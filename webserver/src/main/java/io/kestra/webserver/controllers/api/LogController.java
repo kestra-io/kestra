@@ -2,11 +2,11 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.InputStream;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import io.kestra.webserver.utils.QueryFilterUtils;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.QueryFilter;
@@ -20,11 +20,9 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -75,39 +73,13 @@ public class LogController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
-        ) @Nullable @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "A trigger id filter", deprecated = true) @Nullable @QueryValue String triggerId,
-        @Deprecated @Parameter(description = "The min log level filter", deprecated = true) @Nullable @QueryValue Level minLevel,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate)
+        ) @Nullable @QueryFilterFormat List<QueryFilter> filters)
         throws HttpStatusException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            triggerId,
-            minLevel,
-            startDate,
-            endDate,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
         return PagedResults.of(
             logRepository.find(
                 PageableUtils.from(page, size, sort),
                 tenantService.resolveTenant(),
-                filters
+                QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
             )
         );
     }

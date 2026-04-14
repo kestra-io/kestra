@@ -28,6 +28,8 @@ public interface WorkerConnectionService {
     }
 
     class WorkerConnectionFailedException extends KestraRuntimeException {
+        private static final long serialVersionUID = 1L;
+
         public WorkerConnectionFailedException(String message) {
             super(message);
         }

@@ -1,8 +1,11 @@
 dependencies {
+    annotationProcessor project(':processor')
+
     implementation project(':core')
     implementation project(':worker')
     implementation project(':scheduler')
     implementation project(':executor')
+    implementation project(':indexer')
     implementation "io.micronaut:micronaut-runtime"
     implementation "io.micronaut.test:micronaut-test-junit5"
 

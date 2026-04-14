@@ -10,7 +10,7 @@ tasks:
       SELECT sum(total) as sum_total, avg(quantity) as avg_quantity FROM read_csv_auto('https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv');
     fetchType: FETCH
   - id: send_slack_message
-    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
     url: https://kestra.io/api/mock
     messageText: "DuckDB Query Results: Sum of total = {{ outputs.duckdb_query.outputs[0].rows[0].sum_total }}, Average quantity = {{ outputs.duckdb_query.outputs[0].rows[0].avg_quantity }}"
 

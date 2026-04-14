@@ -117,7 +117,18 @@
                             >
                                 <template #default="scope">
                                     <div class="flow-id">
-                                        <span class="me-1">{{ FILTERS.invisibleSpace(scope.row.id) }}</span>
+                                        <router-link
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
+                                            class="me-1"
+                                        >
+                                            {{ FILTERS.invisibleSpace(scope.row.id) }}
+                                        </router-link>
                                         <MarkdownTooltip
                                             :id="scope.row.namespace +
                                                 '-' +
@@ -139,7 +150,7 @@
                                     :label="$t('labels')"
                                 >
                                     <template #default="scope">
-                                        <Labels :labels="scope.row.labels" />
+                                        <Labels :labels="scope.row.labels" @click.prevent.stop />
                                     </template>
                                 </el-table-column>
 
@@ -237,7 +248,7 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton 
+                                        <IconButton
                                             v-if="canExecute(scope.row)"
                                             :tooltip="t('execute')"
                                             @click="openExecuteModal(scope.row)"

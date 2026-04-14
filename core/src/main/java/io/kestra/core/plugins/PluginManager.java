@@ -101,8 +101,7 @@ public interface PluginManager extends AutoCloseable {
     List<PluginResolutionResult> resolveVersions(List<PluginArtifact> artifacts);
 
     @Override
-    default void close() throws Exception {
-
+    default void close() {
     }
 
     /**

@@ -228,8 +228,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     action: NONE
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.ForEachItem"
+    }
 )
 public class ForEachItem extends Task implements FlowableTask<VoidOutput>, ChildFlowInterface {
     @NotEmpty

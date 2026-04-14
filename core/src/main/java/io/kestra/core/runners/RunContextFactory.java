@@ -27,6 +27,8 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 
+import io.kestra.core.encryption.EncryptionConfig;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
@@ -64,8 +66,8 @@ public class RunContextFactory {
     @Inject
     protected WorkingDirFactory workingDirFactory;
 
-    @Value("${kestra.encryption.secret-key}")
-    protected Optional<String> secretKey;
+    @Inject
+    protected EncryptionConfig encryptionConfig;
 
     @Value("${kestra.environment.name}")
     @Nullable
@@ -267,14 +269,14 @@ public class RunContextFactory {
             .withMeterRegistry(metricRegistry)
             .withVariableRenderer(this.variableRenderer)
             .withStorageInterface(storageInterface)
-            .withSecretKey(secretKey)
+            .withSecretKey(encryptionConfig.asOptional())
             .withWorkingDir(workingDirFactory.createWorkingDirectory())
             .withKvStoreService(kvStoreService)
             .withAssetManagerFactory(assetManagerFactory);
     }
 
     protected RunVariables.Builder newRunVariablesBuilder() {
-        return new RunVariables.DefaultBuilder(secretKey)
+        return new RunVariables.DefaultBuilder(encryptionConfig.asOptional())
             .withEnvs(runContextCache.getEnvVars())
             .withGlobals(runContextCache.getGlobalVars())
             .withKestraConfiguration(new RunVariables.KestraConfiguration(kestraEnvironment, kestraUrl));

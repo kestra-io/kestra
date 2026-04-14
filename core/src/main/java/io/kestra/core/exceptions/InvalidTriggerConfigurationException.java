@@ -1,6 +1,8 @@
 package io.kestra.core.exceptions;
 
 public class InvalidTriggerConfigurationException extends KestraRuntimeException {
+    private static final long serialVersionUID = 1L;
+
     public InvalidTriggerConfigurationException() {
         super();
     }

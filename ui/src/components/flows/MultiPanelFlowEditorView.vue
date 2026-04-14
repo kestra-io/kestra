@@ -3,7 +3,7 @@
         <MultiPanelGenericEditorView
             ref="editorView"
             :class="{playgroundMode}"
-            :editorElements="editorElements"
+            :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
             :preSerializePanels="preSerializePanels"
@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import Close from "vue-material-design-icons/Close.vue";
     import Utils from "../../utils/utils";
     import {usePlaygroundStore} from "../../stores/playground";
@@ -66,6 +66,7 @@
 
     import {useNoCodePanelsFull} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
+    import {usePluginsStore} from "../../stores/plugins";
     import {trackTabOpen} from "../../utils/tabTracking";
     import {Panel, Tab} from "../../utils/multiPanelTypes";
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
@@ -86,13 +87,17 @@
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value);
 
     watch(() => flowStore.isCreating, (isCreating) => {
-        if(!isCreating){
-            // when switching from creating to editing, ensure the saveKey is updated
-            editorView.value?.saveState(alwaysSaveKey.value);
+        if (!isCreating) {
+            if (isGuidedCodeOnly.value && alwaysSaveKey.value) {
+                localStorage.removeItem(alwaysSaveKey.value);
+            } else {
+                editorView.value?.saveState(alwaysSaveKey.value);
+            }
         }
     })
 
     const route = useRoute();
+    const router = useRouter();
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
     const showExecuteHint = ref(true);
     const isOnboardingCreate = computed(() =>
@@ -105,8 +110,26 @@
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
             else editorView.value?.focusTab("code")
         }
+
+        if(route.query.createTrigger === "true"){
+            if(!editorView.value?.openTabs.includes("nocode")) {
+                editorView.value?.setTabValue("nocode")
+            } else {
+                editorView.value?.focusTab("nocode")
+            }
+
+            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+            const blockSchemaPath = [
+                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+            ].join("/");
+            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+
+            const {createTrigger: _, ...query} = route.query;
+            router.replace({...route, query});
+        }
     })
 
+    const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
 
     const playgroundMode = computed(() => playgroundStore.enabled)
@@ -153,14 +176,14 @@
     const isGuidedCodeOnly = computed(
         () => onboardingV2Store.isGuidedActive && onboardingV2Store.state.editorMode === "code_only",
     );
-    watch(isGuidedCodeOnly, (guided) => {
+    watch(isGuidedCodeOnly, (guided, wasGuided) => {
         if (guided && playgroundStore.enabled) {
             playgroundStore.enabled = false;
         }
+        if (!guided && wasGuided && alwaysSaveKey.value) {
+            localStorage.removeItem(alwaysSaveKey.value);
+        }
     }, {immediate: true});
-    const editorElements = computed(() => (isGuidedCodeOnly.value
-        ? EDITOR_ELEMENTS.filter((element) => element.uid === "code")
-        : EDITOR_ELEMENTS));
     const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS));
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
@@ -320,3 +343,4 @@
         initial-value: 0turn;
     }
 </style>
+

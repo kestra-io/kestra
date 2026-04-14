@@ -48,7 +48,7 @@ public class FlowTopologyTest {
             namespace: io.kestra.unittest
             tasks:
               - id: subflow
-                type: io.kestra.core.tasks.flows.Flow
+                type: io.kestra.plugin.core.flow.Subflow
                 flowId: child
                 namespace: io.kestra.unittest
             """);
@@ -95,7 +95,7 @@ public class FlowTopologyTest {
                 namespace: io.kestra.unittest
                 tasks:
                   - id: subflow
-                    type: io.kestra.core.tasks.flows.Flow
+                    type: io.kestra.plugin.core.flow.Subflow
                     flowId: sub_child
                     namespace: io.kestra.unittest
                 """
@@ -105,7 +105,7 @@ public class FlowTopologyTest {
             namespace: io.kestra.unittest
             tasks:
               - id: subflow
-                type: io.kestra.core.tasks.flows.Flow
+                type: io.kestra.plugin.core.flow.Subflow
                 flowId: parent
                 namespace: io.kestra.unittest
             """);
@@ -114,7 +114,7 @@ public class FlowTopologyTest {
             namespace: io.kestra.unittest
             tasks:
               - id: subflow
-                type: io.kestra.core.tasks.flows.Flow
+                type: io.kestra.plugin.core.flow.Subflow
                 flowId: child
                 namespace: io.kestra.unittest
             """);
@@ -281,7 +281,7 @@ public class FlowTopologyTest {
                 namespace: io.kestra.unittest
                 tasks:
                   - id: callSub
-                    type: io.kestra.core.tasks.flows.Flow
+                    type: io.kestra.plugin.core.flow.Subflow
                     flowId: sub_child
                     namespace: io.kestra.unittest.sub
                 """
@@ -294,7 +294,7 @@ public class FlowTopologyTest {
                 namespace: io.kestra.unittest
                 tasks:
                   - id: callChild
-                    type: io.kestra.core.tasks.flows.Flow
+                    type: io.kestra.plugin.core.flow.Subflow
                     flowId: child
                     namespace: io.kestra.unittest
                 """

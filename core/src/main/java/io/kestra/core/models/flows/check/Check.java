@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -42,11 +43,13 @@ public class Check {
     /**
      * Defines the style of the message displayed in the UI when the condition evaluates to {@code false}.
      */
+    @Builder.Default
     Style style = Style.INFO;
 
     /**
      * The behavior to apply when the condition evaluates to {@code false}.
      */
+    @Builder.Default
     Behavior behavior = Behavior.BLOCK_EXECUTION;
 
     /**

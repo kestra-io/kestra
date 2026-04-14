@@ -120,6 +120,9 @@ public class Extension extends AbstractExtension {
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
         filters.put("string", new StringFilter());
+        filters.put(RegexMatchFilter.NAME, new RegexMatchFilter());
+        filters.put(RegexReplaceFilter.NAME, new RegexReplaceFilter());
+        filters.put(RegexExtractFilter.NAME, new RegexExtractFilter());
         return filters;
     }
 
@@ -172,6 +175,13 @@ public class Extension extends AbstractExtension {
         functions.put(IterationOutputFunction.NAME, new IterationOutputFunction());
         functions.put(HttpFunction.NAME, httpFunction);
         functions.put(ParentOutputFunction.NAME, new ParentOutputFunction());
+        functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
+        functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
+        functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
+        functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
+        functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
+        functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
+        functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
         return functions;
     }
 

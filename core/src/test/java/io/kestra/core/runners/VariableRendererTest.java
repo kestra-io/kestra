@@ -16,9 +16,6 @@ class VariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;
 
-    @Inject
-    PebbleEngineFactory pebbleEngineFactory;
-
     @Test
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
         final Map<String, Object> input = new LinkedHashMap<>();

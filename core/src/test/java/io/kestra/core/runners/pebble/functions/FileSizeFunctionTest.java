@@ -119,11 +119,11 @@ public class FileSizeFunctionTest {
         );
 
         Exception ex = assertThrows(
-            IllegalArgumentException.class,
+            IllegalVariableEvaluationException.class,
             () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
         );
 
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
+        assertTrue(ex.getCause().getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
     }
 
     @Test

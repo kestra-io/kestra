@@ -114,7 +114,7 @@ public class VariableRenderer {
             OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
             compiledTemplate.evaluate(writer, variables);
             result = writer.output();
-        } catch (IOException | PebbleException e) {
+        } catch (IOException | RuntimeException e) {
             if (e instanceof PebbleException pebbleException) {
                 throw properPebbleException(pebbleException);
             }

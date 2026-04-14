@@ -1,5 +1,20 @@
 package io.kestra.core.runners;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.CaseFormat;
@@ -15,7 +30,6 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
@@ -25,20 +39,8 @@ import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -571,6 +573,17 @@ public class DefaultRunContext extends RunContext {
     @Override
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    /**
+     * Ensure a secret consumer is set in the context.
+     * This is used only when using RunContextInitilizer.forPlugin.
+     */
+    void ensureSecretConsumer() {
+        if (variables.containsKey(RunVariables.SECRET_CONSUMER_VARIABLE_NAME)) {
+            return;
+        }
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
     }
 
     /**

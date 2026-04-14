@@ -60,6 +60,7 @@ public class RunContextInitializer {
                                        final Plugin plugin) {
         runContext.init(applicationContext);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(plugin.getType(), plugin.getClass()));
+        runContext.ensureSecretConsumer();
         return runContext;
     }
 

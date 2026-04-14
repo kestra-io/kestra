@@ -3,6 +3,7 @@
         <slot name="top-bar" />
         <Topology
             v-if="manifestReady"
+            :key="`topology-${!!executionsStore.execution?.id}`"
             :id="vueflowId"
             :isHorizontal="isHorizontal"
             :isReadOnly="isReadOnly"
@@ -34,11 +35,13 @@
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
             <template #taskDetails="taskProps">
-                <component 
-                    v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]" 
+                <component
+                    v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
                     :is="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
                     :task="taskProps.data.node?.task"
                     :execution="executionsStore.execution"
+                    :namespace="props.namespace"
+                    :flowId="props.flowId"
                 />
             </template>
         </Topology>
@@ -144,13 +147,17 @@
 
     const {RemoteComponents:TopologyDetailsRemotes, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details");
 
-    function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) { 
+    function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type;
         const addInfo = taskAdditionalInfoRemote.value[taskType];
+        const hasExecution = !!executionsStore.execution?.id;
+        const height = hasExecution
+            ? (addInfo?.heightWithExecution ?? addInfo?.height ?? getNodeHeight(node))
+            : (addInfo?.height ?? getNodeHeight(node));
         return {
             width: getNodeWidth(node),
-            height: addInfo?.height ?? getNodeHeight(node),
-        } 
+            height,
+        };
     };
 
     onMounted(async () => {
@@ -418,5 +425,11 @@
     height: 100%;
     width: 100%;
     position: relative;
+
+    // Anchor the state icon (playground-button) to the node header area, not
+    // the full VueFlow node element, so it doesn't overlap plugin UI details.
+    :deep(.main-content) {
+        position: relative;
+    }
 }
 </style>

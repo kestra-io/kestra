@@ -42,7 +42,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Branch tasks based on a rendered condition.",
     description = """
-        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `_else` when false, with optional `errors`/`finally` blocks.
+        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `else` when false, with optional `errors`/`finally` blocks.
 
         Frequently used after previous task results to drive control flow."""
 )

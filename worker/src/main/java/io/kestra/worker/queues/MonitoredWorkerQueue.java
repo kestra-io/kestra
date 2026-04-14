@@ -13,7 +13,7 @@ import io.micrometer.core.instrument.Counter;
  *
  * @param <T>
  */
-public class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
+public final class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
 
     public static final String QUEUE_SIZE = "worker.queue.size";
     public static final String QUEUE_REMAINING_CAPACITY = "worker.queue.remaining.capacity";

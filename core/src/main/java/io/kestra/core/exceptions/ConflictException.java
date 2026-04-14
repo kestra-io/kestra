@@ -11,6 +11,7 @@ package io.kestra.core.exceptions;
  * result in an HTTP 409 Conflict response.
  */
 public class ConflictException extends KestraRuntimeException {
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates a new {@link ConflictException} instance.

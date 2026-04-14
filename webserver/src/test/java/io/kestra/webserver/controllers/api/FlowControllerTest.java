@@ -208,7 +208,6 @@ class FlowControllerTest {
         assertThat(flows.getTotal()).isEqualTo(0L);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void searchFlowsByNamespacePrefix() {
         assertThat(
@@ -662,7 +661,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(13);
+        assertThat(namespaces.size()).isEqualTo(14);
     }
 
     @Test
@@ -768,7 +767,7 @@ class FlowControllerTest {
     @Test
     void exportFlowsByQueryForANamespace() throws IOException {
         byte[] zip = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/flows/export/by-query?namespace=io.kestra.tests"),
+            HttpRequest.GET("/api/v1/main/flows/export/by-query?filters[namespace][PREFIX]=io.kestra.tests"),
             Argument.of(byte[].class)
         );
         File file = File.createTempFile("flows", ".zip");
@@ -828,7 +827,7 @@ class FlowControllerTest {
     void importFlowsWithZip() throws IOException {
         // create a ZIP file using the extract endpoint
         byte[] zip = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/flows/export/by-query?namespace=io.kestra.tests"),
+            HttpRequest.GET("/api/v1/main/flows/export/by-query?filters[namespace][PREFIX]=io.kestra.tests"),
             Argument.of(byte[].class)
         );
         File temp = File.createTempFile("flows", ".zip");
@@ -955,7 +954,7 @@ class FlowControllerTest {
 
         HttpResponse<BulkResponse> response = client
             .toBlocking()
-            .exchange(POST("/api/v1/main/flows/disable/by-query?namespace=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
+            .exchange(POST("/api/v1/main/flows/disable/by-query?filters[namespace][PREFIX]=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(1);
 
@@ -965,7 +964,7 @@ class FlowControllerTest {
 
         response = client
             .toBlocking()
-            .exchange(POST("/api/v1/main/flows/enable/by-query?namespace=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
+            .exchange(POST("/api/v1/main/flows/enable/by-query?filters[namespace][PREFIX]=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(1);
 
@@ -980,14 +979,9 @@ class FlowControllerTest {
         postFlow("flowIdB", "io.kestra.tests.delete", "b");
         postFlow("flowIdC", "io.kestra.tests.delete", "c");
 
-        UriBuilder uriBuilder = UriBuilder.of("/api/v1/main/flows/delete/by-query");
-        uriBuilder.queryParam("q", "flowId");
-        uriBuilder.queryParam("namespace", "io.kestra.tests.delete");
-        URI uri = uriBuilder.build();
-
         HttpResponse<BulkResponse> response = client
             .toBlocking()
-            .exchange(DELETE(uri), BulkResponse.class);
+            .exchange(DELETE("/api/v1/main/flows/delete/by-query?filters[namespace][EQUALS]=io.kestra.tests.delete&filters[q][EQUALS]=flowId"), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
@@ -1014,7 +1008,7 @@ class FlowControllerTest {
         Flow flow = generateFlow("toDelete", "io.kestra.unittest.delete", "a");
         client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML), String.class);
 
-        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/delete/by-query?namespace=io.kestra.unittest.delete"));
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/flows/delete/by-query?filters[namespace][PREFIX]=io.kestra.unittest.delete"));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
         {
@@ -1077,7 +1071,7 @@ class FlowControllerTest {
         assertThat(body.getFirst().getDeprecationPaths()).hasSize(2);
         assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]", "tasks[0].additionalProperty");
         assertThat(body.getFirst().getInfos().size()).isEqualTo(1);
-        assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
+        assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.runners.test.task.Alias is replaced by io.kestra.core.runners.test.TaskWithAlias");
     }
 
     @Test
@@ -1249,35 +1243,31 @@ class FlowControllerTest {
         assertEquals(2, violations.getFirst().getDeprecationPaths().size());
         assertEquals("tasks[0]", violations.getFirst().getDeprecationPaths().getFirst());
         assertEquals(1, violations.getFirst().getInfos().size());
-        assertEquals("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log", violations.getFirst().getInfos().getFirst());
+        assertEquals("io.kestra.core.runners.test.task.Alias is replaced by io.kestra.core.runners.test.TaskWithAlias", violations.getFirst().getInfos().getFirst());
     }
 
     @Test
     void commaInSingleLabelsValue() {
-        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
+        String encodedCommaWithinLabel = URLEncoder.encode("foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
             .GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar");
         assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest, PagedResults.class));
 
-        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/main/flows/search?labels=project:foo,bar");
-        assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class));
-
         MutableHttpRequest<Object> exportRequest = HttpRequest
-            .GET("/api/v1/main/flows/export/by-query?labels=" + encodedCommaWithinLabel);
+            .GET("/api/v1/main/flows/export/by-query?filters[labels][EQUALS][project]=" + encodedCommaWithinLabel);
         assertDoesNotThrow(() -> client.toBlocking().retrieve(exportRequest, byte[].class));
 
         MutableHttpRequest<List<Object>> deleteRequest = HttpRequest
-            .DELETE("/api/v1/main/flows/delete/by-query?labels=" + encodedCommaWithinLabel);
+            .DELETE("/api/v1/main/flows/delete/by-query?filters[labels][EQUALS][project]=" + encodedCommaWithinLabel);
         assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> disableRequest = HttpRequest
-            .POST("/api/v1/main/flows/disable/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/flows/disable/by-query?filters[labels][EQUALS][project]=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(disableRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> enableRequest = HttpRequest
-            .POST("/api/v1/main/flows/enable/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/flows/enable/by-query?filters[labels][EQUALS][project]=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(enableRequest, BulkResponse.class));
     }
 
@@ -1291,10 +1281,6 @@ class FlowControllerTest {
         var flows = client.toBlocking()
             .retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(1L);
-
-        flows = client.toBlocking().retrieve(GET("/api/v1/main/flows/search?labels=project:foo,bar" + "&labels=status:test"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows.getTotal()).isEqualTo(1L);
-
     }
 
     @Test

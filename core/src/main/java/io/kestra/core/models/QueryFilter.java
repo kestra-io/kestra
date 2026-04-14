@@ -51,7 +51,11 @@ public record QueryFilter(
 
     @SuppressWarnings("unchecked")
     private List<Object> asValues(Object value) {
-        return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
+        if (value instanceof String valueStr) {
+            Object[] parts = valueStr.split(",");
+            return Arrays.asList(parts);
+        }
+        return (List<Object>) value;
     }
 
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
@@ -101,6 +105,12 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
+            }
+        },
+        TAGS("tags") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.CONTAINS, Op.IN);
             }
         },
         METADATA("metadata") {
@@ -559,6 +569,18 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.STATE, Field.TYPE, Field.CREATED);
+            }
+        },
+        TENANT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY);
+            }
+        },
+        APP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID);
             }
         };
 

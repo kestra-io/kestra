@@ -1,0 +1,11 @@
+id: loop-failed-no-transmit
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    transmitFailed: false
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail

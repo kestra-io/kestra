@@ -15,6 +15,7 @@ import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.value.PropertyResolver;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
+@Requires(property = "kestra.ai.enabled", value = "true", defaultValue = "true")
 public class AiServiceManager {
     private final Map<String, AiServiceInterface> aiServices = new HashMap<>();
     private final AiProvidersConfiguration providersConfiguration;

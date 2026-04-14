@@ -3,8 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -49,10 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Slf4j
 @KestraTest
 class ExecutionControllerTest {
-
-    @Inject
-    private ExecutionController executionController;
-
     @Inject
     private ExecutionRepositoryInterface executionRepository;
 
@@ -251,17 +245,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void resolveAbsoluteDateTime() {
-        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6, 10, 0, ZoneId.systemDefault());
-        final Duration offset = Duration.ofSeconds(5L);
-        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6, 10, 0, ZoneId.systemDefault());
-
-        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null)).isEqualTo(absoluteTimestamp);
-        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp)).isEqualTo(baseTimestamp.minus(offset));
-        assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
-    }
-
-    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 
@@ -387,16 +370,6 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
-
-        HttpClientResponseException exception_oldParameters = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET(
-                    "/api/v1/main/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"
-                ), PagedResults.class
-            )
-        );
-        assertThat(exception_oldParameters.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception_oldParameters.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
     }
 
     @Test

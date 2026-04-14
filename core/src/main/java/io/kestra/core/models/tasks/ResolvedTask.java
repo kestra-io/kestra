@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 
+import io.kestra.core.utils.IdUtils;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
@@ -51,5 +52,9 @@ public class ResolvedTask {
             .stream()
             .map(ResolvedTask::of)
             .toList();
+    }
+
+    public String uid() {
+        return IdUtils.fromParts(this.task.getId(), this.value);
     }
 }

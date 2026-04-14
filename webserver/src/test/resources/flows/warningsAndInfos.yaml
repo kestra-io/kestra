@@ -5,7 +5,7 @@ tasks:
     type: io.kestra.core.plugins.test.DeprecatedTask
     additionalProperty: "value"
   - id: alias
-    type: io.kestra.core.tasks.log.Log
+    type: io.kestra.core.runners.test.task.Alias
     message: I'm an alias
   - id: hello
     type: io.kestra.plugin.core.log.Log

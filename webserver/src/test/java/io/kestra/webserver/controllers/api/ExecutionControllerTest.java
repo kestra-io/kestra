@@ -467,7 +467,7 @@ class ExecutionControllerTest {
             .id(flowId)
             .tenantId(MAIN_TENANT)
             .namespace(namespaceId)
-            .checks(List.of(Check.builder().condition("{{ [] | length > 0 }}").message("No VM provided").style(Check.Style.ERROR).behavior(Check.Behavior.BLOCK_EXECUTION).build()))
+            .checks(List.of(Check.builder().when("{{ [] | length > 0 }}").message("No VM provided").style(Check.Style.ERROR).behavior(Check.Behavior.BLOCK_EXECUTION).build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
 

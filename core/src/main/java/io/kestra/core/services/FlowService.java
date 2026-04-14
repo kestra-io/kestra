@@ -282,7 +282,7 @@ public class FlowService {
     /**
      * Evaluates all checks defined in the given flow using the provided inputs.
      * <p>
-     * Each check's {@link Check#getCondition()} is evaluated in the context of the flow.
+     * Each check's {@link Check#getWhen()} is evaluated in the context of the flow.
      * If a condition evaluates to {@code false} or fails to evaluate due to a
      * variable error, the corresponding {@link Check} is added to the returned list.
      * </p>
@@ -297,7 +297,7 @@ public class FlowService {
             List<Check> falseConditions = new ArrayList<>();
             for (Check check : flow.getChecks()) {
                 try {
-                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getCondition()));
+                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getWhen()));
                     if (!result) {
                         falseConditions.add(check);
                     }

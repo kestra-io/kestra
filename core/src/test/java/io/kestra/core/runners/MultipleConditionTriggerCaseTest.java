@@ -199,6 +199,34 @@ public class MultipleConditionTriggerCaseTest {
         );
     }
 
+    public void flowTriggerWhenCondition() throws TimeoutException, QueueException {
+        // Run flow-a which has label "source: when-test"
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.when.condition",
+            "flow-trigger-when-condition-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // The listener uses `when: '{{ labels.source == "when-test" }}'` instead of conditions;
+        // it should fire because flow-a carries the matching label.
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.when.condition", "flow-trigger-when-condition-flow-listen"
+        );
+        executionRepository.delete(triggerExecution);
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // No further execution should be triggered
+        assertThrows(
+            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+                e -> e.getState().getCurrent().equals(Type.SUCCESS),
+                MAIN_TENANT, "io.kestra.tests.trigger.when.condition", "flow-trigger-when-condition-flow-listen", Duration.ofSeconds(1)
+            )
+        );
+    }
+
     public void flowTriggerMixedConditions() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.mixed.conditions",

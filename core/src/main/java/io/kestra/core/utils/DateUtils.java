@@ -29,14 +29,19 @@ public class DateUtils {
     }
 
     public static LocalDate parseLocalDate(String render) throws InternalException {
-        LocalDate currentDate;
         try {
-            currentDate = LocalDate.parse(render);
-        } catch (DateTimeException e) {
-            currentDate = DateUtils.parseZonedDateTime(render).toLocalDate();
+            return LocalDate.parse(render);
+        } catch (DateTimeException e1) {
+            try {
+                return ZonedDateTime.parse(render).toLocalDate();
+            } catch (DateTimeException e2) {
+                try {
+                    return LocalDateTime.parse(render).toLocalDate();
+                } catch (DateTimeException e3) {
+                    throw new InternalException(e3);
+                }
+            }
         }
-
-        return currentDate;
     }
 
     public static GroupType groupByType(Duration duration) {

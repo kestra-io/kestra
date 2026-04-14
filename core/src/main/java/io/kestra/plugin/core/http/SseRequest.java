@@ -125,6 +125,7 @@ public class SseRequest extends AbstractHttp implements RunnableTask<SseRequest.
             "without causing the task to fail. If true, the task will throw an exception if " +
             "any event does not yield a value from the JQ expression. Default is true."
     )
+    @Builder.Default
     private Property<Boolean> failedOnMissingJq = Property.ofValue(true);
 
     @Override

@@ -152,6 +152,8 @@
     async function loadPlugin() {
         if (route.params.version) {
             version.value = route.params.version as string;
+        } else {
+            version.value = undefined;
         }
 
         const clsParam = route.params.cls as string | undefined;

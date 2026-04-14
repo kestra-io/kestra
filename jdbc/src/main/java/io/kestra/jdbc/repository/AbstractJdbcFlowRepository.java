@@ -914,7 +914,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return findAsync(defaultFilter(tenantId), condition);
     }
 
-    protected Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
+    protected final Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()

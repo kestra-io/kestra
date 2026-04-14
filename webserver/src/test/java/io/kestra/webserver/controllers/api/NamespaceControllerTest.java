@@ -125,33 +125,6 @@ public class NamespaceControllerTest {
     }
 
     @Test
-    void secrets() {
-        ApiSecretListResponse secrets = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/namespaces/any.ns/secrets?page=1&size=2"),
-            ApiSecretListResponse.class
-        );
-        assertThat(secrets.readOnly()).isTrue();
-        assertThat(secrets.total()).isEqualTo(4L);
-        assertThat(secrets.results()).isEqualTo(
-            List.of(
-                new ApiSecretMeta("WEBHOOK_KEY"),
-                new ApiSecretMeta("PASSWORD")
-            )
-        );
-
-        secrets = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/namespaces/any.ns/secrets?page=2&size=2"),
-            ApiSecretListResponse.class
-        );
-        assertThat(secrets.results()).isEqualTo(
-            List.of(
-                new ApiSecretMeta("NEW_LINE"),
-                new ApiSecretMeta("MY_SECRET")
-            )
-        );
-    }
-
-    @Test
     void inheritedSecrets() {
         Map<String, Set<String>> parentInheritedSecrets = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/namespaces/any.ns/inherited-secrets"),

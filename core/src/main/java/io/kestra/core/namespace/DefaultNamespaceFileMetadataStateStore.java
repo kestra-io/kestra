@@ -24,7 +24,7 @@ import jakarta.inject.Singleton;
  * where the repository is available. Workers use a gRPC-based implementation instead.
  */
 @Singleton
-@Requires(property = "kestra.server-type", notEquals = "WORKER")
+@Requires(beans = NamespaceFileMetadataRepositoryInterface.class)
 public class DefaultNamespaceFileMetadataStateStore implements NamespaceFileMetadataStateStore {
 
     private final NamespaceFileMetadataRepositoryInterface repository;

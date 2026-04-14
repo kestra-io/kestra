@@ -32,6 +32,7 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -130,6 +131,14 @@ public class DefaultRunContext extends RunContext {
     @Override
     public void setTraceParent(String traceParent) {
         this.traceParent = traceParent;
+
+        // add it inside variables if not already present to be available in expressions
+        if (traceParent != null && !this.variables.containsKey("trace")) {
+            this.variables = ImmutableMap.<String, Object>builder()
+                .putAll(this.variables)
+                .put("trace", Map.of("parent", traceParent))
+                .build();
+        }
     }
 
     @JsonIgnore
@@ -155,7 +164,7 @@ public class DefaultRunContext extends RunContext {
             this.meterRegistry = applicationContext.getBean(MetricRegistry.class);
             this.version = applicationContext.getBean(VersionProvider.class);
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
-            this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
+            this.secretKey = applicationContext.getBean(EncryptionConfig.class).asOptional();
             this.validator = applicationContext.getBean(Validator.class);
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
             this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
@@ -685,7 +694,7 @@ public class DefaultRunContext extends RunContext {
             context.applicationContext = applicationContext;
             context.variableRenderer = variableRenderer;
             context.meterRegistry = meterRegistry;
-            context.variables = Optional.ofNullable(variables).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
+            context.variables = variables;
             context.pluginConfiguration = Optional.ofNullable(pluginConfiguration).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
             context.logger = logger;
             context.secretKey = secretKey;

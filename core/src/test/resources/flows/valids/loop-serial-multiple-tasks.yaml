@@ -1,0 +1,14 @@
+id: loop-serial-multiple-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2"]
+    tasks:
+      - id: first
+        type: io.kestra.plugin.core.log.Log
+        message: "First task for {{ item.value }}"
+      - id: second
+        type: io.kestra.plugin.core.log.Log
+        message: "Second task for {{ item.value }}"

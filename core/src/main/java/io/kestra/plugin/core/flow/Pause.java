@@ -103,7 +103,7 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: send_approval_request
-                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
                     url: "{{ inputs.slack_webhook_uri }}"
                     payload: |
                       {
@@ -153,8 +153,7 @@ import lombok.experimental.SuperBuilder;
                     format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Pause"
+    }
 )
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(

@@ -499,7 +499,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be failed to be restarted, current state is 'SUCCESS'");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be terminated or paused to be restarted, current state is 'SUCCESS'");
     }
 
     @Test
@@ -1197,7 +1197,7 @@ class ExecutionControllerRunnerTest {
 
         // resume executions
         BulkResponse resumeResponse = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/" + tenantId + "/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null),
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/resume/by-query?filters[namespace][PREFIX]=" + TESTS_FLOW_NS, null),
             BulkResponse.class
         );
         assertThat(resumeResponse.getCount()).isEqualTo(2);
@@ -1211,7 +1211,7 @@ class ExecutionControllerRunnerTest {
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest.POST(
-                    "/api/v1/" + tenantId + "/executions/resume/by-query?namespace=" + TESTS_FLOW_NS, null
+                    "/api/v1/" + tenantId + "/executions/resume/by-query?filters[namespace][PREFIX]=" + TESTS_FLOW_NS, null
                 )
             )
         );
@@ -1295,7 +1295,7 @@ class ExecutionControllerRunnerTest {
 
         // change status of executions
         BulkResponse changeStatus = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/%s/executions/change-status/by-query?namespace=io.kestra.tests&newStatus=WARNING".formatted(tenantId), null),
+            HttpRequest.POST("/api/v1/%s/executions/change-status/by-query?filters[namespace][PREFIX]=io.kestra.tests&newStatus=WARNING".formatted(tenantId), null),
             BulkResponse.class
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
@@ -1466,7 +1466,7 @@ class ExecutionControllerRunnerTest {
 
         // replay executions
         BulkResponse resumeResponse = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/%s/executions/replay/by-query?namespace=io.kestra.tests".formatted(tenantId), null),
+            HttpRequest.POST("/api/v1/%s/executions/replay/by-query?filters[namespace][PREFIX]=io.kestra.tests".formatted(tenantId), null),
             BulkResponse.class
         );
         assertThat(resumeResponse.getCount()).isEqualTo(2);
@@ -1575,12 +1575,6 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(1L);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/search?page=1&size=25&labels=url:" + ENCODED_URL_LABEL_VALUE), PagedResults.class
-        );
-
-        assertThat(executions.getTotal()).isEqualTo(1L);
-
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/" + tenantId + "/executions/search?filters[startDate][EQUALS]=2024-01-07T18:43:11.248%2B01:00&filters[timeRange][EQUALS]=PT12H"))
@@ -1592,12 +1586,6 @@ class ExecutionControllerRunnerTest {
 
         executions = client.toBlocking().retrieve(
             GET("/api/v1/" + tenantId + "/executions/search?filters[timeRange][EQUALS]=PT12H"), PagedResults.class
-        );
-
-        assertThat(executions.getTotal()).isEqualTo(1L);
-
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/search?timeRange=PT12H"), PagedResults.class
         );
 
         assertThat(executions.getTotal()).isEqualTo(1L);
@@ -1660,7 +1648,7 @@ class ExecutionControllerRunnerTest {
         Execution result3 = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.DELETE("/api/v1/%s/executions/by-query?namespace=".formatted(tenantId) + result1.getNamespace()),
+            HttpRequest.DELETE("/api/v1/%s/executions/by-query?filters[namespace][PREFIX]=".formatted(tenantId) + result1.getNamespace()),
             BulkResponse.class
         );
         assertThat(response.getCount()).isEqualTo(3);
@@ -1736,7 +1724,7 @@ class ExecutionControllerRunnerTest {
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST(
-                "/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                "/api/v1/" + tenantId + "/executions/labels/by-query?filters[namespace][PREFIX]=" + result1.getNamespace(),
                 List.of(new Label("key", "value"))
             ),
             BulkResponse.class
@@ -1748,7 +1736,7 @@ class ExecutionControllerRunnerTest {
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
                 HttpRequest.POST(
-                    "/api/v1/" + tenantId + "/executions/labels/by-query?namespace=" + result1.getNamespace(),
+                    "/api/v1/" + tenantId + "/executions/labels/by-query?filters[namespace][PREFIX]=" + result1.getNamespace(),
                     List.of(new Label(null, null))
                 )
             )
@@ -1824,7 +1812,7 @@ class ExecutionControllerRunnerTest {
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST(
-                "/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
+                "/api/v1/%s/executions/labels/by-query?filters[namespace][PREFIX]=".formatted(tenantId) + resultWithLabel.getNamespace(),
                 List.of(new Label(statusLabelKey, "done"))
             ),
             BulkResponse.class
@@ -1836,7 +1824,7 @@ class ExecutionControllerRunnerTest {
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
                 HttpRequest.POST(
-                    "/api/v1/%s/executions/labels/by-query?namespace=".formatted(tenantId) + resultWithLabel.getNamespace(),
+                    "/api/v1/%s/executions/labels/by-query?filters[namespace][PREFIX]=".formatted(tenantId) + resultWithLabel.getNamespace(),
                     List.of(new Label(null, null))
                 )
             )
@@ -1937,7 +1925,7 @@ class ExecutionControllerRunnerTest {
         BulkResponse response = null;
         try {
             response = client.toBlocking().retrieve(
-                HttpRequest.POST("/api/v1/main/executions/pause/by-query?flowId=" + flowId + "&namespace=" + result1.getNamespace(), null),
+                HttpRequest.POST("/api/v1/main/executions/pause/by-query?filters[flowId][EQUALS]=" + flowId + "&filters[namespace][PREFIX]=" + result1.getNamespace(), null),
                 BulkResponse.class
             );
         } catch (HttpClientResponseException e) {
@@ -2160,7 +2148,7 @@ class ExecutionControllerRunnerTest {
         runnerUtils.runOneUntilRunning(TENANT_ID, namespace, "sleep_medium");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/force-run/by-query?namespace=" + namespace, null),
+            HttpRequest.POST("/api/v1/main/executions/force-run/by-query?filters[namespace][PREFIX]=" + namespace, null),
             BulkResponse.class
         );
         assertThat(response.getCount()).isEqualTo(3);
@@ -2222,6 +2210,46 @@ class ExecutionControllerRunnerTest {
         assertThat(evalResult.getError()).isNull();
         assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).isEqualTo("******");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldEvalExpressionWithExecutionContext(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ execution.id }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.is(execution.getId()));
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.nullValue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldEvalExpressionReturnErrorForInvalidExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ invalid_variable }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.nullValue());
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.notNullValue());
+        assertThat(evalResult.getStackTrace(), org.hamcrest.Matchers.notNullValue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldMaskSensitiveFunctionsWhenEvalExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + execution.getId() + "/eval", "{{ secret('MY_SECRET') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError(), org.hamcrest.Matchers.nullValue());
+        assertThat(evalResult.getResult(), org.hamcrest.Matchers.is("******"));
     }
 
     private ExecutionController.EvalResult evalTaskRunExpression(Execution execution, String expression, int index) {
@@ -2470,13 +2498,37 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        // EXECUTION NOT FAILED STATE
+        // EXECUTION RUNNING STATE
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 POST(
                     "/api/v1/main/executions/restart/by-ids",
                     List.of(execution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(e.getMessage()).contains("invalid bulk restart");
+
+        Execution successful = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs?wait=true",
+                null
+            ),
+            Execution.class
+        );
+        assertThat(successful.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // EXECUTION SUCCESS STATE
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/main/executions/restart/by-ids",
+                    List.of(successful.getId())
                 ),
                 MutableHttpResponse.class
             )
@@ -2551,7 +2603,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Illegal state: Execution must be failed to be restarted, current state is 'KILLED' !");
+        assertThat(e.getMessage()).contains("Execution must be terminated or paused to be restarted, current state is 'KILLED'");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -2567,7 +2619,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("execution not in state PAUSED or terminated, or is KILLED");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -2583,7 +2635,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("execution not in state PAUSED or terminated, or is KILLED");
+        assertThat(bulkErrorResponse.get()).contains("must be terminated or paused to be restarted, current state is 'KILLED'");
     }
 
     @Test
@@ -2717,33 +2769,28 @@ class ExecutionControllerRunnerTest {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> deleteRequest = HttpRequest
-            .DELETE("/api/v1/main/executions/by-query?labels=" + encodedCommaWithinLabel);
+            .DELETE("/api/v1/main/executions/by-query?filters[labels][EQUALS][project]=foo,bar");
         assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, PagedResults.class));
 
         MutableHttpRequest<List<Object>> restartRequest = HttpRequest
-            .POST("/api/v1/main/executions/restart/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/restart/by-query?filters[labels][EQUALS][project]=foo,bar", List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(restartRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> resumeRequest = HttpRequest
-            .POST("/api/v1/main/executions/resume/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/resume/by-query?filters[labels][EQUALS][project]=foo,bar", List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(resumeRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> replayRequest = HttpRequest
-            .POST("/api/v1/main/executions/replay/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/replay/by-query?filters[labels][EQUALS][project]=foo,bar", List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(replayRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> labelsRequest = HttpRequest
-            .POST("/api/v1/main/executions/labels/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/labels/by-query?filters[labels][EQUALS][project]=foo,bar", List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(labelsRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> killRequest = HttpRequest
-            .DELETE("/api/v1/main/executions/kill/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .DELETE("/api/v1/main/executions/kill/by-query?filters[labels][EQUALS][project]=foo,bar", List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
-
-        MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
-            .POST("/api/v1/main/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
-            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
             .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
@@ -2754,15 +2801,11 @@ class ExecutionControllerRunnerTest {
             .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar");
         await().atMost(Duration.ofSeconds(10)).until(
             () -> client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(),
-            it -> it == 2L
+            it -> it == 1L
         );
 
-        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/main/executions/search?labels=project:foo,bar");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
-
         MutableHttpRequest<Object> searchRequest_triggerExecution = HttpRequest
-            .GET("/api/v1/executions/search?triggerExecutionId=test");
+            .GET("/api/v1/main/executions/search?filters[triggerExecutionId][EQUALS]=test");
         assertThat(client.toBlocking().retrieve(searchRequest_triggerExecution, PagedResults.class).getTotal()).isEqualTo(0L);
     }
 
@@ -2783,9 +2826,6 @@ class ExecutionControllerRunnerTest {
             it -> it == 1L
         );
 
-        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/main/executions/search?labels=project:foo,bar" + "&labels=status:test");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(1L);
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

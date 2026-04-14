@@ -69,7 +69,7 @@
                         :defaultSort="{prop: 'id', order: 'ascending'}"
                         tableLayout="auto"
                         fixed
-                        @row-dblclick="onRowDoubleClick"
+                        @row-click="onRowDoubleClick"
                         @sort-change="onSort"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
@@ -121,18 +121,13 @@
                                             :to="{
                                                 name: 'flows/update',
                                                 params: {
-                                                    namespace:
-                                                        scope.row.namespace,
+                                                    namespace: scope.row.namespace,
                                                     id: scope.row.id,
                                                 },
                                             }"
                                             class="me-1"
                                         >
-                                            {{
-                                                FILTERS.invisibleSpace(
-                                                    scope.row.id,
-                                                )
-                                            }}
+                                            {{ FILTERS.invisibleSpace(scope.row.id) }}
                                         </router-link>
                                         <MarkdownTooltip
                                             :id="scope.row.namespace +
@@ -155,7 +150,7 @@
                                     :label="$t('labels')"
                                 >
                                     <template #default="scope">
-                                        <Labels :labels="scope.row.labels" />
+                                        <Labels :labels="scope.row.labels" @click.prevent.stop />
                                     </template>
                                 </el-table-column>
 
@@ -176,20 +171,21 @@
                                     :label="$t('last execution date')"
                                 >
                                     <template #default="scope">
-                                        <router-link
-                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
-                                            :to="{
-                                                name: 'executions/update',
-                                                params: {
-                                                    namespace: scope.row.namespace,
-                                                    flowId: scope.row.id,
-                                                    id: getLastExecution(scope.row).id
-                                                }
-                                            }"
-                                            class="table-link"
-                                        >
-                                            <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
-                                        </router-link>
+                                        <div @click.prevent.stop>
+                                            <router-link
+                                                v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                                :to="{
+                                                    name: 'executions/update',
+                                                    params: {
+                                                        namespace: scope.row.namespace,
+                                                        flowId: scope.row.id,
+                                                        id: getLastExecution(scope.row).id
+                                                    }
+                                                }"
+                                            >
+                                                <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
+                                            </router-link>
+                                        </div>
                                     </template>
                                 </el-table-column>
 
@@ -200,6 +196,7 @@
                                 >
                                     <template #default="scope">
                                         <div
+                                            @click.prevent.stop
                                             v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                             class="d-flex justify-content-between align-items-center"
                                         >
@@ -212,7 +209,6 @@
                                                         id: getLastExecution(scope.row).id
                                                     }
                                                 }"
-                                                class="table-link"
                                             >
                                                 <Status :status="getLastExecution(scope.row).status" size="small" />
                                             </router-link>
@@ -252,24 +248,12 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <IconButton 
+                                        <IconButton
                                             v-if="canExecute(scope.row)"
                                             :tooltip="t('execute')"
                                             @click="openExecuteModal(scope.row)"
                                         >
                                             <Play />
-                                        </IconButton>
-                                        <IconButton
-                                            :tooltip="$t('details')"
-                                            :to="{
-                                                name: 'flows/update',
-                                                params: {
-                                                    namespace: scope.row.namespace,
-                                                    id: scope.row.id,
-                                                },
-                                            }"
-                                        >
-                                            <TextSearch />
                                         </IconButton>
                                     </div>
                                 </template>
@@ -312,7 +296,6 @@
     import Upload from "vue-material-design-icons/Upload.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
@@ -741,10 +724,17 @@
 
 .flow-id {
     min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .flows-table .el-table__cell {
     vertical-align: middle;
+}
+
+:deep(.flows-table) .el-table__row {
+    cursor: pointer;
 }
 
 :deep(.flows-table) .el-scrollbar__thumb {
@@ -760,18 +750,6 @@
     @media (max-width: 570px) {
         flex-direction: column;
         align-items: flex-end;
-    }
-}
-
-.table-link {
-    cursor: pointer;
-
-    & :deep(button) {
-        cursor: pointer !important;
-    }
-
-    &:hover {
-        text-decoration: none;
     }
 }
 

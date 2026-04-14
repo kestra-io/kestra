@@ -3,6 +3,7 @@ package io.kestra.plugin.core.condition;
 import java.util.Collections;
 import java.util.Map;
 
+import io.kestra.core.exceptions.InternalException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,7 @@ class PublicHolidayTest {
     }
 
     @Test
-    void validWithDynamicRender() {
+    void validWithDynamicRender() throws InternalException {
         Flow flow = TestsUtils.mockFlow();
 
         Map<String, Object> variables = Map.of(
@@ -82,11 +83,11 @@ class PublicHolidayTest {
             .runContext(runContextFactory.of(flow, execution))
             .variables(variables)
             .build();
-        assertThat(conditionService.valid(flow, Collections.singletonList(publicHoliday), conditionContext)).isTrue();
+        assertThat(conditionService.areValid(Collections.singletonList(publicHoliday), conditionContext)).isTrue();
     }
 
     @Test
-    void invalidWithDynamicRender() {
+    void invalidWithDynamicRender() throws InternalException {
         Flow flow = TestsUtils.mockFlow();
 
         Map<String, Object> variables = Map.of(
@@ -102,7 +103,7 @@ class PublicHolidayTest {
             .runContext(runContextFactory.of(flow, execution))
             .variables(variables)
             .build();
-        assertThat(conditionService.valid(flow, Collections.singletonList(publicHoliday), conditionContext)).isFalse();
+        assertThat(conditionService.areValid(Collections.singletonList(publicHoliday), conditionContext)).isFalse();
     }
 
     @Test

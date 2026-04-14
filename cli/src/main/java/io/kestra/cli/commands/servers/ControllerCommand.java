@@ -1,13 +1,17 @@
 package io.kestra.cli.commands.servers;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.models.ServerType;
-import io.kestra.core.utils.Await;
+import io.kestra.core.services.IgnoreExecutionService;
+import org.awaitility.Awaitility;
 import io.kestra.core.worker.Controller;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @Command(
@@ -16,8 +20,14 @@ import picocli.CommandLine.Command;
 )
 public class ControllerCommand extends AbstractServerCommand {
 
+    @CommandLine.Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
+
     @Inject
     private ApplicationContext applicationContext;
+
+    @Inject
+    private IgnoreExecutionService ignoreExecutionService;
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
@@ -28,12 +38,14 @@ public class ControllerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
+
         super.call();
 
         Controller controller = applicationContext.getBean(Controller.class);
         controller.start();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

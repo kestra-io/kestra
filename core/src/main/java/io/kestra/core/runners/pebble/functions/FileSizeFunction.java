@@ -17,6 +17,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FileSizeFunction extends AbstractFileFunction {
+    public static final String NAME = "fileSize";
     private static final String ERROR_MESSAGE = "The 'fileSize' function expects an argument 'path' that is a path to the internal storage URI.";
 
     @Override

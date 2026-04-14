@@ -14,7 +14,6 @@
             storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS
         }"
         @update-properties="updateDisplayColumns"
-        legacyQuery
         readOnly
         :defaultScope="false"
         :defaultTimeRange="false"
@@ -56,8 +55,8 @@
                         :shrink="true"
                     />
                 </template>
-                <template v-else-if="column.prop === 'nextExecutionDate'">
-                    <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                <template v-else-if="column.prop === 'nextEvaluationDate'">
+                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                 </template>
                 <template v-else>
                     {{ scope.row[column.prop] }}
@@ -135,7 +134,7 @@
         <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <IconButton
-                    v-if="scope.row.evaluateRunningDate"
+                    v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('restart trigger.button')"
                     placement="left"
@@ -149,7 +148,7 @@
         <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <IconButton
-                    v-if="scope.row.executionId"
+                    v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('unlock trigger.button')"
                     placement="left"
@@ -265,7 +264,7 @@
     import {useI18n} from "vue-i18n";
     import _isEqual from "lodash/isEqual";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, onMounted, nextTick} from "vue";
+    import {ref, computed, watch, onMounted} from "vue";
 
     import Play from "vue-material-design-icons/Play.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -292,7 +291,7 @@
 
     import action from "../../models/action";
     import permission from "../../models/permission";
-    
+
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
 
@@ -329,28 +328,28 @@
 
     const localOptionalColumns = ref([
         {
-            label: t("type"), 
-            prop: "type", 
-            default: true, 
+            label: t("type"),
+            prop: "type",
+            default: true,
             description: t("filter.table_column.flow_triggers.type")
         },
         {
-            label: t("workerId"), 
-            prop: "workerId", 
-            default: false, 
+            label: t("workerId"),
+            prop: "workerId",
+            default: false,
             description: t("filter.table_column.flow_triggers.workerId")
         },
         {
-            label: t("next execution date"), 
-            prop: "nextExecutionDate", 
-            default: true, 
+            label: t("next evaluation date"),
+            prop: "nextEvaluationDate",
+            default: true,
             description: t("filter.table_column.flow_triggers.next execution date")
         }
     ]);
 
     const {
-        orderedColumns, 
-        visibleColumns: displayColumns, 
+        orderedColumns,
+        visibleColumns: displayColumns,
         updateVisibleColumns: updateDisplayColumns
     } = useTableColumns({
         columns: localOptionalColumns.value,
@@ -363,7 +362,7 @@
     const triggerStore = useTriggerStore();
 
     const query = computed(() => {
-        return Array.isArray(route.query?.q) ? route.query.q[0] : route.query?.q;
+        return Array.isArray(route.query?.["filters[q][EQUALS]"]) ? route.query["filters[q][EQUALS]"][0] : route.query?.["filters[q][EQUALS]"];
     });
 
     const modalData = computed(() => {
@@ -404,7 +403,8 @@
     });
 
     const cleanBackfill = computed(() => {
-        return {...backfill.value, labels: backfill.value.labels?.filter((label: any) => label.key && label.value)}
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
+        return {...backfill.value, labels: labels?.length ? labels : null};
     });
 
     const checkBackfill = computed(() => {
@@ -437,10 +437,6 @@
         return false
     });
 
-    const editorViewType = computed(() => {
-        return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
-    });
-
     const userCan = (act: any) => {
         if (!flowStore.flow) return false;
         return authStore.user?.isAllowed(permission.EXECUTION, act ? act : action.READ, flowStore.flow?.namespace);
@@ -460,19 +456,18 @@
         selectedTrigger.value = trigger
     };
 
+    const loadDataAfterAction = () => loadData();
+
     const postBackfill = () => {
+        const trigger = selectedTrigger.value as any;
         triggerStore.createBackfill({
-            ...selectedTrigger.value,
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId,
             backfill: cleanBackfill.value
         })
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(selectedTrigger.value?.triggerId);
                 setBackfillModal(null, false);
                 backfill.value = {
                     start: null,
@@ -480,59 +475,39 @@
                     inputs: null,
                     labels: []
                 }
+                loadDataAfterAction();
             })
-
     };
 
     const pauseBackfill = (trigger: any) => {
         triggerStore.pauseBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const unpauseBackfill = (trigger: any) => {
         triggerStore.unpauseBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const deleteBackfill = (trigger: any) => {
         triggerStore.deleteBackfill(trigger)
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
     const setDisabled = (trigger: any, value: boolean) => {
         triggerStore.setDisabled({...trigger, disabled: !value})
-            .then((newTrigger: any) => {
-                toast.saved(newTrigger.triggerId);
-                triggers.value = triggers.value.map((t: any) => {
-                    if (t.id === newTrigger.id) {
-                        return newTrigger
-                    }
-                    return t
-                })
+            .then(() => {
+                toast.saved(trigger.triggerId);
+                loadDataAfterAction();
             })
     };
 
@@ -541,14 +516,9 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
-        }).then((newTrigger: any) => {
-            toast.saved(newTrigger.triggerId);
-            triggers.value = triggers.value.map((t: any) => {
-                if (t.id === newTrigger.id) {
-                    return newTrigger
-                }
-                return t
-            })
+        }).then(() => {
+            toast.saved(trigger.triggerId);
+            loadDataAfterAction();
         })
     };
 
@@ -557,14 +527,9 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
-        }).then((newTrigger: any) => {
-            toast.saved(newTrigger.triggerId);
-            triggers.value = triggers.value.map((t: any) => {
-                if (t.id === newTrigger.id) {
-                    return newTrigger
-                }
-                return t
-            })
+        }).then(() => {
+            toast.saved(trigger.triggerId);
+            loadDataAfterAction();
         })
     };
 
@@ -588,39 +553,18 @@
 
     const addNewTrigger = () => {
         if (!flowStore.flow) return;
-        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
-
-        const baseUrl = {
+        router.push({
             name: "flows/update",
             params: {
                 tenant: route.params?.tenant,
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
                 tab: "edit"
+            },
+            query: {
+                createTrigger: "true"
             }
-        };
-
-        if (editorViewType.value) {
-            const r = {
-                ...baseUrl,
-                query: {
-                    section: "triggers"
-                }
-            };
-
-            nextTick(() => {
-                router.push(r).then(() => {
-                    router.replace({
-                        ...r,
-                        query: {
-                            ...r.query,
-                        }
-                    });
-                });
-            });
-        } else {
-            router.push(baseUrl);
-        }
+        });
     };
 
     onMounted(() => {

@@ -140,7 +140,7 @@ public class TriggerEventHandler {
 
             if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
                 ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
-                state.updateForNextEvaluationDate(clock, nextEvaluationDate);
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate);
             }
 
             triggerStateStore.save(state);
@@ -221,7 +221,7 @@ public class TriggerEventHandler {
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)
-                    .updateForExecutionState(clock, event.executionState())
+                    .updateOnExecutionTerminated(clock, event.executionState())
             );
         });
     }
@@ -241,18 +241,18 @@ public class TriggerEventHandler {
 
             TriggerState newState = state;
             if (data.getRight() != null) {
-                newState = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
             }
 
-            if (event.execution() != null) {
-                newState.updateForExecution(clock, event.execution());
+            if (event.evaluation() != null) {
+                newState = newState.updateOnExecutionCreated(clock, event.evaluation().stateType());
             }
 
-            newState = state.lastEventId(clock, event.eventId());
+            newState = newState.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
 
-            if (event.execution() != null) {
-                Execution execution = event.execution().withTenantId(state.getTenantId());
+            if (event.evaluation() != null) {
+                Execution execution = event.evaluation().toExecution(event.id());
                 triggerExecutionPublisher.send(execution);
             }
         });

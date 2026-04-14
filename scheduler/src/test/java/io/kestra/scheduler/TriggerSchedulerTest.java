@@ -484,6 +484,62 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotScheduleScheduleTriggerGivenWhenFalse() {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("false").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldScheduleScheduleTriggerGivenWhenTruthyExpression() {
+        // region [GIVEN]
+        // '{{ flow.id }}' renders to the flow ID, a non-empty string — truthy
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("{{ flow.id }}").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
+    }
+
+    @Test
+    void shouldSendFailedExecutionGivenWhenInvalidExpression() {
+        // region [GIVEN]
+        // A malformed Pebble expression throws during render, which causes the scheduler
+        // to catch the exception and send a FAILED execution (same path as any trigger evaluation error)
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("{{ invalid-pebble-expression() }}").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN - a FAILED execution is sent due to the render exception
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     void shouldNotScheduleScheduleTriggerWithDisabledTrue() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
@@ -601,7 +657,7 @@ class TriggerSchedulerTest {
         triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
         {
             TriggerState newState = state
-                .updateForExecutionState(SchedulerClock.getClock(), State.Type.SUCCESS)
+                .updateOnExecutionTerminated(SchedulerClock.getClock(), State.Type.SUCCESS)
                 .locked(SchedulerClock.getClock(), false);
             triggerStateStore.save(newState);
         });

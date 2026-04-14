@@ -7,7 +7,6 @@
             columns: {shown: false},
             refresh: {shown: true, callback: load}
         }"
-        legacyQuery
         :defaultScope="false"
         :defaultTimeRange="false"
     />
@@ -85,13 +84,13 @@
     const chartData = computed(() => {
         const aggregations = (flowStore.aggregatedMetrics?.aggregations ?? []) as MetricAggregation[];
         const groupBy = flowStore.aggregatedMetrics?.groupBy;
-        
+
         const aggregationQuery = route.query.aggregation;
-        const aggregationValue = Array.isArray(aggregationQuery) 
-            ? aggregationQuery[0] 
+        const aggregationValue = Array.isArray(aggregationQuery)
+            ? aggregationQuery[0]
             : aggregationQuery;
         const aggregationLabel = aggregationValue?.toLowerCase() ?? "";
-        
+
         return {
             labels: aggregations.map((e: MetricAggregation) =>
                 moment(e.date).format(getFormat(groupBy)),
@@ -164,14 +163,14 @@
 
     function loadMetrics(): void {
         const params = route.params as { namespace: string; id: string };
-        
+
         flowStore.loadTasksWithMetrics({
             namespace: params.namespace,
             id: params.id,
         });
-        
+
         const taskId = route.query.task as string | undefined;
-        
+
         if (taskId) {
             flowStore.loadTaskMetrics({
                 namespace: params.namespace,
@@ -185,7 +184,7 @@
             }).then(handleMetricsLoaded);
         }
     }
-    
+
     function handleMetricsLoaded(): void {
         if ((flowStore.metrics?.length ?? -1) > 0) {
             if (
@@ -211,7 +210,7 @@
             const params = route.params as { namespace: string; id: string };
             const metric = route.query.metric as string;
             const taskId = route.query.task as string | undefined;
-            
+
             if (taskId) {
                 flowStore.loadTaskAggregatedMetrics({
                     namespace: params.namespace,

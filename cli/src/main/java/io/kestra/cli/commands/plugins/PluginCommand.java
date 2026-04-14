@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
+import io.kestra.cli.Kestra;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -25,7 +25,7 @@ public class PluginCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.runCli(new String[] { "plugins", "--help" });
+        return Kestra.runCli(new String[] { "plugins", "--help" });
     }
 
     @Override

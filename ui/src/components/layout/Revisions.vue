@@ -44,11 +44,13 @@
                             </el-button>
                         </el-button-group>
                     </div>
-                    <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
+                    <div class="revision-crud-info">
+                        <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
+                    </div>
                 </div>
             </el-col>
             <el-col :span="12" v-if="revisionRightIndex !== undefined">
-                <div class="revision-select-row m">
+                <div class="revision-select-row">
                     <div class="revision-select">
                         <el-select v-model="revisionRightIndex" @change="addQuery">
                             <el-option
@@ -80,7 +82,9 @@
                             </el-button>
                         </el-button-group>
                     </div>
-                    <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
+                    <div class="revision-crud-info">
+                        <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
+                    </div>
                 </div>
             </el-col>
         </el-row>
@@ -361,13 +365,15 @@
     .revision-select-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
     }
 
     .revision-select {
         display: flex;
         gap: 0.5rem;
         align-items: center;
+        flex-shrink: 0;
 
         > div {
             &:first-child {
@@ -375,6 +381,11 @@
                 width: 100%
             }
         }
+    }
+
+    .revision-crud-info {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .revision-option {

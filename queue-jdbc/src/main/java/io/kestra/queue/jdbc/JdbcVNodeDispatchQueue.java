@@ -59,7 +59,7 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
     }
 
     @Override
-    public QueueSubscriber<T> subscriber(Set<Integer> vNodes) {
+    protected QueueSubscriber<T> doSubscriber(Set<Integer> vNodes) {
         return new JdbcDispatchSubscriber<>(
             cls,
             queueService,

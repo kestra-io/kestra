@@ -1,73 +1,60 @@
 <template>
-    <div class="h-100 d-flex flex-column">
-        <img
-            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
-            class="image-preview"
-        >
-        <Editor
-            v-else
-            id="editorWrapper"
-            ref="editorRefElement"
-            class="flex-1"
-            :modelValue="hasDraft ? draftSource : source"
-            :schemaType="flow ? 'flow': undefined"
-            :lang="lang"
-            :extension="extension"
-            :navbar="false"
-            :readOnly="flow && flowStore.isReadOnly"
-            :creating="isCreating"
-            :path="path"
-            :diffOverviewBar="false"
-            :scrollKey="editorScrollKey"
-            @update:model-value="editorUpdate"
-            @cursor="updatePluginDocumentation"
-            @save="flow ? saveFlowYaml(): saveFileContent()"
-            @execute="execute"
-            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-            @mouse-leave="() => highlightHoveredTask(-1)"
-            :original="hasDraft ? source : undefined"
-            :diffSideBySide="false"
-        >
-            <template #absolute>
-                <AITriggerButton
-                    v-if="aiCopilotAllowed"
-                    :show="flow"
-                    :opened="aiCopilotOpened"
-                    @click="onAiCopilotButtonClick"
-                />
-                <ContentSave v-if="!flow" @click="saveFileContent" />
-            </template>
-            <template v-if="playgroundStore.enabled" #widget-content>
-                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
-            </template>
-            <template #buttons>
-                <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
-            </template>
-        </Editor>
-        <!-- Backdrop overlay -->
-        <Transition name="backdrop-fade">
-            <div
-                v-if="aiCopilotOpened"
-                class="ai-copilot-backdrop"
-                @click="closeAiCopilot"
-            />
-        </Transition>
-
-        <!-- AI Copilot with enhanced animations -->
-        <Transition name="copilot-slide">
-            <AiCopilot
-                v-if="aiCopilotOpened"
-                class="position-absolute prompt ai-copilot-popup"
-                @close="closeAiCopilot"
-                :flow="editorContent"
-                :conversationId="conversationId"
-                :namespace="namespace"
-                @generated-yaml="(yaml: string) => {draftSource = yaml; aiCopilotOpened = false}"
-                :generationType="aiGenerationTypes.FLOW"
-            />
-        </Transition>
-    </div>
+    <AiCopilotWrapper
+        ref="copilotWrapper"
+        class="h-100 d-flex flex-column"
+        :flow="editorContent"
+        :generationType="aiGenerationTypes.FLOW"
+        :namespace="namespace"
+        @generated-yaml="(yaml: string) => { draftSource = yaml }"
+    >
+        <template #default="{aiCopilotOpened, openAiCopilot}">
+            <img
+                v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
+                :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+                class="image-preview"
+            >
+            <Editor
+                v-else
+                id="editorWrapper"
+                ref="editorRefElement"
+                class="flex-1"
+                :modelValue="hasDraft ? draftSource : source"
+                :schemaType="flow ? 'flow': undefined"
+                :lang="lang"
+                :extension="extension"
+                :navbar="false"
+                :readOnly="flow && flowStore.isReadOnly"
+                :creating="isCreating"
+                :path="path"
+                :diffOverviewBar="false"
+                :scrollKey="editorScrollKey"
+                @update:model-value="editorUpdate"
+                @cursor="updatePluginDocumentation"
+                @save="flow ? saveFlowYaml(): saveFileContent()"
+                @execute="execute"
+                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+                @mouse-leave="() => highlightHoveredTask(-1)"
+                :original="hasDraft ? source : undefined"
+                :diffSideBySide="false"
+            >
+                <template #absolute>
+                    <AITriggerButton
+                        v-if="aiCopilotAllowed"
+                        :show="flow"
+                        :opened="aiCopilotOpened"
+                        @click="() => { draftSource = undefined; openAiCopilot(); }"
+                    />
+                    <ContentSave v-if="!flow" @click="saveFileContent" />
+                </template>
+                <template v-if="playgroundStore.enabled" #widget-content>
+                    <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+                </template>
+                <template #buttons>
+                    <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
+                </template>
+            </Editor>
+        </template>
+    </AiCopilotWrapper>
 </template>
 
 <script lang="ts">
@@ -104,10 +91,9 @@
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import AiCopilot from "../ai/AiCopilot.vue";
+    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue";
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
-    import Utils from "../../utils/utils";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
     import permission from "../../models/permission"
     import action from "../../models/action"
@@ -121,6 +107,8 @@
 
     const cursor = ref();
 
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
+
     const toggleAiShortcut = (event: KeyboardEvent) => {
         if (onboardingStore.isGuidedActive) {
             return;
@@ -130,10 +118,13 @@
             event.stopPropagation();
             event.stopImmediatePropagation();
             draftSource.value = undefined;
-            aiCopilotOpened.value = !aiCopilotOpened.value;
+            if (copilotWrapper.value?.aiCopilotOpened) {
+                copilotWrapper.value.closeAiCopilot();
+            } else {
+                copilotWrapper.value?.openAiCopilot();
+            }
         }
     };
-    const aiCopilotOpened = ref(false);
     const draftSource = ref<string | undefined>(undefined);
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
@@ -148,6 +139,8 @@
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
+    // Overrides the wrapper's broader hasAnyActionOnAnyNamespace check with a
+    // namespace-scoped permission check and onboarding guard.
     const aiCopilotAllowed = computed(() => {
         return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
     });
@@ -209,7 +202,7 @@
         window.addEventListener("keydown", toggleAiShortcut);
         if(route.query.ai === "open" && !onboardingStore.isGuidedActive) {
             draftSource.value = undefined;
-            aiCopilotOpened.value = true;
+            copilotWrapper.value?.openAiCopilot();
         }
     });
 
@@ -236,7 +229,7 @@
         }
         if (newVal) {
             draftSource.value = undefined;
-            aiCopilotOpened.value = true;
+            copilotWrapper.value?.openAiCopilot();
             flowStore.setOpenAiCopilot(false);
         }
     });
@@ -380,8 +373,6 @@
         flowStore.executeFlow = true;
     };
 
-    const conversationId = ref<string>(Utils.uid());
-
     function trackAiCopilotAction(action: string) {
         apiStore.posthogEvents({
             type: "AI_COPILOT",
@@ -390,34 +381,18 @@
         });
     }
 
-    function onAiCopilotButtonClick() {
-        trackAiCopilotAction("open_click");
-        draftSource.value = undefined;
-        aiCopilotOpened.value = true;
-    }
-
     function acceptDraft() {
         trackAiCopilotAction("changes_apply");
         const accepted = draftSource.value;
         draftSource.value = undefined;
-        conversationId.value = Utils.uid();
         editorUpdate(accepted!);
+        copilotWrapper.value?.resetConversation();
     }
 
     function declineDraft() {
         trackAiCopilotAction("changes_reject");
         draftSource.value = undefined;
-        aiCopilotOpened.value = true;
-    }
-
-    function closeAiCopilot() {
-        aiCopilotOpened.value = false;
-        const currentQuery = {...route.query, ai: undefined};
-        router.replace({
-            name: route.name,
-            params: route.params,
-            query: currentQuery
-        });
+        copilotWrapper.value?.openAiCopilot();
     }
 
     const hasDraft = computed(() => draftSource.value !== undefined);
@@ -430,77 +405,6 @@
 </script>
 
 <style scoped lang="scss">
-    .prompt {
-        bottom: 10%;
-        width: calc(100% - 5rem);
-        left: 3rem;
-        max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
-    }
-
-    // Enhanced AI Copilot animations
-    .ai-copilot-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        z-index: 1000;
-    }
-
-    .ai-copilot-popup {
-        z-index: 1001;
-        transform-origin: center bottom;
-    }
-
-    // Backdrop fade transition (faster)
-    .backdrop-fade-enter-active,
-    .backdrop-fade-leave-active {
-        transition: opacity 0.2s ease;
-    }
-
-    .backdrop-fade-enter-from,
-    .backdrop-fade-leave-to {
-        opacity: 0;
-    }
-
-    // Copilot transition (scaleX only, no vertical movement)
-    .copilot-slide-enter-active {
-        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.15s ease;
-    }
-
-    .copilot-slide-leave-active {
-        transition: transform 0.35s cubic-bezier(0.4, 0.0, 1, 1);
-    }
-
-    .copilot-slide-enter-from {
-        opacity: 0;
-        transform: scaleX(0.85);
-    }
-
-    .copilot-slide-leave-to {
-        transform: scaleX(0.95);
-    }
-
-    // Responsive design
-    @media (max-width: 768px) {
-        .prompt {
-            width: calc(100% - 2rem);
-            left: 1rem;
-            bottom: 5%;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .prompt {
-            width: calc(100% - 1rem);
-            left: 0.5rem;
-            bottom: 2%;
-        }
-    }
-
     .image-preview {
         margin: 2rem;
     }

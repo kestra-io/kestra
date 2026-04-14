@@ -82,8 +82,7 @@ import lombok.experimental.SuperBuilder;
                       - echo "this will run since previous failure was allowed ✅"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.AllowFailure"
+    }
 )
 public class AllowFailure extends Sequential implements FlowableTask<VoidOutput> {
     @Override

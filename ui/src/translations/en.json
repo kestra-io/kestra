@@ -228,6 +228,7 @@
       ]
     },
     "replay execution title": "Replay execution",
+    "restart execution title": "Restart execution",
     "replay execution description": "This will create a new execution based on the selected execution.",
     "replay using": "Replay using",
     "flow revision original": "Original flow revision",
@@ -236,6 +237,7 @@
     "replay inputs": "Inputs",
     "reuse original inputs": "Reuse original inputs",
     "modify inputs": "Modify inputs",
+    "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
@@ -395,7 +397,9 @@
     "last trigger date": "Last triggered date",
     "trigger_states": "States",
     "context updated date": "Context updated date",
+    "state updated date": "State updated date",
     "next evaluation date": "Next evaluation date",
+    "last evaluation date": "Last evaluation date",
     "last trigger date tooltip": "When the trigger last executed. May be in the past when running a backfill.",
     "context updated date tooltip": "When the trigger's context was last updated. This occurs when execution is triggered, finishes (lock released), or after an evaluation (even if no execution happens).",
     "next evaluation date tooltip": "When the trigger will next be evaluated, based on its interval. Not always the same as the next execution date if conditions are not met.",
@@ -1347,11 +1351,7 @@
         "variable": "Variable"
       },
       "sections": {
-        "main": "Main properties",
-        "general": "General properties",
-        "optional": "Optional properties",
         "deprecated": "Deprecated properties",
-        "connection": "Connection properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",
@@ -1749,7 +1749,15 @@
       "label": "Preview",
       "force-editor": "Enforce editor view",
       "auto-view": "Auto view",
-      "view": "View"
+      "view": "View",
+      "rows_truncated": "Showing {shown} of {total} rows. Download the file to view all data.",
+      "pagination_info": "Showing rows {start}-{end} of {total}.",
+      "showing_rows": "Showing rows {start}-{end} of {total}",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "previous": "Previous",
+      "next": "Next",
+      "page_of": "Page {current} of {total}"
     },
     "filter": {
         "update": "Update",

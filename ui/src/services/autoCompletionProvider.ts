@@ -4,15 +4,25 @@ import {useAxios} from "../utils/axios";
 
 export const QUOTE = "'";
 
+export interface FunctionArgument {
+    name: string;
+    defaultValue: string | null;
+}
+
+export interface PebbleFunctionDef {
+    name: string;
+    arguments: FunctionArgument[];
+}
+
 let cachedFilters: string[] | null = null;
-let cachedFunctions: string[] | null = null;
+let cachedFunctions: PebbleFunctionDef[] | null = null;
 
 export function resetExpressionCache() {
     cachedFilters = null;
     cachedFunctions = null;
 }
 
-export function fillExpressionCache(filters: string[], functions: string[]) {
+export function fillExpressionCache(filters: string[], functions: PebbleFunctionDef[]) {
     cachedFilters = filters;
     cachedFunctions = functions;
 }
@@ -29,16 +39,32 @@ async function fetchExpressionFilters(): Promise<string[]> {
     return cachedFilters;
 }
 
-async function fetchExpressionFunctions(): Promise<string[]> {
+async function fetchExpressionFunctions(): Promise<PebbleFunctionDef[]> {
     if (cachedFunctions === null) {
         try {
             const axios = useAxios();
-            cachedFunctions = (await axios.get<string[]>(`${apiUrlWithoutTenants()}/pebble/functions`)).data;
+            cachedFunctions = (await axios.get<PebbleFunctionDef[]>(`${apiUrlWithoutTenants()}/pebble/functions`)).data;
         } catch {
             return [];
         }
     }
     return cachedFunctions;
+}
+
+/**
+ * Converts a PebbleFunctionDef into a Monaco snippet string using named-argument syntax.
+ * Arguments with null defaults are omitted.
+ */
+export function functionToSnippet(fn: PebbleFunctionDef): string {
+    const argsWithDefaults = fn.arguments.filter(arg => arg.defaultValue !== null);
+    if (argsWithDefaults.length === 0) {
+        return `${fn.name}()`;
+    }
+    const params = argsWithDefaults.map((arg, i) => {
+        const placeholder = `\${${i + 1}:${arg.defaultValue}}`;
+        return `${arg.name}=${placeholder}`;
+    }).join(", ");
+    return `${fn.name}(${params})`;
 }
 
 export class PebbleAutoCompletion {
@@ -58,7 +84,7 @@ export class PebbleAutoCompletion {
         return fetchExpressionFilters();
     }
 
-    functionNames(): Promise<string[]> {
+    functionsWithDefaults(): Promise<PebbleFunctionDef[]> {
         return fetchExpressionFunctions();
     }
 }

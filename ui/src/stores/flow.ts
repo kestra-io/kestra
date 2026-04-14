@@ -717,13 +717,17 @@ function deleteFlowAndDependencies() {
     function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
-            const {namespace} = YAML_UTILS.getMetadata(options.flow);
-            if(authStore.user && !authStore.user?.isAllowed(
-                permission.FLOW,
-                action.CREATE,
-                namespace,
-            )) {
-                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+            try {
+                const {namespace} = YAML_UTILS.getMetadata(options.flow);
+                if(authStore.user && !authStore.user?.isAllowed(
+                    permission.FLOW,
+                    action.CREATE,
+                    namespace,
+                )) {
+                    flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+                }
+            } catch {
+                // YAML may be temporarily invalid during editing
             }
         }
         

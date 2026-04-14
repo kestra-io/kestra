@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +16,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.StorageInterface;
 import io.micronaut.data.model.Pageable;
 
 import jakarta.inject.Inject;
@@ -28,6 +32,9 @@ public class LoopCaseTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     public void loopSerial(Execution execution) throws InternalException {
         // Then
@@ -346,6 +353,85 @@ public class LoopCaseTest {
         assertThat(valueMap).hasSize(3); // one output per iteration
         var firstIterationMap = (Map<String, Object>) valueMap.get("value 1");
         assertThat(firstIterationMap).containsEntry("value", "some output");
+    }
+
+    public void loopOutputsStore(Execution execution) throws InternalException, IOException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        // 3 loop sub-executions, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 1);
+
+        // the loop task outputs should contain a URI per iteration
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        Map<String, Object> loopTaskOutputs = taskOutputService.getOutputs(loopTaskRun);
+        assertThat(loopTaskOutputs)
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> iterationOutputsMap = (Map<String, Object>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
+        assertThat(iterationOutputsMap)
+            .hasSize(3)
+            .containsKeys("value 1", "value 2", "value 3");
+
+        // each iteration output must carry a URI pointing to an ION file with the rendered output value
+        for (Map.Entry<String, Object> entry : iterationOutputsMap.entrySet()) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> iterOutput = (Map<String, Object>) entry.getValue();
+            assertThat(iterOutput).containsKey("uri");
+            String uri = (String) iterOutput.get("uri");
+            assertThat(uri).startsWith("kestra://");
+
+            // read stored ION content and verify the rendered output value
+            try (InputStream content = storageInterface.get(execution.getTenantId(), execution.getNamespace(), URI.create(uri))) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stored = JacksonMapper.ofIon().readValue(content, Map.class);
+                assertThat(stored).containsEntry("value", "some output");
+            }
+        }
+    }
+
+    public void loopOutputsAuto(Execution execution) throws InternalException, IOException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(3);
+
+        // 3 loop sub-executions, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 1);
+
+        // the loop task outputs should contain a URI per iteration
+        TaskRun loopTaskRun = execution.getTaskRunList().get(1);
+        Map<String, Object> loopTaskOutputs = taskOutputService.getOutputs(loopTaskRun);
+        assertThat(loopTaskOutputs)
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> iterationOutputsMap = (Map<String, Object>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
+        assertThat(iterationOutputsMap)
+            .hasSize(3);
+
+        // each iteration output must carry a URI pointing to an ION file with the rendered output value
+        for (Map.Entry<String, Object> entry : iterationOutputsMap.entrySet()) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> iterOutput = (Map<String, Object>) entry.getValue();
+            assertThat(iterOutput).containsKey("uri");
+            String uri = (String) iterOutput.get("uri");
+            assertThat(uri).startsWith("kestra://");
+
+            // read stored ION content and verify the rendered output value
+            try (InputStream content = storageInterface.get(execution.getTenantId(), execution.getNamespace(), URI.create(uri))) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> stored = JacksonMapper.ofIon().readValue(content, Map.class);
+                assertThat(stored).containsEntry("value", "some output");
+            }
+        }
     }
 
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */

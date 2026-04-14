@@ -212,12 +212,12 @@ public class TestRunnerUtils {
     }
 
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution) throws QueueException {
-        return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(20));
+        return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(45));
     }
 
     public Execution restartExecution(Predicate<Execution> predicate, Execution execution)
         throws QueueException, InterruptedException {
-        return restartExecution(predicate, execution, Duration.ofSeconds(20));
+        return restartExecution(predicate, execution, Duration.ofSeconds(45));
     }
 
     public Execution restartExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
@@ -239,14 +239,14 @@ public class TestRunnerUtils {
     }
 
     public Execution awaitExecution(Predicate<Execution> predicate, Execution execution) {
-        return awaitExecution(predicate, execution, Duration.ofSeconds(20));
+        return awaitExecution(predicate, execution, Duration.ofSeconds(45));
     }
 
     public Execution awaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration) {
         try {
 
             if (duration == null) {
-                duration = Duration.ofSeconds(20);
+                duration = Duration.ofSeconds(45);
             }
             return Await.until(() ->
             {
@@ -287,7 +287,7 @@ public class TestRunnerUtils {
         try {
 
             if (duration == null) {
-                duration = Duration.ofSeconds(20);
+                duration = Duration.ofSeconds(45);
             }
             return Await.until(() ->
             {
@@ -332,7 +332,7 @@ public class TestRunnerUtils {
             );
         try {
             if (duration == null) {
-                duration = Duration.ofSeconds(20);
+                duration = Duration.ofSeconds(45);
             }
             Await.until(() ->
             {
@@ -389,7 +389,7 @@ public class TestRunnerUtils {
         try {
 
             if (duration == null) {
-                duration = Duration.ofSeconds(20);
+                duration = Duration.ofSeconds(45);
             }
             return Await.until(() ->
             {

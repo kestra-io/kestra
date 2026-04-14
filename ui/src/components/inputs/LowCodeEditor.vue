@@ -431,5 +431,17 @@
     :deep(.main-content) {
         position: relative;
     }
+
+    // Hover: the topology handler adds an inline `outline` to linked nodes,
+    // but outline renders outside the existing state border creating two rings.
+    // Override: suppress the outline and shift the border-color instead so the
+    // hover highlight cleanly replaces the success/failure color.
+    :deep(.vue-flow__node.rounded-3) {
+        outline: none !important;
+
+        .node-wrapper {
+            border-color: var(--bs-gray-900) !important;
+        }
+    }
 }
 </style>

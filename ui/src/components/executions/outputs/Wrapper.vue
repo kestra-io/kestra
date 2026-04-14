@@ -172,6 +172,8 @@
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
+    import * as outputsSDK from "kestra-api/sdk/ks-Outputs.gen";
+    import {TaskOutput} from "../../../generated/kestra-api";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -195,7 +197,7 @@
             return `["${task}"]${rest}`;
         };
 
-        let task = selectedTask()?.taskId;
+        let task = selectedTask.value?.taskId;
         if (!task) return "";
 
         let path = expandedValue.value;
@@ -207,17 +209,17 @@
     const debugError = ref("");
     const debugStackTrace = ref("");
     const isJSON = ref(false);
-    const selectedTask = () => {
+    const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
+            : (cascader.value as any)?.menuList?.[0]?.panel?.expandingNode?.label;
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
-    };
+    });
 
     const axios = useAxios();
     const onDebugExpression = (expression?: string) => {
-        const taskRun = selectedTask();
+        const taskRun = selectedTask.value;
 
         if (!taskRun) return;
 
@@ -391,6 +393,27 @@
 
         return result;
     };
+
+    const selectedTaskOutputs = ref<TaskOutput | undefined>();
+
+    watch(selectedTask, async (task) => {
+        if(task?.id && executionsStore.execution?.id){
+            const res = await outputsSDK.getTaskRunOutputs({
+                executionId: executionsStore.execution.id,
+                taskRunId: task.id,
+            }, {
+                validateStatus: (status) => status === 200 || status === 404,
+            })
+            if(res?.data?.value){
+                const valueToEval = atob(res.data.value)
+                // FIXME: hack hack hack, why would we need to eval the output of a task run ?!?!?!!?
+                selectedTaskOutputs.value = eval(`(()=>{return ${valueToEval}})()`);
+                return
+            }
+        }
+        selectedTaskOutputs.value = undefined;
+    });
+
     const outputs = computed(() => {
         const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
@@ -405,12 +428,21 @@
             };
         });
 
+        if(!tasks?.length) {
+            return undefined
+        };
+
+        if(selectedTaskOutputs.value){
+            tasks.find(t => t.taskId === selectedTask.value?.taskId)!.children = transform(selectedTaskOutputs.value, true, selectedTask.value?.taskId);
+        }
+
         const HEADING = {
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
         } as any;
-        tasks?.unshift(HEADING);
+
+        tasks.unshift(HEADING);
 
         return tasks;
     });

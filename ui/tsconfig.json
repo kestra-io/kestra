@@ -24,10 +24,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": "./",
     "paths": {
-      "override/*": ["src/override/*"],
-      "kestra-api/*": ["src/generated/kestra-api/*"]
+      "override/*": ["./src/override/*"],
+      "kestra-api/*": ["./src/generated/kestra-api/*"]
     }
   },
   "include": [

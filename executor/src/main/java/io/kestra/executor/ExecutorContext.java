@@ -20,7 +20,7 @@ public class ExecutorContext {
 
     /**
      * Executor-local wrapper that pairs a {@link WorkerTask} (wire model) with its
-     * {@link RunContext} (needed for executor-side rendering like {@code runIf} and worker group keys).
+     * {@link RunContext} (needed for executor-side rendering like {@code when} and worker group keys).
      * The RunContext does NOT travel to the worker — only the WorkerTask does.
      */
     public record ExecutorWorkerTask(WorkerTask workerTask, RunContext runContext) {

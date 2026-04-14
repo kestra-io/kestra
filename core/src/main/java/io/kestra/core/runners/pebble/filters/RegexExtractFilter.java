@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.filters;
 
+import io.kestra.core.utils.RegexUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -70,20 +71,24 @@ public class RegexExtractFilter implements Filter {
 
         Matcher matcher;
         try {
-            matcher = Pattern.compile(regex).matcher(input.toString());
+            matcher = RegexUtils.matcher(Pattern.compile(regex), input.toString());
         } catch (PatternSyntaxException e) {
             throw new PebbleException(e, MessageFormat.format("Invalid regex ''{0}'': {1}", regex, e.getDescription()), lineNumber, self.getName());
         }
-        if (matcher.find()) {
-            if (group > matcher.groupCount()) {
-                throw new PebbleException(
-                    null,
-                    MessageFormat.format("Group index {0} is out of bounds: the pattern has only {1} capture group(s).", group, matcher.groupCount()),
-                    lineNumber,
-                    self.getName()
-                );
+        try {
+            if (matcher.find()) {
+                if (group > matcher.groupCount()) {
+                    throw new PebbleException(
+                        null,
+                        MessageFormat.format("Group index {0} is out of bounds: the pattern has only {1} capture group(s).", group, matcher.groupCount()),
+                        lineNumber,
+                        self.getName()
+                    );
+                }
+                return matcher.group(group);
             }
-            return matcher.group(group);
+        } catch (RegexUtils.RegexTimeoutException e) {
+            throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
         return null;
     }

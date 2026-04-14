@@ -223,12 +223,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
             )
         );
         this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
-        {
-            List<CompletableFuture<Void>> futures = workerTaskResults.stream()
-                .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
-                .toList();
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        }
+            {
+                List<CompletableFuture<Void>> futures = workerTaskResults.stream()
+                    .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
+                    .toList();
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
@@ -869,7 +869,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
             // directly process simple conditions
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-                .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
+                .filter(f -> f.getTrigger().getPreconditions() == null)
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
@@ -877,7 +877,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
             // send multiple conditions to the multiple condition queue for later processing
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-                .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
+                .filter(f -> f.getTrigger().getPreconditions() != null)
                 .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
                 .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
                 .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));

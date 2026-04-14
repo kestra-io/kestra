@@ -1,0 +1,10 @@
+id: flow-trigger-when-condition-flow-a
+namespace: io.kestra.tests.trigger.when.condition
+
+labels:
+  source: when-test
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

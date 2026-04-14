@@ -45,7 +45,8 @@ class TerminatedLoopExecutionMessageHandlerTest {
     @Test
     void shouldReturnEmptyForNonExistingExecution() {
         // Given
-        var loopRun = new LoopRun("nonExistingExecution", "loop", "taskrun", 0, null, "a", null);
+        var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
+        var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null);
         var message = new TerminatedLoopExecution(loopRun, "nonExistingExecution", State.Type.SUCCESS);
 
         // When
@@ -71,7 +72,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
         ));
 
         // When
-        var loopRun = new LoopRun(execution.getId(), "loop", loopTaskRunId,  2, null, "c", null);
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId,  2, null, "c", null);
         var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.SUCCESS);
         var maybeExecutor = handler.handle(message);
 
@@ -91,7 +92,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
         executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
 
         // When — one iteration fails, loop should terminate immediately
-        var loopRun = new LoopRun(execution.getId(), "loop", loopTaskRunId, 0, null, "a", null);
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
         var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.FAILED);
         var maybeExecutor = handler.handle(message);
 
@@ -117,7 +118,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
         ));
 
         // When
-        var loopRun = new LoopRun(execution.getId(), "loop", loopTaskRunId, 0, null, "a", null);
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
         var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.SUCCESS);
         var maybeExecutor = handler.handle(message);
 

@@ -180,11 +180,12 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat(
                 (Map<String, Object>) jsonSchema.get("properties"), allOf(
-                    Matchers.aMapWithSize(4),
+                    Matchers.aMapWithSize(5),
                     hasKey("conditions"),
                     hasKey("stopAfter"),
                     hasKey("type"),
-                    hasKey("allowConcurrent")
+                    hasKey("allowConcurrent"),
+                    hasKey("when")
                 )
             );
         });

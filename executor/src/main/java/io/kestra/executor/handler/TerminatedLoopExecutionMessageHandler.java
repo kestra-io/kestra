@@ -54,7 +54,7 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
             executorService.log(log, true, message);
         }
 
-        return executionStateStore.lock(message.loopRun().executionId(), execution ->
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
         {
             try {
                 final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));

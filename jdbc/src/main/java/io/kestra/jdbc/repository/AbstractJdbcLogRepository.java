@@ -237,41 +237,54 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
-        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
-        {
-            DSLContext context = DSL.using(configuration);
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
+        Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
 
-            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
-
-            if (startDate != null) {
-                delete = delete.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
+                int total = 0;
+                int deleted;
+                do {
+                    deleted = DSL.using(configuration)
+                        .delete(this.jdbcRepository.getTable())
+                        .where(condition)
+                        .limit(batchSize)
+                        .execute();
+                    total += deleted;
+                } while (deleted > 0);
+                return total;
             }
-
-            if (namespace != null) {
-                delete = delete.and(field("namespace").eq(namespace));
-            }
-
-            if (flowId != null) {
-                delete = delete.and(field("flow_id").eq(flowId));
-            }
-
-            if (executionId != null) {
-                delete = delete.and(field("execution_id").eq(executionId));
-            }
-
-            if (logLevels != null) {
-                delete = delete.and(levelsCondition(logLevels));
-            }
-
-            if (purgeExecutionLogs && !purgeNonExecutionLogs) {
-                delete = delete.and(field("execution_id").isNotNull());
-            } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
-                delete = delete.and(field("execution_id").isNull());
-            }
-
-            return delete.execute();
+            return DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(condition).execute();
         });
+    }
+
+    private Condition buildDeleteCondition(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+        Condition condition = this.defaultFilter(tenantId)
+            .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
+
+        if (startDate != null) {
+            condition = condition.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+        if (namespace != null) {
+            condition = condition.and(field("namespace").eq(namespace));
+        }
+        if (flowId != null) {
+            condition = condition.and(field("flow_id").eq(flowId));
+        }
+        if (executionId != null) {
+            condition = condition.and(field("execution_id").eq(executionId));
+        }
+        if (logLevels != null) {
+            condition = condition.and(levelsCondition(logLevels));
+        }
+        if (purgeExecutionLogs && !purgeNonExecutionLogs) {
+            condition = condition.and(field("execution_id").isNotNull());
+        } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
+            condition = condition.and(field("execution_id").isNull());
+        }
+
+        return condition;
     }
 
     @Override

@@ -309,6 +309,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/flow-trigger-when-condition-flow-a.yaml", "flows/valids/flow-trigger-when-condition-flow-listen.yaml" })
+    void flowTriggerWhenCondition() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerWhenCondition();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-mixed-conditions-flow-a.yaml", "flows/valids/flow-trigger-mixed-conditions-flow-listen.yaml" })
     void flowTriggerMixedConditions() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerMixedConditions();
@@ -618,6 +624,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-values-from-uri.yaml")
     protected void loopValuesFromUri(Execution execution) throws Exception {
         loopCaseTest.loopValuesFromUri(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-expression-context.yaml")
+    protected void loopExecutionContext(Execution execution) throws Exception {
+        loopCaseTest.loopExpressionContext(execution);
     }
 
     @Test

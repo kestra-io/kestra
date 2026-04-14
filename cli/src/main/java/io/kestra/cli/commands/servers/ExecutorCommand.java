@@ -13,7 +13,7 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -86,7 +86,7 @@ public class ExecutorCommand extends AbstractServerCommand {
         Executor executorService = applicationContext.getBean(Executor.class);
         executorService.run();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

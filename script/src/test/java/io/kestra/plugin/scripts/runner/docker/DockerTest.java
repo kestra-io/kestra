@@ -1,10 +1,13 @@
 package io.kestra.plugin.scripts.runner.docker;
 
-import java.util.Collections;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.property.Property;
@@ -16,6 +19,22 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
 
 class DockerTest extends AbstractTaskRunnerTest {
+
+    @BeforeEach
+    void assumeDockerAvailable() {
+        String dockerHost = Optional.ofNullable(System.getenv("DOCKER_HOST"))
+            .filter(host -> !host.isBlank())
+            .orElse("unix:///var/run/docker.sock");
+
+        boolean dockerAvailable = !dockerHost.startsWith("unix://") ||
+            Files.exists(Path.of(dockerHost.substring("unix://".length())));
+
+        Assumptions.assumeTrue(
+            dockerAvailable,
+            "Skipping Docker tests: Docker host not available: " + dockerHost
+        );
+    }
+
     @Override
     protected TaskRunner<?> taskRunner() {
         return Docker.builder().image("rockylinux:9.3-minimal").build();

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -593,6 +594,17 @@ public class DefaultRunContext extends RunContext {
      */
     public Services services() {
         return new Services(this.applicationContext);
+    }
+
+    /**
+     * Ensure a secret consumer is set in the context.
+     * This is used only when using RunContextInitilizer.forPlugin.
+     */
+    void ensureSecretConsumer() {
+        if (variables.containsKey(RunVariables.SECRET_CONSUMER_VARIABLE_NAME)) {
+            return;
+        }
+        variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) logger::usedSecret);
     }
 
     /**

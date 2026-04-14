@@ -230,14 +230,13 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion;
                 })
                 // Hide deprecated plugin classes from completion results.
-                .map((suggestion) => {
-                    if (
-                        suggestion.label.includes(".") && 
-                        pluginsStore.deprecatedTypes?.includes(suggestion.label)
-                    ) {
-                        suggestion.tags = [monaco.languages.CompletionItemTag.Deprecated];
+                .filter((suggestion) => {
+                    if (suggestion.label.includes(".")) {
+                        return !pluginsStore.deprecatedTypes.includes(
+                            suggestion.label,
+                        );
                     }
-                    return suggestion;
+                    return true;
                 })
                 // Improve ranking and filter text so plugin type lookup feels natural.
                 .map((suggestion) => {

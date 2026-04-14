@@ -1,5 +1,5 @@
 plugins {
-    id("io.kestra.gradle.develocity-conventions") version "1.0.2-SNAPSHOT"
+    id("io.kestra.gradle.develocity-conventions") version "1.1.0"
 }
 
 rootProject.name = "kestra"

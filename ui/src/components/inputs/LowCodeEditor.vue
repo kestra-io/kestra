@@ -432,12 +432,11 @@
     };
 
     const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
-        let flowParsed: any = null;
-        try { flowParsed = YAML_UTILS.parse(props.source ?? ""); } catch { /* best-effort */ }
+        const parsed = flowStore.flowParsed;
         const allTasks = [
-            ...(flowParsed?.tasks ?? []),
-            ...(flowParsed?.errors ?? []),
-            ...(flowParsed?.finally ?? []),
+            ...(parsed?.tasks ?? []),
+            ...(parsed?.errors ?? []),
+            ...(parsed?.finally ?? []),
         ];
         const fullTask = allTasks.find((t: any) => t.id === event.task.id) ?? event.task;
         selectedTask.value = fullTask;

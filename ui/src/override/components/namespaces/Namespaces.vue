@@ -124,13 +124,13 @@
     const loadData = async () => {
         namespaces.value = await useNamespaces(
             1000,
-            route.query?.q === undefined ? undefined : {q: route.query.q},
+            route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
         ).all();
     };
 
     onMounted(() => loadData());
     watch(
-        () => route.query.q,
+        () => route.query["filters[q][EQUALS]"],
         () => {
             loadData();
             saveRestoreUrl();

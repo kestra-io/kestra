@@ -42,7 +42,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.UnixModeToPosixFilePermissions;
@@ -605,7 +605,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 WaitContainerResultCallback result = dockerClient.waitContainerCmd(runContainerId).start();
 
                 Integer exitCode = result.awaitStatusCode();
-                Await.until(ended::get);
+                Awaitility.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {

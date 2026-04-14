@@ -5,12 +5,11 @@
             v-for="child in filteredChildren"
         >
             <el-collapse-item
-                class="mt-1"
                 :name="child.path"
                 v-if="child.children"
             >
                 <template #title>
-                    <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable" :class="`depth-${depth}`">
+                    <span v-if="DISABLED_PAGES.includes(child.path) || !makeIndexNavigable" :class="`depth-${depth}`">
                         {{ child.title.capitalize() }}
                     </span>
                     <slot v-else v-bind="child" :class="`depth-${depth}`">
@@ -19,7 +18,11 @@
                         </RouterLink>
                     </slot>
                 </template>
-                <RecursiveToc :parent="{children: child.children}" :makeIndexNavigable="makeIndexNavigable" :depth="depth + 1">
+                <RecursiveToc
+                    :parent="{children: child.children}"
+                    :makeIndexNavigable="makeIndexNavigable"
+                    :depth="depth + 1"
+                >
                     <template #default="subChild">
                         <slot v-bind="subChild" />
                     </template>
@@ -38,6 +41,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
+    import {DISABLED_PAGES} from "./docsUtils";
 
     defineOptions({
         name: "RecursiveToc"
@@ -47,12 +51,6 @@
         default: (child: TocChild & {class?: string}) => any
     }>()
 
-    const disabledPages = [
-        "docs/api-reference",
-        "docs/terraform/data-sources",
-        "docs/terraform/guides",
-        "docs/terraform/resources"
-    ]
 
     interface TocChild {
         path: string;
@@ -82,17 +80,28 @@
 <style scoped lang="scss">
     .el-collapse {
         --el-collapse-header-font-size: 14px;
+        --el-collapse-header-height: auto;
+        border-top: none;
+        border-bottom: none;
 
         > * {
             font-size: var(--el-collapse-header-font-size);
         }
 
         :deep(> .el-collapse-item) {
-            > .el-collapse-item__header{
+            > .el-collapse-item__header {
                 padding: 0;
+                border-bottom: none;
+                min-height: 32px;
+                line-height: 1.2;
             }
+            
             > button {
                 padding: 0;
+            }
+
+            .el-collapse-item__wrap {
+                border-bottom: none;
             }
 
             a {
@@ -105,19 +114,12 @@
         }
 
         :deep(.el-collapse-item__content) {
-            padding-top: 0;
-            padding-bottom: 0;
+            padding: 0;
+        }
+
+        :deep(.el-collapse-item__arrow) {
+            margin: 0 8px;
         }
     }
 
-    .depth-0 {
-        padding-left: 10px;
-    }
-    .depth-1 {
-        padding-left: 20px;
-    }
-    .depth-2 {
-        padding-left: 30px;
-    }
-    
 </style>

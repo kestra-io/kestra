@@ -152,7 +152,7 @@
 </script>
 
 <style lang="scss">
-    main.welcome-page {
+    main:has(section#welcome) {
         max-height: 100%;
         overflow: hidden;
     }

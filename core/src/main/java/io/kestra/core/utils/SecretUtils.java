@@ -57,7 +57,7 @@ public final class SecretUtils {
                 }
 
                 if (strValue != null && !PebbleUtil.containsOpeningBlockDelimiter(strValue)) {
-                    warnings.add("Property '" + field.getName() + "' is marked as a secret but appears to have a plain-text value. Use a Pebble expression (e.g., {{ secret('MY_SECRET') }}) to avoid exposing sensitive data.");
+                    warnings.add("Property '" + field.getName() + "' is annotated as a secret and should be provided as a Pebble expression (e.g., `{{ secret('MY_SECRET') }}`), not a plain-text value.");
                 }
             }
             clazz = clazz.getSuperclass();

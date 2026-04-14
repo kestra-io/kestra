@@ -75,7 +75,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         }
     )
     @NotNull
-    @PluginProperty(dynamic = true, secret = true)
+    @PluginProperty(dynamic = true)
     private Object message;
 
     @Schema(

@@ -12,7 +12,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
+
+import io.kestra.core.serializers.JacksonMapper;
+import org.awaitility.Awaitility;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,6 +24,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.debug.Breakpoint;
@@ -56,7 +59,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
@@ -1712,11 +1714,13 @@ public class ExecutionController {
 
             // Check if execution exists
             try {
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500),
-                    Duration.ofSeconds(10)
-                );
+                Execution execution = Awaitility.await()
+                    .atMost(Duration.ofSeconds(10))
+                    .pollInterval(Duration.ofMillis(500))
+                    .until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Objects::nonNull
+                    );
 
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
@@ -2197,7 +2201,7 @@ public class ExecutionController {
     public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
-        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) throws TimeoutException {
+        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) {
         String subscriberId = UUID.randomUUID().toString();
 
         // NOTE: ideally, we should load the execution inside the Flux.
@@ -2205,11 +2209,13 @@ public class ExecutionController {
         //  This should not be an issue as long as it executes on an IO thread.
 
         // Check if execution exists
-        Execution current = Await.until(
-            () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-            Duration.ofMillis(500),
-            Duration.ofSeconds(10)
-        );
+        Execution current = Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(500))
+            .until(
+                () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                Objects::nonNull
+            );
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 
@@ -2306,7 +2312,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportExecutions(
+    public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2315,7 +2321,7 @@ public class ExecutionController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");

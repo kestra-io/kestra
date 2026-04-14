@@ -59,7 +59,7 @@ public class GracefulEmbeddedServiceShutdownListener implements ApplicationEvent
             .filter(state -> state.service().getType() != ServiceType.CONTROLLER)
             .map(state -> CompletableFuture.runAsync(() -> closeService(state), ForkJoinPool.commonPool()))
             .toList();
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).join();
 
         // Then close the Controller
         states.stream()

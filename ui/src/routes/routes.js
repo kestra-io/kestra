@@ -32,7 +32,7 @@ export default [
             // - using nextTick in useDefaultFilter to delay the redirection
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
-            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
+            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true})
             if(change) {
                 next({
                     ...to,

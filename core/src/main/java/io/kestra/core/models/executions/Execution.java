@@ -429,14 +429,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowId,
             this.flowRevision,
             null,
-            this.inputs,
+            null, // we don't copy inputs to reduce the size, the RunVariables must get them from the parent execution
             this.outputs,
             this.labels,
             this.variables,
             this.state,
             this.id,
             this.originalId,
-            this.trigger,
+            null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
             this.deleted,
             this.metadata,
             this.scheduleDate,
@@ -444,7 +444,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.fixtures,
             ExecutionKind.LOOP,
             this.breakpoints,
-            new LoopRun(this.id, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents())
+            new LoopRun(this, taskRun.getTaskId(), taskRun.getId(), index, key, value, computeParents())
         );
     }
 

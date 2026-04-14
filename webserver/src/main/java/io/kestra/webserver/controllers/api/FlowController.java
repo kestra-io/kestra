@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -813,13 +814,13 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Export all flows as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportFlows(
+    public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");

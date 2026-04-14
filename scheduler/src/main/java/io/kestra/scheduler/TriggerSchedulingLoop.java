@@ -315,7 +315,7 @@ public class TriggerSchedulingLoop implements Runnable {
      */
     public CompletableFuture<Void> addTriggerEvents(int vNode, List<TriggerEvent> events) {
         List<CompletableFuture<Void>> futures = events.stream().map(event -> addTriggerEvent(vNode, event)).toList();
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]));
     }
 
     /**

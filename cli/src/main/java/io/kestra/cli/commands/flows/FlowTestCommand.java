@@ -74,6 +74,7 @@ public class FlowTestCommand extends AbstractApiCommand {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Integer call() throws Exception {
         super.call();
 
@@ -112,7 +113,7 @@ public class FlowTestCommand extends AbstractApiCommand {
             stdOut("Successfully executed the flow with execution %s in state %s", terminated.getId(), terminated.getState().getCurrent());
         } catch (ConstraintViolationException e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException e) {
             throw new IllegalStateException(e);
         } finally {
             applicationContext.getProperty("kestra.storage.local.base-path", Path.class)

@@ -2,7 +2,7 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
-            :class="{playgroundMode, 'tour-mode': isGuidedCodeOnly}"
+            :class="{playgroundMode}"
             :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import Close from "vue-material-design-icons/Close.vue";
     import Utils from "../../utils/utils";
     import {usePlaygroundStore} from "../../stores/playground";
@@ -66,6 +66,7 @@
 
     import {useNoCodePanelsFull} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
+    import {usePluginsStore} from "../../stores/plugins";
     import {trackTabOpen} from "../../utils/tabTracking";
     import {Panel, Tab} from "../../utils/multiPanelTypes";
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
@@ -96,6 +97,7 @@
     })
 
     const route = useRoute();
+    const router = useRouter();
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
     const showExecuteHint = ref(true);
     const isOnboardingCreate = computed(() =>
@@ -108,8 +110,26 @@
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
             else editorView.value?.focusTab("code")
         }
+
+        if(route.query.createTrigger === "true"){
+            if(!editorView.value?.openTabs.includes("nocode")) {
+                editorView.value?.setTabValue("nocode")
+            } else {
+                editorView.value?.focusTab("nocode")
+            }
+
+            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+            const blockSchemaPath = [
+                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+            ].join("/");
+            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+
+            const {createTrigger: _, ...query} = route.query;
+            router.replace({...route, query});
+        }
     })
 
+    const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
 
     const playgroundMode = computed(() => playgroundStore.enabled)
@@ -204,20 +224,6 @@
         #{--el-color-primary}: colorPalette.$base-blue-500;
         color: colorPalette.$base-white;
         background-position: 10% 0;
-    }
-
-    .tour-mode :deep(.tabs-wrapper button) {
-        transition: opacity 0.2s ease;
-
-        &:first-child {
-            opacity: 1;
-        }
-
-        &:not(:first-child) {
-            opacity: 0.45;
-            pointer-events: none;
-            cursor: not-allowed;
-        }
     }
 
     .flow-editor-shell {
@@ -337,3 +343,4 @@
         initial-value: 0turn;
     }
 </style>
+

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -21,6 +22,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.models.api.ApiTriggerAndState;
 import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -367,14 +369,14 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Triggers" }, summary = "Export all triggers as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportTriggers(
+    public MutableHttpResponse<Flux<String>> exportTriggers(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 triggerRepository.find(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");

@@ -1,0 +1,26 @@
+id: json-input-schema-validation
+namespace: io.kestra.tests
+
+inputs:
+  - id: jsonWithSchema
+    type: JSON
+    jsonSchema: |
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+  - id: jsonWithoutSchema
+    type: JSON
+
+tasks:
+  - id: withSchema
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.jsonWithSchema }}"
+  - id: withoutSchema
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.jsonWithoutSchema }}"

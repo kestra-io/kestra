@@ -144,7 +144,7 @@ public class JsonSchemaGenerator {
                     .map(JsonNode::asText)
                     .collect(Collectors.toList());
 
-                properties.fields().forEachRemaining(e ->
+                properties.properties().forEach(e ->
                 {
                     int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
                     if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {
@@ -186,7 +186,9 @@ public class JsonSchemaGenerator {
                             Map.entry("default", Optional.empty()),
                             Map.entry("title", Optional.empty()),
                             Map.entry("description", Optional.empty()),
-                            Map.entry("$deprecated", Optional.empty())
+                            Map.entry("$deprecated", Optional.empty()),
+                            Map.entry("$group", Optional.empty()),
+                            Map.entry("$index", Optional.empty())
                         )
                     );
                     // find nodes to pull up

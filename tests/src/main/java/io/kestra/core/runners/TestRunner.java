@@ -1,18 +1,8 @@
 package io.kestra.core.runners;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import io.kestra.core.server.Service;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
-
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
@@ -20,6 +10,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("try")
 @Slf4j
@@ -82,8 +81,8 @@ public class TestRunner implements Runnable, AutoCloseable {
         servers.add(indexer);
 
         try {
-            Await.until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()), null, runningTimeout);
-        } catch (TimeoutException e) {
+            Awaitility.await().atMost(runningTimeout).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
+        } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
                     .map(Service::getClass)

@@ -1,7 +1,5 @@
 package io.kestra.worker.processors;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +14,6 @@ import org.slf4j.event.Level;
 import com.google.common.base.Throwables;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -29,9 +26,9 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTriggerCallable;
@@ -113,7 +110,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                         }
 
                         if (!state.equals(FAILED)) {
-                            this.publishTriggerExecution(workerTrigger, conditionContext, workerCallable.getEvaluate());
+                            this.publishTriggerExecution(workerTrigger, workerCallable.getEvaluate());
                         }
                     } else if (workerTrigger.getTrigger() instanceof RealtimeTriggerInterface streamingTrigger) {
                         WorkerTriggerRealtimeCallable workerCallable = new WorkerTriggerRealtimeCallable(
@@ -123,7 +120,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                             workerTrigger,
                             streamingTrigger,
                             throwable -> this.handleTriggerError(workerTrigger, triggerContext, conditionContext, throwable),
-                            execution -> this.publishTriggerExecution(workerTrigger, conditionContext, Optional.of(execution))
+                            result -> this.publishTriggerExecution(workerTrigger, Optional.of(result))
                         );
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
@@ -164,12 +161,16 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
             .increment();
 
         logError(workerTrigger, conditionContext.getRunContext().logger(), e);
-        Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), conditionContext, triggerContext, (Output) null)
-            .withState(FAILED) : null;
-        if (execution != null) {
+
+        TriggerEvaluationResult result = null;
+        if (workerTrigger.getTrigger().isFailOnTriggerError()) {
+            result = TriggerService.generateEvaluationResult(
+                workerTrigger.getTrigger(), conditionContext, (Output) null
+            ).withState(FAILED);
+            Execution execution = result.toExecution(workerTrigger.triggerId());
             RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)).forEach(workerLogQueue::put);
         }
-        this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, execution));
+        this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, result));
     }
 
     private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, TriggerContext triggerContext, ConditionContext conditionContext, RunContext runContext, Throwable e) {
@@ -179,12 +180,13 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT_DESCRIPTION, tags)
             .increment();
 
-        // We create a FAILED execution, so the user is aware that the realtime trigger failed to be created
-        var execution = TriggerService
-            .generateRealtimeExecution(workerTrigger.getTrigger(), conditionContext, triggerContext, null)
-            .withState(FAILED);
+        // We create a FAILED result, so the user is aware that the realtime trigger failed to be created
+        TriggerEvaluationResult result = TriggerService.generateRealtimeEvaluationResult(
+            workerTrigger.getTrigger(), conditionContext, null
+        ).withState(FAILED);
 
         // We create an ERROR log attached to the execution
+        Execution execution = result.toExecution(workerTrigger.triggerId());
         Logger logger = runContext.logger();
         Logs.logExecution(
             execution,
@@ -198,10 +200,10 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         if (logger.isTraceEnabled() && e != null) {
             logger.trace(Throwables.getStackTraceAsString(e));
         }
-        this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, execution));
+        this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, result));
     }
 
-    private void publishTriggerExecution(WorkerTrigger workerTrigger, ConditionContext conditionContext, Optional<Execution> evaluate) {
+    private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<TriggerEvaluationResult> evaluate) {
         metricRegistry
             .counter(
                 MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT,
@@ -215,18 +217,9 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                 Level.DEBUG,
                 "[type: {}] {}",
                 workerTrigger.getTrigger().getType(),
-                evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                evaluate.map(result -> "New execution '" + result.executionId() + "'").orElse("Empty evaluation")
             );
         }
-
-        var flow = conditionContext.getFlow();
-        evaluate = evaluate.map(execution ->
-        {
-            List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-            executionLabels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
-            return execution.withLabels(executionLabels);
-        }
-        );
 
         this.workerTriggerResultQueue.put(WorkerTriggerResult.of(workerTrigger, evaluate.orElse(null)));
     }

@@ -2,14 +2,10 @@ package io.kestra.plugin.core.flow;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -17,17 +13,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -110,7 +102,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Parallel extends Task implements FlowableTask<VoidOutput> {
+public class Parallel extends AbstractBranch<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
@@ -118,24 +110,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
     private final Property<Integer> concurrent = Property.ofValue(0);
-
-    @Valid
-    @PluginProperty
-    @NotEmpty
-    @NotNull
-    private List<@NotNull Task> tasks;
-
-    @Valid
-    protected List<Task> errors;
-
-    @Valid
-    @JsonProperty("finally")
-    @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
-
-    public List<Task> getFinally() {
-        return this._finally;
-    }
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -151,24 +125,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         );
 
         return subGraph;
-    }
-
-    @Override
-    public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                Stream.concat(
-                    this.errors != null ? this.errors.stream() : Stream.empty(),
-                    this._finally != null ? this._finally.stream() : Stream.empty()
-                )
-            )
-            .toList();
-    }
-
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
     }
 
     @Override

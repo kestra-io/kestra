@@ -212,6 +212,8 @@
     .plugins-list {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        height: 100%;
 
         .search {
             flex-shrink: 0;

@@ -271,6 +271,63 @@ public class LoopCaseTest {
         }
     }
 
+    public void loopMap(Execution execution) throws InternalException {
+        // Then — values defined as a map: each iteration exposes item.key and item.value
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        TaskRun loopTaskRun = execution.getTaskRunList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+
+        // 3 loop sub-executions, one per map entry, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        // each iteration must carry a non-null key
+        assertThat(subExecutions).allMatch(sub -> sub.getLoopRun().key() != null);
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> {
+            LoopRun lr = sub.getLoopRun();
+            String expectedOutput = lr.key() + " - " + lr.value();
+            return expectedOutput.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
+        }));
+    }
+
+    public void loopValuesFromUri(Execution execution) throws InternalException {
+        // Then — values loaded from an ION file URI created by a preceding Write task
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        TaskRun loopTaskRun = execution.getTaskRunList().getLast();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+
+        // 3 loop sub-executions, one per ION value, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> {
+            String expectedValue = sub.getLoopRun().index() + " - " + sub.getLoopRun().value();
+            return expectedValue.equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"));
+        }));
+    }
+
+    public void loopExpressionContext(Execution execution) throws InternalException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        // 3 loop sub-executions, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 2);
+        // each iteration must access the parent execution context from expressions
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> "I'm before the loop".equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"))));
+        assertThat(subExecutions).allMatch(throwPredicate(sub -> execution.getId().equals(taskOutputService.getOutputs(sub.getTaskRunList().getLast()).get("value"))));
+    }
+
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
     private List<Execution> loopSubExecutions(Execution parentExecution) {
         // FIXME retrieving loop sub-executions for a given loop should be more easy

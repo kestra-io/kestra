@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -641,20 +642,45 @@ public class ExecutorService {
                 if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
                     if (taskRun.getState().getCurrent() == State.Type.CREATED) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                        List<String> values = FlowableUtils.resolveValues(runContext, loop.getValues());
-                        int limit = loop.getConcurrencyLimit() == 0 ? values.size() : (loop.getConcurrencyLimit() > values.size() ? values.size() : loop.getConcurrencyLimit());
+                        var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
 
-                        // save the iteration information in outputs to know how many loop iterations we already triggered
-                        taskOutputService.saveOutputs(taskRun, Map.of(
-                            Loop.ITERATION_COUNT_OUTPUT, values.size(),
-                            Loop.RUNNING_ITERATIONS_OUTPUT, limit,
-                            Loop.TERMINATED_ITERATIONS_OUTPUT, 0)
-                        );
-
-                        for (int i = 0; i < limit; i++) {
-                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, values.get(i), i);
-                            executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                        if (valuesUri.isPresent()) {
+                            var init = loop.initFromUri(runContext, valuesUri.get());
+                            // save the iteration information in outputs to know how many loop iterations we already triggered
+                            taskOutputService.saveOutputs(taskRun, Map.of(
+                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0,
+                                Loop.NEXT_OFFSET_OUTPUT, init.nextOffset())
+                            );
+                            for (int i = 0; i < init.values().size(); i++) {
+                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, i, null, init.values().get(i));
+                                executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                            }
+                        } else {
+                            var init = loop.initFromValues(runContext);
+                            // save the iteration information in outputs to know how many loop iterations we already triggered
+                            taskOutputService.saveOutputs(taskRun, Map.of(
+                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0)
+                            );
+                            if (init.values().isLeft()) {
+                                List<String> values = init.values().getLeft();
+                                for (int i = 0; i < init.limit(); i++) {
+                                    var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, i, null, values.get(i));
+                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                                }
+                            } else {
+                                List<Pair<String, String>> values = init.values().getRight();
+                                for (int i = 0; i < init.limit(); i++) {
+                                    var value = values.get(i);
+                                    var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), taskRun, i, value.getKey(), value.getValue());
+                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                                }
+                            }
                         }
+
                         // TODO we may need to also start the attempts...
                         executor.withExecution(executor.getExecution()
                             .withTaskRun(taskRun.withState(State.Type.RUNNING)), "handleLoop");
@@ -1089,8 +1115,8 @@ public class ExecutorService {
                         "handleExecutableTaskRunning"
                     );
 
-                    // handle runIf
-                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
+                    // handle when
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()
@@ -1173,8 +1199,8 @@ public class ExecutorService {
                 }
 
                 try {
-                    // Skip task if runIf condition is false
-                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
+                    // Skip task if when condition is false
+                    if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
                         executor.withExecution(
                             executor
                                 .getExecution()

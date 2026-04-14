@@ -1,0 +1,18 @@
+id: loop-values-from-uri
+namespace: io.kestra.tests
+
+tasks:
+  - id: write
+    type: io.kestra.plugin.core.storage.Write
+    content: |-
+      {date:"2025-12-03T12:00:00Z",title:"Coupe_du_monde_masculine_de_rugby_à_XV_2027",views:490}
+      {date:"2025-12-03T12:00:00Z",title:"Michel-Ange",views:448}
+      {date:"2025-12-03T12:00:00Z",title:"Histoire_des_jeux",views:438}
+    extension: .ion
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: '"{{ outputs.write.uri }}"'
+    tasks:
+      - id: item
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{item.index}} - {{item.value}}"

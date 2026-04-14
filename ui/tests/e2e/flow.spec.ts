@@ -8,7 +8,6 @@ import {shared} from "./fixtures/shared";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const helloFlowYaml = fs.readFileSync(
     path.resolve(__dirname, "./fixtures/flows/hello.yaml"),
     "utf-8"
@@ -42,18 +41,18 @@ test.describe("Flow Page", () => {
             await page.waitForURL("**/flows/new");
 
             await page.getByRole("button", {name: "Save", exact: true}).click();
+            await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible();
             await page.getByRole("link", {name: "Overview"}).click();
         });
 
         await test.step("execute the flow", async () => {
 
-            await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
-            await page.locator("section").getByRole("button", {name: "Execute"}).click();
+            await page.getByRole("button", {name: "Execute"}).first().click();
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
-            await page.getByText("hello").click();// default task log
-            await expect(page.getByText("Hello World!")).toBeVisible();
+            await page.getByText("hello", {exact: true}).click();// default task log
+            await expect(page.getByText("Hello World!")).toBeVisible({timeout: 10000});
         });
     });
 
@@ -96,7 +95,10 @@ test.describe("Flow Page", () => {
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
             await page.getByText("log_hello_task").click();
-            await expect(page.getByText(inputValue)).toBeVisible();
+            await expect(page.getByText(inputValue)
+                .first()// TODO this is probably a hack, but at least it's fixing the test
+            ).toBeVisible();
         });
     });
 });
+

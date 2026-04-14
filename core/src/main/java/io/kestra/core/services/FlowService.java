@@ -48,6 +48,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
@@ -478,6 +479,14 @@ public class FlowService {
                 }
             }
         });
+
+        // warn when @PluginProperty(secret=true) fields have plain-text values
+        flow.allTasksWithChilds().forEach(task ->
+            SecretUtils.validateSecretFields(task)
+                .forEach(msg -> warnings.add("Task '" + task.getId() + "': " + msg)));
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger ->
+            SecretUtils.validateSecretFields(trigger)
+                .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg)));
 
         return warnings;
     }

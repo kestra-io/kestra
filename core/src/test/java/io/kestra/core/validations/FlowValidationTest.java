@@ -266,7 +266,7 @@ class FlowValidationTest {
     };
 
     @Test
-    void plainTextSecretPropertyShouldNotFailFlowValidation() {
+    void shouldNotFailValidationWhenSecretPropertyHasPlainTextValue() {
         // Given
         SecretFieldTask task = SecretFieldTask.builder()
             .id("secret-task")
@@ -287,7 +287,7 @@ class FlowValidationTest {
     }
 
     @Test
-    void plainTextSecretPropertyShouldProduceWarning() {
+    void shouldProduceWarningWhenSecretPropertyHasPlainTextValue() {
         // Given
         SecretFieldTask task = SecretFieldTask.builder()
             .id("secret-task")

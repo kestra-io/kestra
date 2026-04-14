@@ -13,7 +13,7 @@ import jakarta.inject.Singleton;
 
 @SuppressWarnings("rawtypes")
 @Factory
-@Requires(missingProperty = "datasources.h2.url", condition = DatasourceProvider.H2RepositoryOrQueue.class)
+@Requires(condition = DatasourceProvider.H2RepositoryOrQueue.class)
 public class DatasourceProvider {
     @Singleton
     @Named("h2")
@@ -54,6 +54,12 @@ public class DatasourceProvider {
     public static class H2RepositoryOrQueue implements Condition {
         @Override
         public boolean matches(ConditionContext context) {
+            // If an explicit H2 datasource URL is already configured (e.g. server local with a
+            // file-based H2 DB), do not create an in-memory datasource on top of it.
+            if (context.getProperty("datasources.h2.url", String.class).isPresent()) {
+                return false;
+            }
+
             Optional<String> repositoryType = context.getProperty("kestra.repository.type", String.class);
             if (repositoryType.isPresent() && (repositoryType.get().equals("h2") || repositoryType.get().equals("memory"))) {
                 return true;

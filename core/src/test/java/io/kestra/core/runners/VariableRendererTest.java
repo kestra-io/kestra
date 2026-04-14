@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -25,7 +26,10 @@ class VariableRendererTest {
     VariableRenderer variableRenderer;
 
     @Inject
-    PebbleEngineFactory pebbleEngineFactory;
+    ApplicationContext applicationContext;
+
+    @Inject
+    VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {

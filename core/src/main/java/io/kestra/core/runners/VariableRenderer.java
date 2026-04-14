@@ -121,7 +121,7 @@ public class VariableRenderer {
                 }
             }
 
-        } catch (IOException | PebbleException e) {
+        } catch (IOException | RuntimeException e) {
             if (e instanceof PebbleException pebbleException) {
                 throw properPebbleException(pebbleException);
             }

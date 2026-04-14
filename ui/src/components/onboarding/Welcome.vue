@@ -151,15 +151,13 @@
     }
 </script>
 
-<style lang="scss">
-    main:has(section#welcome) {
+<style scoped lang="scss">
+    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
+
+    :global(main:has(section#welcome)) {
         max-height: 100%;
         overflow: hidden;
     }
-</style>
-
-<style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     section#welcome {
         position: relative;

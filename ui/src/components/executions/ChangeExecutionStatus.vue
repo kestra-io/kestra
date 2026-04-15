@@ -55,17 +55,14 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
 
     import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue";
 
     import {State, Status} from "@kestra-io/ui-libs";
-    import * as ExecutionUtils from "../../utils/executionUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useToast} from "../../utils/toast";
-    import {useAxios} from "../../utils/axios";
 
     import {Execution, useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
@@ -78,9 +75,6 @@
 
     const {t} = useI18n({useScope: "global"});
     const toast = useToast();
-    const router = useRouter();
-    const route = useRoute();
-    const axios = useAxios();
 
     const executionsStore = useExecutionsStore();
     const authStore = useAuthStore();
@@ -130,33 +124,15 @@
     const changeStatus = async () => {
         visible.value = false;
 
-        const response = await executionsStore.changeExecutionStatus({
+        await executionsStore.changeExecutionStatus({
             executionId: props.execution.id,
             state: selectedStatus.value!
         });
 
-        let execution;
-        if (response.data.id === props.execution.id) {
-            execution = await ExecutionUtils.waitForState(axios, response.data);
-        } else {
-            execution = response.data;
-        }
+        const execution = await executionsStore.waitForStateChange(props.execution) as Execution;
 
         executionsStore.execution = execution;
-        if (execution.id === props.execution.id) {
-            emit("follow");
-        } else {
-            router.push({
-                name: "executions/update",
-                params: {
-                    namespace: execution.namespace,
-                    flowId: execution.flowId,
-                    id: execution.id,
-                    tab: "gantt",
-                    tenant: route.params.tenant
-                }
-            });
-        }
+        emit("follow");
         toast.success(t("change execution state done"));
     };
 </script>

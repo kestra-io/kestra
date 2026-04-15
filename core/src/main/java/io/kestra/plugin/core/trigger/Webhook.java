@@ -115,8 +115,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 """,
             full = true
         )
-    },
-    aliases = "io.kestra.core.models.triggers.types.Webhook"
+    }
 )
 @WebhookValidation
 public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Webhook.Output> {

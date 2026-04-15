@@ -1,0 +1,20 @@
+id: flow-trigger-depends-on-flow-listen
+namespace: io.kestra.tests.trigger.depends.on
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.depends.on
+        flowId: flow-trigger-depends-on-flow-a
+        states: [SUCCESS, WARNING, FAILED]
+        labels:
+          some: label
+      - namespace: io.kestra.tests.trigger.depends.on
+        flowId: flow-trigger-depends-on-flow-b
+        states: [SUCCESS]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

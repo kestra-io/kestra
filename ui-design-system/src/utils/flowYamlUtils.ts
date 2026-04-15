@@ -107,7 +107,7 @@ export function pairsToMap(pairs?: any[]) {
         return map;
     }
 
-    for (const pair of pairs) {
+    for (const pair of pairs!) {
         map.add(pair);
     };
     return map;

@@ -48,9 +48,11 @@ export default defineConfig(({mode}) => {
             }
         },
         resolve: {
+            preserveSymlinks: true,
             dedupe: ["echarts", "vue-echarts"],
             alias: [
-                {find: /^@kestra-io\/ui-design-system$/, replacement: path.resolve(__dirname, "../ui-design-system/src/index.ts")},
+                {find: /^@kestra-io\/ui-design-system$/, replacement: path.join(__dirname, "node_modules/@kestra-io/ui-design-system/src/index.ts")},
+                {find: /^@kestra-io\/ui-design-system\/(.*)$/, replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-design-system") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
                 {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
@@ -87,7 +89,8 @@ export default defineConfig(({mode}) => {
             devSourcemap: true,
             preprocessorOptions: {
                 scss: {
-                    silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
+                    silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"],
+                    loadPaths: [path.resolve(__dirname, "node_modules")]
                 },
             }
         },
@@ -102,7 +105,15 @@ export default defineConfig(({mode}) => {
                 "@braintree/sanitize-url",
                 "monaco-yaml/yaml.worker",
                 "lodash-es",
-                "nprogress"
+                "nprogress",
+                // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
+                // Adding them here makes Vite pre-bundle them as ESM so Chromium (storybook) can load them.
+                "extend",
+                "format",
+                "humanize-duration",
+                "moment",
+                "moment-timezone",
+                "moment-range"
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

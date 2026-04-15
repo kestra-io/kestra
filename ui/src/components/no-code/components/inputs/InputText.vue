@@ -5,7 +5,7 @@
         <ks-input
             ref="elInputRef"
             :modelValue="(input as string | number | undefined)"
-            @update:modelValue="input = $event"
+            @update:model-value="input = $event"
             :id="uid"
             :placeholder
             :disabled
@@ -47,7 +47,7 @@
 
     defineExpose({
         focus: () => {
-            (elInputRef.value as any)?.focus();
+            (elInputRef.value as any)?.focus?.();
         }
     });
 </script>

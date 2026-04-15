@@ -3,13 +3,13 @@ import vue from "@vitejs/plugin-vue";
 
 import viteConfig from "./vite.config.js";
 
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
+
 export default defineProject({
     plugins: [
         vue(),
     ],
-    resolve: {
-        alias: viteConfig.resolve.alias,
-    },
+    resolve: resolvedViteConfig.resolve,
     test: {
         name: "unit",
         environment: "jsdom",

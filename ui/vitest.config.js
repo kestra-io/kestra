@@ -13,16 +13,16 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url));
 
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
     plugins: [vue()],
-    resolve: {
-        alias: viteConfig.resolve.alias,
-    },
+    resolve: resolvedViteConfig.resolve,
     test: {
         projects: [
             "./vitest.config.unit.js",
-            mergeConfig(viteConfig, {
+            mergeConfig(resolvedViteConfig, {
                 plugins: [
                     // The plugin will run tests for the stories defined in your Storybook config
                     // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest

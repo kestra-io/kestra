@@ -100,7 +100,12 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
-        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
+        var outputs = (Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs");
+        assertThat(outputs).containsKey("io.kestra.tests.trigger.preconditions");
+        outputs = (Map<String, Object>) outputs.get("io.kestra.tests.trigger.preconditions");
+        assertThat(outputs).containsKey("flow-trigger-preconditions-flow-b");
+        outputs = (Map<String, Object>) outputs.get("flow-trigger-preconditions-flow-b");
+        assertThat(outputs).containsEntry("some", "value");
     }
 
     public void flowTriggerOnPaused() throws TimeoutException, QueueException {

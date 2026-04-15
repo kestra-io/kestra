@@ -851,31 +851,47 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "The execution ID that triggered the current flow")
+        @Schema(
+            title = "The execution ID that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one."
+        )
         @NotNull
         private String executionId;
 
-        @Schema(title = "The execution labels that triggered the current flow")
+        @Schema(
+            title = "The execution labels that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private Map<String, Object> executionLabels;
 
-        @Schema(title = "The execution state")
+        @Schema(
+            title = "The execution state",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private State.Type state;
 
-        @Schema(title = "The namespace of the flow that triggered the current flow")
+        @Schema(
+            title = "The namespace of the flow that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private String namespace;
 
-        @Schema(title = "The flow ID whose execution triggered the current flow")
+        @Schema(
+            title = "The flow ID whose execution triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private String flowId;
 
-        @Schema(title = "The flow revision that triggered the current flow")
+        @Schema(
+            title = "The flow revision that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private Integer flowRevision;
 
-        @Schema(title = "The extracted outputs from the flow that triggered the current flow")
+        @Schema(
+            title = "The extracted outputs from the flows that triggered the current flow",
+            description = "As there can be multiple executions that trigger this flow, each output will be prefixed by its namespace and flow ID. For example, 'namespace.flowId.key' will be the key for the output 'key' from the flow with ID 'flowId' in namespace 'namespace'."
+        )
         private Map<String, Object> outputs;
     }
 }

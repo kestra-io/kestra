@@ -14,9 +14,10 @@ public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 
     public static ConditionFactory await(){
-        Awaitility.pollInSameThread();
-        Awaitility.setDefaultPollDelay(defaultSleep);
-        return Awaitility.await();
+        return Awaitility
+            .await()
+            .pollInSameThread()
+            .pollDelay(defaultSleep);
     }
 
     /**

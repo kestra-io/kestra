@@ -9,6 +9,7 @@
                     refresh: {shown: true, callback: refresh}
                 }"
                 prefix="kv"
+                :buttons="{savedFilters: {shown: !namespace}}"
                 :properties="{
                     shown: true,
                     columns: optionalColumns,
@@ -309,7 +310,7 @@
 
             if (props.includeInherited && props.namespace) {
                 const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
-                
+
                 for (const parentNs of parentNamespaces) {
                     const parentKvsResponse = await kvStore.find(loadQuery({
                         filters: {

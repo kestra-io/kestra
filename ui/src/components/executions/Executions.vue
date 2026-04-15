@@ -904,15 +904,16 @@
         return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
     };
 
-    const changeStatus = () => {
+    const changeStatus = async () => {
         changeStatusDialogVisible.value = false;
         actionOptions.value.newStatus = selectedStatus.value;
 
-        genericConfirmCallback(
+        await genericConfirmCallback(
             "queryChangeExecutionStatus",
             "bulkChangeExecutionStatus",
             "executions state changed"
         );
+        window.setTimeout(() => loadData(), 100);
     };
 
     const changeStatusToast = () => {

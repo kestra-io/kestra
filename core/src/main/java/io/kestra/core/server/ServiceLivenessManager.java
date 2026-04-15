@@ -10,7 +10,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServiceStateTransition.Result;
 
 import io.micronaut.context.annotation.Context;
@@ -30,7 +29,6 @@ import static io.kestra.core.server.ServiceLivenessManager.OnStateTransitionFail
 @Context
 @Requires(property = "kestra.server-type")
 @Requires(beans = ServiceLivenessUpdater.class)
-@Requires(beans = ServiceInstanceRepositoryInterface.class)
 @Slf4j
 public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 

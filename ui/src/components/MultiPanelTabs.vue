@@ -851,7 +851,7 @@
             }
         }
 
-        :deep(.el-splitter-bar) {
+        :deep(.kel-splitter-bar) {
             z-index: 0;
         }
     }

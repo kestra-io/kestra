@@ -80,7 +80,7 @@
 <style scoped lang="scss">
     .kel-collapse {
         --kel-collapse-header-font-size: var(--kel-font-size-small);
-        --el-collapse-header-height: auto;
+        --kel-collapse-header-height: auto;
         border-top: none;
         border-bottom: none;
 

@@ -661,7 +661,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(14);
+        assertThat(namespaces.size()).isEqualTo(17);
     }
 
     @Test

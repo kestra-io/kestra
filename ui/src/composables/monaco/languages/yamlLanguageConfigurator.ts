@@ -354,6 +354,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
             return {
                 ...defaultCompletion,
+                incomplete: true,
                 suggestions,
             };
         };
@@ -395,12 +396,18 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber;
-                    const autoCompletions =
-                        await yamlAutoCompletion.valueAutoCompletion(
+                    
+                    let autoCompletions = [];
+                    try {
+                        autoCompletions = await yamlAutoCompletion.valueAutoCompletion(
                             source,
                             parsed,
                             elementUnderCursor,
                         );
+                    } catch {
+                        return NO_SUGGESTIONS;
+                    }
+
                     return {
                         suggestions: autoCompletions.map((autoCompletion) => {
                             const [label, isKey] = autoCompletion.split(
@@ -492,7 +499,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     if (
                         typeof pluginsStore.updateDocumentation === "function"
                     ) {
-                        await pluginsStore.updateDocumentation({cls});
+                        try {
+                            await pluginsStore.updateDocumentation({cls});
+                        } catch {
+                            return {items: []};
+                        }
                     }
 
                     const allProperties =

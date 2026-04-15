@@ -3,7 +3,9 @@ package io.kestra.core.models.executions;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.event.DispatchEvent;
 
-public record TerminatedLoopExecution(LoopRun loopRun, String executionId, State.Type state) implements DispatchEvent {
+import java.util.Map;
+
+public record TerminatedLoopExecution(LoopRun loopRun, String executionId, State.Type state, Map<String, Object> outputs) implements DispatchEvent {
     @Override
     public String key() {
         return executionId;

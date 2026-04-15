@@ -4,12 +4,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
 import io.micronaut.data.model.Pageable;
 
@@ -326,6 +328,24 @@ public class LoopCaseTest {
         // each iteration must access the parent execution context from expressions
         assertThat(subExecutions).allMatch(throwPredicate(sub -> "I'm before the loop".equals(taskOutputService.getOutputs(sub.getTaskRunList().getFirst()).get("value"))));
         assertThat(subExecutions).allMatch(throwPredicate(sub -> execution.getId().equals(taskOutputService.getOutputs(sub.getTaskRunList().getLast()).get("value"))));
+    }
+
+    public void loopOutputs(Execution execution) throws InternalException, JsonProcessingException {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+
+        // 3 loop sub-executions, all with SUCCESS
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(3);
+        assertThat(subExecutions).allMatch(sub -> sub.getState().getCurrent() == State.Type.SUCCESS);
+        assertThat(subExecutions).allMatch(sub -> sub.getTaskRunList().size() == 1);
+
+        // the last task can access loop iteration outputs
+        var loopOutputs = taskOutputService.getOutputs(execution.getTaskRunList().getLast());
+        var valueMap = JacksonMapper.toMap((String) loopOutputs.get("value"));
+        assertThat(valueMap).hasSize(3); // one output per iteration
+        var firstIterationMap = (Map<String, Object>) valueMap.get("value 1");
+        assertThat(firstIterationMap).containsEntry("value", "some output");
     }
 
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */

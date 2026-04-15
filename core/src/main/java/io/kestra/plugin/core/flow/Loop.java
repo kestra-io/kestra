@@ -16,8 +16,8 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @SuperBuilder
@@ -37,9 +38,13 @@ import java.util.Optional;
 @Schema(
     title = "Execute child tasks for each value in a list.",
     description = """
-        Renders `values` (JSON array, YAML list, or expression) and runs the child task group once per item. The current item is available as `item.value`; `item.index` exposes the index.
+        Renders `values` (list, map, map, URI, or expression) and runs the child task group once per item.
+        The current item is available as `item.value`; `item.index` exposes the index; if the values was a map, the key is available as `item.key`.
+        It values was an internal storage URI, the loop will perform one iteration per line.
 
-        Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task."""
+        Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task.
+
+        Each loop iteration will execute in an isolated context, to access any loop iteration task outputs outside of the loop, you need to define `outputs`."""
 )
 @Plugin(
     examples = {
@@ -187,6 +192,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public static final String RUNNING_ITERATIONS_OUTPUT = "runningIterations";
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
     public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
+    public static final String OUTPUTS_OUTPUT = "outputs";
 
     @NotNull
     @PluginProperty(dynamic = true)
@@ -223,6 +229,13 @@ public class Loop extends AbstractBranch<Loop.Output> {
     )
     @PluginProperty
     private final Boolean transmitFailed = true;
+
+    @Schema(
+        title = "Output values available and exposed outside the loop."
+    )
+    @PluginProperty(dynamic = true)
+    @Valid
+    List<io.kestra.core.models.flows.Output> outputs;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -281,24 +294,24 @@ public class Loop extends AbstractBranch<Loop.Output> {
         );
     }
 
+    // NOTE: this is to document outputs, they are always computed by the executor itself
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(
-            title = "The counter of iterations for each loop branch execution"
-        )
-        private Integer iterations;
-    }
+        @Schema(title = "The total number of iterations")
+        private Integer iterationCount;
 
-    @Override
-    public Output outputs(RunContext runContext) throws Exception {
-        var currentOutputs = runContext.currentOutput();
-        if (!MapUtils.isEmpty(currentOutputs) && currentOutputs.containsKey("iterations")) {
-            Integer iterations = (Integer) currentOutputs.get("iterations");
-            return Output.builder().iterations(iterations).build();
-        } else {
-            return Output.builder().iterations(0).build();
-        }
+        @Schema(title = "The count of running iterations")
+        private Integer runningIterations;
+
+        @Schema(title = "The count of terminated iterations")
+        private Integer terminatedIterations;
+
+        @Schema(
+            title = "The outputs of the loop, accessible outside of the loop for subsequent tasks",
+            description = "Outputs must first be defined using the `outputs` property."
+        )
+        private Map<String, Object> outputs;
     }
 
     public boolean isMySubExecution(Execution execution, TaskRun parentTaskRun) {

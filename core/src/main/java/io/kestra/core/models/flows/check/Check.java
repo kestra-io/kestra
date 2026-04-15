@@ -32,7 +32,7 @@ public class Check {
      */
     @NotNull
     @NotEmpty
-    String condition;
+    String when;
 
     /**
      * The message associated with this check, will be displayed when the condition evaluates to {@code false}.
@@ -51,6 +51,11 @@ public class Check {
      */
     @Builder.Default
     Behavior behavior = Behavior.BLOCK_EXECUTION;
+
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    public void setCondition(String condition) {
+        this.when = condition;
+    }
 
     /**
      * The visual style used to display the message when the check fails.

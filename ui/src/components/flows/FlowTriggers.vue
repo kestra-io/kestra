@@ -544,7 +544,7 @@
     };
 
     const isSchedule = (type: string) => {
-        return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
+        return type === "io.kestra.plugin.core.trigger.Schedule";
     };
 
     const hasTrigger = (trigger: any) => {

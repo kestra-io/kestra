@@ -149,8 +149,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     stopAfter:
                       - FAILED"""
         )
-    },
-    aliases = "io.kestra.core.models.triggers.types.Schedule"
+    }
 )
 @ScheduleValidation
 public class Schedule extends AbstractTrigger implements Schedulable, TriggerOutput<Schedule.Output> {

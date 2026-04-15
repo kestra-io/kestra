@@ -309,7 +309,7 @@ class FlowServiceTest {
     void shouldReturnCheckWhenConditionEvaluatesFalse() {
         // Given
         Check failingCheck = Check.builder()
-            .condition("{{ false }}")
+            .when("{{ false }}")
             .message("fail")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -330,7 +330,7 @@ class FlowServiceTest {
     void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
         // Given
         Check passingCheck = Check.builder()
-            .condition("{{ true }}")
+            .when("{{ true }}")
             .message("pass")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -350,7 +350,7 @@ class FlowServiceTest {
     void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
         // Given
         Check check = Check.builder()
-            .condition("{{ invalidFunction() }}")
+            .when("{{ invalidFunction() }}")
             .message("ignored")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -373,9 +373,9 @@ class FlowServiceTest {
     @Test
     void shouldHandleMultipleChecksWithMixedResults() {
         // Given
-        Check passCheck = Check.builder().condition("{{ true }}").message("pass").build();
-        Check failCheck = Check.builder().condition("{{ false }}").message("fail").build();
-        Check exceptionCheck = Check.builder().condition("{{ invalidFunction }}").message("exception").build();
+        Check passCheck = Check.builder().when("{{ true }}").message("pass").build();
+        Check failCheck = Check.builder().when("{{ false }}").message("fail").build();
+        Check exceptionCheck = Check.builder().when("{{ invalidFunction }}").message("exception").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
@@ -399,7 +399,7 @@ class FlowServiceTest {
     @Test
     void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
         // Given
-        Check passCheck = Check.builder().condition("{{ flow.id == 'test' }}").message("pass").build();
+        Check passCheck = Check.builder().when("{{ flow.id == 'test' }}").message("pass").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck));

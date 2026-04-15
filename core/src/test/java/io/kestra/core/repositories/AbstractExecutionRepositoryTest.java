@@ -52,6 +52,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.params.provider.FieldSource;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
@@ -219,8 +220,14 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unused").operation(Op.NOT_EQUALS).build(), 29),
 
-            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 29),
-            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(USER).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(SYSTEM).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.IN).build(), 0),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER, SYSTEM)).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.NOT_IN).build(), 0),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER, SYSTEM)).operation(Op.NOT_IN).build(), 0),
 
             Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("not.this.one").operation(Op.NOT_EQUALS).build(), 29),
@@ -1336,5 +1343,110 @@ public abstract class AbstractExecutionRepositoryTest {
 
         // THEN
         assertThat(flux.collectList().block()).map(Execution::getId).isEqualTo(List.of(execution.getId()));
+    }
+
+    // ---- SCOPE dashboard filter tests ----
+
+    private static final String SCOPE_USER_EXECUTION_ID = "scope-user-exec";
+    private static final String SCOPE_SYSTEM_EXECUTION_ID = "scope-system-exec";
+
+    private static final Duration SCOPE_TEST_DURATION = Duration.ofSeconds(10);
+    private static final Instant SCOPE_TEST_CREATE_DATE = Instant.now().minus(Duration.ofMinutes(5));
+
+    private final Execution scopeUserExecution = Execution.builder()
+        .id(SCOPE_USER_EXECUTION_ID)
+        .namespace(NAMESPACE)
+        .flowId("scope-test")
+        .flowRevision(1)
+        .state(new State(Type.SUCCESS, List.of(
+            new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
+            new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION)))))
+        .taskRunList(List.of())
+        .build();
+
+    private final Execution scopeSystemExecution = Execution.builder()
+        .id(SCOPE_SYSTEM_EXECUTION_ID)
+        .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+        .flowId("scope-test")
+        .flowRevision(1)
+        .state(new State(Type.SUCCESS, List.of(
+            new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
+            new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION)))))
+        .taskRunList(List.of())
+        .build();
+
+    private record DashboardScopeFilterTestCase(
+        QueryFilter queryFilter,
+        List<String> expectedIds
+    ) {}
+
+    private static QueryFilter scopeFilter(QueryFilter.Op op, Object value) {
+        return QueryFilter.builder()
+            .field(QueryFilter.Field.SCOPE)
+            .operation(op)
+            .value(value)
+            .build();
+    }
+
+    static final List<DashboardScopeFilterTestCase> dashboardScopeFilterTestCases = List.of(
+        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, USER),        List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, SYSTEM),      List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, USER),    List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, SYSTEM),  List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(USER)),   List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(SYSTEM)), List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.IN,     List.of(USER, SYSTEM)), List.of(SCOPE_USER_EXECUTION_ID, SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(USER)),   List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(SYSTEM)), List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(USER, SYSTEM)), List.of())
+    );
+
+    @ParameterizedTest
+    @FieldSource("dashboardScopeFilterTestCases")
+    protected void dashboardFetchDataWithScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
+        // Given
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        executionRepository.save(scopeUserExecution.toBuilder().tenantId(tenantId).build());
+        executionRepository.save(scopeSystemExecution.toBuilder().tenantId(tenantId).build());
+
+        // When
+        var now = ZonedDateTime.now();
+        var dataFilter = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(Map.of(
+                "id", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).build()
+            ))
+            .build();
+        dataFilter.updateWhereWithGlobalFilters(List.of(testCase.queryFilter()), now.minusHours(1), now);
+
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, dataFilter, now.minusHours(1), now, null);
+
+        // Then
+        List<String> returnedIds = data.stream().map(row -> (String) row.get("id")).toList();
+        assertThat(returnedIds).containsExactlyInAnyOrderElementsOf(testCase.expectedIds());
+    }
+
+    @ParameterizedTest
+    @FieldSource("dashboardScopeFilterTestCases")
+    protected void dashboardFetchValueWithScopeFilter(DashboardScopeFilterTestCase testCase) throws IOException {
+        // Given
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        executionRepository.save(scopeUserExecution.toBuilder().tenantId(tenantId).build());
+        executionRepository.save(scopeSystemExecution.toBuilder().tenantId(tenantId).build());
+
+        // When
+        var now = ZonedDateTime.now();
+        var dataFilter = ExecutionsKPI.builder()
+            .type(ExecutionsKPI.class.getName())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields>builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .build();
+        dataFilter.updateWhereWithGlobalFilters(List.of(testCase.queryFilter()), now.minusHours(1), now);
+
+        Double value = executionRepository.fetchValue(tenantId, dataFilter, now.minusHours(1), now, false);
+
+        // Then
+        assertThat(value).isEqualTo((double) testCase.expectedIds().size());
     }
 }

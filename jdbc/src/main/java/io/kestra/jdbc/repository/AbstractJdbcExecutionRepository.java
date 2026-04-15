@@ -36,6 +36,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
+import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
@@ -924,10 +925,23 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));
             }
 
-            // Remove the state filters from descriptors
+            // Handle SCOPE filters — translate to namespace-based conditions
+            List<AbstractFilter<F>> scopeFilters = filters.stream()
+                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.SCOPE))
+                .toList();
+
+            if (!scopeFilters.isEmpty()) {
+                String systemNamespace = kestraConfig.getSystemFlowNamespace();
+                for (AbstractFilter<F> scopeFilter : scopeFilters) {
+                    selectConditionStep = selectConditionStep.and(toScopeCondition(scopeFilter, systemNamespace));
+                }
+            }
+
+            // Remove the state, label, and scope filters from descriptors
             List<AbstractFilter<F>> remainingFilters = filters.stream()
                 .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE)) // Filter state
                 .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
+                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.SCOPE)) // Filter scope
                 .toList();
 
             // Use the generic method addFilters with the remaining filters
@@ -992,6 +1006,37 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             );
         }
         return selectConditionStep;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <F extends Enum<F>> Condition toScopeCondition(AbstractFilter<F> filter, String systemNamespace) {
+        return switch (filter) {
+            case EqualTo<F> f -> {
+                FlowScope scope = Enums.fromList(f.getValue(), FlowScope.class).getFirst();
+                yield FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
+            }
+            case NotEqualTo<F> f -> {
+                FlowScope scope = Enums.fromList(f.getValue(), FlowScope.class).getFirst();
+                yield FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+            }
+            case In<F> f -> {
+                List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
+                boolean includesUser = scopes.contains(FlowScope.USER);
+                boolean includesSystem = scopes.contains(FlowScope.SYSTEM);
+                if (includesUser && includesSystem) yield DSL.noCondition();
+                else if (includesUser) yield field("namespace").ne(systemNamespace);
+                else yield field("namespace").eq(systemNamespace);
+            }
+            case NotIn<F> f -> {
+                List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
+                boolean excludesUser = scopes.contains(FlowScope.USER);
+                boolean excludesSystem = scopes.contains(FlowScope.SYSTEM);
+                if (excludesUser && excludesSystem) yield DSL.falseCondition();
+                else if (excludesUser) yield field("namespace").eq(systemNamespace);
+                else yield field("namespace").ne(systemNamespace);
+            }
+            default -> throw new IllegalArgumentException("Unsupported SCOPE filter type: " + filter.getClass().getSimpleName());
+        };
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);

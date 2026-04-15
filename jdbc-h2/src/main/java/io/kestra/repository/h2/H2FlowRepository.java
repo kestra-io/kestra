@@ -38,4 +38,9 @@ public class H2FlowRepository extends AbstractJdbcFlowRepository {
     protected Condition findSourceCodeCondition(String query) {
         return H2FlowRepositoryService.findSourceCodeCondition(this.jdbcRepository, query);
     }
+
+    @Override
+    protected Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        return H2FlowRepositoryService.findTriggerClassCondition(triggerClass);
+    }
 }

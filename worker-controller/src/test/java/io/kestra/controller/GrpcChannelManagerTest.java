@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 
 import io.kestra.controller.config.GrpcChannelConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
-import io.kestra.controller.config.GrpcTlsConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration.DiscoveryType;
 import io.kestra.controller.config.WorkerControllersConfiguration.DnsConfig;
@@ -57,7 +56,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then
@@ -79,7 +78,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then
@@ -94,7 +93,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then
@@ -109,7 +108,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then
@@ -122,7 +121,7 @@ class GrpcChannelManagerTest {
         // Given
         WorkerControllersConfiguration config = createStaticConfig(List.of());
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -142,7 +141,7 @@ class GrpcChannelManagerTest {
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -162,7 +161,7 @@ class GrpcChannelManagerTest {
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -182,7 +181,7 @@ class GrpcChannelManagerTest {
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -197,7 +196,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // When
@@ -215,7 +214,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
 
         // When - call init multiple times
         channelManager.init();
@@ -234,7 +233,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
         ManagedChannel channel = (ManagedChannel) channelManager.getDefaultChannel();
 
@@ -255,7 +254,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // When - call close multiple times
@@ -274,7 +273,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         // Note: init() is NOT called
 
         // When/Then - should not throw
@@ -288,7 +287,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // When
@@ -312,7 +311,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then - channel is created successfully (load balancing is internal to gRPC)
@@ -329,7 +328,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then - channel is created successfully
@@ -346,7 +345,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then - channel is created with health check config
@@ -363,7 +362,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then - channel is created without health check
@@ -392,7 +391,7 @@ class GrpcChannelManagerTest {
         );
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         channelManager.init();
 
         // Then - channel is created (configuration is applied internally)
@@ -419,14 +418,14 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // First manager registers the resolver
-        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         manager1.init();
 
         // Close first manager - should unregister resolver
         manager1.close();
 
         // Second manager should be able to register a new resolver
-        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), createDefaultTlsConfig(), config);
+        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
         manager2.init();
 
         // Then - both should work without conflict
@@ -434,46 +433,6 @@ class GrpcChannelManagerTest {
 
         // Cleanup
         manager2.close();
-    }
-
-    @Test
-    void shouldCreateChannelWithTlsEnabled() {
-        // Given
-        String truststorePath = GrpcChannelManagerTest.class.getClassLoader().getResource("tls/server-truststore.p12").getPath();
-        var trustStore = new GrpcTlsConfiguration.TrustStoreConfig(truststorePath, "PKCS12", "trustpass");
-        var tlsConfig = new GrpcTlsConfiguration(true, null, trustStore, GrpcTlsConfiguration.ClientAuth.NONE, false, null);
-        WorkerControllersConfiguration config = createStaticConfig(
-            List.of(new Endpoint("localhost", 9096))
-        );
-        GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-
-        // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), tlsConfig, config);
-        channelManager.init();
-
-        // Then
-        Channel channel = channelManager.getDefaultChannel();
-        assertThat(channel).isNotNull();
-        assertThat(channel).isInstanceOf(ManagedChannel.class);
-    }
-
-    @Test
-    void shouldCreateChannelWithTlsInsecureTrustAll() {
-        // Given
-        var tlsConfig = new GrpcTlsConfiguration(true, null, null, GrpcTlsConfiguration.ClientAuth.NONE, true, null);
-        WorkerControllersConfiguration config = createStaticConfig(
-            List.of(new Endpoint("localhost", 9096))
-        );
-        GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-
-        // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), tlsConfig, config);
-        channelManager.init();
-
-        // Then
-        Channel channel = channelManager.getDefaultChannel();
-        assertThat(channel).isNotNull();
-        assertThat(channel).isInstanceOf(ManagedChannel.class);
     }
 
     // Helper methods
@@ -547,9 +506,5 @@ class GrpcChannelManagerTest {
 
     private static GrpcConfiguration createDefaultGrpcConfig() {
         return new GrpcConfiguration(false, Integer.MAX_VALUE);
-    }
-
-    static GrpcTlsConfiguration createDefaultTlsConfig() {
-        return new GrpcTlsConfiguration(false, null, null, GrpcTlsConfiguration.ClientAuth.NONE, false, null);
     }
 }

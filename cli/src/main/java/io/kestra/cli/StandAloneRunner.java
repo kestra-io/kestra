@@ -22,6 +22,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import io.kestra.core.utils.Await;
 
 @Slf4j
 public class StandAloneRunner implements Runnable, AutoCloseable {
@@ -83,7 +84,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         }
 
         try {
-            Awaitility.await().atMost(runningTimeout).until(
+            Await.await().atMost(runningTimeout).until(
                 () -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
             );
         } catch (ConditionTimeoutException e) {

@@ -53,6 +53,17 @@
 
     loadNodeTypes();
 
+    const OVERFLOW_WIDGETS_ID = "ks-monaco-overflow-widgets";
+    function getOrCreateOverflowWidgetsDomNode(): HTMLDivElement {
+        let node = document.getElementById(OVERFLOW_WIDGETS_ID) as HTMLDivElement | null;
+        if (!node) {
+            node = document.createElement("div");
+            node.id = OVERFLOW_WIDGETS_ID;
+            node.className = "monaco-editor";
+            document.body.appendChild(node);
+        }
+        return node;
+    }
 
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 
@@ -505,7 +516,6 @@
             suggestWidgetObserver.value?.disconnect();
             suggestWidgetObserver.value = undefined;
 
-
             suggestWidgetObserver.value = new MutationObserver(mutations => {
                 mutations.forEach(({removedNodes}) => {
                     if ([...removedNodes.values()].some(n => n instanceof Text && n.textContent === "_DATE_PICKER_")) {
@@ -810,9 +820,11 @@
             });
 
             if (editorRef.value) {
+                const overflowWidgetsDomNode = getOrCreateOverflowWidgetsDomNode();
                 localEditor.value = monaco.editor.create(editorRef.value, {
                     ...options,
-                    fixedOverflowWidgets: true // Helps suggestion widget render above other elements
+                    fixedOverflowWidgets: true,
+                    overflowWidgetsDomNode,
                 });
 
                 if (!moveCursorCmdDisposable) {

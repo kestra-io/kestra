@@ -121,7 +121,7 @@
                         size="small"
                         :activeText="$t('enabled')"
                         :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
-                        @change="setDisabled(scope.row, $event)"
+                        @change="setDisabled(scope.row, $event as boolean)"
                         class="switch-text"
                         :activeActionIcon="Check"
                         :disabled="scope.row.sourceDisabled"
@@ -211,7 +211,7 @@
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabledDate="(time: Date) => new Date() < time || (backfill.end && time > backfill.end)"
+                            :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.end && time > backfill.end)"
                         />
                     </ks-form-item>
                 </div>
@@ -221,7 +221,7 @@
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabledDate="(time: Date) => new Date() < time || (backfill.start && backfill.start > time)"
+                            :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.start && backfill.start > time)"
                         />
                     </ks-form-item>
                 </div>

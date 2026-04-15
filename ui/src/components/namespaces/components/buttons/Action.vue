@@ -2,7 +2,7 @@
     <ul>
         <li>
             <ks-button
-                :type="props.type || 'primary'"
+                :type="(props.type || 'primary') as any"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"

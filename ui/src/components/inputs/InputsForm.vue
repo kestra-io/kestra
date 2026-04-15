@@ -393,18 +393,18 @@
         }
     }
 
-    function inputError(id: string): string | null {
+    function inputError(id: string): string | undefined {
         // if this input has not been edited yet
         // showing any error is annoying
         if (!inputsValidated.value.has(id)) {
-            return null;
+            return undefined;
         }
 
         const errors = inputsMetaData.value
             .filter((it) => it.id === id && it.errors && it.errors.length > 0)
             .map(it => it.errors!.map(err => err.message).join("\n"));
 
-        return errors.length > 0 ? errors[0] : null;
+        return errors.length > 0 ? errors[0] : undefined;
     }
 
     function updateDefaults(): void {

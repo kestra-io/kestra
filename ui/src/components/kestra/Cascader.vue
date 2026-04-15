@@ -34,7 +34,7 @@
         children?: Options[];
     }
 
-    defineProps<{ options: Options; execution: any }>();
+    defineProps<{ options: Options[]; execution: any }>();
         
     const panelRef = ref<any>(null);
 

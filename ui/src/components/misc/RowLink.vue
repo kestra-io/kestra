@@ -19,7 +19,7 @@
     interface Props {
         icon?: string;
         text: string;
-        icons?: Record<string, string>;
+        icons?: Record<string, {icon: string; flowable: boolean}>;
         clickable?: boolean;
     }
 

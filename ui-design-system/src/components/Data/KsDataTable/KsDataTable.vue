@@ -74,7 +74,6 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-         
         data?: any[]
         total?: number
         currentPage?: number
@@ -82,13 +81,10 @@
         loading?: boolean
         selectable?: boolean
         showSelection?: boolean
-         
         rowKey?: string | ((row: any) => string)
         noDataText?: string
         pageSizeOptions?: number[]
-         
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
-         
         selectionMapper?: (element: any) => any
     }>(), {
         data: () => [],
@@ -106,13 +102,9 @@
     })
 
     const emit = defineEmits<{
-         
         "page-changed": [payload: {page: number; size: number}]
-         
         "sort-change": [sort: {column: any; prop: string; order: string | null}]
-         
         "selection-change": [selection: any[]]
-         
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
     }>()
@@ -135,10 +127,8 @@
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
     const queryBulkAction = ref(false)
-     
     const mappedSelection = ref<any[]>([])
 
-     
     const selectionChanged = (rawSelection: any[]) => {
         hasSelection.value = rawSelection.length > 0
 
@@ -152,7 +142,6 @@
         emit("selection-change", rawSelection)
     }
 
-     
     const onSelect = async (selection: any[], row: any) => {
         const data = props.data ?? []
         const currentIndex = data.indexOf(row)
@@ -191,14 +180,13 @@
         queryBulkAction.value = false
     }
 
-     
     const setSelection = (selection: any[]) => {
         tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
             const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
                 const row = props.data.find(r => isFunction
-                     
+
                     ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
                     : r[props.rowKey as string] === sel[props.rowKey as string])
                 if (row) tableRef.value?.toggleRowSelection(row, true)
@@ -207,7 +195,6 @@
         selectionChanged(selection)
     }
 
-     
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         tableRef.value?.toggleRowExpansion(row, expand)
     }
@@ -277,7 +264,7 @@
             const validSelection = currentSelection.filter((sel: unknown) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
-                     
+
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
                     : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
             })
@@ -308,7 +295,6 @@
         callLoad()
     }
 
-     
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
         if (sort.prop && sort.order) {
             internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
@@ -365,7 +351,7 @@
             }
         }
 
-        :deep(.kel-table__empty-text) {
+        .kel-table__empty-text {
             @media (max-width: 500px) {
                 overflow: hidden;
                 text-overflow: ellipsis;

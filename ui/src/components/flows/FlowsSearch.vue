@@ -6,7 +6,7 @@
                 ref="dataTable"
                 :loadData="loadData"
                 @ready="ready = true"
-                @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 striped
                 hover
                 :total="flowStore.total"
@@ -97,7 +97,7 @@
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        const params = {page, size, ...filters};
+        const params: {page: number; size: number; [key: string]: any} = {page, size, ...filters};
         await flowStore.searchFlows(params).finally(() => {
             if (!params.q) {
                 flowStore.total = 0;

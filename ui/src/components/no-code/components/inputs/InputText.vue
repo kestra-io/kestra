@@ -4,7 +4,8 @@
     <div class="wrapper" :class="[props.margin, props.class]">
         <ks-input
             ref="elInputRef"
-            v-model="input"
+            :modelValue="(input as string | number | undefined)"
+            @update:modelValue="input = $event"
             :id="uid"
             :placeholder
             :disabled
@@ -46,7 +47,7 @@
 
     defineExpose({
         focus: () => {
-            elInputRef.value?.focus();
+            (elInputRef.value as any)?.focus();
         }
     });
 </script>

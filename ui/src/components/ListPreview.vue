@@ -29,7 +29,7 @@
         <ks-pagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :size="pageSize"
+            :size="(pageSize as any)"
             :page="currentPage"
             @page-changed="onPageChanged"
         />

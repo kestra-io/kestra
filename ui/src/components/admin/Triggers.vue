@@ -13,8 +13,8 @@
                 :loadData="loadData"
                 :data="triggersMerged"
                 :total="total"
-                @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-                @sort-change="({prop, order}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
                 @ready="ready = true"
                 :defaultSort="{prop: 'flowId', order: 'ascending'}"
                 expandable
@@ -29,7 +29,7 @@
                         @update-properties="updateDisplayColumns"
                         :tableOptions="{
                             chart: {shown: false},
-                            refresh: {shown: true, callback: () => dataTable.value?.reload()}
+                            refresh: {shown: true, callback: () => dataTable?.reload()}
                         }"
                         :properties="{
                             displayColumns,
@@ -236,7 +236,7 @@
                         >
                             <ks-switch
                                 :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
-                                @change="setDisabled(scope.row, $event)"
+                                @change="setDisabled(scope.row, $event as boolean)"
                                 inlinePrompt
                                 class="switch-text"
                                 :disabled="scope.row.codeDisabled"
@@ -527,12 +527,12 @@
         return hasLogsContent(row) ? "expandable" : "no-expand";
     };
 
-    const disabledStartDate = (time: Date) => {
-        return new Date() < time || (backfill.value.end && time > backfill.value.end);
+    const disabledStartDate = (time: Date): boolean => {
+        return new Date() < time || !!(backfill.value.end && time > backfill.value.end);
     };
 
-    const disabledEndDate = (time: Date) => {
-        return new Date() < time || (backfill.value.start && backfill.value.start > time);
+    const disabledEndDate = (time: Date): boolean => {
+        return new Date() < time || !!(backfill.value.start && backfill.value.start > time);
     };
 
     const triggerLoadDataAfterBulkEditAction = () => {

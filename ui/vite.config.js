@@ -5,7 +5,6 @@ import vue from "@vitejs/plugin-vue";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-const MDC_STUB = path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js");
 const NUXTJS_MDC_STUB = path.resolve(__dirname, "plugins/stub-nuxtjs-mdc.js");
 
 export default defineConfig(({mode}) => {

@@ -98,7 +98,7 @@
             draggable
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
-            :props="{class: nodeClass, isLeaf: 'leaf'}"
+            :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
             @node-drag-start="
                 nodeBeforeDrag = {

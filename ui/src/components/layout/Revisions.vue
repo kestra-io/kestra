@@ -4,7 +4,7 @@
             <ks-select v-model="sideBySide" class="mb-3 display-select">
                 <ks-option
                     v-for="item in displayTypes"
-                    :key="item.value"
+                    :key="String(item.value)"
                     :label="item.text"
                     :value="item.value"
                 />

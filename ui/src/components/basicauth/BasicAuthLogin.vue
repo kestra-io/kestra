@@ -143,10 +143,10 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}]
     }))
 
-    const getFieldError = (fieldName: string) => {
-        if (!form.value) return null
+    const getFieldError = (fieldName: string): string | undefined => {
+        if (!form.value) return undefined
         const field = form.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : null
+        return field?.validateState === "error" ? field.validateMessage : undefined
     }
 
     const redirectPath = computed(() => route.query.from as string | undefined)

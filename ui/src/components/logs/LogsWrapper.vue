@@ -6,7 +6,7 @@
                 ref="dataTable"
                 :loadData="loadData"
                 @ready="ready = true"
-                @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 :total="logsStore.total"
             >
                 <template #navbar v-if="!embed || showFilters">

@@ -94,7 +94,7 @@
     });
 
     const totalValue = computed(() => {
-        const total = pieData.value.reduce((acc, item) => acc + item.value, 0);
+        const total = pieData.value.reduce((acc, item) => acc + Number(item.value), 0);
         return isDuration ? Utils.humanDuration(total) : String(total);
     });
 

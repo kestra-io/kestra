@@ -1,5 +1,5 @@
 <template>
-    <ks-collapse accordion v-model="openedDocs" :key="openedDocs">
+    <ks-collapse accordion v-model="openedDocs" :key="openedDocs.join(',')">
         <template
             :key="child.title"
             v-for="child in filteredChildren"

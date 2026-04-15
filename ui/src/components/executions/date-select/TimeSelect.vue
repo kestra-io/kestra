@@ -72,17 +72,19 @@
         return props.allowCustom ? t("datepicker.custom") : undefined;
     });
 
-    const onTimeRangeSelect = (range: string | undefined) => {
-        timeRangeSelect.value = range;
-        onTimeRangeChange(range);
+    const onTimeRangeSelect = (range: string | number | undefined) => {
+        const strRange = range !== undefined ? String(range) : undefined;
+        timeRangeSelect.value = strRange;
+        onTimeRangeChange(strRange);
     };
 
     const emit = defineEmits<{
         (e: "update:modelValue", payload: { timeRange: string | undefined }): void;
     }>();
 
-    const onTimeRangeChange = (range: string | undefined) => {
-        emit("update:modelValue", {timeRange: range});
+    const onTimeRangeChange = (range: string | number | undefined) => {
+        const strRange = range !== undefined ? String(range) : undefined;
+        emit("update:modelValue", {timeRange: strRange});
     };
 
     // Watcher

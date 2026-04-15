@@ -79,7 +79,7 @@
     const plugin = ref<any>({});
     const groupedElements = ref<Record<string, Record<string, string[]>>>({});
     const elementsData = ref<Record<string, string[]>>({});
-    const icons = ref<Record<string, string>>({});
+    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({});
     const subgroupTitles = ref<Record<string, string>>({});
 
     const isSubgroupView = computed(() => !!props.subgroup);

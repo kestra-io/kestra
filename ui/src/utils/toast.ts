@@ -17,7 +17,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     size: "small",
                 },
                 [
-                    h(KsTableColumn, {label: "Message", formatter: (row) => { return h("span",{innerHTML:row.message})}})
+                    h(KsTableColumn, {label: "Message", formatter: (row: any) => { return h("span",{innerHTML:row.message})}})
                 ]
             )
         } else {

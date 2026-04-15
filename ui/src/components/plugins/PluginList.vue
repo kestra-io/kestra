@@ -102,7 +102,7 @@
     const currentGroup = ref<string>("");
     const currentSubgroup = ref<string>();
     const searchQuery = ref<string>("");
-    const icons = ref<Record<string, string>>({});
+    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({});
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
     const currentView = ref<"list" | "group" | "documentation">("documentation");

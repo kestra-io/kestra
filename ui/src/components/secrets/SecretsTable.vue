@@ -7,8 +7,8 @@
             :total="total"
             :defaultSort="{prop: 'key', order: 'ascending'}"
             :selectable="false"
-            @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-            @sort-change="({prop, order}: {prop: string; order: string}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
             class="fill-height"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
@@ -18,7 +18,7 @@
                     :configuration="secretsFilter"
                     :tableOptions="{
                         chart: {shown: false},
-                        refresh: {shown: true, callback: () => dataTable.value?.reload()}
+                        refresh: {shown: true, callback: () => dataTable?.reload()}
                     }"
                     :prefix="'secrets'"
                     :buttons="{savedFilters: {shown: !namespace}}"

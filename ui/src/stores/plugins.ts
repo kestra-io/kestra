@@ -41,14 +41,19 @@ export function removeRefPrefix(ref?: string): string {
     return ref?.replace(/^#\/definitions\//, "") ?? "";
 }
 
+interface PluginIconData {
+    icon: string;
+    flowable: boolean;
+}
+
 function usePluginsIcons() {
     const apiStore = useApiStore();
 
     const iconsLoaded = ref(false)
 
-    const apiIcons = ref<Record<string, string>>({});
-    const pluginsIcons = ref<Record<string, string>>({});
-    const _iconsPromise = ref<Promise<Record<string, string>>>();
+    const apiIcons = ref<Record<string, PluginIconData>>({});
+    const pluginsIcons = ref<Record<string, PluginIconData>>({});
+    const _iconsPromise = ref<Promise<Record<string, PluginIconData>>>();
     const axios = useAxios();
 
     const icons = computed(() => {

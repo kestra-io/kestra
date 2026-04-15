@@ -139,7 +139,7 @@
 
         return `\`\`\`yaml\n${resolvedSnippet}\n\`\`\``;
     });
-    const snippetCopyEnabled = computed(() => currentStep.value?.snippetCopyEnabled ?? true);
+
     const nextLabel = computed(() => {
         if (isFinishStep.value) {
             return t("onboarding.actions.finish_tutorial");

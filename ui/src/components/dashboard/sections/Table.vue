@@ -14,7 +14,7 @@
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
-                :width="value.field === 'STATE' ? 140 : null"
+                :width="value.field === 'STATE' ? 140 : undefined"
             >
                 <template #default="scope">
                     <template v-if="resolvedComponent(value.field) === undefined">

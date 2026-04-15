@@ -5,8 +5,8 @@
         :data="kvs"
         :total="total"
         :defaultSort="{prop: 'key', order: 'ascending'}"
-        @page-changed="({page, size}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-        @sort-change="({prop, order}: {prop: string; order: string}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+        @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+        @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
         :showSelection="!paneView"
@@ -18,7 +18,7 @@
                 :tableOptions="{
                     chart: {shown: false},
                     columns: {shown: true},
-                    refresh: {shown: true, callback: () => dataTable.value?.reload()}
+                    refresh: {shown: true, callback: () => dataTable?.reload()}
                 }"
                 prefix="kv"
                 :buttons="{savedFilters: {shown: !namespace}}"
@@ -429,7 +429,8 @@
     });
 
     const selection = computed(() => dataTable.value?.selection ?? []);
-    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
+    // queryBulkAction: reserved for future bulk action support
+    // const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
 
 

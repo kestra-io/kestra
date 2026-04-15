@@ -26,7 +26,14 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "override/*": ["./src/override/*"],
-      "kestra-api/*": ["./src/generated/kestra-api/*"]
+      "kestra-api/*": ["./src/generated/kestra-api/*"],
+      "vue": ["./node_modules/vue/dist/vue.d.ts"],
+      "@vue/runtime-core": ["./node_modules/@vue/runtime-core/dist/runtime-core.d.ts"],
+      "@vue/runtime-dom": ["./node_modules/@vue/runtime-dom/dist/runtime-dom.d.ts"],
+      "@vue/reactivity": ["./node_modules/@vue/reactivity/dist/reactivity.d.ts"],
+      "@vue/compiler-dom": ["./node_modules/@vue/compiler-dom/dist/compiler-dom.d.ts"],
+      "@kestra-io/ui-design-system": ["../ui-design-system/src/index.ts"],
+      "@kestra-io/ui-design-system/*": ["../ui-design-system/*"]
     }
   },
   "include": [

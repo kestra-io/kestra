@@ -40,8 +40,8 @@
             :loadData="loadData"
             :data="executionsStore.executions"
             :total="executionsStore.total"
-            @page-changed="({page, size}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
-            @sort-change="({prop, order}: {prop: string; order: string}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
+            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
@@ -391,7 +391,7 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsId} from "@kestra-io/ui-design-system";
     import {State} from "@kestra-io/ui-design-system";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
     import Labels from "../layout/Labels.vue";
@@ -590,7 +590,7 @@
     };
 
     const ready = ref(false);
-    const dataTable = useTemplateRef("dataTable");
+    const dataTable = useTemplateRef<any>("dataTable");
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         lastRefreshDate.value = new Date();
@@ -873,7 +873,7 @@
             "bulkChangeExecutionStatus",
             "executions state changed"
         );
-        window.setTimeout(() => loadData(), 100);
+        window.setTimeout(() => dataTable.value?.reload(), 100);
     };
 
     const changeStatusToast = () => {

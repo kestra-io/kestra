@@ -442,7 +442,7 @@
                         cls: completionValue,
                         "only-icon": true,
                         icons: pluginsStore.icons,
-                    }));
+                    } as any));
                 }
             } else if (STATES[completionValue] !== undefined) {
                 replaceRowIcon(vsCodeIcon, h(STATES[completionValue].icon));

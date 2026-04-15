@@ -8,14 +8,14 @@
             <ks-input
                 class="form-control me-2"
                 :placeholder="$t('key')"
-                v-model="label.key"
+                :modelValue="(label.key as string | undefined)"
                 :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
             <ks-input
                 class="form-control me-2"
                 :placeholder="$t('value')"
-                v-model="label.value"
+                :modelValue="(label.value as string | undefined)"
                 @update:model-value="update(index, $event, 'value')"
             />
         </div>
@@ -63,8 +63,8 @@
         emit("update:labels", locals.value);
     };
 
-    const update = (index: number, value: string | null, prop: keyof Label) => {
-        locals.value[index][prop] = value;
+    const update = (index: number, value: string | number, prop: keyof Label) => {
+        locals.value[index][prop] = value !== "" ? String(value) : null;
         emit("update:labels", locals.value);
     };
 

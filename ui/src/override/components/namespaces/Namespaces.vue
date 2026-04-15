@@ -38,7 +38,7 @@
             <ks-tree
                 :data="[namespace]"
                 defaultExpandAll
-                :props="{class: 'tree'}"
+                :props="({class: 'tree'} as any)"
                 class="h-auto p-2 rounded-full"
             >
                 <template #default="{data}">

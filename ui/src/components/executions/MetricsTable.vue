@@ -110,7 +110,7 @@
 
     const dataTable = useTemplateRef("dataTable");
 
-    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+    const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
         let params: Record<string, any> = {};
 
         if (props.taskRunId) {

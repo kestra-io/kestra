@@ -170,7 +170,7 @@
         searchText.value = query;
     };
 
-    const onPageChanged = (page: number) => {
+    const onPageChanged = ({page}: {page: number; size: number}) => {
         router.push({query: {...route.query, page}});
     };
 

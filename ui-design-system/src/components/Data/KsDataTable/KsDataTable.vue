@@ -12,7 +12,7 @@
             </template>
 
             <template v-else>
-                <div ref="container" class="ks-data-table-content" @click.capture="(e) => isShiftPressed = (e as MouseEvent).shiftKey">
+                <div ref="container" class="ks-data-table-content" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                     <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                         <KsBulkSelect
                             :selectAll="queryBulkAction"

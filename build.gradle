@@ -37,7 +37,7 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.0" apply false
+    id "org.owasp.dependencycheck" version "12.2.1" apply false
 
     // Formatting
     id "io.kestra.gradle.spotless-conventions" version "1.0.4"

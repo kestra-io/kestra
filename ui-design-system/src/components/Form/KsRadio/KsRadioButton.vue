@@ -1,3 +1,14 @@
+<template>
+    <ElRadioButton
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElRadioButton>
+</template>
+
 <script setup lang="ts">
     import {ElRadioButton, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -15,7 +26,7 @@
     const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         change: [value: any]
     }>()
 
@@ -23,15 +34,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-radio-button
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-radio-button>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

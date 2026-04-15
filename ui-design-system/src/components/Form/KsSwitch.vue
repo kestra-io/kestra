@@ -1,3 +1,11 @@
+<template>
+    <ElSwitch
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    />
+</template>
+
 <script setup lang="ts">
     import {ElSwitch, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -11,9 +19,9 @@
         disabled?: boolean
         activeText?: string
         inactiveText?: string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         activeActionIcon?: any
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         inactiveActionIcon?: any
         size?: "large" | "default" | "small"
         activeValue?: boolean | string | number
@@ -30,14 +38,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-switch
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    />
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

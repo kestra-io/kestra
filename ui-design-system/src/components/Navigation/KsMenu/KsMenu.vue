@@ -1,3 +1,14 @@
+<template>
+    <ElMenu
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @select="(index, indexPath) => emit('select', index, indexPath)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElMenu>
+</template>
+
 <script setup lang="ts">
     import {ElMenu, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -26,15 +37,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-menu
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @select="(index, indexPath) => emit('select', index, indexPath)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-menu>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

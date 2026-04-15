@@ -1,3 +1,17 @@
+<template>
+    <ElFormItem v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.label" #label>
+            <slot name="label" />
+        </template>
+        <template v-if="$slots.error" #error="p">
+            <slot name="error" v-bind="p" />
+        </template>
+    </ElFormItem>
+</template>
+
 <script setup lang="ts">
     import {ElFormItem, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -9,7 +23,7 @@
     const props = withDefaults(defineProps<{
         label?: string
         prop?: string | string[]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         rules?: any | any[]
         required?: boolean
         labelWidth?: string | number
@@ -27,14 +41,6 @@
         error?: (scope: {error: string}) => unknown
     }>()
 </script>
-
-<template>
-    <el-form-item v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.label" #label><slot name="label" /></template>
-        <template v-if="$slots.error" #error="p"><slot name="error" v-bind="p" /></template>
-    </el-form-item>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

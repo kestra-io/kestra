@@ -18,7 +18,7 @@ describe("KsForm", () => {
         const wrapper = mount(KsForm, {
             props: {model: {}},
             slots: {
-                default: `<ks-form-item label="Name"><input /></ks-form-item>`,
+                default: "<ks-form-item label=\"Name\"><input /></ks-form-item>",
             },
             global: globalConfig,
         })

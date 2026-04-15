@@ -1,3 +1,14 @@
+<template>
+    <ElCheckTag
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElCheckTag>
+</template>
+
 <script setup lang="ts">
     import {ElCheckTag, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -21,15 +32,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-check-tag
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-check-tag>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

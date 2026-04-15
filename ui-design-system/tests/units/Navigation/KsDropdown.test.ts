@@ -22,10 +22,10 @@ describe("KsDropdown", () => {
         const wrapper = mount(KsDropdown, {
             slots: {
                 default: "<button>Actions</button>",
-                dropdown: {
+                dropdown: defineComponent({
                     components: {KsDropdownMenu, KsDropdownItem},
-                    template: `<ks-dropdown-menu><ks-dropdown-item command="edit">Edit</ks-dropdown-item></ks-dropdown-menu>`,
-                },
+                    template: "<ks-dropdown-menu><ks-dropdown-item command=\"edit\">Edit</ks-dropdown-item></ks-dropdown-menu>",
+                }),
             },
             global: globalConfig,
         })
@@ -35,14 +35,14 @@ describe("KsDropdown", () => {
 
 describe("KsDropdownItem", () => {
     test("renders with command prop", () => {
-        const wrapper = mount(wrapInDropdown(`<ks-dropdown-item command="edit">Edit</ks-dropdown-item>`), {
+        const wrapper = mount(wrapInDropdown("<ks-dropdown-item command=\"edit\">Edit</ks-dropdown-item>"), {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()
     })
 
     test("disabled prop is accepted", () => {
-        const wrapper = mount(wrapInDropdown(`<ks-dropdown-item command="delete" :disabled="true">Delete</ks-dropdown-item>`), {
+        const wrapper = mount(wrapInDropdown("<ks-dropdown-item command=\"delete\" :disabled=\"true\">Delete</ks-dropdown-item>"), {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()
@@ -51,7 +51,7 @@ describe("KsDropdownItem", () => {
 
 describe("KsDropdownMenu", () => {
     test("renders default slot", () => {
-        const wrapper = mount(wrapInDropdown(`<li>Item</li>`), {
+        const wrapper = mount(wrapInDropdown("<li>Item</li>"), {
             global: globalConfig,
         })
         expect(wrapper).toBeTruthy()

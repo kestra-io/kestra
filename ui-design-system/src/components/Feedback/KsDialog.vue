@@ -1,3 +1,21 @@
+<template>
+    <ElDialog
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @close="emit('close')"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.header" #header>
+            <slot name="header" />
+        </template>
+        <template v-if="$slots.footer" #footer>
+            <slot name="footer" />
+        </template>
+    </ElDialog>
+</template>
+
 <script setup lang="ts">
     import {ElDialog, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -37,18 +55,6 @@
         footer?(): unknown
     }>()
 </script>
-
-<template>
-    <el-dialog
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @close="emit('close')"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.header" #header><slot name="header" /></template>
-        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
-    </el-dialog>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

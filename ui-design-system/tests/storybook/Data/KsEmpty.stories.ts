@@ -16,7 +16,7 @@ type Story = StoryObj<typeof KsEmpty>
 export const Default: Story = {
     render: () => ({
         components: {KsEmpty},
-        template: `<div style="padding:24px"><ks-empty /></div>`,
+        template: "<div style=\"padding:24px\"><ks-empty /></div>",
     }),
 }
 

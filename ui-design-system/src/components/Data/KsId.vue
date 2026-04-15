@@ -1,19 +1,19 @@
 <template>
-    <ks-tooltip v-if="hasTooltip" placement="top">
+    <KsTooltip v-if="hasTooltip" placement="top">
         <template #content>
             <code>{{ value }}</code>
         </template>
         <code :id="uid" @click="emit('click')" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}">
             {{ transformValue }}
         </code>
-    </ks-tooltip>
+    </KsTooltip>
     <code v-else :id="uid" class="ks-id text-nowrap" :class="{'ks-id--clickable': hasClickListener}" @click="emit('click')">
         {{ transformValue }}
     </code>
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs, useId, getCurrentInstance} from "vue"
+    import {computed, useId, getCurrentInstance} from "vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
 
     const props = withDefaults(defineProps<{
@@ -27,8 +27,6 @@
     const emit = defineEmits<{
         click: []
     }>()
-
-    const attrs = useAttrs()
 
     const size = computed(() => props.size ?? 8)
 

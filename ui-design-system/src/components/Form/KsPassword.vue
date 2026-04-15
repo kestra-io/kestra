@@ -1,3 +1,27 @@
+<template>
+    <div class="ks-password w-100">
+        <ks-input
+            :class="hidden || disabled ? 'ks-password--masked' : ''"
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            @update:model-value="emit('update:modelValue', $event)"
+            @change="emit('change', $event)"
+            autosize
+            type="textarea"
+        >
+            <template v-if="$slots.prepend" #prepend>
+                <slot name="prepend" />
+            </template>
+            <template v-if="$slots.suffix" #suffix>
+                <slot name="suffix" />
+            </template>
+            <template v-if="$slots.default" #default>
+                <slot />
+            </template>
+        </ks-input>
+        <ks-button class="hide" link v-if="!disabled && modelValue" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+    </div>
+</template>
+
 <script setup lang="ts">
     import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -12,7 +36,7 @@
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         suffixIcon?: any
         clearable?: boolean
         size?: "large" | "default" | "small"
@@ -22,7 +46,7 @@
         rows?: number
     }>()
 
-    const filteredProps = useFilteredProps(props, ['autosize', 'type'])
+    const filteredProps = useFilteredProps(props, ["type"])
 
     const hidden = ref(true)
 
@@ -45,27 +69,9 @@
     
     const toggle = () => {
         hidden.value = !hidden.value;
-        emit('change', props.modelValue);
+        emit("change", props.modelValue ?? "");
     }
 </script>
-
-<template>
-    <div class="ks-password w-100">
-        <ks-input
-            :class="hidden || disabled ? 'ks-password--masked' : ''"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
-            @update:model-value="emit('update:modelValue', $event)"
-            @change="emit('change', $event)"
-            autosize
-            type="textarea"
-        >
-            <template v-if="$slots.prepend" #prepend><slot name="prepend" /></template>
-            <template v-if="$slots.suffix" #suffix><slot name="suffix" /></template>
-            <template v-if="$slots.default" #default><slot /></template>
-        </ks-input>
-        <ks-button class="hide" link v-if="!disabled && modelValue" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
-    </div>
-</template>
 
 <style scoped lang="scss">
     @font-face {

@@ -21,7 +21,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsLink},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-link v-bind="args">Click me</ks-link></div>`,
+        template: "<div style=\"padding:24px\"><ks-link v-bind=\"args\">Click me</ks-link></div>",
     }),
     args: {type: "primary", href: "#"},
 }

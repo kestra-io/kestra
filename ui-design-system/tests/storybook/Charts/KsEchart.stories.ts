@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {use} from "echarts/core"
 import {BarChart, LineChart} from "echarts/charts"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
+import {TooltipType} from "../../../src/components/Charts/ksChartUtils"
 
 use([BarChart, LineChart])
 
@@ -54,9 +55,9 @@ export const Default: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:320px"><ks-echart v-bind="{...args, options}" /></div>`,
+        template: "<div style=\"padding:24px;height:320px\"><ks-echart v-bind=\"{...args, options}\" /></div>",
     }),
-    args: {loading: false, tooltipType: "native"},
+    args: {loading: false, tooltipType: TooltipType.NATIVE},
 }
 
 // ─── Bar chart ────────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ export const SimpleBarChart: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:320px"><ks-echart :options="options" /></div>`,
+        template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" /></div>",
     }),
 }
 
@@ -117,7 +118,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:320px"><ks-echart :options="options" tooltip-type="external" /></div>`,
+        template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" tooltip-type=\"external\" /></div>",
     }),
     parameters: {
         docs: {
@@ -172,7 +173,7 @@ export const TripleYAxis: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:360px"><ks-echart :options="options" /></div>`,
+        template: "<div style=\"padding:24px;height:360px\"><ks-echart :options=\"options\" /></div>",
     }),
     parameters: {
         docs: {
@@ -237,7 +238,7 @@ export const Loading: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:280px"><ks-echart :options="options" :loading="true" /></div>`,
+        template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" :loading=\"true\" /></div>",
     }),
 }
 
@@ -292,6 +293,6 @@ export const SvgRenderer: Story = {
                 },
             }
         },
-        template: `<div style="padding:24px;height:280px"><ks-echart :options="options" renderer="svg" /></div>`,
+        template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" renderer=\"svg\" /></div>",
     }),
 }

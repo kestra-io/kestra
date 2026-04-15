@@ -1,3 +1,11 @@
+<template>
+    <ElAvatar v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElAvatar>
+</template>
+
 <script setup lang="ts">
     import {ElAvatar, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -21,12 +29,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-avatar v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-avatar>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

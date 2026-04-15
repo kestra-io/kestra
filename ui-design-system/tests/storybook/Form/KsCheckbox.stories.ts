@@ -77,7 +77,7 @@ export const Disabled: Story = {
     render: () => ({
         components: {KsCheckbox},
         setup() { return {value: ref(true)} },
-        template: `<div style="padding:24px"><ks-checkbox v-model="value" disabled>Disabled</ks-checkbox></div>`,
+        template: "<div style=\"padding:24px\"><ks-checkbox v-model=\"value\" disabled>Disabled</ks-checkbox></div>",
     }),
 }
 

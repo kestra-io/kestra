@@ -1,3 +1,20 @@
+<template>
+    <ElButton
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @click="emit('click', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.loading" #loading>
+            <slot name="loading" />
+        </template>
+        <template v-if="$slots.icon" #icon>
+            <slot name="icon" />
+        </template>
+    </ElButton>
+</template>
+
 <script setup lang="ts">
     import type {Component} from "vue"
     import {ElButton, provideGlobalConfig} from "element-plus"
@@ -40,17 +57,6 @@
         icon?(): unknown
     }>()
 </script>
-
-<template>
-    <el-button
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @click="emit('click', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.loading" #loading><slot name="loading" /></template>
-        <template v-if="$slots.icon" #icon><slot name="icon" /></template>
-    </el-button>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

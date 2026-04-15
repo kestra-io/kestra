@@ -1,3 +1,13 @@
+<template>
+    <ElDropdownMenu
+        v-bind="({...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElDropdownMenu>
+</template>
+
 <script setup lang="ts">
     import {ElDropdownMenu, provideGlobalConfig} from "element-plus"
 
@@ -9,14 +19,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-dropdown-menu
-        v-bind="({...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-dropdown-menu>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

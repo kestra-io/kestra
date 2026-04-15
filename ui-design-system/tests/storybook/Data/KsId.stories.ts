@@ -21,7 +21,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsId},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-id v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-id v-bind=\"args\" /></div>",
     }),
     args: {value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"},
 }

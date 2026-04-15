@@ -5,7 +5,7 @@ import KsIconButton from "../../../src/components/Basic/KsIconButton/KsIconButto
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
-const StarIcon = {template: `<svg data-testid="star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`}
+const StarIcon = {template: "<svg data-testid=\"star-icon\" viewBox=\"0 0 24 24\"><path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z\"/></svg>"}
 
 describe("KsIconButton", () => {
     test("renders a button with ks-icon-button class", () => {
@@ -18,7 +18,7 @@ describe("KsIconButton", () => {
 
     test("renders slot content", () => {
         const wrapper = mount(KsIconButton, {
-            slots: {default: `<span data-testid="icon">★</span>`},
+            slots: {default: "<span data-testid=\"icon\">★</span>"},
             global: globalConfig,
         })
         expect(wrapper.find("[data-testid=icon]").exists()).toBe(true)

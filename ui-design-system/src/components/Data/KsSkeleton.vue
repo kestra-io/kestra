@@ -1,3 +1,14 @@
+<template>
+    <ElSkeleton v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.template" #template>
+            <slot name="template" />
+        </template>
+    </ElSkeleton>
+</template>
+
 <script setup lang="ts">
     import {ElSkeleton, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -24,13 +35,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-skeleton v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.template" #template><slot name="template" /></template>
-    </el-skeleton>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

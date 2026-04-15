@@ -1,3 +1,11 @@
+<template>
+    <ElForm ref="formRef" v-bind="({...filteredProps(), ...$attrs} as any)" @submit="emit('submit', $event)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElForm>
+</template>
+
 <script setup lang="ts">
     import {ref} from "vue"
     import {ElForm, provideGlobalConfig} from "element-plus"
@@ -31,21 +39,15 @@
 
     defineExpose({
         validate: (...args: Parameters<NonNullable<InstanceType<typeof ElForm>>["validate"]>) => formRef.value?.validate(...args),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         resetFields: (...args: any[]) => formRef.value?.resetFields(...args),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         clearValidate: (...args: any[]) => formRef.value?.clearValidate(...args),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         validateField: (...args: any[]) => formRef.value?.validateField(...args),
         scrollToField: (prop: string) => formRef.value?.scrollToField(prop),
     })
 </script>
-
-<template>
-    <el-form ref="formRef" v-bind="({...filteredProps(), ...$attrs} as any)" @submit="emit('submit', $event)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-form>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

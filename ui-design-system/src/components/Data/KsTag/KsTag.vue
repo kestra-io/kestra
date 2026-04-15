@@ -1,3 +1,20 @@
+<template>
+    <ElTag
+        disableTransitions
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @close="emit('close')"
+    >
+        <template #default>
+            <ks-icon v-if="icon || $slots.icon">
+                <component :is="icon" v-if="icon" />
+                <slot v-else name="icon" />
+            </ks-icon>
+            <span v-if="label">{{ label }}</span>
+            <span v-else-if="$slots.default"><slot /></span>
+        </template>
+    </ElTag>
+</template>
+
 <script setup lang="ts">
     import {ElTag, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -28,23 +45,6 @@
         icon?(): unknown
     }>()
 </script>
-
-<template>
-    <el-tag
-        disable-transitions
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @close="emit('close')"
-    >
-        <template #default>
-            <ks-icon v-if="icon || $slots.icon">
-                <component :is="icon" v-if="icon" />
-                <slot v-else name="icon" />
-            </ks-icon>
-            <span v-if="label">{{ label }}</span>
-            <span v-else-if="$slots.default"><slot  /></span>
-        </template>
-    </el-tag>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

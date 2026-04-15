@@ -1,3 +1,20 @@
+<template>
+    <ElTooltip
+        :persistent="false"
+        :hideAfter="0"
+        transition=""
+        :effect="effectValue"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.content" #content>
+            <slot name="content" />
+        </template>
+    </ElTooltip>
+</template>
+
 <script setup lang="ts">
     import {ElTooltip, provideGlobalConfig} from "element-plus"
     import {computed} from "vue"
@@ -18,7 +35,7 @@
         disabled?: boolean,
         autoClose?: boolean | number
     }>(), {
-        effect: "dark",
+        effect: undefined,
         enterable: undefined,
         autoClose: undefined,
     })
@@ -34,19 +51,6 @@
         content?(): unknown
     }>()
 </script>
-
-<template>
-    <el-tooltip
-        :persistent="false"
-        :hideAfter="0"
-        transition=""
-        :effect="effectValue"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.content" #content><slot name="content" /></template>
-    </el-tooltip>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

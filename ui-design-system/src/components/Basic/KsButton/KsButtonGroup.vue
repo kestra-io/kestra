@@ -1,3 +1,11 @@
+<template>
+    <ElButtonGroup v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElButtonGroup>
+</template>
+
 <script setup lang="ts">
     import {ElButtonGroup, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -17,12 +25,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-button-group v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-button-group>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

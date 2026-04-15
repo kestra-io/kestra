@@ -27,7 +27,7 @@ export function useSavedFilters(prefix: string) {
         return `saved_filters_${prefix}_${routeKey}`;
     });
 
-    const savedFilters = useStorage<SavedFilter[]>(storageKey, [], localStorage, {
+    const savedFilters = useStorage<SavedFilter[]>(storageKey.value, [], localStorage, {
         serializer: {
             read: (v: string) => JSON.parse(v).map(deserializeDates),
             write: (v: SavedFilter[]) => JSON.stringify(v)

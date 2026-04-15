@@ -1,3 +1,9 @@
+<template>
+    <div ref="containerRef" class="ks-markdown">
+        <component :is="markdownContent" />
+    </div>
+</template>
+
 <script setup lang="ts">
     import {computed, h, onMounted, onUpdated, ref, watch, type Component, type FunctionalComponent, type VNode} from "vue"
     import {unified} from "unified"
@@ -156,204 +162,204 @@
 
     function renderNode(node: any): VNode | string | null {
         switch (node.type as string) {
-            case "text":
-                return node.value as string
+        case "text":
+            return node.value as string
 
-            case "paragraph":
-                return h("p", renderNodes(node.children))
+        case "paragraph":
+            return h("p", renderNodes(node.children))
 
-            case "heading": {
-                const text = extractText(node.children as RootContent[])
-                const slug = slugify(text)
-                const tag = `h${node.depth as number}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
-                return h(tag, {id: slug, class: "ks-markdown__heading"}, [
-                    ...renderNodes(node.children),
-                    h("a", {
-                        href: `#${slug}`,
-                        class: "ks-markdown__heading-link",
-                        "aria-hidden": "true",
-                        tabindex: "-1",
-                    }, "#"),
-                ])
+        case "heading": {
+            const text = extractText(node.children as RootContent[])
+            const slug = slugify(text)
+            const tag = `h${node.depth as number}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
+            return h(tag, {id: slug, class: "ks-markdown__heading"}, [
+                ...renderNodes(node.children),
+                h("a", {
+                    href: `#${slug}`,
+                    class: "ks-markdown__heading-link",
+                    "aria-hidden": "true",
+                    tabindex: "-1",
+                }, "#"),
+            ])
+        }
+
+        case "blockquote":
+            return h("blockquote", {class: "ks-markdown__blockquote"}, renderNodes(node.children))
+
+        case "code": {
+            const lang = (node.lang ?? "") as string
+            const value = node.value as string
+
+            if (lang === "mermaid") {
+                return h("div", {class: "ks-markdown__mermaid mermaid"}, value)
             }
 
-            case "blockquote":
-                return h("blockquote", {class: "ks-markdown__blockquote"}, renderNodes(node.children))
+            const key = `${lang}::${value}`
+            const highlightedHtml = codeHighlights.value.get(key)
 
-            case "code": {
-                const lang = (node.lang ?? "") as string
-                const value = node.value as string
-
-                if (lang === "mermaid") {
-                    return h("div", {class: "ks-markdown__mermaid mermaid"}, value)
-                }
-
-                const key = `${lang}::${value}`
-                const highlightedHtml = codeHighlights.value.get(key)
-
-                return h("div", {class: "ks-markdown__code-block"}, [
-                    h("div", {class: "ks-markdown__code-header"}, [
-                        lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
-                        h("button", {
-                            class: "ks-markdown__copy-btn",
-                            type: "button",
-                            title: "Copy to clipboard",
-                            onClick: (e: MouseEvent) => {
-                                const btn = e.currentTarget as HTMLButtonElement
-                                navigator.clipboard.writeText(value).then(() => {
-                                    btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.add("opacity-100");
-                                    setTimeout(() => {
-                                        btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.remove("opacity-100");
-                                    }, 2000)
-                                }).catch(() => { /* clipboard unavailable */ })
-                            },
-                        }, [h(CheckCircleOutline, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy)]),
+            return h("div", {class: "ks-markdown__code-block"}, [
+                h("div", {class: "ks-markdown__code-header"}, [
+                    lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
+                    h("button", {
+                        class: "ks-markdown__copy-btn",
+                        type: "button",
+                        title: "Copy to clipboard",
+                        onClick: (e: MouseEvent) => {
+                            const btn = e.currentTarget as HTMLButtonElement
+                            navigator.clipboard.writeText(value).then(() => {
+                                btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.add("opacity-100");
+                                setTimeout(() => {
+                                    btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.remove("opacity-100");
+                                }, 2000)
+                            }).catch(() => { /* clipboard unavailable */ })
+                        },
+                    }, [h(CheckCircleOutline, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy)]),
+                ]),
+                highlightedHtml
+                    ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
+                    : h("pre", {class: "ks-markdown__code-plain"}, [
+                        h("code", {class: lang ? `language-${lang}` : undefined}, value),
                     ]),
-                    highlightedHtml
-                        ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
-                        : h("pre", {class: "ks-markdown__code-plain"}, [
-                            h("code", {class: lang ? `language-${lang}` : undefined}, value),
-                        ]),
-                ])
-            }
+            ])
+        }
 
-            case "inlineCode":
-                return h("code", {class: "ks-markdown__inline-code"}, node.value as string)
+        case "inlineCode":
+            return h("code", {class: "ks-markdown__inline-code"}, node.value as string)
 
-            case "list":
-                return h(node.ordered ? "ol" : "ul", {class: "ks-markdown__list"}, renderNodes(node.children))
+        case "list":
+            return h(node.ordered ? "ol" : "ul", {class: "ks-markdown__list"}, renderNodes(node.children))
 
-            case "listItem": {
-                const children = (node.children as any[]).flatMap((child: any): (VNode | string)[] => {
-                    if (child.type === "paragraph") return renderNodes(child.children)
-                    const vnode = renderNode(child)
-                    return vnode !== null ? [vnode] : []
+        case "listItem": {
+            const children = (node.children as any[]).flatMap((child: any): (VNode | string)[] => {
+                if (child.type === "paragraph") return renderNodes(child.children)
+                const vnode = renderNode(child)
+                return vnode !== null ? [vnode] : []
+            })
+            return h("li", children)
+        }
+
+        case "table": {
+            const align = node.align as (string | null)[] | null
+            const [headerRow, ...bodyRows] = node.children as any[]
+
+            // Column labels extracted from the header row
+            const headers = (headerRow.children as any[]).map((cell: any) =>
+                extractText(cell.children as RootContent[])
+            )
+
+            // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
+            const cellGrid = (bodyRows as any[]).map((row: any) =>
+                (row.children as any[]).map((cell: any) => renderNodes(cell.children))
+            )
+
+            const data = cellGrid.map((_, i) => ({_idx: i}))
+
+            const columns = headers.map((label: string, colIdx: number) => {
+                const cellAlign = align?.[colIdx] ?? null
+                return h(KsTableColumn, {
+                    label,
+                    // align is not in KsTableColumn's defineProps but is forwarded via $attrs
+                    ...(cellAlign ? {align: cellAlign} : {}),
+                } as any, {
+                    default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 })
-                return h("li", children)
-            }
+            })
 
-            case "table": {
-                const align = node.align as (string | null)[] | null
-                const [headerRow, ...bodyRows] = node.children as any[]
+            return h("div", {class: "ks-markdown__table-wrapper"}, [
+                h(KsTable, {data} as any, {default: () => columns}),
+            ])
+        }
 
-                // Column labels extracted from the header row
-                const headers = (headerRow.children as any[]).map((cell: any) =>
-                    extractText(cell.children as RootContent[])
-                )
-
-                // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
-                const cellGrid = (bodyRows as any[]).map((row: any) =>
-                    (row.children as any[]).map((cell: any) => renderNodes(cell.children))
-                )
-
-                const data = cellGrid.map((_, i) => ({_idx: i}))
-
-                const columns = headers.map((label: string, colIdx: number) => {
-                    const cellAlign = align?.[colIdx] ?? null
-                    return h(KsTableColumn, {
-                        label,
-                        // align is not in KsTableColumn's defineProps but is forwarded via $attrs
-                        ...(cellAlign ? {align: cellAlign} : {}),
-                    } as any, {
-                        default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
-                    })
-                })
-
-                return h("div", {class: "ks-markdown__table-wrapper"}, [
-                    h(KsTable, {data} as any, {default: () => columns}),
-                ])
-            }
-
-            case "link": {
-                const url = node.url as string
-                if (props.components?.a) {
-                    return h(props.components.a as any, {
-                        href: url,
-                        title: node.title ?? undefined,
-                        class: "ks-markdown__link",
-                    }, {default: () => renderNodes(node.children)})
-                }
-
-                const isExternal = url.startsWith("http://") || url.startsWith("https://")
-                return h("a", {
+        case "link": {
+            const url = node.url as string
+            if (props.components?.a) {
+                return h(props.components.a as any, {
                     href: url,
                     title: node.title ?? undefined,
-                    target: isExternal ? "_blank" : undefined,
-                    rel: isExternal ? "noopener noreferrer" : undefined,
                     class: "ks-markdown__link",
-                }, renderNodes(node.children))
+                }, {default: () => renderNodes(node.children)})
             }
 
-            case "image":
-                if (props.components?.img) {
-                    return h(props.components.img as any, {
-                        src: node.url as string,
-                        alt: (node.alt ?? "") as string,
-                    })
-                }
+            const isExternal = url.startsWith("http://") || url.startsWith("https://")
+            return h("a", {
+                href: url,
+                title: node.title ?? undefined,
+                target: isExternal ? "_blank" : undefined,
+                rel: isExternal ? "noopener noreferrer" : undefined,
+                class: "ks-markdown__link",
+            }, renderNodes(node.children))
+        }
 
-                return h("img", {
+        case "image":
+            if (props.components?.img) {
+                return h(props.components.img as any, {
                     src: node.url as string,
                     alt: (node.alt ?? "") as string,
-                    title: node.title ?? undefined,
-                    class: "ks-markdown__image",
                 })
+            }
 
-            case "strong":
-                return h("strong", renderNodes(node.children))
+            return h("img", {
+                src: node.url as string,
+                alt: (node.alt ?? "") as string,
+                title: node.title ?? undefined,
+                class: "ks-markdown__image",
+            })
 
-            case "emphasis":
-                return h("em", renderNodes(node.children))
+        case "strong":
+            return h("strong", renderNodes(node.children))
 
-            case "delete":
-                return h("del", renderNodes(node.children))
+        case "emphasis":
+            return h("em", renderNodes(node.children))
 
-            case "break":
-                return h("br")
+        case "delete":
+            return h("del", renderNodes(node.children))
 
-            case "thematicBreak":
-                return h("hr", {class: "ks-markdown__hr"})
+        case "break":
+            return h("br")
 
-            case "html": {
-                const customVNode = tryRenderCustomComponent(node.value as string)
-                if (customVNode) return customVNode
+        case "thematicBreak":
+            return h("hr", {class: "ks-markdown__hr"})
 
-                if (props.html) {
-                    if (props.xssProtection) {
-                        return h("span", {innerHTML: htmlEscape(node.value) as string, class: "ks-markdown__raw-html"})
-                    } else {
-                        return h("span", {innerHTML: node.value as string, class: "ks-markdown__raw-html"})
-                    }
+        case "html": {
+            const customVNode = tryRenderCustomComponent(node.value as string)
+            if (customVNode) return customVNode
+
+            if (props.html) {
+                if (props.xssProtection) {
+                    return h("span", {innerHTML: htmlEscape(node.value) as string, class: "ks-markdown__raw-html"})
                 } else {
-                    return h("span", {innerText: node.value, class: "ks-markdown__raw-html"})
+                    return h("span", {innerHTML: node.value as string, class: "ks-markdown__raw-html"})
                 }
+            } else {
+                return h("span", {innerText: node.value, class: "ks-markdown__raw-html"})
+            }
+        }
+
+        // remark-directive: :::name{attrs}\ncontent\n:::
+        case "containerDirective": {
+            const name = node.name as string
+            if (name === "alert") {
+                const type = (node.attributes as Record<string, string> | undefined)?.type ?? "info"
+                return h(KsAlert, {
+                    type: type as "success" | "warning" | "info" | "error",
+                    showIcon: false,
+                    class: "ks-markdown__alert",
+                }, {default: () => renderNodes(node.children)})
+            }
+            return h("div", {class: `ks-markdown__directive ks-markdown__directive--${name}`},
+                     renderNodes(node.children))
+        }
+
+        case "leafDirective":
+        case "textDirective":
+            return null
+
+        default:
+            if ("children" in node && Array.isArray(node.children)) {
+                return h("div", renderNodes(node.children as any[]))
             }
 
-            // remark-directive: :::name{attrs}\ncontent\n:::
-            case "containerDirective": {
-                const name = node.name as string
-                if (name === "alert") {
-                    const type = (node.attributes as Record<string, string> | undefined)?.type ?? "info"
-                    return h(KsAlert, {
-                        type: type as "success" | "warning" | "info" | "error",
-                        showIcon: false,
-                        class: "ks-markdown__alert",
-                    }, {default: () => renderNodes(node.children)})
-                }
-                return h("div", {class: `ks-markdown__directive ks-markdown__directive--${name}`},
-                    renderNodes(node.children))
-            }
-
-            case "leafDirective":
-            case "textDirective":
-                return null
-
-            default:
-                if ("children" in node && Array.isArray(node.children)) {
-                    return h("div", renderNodes(node.children as any[]))
-                }
-
-                return null
+            return null
         }
     }
 
@@ -436,12 +442,6 @@
     onMounted(initMermaid)
     onUpdated(initMermaid)
 </script>
-
-<template>
-    <div ref="containerRef" class="ks-markdown">
-        <component :is="markdownContent" />
-    </div>
-</template>
 
 <style lang="scss">
     // ─── Shiki light/dark theme switching ────────────────────────────────────

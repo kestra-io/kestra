@@ -22,7 +22,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsSkeleton},
         setup() { return {args} },
-        template: `<div style="padding:24px;width:300px"><ks-skeleton v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-skeleton v-bind=\"args\" /></div>",
     }),
     args: {animated: true, rows: 3},
 }

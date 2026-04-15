@@ -1,7 +1,11 @@
+<template>
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)" />
+</template>
+
 <script setup lang="ts">
     import {ElProgress, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-    import {computed, ref} from "vue";
+    import {computed} from "vue";
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -27,10 +31,6 @@
         return `${props.left ?? 0}%`;
     });
 </script>
-
-<template>
-    <el-progress v-bind="({...filteredProps(), ...$attrs} as any)" />
-</template>
 
 <style lang="scss" scoped>
     @use '../../assets/styles/el-ns';

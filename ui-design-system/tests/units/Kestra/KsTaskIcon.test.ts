@@ -1,4 +1,4 @@
-import {describe, test, expect, beforeEach, vi} from "vitest"
+import {describe, test, expect, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
 import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
@@ -6,7 +6,7 @@ import KsTaskIcon from "../../../src/components/Kestra/KsTaskIcon.vue"
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 // A simple circle SVG encoded as base64 to simulate a plugin icon
-const mockSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>'
+const mockSvg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/></svg>"
 const mockIconBase64 = btoa(mockSvg)
 
 const mockIcons = {

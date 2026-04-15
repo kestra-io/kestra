@@ -7,7 +7,7 @@ vi.mock("vue-echarts", () => ({
     default: {
         name: "VChart",
         props: ["option", "initOptions", "autoresize", "theme"],
-        template: `<div class="v-chart-stub" :data-option="JSON.stringify(option)" />`,
+        template: "<div class=\"v-chart-stub\" :data-option=\"JSON.stringify(option)\" />",
     },
 }))
 
@@ -37,7 +37,7 @@ vi.mock("../../../src/components/Feedback/KsTooltip.vue", () => ({
     default: {
         name: "KsTooltip",
         props: ["trigger", "visible", "content", "rawContent", "placement"],
-        template: `<div class="ks-tooltip-stub"><slot /></div>`,
+        template: "<div class=\"ks-tooltip-stub\"><slot /></div>",
     },
 }))
 

@@ -1,68 +1,27 @@
-<script setup lang="ts">
-    import {resolveComponent} from "vue"
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
-    import StarIcon from "vue-material-design-icons/Star.vue"
-    import Information from "vue-material-design-icons/Information.vue"
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
-    import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
-    import KsBreadcrumbItem from "../KsBreadcrumb/KsBreadcrumbItem.vue"
-    import KsButton from "../../Basic/KsButton/KsButton.vue"
-    import KsTooltip from "../../Feedback/KsTooltip.vue"
-
-    defineProps<{
-        title: string
-        description?: string
-        longDescription?: string
-        breadcrumb?: {
-            label: string
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            link?: any
-            disabled?: boolean
-        }[]
-        beta?: boolean
-        isBookmarked?: boolean
-    }>()
-
-    defineEmits<{
-        "star-click": []
-    }>()
-
-    defineSlots<{
-        "sidebar-toggle"?(): unknown
-        title?(): unknown
-        badge?(): unknown
-        description?(): unknown
-        search?(): unknown
-        "pre-action"?(): unknown
-        "more-actions"?(): unknown
-        "actions"?(): unknown
-    }>()
-
-    const RouterLink = resolveComponent("RouterLink")
-</script>
-
 <template>
     <nav class="d-flex align-items-center w-100 gap-3 ks-topnavbar">
         <slot name="sidebar-toggle" />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden ks-top-title">
             <div class="d-flex align-items-end gap-2">
                 <div class="d-flex flex-column gap-2">
-                    <ks-breadcrumb v-if="breadcrumb">
-                        <ks-breadcrumb-item
+                    <KsBreadcrumb v-if="breadcrumb">
+                        <KsBreadcrumbItem
                             v-for="(item, x) in breadcrumb"
                             :key="x"
                             :class="{'pe-none': item.disabled}"
                         >
                             <a v-if="item.disabled || !item.link">{{ item.label }}</a>
-                            <component v-else :is="RouterLink" :to="item.link">{{ item.label }}</component>
-                        </ks-breadcrumb-item>
-                    </ks-breadcrumb>
+                            <component v-else :is="RouterLink" :to="item.link">
+                                {{ item.label }}
+                            </component>
+                        </KsBreadcrumbItem>
+                    </KsBreadcrumb>
                     <h1 class="h5 fw-semibold m-0 d-inline-flex">
                         <slot name="title">
                             {{ title }}
-                            <ks-tooltip v-if="description" :content="description">
+                            <KsTooltip v-if="description" :content="description">
                                 <Information class="ms-2 icon" />
-                            </ks-tooltip>
+                            </KsTooltip>
                             <span v-if="beta" class="beta-badge">Beta</span>
                             <template v-if="$slots.badge">
                                 <span class="ks-badge">
@@ -70,7 +29,7 @@
                                 </span>
                             </template>
                         </slot>
-                        <ks-button
+                        <KsButton
                             class="icon"
                             :class="{'active': isBookmarked}"
                             :icon="isBookmarked ? StarIcon : StarOutlineIcon"
@@ -95,19 +54,61 @@
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center" v-if="$slots['more-actions']">
                 <ks-dropdown>
-                    <ks-button class="more-actions" type="default" :icon="DotsVertical"></ks-button>
+                    <KsButton class="more-actions" type="default" :icon="DotsVertical" />
                     <template #dropdown>
                         <ks-dropdown-menu>
                             <slot v-if="$slots['more-actions']" name="more-actions" />
                         </ks-dropdown-menu>
                     </template>
                 </ks-dropdown>
-
             </div>
             <slot v-if="$slots.actions" name="actions" />
         </div>
     </nav>
 </template>
+
+<script setup lang="ts">
+    import {resolveComponent} from "vue"
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
+    import StarIcon from "vue-material-design-icons/Star.vue"
+    import Information from "vue-material-design-icons/Information.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
+    import KsBreadcrumbItem from "../KsBreadcrumb/KsBreadcrumbItem.vue"
+    import KsButton from "../../Basic/KsButton/KsButton.vue"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
+
+    defineProps<{
+        title: string
+        description?: string
+        longDescription?: string
+        breadcrumb?: {
+            label: string
+             
+            link?: any
+            disabled?: boolean
+        }[]
+        beta?: boolean
+        isBookmarked?: boolean
+    }>()
+
+    defineEmits<{
+        "star-click": []
+    }>()
+
+    defineSlots<{
+        "sidebar-toggle"?(): unknown
+        title?(): unknown
+        badge?(): unknown
+        description?(): unknown
+        search?(): unknown
+        "pre-action"?(): unknown
+        "more-actions"?(): unknown
+        "actions"?(): unknown
+    }>()
+
+    const RouterLink = resolveComponent("RouterLink")
+</script>
 
 <style scoped lang="scss">
     nav {

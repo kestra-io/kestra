@@ -1,3 +1,86 @@
+<template>
+    <div class="ks-duration-picker" v-bind="$attrs">
+        <div class="ks-duration-picker__fields">
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-years">{{ $t('years') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-years"
+                    v-model="years"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-months">{{ $t('months') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-months"
+                    v-model="months"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-weeks">{{ $t('weeks') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-weeks"
+                    v-model="weeks"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-days">{{ $t('days') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-days"
+                    v-model="days"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-hours">{{ $t('hours') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-hours"
+                    v-model="hours"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-minutes">{{ $t('minutes') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-minutes"
+                    v-model="minutes"
+                    :min="0"
+                />
+            </div>
+            <div class="ks-duration-picker__field">
+                <label for="ks-duration-seconds">{{ $t('seconds') }}</label>
+                <ks-input-number
+                    size="small"
+                    controlsPosition="right"
+                    id="ks-duration-seconds"
+                    v-model="seconds"
+                    :min="0"
+                />
+            </div>
+        </div>
+        <div class="ks-duration-picker__custom">
+            <ks-text size="small" :type="durationIssue ? 'danger': ''">
+                {{ durationIssue ?? $t('input_custom_duration') }}
+            </ks-text>
+            <ks-input type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
     import {provideGlobalConfig} from "element-plus"
     import {ref, watch, onMounted} from "vue"
@@ -100,89 +183,6 @@
         updateDuration()
     })
 </script>
-
-<template>
-    <div class="ks-duration-picker" v-bind="$attrs">
-        <div class="ks-duration-picker__fields">
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-years">{{ $t('years') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-years"
-                    v-model="years"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-months">{{ $t('months') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-months"
-                    v-model="months"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-weeks">{{ $t('weeks') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-weeks"
-                    v-model="weeks"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-days">{{ $t('days') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-days"
-                    v-model="days"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-hours">{{ $t('hours') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-hours"
-                    v-model="hours"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-minutes">{{ $t('minutes') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-minutes"
-                    v-model="minutes"
-                    :min="0"
-                />
-            </div>
-            <div class="ks-duration-picker__field">
-                <label for="ks-duration-seconds">{{ $t('seconds') }}</label>
-                <ks-input-number
-                    size="small"
-                    controlsPosition="right"
-                    id="ks-duration-seconds"
-                    v-model="seconds"
-                    :min="0"
-                />
-            </div>
-        </div>
-        <div class="ks-duration-picker__custom">
-            <ks-text size="small" :type="durationIssue ? 'danger': ''">
-                {{ durationIssue ?? $t('input_custom_duration') }}
-            </ks-text>
-            <ks-input type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
-        </div>
-    </div>
-</template>
 
 <style lang="scss">
     .ks-duration-picker {

@@ -1,3 +1,16 @@
+<template>
+    <ElTabs
+        :type="type"
+        :class="{'kel-tabs--box': props.type === 'box'}"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event as string)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElTabs>
+</template>
+
 <script setup lang="ts">
     import {ElTabs, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -26,17 +39,6 @@
         return props.type == "box" ? "" : props.type;
     })
 </script>
-
-<template>
-    <el-tabs
-        :type="type"
-        :class="{'kel-tabs--box': props.type === 'box'}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-tabs>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

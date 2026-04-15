@@ -1,3 +1,11 @@
+<template>
+    <ElSplitterPanel v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElSplitterPanel>
+</template>
+
 <script setup lang="ts">
     import {ElSplitterPanel, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -22,12 +30,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-splitter-panel v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-splitter-panel>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

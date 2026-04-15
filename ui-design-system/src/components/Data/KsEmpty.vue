@@ -1,3 +1,20 @@
+<template>
+    <ElEmpty v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template #description>
+            <slot name="description">
+                <!-- eslint-disable-next-line vue/no-v-html -->
+                <span v-html="description ?? t('no_data').replaceAll('\n', '<br >')" />
+            </slot>
+        </template>
+        <template v-if="$slots.image" #image>
+            <slot name="image" />
+        </template>
+    </ElEmpty>
+</template>
+
 <script setup lang="ts">
     import {ElEmpty, provideGlobalConfig} from "element-plus"
     import {useI18n} from "vue-i18n"
@@ -31,19 +48,6 @@
         mergeLocaleMessage(lang, messages)
     }
 </script>
-
-<template>
-    <el-empty v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-        <template #description>
-            <slot name="description">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span v-html="description ?? t('no_data').replaceAll('\n', '<br >')" />
-            </slot>
-        </template>
-        <template v-if="$slots.image" #image><slot name="image" /></template>
-    </el-empty>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

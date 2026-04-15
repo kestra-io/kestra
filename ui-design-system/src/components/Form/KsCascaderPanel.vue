@@ -1,3 +1,15 @@
+<template>
+    <ElCascaderPanel
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default="scope">
+            <slot v-bind="scope" />
+        </template>
+    </ElCascaderPanel>
+</template>
+
 <script setup lang="ts">
     import {ElCascaderPanel, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -22,16 +34,6 @@
         default?: (scope: {data: any; node: any}) => unknown
     }>()
 </script>
-
-<template>
-    <el-cascader-panel
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default="scope"><slot v-bind="scope" /></template>
-    </el-cascader-panel>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

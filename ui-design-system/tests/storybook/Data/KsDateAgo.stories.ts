@@ -50,7 +50,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsDateAgo},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-date-ago v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-date-ago v-bind=\"args\" /></div>",
     }),
     args: {date: ONE_HOUR_AGO, showTooltip: true},
 }
@@ -93,6 +93,6 @@ export const CustomFormat: Story = {
 export const NoDate: Story = {
     render: () => ({
         components: {KsDateAgo},
-        template: `<div style="padding:24px"><ks-date-ago /></div>`,
+        template: "<div style=\"padding:24px\"><ks-date-ago /></div>",
     }),
 }

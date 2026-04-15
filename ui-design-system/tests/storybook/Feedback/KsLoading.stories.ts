@@ -16,14 +16,14 @@ type Story = StoryObj
 export const Default: Story = {
     render: () => ({
         directives: {KsLoading: vKsLoading},
-        template: `<div v-ks-loading="true" style="height:120px;padding:24px"><p>Content behind the overlay.</p></div>`,
+        template: "<div v-ks-loading=\"true\" style=\"height:120px;padding:24px\"><p>Content behind the overlay.</p></div>",
     }),
 }
 
 export const NotLoading: Story = {
     render: () => ({
         directives: {KsLoading: vKsLoading},
-        template: `<div v-ks-loading="false" style="padding:24px"><p>Loading is off — content is fully visible.</p></div>`,
+        template: "<div v-ks-loading=\"false\" style=\"padding:24px\"><p>Loading is off — content is fully visible.</p></div>",
     }),
 }
 

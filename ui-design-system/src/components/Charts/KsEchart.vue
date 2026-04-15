@@ -1,10 +1,10 @@
 <template>
-    <ks-tooltip
+    <KsTooltip
         v-if="tooltipType === TooltipType.EXTERNAL"
         trigger="manual"
         :visible="tooltipVisible"
         :content="tooltipContent"
-        :raw-content="true"
+        :rawContent="true"
         placement="bottom"
     >
         <div
@@ -13,18 +13,18 @@
             v-bind="$attrs"
             @mouseleave="onMouseleave"
         >
-            <v-chart
+            <VChart
                 ref="vChartRef"
                 class="ks-chart__inner"
                 :theme="currentTheme"
                 :option="effectiveOption"
-                :init-options="{renderer: renderer}"
+                :initOptions="{renderer: renderer}"
                 autoresize
                 @mouseover="emit('echarts-mouseover', $event)"
                 @mouseout="emit('echarts-mouseout', $event)"
             />
         </div>
-    </ks-tooltip>
+    </KsTooltip>
 
     <div
         v-else
@@ -32,12 +32,12 @@
         class="ks-chart-wrapper"
         v-bind="$attrs"
     >
-        <v-chart
+        <VChart
             ref="vChartRef"
             class="ks-chart__inner"
             :theme="currentTheme"
             :option="effectiveOption"
-            :init-options="{renderer: renderer}"
+            :initOptions="{renderer: renderer}"
             autoresize
             @mouseover="emit('echarts-mouseover', $event)"
             @mouseout="emit('echarts-mouseout', $event)"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted, nextTick} from "vue"
+    import {ref, computed, onMounted, onUnmounted} from "vue"
     import VChart from "vue-echarts"
     import type {ECharts} from "echarts/core"
     import {use} from "echarts/core"
@@ -176,7 +176,7 @@
     // ─── Theme builder ────────────────────────────────────────────────────────
 
     const currentTheme = computed(() => {
-        isDark.value // reactive dependency — triggers rebuild on theme change
+        void isDark.value // reactive dependency — triggers rebuild on theme change
         return KsTheme()
     })
 

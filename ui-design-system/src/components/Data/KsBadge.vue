@@ -1,3 +1,11 @@
+<template>
+    <ElBadge v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElBadge>
+</template>
+
 <script setup lang="ts">
     import {ElBadge, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -21,12 +29,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-badge v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-badge>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

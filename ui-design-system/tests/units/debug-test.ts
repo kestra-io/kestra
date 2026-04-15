@@ -1,11 +1,11 @@
-import {describe, test, expect} from "vitest"
+import {describe, test} from "vitest"
 import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "./src/index"
-import KsAutocomplete from "./src/components/Form/KsAutocomplete.vue"
-import KsTimePicker from "./src/components/Form/KsTimePicker.vue"
+import KestraDesignSystem from "../../src/index"
+import KsAutocomplete from "../../src/components/Form/KsAutocomplete.vue"
+import KsTimePicker from "../../src/components/Form/KsTimePicker.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
-const fetchSuggestions = (query: string, callback: (results: {value: string}[]) => void) => {
+const fetchSuggestions = (_query: string, callback: (results: {value: string}[]) => void) => {
     callback([{value: "alpha"}])
 }
 

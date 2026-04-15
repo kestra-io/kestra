@@ -261,7 +261,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsMarkdown},
         setup() { return {args} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown v-bind=\"args\" /></div>",
     }),
     args: {
         content: "Hello **Kestra**! This is `KsMarkdown` in action.\n\n> Try editing the `content` control above.",
@@ -273,7 +273,7 @@ export const KitchenSink: Story = {
     render: () => ({
         components: {KsMarkdown},
         setup() { return {content: KITCHEN_SINK} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }
 
@@ -282,7 +282,7 @@ export const CodeBlocks: Story = {
     render: () => ({
         components: {KsMarkdown},
         setup() { return {content: CODE_BLOCKS} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }
 
@@ -291,7 +291,7 @@ export const AlertDirectives: Story = {
     render: () => ({
         components: {KsMarkdown},
         setup() { return {content: ALERT_DIRECTIVES} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }
 
@@ -300,7 +300,7 @@ export const GFMFeatures: Story = {
     render: () => ({
         components: {KsMarkdown},
         setup() { return {content: GFM_FEATURES} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }
 
@@ -309,7 +309,7 @@ export const MermaidDiagrams: Story = {
     render: () => ({
         components: {KsMarkdown},
         setup() { return {content: MERMAID_EXAMPLE} },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }
 
@@ -347,6 +347,6 @@ export const HeadingLinks: Story = {
                 ].join("\n"),
             }
         },
-        template: `<div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>`,
+        template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
 }

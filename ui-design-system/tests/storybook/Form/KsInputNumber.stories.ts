@@ -40,7 +40,7 @@ export const WithStep: Story = {
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(0)} },
-        template: `<div style="padding:24px"><ks-input-number v-model="value" :step="5" :min="0" :max="100" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" :step=\"5\" :min=\"0\" :max=\"100\" /></div>",
     }),
 }
 
@@ -48,7 +48,7 @@ export const ControlsRight: Story = {
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(10)} },
-        template: `<div style="padding:24px"><ks-input-number v-model="value" controls-position="right" :min="0" :max="999" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" controls-position=\"right\" :min=\"0\" :max=\"999\" /></div>",
     }),
 }
 
@@ -84,6 +84,6 @@ export const Disabled: Story = {
     render: () => ({
         components: {KsInputNumber},
         setup() { return {value: ref(42)} },
-        template: `<div style="padding:24px"><ks-input-number v-model="value" disabled /></div>`,
+        template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" disabled /></div>",
     }),
 }

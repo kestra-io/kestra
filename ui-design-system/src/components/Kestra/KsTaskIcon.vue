@@ -38,7 +38,7 @@
 
     const classes = computed(() => {
         return {
-            "ks-task-icon--flowable": icon.value ? icon.value.flowable : false,
+            "ks-task-icon--flowable": icon.value && "flowable" in icon.value ? icon.value.flowable : false,
         }
     })
 

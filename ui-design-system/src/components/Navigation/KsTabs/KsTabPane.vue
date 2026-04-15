@@ -1,3 +1,16 @@
+<template>
+    <ElTabPane
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.label" #label>
+            <slot name="label" />
+        </template>
+    </ElTabPane>
+</template>
+
 <script setup lang="ts">
     import {ElTabPane, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -19,15 +32,6 @@
         label?(): unknown
     }>()
 </script>
-
-<template>
-    <el-tab-pane
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.label" #label><slot name="label" /></template>
-    </el-tab-pane>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

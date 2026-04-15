@@ -6,13 +6,13 @@ import {KsTag, KsRouterTab} from "../../../src"
 
 // Simple content components for stories
 const OverviewPanel = defineComponent({
-    template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Overview content</div>`,
+    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Overview content</div>",
 })
 const LogsPanel = defineComponent({
-    template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Logs content</div>`,
+    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Logs content</div>",
 })
 const MetricsPanel = defineComponent({
-    template: `<div style="padding:16px;background:var(--ks-background-card);border-radius:4px">Metrics content</div>`,
+    template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Metrics content</div>",
 })
 
 const baseTabs: RouterTab[] = [

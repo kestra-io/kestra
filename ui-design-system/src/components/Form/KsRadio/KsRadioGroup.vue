@@ -1,3 +1,16 @@
+<template>
+    <ElRadioGroup
+        :class="props.size ? `kel-radio-group--${props.size}` : undefined"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElRadioGroup>
+</template>
+
 <script setup lang="ts">
     import {ElRadioGroup, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -15,9 +28,9 @@
     const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "update:modelValue": [value: any]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         change: [value: any]
     }>()
 
@@ -25,17 +38,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-radio-group
-        :class="props.size ? `kel-radio-group--${props.size}` : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-radio-group>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

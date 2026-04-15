@@ -1,3 +1,16 @@
+<template>
+    <ElTableColumn
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default="scope">
+            <slot v-if="scope.$index !== -1" v-bind="scope" />
+        </template>
+        <template v-if="$slots.header" #header="scope">
+            <slot name="header" v-bind="scope" />
+        </template>
+    </ElTableColumn>
+</template>
+
 <script setup lang="ts">
     import {ElTableColumn, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -31,15 +44,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-table-column
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default="scope"><slot v-if="scope.$index !== -1" v-bind="scope" /></template>
-        <template v-if="$slots.header" #header="scope"><slot name="header" v-bind="scope" /></template>
-    </el-table-column>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

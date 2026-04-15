@@ -1,3 +1,39 @@
+<template>
+    <KsTooltip
+        v-if="tooltip"
+        :content="tooltip"
+        :rawContent="true"
+        v-bind="placement ? {placement} : {}"
+        :enterable="false"
+    >
+        <KsButton
+            v-bind="buttonAttrs"
+            class="ks-icon-button"
+            :disabled="disabled"
+            :aria-label="ariaLabel || tooltip"
+            :tag="buttonTag"
+            :to="disabled ? undefined : to"
+            :replace="replace"
+            :nativeType="nativeType"
+        >
+            <slot />
+        </KsButton>
+    </KsTooltip>
+    <KsButton
+        v-else
+        v-bind="buttonAttrs"
+        class="ks-icon-button"
+        :disabled="disabled"
+        :aria-label="ariaLabel"
+        :tag="buttonTag"
+        :to="disabled ? undefined : to"
+        :replace="replace"
+        :nativeType="nativeType"
+    >
+        <slot />
+    </KsButton>
+</template>
+
 <script setup lang="ts">
     import {computed, useAttrs} from "vue"
     import KsButton from "../KsButton/KsButton.vue"
@@ -34,42 +70,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <ks-tooltip
-        v-if="tooltip"
-        :content="tooltip"
-        :rawContent="true"
-        v-bind="placement ? {placement} : {}"
-        :enterable="false"
-    >
-        <ks-button
-            v-bind="buttonAttrs"
-            class="ks-icon-button"
-            :disabled="disabled"
-            :aria-label="ariaLabel || tooltip"
-            :tag="buttonTag"
-            :to="disabled ? undefined : to"
-            :replace="replace"
-            :nativeType="nativeType"
-        >
-            <slot />
-        </ks-button>
-    </ks-tooltip>
-    <ks-button
-        v-else
-        v-bind="buttonAttrs"
-        class="ks-icon-button"
-        :disabled="disabled"
-        :aria-label="ariaLabel"
-        :tag="buttonTag"
-        :to="disabled ? undefined : to"
-        :replace="replace"
-        :nativeType="nativeType"
-    >
-        <slot />
-    </ks-button>
-</template>
 
 <style scoped lang="scss">
     .ks-icon-button {

@@ -1,3 +1,11 @@
+<template>
+    <ElTimePicker
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    />
+</template>
+
 <script setup lang="ts">
     import {ElTimePicker, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -25,14 +33,6 @@
         change: [value: any]
     }>()
 </script>
-
-<template>
-    <el-time-picker
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    />
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

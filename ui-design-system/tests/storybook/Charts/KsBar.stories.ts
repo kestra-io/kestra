@@ -40,7 +40,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsBar},
         setup() { return {args, MONTHS} },
-        template: `<div style="padding:24px;height:300px"><ks-bar v-bind="args" :categories="MONTHS" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
@@ -79,7 +79,7 @@ export const SplitArea: Story = {
     render: (args) => ({
         components: {KsBar},
         setup() { return {args, MONTHS} },
-        template: `<div style="padding:24px;height:300px"><ks-bar v-bind="args" :categories="MONTHS" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
@@ -114,7 +114,7 @@ export const SplitArea: Story = {
 export const Loading: Story = {
     render: () => ({
         components: {KsBar},
-        template: `<div style="padding:24px;height:300px"><ks-bar :data="null" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-bar :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
@@ -191,7 +191,7 @@ export const MiniBar: Story = {
     render: (args) => ({
         components: {KsBar},
         setup() { return {args, MONTHS} },
-        template: `<div style="padding:24px;width:240px;height:80px"><ks-bar v-bind="args" :categories="MONTHS" /></div>`,
+        template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
         disableFeatures: [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE],
@@ -232,6 +232,6 @@ export const MiniLoading: Story = {
     render: () => ({
         components: {KsBar},
         setup() { return {ALL_FEATURES} },
-        template: `<div style="padding:24px;width:240px;height:80px"><ks-bar :disable-features="ALL_FEATURES" :data="null" /></div>`,
+        template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-bar :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
 }

@@ -1,3 +1,11 @@
+<template>
+    <ElInputNumber
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event, undefined)"
+    />
+</template>
+
 <script setup lang="ts">
     import {ElInputNumber, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -29,14 +37,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-input-number
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event, undefined)"
-    />
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

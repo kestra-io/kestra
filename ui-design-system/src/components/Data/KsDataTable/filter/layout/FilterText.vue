@@ -3,7 +3,7 @@
         <ks-input
             :modelValue="textValue"
             :placeholder="`Enter ${label.toLowerCase()}`"
-            @update:model-value="emits('update:textValue', $event)"
+            @update:model-value="emits('update:textValue', String($event))"
         />
     </div>
 </template>

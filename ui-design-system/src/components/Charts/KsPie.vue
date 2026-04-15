@@ -1,12 +1,12 @@
 <template>
-    <ks-echart
+    <KsEchart
         ref="ksEchartRef"
         v-bind="$attrs"
         class="ks-chart--pie"
         :options="mergedOption"
         :loading="isLoading"
-        :tooltip-type="tooltipType"
-        :disable-features="disableFeatures"
+        :tooltipType="tooltipType"
+        :disableFeatures="disableFeatures"
         :renderer="renderer"
         type="pie"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
@@ -78,10 +78,10 @@
                 {
                     type: "pie",
                     radius: props.donut ? ["40%", "70%"] : "60%",
-                    center: props.options.legend?.show == false || props.disableFeatures.includes(ChartFeature.LEGEND) ? ["50%", "50%"] : ["40%", "50%"],
+                    center: (props.options.legend as {show?: boolean})?.show == false || props.disableFeatures.includes(ChartFeature.LEGEND) ? ["50%", "50%"] : ["40%", "50%"],
                     data: (props.data ?? []) as KsChartSeriesItem[],
                     emphasis: {
-                        show: false
+                        scale: false
                     }
                 },
             ],

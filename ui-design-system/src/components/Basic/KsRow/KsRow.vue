@@ -1,3 +1,11 @@
+<template>
+    <ElRow v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElRow>
+</template>
+
 <script setup lang="ts">
     import {ElRow, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -19,12 +27,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-row v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-row>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

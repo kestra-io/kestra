@@ -1,3 +1,15 @@
+<template>
+    <ElCheckbox
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElCheckbox>
+</template>
+
 <script setup lang="ts">
     import {ElCheckbox, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -7,7 +19,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         modelValue?: boolean | string | number | any[]
         value?: boolean | string | number
         label?: string | boolean | number | object
@@ -22,9 +34,9 @@
     })
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "update:modelValue": [value: any]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         change: [value: any]
     }>()
 
@@ -34,16 +46,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-checkbox
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-checkbox>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

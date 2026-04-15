@@ -23,7 +23,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsBadge, KsButton},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-badge v-bind="args"><ks-button>Messages</ks-button></ks-badge></div>`,
+        template: "<div style=\"padding:24px\"><ks-badge v-bind=\"args\"><ks-button>Messages</ks-button></ks-badge></div>",
     }),
     args: {value: 5},
 }

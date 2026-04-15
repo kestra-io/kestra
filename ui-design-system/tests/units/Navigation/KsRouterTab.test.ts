@@ -119,7 +119,7 @@ describe("KsRouterTab", () => {
         const wrapper = mount(KsRouterTab, {
             props: {tabs: baseTabs, embedActiveTab: "logs"},
             slots: {
-                content: `<template #content="{activeTab}"><div class="slot-content">{{ activeTab.title }}</div></template>`,
+                content: "<template #content=\"{activeTab}\"><div class=\"slot-content\">{{ activeTab.title }}</div></template>",
             },
             global: globalConfig,
         })
@@ -131,7 +131,7 @@ describe("KsRouterTab", () => {
         const wrapper = mount(KsRouterTab, {
             props: {tabs: baseTabs, embedActiveTab: "overview"},
             slots: {
-                "tab-label": `<template #tab-label="{tab}"><span class="custom-label">{{ tab.name }}-custom</span></template>`,
+                "tab-label": "<template #tab-label=\"{tab}\"><span class=\"custom-label\">{{ tab.name }}-custom</span></template>",
             },
             global: globalConfig,
         })
@@ -142,7 +142,7 @@ describe("KsRouterTab", () => {
 
     test("renders activeTab.component inside the section", () => {
         const DummyComponent = markRaw(defineComponent({
-            template: `<div class="dummy-component">Dummy</div>`,
+            template: "<div class=\"dummy-component\">Dummy</div>",
         }))
         const tabs: RouterTab[] = [
             {name: "a", title: "A", component: DummyComponent},

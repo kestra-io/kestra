@@ -22,13 +22,15 @@
     "scripts": {
         "dev": "storybook dev -p 6007 --no-open",
         "build": "./node_modules/.bin/vite build",
-        "test": "npm run unit:test & npm run storybook:test & wait",
+        "test": "npm run lint:test & npm run types:test & npm run unit:test & npm run storybook:test & wait",
         "build:watch": "vite build --watch",
         "unit:test": "vitest run --config vitest.unit.config.ts",
         "unit:watch": "vitest",
         "storybook:test": "vitest run --config vitest.config.ts --project 'storybook:*'",
         "storybook:build": "storybook build",
-        "types:check": "vue-tsc --noEmit"
+        "lint:fix": "eslint --fix",
+        "lint:test": "eslint",
+        "types:test": "vue-tsc --noEmit"
     },
     "peerDependencies": {
         "@vueuse/core": ">=11.0.0",
@@ -56,6 +58,8 @@
         "xss": "^1.0.15"
     },
     "devDependencies": {
+        "element-plus": ">=2.13.5",
+        "@eslint/js": "^9.39.4",
         "@storybook/addon-a11y": "^10.3.1",
         "@storybook/addon-docs": "^10.3.1",
         "@storybook/addon-themes": "^10.3.1",
@@ -94,6 +98,10 @@
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^4.0.0",
         "vue-tsc": "^3.2.6",
-        "yaml": "^2.8.2"
+        "yaml": "^2.8.2",
+        "eslint": "^9.39.4",
+        "eslint-plugin-vue": "^9.33.0",
+        "globals": "^16.0.0",
+        "typescript-eslint": "^8.58.0"
     }
 }

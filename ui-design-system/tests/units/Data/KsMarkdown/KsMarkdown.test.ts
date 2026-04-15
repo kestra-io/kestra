@@ -89,7 +89,7 @@ describe("KsMarkdown", () => {
         })
         expect(wrapper.find(".ks-markdown__code-block").exists()).toBe(true)
         expect(wrapper.find(".ks-markdown__copy-btn").exists()).toBe(true)
-        expect(wrapper.find(".ks-markdown__copy-btn").text()).toBe("Copy")
+        expect(wrapper.find(".ks-markdown__copy-btn").attributes("title")).toBe("Copy to clipboard")
         expect(wrapper.find("pre").exists()).toBe(true)
         expect(wrapper.find("code.language-js").exists()).toBe(true)
     })

@@ -1,3 +1,31 @@
+<template>
+    <ks-tooltip
+        v-if="tooltip"
+        :content="tooltip"
+        :rawContent="true"
+        v-bind="placement ? {placement} : {}"
+        :enterable="false"
+    >
+        <ElIcon
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            @click="emit('click', $event)"
+        >
+            <template v-if="$slots.default" #default>
+                <slot />
+            </template>
+        </ElIcon>
+    </ks-tooltip>
+    <ElIcon
+        v-else
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @click="emit('click', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElIcon>
+</template>
+
 <script setup lang="ts">
     import {ElIcon, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -23,27 +51,3 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <ks-tooltip
-        v-if="tooltip"
-        :content="tooltip"
-        :rawContent="true"
-        v-bind="placement ? {placement} : {}"
-        :enterable="false"
-    >
-        <el-icon
-            v-bind="({...filteredProps(), ...$attrs} as any)"
-            @click="emit('click', $event)"
-        >
-            <template v-if="$slots.default" #default><slot /></template>
-        </el-icon>
-    </ks-tooltip>
-    <el-icon
-        v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @click="emit('click', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-icon>
-</template>

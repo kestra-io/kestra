@@ -1,3 +1,13 @@
+<template>
+    <ElBreadcrumbItem
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElBreadcrumbItem>
+</template>
+
 <script setup lang="ts">
     import {ElBreadcrumbItem, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -17,14 +27,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-breadcrumb-item
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-breadcrumb-item>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

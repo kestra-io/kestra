@@ -1,3 +1,11 @@
+<template>
+    <ElSplitter v-bind="($attrs as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElSplitter>
+</template>
+
 <script setup lang="ts">
     import {ElSplitter, provideGlobalConfig} from "element-plus"
 
@@ -9,12 +17,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-splitter v-bind="($attrs as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-splitter>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

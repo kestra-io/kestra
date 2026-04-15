@@ -1,3 +1,17 @@
+<template>
+    <ElDropdown
+        :persistent="false"
+        v-bind="({...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.dropdown" #dropdown>
+            <slot name="dropdown" />
+        </template>
+    </ElDropdown>
+</template>
+
 <script setup lang="ts">
     import {ElDropdown, provideGlobalConfig} from "element-plus"
 
@@ -10,16 +24,6 @@
         dropdown?(): unknown
     }>()
 </script>
-
-<template>
-    <el-dropdown
-        :persistent="false"
-        v-bind="({...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.dropdown" #dropdown><slot name="dropdown" /></template>
-    </el-dropdown>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

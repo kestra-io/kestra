@@ -8,7 +8,7 @@ const globalConfig = {plugins: [KestraDesignSystem]}
 describe("vKsLoading", () => {
     test("mounts without errors when loading is false", () => {
         const wrapper = mount(
-            {template: '<div v-ks-loading="false">content</div>'},
+            {template: "<div v-ks-loading=\"false\">content</div>"},
             {global: globalConfig},
         )
         expect(wrapper.text()).toContain("content")
@@ -16,7 +16,7 @@ describe("vKsLoading", () => {
 
     test("applies loading mask element when loading is true", () => {
         const wrapper = mount(
-            {template: '<div v-ks-loading="true" style="position:relative">content</div>'},
+            {template: "<div v-ks-loading=\"true\" style=\"position:relative\">content</div>"},
             {global: globalConfig},
         )
         expect(wrapper.find(".kel-loading-mask").exists()).toBe(true)
@@ -24,7 +24,7 @@ describe("vKsLoading", () => {
 
     test("does not render loading mask when loading is false", () => {
         const wrapper = mount(
-            {template: '<div v-ks-loading="false">content</div>'},
+            {template: "<div v-ks-loading=\"false\">content</div>"},
             {global: globalConfig},
         )
         expect(wrapper.find(".kel-loading-mask").exists()).toBe(false)

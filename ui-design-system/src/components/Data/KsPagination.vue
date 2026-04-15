@@ -1,3 +1,13 @@
+<template>
+    <ElPagination
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:current-page="emit('update:currentPage', $event)"
+        @update:page-size="emit('update:pageSize', $event)"
+        @current-change="emit('currentChange', $event)"
+        @size-change="emit('sizeChange', $event)"
+    />
+</template>
+
 <script setup lang="ts">
     import {ElPagination, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -26,16 +36,6 @@
         sizeChange: [size: number]
     }>()
 </script>
-
-<template>
-    <el-pagination
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:current-page="emit('update:currentPage', $event)"
-        @update:page-size="emit('update:pageSize', $event)"
-        @current-change="emit('currentChange', $event)"
-        @size-change="emit('sizeChange', $event)"
-    />
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

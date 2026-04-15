@@ -1,3 +1,12 @@
+<template>
+    <ElSegmented
+        :class="props.disabled ? 'is-disabled' : undefined"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    />
+</template>
+
 <script setup lang="ts">
     import {ElSegmented, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -21,15 +30,6 @@
         change: [value: string | number | boolean]
     }>()
 </script>
-
-<template>
-    <el-segmented
-        :class="props.disabled ? 'is-disabled' : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    />
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

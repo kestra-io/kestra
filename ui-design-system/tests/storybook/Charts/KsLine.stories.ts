@@ -3,9 +3,10 @@ import {ref} from "vue"
 import {expect} from "storybook/test"
 import KsLine from "../../../src/components/Charts/KsLine.vue"
 import KsBar from "../../../src/components/Charts/KsBar.vue"
+import {ChartFeature, TooltipType} from "../../../src/components/Charts/ksChartUtils"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-const ALL_FEATURES = ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"] as const
+const ALL_FEATURES: ChartFeature[] = [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE, ChartFeature.TOOLTIP]
 
 const meta: Meta<typeof KsLine> = {
     title: "Components/Charts/KsLine",
@@ -39,7 +40,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsLine},
         setup() { return {args, MONTHS} },
-        template: `<div style="padding:24px;height:300px"><ks-line v-bind="args" :categories="MONTHS" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-line v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
@@ -76,7 +77,7 @@ export const MultipleSeries: Story = {
 export const Loading: Story = {
     render: () => ({
         components: {KsLine},
-        template: `<div style="padding:24px;height:300px"><ks-line :data="null" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-line :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy()
@@ -146,11 +147,11 @@ export const MiniLine: Story = {
     render: (args) => ({
         components: {KsLine},
         setup() { return {args, MONTHS} },
-        template: `<div style="padding:24px;width:240px;height:80px"><ks-line v-bind="args" :categories="MONTHS" /></div>`,
+        template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-line v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
         disableFeatures: [...ALL_FEATURES],
-        tooltipType: "external",
+        tooltipType: TooltipType.EXTERNAL,
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
         loading: false,
     },
@@ -205,7 +206,7 @@ export const MiniLoading: Story = {
     render: () => ({
         components: {KsLine},
         setup() { return {ALL_FEATURES} },
-        template: `<div style="padding:24px;width:240px;height:80px"><ks-line :disable-features="ALL_FEATURES" :data="null" /></div>`,
+        template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-line :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
 }
 

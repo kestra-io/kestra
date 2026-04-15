@@ -1,10 +1,10 @@
 <template>
-    <ks-tooltip
+    <KsTooltip
         v-if="showTooltip && date"
         :content="inverted ? from : full"
     >
         <span :class="className">{{ inverted ? full : from }}</span>
-    </ks-tooltip>
+    </KsTooltip>
     <span v-else-if="date" :class="className">{{ inverted ? full : from }}</span>
 </template>
 

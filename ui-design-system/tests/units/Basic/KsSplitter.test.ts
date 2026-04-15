@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {defineComponent} from "vue"
 import KestraDesignSystem from "../../../src/index"
 import KsSplitter from "../../../src/components/Basic/KsSplitter/KsSplitter.vue"
 import KsSplitterPanel from "../../../src/components/Basic/KsSplitter/KsSplitterPanel.vue"
@@ -10,10 +11,10 @@ describe("KsSplitter", () => {
     test("renders splitter element", () => {
         const wrapper = mount(KsSplitter, {
             slots: {
-                default: {
+                default: defineComponent({
                     components: {KsSplitterPanel},
-                    template: `<ks-splitter-panel>Panel</ks-splitter-panel>`,
-                },
+                    template: "<ks-splitter-panel>Panel</ks-splitter-panel>",
+                }),
             },
             global: globalConfig,
         })
@@ -33,10 +34,10 @@ describe("KsSplitterPanel", () => {
     test("renders splitter panel element", () => {
         const wrapper = mount(KsSplitter, {
             slots: {
-                default: {
+                default: defineComponent({
                     components: {KsSplitterPanel},
-                    template: `<ks-splitter-panel><div>Content</div></ks-splitter-panel>`,
-                },
+                    template: "<ks-splitter-panel><div>Content</div></ks-splitter-panel>",
+                }),
             },
             global: globalConfig,
         })
@@ -46,10 +47,10 @@ describe("KsSplitterPanel", () => {
     test("renders slot content", () => {
         const wrapper = mount(KsSplitter, {
             slots: {
-                default: {
+                default: defineComponent({
                     components: {KsSplitterPanel},
-                    template: `<ks-splitter-panel><p class='inner'>Inner</p></ks-splitter-panel>`,
-                },
+                    template: "<ks-splitter-panel><p class='inner'>Inner</p></ks-splitter-panel>",
+                }),
             },
             global: globalConfig,
         })

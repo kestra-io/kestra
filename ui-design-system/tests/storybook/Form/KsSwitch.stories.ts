@@ -87,6 +87,6 @@ export const Disabled: Story = {
     render: () => ({
         components: {KsSwitch},
         setup() { return {value: ref(true)} },
-        template: `<div style="padding:24px"><ks-switch v-model="value" disabled /></div>`,
+        template: "<div style=\"padding:24px\"><ks-switch v-model=\"value\" disabled /></div>",
     }),
 }

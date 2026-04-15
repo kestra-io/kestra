@@ -1,3 +1,21 @@
+<template>
+    <ElAutocomplete
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event as string)"
+        @select="emit('select', $event)"
+    >
+        <template v-if="$slots.default" #default="p">
+            <slot v-bind="p" />
+        </template>
+        <template v-if="$slots.prepend" #prepend>
+            <slot name="prepend" />
+        </template>
+        <template v-if="$slots.suffix" #suffix>
+            <slot name="suffix" />
+        </template>
+    </ElAutocomplete>
+</template>
+
 <script setup lang="ts">
     import {ElAutocomplete, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -11,7 +29,7 @@
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         fetchSuggestions?: (query: string, callback: (results: any[]) => void) => void
         triggerOnFocus?: boolean
         valueKey?: string
@@ -23,29 +41,17 @@
 
     const emit = defineEmits<{
         "update:modelValue": [value: string]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         select: [item: any]
     }>()
 
     defineSlots<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         default?: (scope: {item: any}) => unknown
         prepend?(): unknown
         suffix?(): unknown
     }>()
 </script>
-
-<template>
-    <el-autocomplete
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string)"
-        @select="emit('select', $event)"
-    >
-        <template v-if="$slots.default" #default="p"><slot v-bind="p" /></template>
-        <template v-if="$slots.prepend" #prepend><slot name="prepend" /></template>
-        <template v-if="$slots.suffix" #suffix><slot name="suffix" /></template>
-    </el-autocomplete>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

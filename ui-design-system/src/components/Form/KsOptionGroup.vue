@@ -1,3 +1,11 @@
+<template>
+    <ElOptionGroup v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElOptionGroup>
+</template>
+
 <script setup lang="ts">
     import {ElOptionGroup, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -17,12 +25,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-option-group v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-option-group>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

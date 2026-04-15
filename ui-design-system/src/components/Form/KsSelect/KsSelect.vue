@@ -1,3 +1,31 @@
+<template>
+    <ElSelect
+        :persistent="false"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.prefix" #prefix>
+            <slot name="prefix" />
+        </template>
+        <template v-if="$slots.header" #header>
+            <slot name="header" />
+        </template>
+        <template v-if="$slots.footer" #footer>
+            <slot name="footer" />
+        </template>
+        <template v-if="$slots.label" #label="p">
+            <slot name="label" v-bind="p" />
+        </template>
+        <template v-if="$slots.tag" #tag>
+            <slot name="tag" />
+        </template>
+    </ElSelect>
+</template>
+
 <script setup lang="ts">
     import type {Component} from "vue"
     import {ElSelect, provideGlobalConfig} from "element-plus"
@@ -8,7 +36,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         modelValue?: any
         placeholder?: string
         disabled?: boolean
@@ -35,9 +63,9 @@
     const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "update:modelValue": [value: any]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         change: [value: any]
     }>()
 
@@ -46,27 +74,11 @@
         prefix?(): unknown
         header?(): unknown
         footer?(): unknown
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         label?(props: { value: any; label: string }): any
         tag?(): unknown
     }>()
 </script>
-
-<template>
-    <el-select
-        :persistent="false"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.prefix" #prefix><slot name="prefix" /></template>
-        <template v-if="$slots.header" #header><slot name="header" /></template>
-        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
-        <template v-if="$slots.label" #label="p"><slot name="label" v-bind="p" /></template>
-        <template v-if="$slots.tag" #tag><slot name="tag" /></template>
-    </el-select>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

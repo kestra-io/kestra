@@ -1,3 +1,50 @@
+<template>
+    <ks-tabs class="ks-router-tab" :class="{top}" v-model="activeName" type="box">
+        <ks-tab-pane
+            v-for="tab in visibleTabs"
+            :key="tab.name ?? 'default'"
+            :label="tab.title"
+            :name="tab.name ?? 'default'"
+            :disabled="tab.disabled"
+        >
+            <template #label>
+                <component
+                    :is="isEmbedded || tab.disabled ? 'a' : 'router-link'"
+                    :to="isEmbedded ? undefined : toRoute(tab)"
+                    @click="handleTabClick(tab)"
+                >
+                    <slot name="tab-label" :tab="tab">
+                        <span class="ks-router-tab__label">
+                            {{ tab.title }}
+                            <ks-badge
+                                v-if="tab.count !== undefined"
+                                :value="tab.count"
+                                type="primary"
+                                class="ks-router-tab__badge"
+                            />
+                        </span>
+                    </slot>
+                </component>
+            </template>
+        </ks-tab-pane>
+    </ks-tabs>
+    <section
+        v-if="hasContent"
+        ref="container"
+        v-bind="$attrs"
+        :class="{'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}"
+    >
+        <slot name="content" :activeTab="activeTab">
+            <component
+                v-if="activeTab.component"
+                v-bind="activeTab.props"
+                v-on="activeTab['v-on'] ?? {}"
+                :is="activeTab.component"
+            />
+        </slot>
+    </section>
+</template>
+
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, useSlots} from "vue"
     import {useRoute, type RouteLocationNormalizedLoaded} from "vue-router"
@@ -113,53 +160,6 @@
 
     onMounted(() => setActiveName())
 </script>
-
-<template>
-    <ks-tabs class="ks-router-tab" :class="{top}" v-model="activeName" type="box">
-        <ks-tab-pane
-            v-for="tab in visibleTabs"
-            :key="tab.name ?? 'default'"
-            :label="tab.title"
-            :name="tab.name ?? 'default'"
-            :disabled="tab.disabled"
-        >
-            <template #label>
-                <component
-                    :is="isEmbedded || tab.disabled ? 'a' : 'router-link'"
-                    :to="isEmbedded ? undefined : toRoute(tab)"
-                    @click="handleTabClick(tab)"
-                >
-                    <slot name="tab-label" :tab="tab">
-                        <span class="ks-router-tab__label">
-                            {{ tab.title }}
-                            <ks-badge
-                                v-if="tab.count !== undefined"
-                                :value="tab.count"
-                                type="primary"
-                                class="ks-router-tab__badge"
-                            />
-                        </span>
-                    </slot>
-                </component>
-            </template>
-        </ks-tab-pane>
-    </ks-tabs>
-    <section
-        v-if="hasContent"
-        ref="container"
-        v-bind="$attrs"
-        :class="{'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}"
-    >
-        <slot name="content" :active-tab="activeTab">
-            <component
-                v-if="activeTab.component"
-                v-bind="activeTab.props"
-                v-on="activeTab['v-on'] ?? {}"
-                :is="activeTab.component"
-            />
-        </slot>
-    </section>
-</template>
 
 <style scoped lang="scss">
 .maximized {

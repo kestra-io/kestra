@@ -1,3 +1,32 @@
+<template>
+    <ElDrawer
+        destroyOnClose
+        lockScroll
+        size=""
+        :appendToBody="true"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @before-close="emit('before-close', $event)"
+        :class="{'full-screen': fullScreen}"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.header || props.title" #header>
+            <span>
+                {{ props.title }}
+                <slot name="header" />
+            </span>
+            <ks-button link @click="toggleFullScreen">
+                <Fullscreen class="full-screen" />
+            </ks-button>
+        </template>
+        <template v-if="$slots.footer" #footer>
+            <slot name="footer" />
+        </template>
+    </ElDrawer>
+</template>
+
 <script setup lang="ts">
     import {ElDrawer, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -45,31 +74,6 @@
     }
 
 </script>
-
-<template>
-    <el-drawer
-        destroyOnClose
-        lockScroll
-        size=""
-        :appendToBody="true"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @before-close="emit('before-close', $event)"
-        :class="{'full-screen': fullScreen}"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.header || props.title" #header>
-            <span>
-                {{ props.title }}
-                <slot name="header" />
-            </span>
-            <ks-button link @click="toggleFullScreen">
-                <Fullscreen class="full-screen"/>
-            </ks-button>
-        </template>
-        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
-    </el-drawer>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

@@ -1,3 +1,22 @@
+<template>
+    <ElStep
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.icon" #icon>
+            <slot name="icon" />
+        </template>
+        <template v-if="$slots.title" #title>
+            <slot name="title" />
+        </template>
+        <template v-if="$slots.description" #description>
+            <slot name="description" />
+        </template>
+    </ElStep>
+</template>
+
 <script setup lang="ts">
     import {ElStep, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -9,7 +28,7 @@
     const props = defineProps<{
         title?: string
         description?: string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         icon?: any
         status?: string
     }>()
@@ -23,17 +42,6 @@
         description?(): unknown
     }>()
 </script>
-
-<template>
-    <el-step
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.icon" #icon><slot name="icon" /></template>
-        <template v-if="$slots.title" #title><slot name="title" /></template>
-        <template v-if="$slots.description" #description><slot name="description" /></template>
-    </el-step>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

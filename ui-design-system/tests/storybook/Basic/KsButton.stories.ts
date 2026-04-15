@@ -5,10 +5,10 @@ import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 // Inline SVG icons as components to avoid external dependencies
 const DownloadIcon = markRaw({
-    template: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+    template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg>",
 })
 const PlusIcon = markRaw({
-    template: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/></svg>",
 })
 
 const meta: Meta<typeof KsButton> = {
@@ -47,7 +47,7 @@ export const Default: Story = {
         setup() {
             return {args}
         },
-        template: `<div style="padding:24px"><ks-button v-bind="args">Button</ks-button></div>`,
+        template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\">Button</ks-button></div>",
     }),
     args: {type: "default"},
     async play({canvasElement}) {
@@ -151,7 +151,7 @@ export const Loading: Story = {
         setup() {
             return {args}
         },
-        template: `<div style="padding:24px"><ks-button v-bind="args">Saving…</ks-button></div>`,
+        template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\">Saving…</ks-button></div>",
     }),
     args: {type: "primary", loading: true},
     async play({canvasElement}) {
@@ -169,7 +169,7 @@ export const WithIcon: Story = {
         setup() {
             return {args, DownloadIcon}
         },
-        template: `<div style="padding:24px"><ks-button v-bind="args" :icon="DownloadIcon">Download</ks-button></div>`,
+        template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\" :icon=\"DownloadIcon\">Download</ks-button></div>",
     }),
     args: {type: "primary"},
     async play({canvasElement}) {

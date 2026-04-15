@@ -24,7 +24,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsProgress},
         setup() { return {args} },
-        template: `<div style="padding:24px;width:300px"><ks-progress v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-progress v-bind=\"args\" /></div>",
     }),
     args: {percentage: 70},
 }

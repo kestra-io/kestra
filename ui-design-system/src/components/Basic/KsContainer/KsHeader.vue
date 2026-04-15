@@ -1,3 +1,11 @@
+<template>
+    <ElHeader v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElHeader>
+</template>
+
 <script setup lang="ts">
     import {ElHeader, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -16,12 +24,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-header v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-header>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

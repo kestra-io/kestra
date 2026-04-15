@@ -23,9 +23,9 @@
         TableOptions,
         TableProperties
     } from "./filter/utils/filterTypes";
-    import { useFilters } from "./filter/composables/useFilters";
-    import { useSavedFilters } from "./filter/composables/useSavedFilters";
-    import { useDataOptions } from "./filter/composables/useDataOptions";
+    import {useFilters} from "./filter/composables/useFilters";
+    import {useSavedFilters} from "./filter/composables/useSavedFilters";
+    import {useDataOptions} from "./filter/composables/useDataOptions";
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts";
     import MainFilter from "./filter/MainFilter.vue";
     import RightFilter from "./filter/RightFilter.vue";

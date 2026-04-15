@@ -1,3 +1,19 @@
+<template>
+    <ElTable
+        ref="tableRef"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @selection-change="(selection) => emit('selectionChange', selection)"
+        @select="(selection, row) => emit('select', selection, row)"
+        @sort-change="(e) => emit('sortChange', e)"
+        @row-click="(row, column, event) => emit('rowClick', row, column, event)"
+        @row-dblclick="(row, column, event) => emit('rowDblclick', row, column, event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElTable>
+</template>
+
 <script setup lang="ts">
     import {ref} from "vue"
     import {ElTable, provideGlobalConfig} from "element-plus"
@@ -8,7 +24,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         data?: any[]
         tableLayout?: "fixed" | "auto"
         size?: "large" | "default" | "small"
@@ -18,9 +34,9 @@
         showHeader?: boolean
         maxHeight?: string | number
         fit?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         cellClassName?: string | ((data: any) => string)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         rowClassName?: string | ((data: any) => string)
     }>(), {
         showHeader: undefined,
@@ -28,15 +44,15 @@
     })
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         selectionChange: [selection: any[]]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         select: [selection: any[], row: any]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         sortChange: [sort: {column: any; prop: string; order: string | null}]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         rowClick: [row: any, column: any, event: Event]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         rowDblclick: [row: any, column: any, event: Event]
     }>()
 
@@ -59,20 +75,6 @@
 
     const filteredProps = useFilteredProps(props)
 </script>
-
-<template>
-    <el-table
-        ref="tableRef"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @selection-change="(selection) => emit('selectionChange', selection)"
-        @select="(selection, row) => emit('select', selection, row)"
-        @sort-change="(e) => emit('sortChange', e)"
-        @row-click="(row, column, event) => emit('rowClick', row, column, event)"
-        @row-dblclick="(row, column, event) => emit('rowDblclick', row, column, event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-table>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

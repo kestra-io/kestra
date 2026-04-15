@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
+import {ChartFeature} from "../../../src/components/Charts/ksChartUtils"
 
 // ─── Mock vue-echarts ─────────────────────────────────────────────────────────
 // VChart relies on canvas APIs absent in jsdom. Replace it with a no-op stub
@@ -20,7 +21,7 @@ vi.mock("vue-echarts", () => ({
         setup() {
             return {chart: mockEchartsInstance}
         },
-        template: `<div class="v-chart-stub" />`,
+        template: "<div class=\"v-chart-stub\" />",
     },
 }))
 
@@ -49,7 +50,7 @@ vi.mock("../../../src/components/Feedback/KsTooltip.vue", () => ({
     default: {
         name: "KsTooltip",
         props: ["trigger", "visible", "content", "rawContent", "placement"],
-        template: `<div class="ks-tooltip-stub"><slot /></div>`,
+        template: "<div class=\"ks-tooltip-stub\"><slot /></div>",
     },
 }))
 
@@ -213,7 +214,7 @@ describe("KsEchart", () => {
         }
 
         const wrapper = mount(KsEchart, {
-            props: {options: mixedOptions, disableFeatures: ["AXIS"]},
+            props: {options: mixedOptions, disableFeatures: [ChartFeature.AXIS]},
             global: globalConfig,
         })
 
@@ -242,7 +243,7 @@ describe("KsEchart", () => {
         }
 
         const wrapper = mount(KsEchart, {
-            props: {options: mixedOptions, disableFeatures: ["AXIS_SPLITLINE"]},
+            props: {options: mixedOptions, disableFeatures: [ChartFeature.AXIS_SPLITLINE]},
             global: globalConfig,
         })
 

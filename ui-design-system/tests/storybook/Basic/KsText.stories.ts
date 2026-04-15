@@ -21,7 +21,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsText},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-text v-bind="args">Sample text content</ks-text></div>`,
+        template: "<div style=\"padding:24px\"><ks-text v-bind=\"args\">Sample text content</ks-text></div>",
     }),
     args: {type: ""},
 }

@@ -1,3 +1,11 @@
+<template>
+    <ElMain v-bind="($attrs as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElMain>
+</template>
+
 <script setup lang="ts">
     import {ElMain, provideGlobalConfig} from "element-plus"
 
@@ -9,12 +17,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-main v-bind="($attrs as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-main>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

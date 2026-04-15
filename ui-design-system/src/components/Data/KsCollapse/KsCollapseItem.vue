@@ -1,3 +1,16 @@
+<template>
+    <ElCollapseItem
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.title" #title>
+            <slot name="title" />
+        </template>
+    </ElCollapseItem>
+</template>
+
 <script setup lang="ts">
     import {ElCollapseItem, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -10,7 +23,7 @@
         name?: string | number
         title?: string
         disabled?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         icon?: any
     }>()
 
@@ -21,15 +34,6 @@
         title?(): unknown
     }>()
 </script>
-
-<template>
-    <el-collapse-item
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.title" #title><slot name="title" /></template>
-    </el-collapse-item>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

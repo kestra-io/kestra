@@ -21,7 +21,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsAvatar},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-avatar v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-avatar v-bind=\"args\" /></div>",
     }),
     args: {src: "https://cube.elemecdn.com/3/7c/3ea0eb2965f53f9570b3a1a9891c3png.png"},
 }

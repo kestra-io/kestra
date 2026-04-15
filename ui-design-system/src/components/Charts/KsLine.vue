@@ -1,12 +1,12 @@
 <template>
-    <ks-echart
+    <KsEchart
         ref="ksEchartRef"
         class="ks-chart--line"
         v-bind="$attrs"
         :options="mergedOption"
         :loading="isLoading"
-        :tooltip-type="tooltipType"
-        :disable-features="disableFeatures"
+        :tooltipType="tooltipType"
+        :disableFeatures="disableFeatures"
         :renderer="renderer"
         type="line"
         :data="data"

@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type MomentFn = (date?: any) => any
 type DateFormatterFn = (date: string | Date, format?: string) => string
 

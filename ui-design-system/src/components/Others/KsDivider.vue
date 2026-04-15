@@ -1,3 +1,11 @@
+<template>
+    <ElDivider v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElDivider>
+</template>
+
 <script setup lang="ts">
     import {ElDivider, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -18,12 +26,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-divider v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-divider>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

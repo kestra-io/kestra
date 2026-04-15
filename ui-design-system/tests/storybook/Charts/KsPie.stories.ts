@@ -40,7 +40,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsPie},
         setup() { return {args} },
-        template: `<div style="padding:24px;height:300px"><ks-pie v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-pie v-bind=\"args\" /></div>",
     }),
     args: {
         data: STATUS_DATA,
@@ -56,7 +56,7 @@ export const Donut: Story = {
     render: (args) => ({
         components: {KsPie},
         setup() { return {args} },
-        template: `<div style="padding:24px;height:300px"><ks-pie v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-pie v-bind=\"args\" /></div>",
     }),
     args: {
         data: STATUS_DATA,
@@ -77,7 +77,7 @@ export const Donut: Story = {
 export const Loading: Story = {
     render: () => ({
         components: {KsPie},
-        template: `<div style="padding:24px;height:300px"><ks-pie :data="null" /></div>`,
+        template: "<div style=\"padding:24px;height:300px\"><ks-pie :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()

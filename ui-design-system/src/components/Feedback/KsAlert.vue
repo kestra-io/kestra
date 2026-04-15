@@ -1,3 +1,14 @@
+<template>
+    <ElAlert v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.title" #title>
+            <slot name="title" />
+        </template>
+    </ElAlert>
+</template>
+
 <script setup lang="ts">
     import {ElAlert, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -23,13 +34,6 @@
         title?(): unknown
     }>()
 </script>
-
-<template>
-    <el-alert v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.title" #title><slot name="title" /></template>
-    </el-alert>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

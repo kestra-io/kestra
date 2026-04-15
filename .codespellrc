@@ -1,6 +1,6 @@
 [codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = .git*,*.svg,package-lock.json,*.css,.codespellrc,translations,*.patch,data
+skip = .git*,*.svg,package-lock.json,*.css,.codespellrc,translations,*.patch,data,*.locale.ts
 check-hidden = true
 # mixed case
 ignore-regex = \b([a-zA-Z]+[A-Z]|[A-Z][a-z])[a-zA-Z_-]*\b

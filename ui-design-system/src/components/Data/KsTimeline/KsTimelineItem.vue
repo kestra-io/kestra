@@ -1,3 +1,16 @@
+<template>
+    <ElTimelineItem
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.dot" #dot>
+            <slot name="dot" />
+        </template>
+    </ElTimelineItem>
+</template>
+
 <script setup lang="ts">
     import {ElTimelineItem, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -10,7 +23,7 @@
         timestamp?: string
         color?: string
         type?: string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         icon?: any
         size?: "normal" | "large"
         hideTimestamp?: boolean
@@ -24,15 +37,6 @@
         dot?(): unknown
     }>()
 </script>
-
-<template>
-    <el-timeline-item
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.dot" #dot><slot name="dot" /></template>
-    </el-timeline-item>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

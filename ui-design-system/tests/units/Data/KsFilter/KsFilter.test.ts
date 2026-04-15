@@ -26,7 +26,7 @@ describe("KsFilter", () => {
     test("renders without errors with minimal config", () => {
         const wrapper = mount(KsFilter, {
             props: {
-                configuration: {keys: []},
+                configuration: {title: "", keys: []},
             },
             global: globalConfig,
         })
@@ -36,7 +36,7 @@ describe("KsFilter", () => {
     test("renders filter section with top div", () => {
         const wrapper = mount(KsFilter, {
             props: {
-                configuration: {keys: []},
+                configuration: {title: "", keys: []},
             },
             global: globalConfig,
         })
@@ -46,7 +46,7 @@ describe("KsFilter", () => {
     test("emits filter event when appliedFilters change", async () => {
         const wrapper = mount(KsFilter, {
             props: {
-                configuration: {keys: []},
+                configuration: {title: "", keys: []},
             },
             global: globalConfig,
         })
@@ -56,7 +56,7 @@ describe("KsFilter", () => {
     test("does not render filter options when showOptions is false", () => {
         const wrapper = mount(KsFilter, {
             props: {
-                configuration: {keys: []},
+                configuration: {title: "", keys: []},
                 tableOptions: {},
             },
             global: globalConfig,

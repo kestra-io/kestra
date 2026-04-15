@@ -28,7 +28,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsExecutionStatus},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-execution-status v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
     args: {status: "SUCCESS"},
 }
@@ -74,7 +74,7 @@ export const CustomTitle: Story = {
     render: (args) => ({
         components: {KsExecutionStatus},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-execution-status v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
     args: {status: "RUNNING", title: "In Progress", icon: true},
 }

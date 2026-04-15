@@ -1,3 +1,17 @@
+<template>
+    <ElLink
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @click="emit('click', $event)"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.icon" #icon>
+            <slot name="icon" />
+        </template>
+    </ElLink>
+</template>
+
 <script setup lang="ts">
     import {ElLink, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -26,16 +40,6 @@
         icon?(): unknown
     }>()
 </script>
-
-<template>
-    <el-link
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @click="emit('click', $event)"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.icon" #icon><slot name="icon" /></template>
-    </el-link>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

@@ -1,3 +1,68 @@
+<template>
+    <div class="ks-data-table-wrapper">
+        <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
+            <slot name="navbar" />
+        </nav>
+
+        <div v-ks-loading="isLoading">
+            <slot name="top" />
+
+            <template v-if="hasTableSlot">
+                <slot name="table" />
+            </template>
+
+            <template v-else>
+                <div ref="container" class="ks-data-table-content" @click.capture="(e) => isShiftPressed = (e as MouseEvent).shiftKey">
+                    <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
+                        <KsBulkSelect
+                            :selectAll="queryBulkAction"
+                            :selectionCount="mappedSelection.length"
+                            :total
+                            @toggle-all="toggleAllSelection"
+                            @unselect="toggleAllUnselected"
+                        >
+                            <slot name="bulk-actions" />
+                        </KsBulkSelect>
+                    </div>
+                    <div v-else-if="hasSelection && data && data.length" class="bulk-select-header">
+                        <slot name="select-actions" />
+                    </div>
+
+                    <KsTable
+                        ref="tableRef"
+                        v-bind="$attrs"
+                        tableLayout="auto"
+                        fixed
+                        :data
+                        :rowKey
+                        :emptyText="data && data.length === 0 ? noDataText : ''"
+                        @selection-change="selectionChanged"
+                        @select="onSelect"
+                        @sort-change="onSortChange"
+                        @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
+                    >
+                        <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
+                        <slot />
+                    </KsTable>
+                </div>
+            </template>
+
+            <KsPagination
+                v-if="total && total > 0"
+                :currentPage="internalPage"
+                :pageSize="internalSize"
+                :total
+                layout="sizes, prev, pager, next, total"
+                size="small"
+                :pageSizes="pageSizeOptions"
+                @current-change="onPageChange"
+                @size-change="onSizeChange"
+                class="mt-3"
+            />
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
     import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
     import {vKsLoading} from "../../Feedback/KsLoading"
@@ -9,7 +74,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         data?: any[]
         total?: number
         currentPage?: number
@@ -17,13 +82,13 @@
         loading?: boolean
         selectable?: boolean
         showSelection?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        rowKey?: string | ((row: any) => string | number)
+         
+        rowKey?: string | ((row: any) => string)
         noDataText?: string
         pageSizeOptions?: number[]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         selectionMapper?: (element: any) => any
     }>(), {
         data: () => [],
@@ -41,13 +106,13 @@
     })
 
     const emit = defineEmits<{
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "page-changed": [payload: {page: number; size: number}]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "sort-change": [sort: {column: any; prop: string; order: string | null}]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "selection-change": [selection: any[]]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
     }>()
@@ -70,10 +135,10 @@
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
     const queryBulkAction = ref(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const mappedSelection = ref<any[]>([])
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const selectionChanged = (rawSelection: any[]) => {
         hasSelection.value = rawSelection.length > 0
 
@@ -87,7 +152,7 @@
         emit("selection-change", rawSelection)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const onSelect = async (selection: any[], row: any) => {
         const data = props.data ?? []
         const currentIndex = data.indexOf(row)
@@ -126,14 +191,14 @@
         queryBulkAction.value = false
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const setSelection = (selection: any[]) => {
         tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
             const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
                 const row = props.data.find(r => isFunction
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                     
                     ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
                     : r[props.rowKey as string] === sel[props.rowKey as string])
                 if (row) tableRef.value?.toggleRowSelection(row, true)
@@ -142,7 +207,7 @@
         selectionChanged(selection)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         tableRef.value?.toggleRowExpansion(row, expand)
     }
@@ -212,7 +277,7 @@
             const validSelection = currentSelection.filter((sel: unknown) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                     
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
                     : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
             })
@@ -243,7 +308,7 @@
         callLoad()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
         if (sort.prop && sort.order) {
             internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
@@ -270,71 +335,6 @@
         selection: mappedSelection,
     })
 </script>
-
-<template>
-    <div class="ks-data-table-wrapper">
-        <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
-            <slot name="navbar" />
-        </nav>
-
-        <div v-ks-loading="isLoading">
-            <slot name="top" />
-
-            <template v-if="hasTableSlot">
-                <slot name="table" />
-            </template>
-
-            <template v-else>
-                <div ref="container" class="ks-data-table-content" @click.capture="(e) => isShiftPressed = (e as MouseEvent).shiftKey">
-                    <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
-                        <ks-bulk-select
-                            :selectAll="queryBulkAction"
-                            :selectionCount="mappedSelection.length"
-                            :total
-                            @toggle-all="toggleAllSelection"
-                            @unselect="toggleAllUnselected"
-                        >
-                            <slot name="bulk-actions" />
-                        </ks-bulk-select>
-                    </div>
-                    <div v-else-if="hasSelection && data && data.length" class="bulk-select-header">
-                        <slot name="select-actions" />
-                    </div>
-
-                    <ks-table
-                        ref="tableRef"
-                        v-bind="$attrs"
-                        tableLayout="auto"
-                        fixed
-                        :data
-                        :row-key
-                        :emptyText="data && data.length === 0 ? noDataText : ''"
-                        @selection-change="selectionChanged"
-                        @select="onSelect"
-                        @sort-change="onSortChange"
-                        @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
-                    >
-                        <ks-table-column v-if="selectable && showSelection" type="selection" reserveSelection />
-                        <slot />
-                    </ks-table>
-                </div>
-            </template>
-
-            <ks-pagination
-                v-if="total && total > 0"
-                :currentPage="internalPage"
-                :pageSize="internalSize"
-                :total
-                layout="sizes, prev, pager, next, total"
-                size="small"
-                :page-sizes="pageSizeOptions"
-                @current-change="onPageChange"
-                @size-change="onSizeChange"
-                class="mt-3"
-            />
-        </div>
-    </div>
-</template>
 
 <style lang="scss">
     .ks-data-table-wrapper {

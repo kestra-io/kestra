@@ -1,3 +1,22 @@
+<template>
+    <ElPopover
+        :persistent="false"
+        :hideAfter="0"
+        transition=""
+        :visible="internalVisible"
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:visible="handleUpdateVisible"
+        @hide="emit('hide')"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.reference" #reference>
+            <slot name="reference" />
+        </template>
+    </ElPopover>
+</template>
+
 <script setup lang="ts">
     import {ElPopover, provideGlobalConfig} from "element-plus"
     import {ref, watch} from "vue"
@@ -43,21 +62,6 @@
         reference?(): unknown
     }>()
 </script>
-
-<template>
-    <el-popover
-        :persistent="false"
-        :hideAfter="0"
-        transition=""
-        :visible="internalVisible"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:visible="handleUpdateVisible"
-        @hide="emit('hide')"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.reference" #reference><slot name="reference" /></template>
-    </el-popover>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

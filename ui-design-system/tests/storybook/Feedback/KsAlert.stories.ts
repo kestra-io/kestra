@@ -23,7 +23,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsAlert},
         setup() { return {args} },
-        template: `<div style="padding:24px"><ks-alert v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px\"><ks-alert v-bind=\"args\" /></div>",
     }),
     args: {type: "info", title: "This is an info alert", showIcon: true},
 }

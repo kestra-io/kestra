@@ -1,3 +1,21 @@
+<template>
+    <ElInput
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event)"
+        @change="emit('change', $event)"
+    >
+        <template v-if="$slots.prepend" #prepend>
+            <slot name="prepend" />
+        </template>
+        <template v-if="$slots.suffix" #suffix>
+            <slot name="suffix" />
+        </template>
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElInput>
+</template>
+
 <script setup lang="ts">
     import {ElInput, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -12,7 +30,7 @@
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         suffixIcon?: any
         clearable?: boolean
         size?: "large" | "default" | "small"
@@ -35,18 +53,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-input
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @change="emit('change', $event)"
-    >
-        <template v-if="$slots.prepend" #prepend><slot name="prepend" /></template>
-        <template v-if="$slots.suffix" #suffix><slot name="suffix" /></template>
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-input>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

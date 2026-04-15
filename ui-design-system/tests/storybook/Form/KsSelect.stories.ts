@@ -18,7 +18,6 @@ const meta: Meta<typeof KsSelect> = {
         collapseTags: {control: "boolean"},
         disabled: {control: "boolean"},
         allowCreate: {control: "boolean"},
-        persistent: {control: "boolean"},
     },
     parameters: {
         docs: {

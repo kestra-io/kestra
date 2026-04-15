@@ -1,3 +1,15 @@
+<template>
+    <ElCollapse
+        v-bind="({...filteredProps(), ...$attrs} as any)"
+        @update:model-value="emit('update:modelValue', $event as string | string[])"
+        @change="emit('change', $event as string | string[])"
+    >
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+    </ElCollapse>
+</template>
+
 <script setup lang="ts">
     import {ElCollapse, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
@@ -22,16 +34,6 @@
         default?(): unknown
     }>()
 </script>
-
-<template>
-    <el-collapse
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string | string[])"
-        @change="emit('change', $event as string | string[])"
-    >
-        <template v-if="$slots.default" #default><slot /></template>
-    </el-collapse>
-</template>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';

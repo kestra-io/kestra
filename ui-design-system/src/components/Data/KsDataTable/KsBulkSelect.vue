@@ -1,3 +1,25 @@
+<template>
+    <div class="ks-bulk-select">
+        <ks-checkbox
+            :modelValue="selectionCount > 0"
+            @change="toggle"
+            :indeterminate="partialCheck"
+        >
+            <span v-html="t('selected', {count: selectAll && total !== undefined ? total : selectionCount})" />
+        </ks-checkbox>
+        <ks-button-group>
+            <ks-button
+                :type="selectAll ? 'primary' : 'default'"
+                @click="toggleAll"
+                v-if="total !== undefined && selectionCount < total"
+            >
+                <span v-html="t('all', {count: total!})" />
+            </ks-button>
+            <slot />
+        </ks-button-group>
+    </div>
+</template>
+
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
@@ -36,28 +58,6 @@
         emit("toggle-all")
     }
 </script>
-
-<template>
-    <div class="ks-bulk-select">
-        <ks-checkbox
-            :modelValue="selectionCount > 0"
-            @change="toggle"
-            :indeterminate="partialCheck"
-        >
-            <span v-html="t('selected', {count: selectAll && total !== undefined ? total : selectionCount})" />
-        </ks-checkbox>
-        <ks-button-group>
-            <ks-button
-                :type="selectAll ? 'primary' : 'default'"
-                @click="toggleAll"
-                v-if="total !== undefined && selectionCount < total"
-            >
-                <span v-html="t('all', {count: total!})" />
-            </ks-button>
-            <slot />
-        </ks-button-group>
-    </div>
-</template>
 
 <style lang="scss">
     .ks-bulk-select {

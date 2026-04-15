@@ -27,7 +27,7 @@ export const Default: Story = {
             const value = ref("")
             return {args, value}
         },
-        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" v-bind=\"args\" /></div>",
     }),
     args: {placeholder: "Type something..."},
 }
@@ -52,7 +52,7 @@ export const Password: Story = {
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
-        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" type="password" :show-password="true" placeholder="Enter password" /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" type=\"password\" :show-password=\"true\" placeholder=\"Enter password\" /></div>",
     }),
 }
 
@@ -60,7 +60,7 @@ export const TextArea: Story = {
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
-        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" type="textarea" :rows="4" placeholder="Enter text..." /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" type=\"textarea\" :rows=\"4\" placeholder=\"Enter text...\" /></div>",
     }),
 }
 
@@ -69,7 +69,7 @@ export const Clearable: Story = {
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("Clear me")} },
-        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" clearable placeholder="Type to fill..." /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" clearable placeholder=\"Type to fill...\" /></div>",
     }),
 }
 
@@ -111,6 +111,6 @@ export const Disabled: Story = {
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("Disabled value")} },
-        template: `<div style="padding:24px;width:300px"><ks-input v-model="value" disabled /></div>`,
+        template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" disabled /></div>",
     }),
 }

@@ -1,3 +1,17 @@
+<template>
+    <ElCard v-bind="({...filteredProps(), ...$attrs} as any)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.header" #header>
+            <slot name="header" />
+        </template>
+        <template v-if="$slots.footer" #footer>
+            <slot name="footer" />
+        </template>
+    </ElCard>
+</template>
+
 <script setup lang="ts">
     import {ElCard, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
@@ -19,14 +33,6 @@
         footer?(): unknown
     }>()
 </script>
-
-<template>
-    <el-card v-bind="({...filteredProps(), ...$attrs} as any)">
-        <template v-if="$slots.default" #default><slot /></template>
-        <template v-if="$slots.header" #header><slot name="header" /></template>
-        <template v-if="$slots.footer" #footer><slot name="footer" /></template>
-    </el-card>
-</template>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';

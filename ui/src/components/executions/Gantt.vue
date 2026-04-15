@@ -93,8 +93,8 @@
                                                         :color="item.color"
                                                         :stroke-width="25"
                                                         :striped="item.running"
-                                                        :striped-flow="item.running"
-                                                        :show-text="false"
+                                                        :stripedFlow="item.running"
+                                                        :showText="false"
                                                     />
                                                 </div>
                                             </ks-tooltip>
@@ -138,10 +138,9 @@
     import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State, durationUtils} from "@kestra-io/ui-design-system";
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
-    import Utils from "../../utils/utils";
     // @ts-expect-error JS module without declarations
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
@@ -448,11 +447,11 @@
 
             const taskDelta = stopTs - startTs;
 
-            let tooltip = `${t("duration")} : ${Utils.humanDuration(taskDelta / 1000)}`;
+            let tooltip = `${t("duration")} : ${durationUtils.humanDuration(taskDelta / 1000)}`;
 
             if (runningState.length > 0) {
-                tooltip += `\n${t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
-                tooltip += `\n${t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
+                tooltip += `\n${t("queued duration")} : ${durationUtils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
+                tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
             }
 
             let width = (taskStop / executionDelta) * 100;

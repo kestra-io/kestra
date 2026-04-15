@@ -22,6 +22,16 @@ const humanizeDurationLanguages = {
         s: () => "s",
         ms: () => "ms",
     },
+    "zh_CN": {
+        y: () => "年",
+        mo: () => "月",
+        w: () => "周",
+        d: () => "天",
+        h: () => "小时",
+        m: () => "分钟",
+        s: () => "秒",
+        ms: () => "毫秒",
+    }
 };
 
 export function duration(isoString: string) {

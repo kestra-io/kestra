@@ -33,7 +33,27 @@
       "@vue/reactivity": ["./node_modules/@vue/reactivity/dist/reactivity.d.ts"],
       "@vue/compiler-dom": ["./node_modules/@vue/compiler-dom/dist/compiler-dom.d.ts"],
       "@kestra-io/ui-design-system": ["../ui-design-system/src/index.ts"],
-      "@kestra-io/ui-design-system/*": ["../ui-design-system/*"]
+      "@kestra-io/ui-design-system/*": ["../ui-design-system/*"],
+      "element-plus": ["./node_modules/element-plus"],
+      "element-plus/*": ["./node_modules/element-plus/*"],
+      "js-yaml": ["./node_modules/js-yaml"],
+      "js-yaml/*": ["./node_modules/js-yaml/*"],
+      "moment": ["./node_modules/moment"],
+      "moment/*": ["./node_modules/moment/*"],
+      "moment-timezone": ["./node_modules/moment-timezone"],
+      "moment-timezone/*": ["./node_modules/moment-timezone/*"],
+      "vue-i18n": ["./node_modules/vue-i18n"],
+      "vue-i18n/*": ["./node_modules/vue-i18n/*"],
+      "vue-router": ["./node_modules/vue-router"],
+      "vue-router/*": ["./node_modules/vue-router/*"],
+      "@vueuse/core": ["./node_modules/@vueuse/core"],
+      "@vueuse/core/*": ["./node_modules/@vueuse/core/*"],
+      "echarts": ["./node_modules/echarts"],
+      "echarts/*": ["./node_modules/echarts/*"],
+      "vue-echarts": ["./node_modules/vue-echarts"],
+      "vue-echarts/*": ["./node_modules/vue-echarts/*"],
+      "yaml": ["./node_modules/yaml"],
+      "yaml/*": ["./node_modules/yaml/*"]
     }
   },
   "include": [

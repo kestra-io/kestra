@@ -193,10 +193,9 @@
 
     import {verticalLayout} from "./utils/layout";
     import {createLink} from "./utils/links";
-    import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
-    import {State} from "@kestra-io/ui-design-system";
+    import {State, durationUtils} from "@kestra-io/ui-design-system";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import Row from "./components/sidebar/Row.vue";
@@ -332,7 +331,7 @@
 
                     const deltaSeconds = (stop - start) / 1000;
 
-                    return Utils.humanDuration(deltaSeconds);
+                    return durationUtils.humanDuration(deltaSeconds);
                 })(),
             },
             {

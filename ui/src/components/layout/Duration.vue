@@ -14,8 +14,7 @@
 </template>
 
 <script>
-    import {State} from "@kestra-io/ui-design-system"
-    import Utils from "../../utils/utils";
+    import {State, durationUtils} from "@kestra-io/ui-design-system"
 
     const ts = date => new Date(date).getTime();
 
@@ -78,7 +77,7 @@
                 return ts(this.lastStep.date)
             },
             computeDuration() {
-                this.duration = Utils.humanDuration(this.delta() / 1000)
+                this.duration = durationUtils.humanDuration(this.delta() / 1000)
             },
             squareClass(state) {
                 let statusVarname = state.toLowerCase();

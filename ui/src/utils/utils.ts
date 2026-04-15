@@ -1,40 +1,6 @@
 import {computed} from "vue";
 import moment from "moment";
-import humanizeDuration from "humanize-duration";
 import {useMiscStore} from "override/stores/misc";
-
-const humanizeDurationLanguages = {
-    "en": {
-        y: () => "y",
-        mo: () => "mo",
-        w: () => "w",
-        d: () => "d",
-        h: () => "h",
-        m: () => "m",
-        s: () => "s",
-        ms: () => "ms",
-    },
-    "fr": {
-        y: () => "a",
-        mo: () => "mo",
-        w: () => "se",
-        d: () => "j",
-        h: () => "h",
-        m: () => "m",
-        s: () => "s",
-        ms: () => "ms",
-    },
-    "zh_CN": {
-        y: () => "年",
-        mo: () => "月",
-        w: () => "周",
-        d: () => "天",
-        h: () => "小时",
-        m: () => "分钟",
-        s: () => "秒",
-        ms: () => "毫秒",
-    }
-}
 
 export default class Utils {
     static uid() {
@@ -132,25 +98,6 @@ export default class Utils {
 
 
         return bytes.toFixed(dp) + " " + units[u];
-    }
-
-    static duration(isoString: string) {
-        return moment.duration(isoString).asMilliseconds() / 1000
-    }
-
-    static humanDuration(value: string | number, options?: humanizeDuration.HumanizerOptions) {
-        options = options || {maxDecimalPoints: 2};
-        options.spacer = "";
-        options.language = Object.keys(humanizeDurationLanguages).includes(Utils.getLang()) ? Utils.getLang() : "en";
-        options.languages = humanizeDurationLanguages;
-        options.largest = 2;
-
-        if (typeof (value) !== "number") {
-            value = Utils.duration(value);
-        }
-
-        const humanizer = humanizeDuration.humanizer(options);
-        return humanizer(value * 1000).replace(/\.([0-9])s$/i, ".$10s")
     }
 
     static number(number: number) {

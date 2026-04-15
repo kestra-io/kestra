@@ -20,12 +20,11 @@
 <script setup lang="ts">
     import {computed, ref, watch, PropType} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {ChartFeature, KsBar, TooltipType} from "@kestra-io/ui-design-system";
+    import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/ui-design-system";
     import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {useTheme} from "../../../utils/utils";
-    import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
     import {useMiscStore} from "override/stores/misc";
 
@@ -81,7 +80,7 @@
                 label: subSectionsEntry[0],
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
-                tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
+                tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? durationUtils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
 
@@ -117,7 +116,7 @@
                 show: showAxes,
                 name: showAxes ? (aggregator[0][1].displayName ?? aggregator[0][0]) : undefined,
                 axisLabel: isDurationAgg()
-                    ? {formatter: (v: number) => Utils.humanDuration(v)}
+                    ? {formatter: (v: number) => durationUtils.humanDuration(v)}
                     : {},
             },
             tooltip: props.short

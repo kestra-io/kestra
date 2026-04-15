@@ -26,10 +26,9 @@
     import {computed, PropType, ref, watch} from "vue";
 
     import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import Utils from "../../../utils/utils";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {FilterObject} from "../../../utils/filters";
-    import {KsPie} from "@kestra-io/ui-design-system";
+    import {KsPie, durationUtils} from "@kestra-io/ui-design-system";
     import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
     import {TooltipType, ChartFeature} from "@kestra-io/ui-design-system";
     import {useMiscStore} from "override/stores/misc";
@@ -95,7 +94,7 @@
 
     const totalValue = computed(() => {
         const total = pieData.value.reduce((acc, item) => acc + Number(item.value), 0);
-        return isDuration ? Utils.humanDuration(total) : String(total);
+        return isDuration ? durationUtils.humanDuration(total) : String(total);
     });
 
 
@@ -105,7 +104,7 @@
             tooltip: {
                 formatter: (params: any) =>
                     isDuration
-                        ? `${params.name}: ${Utils.humanDuration(params.value)} (${params.percent}%)`
+                        ? `${params.name}: ${durationUtils.humanDuration(params.value)} (${params.percent}%)`
                         : `${params.name}: ${params.value} (${params.percent}%)`,
             },
         };

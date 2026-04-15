@@ -36,9 +36,6 @@ class VariableRendererTest {
     VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Inject
-    VariableRenderer variableRenderer;
-
-    @Inject
     private PebbleEngineFactory pebbleEngineFactory;
 
     @Test
@@ -134,11 +131,6 @@ class VariableRendererTest {
         public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,
             VariableConfiguration variableConfiguration) {
             super(pebbleEngineFactory, variableConfiguration);
-        }
-
-        @Override
-        protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-            return "result";
         }
     }
 

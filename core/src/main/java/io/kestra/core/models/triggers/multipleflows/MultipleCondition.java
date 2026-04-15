@@ -10,7 +10,8 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.utils.Rethrow;
-
+// FIXME check if we keep it or not, maybe refactor the whole multiple flow handling and simplify it.
+//  At least, if we keep it, we should make it sealed so it's not implemented wildly.
 public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionContext, InternalException> {
     String getId();
 

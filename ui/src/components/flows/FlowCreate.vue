@@ -16,6 +16,7 @@
     import {getRandomID} from "../../../scripts/id";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
+    import useRouteContext from "../../composables/useRouteContext";
 
     import type {BlueprintType} from "../../stores/blueprints"
     import {useAuthStore} from "override/stores/auth";
@@ -102,6 +103,8 @@ tasks:
             title: t("flows")
         };
     });
+
+    useRouteContext(routeInfo);
 
     flowStore.isCreating = true;
     if (route.query.reset || route.query.onboarding === "guided") {

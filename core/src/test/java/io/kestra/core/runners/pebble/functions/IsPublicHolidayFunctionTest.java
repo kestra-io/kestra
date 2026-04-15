@@ -10,6 +10,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 class IsPublicHolidayFunctionTest {
@@ -86,8 +87,9 @@ class IsPublicHolidayFunctionTest {
 
     @Test
     void invalidCountryCodeThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render(
             "{{ isPublicHoliday('2024-12-25', 'XX') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalStateException.class);
+        ));
+        assertThat(exception.getCause()).isInstanceOf(IllegalStateException.class);
     }
 }

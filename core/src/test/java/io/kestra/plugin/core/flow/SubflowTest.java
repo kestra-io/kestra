@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.models.flows.FlowInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,7 +88,7 @@ class SubflowTest {
     void shouldOnlyReturnOutputsFromFlowOutputs() throws IllegalVariableEvaluationException {
         Output output = Output.builder().id("key").value("value").build();
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(Map.of(output.getId(), output.getValue()));
-        Mockito.when(inputAndOutput.typedOutputs(Mockito.any(), Mockito.any(), Mockito.anyMap())).thenReturn(Map.of("key", "value"));
+        Mockito.when(inputAndOutput.typedOutputs(Mockito.any(FlowInterface.class), Mockito.any(), Mockito.anyMap())).thenReturn(Map.of("key", "value"));
         Flow flow = Flow.builder()
             .outputs(List.of(output))
             .build();

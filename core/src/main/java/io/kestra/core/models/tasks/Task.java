@@ -72,7 +72,7 @@ abstract public class Task implements TaskInterface {
     private boolean logToFile = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = "reliability")
+    @PluginProperty(hidden = true, group = "reliability", dynamic = true)
     private String when = "true";
 
     @Builder.Default

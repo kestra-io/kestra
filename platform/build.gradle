@@ -132,7 +132,7 @@ dependencies {
         api group: 'de.siegmar', name: 'fastcsv', version: '4.2.0'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
-        api 'com.rabbitmq:amqp-client:5.29.0'
+        api 'com.rabbitmq:amqp-client:5.30.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
         api 'io.lettuce:lettuce-core:7.5.1.RELEASE'
 

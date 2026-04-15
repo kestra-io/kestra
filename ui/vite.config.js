@@ -5,8 +5,6 @@ import vue from "@vitejs/plugin-vue";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-const NUXTJS_MDC_STUB = path.resolve(__dirname, "plugins/stub-nuxtjs-mdc.js");
-
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())};
 
@@ -25,10 +23,6 @@ export default defineConfig(({mode}) => {
                             {
                                 test: /src\/components\/flows/i,
                                 name: "flows",
-                            },
-                            {
-                                test: /(shiki\/langs)|(src\/utils\/markdownDeps)/,
-                                name: "markdownDeps",
                             },
                         ],
                     }
@@ -55,15 +49,14 @@ export default defineConfig(({mode}) => {
                 {find: /^@kestra-io\/ui-design-system\/(.*)$/, replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-design-system") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
+                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
+
+                // to be removed when all mdc import are removed
+                // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
                 {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
                 {find: "#build/mdc-image-component.mjs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
                 {find: "#mdc-imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
                 {find: "#mdc-configs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
-                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
-                // @nuxtjs/mdc is a peer dep of @kestra-io/ui-libs that is not installed here;
-                // all its subpaths are stubbed out to prevent Rolldown from erroring on
-                // unresolved imports (Vite 8 treats them as errors, not warnings).
-                {find: /^@nuxtjs\/mdc(\/.*)?$/, replacement: NUXTJS_MDC_STUB},
             ],
         },
         plugins: [

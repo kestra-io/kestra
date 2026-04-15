@@ -52,7 +52,9 @@
       "vue-echarts": ["./node_modules/vue-echarts"],
       "vue-echarts/*": ["./node_modules/vue-echarts/*"],
       "yaml": ["./node_modules/yaml"],
-      "yaml/*": ["./node_modules/yaml/*"]
+      "yaml/*": ["./node_modules/yaml/*"],
+      "remark-frontmatter": ["./node_modules/remark-frontmatter"],
+      "remark-directive": ["./node_modules/remark-directive"]
     }
   },
   "include": [

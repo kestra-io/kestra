@@ -115,7 +115,7 @@
                 button: ["type", "class", "aria-label"],
             },
             stripIgnoreTag: true,
-            onIgnoreTagAttr: function (_tag, name, value) {
+            onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
                 if (name.startsWith("data-")) {
                     return name + "=\"" + escapeAttrValue(value) + "\"";
                 }

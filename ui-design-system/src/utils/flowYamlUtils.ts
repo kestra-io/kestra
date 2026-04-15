@@ -15,7 +15,7 @@ import {
     Range,
     ToStringOptions,
 } from "yaml";
-import cloneDeep from "lodash/cloneDeep";
+import {cloneDeep} from "./util";
 
 export function parse<T = any>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined;

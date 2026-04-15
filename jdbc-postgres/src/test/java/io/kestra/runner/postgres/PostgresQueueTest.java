@@ -77,5 +77,4 @@ class PostgresQueueTest extends JdbcQueueTest {
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
         assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
         assertThat(exception.getCause()).isInstanceOf(DataException.class);
-    }
 }

@@ -143,7 +143,7 @@
     }
 
     .postParagraph {
-        max-height: calc(2 * #{$post-line-height}em);
+        max-height: calc(4 * #{$post-line-height}em);
         overflow: hidden;
         line-height: $post-line-height;
         .expanded & {

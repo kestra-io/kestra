@@ -96,7 +96,7 @@ function sortPredicate(a: string, b: string) {
     return aIndexProtected - bIndexProtected;
 }
 
-export function sort(value: Record<string, any>) {
+function sort(value: Record<string, any>) {
     return Object.keys(value)
         .sort(sortPredicate);
 }
@@ -365,54 +365,6 @@ export function replaceBlockWithPath({source, path, newContent}: {
     return yamlDoc.toString(TOSTRING_OPTIONS);
 }
 
-export function replaceBlockInDocument({source, section, keyName, key, newContent}: {
-    source: string,
-    section: string,
-    keyName: string,
-    key: string,
-    newContent: string
-}) {
-    const {yamlDoc, sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
-    const newItem = yamlDoc.createNode(parseDocument(newContent));
-    if (!sectionNode) {
-        return undefined;
-    }
-
-    extractBlockFromDocument({
-        yamlDoc: sectionNode, keyName, key, callback(oldValue) {
-            restoreCommentsInBlock(
-                oldValue as YAMLMap<{ value: string }, Node>,
-                newItem as YAMLMap<{ value: string }, Node>
-            );
-
-            // replace the old value with the new value
-            return newItem;
-        }
-    });
-
-    return yamlDoc.toString(TOSTRING_OPTIONS);
-}
-
-/**
- * keep comments from old plugin property in the new
- * @param oldProperty
- * @param newProperty
- */
-function restoreCommentsInBlock(oldProperty: YAMLMap<{ value: string }, Node>, newProperty: YAMLMap<{ value: string }, Node>) {
-    for (const oldProp of oldProperty.items) {
-        for (const newProp of newProperty.items) {
-            if (
-                oldProp.key.value === newProp.key.value &&
-                newProp.value &&
-                newProp.value.comment === undefined
-            ) {
-                newProp.value.comment = oldProp.value?.comment;
-                break;
-            }
-        }
-    }
-}
-
 export function swapBlocks({source, section, key1, key2, keyName}: {
     source: string,
     section: string,
@@ -454,98 +406,6 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
     return yamlDoc.toString(TOSTRING_OPTIONS);
 }
 
-export function insertBlock({source,
-    section,
-    newBlock,
-    refKey,
-    position,
-    parentKey,
-    keyName,
-    subBlockName
-}: {
-    source: string,
-    section: string,
-    newBlock: string,
-    refKey?: string,
-    position?: "before" | "after",
-    parentKey?: string,
-    keyName?: string,
-    subBlockName?: string,
-}) {
-    if (!keyName) {
-        keyName = "id";
-    }
-    if (!subBlockName) {
-        subBlockName = section;
-    }
-    if (!position) {
-        position = "after";
-    }
-    const {yamlDoc, sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
-    const newPropNode = yamlDoc.createNode(parseDocument(newBlock));
-
-    const parentNode: any = parentKey && sectionNode
-        ? extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: parentKey})?.contents
-        : sectionNode;
-    if (!parentNode && parentKey) {
-        throw new Error(`Parent block with ID ${parentKey} not found in ${section}`);
-    }
-
-    // if the container (parentNode) is missing
-    //  - an entire section
-    //  - a tasks entry in a flowable task
-    //  - a condition section in a trigger
-    if (!parentNode || (parentKey && !parentNode.get(subBlockName))) {
-        const propertyList = new YAMLSeq();
-        propertyList.items.push(newPropNode);
-        const blocks = new Pair(new Scalar(subBlockName), propertyList);
-        if (!parentKey) {
-            yamlDoc.contents?.items.push(blocks);
-            return yamlDoc.toString(TOSTRING_OPTIONS);
-        }
-
-        if (parentNode && !parentNode.get(subBlockName)) {
-            parentNode.items.push(blocks);
-            return yamlDoc.toString(TOSTRING_OPTIONS);
-        }
-    }
-
-    const protectedReferenceKey = refKey
-        ?? (position === "after"
-            ? getLastBlock({source, section, parentKey: parentKey, keyName, subBlockName})
-            : parentNode.items?.[0]?.get(keyName));
-
-    let added = false;
-    visit(parentNode, {
-        Seq(_, seq) {
-            for (const map of seq.items) {
-                if (isMap(map)) {
-                    if (added) {
-                        return visit.BREAK;
-                    }
-                    if (map.get(keyName) === protectedReferenceKey) {
-                        const index = seq.items.indexOf(map);
-                        if (position === "before") {
-                            if (index === 0) {
-                                seq.items.unshift(newPropNode);
-                            } else {
-                                seq.items.splice(index, 0, newPropNode);
-                            }
-                        } else {
-                            if (index === seq.items.length - 1) {
-                                seq.items.push(newPropNode);
-                            } else {
-                                seq.items.splice(index + 1, 0, newPropNode);
-                            }
-                        }
-                        added = true;
-                    }
-                }
-            }
-        },
-    });
-    return cleanMetadataDocument(yamlDoc).toString(TOSTRING_OPTIONS);
-}
 
 function getNodeIndexInParent(
     yamlDoc: Document<YAMLMap<{ value: string }, Node>>,
@@ -692,62 +552,6 @@ export function deleteBlock({source, section, key, keyName}: {
 }
 
 
-export function deleteBlockWithPath({source, path}: {
-    source: string,
-    path: string,
-}) {
-    const yamlDoc = parseDocumentTyped(source);
-    const parsedPath = parsePath(path)
-    const parsedParentPath = parsedPath.slice(0, -1);
-    const parentNode = yamlDoc.getIn(parsedParentPath) as YAMLMap<{ value: string }, Node>;
-    if (!parentNode) {
-        return source;
-    }
-    const index = getNodeIndexInParent(yamlDoc, parentNode, parsedPath.slice(0, -1), parsedPath[parsedPath.length - 1]);
-    if (parentNode.items.length === 1) {
-        yamlDoc.deleteIn(parsedParentPath);
-    } else {
-        parentNode.items.splice(index, 1);
-    }
-    return yamlDoc.toString(TOSTRING_OPTIONS);
-}
-
-function isChildrenOf(source: string, section: string, parentKey: string, childKey: string, keyName: string) {
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
-    if (!sectionNode) {
-        return false;
-    }
-
-    const parentDoc = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: parentKey});
-
-    if (!parentDoc) {
-        return false;
-    }
-
-    let isChildrenOf = false;
-    visit(parentDoc, {
-        Map(_, map) {
-            if (map.get(keyName) === childKey) {
-                isChildrenOf = true;
-                return visit.BREAK;
-            }
-        },
-    });
-    return isChildrenOf;
-}
-
-export function isParentChildrenRelation({source, sections, key1, key2, keyName}:
-    { source: string, sections: string[], key1: string, key2: string, keyName: string }) {
-    if (!keyName) {
-        keyName = "id";
-    }
-    return sections.reduce((acc, section) => (
-        acc
-        || isChildrenOf(source, section, key2, key1, keyName)
-        || isChildrenOf(source, section, key1, key2, keyName)
-    ), false);
-}
-
 export function replaceIdAndNamespace(source: string, id: string, namespace: string) {
     const yamlDoc = parseDocumentTyped(source);
     yamlDoc.contents = yamlDoc.contents || new YAMLMap();
@@ -767,66 +571,6 @@ export function replaceIdAndNamespace(source: string, id: string, namespace: str
     }
 
     return yamlDoc.toString(TOSTRING_OPTIONS);
-}
-
-export function checkBlockAlreadyExists({source, section, newContent, keyName}:
-    { source: string, section: string, newContent: string, keyName: string }) {
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
-    const parsedProp = parse(newContent);
-    if (!sectionNode) {
-        return undefined
-    }
-    let propExists = false;
-    visit(sectionNode, {
-        Map(_, map) {
-            if (map.get(keyName) === parsedProp[keyName]) {
-                propExists = true;
-                return visit.BREAK;
-            }
-        },
-    });
-    return propExists ? parsedProp[keyName] : undefined
-}
-
-export function getLastBlock({source, section, parentKey, keyName, subBlockName}: {
-    source: string,
-    section: string,
-    parentKey?: string,
-    keyName?: string,
-    subBlockName?: string
-}): string | undefined {
-    if (!keyName) {
-        keyName = "id";
-    }
-    if (!subBlockName) {
-        subBlockName = section;
-    }
-
-    if (parentKey) {
-        const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
-        if (!sectionNode) {
-            return undefined
-        }
-        const parentProperty = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: parentKey}) as Document<YAMLMap<{
-            value: string;
-        }, YAMLSeq<YAMLMap>>>;
-
-        if (!parentProperty?.contents?.items) {
-            throw new Error(`Parent with ID ${parentKey} not found`);
-        }
-
-        const subBlocksNode = parentProperty.contents.items.find((pair: any) => pair.key.value === subBlockName);
-
-        if (!subBlocksNode || (subBlocksNode.value && "value" in subBlocksNode.value && subBlocksNode.value.value === null)) {
-            return undefined;
-        }
-
-        return subBlocksNode.value?.items[subBlocksNode.value.items.length - 1].get(keyName) as string;
-    }
-
-    const parsed = parse(source);
-
-    return parsed[section]?.[parsed?.[section]?.length - 1]?.[keyName];
 }
 
 export function updateMetadata(source: string, metadata: Record<string, any>) {
@@ -853,7 +597,7 @@ export function updateMetadata(source: string, metadata: Record<string, any>) {
     return cleanMetadataDocument(yamlDoc).toString(TOSTRING_OPTIONS);
 }
 
-export const FLOW_SECTION_KEYS = [
+const FLOW_SECTION_KEYS = [
     "tasks",
     "triggers",
     "errors",
@@ -862,9 +606,7 @@ export const FLOW_SECTION_KEYS = [
     "pluginDefaults",
 ] as const
 
-export type FlowSectionKeys = typeof FLOW_SECTION_KEYS[number];
-
-export const ORDERED_FLOW_ROOT_KEYS = [
+const ORDERED_FLOW_ROOT_KEYS = [
     "id",
     "type",
     "namespace",
@@ -880,8 +622,6 @@ export const ORDERED_FLOW_ROOT_KEYS = [
     "outputs",
     "disabled",
 ] as const
-
-export type FlowRootKeys = typeof ORDERED_FLOW_ROOT_KEYS[number];
 
 function isItemTruthy(item: Node) {
     if (isSeq(item) || isMap(item)) {
@@ -925,12 +665,6 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
     return yamlDoc;
 }
 
-export function cleanMetadata(source: string) {
-    const yamlDoc = parseDocumentTyped(source);
-    const cleanedYamlDoc = cleanMetadataDocument(yamlDoc);
-    return cleanedYamlDoc.toString(TOSTRING_OPTIONS);
-}
-
 export function getMetadata(source: string): Record<string, any> {
     const yamlDoc = parseDocument(source) as any;
     if(!yamlDoc.contents?.items) return {};
@@ -968,47 +702,6 @@ export function flowHaveTasks(source: string) {
         return false;
     }
     return isSeq(sectionNode) && sectionNode.items.length > 0;
-}
-
-export function extractPluginDefault(source: string, pluginType: string) {
-    return extractBlock({source, section: "pluginDefaults", key: pluginType, keyName: "type"});
-}
-
-export function replacePluginDefaultsInDocument(source: string, pluginType: string, newContent: string) {
-    return replaceBlockInDocument({source, section: "pluginDefaults", keyName: "type", key: pluginType, newContent});
-}
-
-export function deletePluginDefaults(source: string, pluginType: string) {
-    return deleteBlock({source, section: "pluginDefaults", key: pluginType, keyName: "type"});
-}
-
-export function insertErrorInFlowable(source: string, errorTask: string, flowableTask: string) {
-    const yamlDoc = parseDocument(source) as any;
-    const newErrorNode = yamlDoc.createNode(parseDocument(errorTask));
-    let added = false;
-    visit(yamlDoc, {
-        Map(_, map) {
-            if (added) {
-                return visit.BREAK;
-            }
-            if (map.get("id") === flowableTask) {
-                if (map.items.find((item: any) => item.key.value === "errors")) {
-                    (
-                        map.items?.find((item: any) => item.key.value === "errors")
-                            ?.value as any
-                    )?.items.push(newErrorNode);
-                } else {
-                    const errorsSeq = new YAMLSeq();
-                    errorsSeq.items.push(newErrorNode);
-                    const errors = new Pair(new Scalar("errors"), errorsSeq);
-                    map.items.push(errors);
-                }
-                added = true;
-                return map;
-            }
-        },
-    });
-    return yamlDoc.toString(TOSTRING_OPTIONS);
 }
 
 /**

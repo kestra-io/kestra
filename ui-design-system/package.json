@@ -27,7 +27,8 @@
         "unit:test": "vitest run --config vitest.unit.config.ts",
         "unit:watch": "vitest",
         "storybook:test": "vitest run --config vitest.config.ts --project 'storybook:*'",
-        "storybook:build": "storybook build"
+        "storybook:build": "storybook build",
+        "types:check": "vue-tsc --noEmit"
     },
     "peerDependencies": {
         "@vueuse/core": ">=11.0.0",
@@ -45,7 +46,6 @@
         "vue-i18n": "^11.3.0",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": ">=4.0.0",
-        "xss": ">=1.0.0",
         "yaml": "^2.8.2"
     },
     "dependencies": {
@@ -53,7 +53,7 @@
         "remark-frontmatter": "^5.0.0",
         "remark-gfm": "^4.0.1",
         "remark-parse": "^11.0.0",
-        "xss": ">=1.0.0"
+        "xss": "^1.0.15"
     },
     "devDependencies": {
         "@storybook/addon-a11y": "^10.3.1",

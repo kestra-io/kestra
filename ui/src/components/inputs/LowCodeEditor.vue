@@ -44,6 +44,8 @@
                     :execution="executionsStore.execution"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
+                    :outputs="taskOutputs(taskProps.data.node?.task?.id)"
+                    :metrics="taskMetrics(taskProps.data.node?.task?.id)"
                 />
             </template>
         </Topology>
@@ -117,6 +119,8 @@
                     :execution="executionsStore.execution"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
+                    :outputs="taskOutputs(selectedTask?.id)"
+                    :metrics="taskMetrics(selectedTask?.id)"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -180,6 +184,12 @@
         }
         return result;
     });
+
+    const taskOutputs = (taskId: string | undefined) =>
+        executionsStore.execution?.taskRunList?.filter((tr: any) => tr.taskId === taskId)?.at(-1)?.outputs ?? null;
+
+    const taskMetrics = (taskId: string | undefined) =>
+        executionsStore.metrics?.filter((m: any) => m.taskId === taskId) ?? null;
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type;
@@ -273,6 +283,7 @@
             executionsStore.loadAugmentedGraph({
                 id,
             });
+            executionsStore.loadMetrics({executionId: id});
         }
     }, {immediate: true});
 

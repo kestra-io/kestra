@@ -12,7 +12,7 @@
     />
 
     <div v-bind="$attrs">
-        <ks-card>
+        <KsCard>
             <KsBar
                 v-if="flowStore.aggregatedMetrics"
                 class="chart"
@@ -21,11 +21,11 @@
                 :loading="isLoading"
             />
             <span v-else>
-                <ks-alert type="info" :closable="false">
+                <KsAlert type="info" :closable="false">
                     {{ $t("metric choice") }}
-                </ks-alert>
+                </KsAlert>
             </span>
-        </ks-card>
+        </KsCard>
     </div>
 </template>
 

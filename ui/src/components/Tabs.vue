@@ -1,28 +1,28 @@
 <template>
-    <ks-router-tab
+    <KsRouterTab
         :tabs="tabs"
-        :route-name="routeName"
+        :routeName="routeName"
         :top="top"
-        :embed-active-tab="embedActiveTab"
+        :embedActiveTab="embedActiveTab"
         :class="containerClass"
         @changed="emit('changed', $event)"
     >
-        <template #tab-label="{ tab }">
-            <ks-tooltip
+        <template #tab-label="{tab}">
+            <KsTooltip
                 v-if="tab.disabled && (tab as Tab).props?.showTooltip"
                 :content="$t('add-trigger-in-editor')"
                 placement="top"
             >
                 <span><strong>{{ tab.title }}</strong></span>
-            </ks-tooltip>
+            </KsTooltip>
             <EnterpriseBadge :enable="(tab as Tab).locked">
                 <span class="tab-label-wrapper">
                     {{ tab.title }}
-                    <ks-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                    <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
                 </span>
             </EnterpriseBadge>
         </template>
-        <template #content="{ activeTab }">
+        <template #content="{activeTab}">
             <BlueprintDetail
                 v-if="selectedBlueprintId"
                 :blueprintId="selectedBlueprintId"
@@ -43,7 +43,7 @@
                 :embed="(activeTab as Tab).props?.embed ?? true"
             />
         </template>
-    </ks-router-tab>
+    </KsRouterTab>
 </template>
 
 <script setup lang="ts">

@@ -1,15 +1,15 @@
 <template>
-    <ks-table tableLayout="auto" fixed :data="variables">
-        <ks-table-column prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
+    <KsTable tableLayout="auto" fixed :data="variables">
+        <KsTableColumn prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
             <template #default="scope">
                 <code class="key-col">{{ scope.row.key }}</code>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="value" :label="$t('value')">
+        <KsTableColumn prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.date">
-                    <ks-date-ago :inverted="true" :date="scope.row.value" />
+                    <KsDateAgo :inverted="true" :date="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.subflow">
                     {{ scope.row.value }}
@@ -19,8 +19,8 @@
                     <VarValue :execution="executionsStore.execution" :value="scope.row.value" />
                 </template>
             </template>
-        </ks-table-column>
-    </ks-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">

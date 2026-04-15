@@ -2,7 +2,7 @@
     <div class="trigger">
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
-                <ks-popover
+                <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
@@ -18,7 +18,7 @@
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
-                </ks-popover>
+                </KsPopover>
             </template>
         </span>
     </div>

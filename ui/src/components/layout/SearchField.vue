@@ -1,5 +1,5 @@
 <template>
-    <ks-input
+    <KsInput
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
@@ -16,7 +16,7 @@
                 </slot>
             </div>
         </template>
-    </ks-input>
+    </KsInput>
 </template>
 
 <script lang="ts" setup>

@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <ks-data-table
+        <KsDataTable
             ref="dataTable"
             :loadData="loadData"
             :data="secrets"
@@ -32,7 +32,7 @@
                 />
             </template>
 
-            <ks-table-column
+            <KsTableColumn
                 prop="key"
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
@@ -41,9 +41,9 @@
                 <template #default="scope">
                     <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column
+            <KsTableColumn
                 v-for="col in visibleColumns"
                 :key="col.prop"
                 :prop="col.prop"
@@ -53,13 +53,13 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'namespace'">
-                        <ks-tag
+                        <KsTag
                             type="info"
                             class="namespace-tag"
                         >
                             <FolderOpenOutline />
                             {{ scope.row?.namespace }}
-                        </ks-tag>
+                        </KsTag>
                     </template>
                     <template v-else-if="col.prop === 'description'">
                         {{ scope.row?.description }}
@@ -68,24 +68,24 @@
                         <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
                     </template>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column columnKey="locked" className="row-action">
+            <KsTableColumn columnKey="locked" className="row-action">
                 <template #default="scope">
-                    <ks-tooltip
+                    <KsTooltip
                         v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
                         <template #content>
                             <span v-html="$t('secret.isReadOnly')" />
                         </template>
-                        <ks-icon class="d-flex justify-content-center">
+                        <KsIcon class="d-flex justify-content-center">
                             <Lock />
-                        </ks-icon>
-                    </ks-tooltip>
+                        </KsIcon>
+                    </KsTooltip>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column columnKey="copy" className="row-action">
+            <KsTableColumn columnKey="copy" className="row-action">
                 <template #default="scope">
                     <KsIconButton
                         :tooltip="$t('copy_to_clipboard')"
@@ -95,9 +95,9 @@
                         <ContentCopy />
                     </KsIconButton>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column
+            <KsTableColumn
                 v-if="!keyOnly && !paneView"
                 columnKey="update"
                 className="row-action"
@@ -112,9 +112,9 @@
                         <FileDocumentEdit />
                     </KsIconButton>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column
+            <KsTableColumn
                 v-if="!keyOnly && !paneView"
                 columnKey="delete"
                 className="row-action"
@@ -129,16 +129,16 @@
                         <Delete />
                     </KsIconButton>
                 </template>
-            </ks-table-column>
-        </ks-data-table>
+            </KsTableColumn>
+        </KsDataTable>
 
-        <ks-drawer
+        <KsDrawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
         >
-            <ks-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-                <ks-form-item
+            <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+                <KsFormItem
                     v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
@@ -150,65 +150,65 @@
                         :includeSystemNamespace="true"
                         all
                     />
-                </ks-form-item>
-                <ks-form-item :label="$t('secret.key')" prop="key">
-                    <ks-input v-model="secret.key" :disabled="secret.update" required />
-                </ks-form-item>
-                <ks-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.key')" prop="key">
+                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                </KsFormItem>
+                <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
                     <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
-                </ks-form-item>
-                <ks-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
-                    <ks-col :span="20">
+                </KsFormItem>
+                <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value">
+                    <KsCol :span="20">
                         <KsPassword
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
                         />
-                    </ks-col>
-                    <ks-col class="px-2" :span="4">
-                        <ks-switch
+                    </KsCol>
+                    <KsCol class="px-2" :span="4">
+                        <KsSwitch
                             size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
                             :activeIcon="PencilOutline"
                             :inactiveIcon="PencilOff"
                         />
-                    </ks-col>
-                </ks-form-item>
-                <ks-form-item :label="$t('secret.description')" prop="description">
-                    <ks-input
+                    </KsCol>
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.description')" prop="description">
+                    <KsInput
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
                     />
-                </ks-form-item>
-                <ks-form-item :label="$t('secret.tags')" prop="tags">
-                    <ks-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                        <ks-col :span="8">
-                            <ks-input required v-model="tag.key" :placeholder="$t('key')" />
-                        </ks-col>
-                        <ks-col :span="12">
-                            <ks-input required v-model="tag.value" :placeholder="$t('value')" />
-                        </ks-col>
-                        <ks-button-group class="d-flex flex-nowrap">
-                            <ks-button
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.tags')" prop="tags">
+                    <KsRow class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                        <KsCol :span="8">
+                            <KsInput required v-model="tag.key" :placeholder="$t('key')" />
+                        </KsCol>
+                        <KsCol :span="12">
+                            <KsInput required v-model="tag.value" :placeholder="$t('value')" />
+                        </KsCol>
+                        <KsButtonGroup class="d-flex flex-nowrap">
+                            <KsButton
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
                             />
-                        </ks-button-group>
-                    </ks-row>
-                    <ks-button :icon="Plus" @click="addSecretTag" type="default">
+                        </KsButtonGroup>
+                    </KsRow>
+                    <KsButton :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
-                    </ks-button>
-                </ks-form-item>
-            </ks-form>
+                    </KsButton>
+                </KsFormItem>
+            </KsForm>
 
             <template #footer>
-                <ks-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
+                <KsButton :icon="ContentSave" @click="saveSecret(form)" type="primary">
                     {{ $t('save') }}
-                </ks-button>
+                </KsButton>
             </template>
-        </ks-drawer>
+        </KsDrawer>
     </div>
 </template>
 

@@ -1,5 +1,5 @@
 <template>
-    <ks-card
+    <KsCard
         shadow="never"
         :class="{
             'ai-copilot-card': !props.onboarding,
@@ -11,7 +11,7 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon />&nbsp;<span>{{ $t("ai.flow.title") }}</span>
                 </span>
-                <ks-button
+                <KsButton
                     class="ai-close-button"
                     :icon="Close"
                     @click.stop="emit('close')"
@@ -36,10 +36,10 @@
             <div class="ai-onboarding-composer-wrap">
                 <div v-if="apiFeedback" class="ai-onboarding-info" :role="error ? 'alert' : 'status'">
                     <span class="ai-onboarding-info-content">
-                        <ks-icon class="ai-onboarding-info-icon">
+                        <KsIcon class="ai-onboarding-info-icon">
                             <AlertBox v-if="error" />
                             <InformationOutline v-else />
-                        </ks-icon>
+                        </KsIcon>
                         <span>{{ error ?? $t("welcome_copilot.remaining_quota", {count: remainingQuota}) }}</span>
                     </span>
                 </div>
@@ -61,7 +61,7 @@
                     </template>
 
                     <div v-else class="ai-input-container ai-input-container-onboarding">
-                        <ks-input
+                        <KsInput
                             ref="promptInput"
                             v-if="configured || props.onboarding"
                             v-model="prompt"
@@ -79,77 +79,77 @@
                             <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
-                        <ks-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
+                        <KsText v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
                             {{ error }}
-                        </ks-text>
+                        </KsText>
                     </div>
 
                     <div v-if="configured" class="ai-footer ai-footer-onboarding">
-                        <ks-select
+                        <KsSelect
                             v-if="providers.length > 1"
                             class="ai-provider-select"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
                         >
-                            <ks-option
+                            <KsOption
                                 v-for="p in providers"
                                 :key="p.id"
                                 :label="p.displayName"
                                 :value="p.id"
                             />
-                        </ks-select>
+                        </KsSelect>
 
                         <div class="footer-right">
                             <template v-if="waitingForReply">
                                 <template v-if="props.onboarding">
-                                    <ks-button
+                                    <KsButton
                                         type="primary"
                                         class="send-btn send-btn-onboarding"
                                         disabled
                                     >
-                                        <ks-icon class="is-loading">
+                                        <KsIcon class="is-loading">
                                             <Loading />
-                                        </ks-icon>
-                                    </ks-button>
+                                        </KsIcon>
+                                    </KsButton>
                                 </template>
                                 <template v-else>
                                     <span class="generating-label">
-                                        <ks-icon class="is-loading"><Loading /></ks-icon>
+                                        <KsIcon class="is-loading"><Loading /></KsIcon>
                                         {{ $t(`ai.flow.generating.${generationType}`) }}
                                     </span>
                                 </template>
                             </template>
                             <template v-else-if="isListening">
-                                <ks-button
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="cancelVoice"
                                 >
                                     <Close />
-                                </ks-button>
-                                <ks-button
+                                </KsButton>
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="stopAndValidateVoice"
                                 >
                                     <Check />
-                                </ks-button>
+                                </KsButton>
                             </template>
                             <template v-else>
-                                <ks-button
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="toggleVoiceInput"
                                 >
                                     <Microphone />
-                                </ks-button>
+                                </KsButton>
 
-                                <ks-button
+                                <KsButton
                                     type="primary"
                                     class="send-btn send-btn-onboarding"
                                     :disabled="!prompt.trim()"
                                     @click="submitPrompt"
                                 >
                                     <ArrowUp />
-                                </ks-button>
+                                </KsButton>
                             </template>
                         </div>
                     </div>
@@ -174,7 +174,7 @@
             </template>
 
             <div v-else class="ai-input-container">
-                <ks-input
+                <KsInput
                     ref="promptInput"
                     v-if="configured"
                     v-model="prompt"
@@ -191,9 +191,9 @@
                     <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
-                <ks-text v-if="error" type="danger" size="small" class="error-msg">
+                <KsText v-if="error" type="danger" size="small" class="error-msg">
                     {{ error }}
-                </ks-text>
+                </KsText>
             </div>
         </div>
 
@@ -203,63 +203,63 @@
                     <span class="shortcut-hint">(⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}</span>
                 </div>
 
-                <ks-select
+                <KsSelect
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
                 >
-                    <ks-option
+                    <KsOption
                         v-for="p in providers"
                         :key="p.id"
                         :label="p.displayName"
                         :value="p.id"
                     />
-                </ks-select>
+                </KsSelect>
 
                 <div class="footer-right">
                     <template v-if="waitingForReply">
                         <span class="generating-label">
-                            <ks-icon class="is-loading"><Loading /></ks-icon>
+                            <KsIcon class="is-loading"><Loading /></KsIcon>
                             {{ $t(`ai.flow.generating.${generationType}`) }}
                         </span>
                     </template>
                     <template v-else-if="isListening">
-                        <ks-button
+                        <KsButton
                             class="no-bg-btn"
                             @click="cancelVoice"
                         >
                             <Close />
-                        </ks-button>
-                        <ks-button
+                        </KsButton>
+                        <KsButton
                             class="no-bg-btn"
                             @click="stopAndValidateVoice"
                         >
                             <Check />
-                        </ks-button>
+                        </KsButton>
                     </template>
                     <template v-else>
-                        <ks-button
+                        <KsButton
                             class="no-bg-btn"
                             @click="toggleVoiceInput"
                         >
                             <Microphone />
-                        </ks-button>
+                        </KsButton>
 
-                        <ks-button
+                        <KsButton
                             type="primary"
                             class="send-btn"
                             :disabled="!prompt.trim()"
                             @click="submitPrompt"
                         >
                             <ArrowUp />
-                        </ks-button>
+                        </KsButton>
                     </template>
                 </div>
             </div>
         </template>
-    </ks-card>
+    </KsCard>
 </template>
 
 <script setup lang="ts">

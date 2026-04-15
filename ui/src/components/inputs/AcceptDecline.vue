@@ -3,16 +3,16 @@
         <div v-show="visible" class="accept-decline-bar" role="status" aria-live="polite">
             <div class="bar-content">
                 <div class="left-slot" />
-                <ks-tooltip :content="$t('draft_available')" placement="top">
+                <KsTooltip :content="$t('draft_available')" placement="top">
                     <div class="buttons">
-                        <ks-button @click="emit('reject')">
+                        <KsButton @click="emit('reject')">
                             {{ $t("reject") }}
-                        </ks-button>
-                        <ks-button type="primary" @click="emit('accept')">
+                        </KsButton>
+                        <KsButton type="primary" @click="emit('accept')">
                             {{ $t("accept") }}
-                        </ks-button>
+                        </KsButton>
                     </div>
-                </ks-tooltip>
+                </KsTooltip>
             </div>
         </div>
     </transition>

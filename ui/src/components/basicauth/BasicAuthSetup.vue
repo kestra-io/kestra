@@ -1,126 +1,126 @@
 <template>
-    <ks-row class="setup-container" :gutter="30" justify="center" align="middle">
-        <ks-col :xs="24" :md="8" class="setup-sidebar">
+    <KsRow class="setup-container" :gutter="30" justify="center" align="middle">
+        <KsCol :xs="24" :md="8" class="setup-sidebar">
             <div class="logo-container">
                 <Logo style="width: 14rem;" />
             </div>
-            <ks-steps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
-                <ks-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="$t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
-                <ks-step
+            <KsSteps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
+                <KsStep :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="$t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
+                <KsStep
                     :icon="activeStep > 1 ? CheckBold : MessageOutline"
                     :title="$t('setup.steps.survey')"
                     :class="{'primary-icon': activeStep <= 1}"
                 />
-                <ks-step :icon="LightningBolt" :title="$t('setup.steps.complete')" class="primary-icon" />
-            </ks-steps>
-        </ks-col>
-        <ks-col :xs="24" :md="16" class="setup-main">
-            <ks-card class="setup-card">
+                <KsStep :icon="LightningBolt" :title="$t('setup.steps.complete')" class="primary-icon" />
+            </KsSteps>
+        </KsCol>
+        <KsCol :xs="24" :md="16" class="setup-main">
+            <KsCard class="setup-card">
                 <template #header v-if="activeStep !== 2">
                     <div class="card-header">
-                        <ks-text size="large" class="header-title" v-if="activeStep === 0">
+                        <KsText size="large" class="header-title" v-if="activeStep === 0">
                             {{ $t('setup.titles.user') }}
-                        </ks-text>
-                        <ks-text size="large" class="header-title" v-else-if="activeStep === 1">
+                        </KsText>
+                        <KsText size="large" class="header-title" v-else-if="activeStep === 1">
                             {{ $t('setup.titles.survey') }}
-                        </ks-text>
-                        <ks-text v-if="activeStep === 0" class="header-subtitle">
+                        </KsText>
+                        <KsText v-if="activeStep === 0" class="header-subtitle">
                             {{ $t('setup.subtitles.user') }}
-                        </ks-text>
-                        <ks-button v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
+                        </KsText>
+                        <KsButton v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
                             {{ $t('setup.survey.skip') }}
-                        </ks-button>
+                        </KsButton>
                     </div>
                 </template>
 
                 <div class="setup-card-body">
                     <div v-if="activeStep === 0">
-                        <ks-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                            <ks-form-item :label="$t('setup.form.email')" prop="username" class="mb-2">
-                                <ks-input v-model="userFormData.username" placeholder="admin@company.com" type="email">
+                        <KsForm ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
+                            <KsFormItem :label="$t('setup.form.email')" prop="username" class="mb-2">
+                                <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
                                     <template #suffix v-if="getFieldError('username')">
-                                        <ks-tooltip placement="top" :content="getFieldError('username')">
+                                        <KsTooltip placement="top" :content="getFieldError('username')">
                                             <InformationOutline class="validation-icon error" />
-                                        </ks-tooltip>
+                                        </KsTooltip>
                                     </template>
-                                </ks-input>
-                            </ks-form-item>
+                                </KsInput>
+                            </KsFormItem>
                             <div class="username-requirements mb-2">
-                                <ks-text>
+                                <KsText>
                                     Used as your admin login. No emails unless you opt in.
-                                </ks-text>
+                                </KsText>
                             </div>
-                            <ks-form-item :label="$t('setup.form.password')" prop="password" class="mb-2">
-                                <ks-input
+                            <KsFormItem :label="$t('setup.form.password')" prop="password" class="mb-2">
+                                <KsInput
                                     type="password"
                                     showPassword
                                     v-model="userFormData.password"
                                     placeholder="StrongPass1"
                                 >
                                     <template #suffix v-if="getFieldError('password')">
-                                        <ks-tooltip placement="top" :content="getFieldError('password')">
+                                        <KsTooltip placement="top" :content="getFieldError('password')">
                                             <InformationOutline class="validation-icon error" />
-                                        </ks-tooltip>
+                                        </KsTooltip>
                                     </template>
-                                </ks-input>
-                            </ks-form-item>
+                                </KsInput>
+                            </KsFormItem>
                             <div class="password-requirements mb-2">
-                                <ks-text>
+                                <KsText>
                                     {{ $t('setup.form.password_requirements') }}
-                                </ks-text>
+                                </KsText>
                             </div>
-                        </ks-form>
+                        </KsForm>
                         <div class="d-flex justify-content-end gap-1">
-                            <ks-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
+                            <KsButton type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
                                 {{ $t("setup.confirm.confirm") }}
-                            </ks-button>
+                            </KsButton>
                         </div>
                     </div>
 
                     <div v-else-if="activeStep === 1">
-                        <ks-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
-                            <ks-form-item :label="$t('setup.survey.company_size')">
-                                <ks-radio-group v-model="surveyData.mainGoal" class="survey-radio-group">
-                                    <ks-radio
+                        <KsForm ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
+                            <KsFormItem :label="$t('setup.survey.company_size')">
+                                <KsRadioGroup v-model="surveyData.mainGoal" class="survey-radio-group">
+                                    <KsRadio
                                         v-for="option in intentOptions"
                                         :key="option.value"
                                         :value="option.value"
                                     >
                                         {{ option.label }}
-                                    </ks-radio>
-                                </ks-radio-group>
-                            </ks-form-item>
+                                    </KsRadio>
+                                </KsRadioGroup>
+                            </KsFormItem>
 
-                            <ks-divider class="survey-divider" />
+                            <KsDivider class="survey-divider" />
 
-                            <ks-form-item :label="$t('setup.survey.use_case')">
+                            <KsFormItem :label="$t('setup.survey.use_case')">
                                 <div class="use-case-checkboxes">
-                                    <ks-checkbox-group v-model="surveyData.useCases">
-                                        <ks-checkbox
+                                    <KsCheckboxGroup v-model="surveyData.useCases">
+                                        <KsCheckbox
                                             v-for="option in useCaseOptions"
                                             :key="option.value"
                                             :value="option.value"
                                             class="survey-checkbox"
                                         >
                                             {{ option.label }}
-                                        </ks-checkbox>
-                                    </ks-checkbox-group>
+                                        </KsCheckbox>
+                                    </KsCheckboxGroup>
                                 </div>
-                            </ks-form-item>
+                            </KsFormItem>
 
-                            <ks-divider class="survey-divider" />
+                            <KsDivider class="survey-divider" />
 
-                            <ks-form-item :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
-                                <ks-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
+                            <KsFormItem :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
+                                <KsCheckbox v-model="surveyData.newsletter" class="newsletter-checkbox">
                                     {{ $t('setup.survey.newsletter') }}
-                                </ks-checkbox>
-                            </ks-form-item>
-                        </ks-form>
+                                </KsCheckbox>
+                            </KsFormItem>
+                        </KsForm>
 
                         <div class="d-flex justify-content-end">
-                            <ks-button type="primary" @click="handleSurveyContinue()">
+                            <KsButton type="primary" @click="handleSurveyContinue()">
                                 {{ $t("setup.survey.continue") }}
-                            </ks-button>
+                            </KsButton>
                         </div>
                     </div>
 
@@ -134,14 +134,14 @@
                                 {{ $t('setup.success.subtitle') }}
                             </p>
                         </div>
-                        <ks-button @click="completeSetup()" type="primary" class="success-button">
+                        <KsButton @click="completeSetup()" type="primary" class="success-button">
                             {{ $t('setup.steps.complete') }}
-                        </ks-button>
+                        </KsButton>
                     </div>
                 </div>
-            </ks-card>
-        </ks-col>
-    </ks-row>
+            </KsCard>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

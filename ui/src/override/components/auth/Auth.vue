@@ -1,5 +1,5 @@
 <template>
-    <ks-select
+    <KsSelect
         placement="right-end"
         :popperOffset="20"
         :showArrow="false"
@@ -11,40 +11,40 @@
             <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
-            <ks-option :value="{}" class=" list-unstyled">
+            <KsOption :value="{}" class=" list-unstyled">
                 <div class="menu-item">
                     <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
                     {{ $t("kestra") }}
                 </div>
-            </ks-option>
+            </KsOption>
         </template>
-        <ks-option label="welcome" value="welcome">
+        <KsOption label="welcome" value="welcome">
             <RouterLink :to="startTutorial" class="menu-item">
                 <RocketLaunchOutline class="menu-icon" />
                 {{ $t("product_tour") }}
             </RouterLink>
-        </ks-option>
-        <ks-option label="Settings" value="settings">
+        </KsOption>
+        <KsOption label="Settings" value="settings">
             <RouterLink :to="{name: 'settings'}" class="menu-item">
                 <CogOutline class="menu-icon" />
                 {{ $t("settings.label") }}
             </RouterLink>
-        </ks-option>
-        <ks-option label="slack" value="slack">
+        </KsOption>
+        <KsOption label="slack" value="slack">
             <a href="https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
                 {{ $t("join_slack") }}
             </a>
-        </ks-option>
+        </KsOption>
         <template #footer>
-            <ks-option class="list-unstyled" :value="'logout'" @click="logout">
+            <KsOption class="list-unstyled" :value="'logout'" @click="logout">
                 <div class="menu-item">
                     <Logout class="menu-icon" />
                     {{ $t("setup.logout") }}
                 </div>
-            </ks-option>
+            </KsOption>
         </template>
-    </ks-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">

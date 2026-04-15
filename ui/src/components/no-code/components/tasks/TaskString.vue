@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <ks-checkbox-button
+        <KsCheckboxButton
             v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
             :label="$t('no_code.toggle_pebble')"
@@ -8,16 +8,16 @@
             class="ks-pebble"
         >
             <IconCodeBracesBox />
-        </ks-checkbox-button>
+        </KsCheckboxButton>
 
-        <ks-date-picker
+        <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
             @update:model-value="onInput($event.toISOString())"
         />
-        <ks-input-number
+        <KsInputNumber
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
             align="right"
@@ -29,8 +29,8 @@
             <template #suffix>
                 <span class="duration-unit">{{ $t("days") }}</span>
             </template>
-        </ks-input-number>
-        <ks-time-picker
+        </KsInputNumber>
+        <KsTimePicker
             v-if="!pebble && schema?.format === 'duration'"
             :modelValue="timeDurationValue"
             type="time"

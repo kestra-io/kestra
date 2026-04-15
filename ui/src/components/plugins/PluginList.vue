@@ -1,17 +1,17 @@
 <template>
     <div v-if="currentView !== 'documentation' || currentDocumentationPlugin" class="breadcrumb">
-        <ks-button
+        <KsButton
             v-if="navigationStack.length > 0"
             class="back-btn"
             @click="goBack"
             aria-label="Go back"
             :icon="ChevronLeft"
         />
-        <ks-breadcrumb separator="/">
-            <ks-breadcrumb-item>
+        <KsBreadcrumb separator="/">
+            <KsBreadcrumbItem>
                 <a :class="{'fw-bold ps-2': navigationStack.length === 0}" href="#" @click.prevent="goToStep(-1)">{{ $t('plugins.names') }}</a>
-            </ks-breadcrumb-item>
-            <ks-breadcrumb-item
+            </KsBreadcrumbItem>
+            <KsBreadcrumbItem
                 v-for="(item, index) in navigationStack"
                 :key="index"
                 :class="{'is-active': index === navigationStack.length - 1}"
@@ -24,8 +24,8 @@
                     {{ item.title }}
                 </a>
                 <span v-else>{{ item.title }}</span>
-            </ks-breadcrumb-item>
-        </ks-breadcrumb>
+            </KsBreadcrumbItem>
+        </KsBreadcrumb>
         <SearchField
             v-if="navigationStack.length === 0"
             class="search-field"

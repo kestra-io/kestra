@@ -1,43 +1,43 @@
 <template>
     <div v-if="!isNamespace && (isAllowedEdit || canDelete)">
-        <ks-dropdown>
-            <ks-button type="default" :disabled="isReadOnly">
+        <KsDropdown>
+            <KsButton type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
                 {{ $t("actions") }}
-            </ks-button>
+            </KsButton>
             <template #dropdown>
-                <ks-dropdown-menu class="m-dropdown-menu">
-                    <ks-dropdown-item
+                <KsDropdownMenu class="m-dropdown-menu">
+                    <KsDropdownItem
                         v-if="isAllowedEdit"
                         :icon="Download"
                         size="large"
                         @click="forwardEvent('export')"
                     >
                         {{ $t("flow_export") }}
-                    </ks-dropdown-item>
-                    <ks-dropdown-item
+                    </KsDropdownItem>
+                    <KsDropdownItem
                         v-if="!isCreating && canDelete"
                         :icon="Delete"
                         size="large"
                         @click="forwardEvent('delete-flow', $event)"
                     >
                         {{ $t("delete") }}
-                    </ks-dropdown-item>
+                    </KsDropdownItem>
 
-                    <ks-dropdown-item
+                    <KsDropdownItem
                         v-if="!isCreating"
                         :icon="ContentCopy"
                         size="large"
                         @click="forwardEvent('copy', $event)"
                     >
                         {{ $t("copy") }}
-                    </ks-dropdown-item>
-                </ks-dropdown-menu>
+                    </KsDropdownItem>
+                </KsDropdownMenu>
             </template>
-        </ks-dropdown>
+        </KsDropdown>
     </div>
     <div data-onboarding-target="flow-save-button">
-        <ks-button
+        <KsButton
             v-if="isNamespace || isAllowedEdit"
             :icon="ContentSave"
             @click="forwardEvent(showSaveAndExecute ? 'save-and-execute' : 'save', $event)"
@@ -51,7 +51,7 @@
             :id="showSaveAndExecute ? 'execute-button' : undefined"
         >
             {{ $t(showSaveAndExecute ? "save_and_execute" : "save") }}
-        </ks-button>
+        </KsButton>
     </div>
 </template>
 <script setup lang="ts">

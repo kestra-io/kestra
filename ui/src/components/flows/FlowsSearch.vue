@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section class="container">
         <div>
-            <ks-data-table
+            <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
                 @ready="ready = true"
@@ -12,22 +12,22 @@
                 :total="flowStore.total"
             >
                 <template #navbar>
-                    <ks-form-item>
+                    <KsFormItem>
                         <SearchField />
-                    </ks-form-item>
-                    <ks-form-item>
+                    </KsFormItem>
+                    <KsFormItem>
                         <NamespaceSelect
                             v-if="$route.name !== 'flows/update'"
                             data-type="flow"
                             v-model="namespace"
                             @update:model-value="onNamespaceChange"
                         />
-                    </ks-form-item>
+                    </KsFormItem>
                 </template>
 
                 <template #table>
                     <template v-for="(item, _i) in flowStore.search" :key="`card-${_i}`">
-                        <ks-card class="mb-2" shadow="never">
+                        <KsCard class="mb-2" shadow="never">
                             <template #header>
                                 <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
                                     {{ item.model.namespace }}.{{ item.model.id }}
@@ -38,12 +38,12 @@
                                     <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>
-                        </ks-card>
+                        </KsCard>
                     </template>
 
-                    <ks-empty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
+                    <KsEmpty v-if="flowStore.search === undefined || flowStore.search.length === 0" />
                 </template>
-            </ks-data-table>
+            </KsDataTable>
         </div>
     </section>
 </template>

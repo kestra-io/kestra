@@ -1,5 +1,5 @@
 <template>
-    <ks-cascader-panel ref="panelRef" :options>
+    <KsCascaderPanel ref="panelRef" :options>
         <template #default="{data}">
             <div v-if="Utils.isFile(data.value)">
                 <VarValue :value="data.value" :execution="execution" />
@@ -19,7 +19,7 @@
                 </div>
             </div>
         </template>
-    </ks-cascader-panel>
+    </KsCascaderPanel>
 </template>
 
 <script setup lang="ts">

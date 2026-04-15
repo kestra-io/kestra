@@ -1,6 +1,6 @@
 <template>
     <div class="docsMenuWrapper">
-        <ks-button
+        <KsButton
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
@@ -10,7 +10,7 @@
                 class="expandIcon"
                 :class="{'rotate-icon': menuOpen}"
             />
-        </ks-button>
+        </KsButton>
         <div v-if="menuOpen" class="docsMenuContainer">
             <ul class="docsMenu list-unstyled d-flex flex-column m-0">
                 <template v-if="rawStructure">
@@ -128,8 +128,8 @@
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
         .map(([section, childrenTitles]) =>({
 
-                section,
-                children: childrenTitles
+            section,
+            children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
                     path.split("/").length === 2 && (sidebarTitle === name || title === name)
                 ))

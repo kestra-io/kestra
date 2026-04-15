@@ -1,5 +1,5 @@
 <template>
-    <ks-button
+    <KsButton
         size="small"
         type="primary"
         :icon="EyeOutline"
@@ -7,8 +7,8 @@
         :disabled="isZipFile"
     >
         {{ $t("preview.label") }}
-    </ks-button>
-    <ks-drawer
+    </KsButton>
+    <KsDrawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
@@ -16,51 +16,51 @@
             {{ $t("preview.label") }}
         </template>
         <template #default>
-            <ks-alert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
+            <KsAlert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
-            </ks-alert>
-            <ks-form class="ks-horizontal max-size mt-3">
-                <ks-form-item :label="$t('row count')">
-                    <ks-select
+            </KsAlert>
+            <KsForm class="ks-horizontal max-size mt-3">
+                <KsFormItem :label="$t('row count')">
+                    <KsSelect
                         v-model="maxPreview"
                         filterable
                         clearable
                         :required="true"
                         @change="getFilePreview"
                     >
-                        <ks-option
+                        <KsOption
                             v-for="item in maxPreviewOptions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </ks-select>
-                </ks-form-item>
-                <ks-form-item :label="$t('encoding')">
-                    <ks-select
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem :label="$t('encoding')">
+                    <KsSelect
                         v-model="encoding"
                         filterable
                         clearable
                         :required="true"
                         @change="getFilePreview"
                     >
-                        <ks-option
+                        <KsOption
                             v-for="item in encodingOptions"
                             :key="item.value"
                             :label="item.label"
                             :value="item.value"
                         />
-                    </ks-select>
-                </ks-form-item>
-                <ks-form-item :label="($t('preview.view'))">
-                    <ks-switch
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem :label="($t('preview.view'))">
+                    <KsSwitch
                         v-model="forceEditor"
                         class="ml-3"
                         :activeText="$t('preview.force-editor')"
                         :inactiveText="$t('preview.auto-view')"
                     />
-                </ks-form-item>
-            </ks-form>
+                </KsFormItem>
+            </KsForm>
             <ListPreview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <PdfPreview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
@@ -79,23 +79,23 @@
                 <template #absolute>
                     <CopyToClipboard :text="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)">
                         <template #right>
-                            <ks-tooltip
+                            <KsTooltip
                                 :content="$t('toggle_word_wrap')"
                                 placement="bottom"
                                 :autoClose="2000"
                             >
-                                <ks-button
+                                <KsButton
                                     :icon="Wrap"
                                     type="default"
                                     @click="wordWrap = !wordWrap"
                                 />
-                            </ks-tooltip>
+                            </KsTooltip>
                         </template>
                     </CopyToClipboard>
                 </template>
             </Editor>
         </template>
-    </ks-drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">

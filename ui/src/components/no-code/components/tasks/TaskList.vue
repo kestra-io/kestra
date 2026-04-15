@@ -1,7 +1,7 @@
 <template>
     <div class="tasks-wrapper">
-        <ks-collapse v-model="expanded" class="collapse">
-            <ks-collapse-item
+        <KsCollapse v-model="expanded" class="collapse">
+            <KsCollapseItem
                 :name="section"
                 :title="`${section}${elements ? ` (${elements.length})` : ''}`"
                 :disabled="merge"
@@ -36,8 +36,8 @@
                             )
                     "
                 />
-            </ks-collapse-item>
-        </ks-collapse>
+            </KsCollapseItem>
+        </KsCollapse>
     </div>
 </template>
 

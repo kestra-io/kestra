@@ -25,23 +25,23 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <ks-icon
+                            <KsIcon
                                 v-if="isTableChart(chart.type)"
                                 :tooltip="$t('dashboards.export')"
                             >
-                                <ks-button
+                                <KsButton
                                     @click="dashboardStore.export(dashboard, chart, {filters})"
                                     :icon="Download"
                                     link
                                     class="ms-2"
                                 />
-                            </ks-icon>
+                            </KsIcon>
 
-                            <ks-icon
+                            <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
                                 :tooltip="$t('dashboards.edition.chart')"
                             >
-                                <ks-button
+                                <KsButton
                                     tag="router-link"
                                     :to="{
                                         name: 'dashboards/update',
@@ -51,7 +51,7 @@
                                     link
                                     class="ms-2"
                                 />
-                            </ks-icon>
+                            </KsIcon>
                         </div>
                     </div>
 

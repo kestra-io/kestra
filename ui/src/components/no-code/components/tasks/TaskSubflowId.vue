@@ -1,5 +1,5 @@
 <template>
-    <ks-select
+    <KsSelect
         :modelValue="values"
         @update:model-value="onInput"
         filterable
@@ -8,13 +8,13 @@
         :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
         :disabled="!task.namespace"
     >
-        <ks-option
+        <KsOption
             v-for="item in flowIds"
             :key="item"
             :label="item"
             :value="item"
         />
-    </ks-select>
+    </KsSelect>
 </template>
 <script>
     import {mapStores} from "pinia";

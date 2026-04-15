@@ -16,19 +16,19 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <ks-date-ago className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
+                <KsDateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
             <KsMarkdown class="markdown-tooltip postParagraph" :content="feed.description" />
 
             <div class="newsButtonBar">
-                <ks-button
+                <KsButton
                     style="flex:1"
                     @click="expanded[feed.id] = !expanded[feed.id]"
                 >
                     <MenuDown class="expandIcon" />
                     {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
-                </ks-button>
-                <ks-button
+                </KsButton>
+                <KsButton
                     v-if="feed.href"
                     :title="$t('open in new tab')"
                     tag="a"
@@ -37,10 +37,10 @@
                     :href="feed.href"
                 >
                     <OpenInNew :title="feed.link" />
-                </ks-button>
+                </KsButton>
             </div>
 
-            <ks-divider class="mb-2" v-if="index !== feeds.length - 1" />
+            <KsDivider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>

@@ -1,16 +1,16 @@
 <template>
-    <ks-card class="card">
+    <KsCard class="card">
         <div v-if="showIcon" class="header">
-            <ks-link :href="link" target="_blank">
-                <ks-icon class="el-icon--right">
+            <KsLink :href="link" target="_blank">
+                <KsIcon class="el-icon--right">
                     <OpenInNew />
-                </ks-icon>
-            </ks-link>
+                </KsIcon>
+            </KsLink>
         </div>
         <div class="icon-row">
-            <ks-icon :size="24">
+            <KsIcon :size="24">
                 <component :is="icon" />
-            </ks-icon>
+            </KsIcon>
             <div>
                 <h5 class="title">
                     {{ title }}
@@ -20,7 +20,7 @@
                 </div>
             </div>
         </div>
-    </ks-card>
+    </KsCard>
 </template>
 
 <script setup lang="ts">

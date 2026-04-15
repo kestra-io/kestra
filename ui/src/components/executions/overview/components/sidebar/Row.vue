@@ -1,17 +1,17 @@
 <template>
-    <ks-row v-for="(row, rIdx) in props.rows" :key="rIdx">
-        <ks-col :span="14" class="label">
+    <KsRow v-for="(row, rIdx) in props.rows" :key="rIdx">
+        <KsCol :span="14" class="label">
             <component :is="row.icon" />
-            <ks-text truncated>
+            <KsText truncated>
                 {{ row.label }}
-            </ks-text>
-        </ks-col>
+            </KsText>
+        </KsCol>
 
-        <ks-col v-if="$slots.value" :span="10" class="value">
+        <KsCol v-if="$slots.value" :span="10" class="value">
             <slot name="value" />
-        </ks-col>
-        <ks-col v-else-if="row.value" :span="10" class="value">
-            <ks-text truncated>
+        </KsCol>
+        <KsCol v-else-if="row.value" :span="10" class="value">
+            <KsText truncated>
                 <router-link v-if="row.to" :to="row.to">
                     {{ row.value }}
                 </router-link>
@@ -19,13 +19,13 @@
                 <template v-else>
                     {{ row.value }}
                 </template>
-            </ks-text>
-        </ks-col>
+            </KsText>
+        </KsCol>
 
-        <ks-col v-if="$slots.action" :span="10">
+        <KsCol v-if="$slots.action" :span="10">
             <slot name="action" />
-        </ks-col>
-    </ks-row>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

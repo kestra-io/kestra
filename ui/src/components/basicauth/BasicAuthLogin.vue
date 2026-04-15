@@ -4,10 +4,10 @@
             <Logo class="logo" />
         </div>
 
-        <ks-form @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
+        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
             <input type="hidden" name="from" :value="redirectPath">
-            <ks-form-item prop="username">
-                <ks-input
+            <KsFormItem prop="username">
+                <KsInput
                     name="username"
                     size="large"
                     id="input-username"
@@ -19,14 +19,14 @@
                         <Account />
                     </template>
                     <template #suffix v-if="getFieldError('username')">
-                        <ks-tooltip placement="top" :content="getFieldError('username')">
+                        <KsTooltip placement="top" :content="getFieldError('username')">
                             <InformationOutline class="validation-icon error" />
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
-                </ks-input>
-            </ks-form-item>
-            <ks-form-item prop="password">
-                <ks-input
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem prop="password">
+                <KsInput
                     v-model="credentials.password"
                     size="large"
                     name="password"
@@ -40,14 +40,14 @@
                         <Lock />
                     </template>
                     <template #suffix v-if="getFieldError('password')">
-                        <ks-tooltip placement="top" :content="getFieldError('password')">
+                        <KsTooltip placement="top" :content="getFieldError('password')">
                             <InformationOutline class="validation-icon error" />
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
-                </ks-input>
-            </ks-form-item>
-            <ks-form-item>
-                <ks-button
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="primary"
                     class="w-100"
                     size="large"
@@ -57,19 +57,19 @@
                     :loading="isLoading"
                 >
                     {{ $t("setup.login") }}
-                </ks-button>
-            </ks-form-item>
-            <ks-form-item>
-                <ks-button
+                </KsButton>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="default"
                     class="w-100"
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
                     {{ $t("setup.troubleshooting") }}
-                </ks-button>
-            </ks-form-item>
-        </ks-form>
+                </KsButton>
+            </KsFormItem>
+        </KsForm>
     </div>
 </template>
 

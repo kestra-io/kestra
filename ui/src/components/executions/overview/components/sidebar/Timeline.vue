@@ -1,12 +1,12 @@
 <template>
-    <ks-collapse accordion ref="container">
-        <ks-collapse-item :icon="ChevronDown">
+    <KsCollapse accordion ref="container">
+        <KsCollapseItem :icon="ChevronDown">
             <template #title>
                 <span>{{ $t("state_history") }}</span>
             </template>
 
-            <ks-timeline :class="{'is-narrow': isNarrow}">
-                <ks-timeline-item
+            <KsTimeline :class="{'is-narrow': isNarrow}">
+                <KsTimelineItem
                     v-for="(activity, aIdx) in props.histories"
                     :key="aIdx"
                     v-bind="isNarrow ? {} : {timestamp: formatDate(activity.date)}"
@@ -19,10 +19,10 @@
                     <template v-else>
                         {{ activity.state }}
                     </template>
-                </ks-timeline-item>
-            </ks-timeline>
-        </ks-collapse-item>
-    </ks-collapse>
+                </KsTimelineItem>
+            </KsTimeline>
+        </KsCollapseItem>
+    </KsCollapse>
 </template>
 
 <script setup lang="ts">

@@ -2,7 +2,7 @@
     <TopNavBar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <ks-data-table
+            <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
                 @ready="ready = true"
@@ -41,11 +41,11 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <ks-empty :description="$t('no_logs_data_description')" />
+                            <KsEmpty :description="$t('no_logs_data_description')" />
                         </div>
                     </div>
                 </template>
-            </ks-data-table>
+            </KsDataTable>
         </div>
     </section>
 </template>

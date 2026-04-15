@@ -1,13 +1,13 @@
 <template>
-    <ks-button
+    <KsButton
         v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
     >
         {{ $t('unqueue') }}
-    </ks-button>
+    </KsButton>
 
-    <ks-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('unqueue')" />
         </template>
@@ -15,11 +15,11 @@
         <template #default>
             <p v-html="$t('unqueue title', {id: execution.id})" />
 
-            <ks-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
-                <ks-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
@@ -28,16 +28,16 @@
                         <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </ks-option>
-            </ks-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <ks-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
+            <KsButton :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
                 {{ $t('unqueue') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

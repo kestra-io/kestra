@@ -2,7 +2,7 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
-        <ks-input
+        <KsInput
             ref="elInputRef"
             :modelValue="(input as string | number | undefined)"
             @update:model-value="input = $event"

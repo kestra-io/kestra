@@ -1,5 +1,5 @@
 <template>
-    <ks-button
+    <KsButton
         v-if="isFlowContext"
         @click="fixWithAi"
         class="el-button--small"
@@ -7,7 +7,7 @@
     >
         <AiIcon class="me-1" />
         <span>{{ $t("fix_with_ai") }}</span>
-    </ks-button>
+    </KsButton>
     <KsMarkdown :content="markdownRenderer" v-if="items.length === 0" />
     <ul>
         <li v-for="(item, index) in items" :key="index" class="font-monospace">

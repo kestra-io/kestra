@@ -6,7 +6,7 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <ks-drawer
+        <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
@@ -17,7 +17,7 @@
                 <div v-ks-loading="isLoading">
                     <ValidationError class="me-2" link :errors="errors" />
 
-                    <ks-button
+                    <KsButton
                         :icon="ContentSave"
                         @click="saveTask"
                         v-if="canSave && !readOnly"
@@ -25,8 +25,8 @@
                         type="primary"
                     >
                         {{ $t("save task") }}
-                    </ks-button>
-                    <ks-alert
+                    </KsButton>
+                    <KsAlert
                         showIcon
                         :closable="false"
                         class="mb-0 mt-3"
@@ -34,12 +34,12 @@
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
-                    </ks-alert>
+                    </KsAlert>
                 </div>
             </template>
 
-            <ks-tabs v-model="activeTabs">
-                <ks-tab-pane v-if="!readOnly" name="form">
+            <KsTabs v-model="activeTabs">
+                <KsTabPane v-if="!readOnly" name="form">
                     <template #label>
                         <span>{{ $t("form") }}</span>
                     </template>
@@ -49,8 +49,8 @@
                         :section="section"
                         @update:model-value="onInput"
                     />
-                </ks-tab-pane>
-                <ks-tab-pane name="source">
+                </KsTabPane>
+                <KsTabPane name="source">
                     <template #label>
                         <span>{{ $t("source") }}</span>
                     </template>
@@ -65,8 +65,8 @@
                         lang="yaml"
                         @update:model-value="onInput"
                     />
-                </ks-tab-pane>
-                <ks-tab-pane v-if="pluginMarkdown" name="documentation">
+                </KsTabPane>
+                <KsTabPane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
                             {{ $t("documentation.documentation") }}
@@ -75,9 +75,9 @@
                     <div class="documentation">
                         <KsMarkdown :content="pluginMarkdown" />
                     </div>
-                </ks-tab-pane>
-            </ks-tabs>
-        </ks-drawer>
+                </KsTabPane>
+            </KsTabs>
+        </KsDrawer>
     </component>
 </template>
 

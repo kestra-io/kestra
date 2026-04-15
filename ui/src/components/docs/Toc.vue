@@ -1,5 +1,5 @@
 <template>
-    <ks-autocomplete
+    <KsAutocomplete
         ref="search"
         class="flex-shrink-0"
         v-model="query"
@@ -19,7 +19,7 @@
                 <ArrowRight class="is-justify-end" />
             </RouterLink>
         </template>
-    </ks-autocomplete>
+    </KsAutocomplete>
     <ul class="list-unstyled d-flex flex-column gap-3">
         <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
             <span class="text-secondary">

@@ -1,6 +1,6 @@
 <template>
     <div class="search-container" ref="searchContainer">
-        <ks-input
+        <KsInput
             v-model="searchQuery"
             :placeholder="$t('search_docs')"
             class="search-input"
@@ -14,7 +14,7 @@
             <template #prefix>
                 <Magnify class="search-icon" />
             </template>
-        </ks-input>
+        </KsInput>
         <div v-if="loading" class="loading-indicator">
             {{ $t('searching') }}
         </div>

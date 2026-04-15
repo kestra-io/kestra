@@ -1,5 +1,5 @@
 <template>
-    <ks-switch
+    <KsSwitch
         :modelValue="modelValue"
         @update:model-value="onInput"
         :activeActionIcon="Check"

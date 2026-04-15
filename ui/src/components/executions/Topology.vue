@@ -1,5 +1,5 @@
 <template>
-    <ks-card>
+    <KsCard>
         <div class="vueflow">
             <LowCodeEditor
                 :key="execution.id"
@@ -16,11 +16,11 @@
                 @expand-subflow="onExpandSubflow"
             />
             <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
-            <ks-alert v-else type="warning" :closable="false">
+            <KsAlert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
-            </ks-alert>
+            </KsAlert>
         </div>
-    </ks-card>
+    </KsCard>
 </template>
 <script>
     import throttle from "lodash/throttle";

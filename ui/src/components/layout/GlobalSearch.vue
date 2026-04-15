@@ -4,7 +4,7 @@
             <div v-if="isOpen" class="search-overlay" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
-                        <ks-input
+                        <KsInput
                             ref="searchInput"
                             v-model="query"
                             :placeholder="$t('jump to...')"
@@ -16,7 +16,7 @@
                                 <span v-if="scopePrefix" class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template #suffix>
-                                <ks-button
+                                <KsButton
                                     v-if="query"
                                     class="close-button"
                                     text
@@ -24,15 +24,15 @@
                                     @click.stop="clearSearch"
                                 >
                                     <Close />
-                                </ks-button>
+                                </KsButton>
                                 <span v-else class="d-none d-sm-block">
                                     <kbd>ESC</kbd> to close
                                 </span>
                             </template>
-                        </ks-input>
+                        </KsInput>
 
                         <div class="results" role="listbox">
-                            <ks-scrollbar v-if="results.length > 0" class="results-scroll">
+                            <KsScrollbar v-if="results.length > 0" class="results-scroll">
                                 <ul id="global-search-listbox" class="results-list">
                                     <li
                                         v-for="(item, index) in results"
@@ -67,7 +67,7 @@
                                         </component>
                                     </li>
                                 </ul>
-                            </ks-scrollbar>
+                            </KsScrollbar>
                             <div v-else class="empty">
                                 {{ $t("no results") }}
                             </div>

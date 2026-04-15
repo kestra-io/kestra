@@ -1,5 +1,5 @@
 <template>
-    <ks-dialog
+    <KsDialog
         v-model="unsavedChangesStore.isDialogVisible"
         :title="$t('unsaved changes')"
         width="500px"
@@ -13,15 +13,15 @@
         </div>
         <template #footer>
             <div class="dialog-footer">
-                <ks-button @click="unsavedChangesStore.handleCancel">
+                <KsButton @click="unsavedChangesStore.handleCancel">
                     {{ $t('cancel') }}
-                </ks-button>
-                <ks-button type="primary" @click="unsavedChangesStore.handleLeave">
+                </KsButton>
+                <KsButton type="primary" @click="unsavedChangesStore.handleLeave">
                     {{ $t('leave page') }}
-                </ks-button>
+                </KsButton>
             </div>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script lang="ts" setup>

@@ -1,14 +1,14 @@
 <template>
     <div class="plugins-list">
-        <ks-input
+        <KsInput
             class="p-2 bg-transparent search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable
         />
-        <ks-collapse accordion v-model="activeNames">
+        <KsCollapse accordion v-model="activeNames">
             <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
-                <ks-collapse-item
+                <KsCollapseItem
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
@@ -46,9 +46,9 @@
                             </ul>
                         </li>
                     </ul>
-                </ks-collapse-item>
+                </KsCollapseItem>
             </template>
-        </ks-collapse>
+        </KsCollapse>
     </div>
 </template>
 

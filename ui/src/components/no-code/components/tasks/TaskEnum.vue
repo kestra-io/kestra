@@ -1,18 +1,18 @@
 <template>
-    <ks-select
+    <KsSelect
         :modelValue="values"
         @update:model-value="onInput"
         filterable
         clearable
         :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
     >
-        <ks-option
+        <KsOption
             v-for="item in schema.enum"
             :key="item"
             :label="item"
             :value="item"
         />
-    </ks-select>
+    </KsSelect>
 </template>
 <script>
     import Task from "./MixinTask";

@@ -1,13 +1,13 @@
 <template>
-    <ks-button
+    <KsButton
         :disabled="!enabled"
         :icon="SwapHorizontal"
         @click="visible = !visible"
     >
         {{ $t('change state') }}
-    </ks-button>
+    </KsButton>
 
-    <ks-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -19,11 +19,11 @@
                 {{ $t("change state current state") }} <KsExecutionStatus size="small" class="me-1" :status="execution.state.current" />
             </p>
 
-            <ks-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
-                <ks-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
@@ -33,23 +33,23 @@
                         <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </ks-option>
-            </ks-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <ks-button @click="visible = false">
+            <KsButton @click="visible = false">
                 {{ $t('cancel') }}
-            </ks-button>
-            <ks-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="changeStatus()"
                 :disabled="selectedStatus === execution.state.current || selectedStatus === null"
             >
                 {{ $t('ok') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

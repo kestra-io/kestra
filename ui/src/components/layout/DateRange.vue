@@ -1,5 +1,5 @@
 <template>
-    <ks-date-picker
+    <KsDatePicker
         :modelValue="date"
         @update:model-value="onDate"
         type="datetimerange"

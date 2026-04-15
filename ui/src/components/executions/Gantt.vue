@@ -15,7 +15,7 @@
             @filter="onFilterChange"
         />
         <div class="gantt-stage">
-            <ks-card
+            <KsCard
                 id="gantt"
                 data-onboarding-target="execution-gantt"
                 shadow="never"
@@ -54,7 +54,7 @@
                                             <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                             <ChevronDown v-else />
                                         </div>
-                                        <ks-tooltip placement="top-start">
+                                        <KsTooltip placement="top-start">
                                             <template #content>
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -67,17 +67,17 @@
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                             </span>
-                                        </ks-tooltip>
+                                        </KsTooltip>
                                         <div>
-                                            <ks-tooltip v-if="item.attempts > 1" placement="right">
+                                            <KsTooltip v-if="item.attempts > 1" placement="right">
                                                 <template #content>
                                                     <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                 </template>
                                                 <Warning class="attempt_warn me-3" />
-                                            </ks-tooltip>
+                                            </KsTooltip>
                                         </div>
                                         <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                            <ks-tooltip placement="top">
+                                            <KsTooltip placement="top">
                                                 <template #content>
                                                     <span style="white-space: pre-wrap;">
                                                         {{ item.tooltip }}
@@ -87,7 +87,7 @@
                                                     :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                                     class="task-progress"
                                                 >
-                                                    <ks-progress
+                                                    <KsProgress
                                                         :left="Math.min(item.left, 90)"
                                                         :percentage="Math.max(100 - item.left, 10)"
                                                         :color="item.color"
@@ -97,7 +97,7 @@
                                                         :showText="false"
                                                     />
                                                 </div>
-                                            </ks-tooltip>
+                                            </KsTooltip>
                                         </div>
                                     </div>
                                     <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
@@ -116,7 +116,7 @@
                         </template>
                     </DynamicScroller>
                 </template>
-            </ks-card>
+            </KsCard>
         </div>
         <OnboardingSuccessPopup
             :modelValue="showOnboardingSuccessPopup"

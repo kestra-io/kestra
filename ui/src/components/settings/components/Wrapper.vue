@@ -1,6 +1,6 @@
 <template>
-    <ks-row class="my-5 settings-wrapper">
-        <ks-col
+    <KsRow class="my-5 settings-wrapper">
+        <KsCol
             :xs="layout(24, 0)"
             :sm="layout(20, 2)"
             :md="layout(18, 3)"
@@ -8,8 +8,8 @@
             :xl="layout(14, 5)"
         >
             <slot />
-        </ks-col>
-    </ks-row>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

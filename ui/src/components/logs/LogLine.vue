@@ -5,9 +5,9 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <ks-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
+        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
             <MenuRight />
-        </ks-icon>
+        </KsIcon>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div

@@ -3,9 +3,9 @@
         <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
-                    <ks-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
+                    <KsButton type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
                         {{ $t('use') }}
-                    </ks-button>
+                    </KsButton>
                 </router-link>
             </ul>
         </template>
@@ -13,17 +13,17 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <ks-icon size="medium" @click="goBack">
+                <KsIcon size="medium" @click="goBack">
                     <ChevronLeft />
-                </ks-icon>
+                </KsIcon>
             </button>
             <span class="header-title align-self-center">
                 {{ $t('blueprints.title') }}
             </span>
             <router-link v-if="userCanCreate" :to="editorRoute" class="ms-auto">
-                <ks-button type="primary" @click="trackBlueprintUse('detail')">
+                <KsButton type="primary" @click="trackBlueprintUse('detail')">
                     {{ $t('use') }}
-                </ks-button>
+                </KsButton>
             </router-link>
         </div>
         <div>
@@ -34,7 +34,7 @@
     </div>
 
     <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-ks-loading="!blueprint">
-        <ks-card v-if="blueprint && kind === 'flow'">
+        <KsCard v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -46,11 +46,11 @@
                     isReadOnly
                 />
             </div>
-        </ks-card>
-        <ks-row :gutter="30" v-if="blueprint">
-            <ks-col :md="24" :lg="embed ? 24 : 18">
+        </KsCard>
+        <KsRow :gutter="30" v-if="blueprint">
+            <KsCol :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
-                <ks-card>
+                <KsCard>
                     <Editor
                         class="position-relative"
                         :readOnly="true"
@@ -64,28 +64,28 @@
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
                     </Editor>
-                </ks-card>
+                </KsCard>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
                     <div class="tags text-uppercase">
                         <div v-for="tag in processedTags" :key="tag.original" class="tag-box">
-                            <ks-tag type="info" size="small">
+                            <KsTag type="info" size="small">
                                 {{ tag.display }}
-                            </ks-tag>
+                            </KsTag>
                         </div>
                     </div>
                     <KsMarkdown :content="blueprint?.description" />
                 </template>
-            </ks-col>
-            <ks-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
+            </KsCol>
+            <KsCol :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint?.includedTasks)]" :key="String(task)">
                         <KsTaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
                     </div>
                 </div>
-            </ks-col>
-        </ks-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 <script setup lang="ts">

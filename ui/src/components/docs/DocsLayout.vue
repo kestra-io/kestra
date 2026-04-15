@@ -7,7 +7,7 @@
         />
 
         <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
-            <ks-button
+            <KsButton
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
                 @click="mobileMenuOpen = false"
@@ -21,7 +21,7 @@
         </div>
         <div class="main-content-wrapper">
             <div v-if="$slots['secondary-header']" class="secondary-header">
-                <ks-button
+                <KsButton
                     v-if="$slots.menu && isPluginsRoute"
                     :class="['mobile-menu-toggle']"
                     @click="mobileMenuOpen = !mobileMenuOpen"

@@ -8,9 +8,9 @@
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
 
-        <ks-button v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
+        <KsButton v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
             {{ $t("back_to_dashboard") }}
-        </ks-button>
+        </KsButton>
     </EmptyTemplate>
 </template>
 

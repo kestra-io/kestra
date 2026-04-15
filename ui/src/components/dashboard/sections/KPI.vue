@@ -6,7 +6,7 @@
         </p>
     </section>
 
-    <ks-empty v-else :description="EMPTY_TEXT" />
+    <KsEmpty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">

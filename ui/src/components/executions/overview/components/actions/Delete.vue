@@ -1,11 +1,11 @@
 <template>
-    <ks-button
+    <KsButton
         v-if="isAllowedDelete"
         :icon="TrashCanOutline"
         @click="deleteExecution"
     >
         {{ $t("delete") }}
-    </ks-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">

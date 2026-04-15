@@ -1,10 +1,10 @@
 <template>
-    <ks-dialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
+    <KsDialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
-                <ks-icon :size="30">
+                <KsIcon :size="30">
                     <Keyboard />
-                </ks-icon>
+                </KsIcon>
                 <span class="fs-6">
                     {{ $t("editor_shortcuts.label") }}
                 </span>
@@ -19,7 +19,7 @@
             >
                 <div class="d-flex align-items-center gap-2 keys">
                     <template v-for="(key, index) in command.keys" :key="index">
-                        <ks-tag>{{ key }}</ks-tag>
+                        <KsTag>{{ key }}</KsTag>
                         <span
                             v-if="index < command.keys.length - 1"
                             class="fw-bold"
@@ -31,7 +31,7 @@
                 </div>
             </div>
         </div>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

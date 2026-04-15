@@ -5,14 +5,14 @@
         :key="index"
     >
         <div class="flex-grow-1 d-flex align-items-center">
-            <ks-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 :modelValue="(label.key as string | undefined)"
                 :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
-            <ks-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('value')"
                 :modelValue="(label.value as string | undefined)"
@@ -20,10 +20,10 @@
             />
         </div>
         <div class="flex-shrink-1">
-            <ks-button-group class="d-flex">
-                <ks-button :icon="Plus" @click="addItem" />
-                <ks-button :icon="Minus" @click="removeItem(index)" />
-            </ks-button-group>
+            <KsButtonGroup class="d-flex">
+                <KsButton :icon="Plus" @click="addItem" />
+                <KsButton :icon="Minus" @click="removeItem(index)" />
+            </KsButtonGroup>
         </div>
     </div>
 </template>

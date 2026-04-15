@@ -1,35 +1,35 @@
 <template>
     <div class="button-top">
-        <ks-button-group class="view-buttons">
-            <ks-tooltip :content="$t('source only')">
-                <ks-button
+        <KsButtonGroup class="view-buttons">
+            <KsTooltip :content="$t('source only')">
+                <KsButton
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
-            </ks-tooltip>
-            <ks-tooltip :content="$t('documentation.documentation')">
-                <ks-button
+            </KsTooltip>
+            <KsTooltip :content="$t('documentation.documentation')">
+                <KsButton
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
-            </ks-tooltip>
-            <ks-tooltip :content="$t('chart preview')">
-                <ks-button
+            </KsTooltip>
+            <KsTooltip :content="$t('chart preview')">
+                <KsButton
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
-            </ks-tooltip>
-            <ks-tooltip :content="$t('dashboards.preview')">
-                <ks-button
+            </KsTooltip>
+            <KsTooltip :content="$t('dashboards.preview')">
+                <KsButton
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
-            </ks-tooltip>
-        </ks-button-group>
+            </KsTooltip>
+        </KsButtonGroup>
 
         <ValidationErrors
             class="mx-3"
@@ -37,21 +37,21 @@
             :errors="errors"
         />
 
-        <ks-button
+        <KsButton
             :icon="ContentSave"
             @click="emit('save', source)"
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
-        </ks-button>
+        </KsButton>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
         <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
-        <ks-splitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
-            <ks-splitter-panel :size="editorWidth" min="25%" max="75%">
+        <KsSplitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
+            <KsSplitterPanel :size="editorWidth" min="25%" max="75%">
                 <Editor
                     @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                     v-model="source"
@@ -63,8 +63,8 @@
                     :readOnly="false"
                     :navbar="false"
                 />
-            </ks-splitter-panel>
-            <ks-splitter-panel :size="100 - editorWidth">
+            </KsSplitterPanel>
+            <KsSplitterPanel :size="100 - editorWidth">
                 <PluginDocumentation
                     v-if="currentView === views.DOC"
                     class="combined-right-view enhance-readability"
@@ -82,17 +82,17 @@
                         <span>{{ chartError }}</span>
                     </div>
                     <div v-else>
-                        <ks-empty :image="EmptyVisualDashboard" :imageSize="200">
+                        <KsEmpty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
                                     {{ $t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
-                        </ks-empty>
+                        </KsEmpty>
                     </div>
                 </div>
-            </ks-splitter-panel>
-        </ks-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
         <div v-else class="editor-only">
             <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"

@@ -1,5 +1,5 @@
 <template>
-    <ks-select
+    <KsSelect
         class="fit-text"
         v-model="modelValue"
         :multiple
@@ -15,7 +15,7 @@
         :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
-            <ks-tag
+            <KsTag
                 v-for="(value, index) in validValues"
                 :key="index"
                 class="namespace-tag"
@@ -24,15 +24,15 @@
             >
                 <FolderOpenOutline class="tag-icon" />
                 {{ value }}
-            </ks-tag>
+            </KsTag>
         </template>
-        <ks-option
+        <KsOption
             v-for="item in options"
             :key="item.id"
             :label="item.label"
             :value="item.id"
         />
-    </ks-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">

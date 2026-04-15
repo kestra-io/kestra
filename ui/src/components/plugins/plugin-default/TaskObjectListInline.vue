@@ -11,13 +11,13 @@
         >
             <div class="item-header d-flex justify-content-between align-items-center mb-2 px-2">
                 <span class="index-tag">#{{ index + 1 }}</span>
-                <ks-button
+                <KsButton
                     link
                     type="danger"
                     @click="remove(index)"
                 >
                     <DeleteOutline />
-                </ks-button>
+                </KsButton>
             </div>
             <TaskObjectInline
                 :modelValue="modelValue?.[index]"

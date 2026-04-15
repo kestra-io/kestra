@@ -1,7 +1,7 @@
 <template>
-    <ks-data-table
+    <KsDataTable
         ref="dataTable"
-        :load-data="loadData"
+        :loadData="loadData"
         :data="kvs"
         :total="total"
         :defaultSort="{prop: 'key', order: 'ascending'}"
@@ -33,20 +33,20 @@
         </template>
 
         <template #bulk-actions>
-            <ks-button :icon="Delete" type="default" @click="removeKvs()">
+            <KsButton :icon="Delete" type="default" @click="removeKvs()">
                 {{ $t("delete") }}
-            </ks-button>
+            </KsButton>
         </template>
 
         <template v-for="colProp in orderedVisibleColumns" :key="colProp">
-            <ks-table-column
+            <KsTableColumn
                 v-if="colProp === 'namespace' && namespace === undefined && !paneView"
                 prop="namespace"
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
             />
-            <ks-table-column
+            <KsTableColumn
                 v-else-if="colProp === 'key'"
                 prop="key"
                 sortable="custom"
@@ -56,15 +56,15 @@
                 <template #default="scope">
                     <KsId v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
                 </template>
-            </ks-table-column>
-            <ks-table-column
+            </KsTableColumn>
+            <KsTableColumn
                 v-else-if="colProp === 'description' && !paneView"
                 prop="description"
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('description')"
             />
-            <ks-table-column
+            <KsTableColumn
                 v-else-if="colProp === 'updateDate'"
                 prop="updateDate"
                 sortable="custom"
@@ -72,10 +72,10 @@
                 :label="$t('last modified')"
             >
                 <template #default="scope">
-                    <ks-date-ago :date="convertToUserTimezone(scope.row.updateDate)" inverted />
+                    <KsDateAgo :date="convertToUserTimezone(scope.row.updateDate)" inverted />
                 </template>
-            </ks-table-column>
-            <ks-table-column
+            </KsTableColumn>
+            <KsTableColumn
                 v-else-if="colProp === 'expirationDate' && !paneView"
                 prop="expirationDate"
                 sortable="custom"
@@ -83,12 +83,12 @@
                 :label="$t('expiration date')"
             >
                 <template #default="scope">
-                    <ks-date-ago v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
+                    <KsDateAgo v-if="scope.row.expirationDate" :date="convertToUserTimezone(scope.row.expirationDate)" />
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
         </template>
 
-        <ks-table-column columnKey="copy" className="row-action">
+        <KsTableColumn columnKey="copy" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="scope.row.key !== undefined"
@@ -99,9 +99,9 @@
                     <ContentCopy />
                 </KsIconButton>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column v-if="!paneView" columnKey="update" className="row-action">
+        <KsTableColumn v-if="!paneView" columnKey="update" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canUpdate(scope.row)"
@@ -112,9 +112,9 @@
                     <FileDocumentEdit />
                 </KsIconButton>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column v-if="!paneView" columnKey="delete" className="row-action">
+        <KsTableColumn v-if="!paneView" columnKey="delete" className="row-action">
             <template #default="scope">
                 <KsIconButton
                     v-if="canDelete(scope.row)"
@@ -125,60 +125,60 @@
                     <Delete />
                 </KsIconButton>
             </template>
-        </ks-table-column>
-    </ks-data-table>
+        </KsTableColumn>
+    </KsDataTable>
 
-    <ks-drawer
+    <KsDrawer
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
     >
-        <ks-form class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
-            <ks-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
+        <KsForm class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
+            <KsFormItem v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readOnly="kv.update"
                     :includeSystemNamespace="true"
                     all
                 />
-            </ks-form-item>
+            </KsFormItem>
 
-            <ks-form-item :label="$t('key')" prop="key" required>
-                <ks-input v-model="kv.key" :disabled="kv.update" />
-            </ks-form-item>
+            <KsFormItem :label="$t('key')" prop="key" required>
+                <KsInput v-model="kv.key" :disabled="kv.update" />
+            </KsFormItem>
 
-            <ks-form-item :label="$t('kv.type')" prop="type" required>
-                <ks-select
+            <KsFormItem :label="$t('kv.type')" prop="type" required>
+                <KsSelect
                     v-model="kv.type"
                     :disabled="kv.update"
                     @change="kv.value = undefined"
                 >
-                    <ks-option value="STRING" />
-                    <ks-option value="NUMBER" />
-                    <ks-option value="BOOLEAN" />
-                    <ks-option value="DATETIME" />
-                    <ks-option value="DATE" />
-                    <ks-option value="DURATION" />
-                    <ks-option value="JSON" />
-                </ks-select>
-            </ks-form-item>
+                    <KsOption value="STRING" />
+                    <KsOption value="NUMBER" />
+                    <KsOption value="BOOLEAN" />
+                    <KsOption value="DATETIME" />
+                    <KsOption value="DATE" />
+                    <KsOption value="DURATION" />
+                    <KsOption value="JSON" />
+                </KsSelect>
+            </KsFormItem>
 
-            <ks-form-item :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">
-                <ks-input v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
-                <ks-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
-                <ks-switch
+            <KsFormItem :label="$t('value')" prop="value" :required="kv.type !== 'BOOLEAN'">
+                <KsInput v-if="kv.type === 'STRING'" type="textarea" :rows="5" v-model="kv.value" />
+                <KsInput v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
+                <KsSwitch
                     v-else-if="kv.type === 'BOOLEAN'"
                     :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
                     :activeActionIcon="Check"
                 />
-                <ks-date-picker
+                <KsDatePicker
                     v-else-if="kv.type === 'DATETIME'"
                     v-model="kv.value"
                     type="datetime"
                 />
-                <ks-date-picker
+                <KsDatePicker
                     v-else-if="kv.type === 'DATE'"
                     v-model="kv.value"
                     type="date"
@@ -199,13 +199,13 @@
                     lang="json"
                     v-model="kv.value"
                 />
-            </ks-form-item>
+            </KsFormItem>
 
-            <ks-form-item :label="$t('description')" prop="description">
-                <ks-input v-model="kv.description" />
-            </ks-form-item>
+            <KsFormItem :label="$t('description')" prop="description">
+                <KsInput v-model="kv.description" />
+            </KsFormItem>
 
-            <ks-form-item :label="$t('expiration')" prop="ttl">
+            <KsFormItem :label="$t('expiration')" prop="ttl">
                 <TimeSelect
                     :fromNow="false"
                     allowInfinite
@@ -216,23 +216,23 @@
                     includeNever
                     @update:model-value="onTtlChange"
                 />
-            </ks-form-item>
-        </ks-form>
+            </KsFormItem>
+        </KsForm>
 
         <template #footer>
-            <ks-button :icon="ContentSave" @click="saveKv(formRef)" type="primary">
+            <KsButton :icon="ContentSave" @click="saveKv(formRef)" type="primary">
                 {{ $t('save') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-drawer>
+    </KsDrawer>
 
-    <ks-drawer
+    <KsDrawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
     >
         <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
-    </ks-drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">

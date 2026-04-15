@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <ks-row class="p-5">
+    <KsRow class="p-5">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
@@ -25,17 +25,17 @@
             }"
         />
 
-        <ks-col v-if="namespaces.length === 0" class="p-3 namespaces">
+        <KsCol v-if="namespaces.length === 0" class="p-3 namespaces">
             <span>{{ $t("no_namespaces") }}</span>
-        </ks-col>
+        </KsCol>
 
-        <ks-col
+        <KsCol
             v-for="namespace in namespacesHierarchy"
             :key="namespace.id"
             class="namespaces"
             :class="{system: namespace.id === systemNamespace}"
         >
-            <ks-tree
+            <KsTree
                 :data="[namespace]"
                 defaultExpandAll
                 :props="({class: 'tree'} as any)"
@@ -63,14 +63,14 @@
                                 {{ $t("system_namespace") }}
                             </span>
                         </div>
-                        <ks-button size="small">
+                        <KsButton size="small">
                             <TextSearch />
-                        </ks-button>
+                        </KsButton>
                     </router-link>
                 </template>
-            </ks-tree>
-        </ks-col>
-    </ks-row>
+            </KsTree>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

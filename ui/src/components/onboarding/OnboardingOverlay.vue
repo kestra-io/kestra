@@ -18,7 +18,7 @@
                     :content="snippetMarkdown"
                 />
             </div>
-            <ks-alert
+            <KsAlert
                 v-if="externalActionNote"
                 type="info"
                 :closable="false"
@@ -28,8 +28,8 @@
                 <template #title>
                     <span class="feedback-note-title" v-html="externalActionNote" />
                 </template>
-            </ks-alert>
-            <ks-alert
+            </KsAlert>
+            <KsAlert
                 v-if="feedback.message"
                 :title="feedback.message"
                 :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
@@ -38,27 +38,27 @@
                 class="feedback"
             />
             <div v-if="!isFinishStep" class="actions">
-                <ks-button @click="cancelTour">
+                <KsButton @click="cancelTour">
                     {{ t("onboarding.actions.cancel_tutorial") }}
-                </ks-button>
+                </KsButton>
                 <div class="actions-right">
                     <span v-if="showStepCompleteBadge && isStepComplete && !isFinishStep" class="step-complete">
                         <CheckCircle :size="16" />
                         {{ t("onboarding.actions.complete") }}
                     </span>
-                    <ks-button v-if="showNextButton" type="primary" @click="nextStep">
+                    <KsButton v-if="showNextButton" type="primary" @click="nextStep">
                         {{ nextLabel }}
-                    </ks-button>
+                    </KsButton>
                 </div>
             </div>
             <div v-else class="actions finish-footer">
                 <div class="actions-right">
-                    <ks-button @click="goToBlueprints">
+                    <KsButton @click="goToBlueprints">
                         {{ t("onboarding.finish_actions.explore_blueprints") }}
-                    </ks-button>
-                    <ks-button type="primary" :icon="Plus" @click="goToCreateFlow">
+                    </KsButton>
+                    <KsButton type="primary" :icon="Plus" @click="goToCreateFlow">
                         {{ t("onboarding.finish_actions.create_flow") }}
-                    </ks-button>
+                    </KsButton>
                 </div>
             </div>
         </div>

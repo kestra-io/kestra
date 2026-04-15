@@ -1,5 +1,5 @@
 <template>
-    <ks-input-number
+    <KsInputNumber
         :modelValue="val"
         @update:model-value="onInput"
         :state="isValid"

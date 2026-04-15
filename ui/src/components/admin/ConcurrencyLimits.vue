@@ -2,15 +2,15 @@
     <TopNavBar :title="routeInfo.title" />
     
     <section class="container">
-        <ks-data-table :total="data?.total ?? 0">
+        <KsDataTable :total="data?.total ?? 0">
             <template #table>
-                <ks-empty v-if="data?.results === undefined || data?.results.length === 0" />
-                <ks-table
+                <KsEmpty v-if="data?.results === undefined || data?.results.length === 0" />
+                <KsTable
                     v-else
                     :data="data?.results"
                     stripe
                 >
-                    <ks-table-column
+                    <KsTableColumn
                         v-for="k in KEYS"
                         :key="k"
                         :prop="k"
@@ -25,25 +25,25 @@
                                 {{ scope.row[k] }}
                             </span>
                         </template>
-                    </ks-table-column>
-                </ks-table>
+                    </KsTableColumn>
+                </KsTable>
             </template>
-        </ks-data-table>
-        <ks-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <ks-alert type="warning" :closable="false" showIcon>
+        </KsDataTable>
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+            <KsAlert type="warning" :closable="false" showIcon>
                 {{ $t("concurrency_limit.warning") }}
-            </ks-alert>
+            </KsAlert>
             <br>
-            <ks-input-number v-model="newRunningCount" />
+            <KsInputNumber v-model="newRunningCount" />
             <template #footer>
-                <ks-button @click="editRunning = false">
+                <KsButton @click="editRunning = false">
                     {{ $t("cancel") }}
-                </ks-button>
-                <ks-button type="primary" @click="saveEditRunning()">
+                </KsButton>
+                <KsButton type="primary" @click="saveEditRunning()">
                     {{ $t("save") }}
-                </ks-button>
+                </KsButton>
             </template>
-        </ks-dialog>
+        </KsDialog>
     </section>
 </template>
 

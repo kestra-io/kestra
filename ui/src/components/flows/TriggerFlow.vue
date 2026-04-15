@@ -1,10 +1,10 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <ks-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+        <KsButton v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
-        </ks-button>
+        </KsButton>
         <span v-else data-onboarding-target="flow-execute-button">
-            <ks-button
+            <KsButton
                 id="execute-button"
                 :icon="icon.Play"
                 :type="type"
@@ -12,9 +12,9 @@
                 @click="onClick()"
             >
                 {{ $t("execute") }}
-            </ks-button>
+            </KsButton>
         </span>
-        <ks-dialog
+        <KsDialog
             id="execute-flow-dialog"
             v-model="isOpen"
             destroyOnClose
@@ -27,8 +27,8 @@
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
-        </ks-dialog>
-        <ks-dialog
+        </KsDialog>
+        <KsDialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
@@ -36,44 +36,44 @@
             :appendToBody="true"
             :width="dialogWidth"
         >
-            <ks-form
+            <KsForm
                 labelPosition="top"
             >
-                <ks-form-item :label="$t('namespace')">
-                    <ks-select
+                <KsFormItem :label="$t('namespace')">
+                    <KsSelect
                         v-model="localNamespace"
                     >
-                        <ks-option
+                        <KsOption
                             v-for="np in executionsStore.namespaces"
                             :key="np"
                             :label="np"
                             :value="np"
                         />
-                    </ks-select>
-                </ks-form-item>
-                <ks-form-item
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem
                     v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
                     :label="$t('flow')"
                 >
-                    <ks-select
+                    <KsSelect
                         v-model="localFlow"
                         valueKey="id"
                     >
-                        <ks-option
+                        <KsOption
                             v-for="exFlow in executionsStore.flowsExecutable"
                             :key="exFlow.id"
                             :label="exFlow.id"
                             :value="exFlow"
                         />
-                    </ks-select>
-                </ks-form-item>
-                <ks-form-item v-if="localFlow" :label="$t('inputs')">
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
                         <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
-                </ks-form-item>
-            </ks-form>
-        </ks-dialog>
+                </KsFormItem>
+            </KsForm>
+        </KsDialog>
     </div>
 </template>
 

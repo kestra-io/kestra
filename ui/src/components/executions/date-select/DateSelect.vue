@@ -1,6 +1,6 @@
 <template>
-    <ks-tooltip :disabled="tooltip === undefined" :content="tooltip">
-        <ks-select
+    <KsTooltip :disabled="tooltip === undefined" :content="tooltip">
+        <KsSelect
             :modelValue="value"
             :placeholder="placeholder"
             @change="emit('change', $event)"
@@ -9,14 +9,14 @@
             <template #prefix>
                 <ClockOutline />
             </template>
-            <ks-option
+            <KsOption
                 v-for="preset in options"
                 :key="preset.value"
                 :label="$t(preset.label)"
                 :value="preset.value"
             />
-        </ks-select>
-    </ks-tooltip>
+        </KsSelect>
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">

@@ -14,7 +14,7 @@
                         v-if="creatingTask || editingTask"
                     />
 
-                    <ks-form v-else labelPosition="top">
+                    <KsForm v-else labelPosition="top">
                         <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
                             <template #tasks>
                                 <TaskObjectField
@@ -34,7 +34,7 @@
                                 />
                             </template>
                         </Wrapper>
-                    </ks-form>
+                    </KsForm>
                 </div>
             </template>
         </AiCopilotWrapper>

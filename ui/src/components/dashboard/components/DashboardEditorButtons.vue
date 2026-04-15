@@ -7,13 +7,13 @@
             :warnings="dashboardStore.warnings"
         />
 
-        <ks-button
+        <KsButton
             :icon="ContentSave"
             @click="emit('save')"
             :type="saveButtonType"
         >
             {{ $t("save") }}
-        </ks-button>
+        </KsButton>
     </div>
 </template>
 

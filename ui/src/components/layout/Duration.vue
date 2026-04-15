@@ -1,6 +1,6 @@
 <template>
     <span>
-        <ks-tooltip v-if="histories" popperClass="duration-tt">
+        <KsTooltip v-if="histories" popperClass="duration-tt">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">
                     <span class="square" :style="squareClass(history.state)" />
@@ -9,7 +9,7 @@
             </template>
 
             <span>{{ duration }}</span>
-        </ks-tooltip>
+        </KsTooltip>
     </span>
 </template>
 

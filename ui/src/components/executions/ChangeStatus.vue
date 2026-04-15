@@ -7,7 +7,7 @@
     >
         <span v-if="component !== 'el-button'">{{ $t('change state') }}</span>
 
-        <ks-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+        <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
@@ -19,11 +19,11 @@
                     {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
                 </p>
 
-                <ks-select
+                <KsSelect
                     :required="true"
                     v-model="selectedStatus"
                 >
-                    <ks-option
+                    <KsOption
                         v-for="item in states"
                         :key="item.code"
                         :value="item.code"
@@ -33,8 +33,8 @@
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                             <span v-html="item.label" />
                         </template>
-                    </ks-option>
-                </ks-select>
+                    </KsOption>
+                </KsSelect>
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
@@ -46,18 +46,18 @@
             </template>
 
             <template #footer>
-                <ks-button @click="visible = false">
+                <KsButton @click="visible = false">
                     {{ $t('cancel') }}
-                </ks-button>
-                <ks-button
+                </KsButton>
+                <KsButton
                     type="primary"
                     @click="changeStatus()"
                     :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
                 >
                     {{ $t('ok') }}
-                </ks-button>
+                </KsButton>
             </template>
-        </ks-dialog>
+        </KsDialog>
     </component>
 </template>
 

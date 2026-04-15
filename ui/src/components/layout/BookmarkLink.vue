@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper vsm--item" :class="{editing}">
         <div v-if="editing" class="edit-row">
-            <ks-input
+            <KsInput
                 class="vsm--input"
                 ref="titleInput"
                 v-model="updatedTitle"

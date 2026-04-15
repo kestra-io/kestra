@@ -1,13 +1,13 @@
 <template>
-    <ks-card class="edition-card">
+    <KsCard class="edition-card">
         <template #header>
             <div class="header-content">
-                <ks-text class="title">
+                <KsText class="title">
                     {{ name }}
-                </ks-text>
-                <ks-text class="price" v-if="price">
+                </KsText>
+                <KsText class="price" v-if="price">
                     {{ price }}
-                </ks-text>
+                </KsText>
             </div>
         </template>
         <div class="features-container">
@@ -20,22 +20,22 @@
                     <CheckBold class="check-icon" />
                 </div>
                 <div class="feature-column">
-                    <ks-text>
+                    <KsText>
                         {{ feature }}
-                    </ks-text>
+                    </KsText>
                 </div>
             </div>
         </div>
 
         <a v-if="button?.href" class="button-link" :href="button.href">
-            <ks-button type="primary" class="action-button">
+            <KsButton type="primary" class="action-button">
                 {{ button.text }}
-            </ks-button>
+            </KsButton>
         </a>
-        <ks-button v-else-if="button" class="action-button disabled" disabled>
+        <KsButton v-else-if="button" class="action-button disabled" disabled>
             {{ button.text }}
-        </ks-button>
-    </ks-card>
+        </KsButton>
+    </KsCard>
 </template>
 
 <script setup lang="ts">

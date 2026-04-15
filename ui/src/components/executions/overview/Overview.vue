@@ -1,11 +1,11 @@
 <template>
-    <ks-splitter
+    <KsSplitter
         v-if="execution"
         id="overview"
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <ks-splitter-panel :size="verticalLayout ? '50%' : '30%'">
+        <KsSplitterPanel :size="verticalLayout ? '50%' : '30%'">
             <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: $t('state')}]">
@@ -20,18 +20,18 @@
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
-                <ks-divider />
+                <KsDivider />
                 <div class="general">
                     <Row :rows="general" />
                 </div>
 
-                <ks-divider />
+                <KsDivider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
                     />
-                    <ks-row :gutter="12">
-                        <ks-col
+                    <KsRow :gutter="12">
+                        <KsCol
                             v-for="(action, aIdx) in actions"
                             :key="aIdx"
                             :span="12"
@@ -42,20 +42,20 @@
                                 v-on="action.on || {}"
                                 :execution
                             />
-                        </ks-col>
-                    </ks-row>
+                        </KsCol>
+                    </KsRow>
                 </div>
 
-                <ks-divider />
+                <KsDivider />
                 <div class="metadata">
                     <Row :rows="[property]" v-for="property in metadata" :key="property.label">
                         <template v-if="property.value instanceof Date" #value>
-                            <ks-date-ago :date="property.value" format="L LTS" />
+                            <KsDateAgo :date="property.value" format="L LTS" />
                         </template>
                     </Row>
                 </div>
 
-                <ks-divider />
+                <KsDivider />
                 <div class="labels">
                     <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
                         <template #action>
@@ -65,18 +65,18 @@
                     <Labels :labels="execution.labels || []" />
                 </div>
             </div>
-        </ks-splitter-panel>
+        </KsSplitterPanel>
 
-        <ks-splitter-panel>
+        <KsSplitterPanel>
             <div class="main">
                 <div id="alerts">
-                    <ks-alert
+                    <KsAlert
                         v-if="matchesStatus('replayed')"
                         :title="$t('execution replayed')"
                         :closable="false"
                     />
 
-                    <ks-alert v-if="matchesStatus('replay')" :closable="false">
+                    <KsAlert v-if="matchesStatus('replay')" :closable="false">
                         <template #title>
                             <div>
                                 {{ $t("execution replay") }}
@@ -96,9 +96,9 @@
                                 </router-link>.
                             </div>
                         </template>
-                    </ks-alert>
+                    </KsAlert>
 
-                    <ks-alert
+                    <KsAlert
                         v-if="matchesStatus('restarted')"
                         :title="
                             $t('execution restarted', {
@@ -139,17 +139,17 @@
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
-                                <ks-select
+                                <KsSelect
                                     v-model="timerange"
                                     @change="chartRef!.refresh(filters)"
                                 >
-                                    <ks-option
+                                    <KsOption
                                         v-for="option in options"
                                         :key="option.value"
                                         :label="option.label"
                                         :value="option.value"
                                     />
-                                </ks-select>
+                                </KsSelect>
                             </div>
                         </section>
                         <TimeSeries
@@ -164,9 +164,9 @@
 
                 <PrevNext :execution />
             </div>
-        </ks-splitter-panel>
-    </ks-splitter>
-    <ks-empty
+        </KsSplitterPanel>
+    </KsSplitter>
+    <KsEmpty
         v-else
         id="empty"
         :description="$t('execution not found', {executionId: route.params.id})"

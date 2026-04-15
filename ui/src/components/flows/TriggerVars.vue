@@ -1,12 +1,12 @@
 <template>
-    <ks-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
-        <ks-table-column prop="key" rowspan="3" :label="$t('name')">
+    <KsTable tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+        <KsTableColumn prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="value" :label="$t('value')">
+        <KsTableColumn prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
                     <KsMarkdown :content="scope.row.value" />
@@ -16,16 +16,16 @@
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <ks-button @click="emit('on-copy', null)">
+                    <KsButton @click="emit('on-copy', null)">
                         {{ $t('copy url') }}
-                    </ks-button>
+                    </KsButton>
                 </template>
                 <template v-else>
                     <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
-        </ks-table-column>
-    </ks-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">

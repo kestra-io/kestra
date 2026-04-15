@@ -1,6 +1,6 @@
 <template>
     <section v-if="data?.results?.length" id="table">
-        <ks-data-table
+        <KsDataTable
             :id="containerID"
             :data="data.results"
             :total="isPaginationEnabled(props.chart) ? data.total : 0"
@@ -10,7 +10,7 @@
             size="small"
             @page-changed="handlePageChange"
         >
-            <ks-table-column
+            <KsTableColumn
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
@@ -22,11 +22,11 @@
                     </template>
                     <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
-            </ks-table-column>
-        </ks-data-table>
+            </KsTableColumn>
+        </KsDataTable>
     </section>
 
-    <ks-empty v-else :description="EMPTY_TEXT" />
+    <KsEmpty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">

@@ -7,15 +7,15 @@
         <div class="usage-card-body">
             <div v-for="item in usageItems" :key="item.key" class="usage-row">
                 <component :is="item.icon" class="usage-icon" />
-                <ks-text size="small" class="usage-label">
+                <KsText size="small" class="usage-label">
                     {{ $t(item.labelKey) }}
-                </ks-text>
+                </KsText>
                 <div class="usage-divider" />
-                <ks-text size="small" class="usage-value">
+                <KsText size="small" class="usage-value">
                     {{ item.value }}
-                </ks-text>
+                </KsText>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <ks-button class="wh-15" :icon="TextSearchVariant" link />
+                    <KsButton class="wh-15" :icon="TextSearchVariant" link />
                 </router-link>
             </div>
             <slot name="additional-usages" />

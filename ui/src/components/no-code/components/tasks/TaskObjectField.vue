@@ -15,7 +15,7 @@
         :disabled
         class="mt-1 mb-2 wrapper"
     />
-    <ks-form-item v-else-if="fieldKey" :required="isRequired">
+    <KsFormItem v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -33,15 +33,15 @@
                         @click="modelValue = undefined; taskComponent?.resetSelectType?.();"
                     />
                 </div>
-                <ks-tag
+                <KsTag
                     v-if="!isAnyOf"
                     disableTransitions
                     size="small"
                     class="type-tag"
                 >
                     {{ simpleType }}
-                </ks-tag>
-                <ks-tooltip
+                </KsTag>
+                <KsTooltip
                     v-if="!isAnyOf && hasTooltip"
                     placement="left-start"
                     :showArrow="false"
@@ -54,7 +54,7 @@
                         />
                     </template>
                     <Help />
-                </ks-tooltip>
+                </KsTooltip>
             </div>
         </template>
         <TaskObjectTaskInline
@@ -71,7 +71,7 @@
             :disabled
             class="mt-1 mb-2 wrapper"
         />
-    </ks-form-item>
+    </KsFormItem>
 </template>
 
 <script setup lang="ts">

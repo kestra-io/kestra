@@ -1,5 +1,5 @@
 <template>
-    <ks-button
+    <KsButton
         v-if="isAllowedEdit"
         :icon="Api"
         tag="a"
@@ -8,7 +8,7 @@
         rel="noopener noreferrer"
     >
         {{ $t("api") }}
-    </ks-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">

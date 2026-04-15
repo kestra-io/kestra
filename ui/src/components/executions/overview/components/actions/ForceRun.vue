@@ -1,13 +1,13 @@
 <template>
-    <ks-button
+    <KsButton
         :disabled="!enabled"
         :icon="RunFast"
         @click="click"
     >
         {{ $t("force run") }}
-    </ks-button>
+    </KsButton>
 
-    <ks-dialog
+    <KsDialog
         v-if="isDrawerOpen"
         v-model="isDrawerOpen"
         destroyOnClose
@@ -17,16 +17,16 @@
             <span v-html="$t('force run title', {id: execution.id})" />
         </template>
         <template #footer>
-            <ks-button
+            <KsButton
                 :icon="QueueFirstInLastOut"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
             >
                 {{ $t("force run") }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

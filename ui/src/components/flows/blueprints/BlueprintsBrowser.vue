@@ -3,7 +3,7 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <ks-data-table
+            <KsDataTable
                 ref="dataTable"
                 class="blueprints"
                 :loadData="loadData"
@@ -15,16 +15,16 @@
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">
-                            <ks-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
-                                <ks-checkbox-button
+                            <KsCheckboxGroup v-model="selectedTags" class="tags-checkbox-group">
+                                <KsCheckboxButton
                                     v-for="tag in Object.values(tags || {})"
                                     :key="tag.id"
                                     :label="tag.id"
                                     class="hoverable"
                                 >
                                     {{ tag.name }}
-                                </ks-checkbox-button>
-                            </ks-checkbox-group>
+                                </KsCheckboxButton>
+                            </KsCheckboxGroup>
                         </div>
                     </div>
                     <nav v-else-if="system" class="header pb-3">
@@ -37,7 +37,7 @@
                     </nav>
                 </template>
                 <template #top>
-                    <ks-row class="mb-3" justify="center">
+                    <KsRow class="mb-3" justify="center">
                         <KSFilter
                             :configuration="blueprintFilter"
                             :buttons="{
@@ -47,14 +47,14 @@
                             :searchInputFullWidth="true"
                             @search="handleSearch"
                         />
-                    </ks-row>
+                    </KsRow>
                 </template>
                 <template #table>
-                    <ks-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
+                    <KsAlert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
-                    </ks-alert>
+                    </KsAlert>
                     <div class="card-grid">
-                        <ks-card
+                        <KsCard
                             class="blueprint-card"
                             v-for="blueprint in blueprints"
                             :key="blueprint.id"
@@ -78,27 +78,27 @@
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
-                                        <ks-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
-                                            <ks-button
+                                        <KsTooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
+                                            <KsButton
                                                 type="primary"
                                                 size="default"
                                                 :icon="icon.ContentCopy"
                                                 @click.prevent.stop="copy(blueprint.id)"
                                                 class="p-2"
                                             />
-                                        </ks-tooltip>
+                                        </KsTooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <ks-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            <KsButton v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
-                                            </ks-button>
+                                            </KsButton>
                                         </slot>
                                     </div>
                                 </div>
                             </div>
-                        </ks-card>
+                        </KsCard>
                     </div>
                 </template>
-            </ks-data-table>
+            </KsDataTable>
             <slot name="bottom-bar" />
         </slot>
     </div>

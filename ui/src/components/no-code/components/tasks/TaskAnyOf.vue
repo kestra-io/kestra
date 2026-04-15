@@ -1,28 +1,28 @@
 <template>
-    <ks-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
-        <ks-select
+    <KsFormItem :class="{'radio-wrapper':!isSelectingPlugins}">
+        <KsSelect
             v-if="isSelectingPlugins"
             v-model="selectedSchema"
             filterable
         >
-            <ks-option
+            <KsOption
                 v-for="item in schemaOptions"
                 :key="item.value"
                 :label="item.id"
                 :value="item.value"
             />
-        </ks-select>
-        <ks-radio-group v-else v-model="selectedSchema" @change="onSelectType">
-            <ks-radio
+        </KsSelect>
+        <KsRadioGroup v-else v-model="selectedSchema" @change="onSelectType">
+            <KsRadio
                 v-for="radioSchema in schemaOptions"
                 :key="radioSchema.value"
                 :value="radioSchema.value"
             >
                 {{ radioSchema.label }}
-            </ks-radio>
-        </ks-radio-group>
-    </ks-form-item>
-    <ks-form labelPosition="top" v-if="selectedSchema">
+            </KsRadio>
+        </KsRadioGroup>
+    </KsFormItem>
+    <KsForm labelPosition="top" v-if="selectedSchema">
         <component
             :is="currentSchemaType"
             v-if="currentSchema"
@@ -32,7 +32,7 @@
             @update:model-value="onAnyOfInput"
             merge
         />
-    </ks-form>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

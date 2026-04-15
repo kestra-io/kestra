@@ -1,14 +1,14 @@
 <template>
-    <ks-dropdown>
-        <ks-button>
+    <KsDropdown>
+        <KsButton>
             <DotsVertical />
-        </ks-button>
+        </KsButton>
         <template #dropdown>
-            <ks-dropdown-menu>
+            <KsDropdownMenu>
                 <slot />
-            </ks-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </ks-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">

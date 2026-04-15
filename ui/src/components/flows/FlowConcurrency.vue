@@ -1,7 +1,7 @@
 <template>
     <template v-if="flowStore.flow?.concurrency">
         <div v-if="!loading && concurrencyLimit" :class="{'d-none': !runningCountSet}">
-            <ks-card class="mb-3">
+            <KsCard class="mb-3">
                 <div class="row mb-3">
                     <span class="col d-flex align-items-center">
                         <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
@@ -11,10 +11,10 @@
                     </span>
                 </div>
                 <div class="progressbar mb-3">
-                    <ks-progress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                    <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
                 </div>
-            </ks-card>
-            <ks-card>
+            </KsCard>
+            <KsCard>
                 <Executions
                     :restoreUrl="false"
                     :topbar="false"
@@ -22,19 +22,19 @@
                     :flowId="flowStore.flow?.id"
                     filter
                 />
-            </ks-card>
+            </KsCard>
         </div>
-        <ks-card v-else-if="loading" class="mb-3">
+        <KsCard v-else-if="loading" class="mb-3">
             <div class="text-center">
-                <ks-icon class="is-loading">
+                <KsIcon class="is-loading">
                     <Loading />
-                </ks-icon>
+                </KsIcon>
                 <span class="ms-2">{{ $t('loading') }}</span>
             </div>
-        </ks-card>
-        <ks-alert v-else-if="error" type="error" :closable="false" showIcon class="mb-3">
+        </KsCard>
+        <KsAlert v-else-if="error" type="error" :closable="false" showIcon class="mb-3">
             {{ $t('failed to load concurrency limit') }}
-        </ks-alert>
+        </KsAlert>
         <Empty v-else-if="!concurrencyLimit && !loading" type="concurrency_executions" />
     </template>
     <Empty v-else type="concurrency_limit" />

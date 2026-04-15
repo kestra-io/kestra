@@ -1,29 +1,29 @@
 <template>
     <section id="filtering">
-        <ks-input
+        <KsInput
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable
         />
 
-        <ks-select
+        <KsSelect
             v-model="namespace"
             :placeholder="$t('dependency.search.namespace.select')"
             clearable
             filterable
         >
-            <ks-option
+            <KsOption
                 v-for="item in namespaces"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"
             />
-        </ks-select>
+        </KsSelect>
 
-        <ks-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
+        <KsSwitch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
     </section>
 
-    <ks-table
+    <KsTable
         :data="results"
         :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
@@ -31,7 +31,7 @@
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
         :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
-        <ks-table-column>
+        <KsTableColumn>
             <template #default="{row}">
                 <section id="row">
                     <section id="left">
@@ -62,15 +62,15 @@
                                     : {namespace: row.data.namespace, id: row.data.flow}
                             }"
                         >
-                            <ks-icon :size="16">
+                            <KsIcon :size="16">
                                 <OpenInNew />
-                            </ks-icon>
+                            </KsIcon>
                         </RouterLink>
                     </section>
                 </section>
             </template>
-        </ks-table-column>
-    </ks-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">

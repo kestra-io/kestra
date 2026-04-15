@@ -2,7 +2,7 @@
     <section>
         <h1 class="heading">
             <div class="content">
-                <ks-popover
+                <KsPopover
                     v-if="note"
                     :content="note"
                     trigger="hover"
@@ -12,7 +12,7 @@
                     <template #reference>
                         <InformationOutline />
                     </template>
-                </ks-popover>
+                </KsPopover>
                 <span>{{ heading }}</span>
             </div>
             <div class="actions">
@@ -20,7 +20,7 @@
             </div>
         </h1>
         <slot name="content" />
-        <ks-divider v-if="!last" />
+        <KsDivider v-if="!last" />
     </section>
 </template>
 

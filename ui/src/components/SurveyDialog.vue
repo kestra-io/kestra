@@ -1,5 +1,5 @@
 <template>
-    <ks-dialog
+    <KsDialog
         v-model="isVisible"
         :title="$t('setup.titles.survey')"
         width="550px"
@@ -13,56 +13,56 @@
             <div class="question-section">
                 <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
-                    <ks-radio-group v-model="companySize">
-                        <ks-radio
+                    <KsRadioGroup v-model="companySize">
+                        <KsRadio
                             v-for="option in companySizeOptions"
                             :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </ks-radio>
-                    </ks-radio-group>
+                        </KsRadio>
+                    </KsRadioGroup>
                 </div>
             </div>
 
-            <ks-divider />
+            <KsDivider />
 
             <div class="question-section">
                 <h4>{{ $t('setup.survey.use_case') }}</h4>
                 <div class="use-case-options">
-                    <ks-checkbox-group v-model="useCases">
-                        <ks-checkbox
+                    <KsCheckboxGroup v-model="useCases">
+                        <KsCheckbox
                             v-for="option in useCaseOptions"
                             :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </ks-checkbox>
-                    </ks-checkbox-group>
+                        </KsCheckbox>
+                    </KsCheckboxGroup>
                 </div>
             </div>
 
-            <ks-divider />
+            <KsDivider />
 
 
             <div class="newsletter-section">
-                <ks-checkbox v-model="subscribeNewsletter">
+                <KsCheckbox v-model="subscribeNewsletter">
                     <span v-html="$t('setup.survey.newsletter')" />
-                </ks-checkbox>
+                </KsCheckbox>
             </div>
         </div>
 
         <template #footer>
             <div class="dialog-footer">
-                <ks-button @click="handleSkip">
+                <KsButton @click="handleSkip">
                     {{ $t('setup.survey.skip') }}
-                </ks-button>
-                <ks-button type="primary" @click="handleSubmit">
+                </KsButton>
+                <KsButton type="primary" @click="handleSubmit">
                     {{ $t('setup.survey.continue') }}
-                </ks-button>
+                </KsButton>
             </div>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

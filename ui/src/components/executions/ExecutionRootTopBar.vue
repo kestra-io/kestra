@@ -9,30 +9,30 @@
             <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
-                        <ks-button
+                        <KsButton
                             class="execution-edit-flow-button"
                             :icon="Pencil"
                             @click="editFlow"
                         >
                             {{ $t("edit flow") }}
-                        </ks-button>
+                        </KsButton>
                     </li>
                 </ul>
 
-                <ks-dropdown class="d-flex d-xl-none align-items-center">
-                    <ks-button>
-                        <ks-icon><DotsVerticalIcon /></ks-icon>
+                <KsDropdown class="d-flex d-xl-none align-items-center">
+                    <KsButton>
+                        <KsIcon><DotsVerticalIcon /></KsIcon>
                         <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
-                    </ks-button>
+                    </KsButton>
                     <template #dropdown>
-                        <ks-dropdown-menu>
-                            <ks-dropdown-item v-if="isAllowedEdit" @click="editFlow">
-                                <ks-icon><Pencil /></ks-icon>
+                        <KsDropdownMenu>
+                            <KsDropdownItem v-if="isAllowedEdit" @click="editFlow">
+                                <KsIcon><Pencil /></KsIcon>
                                 {{ $t("edit flow") }}
-                            </ks-dropdown-item>
-                        </ks-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
+                </KsDropdown>
 
                 <div v-if="primaryAction || fallbackToExecute">
                     <div class="d-flex align-items-center gap-2">

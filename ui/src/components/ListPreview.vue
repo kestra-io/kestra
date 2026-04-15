@@ -1,13 +1,13 @@
 <template>
     <div class="list-preview-container">
-        <ks-table :data="previewData" stripe class="ion-table-preview">
-            <ks-table-column type="index" :index="indexMethod" label="#" width="60" align="center" />
-            <ks-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
+        <KsTable :data="previewData" stripe class="ion-table-preview">
+            <KsTableColumn type="index" :index="indexMethod" label="#" width="60" align="center" />
+            <KsTableColumn v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
                 <template #default="scope">
                     <div :class="['cell-wrapper', {'expanded': expandedCells.has(getCellKey(scope.$index, column))}]">
                         <span v-if="isComplex(scope.row[column])">
                             <span class="preview-cell">{{ getTruncatedContent(scope.row[column], scope.$index, column) }}</span>
-                            <ks-button
+                            <KsButton
                                 v-if="needsExpansion(scope.row[column])"
                                 link
                                 type="primary"
@@ -16,17 +16,17 @@
                                 @click="toggleExpand(scope.$index, column)"
                             >
                                 {{ expandedCells.has(getCellKey(scope.$index, column)) ? $t('preview.collapse') : $t('preview.expand') }}
-                            </ks-button>
+                            </KsButton>
                         </span>
                         <span v-else class="preview-cell">
                             {{ scope.row[column] }}
                         </span>
                     </div>
                 </template>
-            </ks-table-column>
-        </ks-table>
+            </KsTableColumn>
+        </KsTable>
 
-        <ks-pagination
+        <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
             :size="(pageSize as any)"

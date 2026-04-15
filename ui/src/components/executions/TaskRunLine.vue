@@ -1,7 +1,7 @@
 <template>
     <div class="taskrun-header">
         <div>
-            <ks-icon
+            <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
                 @click.stop="() => $emit('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
@@ -10,7 +10,7 @@
                     v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                 />
                 <ChevronRight v-else />
-            </ks-icon>
+            </KsIcon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
             <KsTaskIcon
@@ -25,7 +25,7 @@
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
-            <ks-tooltip>
+            <KsTooltip>
                 <template #content>
                     {{ $t("from") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
@@ -43,7 +43,7 @@
                         {{ currentTaskRun.value }}
                     </small>
                 </span>
-            </ks-tooltip>
+            </KsTooltip>
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
@@ -58,13 +58,13 @@
 
         <slot name="buttons" />
 
-        <ks-dropdown trigger="click">
-            <ks-button type="default" class="task-run-buttons">
+        <KsDropdown trigger="click">
+            <KsButton type="default" class="task-run-buttons">
                 <DotsVertical title="" />
-            </ks-button>
+            </KsButton>
             <template #dropdown>
-                <ks-dropdown-menu>
-                    <ks-dropdown-item
+                <KsDropdownMenu>
+                    <KsDropdownItem
                         v-if="selectedAttempt(currentTaskRun).state.current === 'FAILED'"
                         @click="fixErrorWithAi(currentTaskRun)"
                     >
@@ -72,7 +72,7 @@
                             <AiIcon class="me-1" />
                             <span>{{ $t('fix_with_ai') }}</span>
                         </span>
-                    </ks-dropdown-item>
+                    </KsDropdownItem>
                     <SubFlowLink
                         v-if="isSubflow(currentTaskRun)"
                         component="el-dropdown-item"
@@ -117,48 +117,48 @@
                         :revision="followedExecution.flowRevision"
                         :flowSource="flow?.source"
                     />
-                    <ks-dropdown-item
+                    <KsDropdownItem
                         :icon="Download"
                         @click="downloadContent(currentTaskRun.id)"
                     >
                         {{ $t("download logs") }}
-                    </ks-dropdown-item>
-                    <ks-dropdown-item
+                    </KsDropdownItem>
+                    <KsDropdownItem
                         :icon="Copy"
                         @click="copyContent(currentTaskRun.id)"
                     >
                         {{ $t("copy logs") }}
-                    </ks-dropdown-item>
-                    <ks-dropdown-item
+                    </KsDropdownItem>
+                    <KsDropdownItem
                         :icon="Delete"
                         @click="deleteLogs(currentTaskRun.id)"
                     >
                         {{ $t("delete logs") }}
-                    </ks-dropdown-item>
+                    </KsDropdownItem>
                     <WorkerInfo
                         component="el-dropdown-item"
                         v-if="hasWorkerId(currentTaskRun) !== null"
                         :taskRun="currentTaskRun"
                         @follow="$emit('follow', $event)"
                     />
-                </ks-dropdown-menu>
+                </KsDropdownMenu>
             </template>
-        </ks-dropdown>
+        </KsDropdown>
     </div>
     <div class="attempt-header">
-        <ks-select
+        <KsSelect
             class="d-none d-md-inline-block attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
-            <ks-option
+            <KsOption
                 v-for="(_, index) in attempts(currentTaskRun)"
                 :key="`attempt-${index}-${currentTaskRun.id}`"
                 :value="index"
                 :label="`${$t('attempt')} ${index + 1}`"
             />
-        </ks-select>
+        </KsSelect>
 
         <div class="task-status">
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />

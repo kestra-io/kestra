@@ -1,6 +1,6 @@
 <template>
     <div v-if="hasButtons && !activeTab.length" class="barWrapper">
-        <ks-button
+        <KsButton
             v-for="(button, key) of contextButtons"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
@@ -12,35 +12,35 @@
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
             <OpenInNew v-if="button.url" class="open-in-new" />
             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-        </ks-button>
+        </KsButton>
 
         <div style="flex:1" />
 
-        <ks-tooltip
+        <KsTooltip
             :disabled="!miscStore.configs?.commitId"
         >
             <template #content>
-                <code>{{ miscStore.configs?.commitId }}</code> <ks-date-ago v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                <code>{{ miscStore.configs?.commitId }}</code> <KsDateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-        </ks-tooltip>
-        <ks-button class="theme-switcher" @click="onSwitchTheme">
+        </KsTooltip>
+        <KsButton class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
             <WeatherSunny v-else />
-        </ks-button>
+        </KsButton>
     </div>
 
     <div v-else-if="hasButtons" class="contextInfoSidebar" :style="{width: `${sidebarWidth}px`}">
-        <ks-splitter
+        <KsSplitter
             class="contextInfoSplitter"
             :style="{width: `${maxSidebarWidth}px`}"
         >
-            <ks-splitter-panel class="contextInfoSpacerPanel" :min="0" />
+            <KsSplitterPanel class="contextInfoSpacerPanel" :min="0" />
 
-            <ks-splitter-panel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
+            <KsSplitterPanel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
                 <div class="contextInfoContent">
                     <div class="barWrapper opened">
-                        <ks-button
+                        <KsButton
                             v-for="(button, key) of contextButtons"
                             :key="key"
                             :type="activeTab === key ? 'primary' : 'default'"
@@ -52,22 +52,22 @@
                             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
                             <OpenInNew v-if="button.url" class="open-in-new" />
                             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                        </ks-button>
+                        </KsButton>
 
                         <div style="flex:1" />
 
-                        <ks-tooltip
+                        <KsTooltip
                             :disabled="!miscStore.configs?.commitId"
                         >
                             <template #content>
-                                <code>{{ miscStore.configs?.commitId }}</code> <ks-date-ago v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                                <code>{{ miscStore.configs?.commitId }}</code> <KsDateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
                             </template>
                             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-                        </ks-tooltip>
-                        <ks-button class="theme-switcher" @click="onSwitchTheme">
+                        </KsTooltip>
+                        <KsButton class="theme-switcher" @click="onSwitchTheme">
                             <WeatherNight v-if="themeIsDark" />
                             <WeatherSunny v-else />
-                        </ks-button>
+                        </KsButton>
                     </div>
 
                     <div class="panelWrapper">
@@ -85,8 +85,8 @@
                         </div>
                     </div>
                 </div>
-            </ks-splitter-panel>
-        </ks-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
     </div>
 </template>
 

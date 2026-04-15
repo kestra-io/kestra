@@ -1,13 +1,13 @@
 <template>
     <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
-            <ks-button @click="isNavbarVisible = !isNavbarVisible">
+            <KsButton @click="isNavbarVisible = !isNavbarVisible">
                 <MenuIcon />
-            </ks-button>
+            </KsButton>
         </div>
-        <ks-form :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
+        <KsForm :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
             <slot />
-        </ks-form>
+        </KsForm>
     </div>
 </template>
 

@@ -20,7 +20,7 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <ks-card class="attempt-wrapper">
+                <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :followedExecution="followedExecution"
@@ -93,8 +93,8 @@
                                 :data-index="index"
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
-                                    <ks-button-group class="line">
-                                        <ks-button
+                                    <KsButtonGroup class="line">
+                                        <KsButton
                                             type="primary"
                                             tag="a"
                                             :href="fileUrl(item.logFile)"
@@ -104,12 +104,12 @@
                                             rel="noopener noreferrer"
                                         >
                                             {{ $t("download") }}
-                                        </ks-button>
+                                        </KsButton>
                                         <FilePreview
                                             :value="item.logFile"
                                             :executionId="followedExecution.id"
                                         />
-                                        <ks-button
+                                        <KsButton
                                             disabled
                                             size="small"
                                             type="primary"
@@ -120,8 +120,8 @@
                                             ({{
                                                 logFileSizeByPath[item.logFile]
                                             }})
-                                        </ks-button>
-                                    </ks-button-group>
+                                        </KsButton>
+                                    </KsButtonGroup>
                                 </Teleport>
                                 <LogLine
                                     class="line"
@@ -213,7 +213,7 @@
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
-                </ks-card>
+                </KsCard>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>

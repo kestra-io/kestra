@@ -1,7 +1,7 @@
 <template>
-    <ks-button @click.prevent.stop="handleClick()" type="default" :icon="Plus">
+    <KsButton @click.prevent.stop="handleClick()" type="default" :icon="Plus">
         {{ $t("add") }}
-    </ks-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">

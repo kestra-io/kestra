@@ -1,25 +1,25 @@
 <template>
-    <ks-button
+    <KsButton
         v-if="enabled"
         :icon="Play"
         @click="click"
     >
         {{ $t('resume') }}
-    </ks-button>
+    </KsButton>
 
-    <ks-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
-        <ks-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
+        <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
-        </ks-form>
+        </KsForm>
         <template #footer>
-            <ks-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
+            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup>

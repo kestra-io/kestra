@@ -1,10 +1,10 @@
 <template>
-    <ks-collapse accordion v-model="openedDocs" :key="openedDocs.join(',')">
+    <KsCollapse accordion v-model="openedDocs" :key="openedDocs.join(',')">
         <template
             :key="child.title"
             v-for="child in filteredChildren"
         >
-            <ks-collapse-item
+            <KsCollapseItem
                 :name="child.path"
                 v-if="child.children"
             >
@@ -27,7 +27,7 @@
                         <slot v-bind="subChild" />
                     </template>
                 </RecursiveToc>
-            </ks-collapse-item>
+            </KsCollapseItem>
             <div v-else>
                 <slot v-bind="child" :class="`depth-${depth}`">
                     <RouterLink :to="{path: '/' + child.path}">
@@ -36,7 +36,7 @@
                 </slot>
             </div>
         </template>
-    </ks-collapse>
+    </KsCollapse>
 </template>
 
 <script setup lang="ts">

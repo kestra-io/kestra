@@ -1,6 +1,6 @@
 <template>
     <template v-if="initialInputs">
-        <ks-form-item
+        <KsFormItem
             v-for="input in inputsMetaData"
             :key="input.id"
             :required="input.required !== false"
@@ -22,7 +22,7 @@
                 @update:model-value="onChange(input)"
                 @confirm="onSubmit"
             />
-            <ks-select
+            <KsSelect
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -34,30 +34,30 @@
                 filterable
                 clearable
             >
-                <ks-option
+                <KsOption
                     v-for="item in input.values"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
                     <KsMarkdown :content="item" />
-                </ks-option>
-            </ks-select>
-            <ks-radio-group
+                </KsOption>
+            </KsSelect>
+            <KsRadioGroup
                 v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <ks-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
-                <ks-input
+                <KsRadio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <KsInput
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     :placeholder="$t('custom value')"
                 />
-            </ks-radio-group>
-            <ks-select
+            </KsRadioGroup>
+            <KsSelect
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -70,16 +70,16 @@
                 clearable
                 :allowCreate="input.allowCustomValue"
             >
-                <ks-option
+                <KsOption
                     v-for="item in (input.values ?? input.options)"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
                     <KsMarkdown :content="item" />
-                </ks-option>
-            </ks-select>
-            <ks-input
+                </KsOption>
+            </KsSelect>
+            <KsInput
                 type="password"
                 v-if="input.type === 'SECRET'"
                 :data-testid="`input-form-${input.id}`"
@@ -88,7 +88,7 @@
                 showPassword
             />
             <span v-if="input.type === 'INT'">
-                <ks-input-number
+                <KsInputNumber
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -99,7 +99,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <span v-if="input.type === 'FLOAT'">
-                <ks-input-number
+                <KsInputNumber
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -109,28 +109,28 @@
                 />
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
-            <ks-switch
+            <KsSwitch
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             />
-            <ks-date-picker
+            <KsDatePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="datetime"
             />
-            <ks-date-picker
+            <KsDatePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="date"
             />
-            <ks-time-picker
+            <KsTimePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputsValues[input.id]"
@@ -158,51 +158,51 @@
             >
                 <div v-if="editingArrayId !== input.id" class="preview">
                     <div class="tags">
-                        <ks-tag
+                        <KsTag
                             v-for="(item, index) in parseArrayValue(input.id)"
                             :key="index"
                         >
                             {{ item }}
-                        </ks-tag>
+                        </KsTag>
                     </div>
-                    <ks-button
+                    <KsButton
                         class="p-3"
                         @click="toggleArrayEdit(input.id)"
                         :icon="Pencil"
                     >
                         {{ $t('edit') }}
-                    </ks-button>
+                    </KsButton>
                 </div>
 
                 <div v-else class="edit_input">
                     <div>
                         <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
-                            <ks-input
+                            <KsInput
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <ks-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />
                             </div>
                         </div>
                     </div>
-                    <ks-button
+                    <KsButton
                         class="add-new mt-1 border-0"
                         @click="addNewArrayItem(input)"
                         :icon="Plus"
                     >
                         {{ $t('add_new_item') }}
-                    </ks-button>
+                    </KsButton>
                     <div class="d-flex justify-content-end mt-2">
-                        <ks-button
+                        <KsButton
                             @click="toggleArrayEdit(input.id)"
                             type="primary"
                             :icon="ContentSave"
                         >
                             {{ $t('save') }}
-                        </ks-button>
+                        </KsButton>
                     </div>
                 </div>
             </div>
@@ -226,26 +226,26 @@
                 :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <ks-duration-picker
+            <KsDurationPicker
                 v-if="input.type === 'DURATION'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
             <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
             <template v-for="err in input.errors ?? []" :key="err.message">
-                <ks-text type="warning">
+                <KsText type="warning">
                     {{ err.message }}
-                </ks-text>
+                </KsText>
             </template>
-        </ks-form-item>
+        </KsFormItem>
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
     </template>
 
-    <ks-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
-    </ks-alert>
+    </KsAlert>
 </template>
 
 <script setup lang="ts">

@@ -5,7 +5,7 @@
         @click="onRootClick"
     >
         <div class="flex-row d-flex">
-            <ks-select
+            <KsSelect
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
                 filterable
@@ -16,32 +16,32 @@
                 <template #prefix>
                     <Magnify />
                 </template>
-                <ks-option
+                <KsOption
                     v-for="item in filesStore.searchResults"
                     :key="item"
                     :label="item"
                     :value="item"
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
-            </ks-select>
-            <ks-button-group class="d-flex">
-                <ks-tooltip
+            </KsSelect>
+            <KsButtonGroup class="d-flex">
+                <KsTooltip
                     :content="$t('namespace files.create.file')"
                 >
-                    <ks-button class="px-2" @click="toggleDialog(true, 'file')">
+                    <KsButton class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
-                    </ks-button>
-                </ks-tooltip>
-                <ks-tooltip
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip
                     :content="$t('namespace files.create.folder')"
                 >
-                    <ks-button
+                    <KsButton
                         class="px-2"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
-                    </ks-button>
-                </ks-tooltip>
+                    </KsButton>
+                </KsTooltip>
                 <input
                     ref="filePicker"
                     type="file"
@@ -60,34 +60,34 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <ks-dropdown>
-                    <ks-button>
+                <KsDropdown>
+                    <KsButton>
                         <PlusBox />
-                    </ks-button>
+                    </KsButton>
                     <template #dropdown>
-                        <ks-dropdown-menu>
-                            <ks-dropdown-item @click="filePicker?.click()">
+                        <KsDropdownMenu>
+                            <KsDropdownItem @click="filePicker?.click()">
                                 {{ $t("namespace files.import.files") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 @click="folderPicker?.click()"
                             >
                                 {{ $t("namespace files.import.folder") }}
-                            </ks-dropdown-item>
-                        </ks-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
-                <ks-tooltip
+                </KsDropdown>
+                <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <ks-button class="px-2" @click="exportFiles()">
+                    <KsButton class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
-                    </ks-button>
-                </ks-tooltip>
-            </ks-button-group>
+                    </KsButton>
+                </KsTooltip>
+            </KsButtonGroup>
         </div>
 
-        <ks-tree
+        <KsTree
             ref="tree"
             lazy
             :load="filesStore.loadNodes"
@@ -117,7 +117,7 @@
                 </div>
             </template>
             <template #default="{data, node}">
-                <ks-dropdown
+                <KsDropdown
                     :ref="(el: any) => dropdowns[data.id as string] = el"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
@@ -146,29 +146,29 @@
                         </div>
                     </div>
                     <template #dropdown>
-                        <ks-dropdown-menu>
-                            <ks-dropdown-item
+                        <KsDropdownMenu>
+                            <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
                                 {{ $t("namespace files.revisions.history") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
                                 {{ $t("namespace files.export_single") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 v-if="data.leaf && !multiSelected"
                                 @click="
                                     toggleRenameDialog(
@@ -186,8 +186,8 @@
                                         }`,
                                     )
                                 }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item @click="removeSelectedFiles(data, node)">
+                            </KsDropdownItem>
+                            <KsDropdownItem @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -199,15 +199,15 @@
                                         }`
                                         , {count: selectedNodes.length})
                                 }}
-                            </ks-dropdown-item>
-                        </ks-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
+                </KsDropdown>
             </template>
-        </ks-tree>
+        </KsTree>
 
         <!-- Creation dialog -->
-        <ks-dialog
+        <KsDialog
             v-model="dialog.visible"
             :title="
                 dialog.type === 'file'
@@ -222,7 +222,7 @@
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
-            <ks-input
+            <KsInput
                 ref="creation_name"
                 v-model="dialog.name"
                 size="large"
@@ -234,37 +234,37 @@
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
-            <ks-select
+            <KsSelect
                 v-model="dialog.folder"
                 clearable
                 size="large"
                 class="mb-3"
             >
-                <ks-option
+                <KsOption
                     v-for="folder in filesStore.folders"
                     :key="folder"
                     :value="folder"
                     :label="folder"
                 />
-            </ks-select>
+            </KsSelect>
             <template #footer>
                 <div>
-                    <ks-button @click="toggleDialog(false)">
+                    <KsButton @click="toggleDialog(false)">
                         {{ $t("cancel") }}
-                    </ks-button>
-                    <ks-button
+                    </KsButton>
+                    <KsButton
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
-                    </ks-button>
+                    </KsButton>
                 </div>
             </template>
-        </ks-dialog>
+        </KsDialog>
 
         <!-- Renaming dialog -->
-        <ks-dialog
+        <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
@@ -275,7 +275,7 @@
                     {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
-            <ks-input
+            <KsInput
                 ref="renaming_name"
                 v-model="renameDialog.name"
                 size="large"
@@ -283,21 +283,21 @@
             />
             <template #footer>
                 <div>
-                    <ks-button @click="toggleRenameDialog(false)">
+                    <KsButton @click="toggleRenameDialog(false)">
                         {{ $t("cancel") }}
-                    </ks-button>
-                    <ks-button
+                    </KsButton>
+                    <KsButton
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
-                    </ks-button>
+                    </KsButton>
                 </div>
             </template>
-        </ks-dialog>
+        </KsDialog>
 
-        <ks-dialog
+        <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
             width="500"
@@ -306,17 +306,17 @@
             <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
-                    <ks-button @click="confirmation.visible = false">
+                    <KsButton @click="confirmation.visible = false">
                         {{ $t("cancel") }}
-                    </ks-button>
-                    <ks-button type="primary" @click="removeItems()">
+                    </KsButton>
+                    <KsButton type="primary" @click="removeItems()">
                         {{ $t("namespace files.dialog.deletion.confirm") }}
-                    </ks-button>
+                    </KsButton>
                 </div>
             </template>
-        </ks-dialog>
+        </KsDialog>
 
-        <ks-dialog
+        <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
             width="75%"
@@ -335,9 +335,9 @@
                     <Crud permission="FLOW" :detail="{resourceType: 'NAMESPACE_FILE', namespace: route.params.namespace, path: revisionsHistory.path, revision}" />
                 </template>
             </Revisions>
-        </ks-dialog>
+        </KsDialog>
 
-        <ks-menu
+        <KsMenu
             v-if="tabContextMenu.visible"
             :style="{
                 left: `${tabContextMenu.x}px`,
@@ -345,13 +345,13 @@
             }"
             class="tabs-context"
         >
-            <ks-menu-item @click="toggleDialog(true, 'file')">
+            <KsMenuItem @click="toggleDialog(true, 'file')">
                 {{ $t("namespace files.create.file") }}
-            </ks-menu-item>
-            <ks-menu-item @click="toggleDialog(true, 'folder')">
+            </KsMenuItem>
+            <KsMenuItem @click="toggleDialog(true, 'folder')">
                 {{ $t("namespace files.create.folder") }}
-            </ks-menu-item>
-        </ks-menu>
+            </KsMenuItem>
+        </KsMenu>
     </div>
 </template>
 

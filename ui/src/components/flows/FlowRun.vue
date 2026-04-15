@@ -1,15 +1,15 @@
 <template>
     <template v-if="flow">
-        <ks-alert v-if="flow.disabled" type="warning" showIcon :closable="false">
+        <KsAlert v-if="flow.disabled" type="warning" showIcon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
-        </ks-alert>
+        </KsAlert>
         <div class="flow-execution-checks-alerts">
-            <ks-alert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+            <KsAlert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
                 {{ alert.message }}
-            </ks-alert>
+            </KsAlert>
         </div>
-        <ks-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
+        <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
             <InputsForm
                 ref="inputsFormRef"
                 :initialInputs="flow.inputs"
@@ -22,45 +22,45 @@
                 @update:checks="values => checks=values"
             />
 
-            <ks-collapse v-model="collapseName">
-                <ks-collapse-item :title="$t('advanced configuration')" name="advanced">
-                    <ks-form-item
+            <KsCollapse v-model="collapseName">
+                <KsCollapseItem :title="$t('advanced configuration')" name="advanced">
+                    <KsFormItem
                         :label="$t('execution labels')"
                     >
                         <LabelInput
                             :key="executionLabels"
                             v-model:labels="executionLabels"
                         />
-                    </ks-form-item>
-                    <ks-form-item
+                    </KsFormItem>
+                    <KsFormItem
                         :label="$t('scheduleDate')"
                     >
-                        <ks-date-picker
+                        <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
                         />
-                    </ks-form-item>
-                </ks-collapse-item>
-                <ks-collapse-item :title="$t('curl.command')" name="curl">
+                    </KsFormItem>
+                </KsCollapseItem>
+                <KsCollapseItem :title="$t('curl.command')" name="curl">
                     <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
-                </ks-collapse-item>
-                <ks-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
+                </KsCollapseItem>
+                <KsCollapseItem v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
                     <WebhookCurl :flow="flow" />
-                </ks-collapse-item>
-            </ks-collapse>
+                </KsCollapseItem>
+            </KsCollapse>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
-                    <ks-form-item>
-                        <ks-button v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
+                    <KsFormItem>
+                        <KsButton v-if="execution && (execution.inputs || hasExecutionLabels())" :icon="ContentCopy" @click="fillInputsFromExecution">
                             {{ $t('prefill inputs') }}
-                        </ks-button>
-                    </ks-form-item>
+                        </KsButton>
+                    </KsFormItem>
                 </div>
                 <div class="right-align">
-                    <ks-form-item class="submit">
+                    <KsFormItem class="submit">
                         <span data-onboarding-target="flow-execute-confirm-button">
-                            <ks-button
+                            <KsButton
                                 :icon="buttonIcon"
                                 :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                                 class="flow-run-trigger-button"
@@ -69,15 +69,15 @@
                                 @click.prevent="onSubmit($refs.form); executeClicked = true;"
                             >
                                 {{ $t(buttonText) }}
-                            </ks-button>
+                            </KsButton>
                         </span>
-                        <ks-text v-if="haveBadLabels" type="danger" size="small">
+                        <KsText v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
-                        </ks-text>
-                    </ks-form-item>
+                        </KsText>
+                    </KsFormItem>
                 </div>
             </div>
-        </ks-form>
+        </KsForm>
     </template>
 </template>
 

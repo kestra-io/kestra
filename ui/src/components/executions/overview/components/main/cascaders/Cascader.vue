@@ -1,10 +1,10 @@
 <template>
     <div :id="cascaderID">
         <div class="header">
-            <ks-text truncated>
+            <KsText truncated>
                 {{ props.title }}
-            </ks-text>
-            <ks-input
+            </KsText>
+            <KsInput
                 v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
@@ -13,7 +13,7 @@
         </div>
 
         <template v-if="props.elements">
-            <ks-cascader-panel
+            <KsCascaderPanel
                 :options="filteredOptions"
                 @expand-change="onExpandChange"
             >
@@ -30,7 +30,7 @@
                         <VarValue :value="data.value" :execution />
                     </div>
                 </template>
-            </ks-cascader-panel>
+            </KsCascaderPanel>
         </template>
 
         <span v-else class="empty">{{ props.empty }}</span>

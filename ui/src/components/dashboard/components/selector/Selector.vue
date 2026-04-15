@@ -1,14 +1,14 @@
 <template>
-    <ks-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <ks-button :icon="ChartLineVariant" class="selected">
+    <KsDropdown trigger="click" hideOnClick placement="bottom-end">
+        <KsButton :icon="ChartLineVariant" class="selected">
             <span v-if="!verticalLayout" class="text-truncate">
                 {{ selected?.title ?? $t('dashboards.default') }}
             </span>
-        </ks-button>
+        </KsButton>
 
         <template #dropdown>
-            <ks-dropdown-menu class="p-3 dropdown">
-                <ks-button
+            <KsDropdownMenu class="p-3 dropdown">
+                <KsButton
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
@@ -16,7 +16,7 @@
                     class="w-100"
                 >
                     <small>{{ $t("dashboards.creation.label") }}</small>
-                </ks-button>
+                </KsButton>
 
                 <Item
                     :dashboard="{
@@ -31,7 +31,7 @@
 
                 <hr class="my-2">
 
-                <ks-input
+                <KsInput
                     v-model="search"
                     :placeholder="$t('search')"
                     :prefixIcon="Magnify"
@@ -53,9 +53,9 @@
                         {{ $t("dashboards.empty") }}
                     </span>
                 </div>
-            </ks-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </ks-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">

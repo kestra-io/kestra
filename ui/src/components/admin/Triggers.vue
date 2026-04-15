@@ -1,14 +1,14 @@
 <template>
     <TopNavBar :title="routeInfo.title">
         <template #actions>
-            <ks-button :icon="Download" @click="exportTriggersAsStream()">
+            <KsButton :icon="Download" @click="exportTriggersAsStream()">
                 {{ $t('export_csv') }}
-            </ks-button>
+            </KsButton>
         </template>
     </TopNavBar>
     <section class="container">
         <div>
-            <ks-data-table
+            <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
                 :data="triggersMerged"
@@ -42,7 +42,7 @@
                     />
                 </template>
                 <template #expand>
-                    <ks-table-column type="expand">
+                    <KsTableColumn type="expand">
                         <template #default="props">
                             <LogsWrapper
                                 class="m-3"
@@ -52,32 +52,32 @@
                                 embed
                             />
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
                 </template>
                 <template #bulk-actions>
-                    <ks-button @click="setDisabledTriggers(false)">
+                    <KsButton @click="setDisabledTriggers(false)">
                         {{ $t("enable") }}
-                    </ks-button>
-                    <ks-button @click="setDisabledTriggers(true)">
+                    </KsButton>
+                    <KsButton @click="setDisabledTriggers(true)">
                         {{ $t("disable") }}
-                    </ks-button>
-                    <ks-button @click="unlockTriggers()">
+                    </KsButton>
+                    <KsButton @click="unlockTriggers()">
                         {{ $t("unlock") }}
-                    </ks-button>
-                    <ks-button @click="pauseBackfills()">
+                    </KsButton>
+                    <KsButton @click="pauseBackfills()">
                         {{ $t("pause backfills") }}
-                    </ks-button>
-                    <ks-button @click="unpauseBackfills()">
+                    </KsButton>
+                    <KsButton @click="unpauseBackfills()">
                         {{ $t("continue backfills") }}
-                    </ks-button>
-                    <ks-button @click="deleteBackfills()">
+                    </KsButton>
+                    <KsButton @click="deleteBackfills()">
                         {{ $t("delete backfills") }}
-                    </ks-button>
-                    <ks-button @click="deleteTriggers()">
+                    </KsButton>
+                    <KsButton @click="deleteTriggers()">
                         {{ $t("delete triggers") }}
-                    </ks-button>
+                    </KsButton>
                 </template>
-                <ks-table-column
+                <KsTableColumn
                     prop="triggerId"
                     sortable="custom"
                     :sortOrders="['ascending', 'descending']"
@@ -88,9 +88,9 @@
                             {{ scope.row.id }}
                         </div>
                     </template>
-                </ks-table-column>
+                </KsTableColumn>
 
-                <ks-table-column
+                <KsTableColumn
                     v-for="col in visibleColumns"
                     :key="col.prop"
                     :prop="col.prop"
@@ -99,31 +99,31 @@
                     :sortOrders="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
                 >
                     <template #header v-if="col.prop === 'lastTriggeredDate'">
-                        <ks-tooltip
+                        <KsTooltip
                             :content="$t('last trigger date tooltip')"
                             placement="top"
                             popperClass="wide-tooltip"
                         >
                             <span>{{ col.label }}</span>
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
                     <template #header v-else-if="col.prop === 'updatedAt'">
-                        <ks-tooltip
+                        <KsTooltip
                             :content="$t('context updated date tooltip')"
                             placement="top"
                             popperClass="wide-tooltip"
                         >
                             <span>{{ col.label }}</span>
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
                     <template #header v-else-if="col.prop === 'nextExecutionDate'">
-                        <ks-tooltip
+                        <KsTooltip
                             :content="$t('next evaluation date tooltip')"
                             placement="top"
                             popperClass="wide-tooltip"
                         >
                             <span>{{ col.label }}</span>
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
                     <template #default="scope">
                         <template v-if="col.prop === 'flowId'">
@@ -151,18 +151,18 @@
                             />
                         </template>
                         <template v-else-if="col.prop === 'lastTriggeredDate'">
-                            <ks-date-ago :inverted="true" :date="scope.row.lastTriggeredDate" />
+                            <KsDateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
                         </template>
                         <template v-else-if="col.prop === 'updatedAt'">
-                            <ks-date-ago :inverted="true" :date="scope.row.updatedAt" />
+                            <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
                         </template>
                         <template v-else-if="col.prop === 'nextEvaluationDate'">
-                            <ks-date-ago :inverted="true" :date="scope.row.nextEvaluationDate" />
+                            <KsDateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                         </template>
                     </template>
-                </ks-table-column>
+                </KsTableColumn>
 
-                <ks-table-column :label="$t('details')">
+                <KsTableColumn :label="$t('details')">
                     <template #default="scope">
                         <TriggerAvatar
                             v-if="!scope.row.missingSource"
@@ -170,9 +170,9 @@
                             :triggerId="scope.row.id"
                         />
                     </template>
-                </ks-table-column>
+                </KsTableColumn>
 
-                <ks-table-column
+                <KsTableColumn
                     v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                     columnKey="action"
                     className="row-action"
@@ -196,23 +196,23 @@
                             </KsIconButton>
                         </div>
                     </template>
-                </ks-table-column>
-                <ks-table-column :label="$t('backfill')" columnKey="backfill">
+                </KsTableColumn>
+                <KsTableColumn :label="$t('backfill')" columnKey="backfill">
                     <template #default="scope">
                         <div class="backfillContainer items-center gap-2">
                             <span v-if="scope.row.backfill" class="statusIcon">
-                                <ks-tooltip
+                                <KsTooltip
                                     v-if="!scope.row.backfill.paused"
                                     :content="$t('backfill running')"
                                 >
                                     <PlayBox font />
-                                </ks-tooltip>
-                                <ks-tooltip v-else :content="$t('backfill paused')">
+                                </KsTooltip>
+                                <KsTooltip v-else :content="$t('backfill paused')">
                                     <PauseBox />
-                                </ks-tooltip>
+                                </KsTooltip>
                             </span>
 
-                            <ks-button
+                            <KsButton
                                 :icon="CalendarCollapseHorizontalOutline"
                                 v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                 @click="setBackfillModal(scope.row, true)"
@@ -221,74 +221,74 @@
                                 :disabled="scope.row.disabled || scope.row.codeDisabled"
                             >
                                 {{ $t("backfill executions") }}
-                            </ks-button>
+                            </KsButton>
                         </div>
                     </template>
-                </ks-table-column>
+                </KsTableColumn>
 
 
-                <ks-table-column :label="$t('enabled')" columnKey="disable" className="row-action">
+                <KsTableColumn :label="$t('enabled')" columnKey="disable" className="row-action">
                     <template #default="scope">
-                        <ks-tooltip
+                        <KsTooltip
                             v-if="!scope.row.missingSource"
                             :content="$t('trigger disabled')"
                             :disabled="!scope.row.codeDisabled"
                         >
-                            <ks-switch
+                            <KsSwitch
                                 :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
                                 @change="setDisabled(scope.row, $event as boolean)"
                                 inlinePrompt
                                 class="switch-text"
                                 :disabled="scope.row.codeDisabled"
                             />
-                        </ks-tooltip>
-                        <ks-tooltip v-else :content="$t('flow source not found')">
+                        </KsTooltip>
+                        <KsTooltip v-else :content="$t('flow source not found')">
                             <AlertCircle />
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
-                </ks-table-column>
-            </ks-data-table>
+                </KsTableColumn>
+            </KsDataTable>
 
-            <ks-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
+            <KsDialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('unlock trigger.confirmation')" />
                 </template>
                 {{ $t("unlock trigger.warning") }}
                 <template #footer>
-                    <ks-button :icon="LockOff" @click="unlock" type="primary">
+                    <KsButton :icon="LockOff" @click="unlock" type="primary">
                         {{ $t("unlock trigger.button") }}
-                    </ks-button>
+                    </KsButton>
                 </template>
-            </ks-dialog>
+            </KsDialog>
 
-            <ks-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+            <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('backfill executions')" />
                 </template>
-                <ks-form :model="backfill" labelPosition="top">
+                <KsForm :model="backfill" labelPosition="top">
                     <div class="pickers">
                         <div class="small-picker">
-                            <ks-form-item label="Start">
-                                <ks-date-picker
+                            <KsFormItem label="Start">
+                                <KsDatePicker
                                     v-model="backfill.start"
                                     type="datetime"
                                     placeholder="Start"
                                     :disabledDate="disabledStartDate"
                                 />
-                            </ks-form-item>
+                            </KsFormItem>
                         </div>
                         <div class="small-picker">
-                            <ks-form-item label="End">
-                                <ks-date-picker
+                            <KsFormItem label="End">
+                                <KsDatePicker
                                     v-model="backfill.end"
                                     type="datetime"
                                     placeholder="End"
                                     :disabledDate="disabledEndDate"
                                 />
-                            </ks-form-item>
+                            </KsFormItem>
                         </div>
                     </div>
-                </ks-form>
+                </KsForm>
                 <FlowRun
                     @update-inputs="backfill.inputs = $event"
                     @update-labels="backfill.labels = $event"
@@ -297,15 +297,15 @@
                     :embed="true"
                 />
                 <template #footer>
-                    <ks-button
+                    <KsButton
                         type="primary"
                         @click="postBackfill()"
                         :disabled="checkBackfill"
                     >
                         {{ $t("execute backfill") }}
-                    </ks-button>
+                    </KsButton>
                 </template>
-            </ks-dialog>
+            </KsDialog>
         </div>
     </section>
 </template>

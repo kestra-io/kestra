@@ -1,9 +1,9 @@
 <template>
-    <ks-tooltip :content="props.tooltip ?? props.label">
-        <ks-button type="primary" size="small" class="badge">
+    <KsTooltip :content="props.tooltip ?? props.label">
+        <KsButton type="primary" size="small" class="badge">
             {{ props.label }}
-        </ks-button>
-    </ks-tooltip>
+        </KsButton>
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">

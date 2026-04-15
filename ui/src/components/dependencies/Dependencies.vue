@@ -1,58 +1,58 @@
 <template>
     <div v-if="!TESTING && isLoading" v-ks-loading="true" class="h-100" />
     <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
-    <ks-splitter v-else class="dependencies">
-        <ks-splitter-panel id="graph" v-bind="PANEL">
+    <KsSplitter v-else class="dependencies">
+        <KsSplitterPanel id="graph" v-bind="PANEL">
             <div v-ks-loading="isRendering" ref="container" />
 
             <div class="controls">
-                <ks-button
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.zoom_in')"
                     @click="handlers.zoomIn"
                 >
                     <Plus />
-                </ks-button>
-                <ks-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.zoom_out')"
                     @click="handlers.zoomOut"
                 >
                     <Minus />
-                </ks-button>
-                <ks-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.clear_selection')"
                     @click="handlers.clearSelection"
                 >
                     <SelectionRemove />
-                </ks-button>
-                <ks-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.fit_view')"
                     @click="handlers.fit"
                 >
                     <FitToScreenOutline />
-                </ks-button>
-                <ks-dropdown>
-                    <ks-button size="small" :title="$t('export')">
+                </KsButton>
+                <KsDropdown>
+                    <KsButton size="small" :title="$t('export')">
                         <Download />
-                    </ks-button>
+                    </KsButton>
                     <template #dropdown>
-                        <ks-dropdown-menu>
-                            <ks-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                        <KsDropdownMenu>
+                            <KsDropdownItem @click="handlers.exportAsImage('jpeg', selectedNodeID)">
                                 {{ $t("export_as", {format: "JPEG"}) }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
+                            </KsDropdownItem>
+                            <KsDropdownItem @click="handlers.exportAsImage('png', selectedNodeID)">
                                 {{ $t("export_as", {format: "PNG"}) }}
-                            </ks-dropdown-item>
-                        </ks-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
+                </KsDropdown>
             </div>
-        </ks-splitter-panel>
+        </KsSplitterPanel>
 
-        <ks-splitter-panel id="table">
+        <KsSplitterPanel id="table">
             <Table
                 :elements="getElements()"
                 :highlightShown="handlers.highlightShown"
@@ -60,8 +60,8 @@
                 :subtype="SUBTYPE"
                 @select="selectNode"
             />
-        </ks-splitter-panel>
-    </ks-splitter>
+        </KsSplitterPanel>
+    </KsSplitter>
 </template>
 
 <script setup lang="ts">

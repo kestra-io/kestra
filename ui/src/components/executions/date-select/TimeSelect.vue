@@ -7,9 +7,9 @@
         :clearable="clearable"
         @change="onTimeRangeSelect"
     />
-    <ks-tooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
-        <ks-input class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
-    </ks-tooltip>
+    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
+        <KsInput class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+    </KsTooltip>
 </template>
 
 <script lang="ts" setup>

@@ -11,7 +11,7 @@
             :tooltipType="TooltipType.EXTERNAL"
         />
     </div>
-    <ks-empty v-else-if="!props.short || (props.execution && generated?.total === 0)" />
+    <KsEmpty v-else-if="!props.short || (props.execution && generated?.total === 0)" />
 </template>
 
 <script setup lang="ts">

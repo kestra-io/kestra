@@ -1,15 +1,15 @@
 <template>
-    <ks-dropdown-item :disabled :icon="LocationExit" @click="isOpen = !isOpen">
+    <KsDropdownItem :disabled :icon="LocationExit" @click="isOpen = !isOpen">
         {{ $t("outputs") }}
-    </ks-dropdown-item>
+    </KsDropdownItem>
 
-    <ks-drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
+    <KsDrawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
         <Vars
             :execution="props.execution"
             class="table-unrounded mt-1"
             :data="props.outputs"
         />
-    </ks-drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">

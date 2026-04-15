@@ -14,7 +14,7 @@
             :tooltipType="TooltipType.EXTERNAL"
         />
     </div>
-    <ks-empty v-else />
+    <KsEmpty v-else />
 </template>
 
 <script setup lang="ts">

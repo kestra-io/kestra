@@ -4,14 +4,14 @@
             <slot name="actions" />
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
-            <ks-splitter class="default-theme editor-panels" layout="vertical">
-                <ks-splitter-panel>
+            <KsSplitter class="default-theme editor-panels" layout="vertical">
+                <KsSplitterPanel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
-                </ks-splitter-panel>
-                <ks-splitter-panel v-if="bottomVisible && slots['bottom-panel']">
+                </KsSplitterPanel>
+                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']">
                     <slot name="bottom-panel" />
-                </ks-splitter-panel>
-            </ks-splitter>
+                </KsSplitterPanel>
+            </KsSplitter>
         </div>
         <slot name="footer" />
     </div>

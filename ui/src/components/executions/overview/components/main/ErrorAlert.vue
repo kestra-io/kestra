@@ -1,5 +1,5 @@
 <template>
-    <ks-alert id="error" type="error" showIcon :closable="false">
+    <KsAlert id="error" type="error" showIcon :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
@@ -14,13 +14,13 @@
             </div>
             <div v-if="logs.length > 3" class="link">
                 <router-link :to>
-                    <ks-button>
+                    <KsButton>
                         {{ $t("errorLogs") }}
-                    </ks-button>
+                    </KsButton>
                 </router-link>
             </div>
         </div>
-    </ks-alert>
+    </KsAlert>
 </template>
 
 <script setup lang="ts">

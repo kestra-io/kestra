@@ -1,5 +1,5 @@
 <template>
-    <ks-form labelPosition="top" class="w-100">
+    <KsForm labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
@@ -9,8 +9,8 @@
                 </Wrapper>
             </template>
 
-            <ks-collapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
-                <ks-collapse-item
+            <KsCollapse v-model="activeNames" v-if="mainProperties.length && hasGroupedProperties" class="collapse">
+                <KsCollapseItem
                     v-for="section in groupSections"
                     :key="section.key"
                     :name="section.key"
@@ -23,8 +23,8 @@
                             </template>
                         </Wrapper>
                     </template>
-                </ks-collapse-item>
-                <ks-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
+                </KsCollapseItem>
+                <KsCollapseItem name="deprecated" v-if="deprecatedProperties?.length" :title="groupTitle('deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -32,8 +32,8 @@
                             </template>
                         </Wrapper>
                     </template>
-                </ks-collapse-item>
-            </ks-collapse>
+                </KsCollapseItem>
+            </KsCollapse>
         </template>
 
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
@@ -47,7 +47,7 @@
                 :required
             />
         </template>
-    </ks-form>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

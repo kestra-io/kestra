@@ -4,9 +4,9 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <ks-button :icon="Download" @click="exportExecutionsAsStream()">
+                        <KsButton :icon="Download" @click="exportExecutionsAsStream()">
                             {{ $t('export_csv') }}
-                        </ks-button>
+                        </KsButton>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -17,9 +17,9 @@
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
-                            <ks-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
+                            <KsButton :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
                                 {{ $t("edit flow") }}
-                            </ks-button>
+                            </KsButton>
                         </template>
                     </li>
                     <li>
@@ -35,7 +35,7 @@
         </template>
     </TopNavBar>
     <section :class="{'container padding-bottom': topbar}">
-        <ks-data-table
+        <KsDataTable
             ref="dataTable"
             :loadData="loadData"
             :data="executionsStore.executions"
@@ -74,47 +74,47 @@
             </template>
 
             <template #bulk-actions>
-                <ks-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                     {{ $t("change state") }}
-                </ks-button>
-                <ks-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                </KsButton>
+                <KsButton v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                     {{ $t("restart") }}
-                </ks-button>
-                <ks-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                </KsButton>
+                <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
-                </ks-button>
-                <ks-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                </KsButton>
+                <KsButton v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
                     {{ $t("kill") }}
-                </ks-button>
-                <ks-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
+                </KsButton>
+                <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
                     {{ $t("delete") }}
-                </ks-button>
+                </KsButton>
 
-                <ks-dropdown>
-                    <ks-button>
+                <KsDropdown>
+                    <KsButton>
                         <DotsVertical />
-                    </ks-button>
+                    </KsButton>
                     <template #dropdown>
-                        <ks-dropdown-menu>
-                            <ks-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                        <KsDropdownMenu>
+                            <KsDropdownItem v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
                                 {{ $t("Set labels") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
                                 {{ $t("resume") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                 {{ $t("pause") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
-                            </ks-dropdown-item>
-                            <ks-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
-                            </ks-dropdown-item>
-                        </ks-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
-                <ks-dialog
+                </KsDropdown>
+                <KsDialog
                     v-if="isOpenLabelsModal"
                     v-model="isOpenLabelsModal"
                     destroyOnClose
@@ -126,23 +126,23 @@
                     </template>
 
                     <template #footer>
-                        <ks-button @click="isOpenLabelsModal = false">
+                        <KsButton @click="isOpenLabelsModal = false">
                             {{ $t("cancel") }}
-                        </ks-button>
-                        <ks-button type="primary" @click="setLabels()">
+                        </KsButton>
+                        <KsButton type="primary" @click="setLabels()">
                             {{ $t("ok") }}
-                        </ks-button>
+                        </KsButton>
                     </template>
 
-                    <ks-form labelPosition="top">
-                        <ks-form-item :label="$t('execution labels')">
+                    <KsForm labelPosition="top">
+                        <KsFormItem :label="$t('execution labels')">
                             <LabelInput v-model:labels="executionLabels" />
-                        </ks-form-item>
-                    </ks-form>
-                </ks-dialog>
+                        </KsFormItem>
+                    </KsForm>
+                </KsDialog>
             </template>
 
-            <ks-table-column
+            <KsTableColumn
                 prop="id"
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
@@ -163,9 +163,9 @@
                         <KsId :value="scope.row?.id" :shrink="true" />
                     </RouterLink>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column
+            <KsTableColumn
                 v-for="col in visibleColumns"
                 :key="col.prop"
                 :prop="col.prop"
@@ -178,10 +178,10 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'state.startDate'">
-                        <ks-date-ago :inverted="true" :date="scope.row?.state?.startDate" />
+                        <KsDateAgo :inverted="true" :date="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.endDate'">
-                        <ks-date-ago :inverted="true" :date="scope.row?.state?.endDate" />
+                        <KsDateAgo :inverted="true" :date="scope.row?.state?.endDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
@@ -192,13 +192,13 @@
                     <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
                         <router-link
                             :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
-                                        }"
+                            }"
                         >
                             {{ invisibleSpace(scope.row?.flowId) }}
                         </router-link>
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop/>
+                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
@@ -207,24 +207,24 @@
                         <code class="code-text">{{ scope.row?.flowRevision }}</code>
                     </template>
                     <template v-else-if="col.prop === 'inputs'">
-                        <ks-tooltip>
+                        <KsTooltip>
                             <template #content>
                                 <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="fs-5" />
                             </div>
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
                     <template v-else-if="col.prop === 'outputs'">
-                        <ks-tooltip>
+                        <KsTooltip>
                             <template #content>
                                 <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
                             </template>
                             <div>
                                 <Export v-if="scope.row?.outputs" class="fs-5" />
                             </div>
-                        </ks-tooltip>
+                        </KsTooltip>
                     </template>
                     <template v-else-if="col.prop === 'taskRunList.taskId'">
                         <code class="code-text">
@@ -248,7 +248,6 @@
                                     id: scope.row?.trigger?.variables?.executionId
                                 }
                             }"
-
                         >
                             <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                         </RouterLink>
@@ -256,16 +255,15 @@
                     </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
-                    <ks-tooltip :content="$t('taskid column details')">
+                    <KsTooltip :content="$t('taskid column details')">
                         {{ scope.column.label }}
-                    </ks-tooltip>
+                    </KsTooltip>
                 </template>
-            </ks-table-column>
-
-        </ks-data-table>
+            </KsTableColumn>
+        </KsDataTable>
     </section>
 
-    <ks-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <KsDialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -273,11 +271,11 @@
         <template #default>
             <p v-html="changeStatusToast()" />
 
-            <ks-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
-                <ks-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
@@ -286,24 +284,24 @@
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </ks-option>
-            </ks-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <ks-button @click="changeStatusDialogVisible = false">
+            <KsButton @click="changeStatusDialogVisible = false">
                 {{ $t('cancel') }}
-            </ks-button>
-            <ks-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="changeStatus()"
             >
                 {{ $t('ok') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 
-    <ks-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -311,11 +309,11 @@
         <template #default>
             <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
 
-            <ks-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
-                <ks-option
+                <KsOption
                     v-for="item in unQueuestates"
                     :key="item.code"
                     :value="item.code"
@@ -324,24 +322,24 @@
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </ks-option>
-            </ks-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <ks-button @click="unqueueDialogVisible = false">
+            <KsButton @click="unqueueDialogVisible = false">
                 {{ $t('cancel') }}
-            </ks-button>
-            <ks-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="unqueueExecutions()"
             >
                 {{ $t('ok') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 
-    <ks-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <KsDialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -351,20 +349,20 @@
         </template>
 
         <template #footer>
-            <ks-button @click="isOpenReplayModal = false">
+            <KsButton @click="isOpenReplayModal = false">
                 {{ $t('cancel') }}
-            </ks-button>
-            <ks-button @click="replayExecutions(true)">
+            </KsButton>
+            <KsButton @click="replayExecutions(true)">
                 {{ $t('replay latest revision') }}
-            </ks-button>
-            <ks-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="replayExecutions(false)"
             >
                 {{ $t('ok') }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

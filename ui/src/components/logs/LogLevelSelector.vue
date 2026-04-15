@@ -1,19 +1,19 @@
 <template>
-    <ks-select
+    <KsSelect
         :modelValue="value"
         @update:model-value="emit('update:modelValue', $event)"
         filterable
         :placeholder="$t('revisions')"
     >
-        <ks-option
+        <KsOption
             v-for="item in LEVELS"
             :key="item"
             :label="item"
             :value="item"
         >
             {{ item }}
-        </ks-option>
-    </ks-select>
+        </KsOption>
+    </KsSelect>
 </template>
 <script setup lang="ts">
     const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()

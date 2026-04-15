@@ -1,5 +1,5 @@
 <template>
-    <ks-data-table
+    <KsDataTable
         ref="dataTable"
         :loadData="loadData"
         :data="metrics"
@@ -11,27 +11,27 @@
         </template>
 
         <template v-for="col in displayColumns" :key="col">
-            <ks-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
+            <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
                     <p class="m-0">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
+            <KsTableColumn v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
                 <template #default="scope">
                     <template v-if="scope.row.type === 'timer'">
-                        <ks-icon><Timer /></ks-icon>
+                        <KsIcon><Timer /></KsIcon>
                     </template>
                     <template v-else>
-                        <ks-icon><Counter /></ks-icon>
+                        <KsIcon><Counter /></KsIcon>
                     </template>
                     &nbsp;<code>{{ scope.row.name }}</code>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
+            <KsTableColumn v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
                 <template #default="scope">
                     <span v-if="scope.row.type === 'timer'">
                         {{ humanizeDuration((scope.row.value / 1000).toString()) }}
@@ -40,11 +40,11 @@
                         {{ humanizeNumber(scope.row.value) }}
                     </span>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
 
-            <ks-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
+            <KsTableColumn v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
                 <template #default="scope">
-                    <ks-tag
+                    <KsTag
                         v-for="(value, key) in scope.row.tags"
                         :key="key"
                         class="tag"
@@ -53,11 +53,11 @@
                         disableTransitions
                     >
                         {{ key }}: <strong>{{ value }}</strong>
-                    </ks-tag>
+                    </KsTag>
                 </template>
-            </ks-table-column>
+            </KsTableColumn>
         </template>
-    </ks-data-table>
+    </KsDataTable>
 </template>
 
 <script setup lang="ts">

@@ -1,12 +1,12 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <ks-button v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
+        <KsButton v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
             <CheckBoldIcon class="text-success" />
-        </ks-button>
+        </KsButton>
 
         <!-- Errors -->
-        <ks-tooltip
+        <KsTooltip
             v-if="errors"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
@@ -14,23 +14,23 @@
             rawContent
         >
             <template #content>
-                <ks-container class="validation-tooltip">
-                    <ks-header>
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
                         <AlertCircle class="align-middle text-danger" />
                         <span class="align-middle">
                             {{ $t("error detected") }}
                         </span>
-                    </ks-header>
-                    <ks-main v-for="error in errors" :key="error">{{ error }}</ks-main>
-                </ks-container>
+                    </KsHeader>
+                    <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
+                </KsContainer>
             </template>
-            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
                 <AlertCircle class="text-danger" />
-            </ks-button>
-        </ks-tooltip>
+            </KsButton>
+        </KsTooltip>
 
         <!-- Warnings -->
-        <ks-tooltip
+        <KsTooltip
             v-if="warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
@@ -38,14 +38,14 @@
             rawContent
         >
             <template #content>
-                <ks-container class="validation-tooltip">
-                    <ks-header>
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
                         <Alert class="align-middle text-warning" />
                         <span class="align-middle">
                             {{ $t("warning detected") }}
                         </span>
-                    </ks-header>
-                    <ks-main>
+                    </KsHeader>
+                    <KsMain>
                         <span v-for="(warning, index) in warnings" :key="index">
                             {{ warning }}<br v-if="index < warnings.length - 1">
                         </span>
@@ -53,16 +53,16 @@
                         <span v-for="(info, index) in infos" :key="index">
                             {{ info }}<br v-if="index < (infos?.length ?? 0) - 1">
                         </span>
-                    </ks-main>
-                </ks-container>
+                    </KsMain>
+                </KsContainer>
             </template>
-            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
                 <Alert class="text-warning" />
-            </ks-button>
-        </ks-tooltip>
+            </KsButton>
+        </KsTooltip>
 
         <!-- Infos -->
-        <ks-tooltip
+        <KsTooltip
             v-if="infos && !warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
@@ -70,21 +70,21 @@
             rawContent
         >
             <template #content>
-                <ks-container class="validation-tooltip">
-                    <ks-header>
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
                         <Alert class="align-middle text-info" />
                         <span class="align-middle">
                             {{ $t("informative notice") }}
                         </span>
-                    </ks-header>
-                    <ks-main>{{ infos.join("<\n") }}</ks-main>
-                </ks-container>
+                    </KsHeader>
+                    <KsMain>{{ infos.join("<\n") }}</KsMain>
+                </KsContainer>
             </template>
-            <ks-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="info">
                 <Alert class="text-info" />
                 <span class="text-info label">{{ $t("informative notice") }}</span>
-            </ks-button>
-        </ks-tooltip>
+            </KsButton>
+        </KsTooltip>
     </span>
 </template>
 

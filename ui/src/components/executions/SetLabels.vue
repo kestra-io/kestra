@@ -1,13 +1,13 @@
 <template>
-    <ks-button
+    <KsButton
         :disabled="!enabled"
         :icon="Plus"
         @click="isOpen = !isOpen"
     >
         {{ $t("set_extra_labels") }}
-    </ks-button>
+    </KsButton>
 
-    <ks-dialog
+    <KsDialog
         v-if="isOpen"
         v-model="isOpen"
         destroyOnClose
@@ -18,25 +18,25 @@
         </template>
 
         <template #footer>
-            <ks-button @click="onCancel">
+            <KsButton @click="onCancel">
                 {{ $t("cancel") }}
-            </ks-button>
-            <ks-button type="primary" :loading="isSaving" @click="setLabels()">
+            </KsButton>
+            <KsButton type="primary" :loading="isSaving" @click="setLabels()">
                 {{ $t("ok") }}
-            </ks-button>
+            </KsButton>
         </template>
 
         <p v-html="$t('Set labels to execution', {id: execution.id})" />
 
-        <ks-form labelPosition="top">
-            <ks-form-item :label="$t('execution labels')">
+        <KsForm labelPosition="top">
+            <KsFormItem :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"
                 />
-            </ks-form-item>
-        </ks-form>
-    </ks-dialog>
+            </KsFormItem>
+        </KsForm>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

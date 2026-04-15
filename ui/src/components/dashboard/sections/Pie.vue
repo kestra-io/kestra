@@ -18,7 +18,7 @@
         >
             {{ totalValue }}
         </div>
-        <ks-empty v-else />
+        <KsEmpty v-else />
     </div>
 </template>
 

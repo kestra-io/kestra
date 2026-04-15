@@ -1,35 +1,35 @@
 <template>
-    <ks-table :data="store.inheritedKVs" tableLayout="auto">
-        <ks-table-column prop="namespace" :label="$t('namespace')">
+    <KsTable :data="store.inheritedKVs" tableLayout="auto">
+        <KsTableColumn prop="namespace" :label="$t('namespace')">
             <template #default="scope">
                 <code>{{ scope.row.namespace }}</code>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="key" :label="$t('key')">
+        <KsTableColumn prop="key" :label="$t('key')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="description" :label="$t('description')">
+        <KsTableColumn prop="description" :label="$t('description')">
             <template #default="scope">
                 <span>{{ scope.row.description }}</span>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="updateDate" :label="$t('last modified')">
+        <KsTableColumn prop="updateDate" :label="$t('last modified')">
             <template #default="scope">
                 <span>{{ scope.row.updateDate }}</span>
             </template>
-        </ks-table-column>
+        </KsTableColumn>
 
-        <ks-table-column prop="creationDate" :label="$t('created date')">
+        <KsTableColumn prop="creationDate" :label="$t('created date')">
             <template #default="scope">
                 <span>{{ scope.row.creationDate }}</span>
             </template>
-        </ks-table-column>
-    </ks-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">

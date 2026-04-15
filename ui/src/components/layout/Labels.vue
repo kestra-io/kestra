@@ -1,6 +1,6 @@
 <template>
     <span v-if="props.labels.length" class="d-flex flex-wrap gap-1">
-        <ks-check-tag
+        <KsCheckTag
             v-for="(label, index) in props.labels"
             :key="index"
             :disabled="readOnly"
@@ -10,7 +10,7 @@
         >
             <template v-if="!label.key">{{ label.value }}</template>
             <template v-else>{{ label.key }}:{{ label.value }}</template>
-        </ks-check-tag>
+        </KsCheckTag>
     </span>
 </template>
 

@@ -16,7 +16,7 @@
                     <h4 class="mb-0 plugin-name">
                         {{ pluginName }}
                     </h4>
-                    <ks-button
+                    <KsButton
                         v-if="releaseNotesUrl"
                         size="small"
                         class="release-notes-btn d-none d-md-inline-flex"
@@ -24,10 +24,10 @@
                         @click="openReleaseNotes"
                     >
                         {{ $t('plugins.release') }}
-                    </ks-button>
+                    </KsButton>
                 </div>
                 <div class="versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
-                    <ks-select
+                    <KsSelect
                         v-model="version"
                         placeholder="Version"
                         size="small"
@@ -38,22 +38,22 @@
                             <span>Version: </span>
                             <span style="font-weight: bold">{{ value }}</span>
                         </template>
-                        <ks-option
+                        <KsOption
                             v-for="item in pluginsStore.versions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </ks-select>
+                    </KsSelect>
                     <div class="release-notes-mobile d-inline-flex d-md-none" v-if="releaseNotesUrl">
-                        <ks-button
+                        <KsButton
                             size="small"
                             class="release-notes-btn"
                             :icon="GitHub"
                             @click="openReleaseNotes"
                         >
                             {{ $t('plugins.release') }}
-                        </ks-button>
+                        </KsButton>
                     </div>
                 </div>
             </div>

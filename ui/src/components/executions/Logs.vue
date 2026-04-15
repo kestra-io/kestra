@@ -10,7 +10,7 @@
             @search="filter = $event"
         />
         <Collapse>
-            <ks-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
+            <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
                     v-if="countByLogLevel[logLevel] > 0"
                     :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
@@ -21,23 +21,23 @@
                     @close="logCursor = undefined"
                     class="w-100"
                 />
-            </ks-form-item>
-            <ks-form-item>
-                <ks-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
-                </ks-button>
-            </ks-form-item>
-            <ks-form-item>
-                <ks-tooltip
+                </KsButton>
+            </KsFormItem>
+            <KsFormItem>
+                <KsTooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <ks-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                    <KsButton @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
-                    </ks-button>
-                </ks-tooltip>
-            </ks-form-item>
-            <ks-form-item>
-                <ks-button-group class="ks-b-group">
+                    </KsButton>
+                </KsTooltip>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButtonGroup class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
                     <KsIconButton :tooltip="$t('download logs')" @click="downloadContent()">
                         <Download />
@@ -48,8 +48,8 @@
                     <KsIconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
                     </KsIconButton>
-                </ks-button-group>
-            </ks-form-item>
+                </KsButtonGroup>
+            </KsFormItem>
         </Collapse>
 
         <TaskRunDetails
@@ -67,7 +67,7 @@
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
-        <ks-card v-else class="attempt-wrapper">
+        <KsCard v-else class="attempt-wrapper">
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
@@ -98,7 +98,7 @@
                     </DynamicScrollerItem>
                 </template>
             </DynamicScroller>
-        </ks-card>
+        </KsCard>
     </div>
 </template>
 

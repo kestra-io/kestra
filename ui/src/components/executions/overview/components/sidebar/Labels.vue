@@ -1,12 +1,12 @@
 <template>
-    <ks-row v-for="(label, index) in props.labels" :key="index">
-        <ks-col>
+    <KsRow v-for="(label, index) in props.labels" :key="index">
+        <KsCol>
             <span>{{ label.key }}:</span>
-            <ks-tag :title="label.value">
+            <KsTag :title="label.value">
                 {{ label.value }}
-            </ks-tag>
-        </ks-col>
-    </ks-row>
+            </KsTag>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

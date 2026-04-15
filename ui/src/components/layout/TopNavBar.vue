@@ -1,5 +1,5 @@
 <template>
-    <ks-top-nav-bar
+    <KsTopNavBar
         :title="title"
         :description="description"
         :longDescription="longDescription"
@@ -21,10 +21,10 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" #pre-action>
-            <ks-button @click="deleteLogs()">
+            <KsButton @click="deleteLogs()">
                 <TrashCan class="me-2" />
                 <span>{{ $t("delete logs") }}</span>
-            </ks-button>
+            </KsButton>
         </template>
         <template v-if="$slots['more-actions']" #more-actions>
             <slot name="more-actions" />
@@ -33,11 +33,11 @@
             <slot name="actions" />
         </template>
         <template #badge v-if="beta">
-            <ks-button type="primary" size="small" class="beta-badge" round>
+            <KsButton type="primary" size="small" class="beta-badge" round>
                 Beta
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-top-nav-bar>
+    </KsTopNavBar>
 </template>
 
 <script setup lang="ts">

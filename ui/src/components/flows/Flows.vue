@@ -3,21 +3,21 @@
         <template #actions>
             <ul class="header-actions-list">
                 <li>
-                    <ks-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                    <KsButton v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
                         {{ $t('export_csv') }}
-                    </ks-button>
+                    </KsButton>
                 </li>
                 <li>
-                    <ks-button :icon="Upload" @click="file?.click()">
+                    <KsButton :icon="Upload" @click="file?.click()">
                         {{ $t("import") }}
-                    </ks-button>
+                    </KsButton>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
-                        <ks-button :icon="TextBoxSearch">
+                        <KsButton :icon="TextBoxSearch">
                             {{ $t("source search") }}
-                        </ks-button>
+                        </KsButton>
                     </router-link>
                 </li>
                 <li>
@@ -28,9 +28,9 @@
                         }"
                         v-if="canCreate"
                     >
-                        <ks-button :icon="Plus" type="primary">
+                        <KsButton :icon="Plus" type="primary">
                             {{ $t("create") }}
-                        </ks-button>
+                        </KsButton>
                     </router-link>
                 </li>
             </ul>
@@ -38,7 +38,7 @@
     </TopNavBar>
     <section :class="{container: topbar}">
         <div>
-            <ks-data-table
+            <KsDataTable
                 ref="dataTable"
                 :loadData="loadData"
                 :data="flowStore.flows"
@@ -75,29 +75,29 @@
                 </template>
 
                 <template #bulk-actions>
-                    <ks-button v-if="canRead" :icon="Download" @click="exportFlows()">
+                    <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                         {{ $t("export") }}
-                    </ks-button>
-                    <ks-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                    </KsButton>
+                    <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
                         {{ $t("delete") }}
-                    </ks-button>
-                    <ks-button
+                    </KsButton>
+                    <KsButton
                         v-if="canUpdate && anyFlowDisabled()"
                         @click="enableFlows"
                         :icon="FileDocumentCheckOutline"
                     >
                         {{ $t("enable") }}
-                    </ks-button>
-                    <ks-button
+                    </KsButton>
+                    <KsButton
                         v-if="canUpdate && anyFlowEnabled()"
                         @click="disableFlows"
                         :icon="FileDocumentRemoveOutline"
                     >
                         {{ $t("disable") }}
-                    </ks-button>
+                    </KsButton>
                 </template>
 
-                <ks-table-column
+                <KsTableColumn
                     prop="id"
                     sortable="custom"
                     :sortOrders="['ascending', 'descending']"
@@ -130,19 +130,19 @@
                             />
                         </div>
                     </template>
-                </ks-table-column>
+                </KsTableColumn>
 
                 <template v-for="colProp in displayColumns" :key="colProp">
-                    <ks-table-column
+                    <KsTableColumn
                         v-if="colProp === 'labels'"
                         :label="$t('labels')"
                     >
                         <template #default="scope">
                             <Labels :labels="scope.row.labels" @click.prevent.stop />
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
 
-                    <ks-table-column
+                    <KsTableColumn
                         v-else-if="colProp === 'namespace'"
                         prop="namespace"
                         sortable="custom"
@@ -153,7 +153,7 @@
                         "
                     />
 
-                    <ks-table-column
+                    <KsTableColumn
                         v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
                         prop="state.startDate"
                         :label="$t('last execution date')"
@@ -171,13 +171,13 @@
                                         }
                                     }"
                                 >
-                                    <ks-date-ago :date="getLastExecution(scope.row)?.startDate" inverted />
+                                    <KsDateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
                                 </router-link>
                             </div>
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
 
-                    <ks-table-column
+                    <KsTableColumn
                         v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
                         prop="state.current"
                         :label="$t('last execution status')"
@@ -202,9 +202,9 @@
                                 </router-link>
                             </div>
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
 
-                    <ks-table-column
+                    <KsTableColumn
                         v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
                         prop="state"
                         :label="$t('execution statistics')"
@@ -220,9 +220,9 @@
                                 :namespace="scope.row.namespace"
                             />
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
 
-                    <ks-table-column
+                    <KsTableColumn
                         v-else-if="colProp === 'triggers'"
                         :label="$t('triggers')"
                         className="row-action"
@@ -230,10 +230,10 @@
                         <template #default="scope">
                             <TriggerAvatar :flow="scope.row" />
                         </template>
-                    </ks-table-column>
+                    </KsTableColumn>
                 </template>
 
-                <ks-table-column columnKey="action" className="row-action" :label="$t('actions')">
+                <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
                     <template #default="scope">
                         <div class="flow-actions-cell">
                             <KsIconButton
@@ -245,11 +245,11 @@
                             </KsIconButton>
                         </div>
                     </template>
-                </ks-table-column>
-            </ks-data-table>
+                </KsTableColumn>
+            </KsDataTable>
         </div>
 
-        <ks-dialog
+        <KsDialog
             v-model="showRunModal"
             destroyOnClose
             appendToBody
@@ -263,7 +263,7 @@
                 :redirect="false"
                 @execution-trigger="handleExecutionStart"
             />
-        </ks-dialog>
+        </KsDialog>
     </section>
 </template>
 

@@ -1,26 +1,26 @@
 <template>
     <TopNavBar :title="routeInfo.title">
         <template #actions>
-            <ks-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
+            <KsButton @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
-            </ks-button>
+            </KsButton>
         </template>
     </TopNavBar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #actions>
-                <ks-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <ks-button
+                    <KsButton
                         v-if="!hasDefaultMainConfig"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultConfigurations"
                     />
-                </ks-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
@@ -33,19 +33,19 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_display')">
-                        <ks-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
+                            <KsOption
                                 v-for="item in logDisplayOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
-                        <ks-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                            <KsOption
                                 v-for="item in [
                                     {
                                         label: $t('no_code.labels.yaml'),
@@ -60,48 +60,48 @@
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
-                        <ks-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                            <KsOption
                                 v-for="item in Object.values(executeFlowBehaviours)"
                                 :key="item"
                                 :label="$t(`open in ${item}`)"
                                 :value="item"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
-                        <ks-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                            <KsOption
                                 v-for="item in executeDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
-                        <ks-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <KsOption
                                 v-for="item in flowDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
-                        <ks-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                        <KsSwitch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
                     </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
-                        <ks-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
                             controlsPosition="right"
@@ -111,7 +111,7 @@
                             <template #suffix>
                                 <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
                             </template>
-                        </ks-input-number>
+                        </KsInputNumber>
                     </Column>
                 </Row>
             </template>
@@ -119,33 +119,33 @@
 
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #actions>
-                <ks-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <ks-button
+                    <KsButton
                         v-if="!hasDefaultPreferences"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultPreferences"
                     />
-                </ks-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
-                        <ks-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.theme" @update:model-value="onTheme">
+                            <KsOption
                                 v-for="item in themesOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
-                        <ks-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
                             controlsPosition="right"
@@ -155,18 +155,18 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
-                        <ks-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
+                            <KsOption
                                 v-for="item in fontFamilyOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
-                        <ks-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
                             controlsPosition="right"
@@ -178,29 +178,29 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
-                        <ks-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                        <KsSwitch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
                     </Column>
                     <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
-                        <ks-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
+                        <KsSwitch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
-                        <ks-tooltip
+                        <KsTooltip
                             v-if="isEnvNameFromConfig"
                             :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
                             placement="bottom"
                         >
-                            <ks-input
+                            <KsInput
                                 v-model="pendingSettings.envName"
                                 @change="onEnvNameChange"
                                 :placeholder="$t('name')"
                                 clearable
                             />
-                        </ks-tooltip>
+                        </KsTooltip>
 
-                        <ks-input
+                        <KsInput
                             v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
@@ -210,7 +210,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.environment_color')">
-                        <ks-color-picker
+                        <KsColorPicker
                             v-model="pendingSettings.envColor"
                             @change="onEnvColorChange"
                             showAlpha
@@ -222,51 +222,51 @@
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #actions>
-                <ks-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <ks-button
+                    <KsButton
                         v-if="!hasDefaultLocalization"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultLocalization"
                     />
-                </ks-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <ks-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.lang" @update:model-value="onLang">
+                            <KsOption
                                 v-for="item in langOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
-                        <ks-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
+                            <KsOption
                                 v-for="item in zonesWithOffset"
                                 :key="item.zone"
                                 :label="`${item.zone} (UTC${item.offset === 0 ? '' : item.formattedOffset})`"
                                 :value="item.zone"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <ks-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
-                            <ks-option
+                        <KsSelect :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
+                            <KsOption
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
                                 :label="$filters.date(now, item.value)"
                                 :value="item.value"
                             />
-                        </ks-select>
+                        </KsSelect>
                     </Column>
                 </Row>
             </template>
@@ -276,9 +276,9 @@
             <template #content>
                 <Row>
                     <Column>
-                        <ks-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
+                        <KsButton v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
                             {{ $t("settings.blocks.export.fields.flows") }}
-                        </ks-button>
+                        </KsButton>
                     </Column>
                 </Row>
             </template>

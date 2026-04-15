@@ -22,9 +22,9 @@
                 />
             </div>
         </div>
-        <ks-divider>
+        <KsDivider>
             {{ isNamespace ? $t("no-executions-view.namespace_guidance_desc") : $t("welcome_page.guide") }}
-        </ks-divider>
+        </KsDivider>
         <OverviewBottom class="bottom" :isNamespace />
     </EmptyTemplate>
 </template>

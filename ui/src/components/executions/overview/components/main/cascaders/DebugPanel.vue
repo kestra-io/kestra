@@ -10,10 +10,10 @@
         />
 
         <div class="buttons">
-            <ks-button type="primary" :icon="Refresh" @click="onRender">
+            <KsButton type="primary" :icon="Refresh" @click="onRender">
                 {{ $t("eval.render") }}
-            </ks-button>
-            <ks-button
+            </KsButton>
+            <KsButton
                 :disabled="!result && !error"
                 :icon="CloseCircleOutline"
                 @click="clearAll"
@@ -35,7 +35,7 @@
             />
         </template>
 
-        <ks-alert
+        <KsAlert
             v-else-if="error"
             type="error"
             :title="error"
@@ -43,7 +43,7 @@
             :closable="false"
         >
             <pre v-if="stackTrace" class="mb-0 stack-trace">{{ stackTrace }}</pre>
-        </ks-alert>
+        </KsAlert>
     </div>
 </template>
 

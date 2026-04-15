@@ -1,12 +1,12 @@
 <template>
-    <ks-dropdown-item
+    <KsDropdownItem
         :icon="ChartAreaspline"
         @click="onClick"
     >
         {{ $t('metrics') }}
-    </ks-dropdown-item>
+    </KsDropdownItem>
 
-    <ks-drawer
+    <KsDrawer
         v-if="isOpen"
         v-model="isOpen"
         :title="$t('metrics')"
@@ -16,7 +16,7 @@
             :taskRunId="props.taskRun.id"
             :execution="props.execution"
         />
-    </ks-drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">

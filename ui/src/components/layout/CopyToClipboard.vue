@@ -1,15 +1,15 @@
 <template>
     <div class="clipboard">
-        <ks-tooltip
+        <KsTooltip
             trigger="click"
             :content="$t('copied')"
             placement="left"
             :autoClose="2000"
         >
-            <ks-button :icon="ContentCopy" type="default" :link @click="copyText">
+            <KsButton :icon="ContentCopy" type="default" :link @click="copyText">
                 <span v-if="label">{{ label }}</span>
-            </ks-button>
-        </ks-tooltip>
+            </KsButton>
+        </KsTooltip>
 
         <slot name="right" />
     </div>

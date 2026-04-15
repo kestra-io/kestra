@@ -32,25 +32,25 @@
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
 
-        <ks-drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+        <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
             <div v-if="isShowLogsOpen">
                 <Collapse>
-                    <ks-form-item>
+                    <KsFormItem>
                         <SearchField
                             :router="false"
                             @search="onSearch"
                             class="me-2"
                         />
-                    </ks-form-item>
-                    <ks-form-item>
+                    </KsFormItem>
+                    <KsFormItem>
                         <LogLevelSelector
                             :value="logLevel"
                             @update:model-value="onLevelChange"
                         />
-                    </ks-form-item>
+                    </KsFormItem>
                 </Collapse>
                 <TaskRunDetails
                     v-for="taskRun in selectedTask.taskRuns"
@@ -84,7 +84,7 @@
                     class="mt-3"
                 />
             </div>
-        </ks-drawer>
+        </KsDrawer>
     </div>
 </template>
 

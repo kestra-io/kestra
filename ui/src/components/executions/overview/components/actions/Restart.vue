@@ -1,5 +1,5 @@
 <template>
-    <ks-tooltip
+    <KsTooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
@@ -30,9 +30,9 @@
                 {{ $t(replayOrRestart) }}
             </component>
         </span>
-    </ks-tooltip>
+    </KsTooltip>
 
-    <ks-dialog
+    <KsDialog
         v-if="enabled && isOpen && !isReplay"
         v-model="isOpen"
         destroyOnClose
@@ -44,7 +44,7 @@
                 <h3 class="modal-title">
                     {{ t("restart execution title") }}
                 </h3>
-                <ks-divider />
+                <KsDivider />
             </div>
         </template>
 
@@ -53,16 +53,16 @@
         </div>
 
         <template #footer>
-            <ks-button @click="isOpen = false">
+            <KsButton @click="isOpen = false">
                 {{ t("cancel") }}
-            </ks-button>
-            <ks-button type="primary" @click="handleRestartExecute">
+            </KsButton>
+            <KsButton type="primary" @click="handleRestartExecute">
                 {{ t("restart") }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 
-    <ks-dialog
+    <KsDialog
         v-if="enabled && isOpen && isReplay"
         v-model="isOpen"
         destroyOnClose
@@ -74,7 +74,7 @@
                 <h3 class="modal-title">
                     {{ t("replay execution title") }}
                 </h3>
-                <ks-divider />
+                <KsDivider />
             </div>
         </template>
 
@@ -88,33 +88,33 @@
                 {{ t("replay using") }}:
             </h4>
 
-            <ks-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <ks-radio value="original" class="radio-item">
+            <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
+                <KsRadio value="original" class="radio-item">
                     {{ t("flow revision original") }}
-                </ks-radio>
-                <ks-radio value="latest" class="radio-item">
+                </KsRadio>
+                <KsRadio value="latest" class="radio-item">
                     {{ t("flow revision latest") }}
-                </ks-radio>
-                <ks-radio value="specific" class="radio-item">
+                </KsRadio>
+                <KsRadio value="specific" class="radio-item">
                     {{ t("flow revision specific") }}
-                </ks-radio>
-            </ks-radio-group>
+                </KsRadio>
+            </KsRadioGroup>
 
-            <ks-form
+            <KsForm
                 v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
                 class="mt-2"
             >
-                <ks-form-item>
-                    <ks-select v-model="revisionsSelected">
-                        <ks-option
+                <KsFormItem>
+                    <KsSelect v-model="revisionsSelected">
+                        <KsOption
                             v-for="item in revisionsOptions"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
-                    </ks-select>
-                </ks-form-item>
-            </ks-form>
+                    </KsSelect>
+                </KsFormItem>
+            </KsForm>
 
             <template v-if="hasInputs">
                 <template v-if="!taskRun">
@@ -122,14 +122,14 @@
                         {{ t("replay inputs") }}:
                     </h4>
 
-                    <ks-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
-                        <ks-radio value="reuse" class="radio-item">
+                    <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
+                        <KsRadio value="reuse" class="radio-item">
                             {{ t("reuse original inputs") }}
-                        </ks-radio>
-                        <ks-radio value="modify" class="radio-item">
+                        </KsRadio>
+                        <KsRadio value="modify" class="radio-item">
                             {{ t("modify inputs") }}
-                        </ks-radio>
-                    </ks-radio-group>
+                        </KsRadio>
+                    </KsRadioGroup>
                 </template>
                 <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
                     {{ t("replay inputs new required") }}
@@ -138,16 +138,16 @@
         </div>
 
         <template #footer>
-            <ks-button @click="isOpen = false">
+            <KsButton @click="isOpen = false">
                 {{ t("cancel") }}
-            </ks-button>
-            <ks-button type="primary" @click="handleReplayExecute">
+            </KsButton>
+            <KsButton type="primary" @click="handleReplayExecute">
                 {{ t("execute") }}
-            </ks-button>
+            </KsButton>
         </template>
-    </ks-dialog>
+    </KsDialog>
 
-    <ks-dialog
+    <KsDialog
         v-if="isReplayWithInputsOpen"
         v-model="isReplayWithInputsOpen"
         destroyOnClose
@@ -169,7 +169,7 @@
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
-    </ks-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">

@@ -1,8 +1,8 @@
 <template>
-    <ks-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <Empty v-if="!panels.length" type="panels" />
         <template v-else>
-            <ks-splitter-panel
+            <KsSplitterPanel
                 v-for="(panel, panelIndex) in panels"
                 min="10%"
                 :key="panelIndex"
@@ -13,7 +13,7 @@
                 :class="{'panel-dragover': panel.dragover}"
             >
                 <div class="editor-tabs-container">
-                    <ks-button
+                    <KsButton
                         :icon="DragVertical"
                         link
                         class="tab-icon drag-handle"
@@ -83,11 +83,11 @@
                             </svg>
                         </button>
 
-                        <ks-dropdown trigger="click" placement="bottom-end">
-                            <ks-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                        <KsDropdown trigger="click" placement="bottom-end">
+                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
                             <template #dropdown>
-                                <ks-dropdown-menu class="m-2">
-                                    <ks-dropdown-item
+                                <KsDropdownMenu class="m-2">
+                                    <KsDropdownItem
                                         :icon="DockRight"
                                         :disabled="panelIndex === panels.length - 1"
                                         @click="movePanel(panelIndex, 'right')"
@@ -95,8 +95,8 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
                                         </span>
-                                    </ks-dropdown-item>
-                                    <ks-dropdown-item
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
                                         :icon="DockLeft"
                                         :disabled="panelIndex === 0"
                                         @click="movePanel(panelIndex, 'left')"
@@ -104,18 +104,18 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_left") }}
                                         </span>
-                                    </ks-dropdown-item>
-                                    <ks-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    </KsDropdownItem>
+                                    <KsDropdownItem v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_tabs") }}
                                         </span>
-                                    </ks-dropdown-item>
-                                    <ks-dropdown-item :icon="Close" @click="closeAllPanels()">
+                                    </KsDropdownItem>
+                                    <KsDropdownItem :icon="Close" @click="closeAllPanels()">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_panels") }}
                                         </span>
-                                    </ks-dropdown-item>
-                                    <ks-dropdown-item
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
                                         v-if="panel.activeTab?.uid === 'code'"
                                         :icon="Keyboard"
                                         @click="showKeyShortcuts()"
@@ -123,10 +123,10 @@
                                         <span class="small-text">
                                             {{ $t("editor_shortcuts.label") }}
                                         </span>
-                                    </ks-dropdown-item>
-                                </ks-dropdown-menu>
+                                    </KsDropdownItem>
+                                </KsDropdownMenu>
                             </template>
-                        </ks-dropdown>
+                        </KsDropdown>
                     </div>
                 </div>
                 <div
@@ -151,9 +151,9 @@
                         :class="{dragover: panel.dragover}"
                     />
                 </div>
-            </ks-splitter-panel>
+            </KsSplitterPanel>
         </template>
-    </ks-splitter>
+    </KsSplitter>
 
     <div
         v-if="showDropZones"

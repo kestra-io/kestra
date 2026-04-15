@@ -2,8 +2,8 @@
     <div v-if="playgroundStore.enabled && isTask && taskModel?.id" class="flow-playground">
         <PlaygroundRunTaskButton :taskId="taskModel?.id" />
     </div>
-    <ks-form v-if="isTaskDefinitionBasedOnType" labelPosition="top">
-        <ks-form-item>
+    <KsForm v-if="isTaskDefinitionBasedOnType" labelPosition="top">
+        <KsFormItem>
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>
@@ -15,8 +15,8 @@
                 :blockSchemaPath
                 @update:model-value="onTaskTypeSelect"
             />
-        </ks-form-item>
-    </ks-form>
+        </KsFormItem>
+    </KsForm>
     <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
             v-ks-loading="isLoading || isPluginSchemaLoading"

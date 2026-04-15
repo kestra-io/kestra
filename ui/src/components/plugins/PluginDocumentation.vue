@@ -11,7 +11,7 @@
                 <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
                 </h4>
-                <ks-button
+                <KsButton
                     v-if="releaseNotesUrl"
                     size="small"
                     class="release-notes-btn"
@@ -19,7 +19,7 @@
                     @click="openReleaseNotes"
                 >
                     {{ $t('plugins.release') }}
-                </ks-button>
+                </KsButton>
             </div>
             <Suspense>
                 <SchemaToHtml

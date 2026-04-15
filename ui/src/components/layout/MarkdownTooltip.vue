@@ -7,13 +7,13 @@
             />
         </a>
 
-        <ks-drawer
+        <KsDrawer
             v-if="isOpen"
             v-model="isOpen"
             :title="title"
         >
             <KsMarkdown class="markdown-tooltip" :content="description" />
-        </ks-drawer>
+        </KsDrawer>
     </span>
 </template>
 

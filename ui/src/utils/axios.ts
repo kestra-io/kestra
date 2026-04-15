@@ -5,7 +5,7 @@ import {Router, routerKey} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
-import * as BasicAuth from "../utils/basicAuth"
+import * as BasicAuth from "./basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"

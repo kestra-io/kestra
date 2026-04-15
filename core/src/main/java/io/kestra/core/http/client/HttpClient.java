@@ -37,6 +37,7 @@ import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
@@ -187,6 +188,17 @@ public class HttpClient implements Closeable {
         }
 
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
+
+        // TCP Keep-Alive extended socket options (disabled for Windows compatibility)
+        if (!runContext.render(this.configuration.getEnabledTcpExtendedKeepAlive()).as(Boolean.class).orElse(true)) {
+            connectionManagerBuilder.setDefaultSocketConfig(
+                SocketConfig.custom()
+                    .setTcpKeepIdle(0)
+                    .setTcpKeepInterval(0)
+                    .setTcpKeepCount(0)
+                    .build()
+            );
+        }
 
         // builder object
         connectionManagerBuilder.setDefaultConnectionConfig(connectionConfig.build());

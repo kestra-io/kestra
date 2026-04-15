@@ -183,6 +183,47 @@ class FlowTopologyServiceTest {
     }
 
     @Test
+    void dependsOn() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        Flow noTrigger = Flow.builder()
+            .namespace("io.kestra.exclude")
+            .id("no")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        Flow child = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .triggers(
+                List.of(
+                    io.kestra.plugin.core.trigger.Flow.builder()
+                        .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                        .dependsOn(
+                            List.of(
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace("io.kestra.ee").flowId("parent").build(),
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace("io.kestra.others").flowId("other").build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
+
+        assertThat(flowTopologyService.isChild(noTrigger, child)).isNull();
+    }
+
+    @Test
     void self() throws IOException {
         Flow flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build();
         assertThat(flowTopologyService.isChild(flow, flow)).isNull();

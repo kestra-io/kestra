@@ -14,7 +14,7 @@
         </el-button>
 
         <SaveFilters
-            v-if="!filter.searchInputFullWidth.value"
+            v-if="!filter.searchInputFullWidth.value && filter.buttons.value?.savedFilters?.shown !== false"
             :disabled="
                 (!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value
             "
@@ -85,7 +85,7 @@
     import {ref, inject} from "vue";
     import {ChevronDown, BookmarkCheckOutline, Refresh} from "../utils/icons";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
-    
+
     import SaveFilters from "../segments/SaveFilters.vue";
     import SavedFilters from "../segments/SavedFilters.vue";
     import VerticalSliders from "../../../assets/icons/VerticalSliders.vue";

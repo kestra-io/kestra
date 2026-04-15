@@ -22,18 +22,12 @@ import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerCredentials;
-import io.grpc.TlsServerCredentials;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import io.kestra.controller.config.GrpcTlsConfiguration;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.security.GeneralSecurityException;
 
 
 /**
@@ -61,18 +55,14 @@ public class DefaultController extends AbstractService implements Controller {
 
     protected final GrpcConfiguration grpcConfiguration;
 
-    protected final GrpcTlsConfiguration grpcTlsConfiguration;
-
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,
-        GrpcTlsConfiguration grpcTlsConfiguration,
         ControllerConfiguration controllerConfiguration,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.grpcConfiguration = grpcConfiguration;
-        this.grpcTlsConfiguration = grpcTlsConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.healthStatusManager = new HealthStatusManager();
@@ -98,7 +88,7 @@ public class DefaultController extends AbstractService implements Controller {
         } catch (IOException e) {
             throw new UncheckedIOException("Error while building gRPC server", e);
         }
-        LOG.info("Controller started, listening on {} (TLS {})", port, grpcTlsConfiguration.enabled() ? "enabled" : "disabled");
+        LOG.info("Controller started, listening on {}", port);
         setState(ServiceState.RUNNING);
     }
 
@@ -106,50 +96,18 @@ public class DefaultController extends AbstractService implements Controller {
      * Returns the underlying gRPC server. Exposed for testing to retrieve the assigned port.
      */
     @VisibleForTesting
-    Server getServer() {
+    public Server getServer() {
         return server;
     }
 
-    private ServerCredentials createServerCredentials() {
-        if (!grpcTlsConfiguration.enabled()) {
-            return InsecureServerCredentials.create();
-        }
-
-        if (grpcTlsConfiguration.keyStore() == null) {
-            throw new IllegalStateException("kestra.grpc.tls.key-store is required on the server side when TLS is enabled");
-        }
-        if (grpcTlsConfiguration.clientAuth() != GrpcTlsConfiguration.ClientAuth.NONE && grpcTlsConfiguration.trustStore() == null) {
-            throw new IllegalStateException(
-                "kestra.grpc.tls.trust-store is required when client-auth is " + grpcTlsConfiguration.clientAuth()
-                    + " — the server needs a trust store to verify client certificates"
-            );
-        }
-
-        try {
-            KeyManagerFactory kmf = GrpcTlsConfiguration.loadKeyManagerFactory(grpcTlsConfiguration.keyStore());
-
-            TlsServerCredentials.Builder builder = TlsServerCredentials.newBuilder()
-                .keyManager(kmf.getKeyManagers());
-
-            if (grpcTlsConfiguration.trustStore() != null) {
-                TrustManagerFactory tmf = GrpcTlsConfiguration.loadTrustManagerFactory(grpcTlsConfiguration.trustStore());
-                builder.trustManager(tmf.getTrustManagers());
-            }
-
-            builder.clientAuth(switch (grpcTlsConfiguration.clientAuth()) {
-                case NONE -> TlsServerCredentials.ClientAuth.NONE;
-                case OPTIONAL -> TlsServerCredentials.ClientAuth.OPTIONAL;
-                case REQUIRE -> TlsServerCredentials.ClientAuth.REQUIRE;
-            });
-
-            LOG.info("gRPC TLS enabled with clientAuth={}, keyStore={}, trustStore={}",
-                grpcTlsConfiguration.clientAuth(), grpcTlsConfiguration.keyStore(), grpcTlsConfiguration.trustStore());
-            return builder.build();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to configure gRPC TLS server credentials", e);
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to configure gRPC TLS server credentials", e);
-        }
+    /**
+     * Creates server credentials for the gRPC server.
+     * Returns plaintext (insecure) credentials by default. EE overrides this to add TLS support.
+     *
+     * @return the server credentials.
+     */
+    protected ServerCredentials createServerCredentials() {
+        return InsecureServerCredentials.create();
     }
 
     protected ServerBuilder<?> buildServer(int port) {

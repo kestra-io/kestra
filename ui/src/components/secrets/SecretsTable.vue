@@ -9,6 +9,7 @@
                         refresh: {shown: true, callback: loadData}
                     }"
                     :prefix="'secrets'"
+                    :buttons="{savedFilters: {shown: !namespace}}"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -18,7 +19,7 @@
                     @update-properties="updateDisplayColumns"
                 />
             </template>
-            
+
             <template #table>
                 <SelectTable
                     :data="secrets"
@@ -32,8 +33,8 @@
                     class="fill-height"
                     :rowKey="(row: any) => `${row.namespace}-${row.key}`"
                 >
-                    <el-table-column 
-                        prop="key" 
+                    <el-table-column
+                        prop="key"
                         sortable="custom"
                         :sortOrders="['ascending', 'descending']"
                         :label="keyOnly ? $t('secret.names') : $t('key')"
@@ -72,7 +73,7 @@
 
                     <el-table-column columnKey="locked" className="row-action">
                         <template #default="scope">
-                            <el-tooltip 
+                            <el-tooltip
                                 v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                                 transition=""
                                 :hideAfter="0"
@@ -101,7 +102,7 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column 
+                    <el-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="update"
                         className="row-action"
@@ -118,7 +119,7 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column 
+                    <el-table-column
                         v-if="!keyOnly && !paneView"
                         columnKey="delete"
                         className="row-action"
@@ -165,7 +166,7 @@
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
                     <el-col :span="20">
-                        <MultilineSecret 
+                        <MultilineSecret
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
@@ -182,7 +183,7 @@
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('secret.description')" prop="description">
-                    <el-input 
+                    <el-input
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
@@ -256,7 +257,7 @@
     import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
-    
+
     const secretsFilter = useSecretsFilter();
 
     interface SecretForm {
@@ -330,25 +331,25 @@
     const optionalColumns = computed(() => {
         const columns = [
             {
-                label: t("namespace"), 
-                prop: "namespace", 
-                default: true, 
+                label: t("namespace"),
+                prop: "namespace",
+                default: true,
                 description: t("filter.table_column.secrets.namespace")
             },
             {
-                label: t("description"), 
-                prop: "description", 
-                default: true, 
+                label: t("description"),
+                prop: "description",
+                default: true,
                 description: t("filter.table_column.secrets.description")
             },
             {
-                label: t("tags"), 
-                prop: "tags", 
+                label: t("tags"),
+                prop: "tags",
                 default: true,
                 description: t("filter.table_column.secrets.tags")
             }
         ];
-        
+
         return columns.filter(col => {
             if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false;
             if (col.prop === "description" && props.keyOnly) return false;
@@ -362,15 +363,15 @@
         storageKey: storageKey
     });
 
-    const visibleColumns = computed(() => 
+    const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
             ?.filter(Boolean) as any[]
     );
 
     const secretModalTitle = computed(() => {
-        return secret.value?.update 
-            ? t("secret.update", {name: secret.value?.key}) 
+        return secret.value?.update
+            ? t("secret.update", {name: secret.value?.key})
             : t("secret.add");
     });
 
@@ -469,12 +470,12 @@
             }));
 
             emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
-            
+
             let allSecrets = secretsResponse.results ?? [];
 
             if (props.includeInherited && props.namespace) {
                 const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
-                
+
                 for (const parentNs of parentNamespaces) {
                     const parentSecretsResponse = await secretsStore.find(loadQuery({
                         filters: {

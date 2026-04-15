@@ -8,7 +8,14 @@
             :is="statusIcon"
             class="ks-execution-status__icon"
         />
-        <span class="ks-execution-status__text">{{ displayText }}</span>
+        <span class="ks-execution-status__text">
+            <template v-if="$slots.title">
+                <slot name="title" />
+            </template>
+            <template v-else>
+                {{ displayText }}
+            </template>
+        </span>
     </button>
 </template>
 
@@ -26,6 +33,10 @@
         size: "default",
         title: undefined,
     });
+
+    defineSlots<{
+        title?: unknown
+    }>()
 
     const statusIcon = computed(() => {
         return EXECUTION_STATUSES[props.status]?.icon;

@@ -20,12 +20,8 @@ public class Await {
             .pollDelay(defaultSleep);
     }
 
-    /**
-     * @deprecated use {@link #await()} instead
-     */
-    @Deprecated
     public static void until(BooleanSupplier condition) {
-        Await.until(condition, null);
+        await().forever().until(condition::getAsBoolean);
     }
 
     /**

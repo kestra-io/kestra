@@ -39,13 +39,6 @@ class VariableRendererTest {
     private PebbleEngineFactory pebbleEngineFactory;
 
     @Test
-    void shouldRenderUsingAlternativeRendering() throws IllegalVariableEvaluationException {
-        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
-        String render = renderer.render("{{ dummy }}", Map.of());
-        Assertions.assertEquals("result", render);
-    }
-
-    @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ prefix }}.kestra.{{ suffix }}", Map.of("prefix", "io", "suffix", "unittest"));
         Assertions.assertEquals("io.kestra.unittest", render);

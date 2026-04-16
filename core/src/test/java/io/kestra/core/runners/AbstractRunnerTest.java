@@ -343,6 +343,27 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({
+        "flows/valids/flow-trigger-any-mode-flow-a.yaml",
+        "flows/valids/flow-trigger-any-mode-flow-b.yaml",
+        "flows/valids/flow-trigger-any-mode-flow-listen.yaml"
+    })
+    void flowTriggerAnyMode() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerAnyMode();
+    }
+
+    @Test
+    @LoadFlows({
+        "flows/valids/flow-trigger-at-least-mode-flow-a.yaml",
+        "flows/valids/flow-trigger-at-least-mode-flow-b.yaml",
+        "flows/valids/flow-trigger-at-least-mode-flow-c.yaml",
+        "flows/valids/flow-trigger-at-least-mode-flow-listen.yaml"
+    })
+    void flowTriggerAtLeastMode() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerAtLeastMode();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/each-null.yaml" }, tenantId = "eachwithnull")
     void eachWithNull() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -658,6 +679,18 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-outputs.yaml")
     protected void loopOutputs(Execution execution) throws Exception {
         loopCaseTest.loopOutputs(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-store.yaml")
+    protected void loopOutputsStore(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsStore(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-auto.yaml")
+    protected void loopOutputsAuto(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsAuto(execution);
     }
 
     @Test

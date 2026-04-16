@@ -32,11 +32,30 @@ public abstract class H2FlowRepositoryService {
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(List.of("source_code"), query);
+    }
+
+    /**
+     * Builds a condition that matches flows containing at least one trigger of the given class type.
+     * Uses the custom JQ_STRING function to extract the first matching trigger type from the JSON array.
+     *
+     * @param triggerClass the trigger class to filter by, or {@code null} to match all flows
+     * @return a jOOQ {@link Condition}
+     */
+    public static Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        if (triggerClass == null) {
+            return DSL.trueCondition();
+        }
+        Field<String> matchedType = DSL.field(
+            "JQ_STRING(\"value\", CONCAT('.triggers[]? | select(.type == \"', {0}, '\") | .type'))",
+            String.class,
+            DSL.val(triggerClass.getName(), String.class)
+        );
+        return matchedType.isNotNull();
     }
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
@@ -56,6 +75,6 @@ public abstract class H2FlowRepositoryService {
             });
 
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

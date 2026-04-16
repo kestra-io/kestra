@@ -771,6 +771,10 @@
       "no options found": "Keine Optionen gefunden",
       "operator": "Filter-Operator",
       "options": "Datenoptionen",
+      "parentId": {
+        "description": "Nach übergeordneter Ausführungs-ID filtern",
+        "label": "Übergeordnete Ausführungs-ID"
+      },
       "periodic refresh": "Periodische Aktualisierung",
       "refresh": "Daten aktualisieren",
       "reset": "Alle löschen",

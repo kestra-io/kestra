@@ -9,12 +9,9 @@ import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolverRegistry;
-import io.grpc.TlsChannelCredentials;
 import io.kestra.controller.config.GrpcChannelConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
-import io.kestra.controller.config.GrpcTlsConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import io.kestra.core.contexts.KestraContext;
 import jakarta.annotation.PostConstruct;
@@ -23,12 +20,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
-import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +52,6 @@ public class GrpcChannelManager {
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final GrpcChannelConfiguration grpcChannelConfiguration;
     private final GrpcConfiguration grpcConfiguration;
-    private final GrpcTlsConfiguration grpcTlsConfiguration;
     private final WorkerControllersConfiguration controllersConfig;
 
     // ExecutorService shared across channels
@@ -71,14 +62,12 @@ public class GrpcChannelManager {
      *
      * @param grpcChannelConfiguration the gRPC channel configuration.
      * @param grpcConfiguration        the global gRPC configuration.
-     * @param grpcTlsConfiguration     the gRPC TLS configuration.
      * @param controllersConfig        the multi-endpoint controllers configuration.
      */
     @Inject
-    public GrpcChannelManager(GrpcChannelConfiguration grpcChannelConfiguration, GrpcConfiguration grpcConfiguration, GrpcTlsConfiguration grpcTlsConfiguration, WorkerControllersConfiguration controllersConfig) {
+    public GrpcChannelManager(GrpcChannelConfiguration grpcChannelConfiguration, GrpcConfiguration grpcConfiguration, WorkerControllersConfiguration controllersConfig) {
         this.grpcChannelConfiguration = grpcChannelConfiguration;
         this.grpcConfiguration = grpcConfiguration;
-        this.grpcTlsConfiguration = grpcTlsConfiguration;
         this.controllersConfig = controllersConfig;
         this.sharedExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("grpc-channel-", 0).factory());
     }
@@ -178,45 +167,22 @@ public class GrpcChannelManager {
     }
 
     /**
-     * Creates channel credentials based on TLS configuration.
-     * Returns plaintext credentials when TLS is disabled, TLS credentials when enabled.
+     * Creates channel credentials for gRPC communication.
+     * Returns plaintext (insecure) credentials by default. EE overrides this to add TLS support.
+     *
+     * @return the channel credentials.
      */
-    private ChannelCredentials createChannelCredentials() {
-        if (!grpcTlsConfiguration.enabled()) {
-            return InsecureChannelCredentials.create();
-        }
-
-        try {
-            TlsChannelCredentials.Builder builder = TlsChannelCredentials.newBuilder();
-
-            // Trust manager: truststore for verifying server certificate
-            if (grpcTlsConfiguration.insecureTrustAllCertificates()) {
-                log.warn("gRPC TLS is configured to trust all certificates - this should only be used for development");
-                builder.trustManager(InsecureTrustManagerFactory.INSTANCE.getTrustManagers());
-            } else if (grpcTlsConfiguration.trustStore() != null) {
-                TrustManagerFactory tmf = GrpcTlsConfiguration.loadTrustManagerFactory(grpcTlsConfiguration.trustStore());
-                builder.trustManager(tmf.getTrustManagers());
-            }
-
-            // Key manager: client keystore for mTLS
-            if (grpcTlsConfiguration.keyStore() != null) {
-                KeyManagerFactory kmf = GrpcTlsConfiguration.loadKeyManagerFactory(grpcTlsConfiguration.keyStore());
-                builder.keyManager(kmf.getKeyManagers());
-            }
-
-            log.info("gRPC TLS enabled for channel");
-            return builder.build();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to configure gRPC TLS channel credentials", e);
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to configure gRPC TLS channel credentials", e);
-        }
+    protected ChannelCredentials createChannelCredentials() {
+        return InsecureChannelCredentials.create();
     }
 
     /**
-     * Configures common channel settings.
+     * Configures common channel settings. EE overrides this to add TLS authority override.
+     *
+     * @param builder the channel builder to configure.
+     * @return the configured channel builder.
      */
-    private ManagedChannelBuilder<?> configureChannel(ManagedChannelBuilder<?> builder) {
+    protected ManagedChannelBuilder<?> configureChannel(ManagedChannelBuilder<?> builder) {
         builder.enableRetry()
             .maxRetryAttempts(grpcChannelConfiguration.maxRetryAttempts())
             .userAgent(getUserAgent())
@@ -224,12 +190,6 @@ public class GrpcChannelManager {
             .keepAliveWithoutCalls(true)
             .maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
             .executor(sharedExecutorService);
-
-        // Override TLS authority if configured (required for static discovery)
-        if (grpcTlsConfiguration.enabled() && grpcTlsConfiguration.authorityOverride() != null) {
-            log.info("Overriding TLS authority to: {}", grpcTlsConfiguration.authorityOverride());
-            builder.overrideAuthority(grpcTlsConfiguration.authorityOverride());
-        }
 
         // Configure load balancing policy
         String loadBalancingPolicy = controllersConfig.loadBalancing().policy().getGrpcName();

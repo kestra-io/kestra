@@ -771,6 +771,10 @@
       "no options found": "オプションが見つかりません",
       "operator": "フィルター演算子",
       "options": "データオプション",
+      "parentId": {
+        "description": "親のExecution IDでフィルター",
+        "label": "親Execution ID"
+      },
       "periodic refresh": "定期更新",
       "refresh": "データを更新",
       "reset": "すべてクリア",

@@ -29,7 +29,7 @@ public abstract class MysqlExecutionRepositoryService {
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
@@ -70,7 +70,7 @@ public abstract class MysqlExecutionRepositoryService {
         if (!inConditions.isEmpty()) {
             conditions.add(DSL.or(inConditions));
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
 }

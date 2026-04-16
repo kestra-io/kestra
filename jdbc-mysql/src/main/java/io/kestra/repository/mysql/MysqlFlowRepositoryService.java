@@ -29,11 +29,28 @@ public abstract class MysqlFlowRepositoryService {
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(Collections.singletonList("source_code"), query);
+    }
+
+    /**
+     * Builds a condition that matches flows containing at least one trigger of the given class type.
+     * Uses JSON_SEARCH to check if the type value exists anywhere in the triggers array.
+     *
+     * @param triggerClass the trigger class to filter by, or {@code null} to match all flows
+     * @return a jOOQ {@link Condition}
+     */
+    public static Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        if (triggerClass == null) {
+            return DSL.trueCondition();
+        }
+        return DSL.condition(
+            "JSON_SEARCH(`value`, 'one', {0}, NULL, '$.triggers[*].type') IS NOT NULL",
+            DSL.val(triggerClass.getName(), String.class)
+        );
     }
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
@@ -56,6 +73,6 @@ public abstract class MysqlFlowRepositoryService {
                 }
             });
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

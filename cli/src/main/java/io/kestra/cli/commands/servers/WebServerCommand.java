@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "webserver",
@@ -93,7 +94,7 @@ public class WebServerCommand extends AbstractServerCommand {
         }
 
         log.info("Webserver started");
-        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }
 }

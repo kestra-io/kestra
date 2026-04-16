@@ -23,7 +23,6 @@ import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -775,11 +774,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     Map<String, Object> outputs = null;
                     if (!ListUtils.isEmpty(loop.getOutputs())) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        var inputAndOutput = runContext.inputAndOutput();
-
                         try {
-                            outputs = inputAndOutput.renderOutputs(loop.getOutputs());
-                            outputs = inputAndOutput.typedOutputs(loop.getOutputs(), executor.getExecution(), outputs);
+                            outputs = loop.computeIterationOutput(runContext, execution);
                         } catch (Exception e) {
                             Logs.logExecution(
                                 executor.getExecution(),
@@ -790,6 +786,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                             runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
                             // FIXME should we fail the execution?
                         }
+
                     }
                     var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent(), outputs);
                     terminatedLoopExecutionQueue.emit(terminatedLoopExecution);

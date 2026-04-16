@@ -623,17 +623,10 @@ public class FlowableUtils {
             return Optional.empty();
         }
         String renderValue = runContext.render(stringValue);
-        try {
-            JsonNode valuesNode = MAPPER.readTree(renderValue);
-            if (valuesNode.isTextual()) {
-                String resolvedValue = valuesNode.asText();
-                if (URIFetcher.supports(resolvedValue)) {
-                    return Optional.of(resolvedValue);
-                }
-            }
-        } catch (IOException e) {
-            // not a valid JSON / not a textual node — fall through and return empty
+        if (URIFetcher.supports(renderValue)) {
+            return Optional.of(renderValue);
         }
+
         return Optional.empty();
     }
 

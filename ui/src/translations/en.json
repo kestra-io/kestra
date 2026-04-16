@@ -1932,6 +1932,10 @@
             "label": "Trigger Execution ID",
             "description": "Filter by trigger execution ID"
         },
+        "parentId": {
+            "label": "Parent Execution ID",
+            "description": "Filter by parent execution ID"
+        },
         "triggerState":{
           "label": " Trigger State",
           "description": "Filter by trigger state",

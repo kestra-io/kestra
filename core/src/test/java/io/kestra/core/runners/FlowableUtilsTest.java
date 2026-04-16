@@ -215,10 +215,9 @@ class FlowableUtilsTest {
         RunContext runContext = runContextFactory.of();
         // The value must be a JSON-encoded string whose text content is a supported URI
         String kestraUri = "kestra://tenant/namespace/file.ion";
-        String jsonEncodedUri = "\"" + kestraUri + "\"";
 
         // When
-        Optional<String> result = FlowableUtils.resolveLoopValuesUri(runContext, jsonEncodedUri);
+        Optional<String> result = FlowableUtils.resolveLoopValuesUri(runContext, kestraUri);
 
         // Then
         assertThat(result).contains(kestraUri);

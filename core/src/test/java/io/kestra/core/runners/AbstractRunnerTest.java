@@ -364,6 +364,15 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({
+        "flows/valids/flow-trigger-invalid-inputs-flow-a.yaml",
+        "flows/valids/flow-trigger-invalid-inputs-flow-listen.yaml"
+    })
+    void flowTriggerWithInvalidInputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerWithInvalidInputs();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/each-null.yaml" }, tenantId = "eachwithnull")
     void eachWithNull() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();

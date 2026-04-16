@@ -387,6 +387,25 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    public void flowTriggerWithInvalidInputs() throws TimeoutException, QueueException {
+        // Run the source flow which has no outputs
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.invalid.inputs",
+            "flow-trigger-invalid-inputs-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // The listener trigger tries to render inputs referencing trigger outputs that don't exist.
+        // Instead of silently swallowing the error, the trigger should produce a FAILED execution.
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.FAILED),
+            MAIN_TENANT, "io.kestra.tests.trigger.invalid.inputs", "flow-trigger-invalid-inputs-flow-listen"
+        );
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(triggerExecution.getTaskRunList()).isNullOrEmpty();
+    }
+
     public void flowTriggerMixedConditions() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.mixed.conditions",

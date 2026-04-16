@@ -401,7 +401,8 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this.getId(),
                 e
             );
-            return Optional.empty();
+            var failedExecution = builder.build().withState(State.Type.FAILED);
+            return Optional.of(failedExecution);
         }
     }
 

@@ -93,7 +93,6 @@
             & span {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
                 font-size: var(--el-alert-title-font-size);
                 line-height: 24px;
                 color: var(--el-color-error);

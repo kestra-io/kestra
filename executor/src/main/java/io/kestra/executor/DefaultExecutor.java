@@ -784,11 +784,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
                                 e
                             );
                             runContext.logger().error("Failed to render output values: {}", e.getMessage(), e);
-                            // FIXME should we fail the execution?
+                            execution = execution.withState(State.Type.FAILED);
+                            // Persist the FAILED state so the sub-execution is correctly reflected in the DB.
+                            try {
+                                executionStateStore.lock(execution.getId(), exec ->
+                                    new ExecutorContext(exec).withExecution(exec.withState(State.Type.FAILED), "failedOutputRender")
+                                );
+                            } catch (Exception persistException) {
+                                log.error("Failed to persist FAILED state for loop sub-execution {}", execution.getId(), persistException);
+                            }
+                            executor = executor.withExecution(execution, "failedOutputRender");
                         }
 
                     }
-                    var terminatedLoopExecution = new TerminatedLoopExecution(executor.getExecution().getLoopRun(), executor.getExecution().getId(), executor.getExecution().getState().getCurrent(), outputs);
+                    var terminatedLoopExecution = new TerminatedLoopExecution(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs);
                     terminatedLoopExecutionQueue.emit(terminatedLoopExecution);
                 }
 
@@ -868,6 +877,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         Execution failed = execution.failedExecutionFromExecutor(e).execution().withState(State.Type.FAILED);
                         ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);
                         this.executionEventQueue.emit(event);
+
+                        // update all execution followers
+                        this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(failed, ExecutionEventType.UPDATED));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", execution.getId(), ex);
                     }

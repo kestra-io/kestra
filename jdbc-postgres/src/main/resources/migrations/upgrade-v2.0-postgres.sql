@@ -48,3 +48,8 @@ DROP INDEX IF EXISTS worker_job_running_worker_uuid;
 ALTER TABLE worker_job_running DROP COLUMN IF EXISTS "worker_uuid";
 ALTER TABLE worker_job_running ADD COLUMN IF NOT EXISTS "worker_uid" VARCHAR(36) NOT NULL GENERATED ALWAYS AS (value -> 'workerInstance' ->> 'uid') STORED;
 CREATE INDEX IF NOT EXISTS worker_job_running_worker_uid ON worker_job_running (worker_uid);
+
+-- Executions: parent execution ID and loop run index
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS "parent_id" VARCHAR(100) GENERATED ALWAYS AS (value #>> '{parentId}') STORED;
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS "loop_run_index" INT GENERATED ALWAYS AS ((value #>> '{loopRun,index}')::INT) STORED;
+CREATE INDEX IF NOT EXISTS executions_parent_id ON executions ("deleted", "tenant_id", "parent_id");

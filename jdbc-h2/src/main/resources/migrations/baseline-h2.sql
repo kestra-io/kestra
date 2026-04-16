@@ -67,7 +67,9 @@ CREATE TABLE IF NOT EXISTS executions (
     "tenant_id" VARCHAR(250) GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
     "trigger_execution_id" VARCHAR(100) GENERATED ALWAYS AS (JQ_STRING("value", '.trigger.variables.executionId')),
     "kind" VARCHAR(32) GENERATED ALWAYS AS (JQ_STRING("value", '.kind')),
-    "trigger_id" VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.trigger.id'))
+    "trigger_id" VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.trigger.id')),
+    "parent_id" VARCHAR(100) GENERATED ALWAYS AS (JQ_STRING("value", '.parentId')),
+    "loop_run_index" INT GENERATED ALWAYS AS (JQ_INTEGER("value", '.loopRun.index'))
 );
 
 CREATE INDEX IF NOT EXISTS executions_namespace ON executions ("deleted", "tenant_id", "namespace");
@@ -78,6 +80,7 @@ CREATE INDEX IF NOT EXISTS executions_end_date ON executions ("deleted", "end_da
 CREATE INDEX IF NOT EXISTS executions_state_duration ON executions ("deleted", "tenant_id", "state_duration");
 CREATE INDEX IF NOT EXISTS executions_trigger_execution_id ON executions ("deleted", "tenant_id", "trigger_execution_id");
 CREATE INDEX idx_executions_trigger_id ON executions ("trigger_id");
+CREATE INDEX IF NOT EXISTS executions_parent_id ON executions ("deleted", "tenant_id", "parent_id");
 
 
 /* ----------------------- triggers ----------------------- */

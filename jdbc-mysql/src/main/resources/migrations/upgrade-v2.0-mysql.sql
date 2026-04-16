@@ -49,3 +49,8 @@ DROP INDEX worker_job_running_worker_uuid ON worker_job_running;
 ALTER TABLE worker_job_running DROP COLUMN `worker_uuid`;
 ALTER TABLE worker_job_running ADD COLUMN `worker_uid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.uid') STORED NOT NULL;
 CREATE INDEX worker_job_running_worker_uid ON worker_job_running (`worker_uid`);
+
+-- Executions: parent execution ID and loop run index
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS parent_id VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.parentId') STORED;
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS loop_run_index INT GENERATED ALWAYS AS (value ->> '$.loopRun.index') STORED;
+CREATE INDEX IF NOT EXISTS executions_parent_id ON executions (`deleted`, `tenant_id`, `parent_id`);

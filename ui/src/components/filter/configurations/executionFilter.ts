@@ -142,6 +142,17 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "text",
                     searchable: true
+                },
+                {
+                    key: "parentId",
+                    label: t("filter.parentId.label"),
+                    description: t("filter.parentId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                    ],
+                    valueType: "text",
+                    searchable: true
                 }
             ]
         };

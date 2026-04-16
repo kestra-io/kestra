@@ -9,7 +9,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -18,6 +20,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -436,11 +439,21 @@ public class LoopCaseTest {
 
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
     private List<Execution> loopSubExecutions(Execution parentExecution) {
-        // FIXME retrieving loop sub-executions for a given loop should be more easy
-        return executionRepository.findByFlowId(parentExecution.getTenantId(), parentExecution.getNamespace(), parentExecution.getFlowId(), Pageable.UNPAGED)
-            .stream()
-            .filter(exec -> parentExecution.getId().equals(exec.getParentId()))
-            .sorted(Comparator.comparingInt(exec -> exec.getLoopRun().index()))
-            .toList();
+        return executionRepository.find(
+            Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
+            parentExecution.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.PARENT_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(parentExecution.getId())
+                    .build(),
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.LOOP)
+                    .build()
+            )
+        );
     }
 }

@@ -47,7 +47,7 @@
                     </el-tag>
                 </div>
 
-                <div class="welcome-help-section">
+                <div v-if="welcomeResources.length > 0" class="welcome-help-section">
                     <p class="welcome-help-title">
                         {{ $t("welcome_copilot.need_help") }}
                     </p>
@@ -65,6 +65,7 @@
     import AiCopilot from "../ai/AiCopilot.vue";
     import OnboardingResourceList from "./OnboardingResourceList.vue";
     import {useOnboardingResources} from "./useOnboardingResources";
+    import type {OnboardingResourceItem} from "./OnboardingResourceList.vue";
 
     import type {AiGenerationType} from "../../utils/constants";
     import Utils from "../../utils/utils";
@@ -81,6 +82,7 @@
         generationType?: AiGenerationType;
         examples: WelcomeCopilotExample[];
         namespace?: string;
+        resources?: OnboardingResourceItem[];
     }>();
 
     const emit = defineEmits<{
@@ -106,7 +108,9 @@
     );
 
     const {onboardingResources} = useOnboardingResources();
-    const welcomeResources = computed(() => onboardingResources.value.slice(0, 3));
+    const welcomeResources = computed(() =>
+        props.resources !== undefined ? props.resources : onboardingResources.value.slice(0, 3),
+    );
 
     function selectExample(index: number) {
         activeIndex.value = index;

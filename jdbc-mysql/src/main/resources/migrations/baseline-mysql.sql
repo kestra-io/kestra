@@ -87,8 +87,6 @@ CREATE TABLE IF NOT EXISTS `executions` (
     `trigger_execution_id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.trigger.variables.executionId') STORED,
     `kind` VARCHAR(32) GENERATED ALWAYS AS (value ->> '$.kind') STORED,
     `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.trigger.id') STORED,
-    `parent_id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.parentId') STORED,
-    `loop_run_index` INT GENERATED ALWAYS AS (value ->> '$.loopRun.index') STORED,
     INDEX ix_namespace (deleted, tenant_id, namespace),
     INDEX ix_flowId (deleted, tenant_id, flow_id),
     INDEX ix_state_current (deleted, tenant_id, state_current),
@@ -97,7 +95,6 @@ CREATE TABLE IF NOT EXISTS `executions` (
     INDEX ix_state_duration (deleted, tenant_id, state_duration),
     INDEX ix_trigger_execution_id (deleted, tenant_id, trigger_execution_id),
     INDEX idx_executions_trigger_id (trigger_id),
-    INDEX executions_parent_id (deleted, tenant_id, parent_id),
     FULLTEXT ix_fulltext (namespace, flow_id, id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

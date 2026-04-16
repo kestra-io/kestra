@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import io.kestra.core.utils.Await;
 
 @SuppressWarnings("try")
 @Slf4j
@@ -81,7 +82,7 @@ public class TestRunner implements Runnable, AutoCloseable {
         servers.add(indexer);
 
         try {
-            Awaitility.await().atMost(runningTimeout).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
+            Await.await().atMost(runningTimeout).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
         } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())

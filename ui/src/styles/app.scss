@@ -8,7 +8,6 @@
 // element-plus
 @use "layout/element-plus-overload";
 
-
 // layout
 @use "layout/root";
 @use "layout/root-dark";
@@ -250,4 +249,11 @@ body{
 #app main {
     flex: 1;
     overflow: auto;
+}
+
+#ks-monaco-overflow-widgets {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
 }

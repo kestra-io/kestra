@@ -95,7 +95,7 @@
     // Groups expanded by default
     const GROUPS_EXPANDED_BY_DEFAULT = new Set(["connection", "source", "destination"]);
 
-    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional"]);
+    const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional", "advanced"]);
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
@@ -137,13 +137,16 @@
     }
 
     function isPartOfGroup(value: any, groups: string[]) {
+        // Check top-level $group first: for Property<T> fields the schema generator places
+        // $group at the root even when anyOf is present, so we must not short-circuit on anyOf.
+        if (value?.$group) return groups.includes(value.$group);
         if (value?.allOf) {
             return value.allOf.some((item: any) => isPartOfGroup(item, groups));
         }
         if (value?.anyOf) {
             return value.anyOf.some((item: any) => isPartOfGroup(item, groups));
         }
-        return value?.$group && groups.includes(value.$group);
+        return false;
     }
 
     function getGroup(value: any): string | null {

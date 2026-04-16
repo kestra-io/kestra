@@ -13,6 +13,7 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "scheduler",
@@ -40,7 +41,7 @@ public class SchedulerCommand extends AbstractServerCommand {
         Scheduler scheduler = applicationContext.getBean(Scheduler.class);
         scheduler.start(Optional.ofNullable(this.maxThread).orElse(Scheduler.defaultMaxNumThreads()));
 
-        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

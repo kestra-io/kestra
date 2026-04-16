@@ -597,7 +597,7 @@
       "metrics": "Metriken löschen",
       "storage": "Interne Speicherdateien löschen"
     },
-    "execution_failed": "Ausführung fehlgeschlagen!  \nLetzter Fehler war",
+    "execution_failed": "Ausführung fehlgeschlagen!",
     "execution_guide": {
       "get_started": {
         "text": "Befolgen Sie den Quickstart-Guide, um Kestra zu installieren und mit dem Erstellen Ihrer ersten Workflows zu beginnen.",

@@ -597,7 +597,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
-    "execution_failed": "निष्पादन विफल हुआ!\nअंतिम त्रुटि थी",
+    "execution_failed": "निष्पादन FAILED!",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",

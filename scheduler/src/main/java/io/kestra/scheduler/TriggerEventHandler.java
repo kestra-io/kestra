@@ -281,9 +281,13 @@ public class TriggerEventHandler {
     void onResetTrigger(Clock clock, ResetTrigger event) {
         findTriggerState(event).ifPresent(state ->
         {
+            Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
             state = state
                 .lastEventId(clock, event.eventId())
                 .reset(clock);
+            if (data.getRight() != null) {
+                state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+            }
             triggerStateStore.save(state);
         });
     }
@@ -345,9 +349,11 @@ public class TriggerEventHandler {
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
+            AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(data.getRight()), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
-                .lastEventId(clock, event.eventId());
+                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
+                .lastEventId(clock, event.eventId())
+                .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger));
             triggerStateStore.save(state);
         }
     }

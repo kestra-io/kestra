@@ -86,7 +86,7 @@ class TriggerEventHandlerTest {
     }
 
     @Test
-    void shouldCreateTriggerGivenTriggerCreatedEventWhenFlowDoesExist() {
+    void shouldCreateTriggerWithNextEvaluationDateGivenTriggerCreatedEventWhenFlowDoesExist() {
         // GIVEN
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerCreated event = new TriggerCreated(triggerId, 1);
@@ -99,6 +99,7 @@ class TriggerEventHandlerTest {
         assertThat(saved).isPresent();
         assertThat(TriggerId.of(saved.get())).isEqualTo(triggerId);
         assertThat(saved.get().getLastEventId()).isNotNull();
+        assertThat(saved.get().getNextEvaluationDate()).isNotNull();
     }
 
     @Test
@@ -184,6 +185,27 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldResetTriggerAndRecomputeNextEvaluationDateWhenFlowExists() {
+        // GIVEN
+        triggerStateStore.save(triggerState
+            .locked(Clock.systemDefaultZone(), true)
+            .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15)));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        ResetTrigger event = new ResetTrigger(triggerId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(Instant.now().minusSeconds(1));
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 

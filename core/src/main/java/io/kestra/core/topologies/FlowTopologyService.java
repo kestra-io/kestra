@@ -203,7 +203,10 @@ public class FlowTopologyService {
         boolean preconditionMatch = flowTriggers.stream()
             .anyMatch(flow -> flow.getPreconditions() == null || validatePreconditions(flow.getPreconditions(), parent, execution));
 
-        return conditionMatch && preconditionMatch;
+        boolean dependsOnMatch = flowTriggers.stream()
+            .anyMatch(flow -> ListUtils.isEmpty(flow.getDependsOn()) || validateDependsOn(flow.getDependsOn(), parent, execution));
+
+        return conditionMatch && dependsOnMatch && preconditionMatch;
     }
 
     private boolean validateCondition(Condition condition, FlowInterface child, Execution execution) {
@@ -260,6 +263,12 @@ public class FlowTopologyService {
 
         // to be a dependency, if upstream flow is set it must be either inside it so it's a AND between upstream flow and where
         return upstreamFlowMatched && whereMatched;
+    }
+
+    private boolean validateDependsOn(List<io.kestra.plugin.core.trigger.Flow.Dependency> dependsOn, FlowInterface child, Execution execution) {
+        return ListUtils.emptyOnNull(dependsOn)
+            .stream()
+            .anyMatch(c -> validateCondition(c.asCondition(), child, execution));
     }
 
     private boolean isFilterCondition(Condition condition) {

@@ -86,7 +86,7 @@ public record QueryFilter(
         SCOPE("scope") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
         NAMESPACE("namespace") {

@@ -31,6 +31,11 @@ class InputAndOutputImpl implements InputAndOutput {
     }
 
     @Override
+    public Map<String, Object> typedOutputs(List<Output> outputs, Execution execution, Map<String, Object> rOutputs) {
+        return flowInputOutput.typedOutputs(outputs, execution, rOutputs);
+    }
+
+    @Override
     public Map<String, Object> renderOutputs(List<Output> outputs) throws IllegalVariableEvaluationException {
         if (outputs == null)
             return Map.of();

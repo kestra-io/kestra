@@ -303,6 +303,28 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(
+        { "flows/valids/flow-trigger-depends-on-flow-listen.yaml",
+            "flows/valids/flow-trigger-depends-on-flow-a.yaml",
+            "flows/valids/flow-trigger-depends-on-flow-b.yaml" }
+    )
+    void flowTriggerDependsOn() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOn();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/flow-trigger-multiple-depends-on-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml", "flows/valids/flow-trigger-multiple-depends-on-flow-listen.yaml" })
+    void flowTriggerMultipleDependsOn() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMultipleDependsOn();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-fire-once-true-flow-a.yaml", "flows/valids/flow-trigger-fire-once-true-flow-b.yaml", "flows/valids/flow-trigger-fire-once-true-flow-listen.yaml"})
+    void flowTriggerDependsOnFireOnceTrue() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerDependsOnFireOnceTrue();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/flow-trigger-multiple-conditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-conditions-flow-listen.yaml" })
     void flowTriggerMultipleConditions() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerMultipleConditions();
@@ -630,6 +652,24 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-expression-context.yaml")
     protected void loopExecutionContext(Execution execution) throws Exception {
         loopCaseTest.loopExpressionContext(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs.yaml")
+    protected void loopOutputs(Execution execution) throws Exception {
+        loopCaseTest.loopOutputs(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-store.yaml")
+    protected void loopOutputsStore(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsStore(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-auto.yaml")
+    protected void loopOutputsAuto(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsAuto(execution);
     }
 
     @Test

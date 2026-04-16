@@ -71,6 +71,18 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true
                 },
                 {
+                    key: "scope",
+                    label: t("filter.scope.label"),
+                    description: t("filter.scope.description"),
+                    comparators: [Comparators.IN, Comparators.NOT_IN],
+                    valueType: "multi-select",
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("executions");
+                        return VALUES.SCOPES;
+                    },
+                    showComparatorSelection: false,
+                },
+                {
                     key: "labels",
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),

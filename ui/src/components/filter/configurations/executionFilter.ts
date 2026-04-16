@@ -92,8 +92,8 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "scope",
                     label: t("filter.scope.label"),
                     description: t("filter.scope.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "radio",
+                    comparators: [Comparators.IN, Comparators.NOT_IN],
+                    valueType: "multi-select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.SCOPES;

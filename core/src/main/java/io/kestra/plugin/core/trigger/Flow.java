@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.Window;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
@@ -223,7 +225,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         @Example(
             full = true,
             title = """
-                5) Chain two different flows (`flow_a` and `flow_b`) and trigger the second only after the first completes successfully with matching labels. Note that this example is two separate flows.""",
+                5) Chain two different flows (`flow_a` and `flow_b`) and trigger `flow_b` only after `flow_a` completes successfully with matching labels. Note that this example shows two separate flows.""",
             code = """
                 id: flow_a
                 namespace: company.team
@@ -236,27 +238,19 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 ---
                 id: flow_b
                 namespace: company.team
-
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World!
-
                 triggers:
                   - id: on_completion
                     type: io.kestra.plugin.core.trigger.Flow
-                    states: [SUCCESS]
-                    labels:
-                      type: orchestration
-                    preconditions:
-                      id: flow_a
-                        id: flow_a
-                        where:
-                          - id: label_filter
-                            filters:
-                              - field: EXPRESSION
-                                type: IS_TRUE
-                                value: "{{ labels.type == 'orchestration' }}
+                    dependsOn:
+                      - namespace: company.team
+                        flowId: flow_a
+                        states: [SUCCESS]
+                        labels:
+                          type: orchestration
                 """
         )
 
@@ -266,6 +260,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> {
     private static final String TRIGGER_VAR = "trigger";
     private static final String OUTPUTS_VAR = "outputs";
+    static final String DEPENDS_ON_CONDITION_PREFIX = "depends_on_";
 
     @Nullable
     @Schema(
@@ -300,6 +295,23 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Preconditions preconditions;
 
+    @Valid
+    @Schema(
+        title = "Dependencies on upstream flow executions",
+        description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."
+    )
+    @PluginProperty
+    private List<Dependency> dependsOn;
+
+    @Valid
+    @Schema(
+        title = "Window configuration for the dependsOn trigger",
+        description = "Configure the time window within which all dependsOn conditions must be met."
+    )
+    @PluginProperty
+    private Window window;
+
+
     public Optional<Execution> evaluate(Optional<MultipleConditionStateStore> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
@@ -308,6 +320,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         if (multipleConditionStorage.isPresent()) {
             if (this.preconditions != null) {
                 Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, this.preconditions.getId());
+                if (multipleConditionWindow.isPresent()) {
+                    outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
+                }
+            }
+            if (!ListUtils.isEmpty(this.dependsOn)) {
+                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, DEPENDS_ON_CONDITION_PREFIX + this.getId());
                 if (multipleConditionWindow.isPresent()) {
                     outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
                 }
@@ -363,6 +381,129 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 e
             );
             return Optional.empty();
+        }
+    }
+
+    @Builder
+    @Getter
+    public static class Dependency {
+        @NotNull
+        @Schema(title = "The namespace of the flow")
+        @PluginProperty
+        private String namespace;
+
+        @Schema(title = "The flow ID")
+        @PluginProperty
+        private String flowId;
+
+        @Schema(title = "The execution states")
+        @PluginProperty
+        private List<State.Type> states;
+
+        @Schema(title = "A key/value map of labels")
+        @PluginProperty
+        private Map<String, Object> labels;
+
+        @Builder.Default
+        @Schema(
+            title = "A condition that determines whether the trigger should run for that dependency.",
+            description = "A Pebble expression evaluated at trigger time. The trigger fires only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number). Use this to gate trigger execution on dynamic runtime values such as execution labels, flow variables, or environment conditions."
+        )
+        private Property<String> when = Property.ofValue("true");
+
+        public Condition asCondition() {
+            return new DependencyCondition(this);
+        }
+    }
+
+    public MultipleCondition dependsOnAsMultipleCondition() {
+        return this.dependsOn == null ? null : new DependsOnMultipleCondition(this.dependsOn, this.getId(), this.window);
+    }
+
+    @Hidden
+    public static class DependencyCondition extends Condition {
+        private final Dependency dependency;
+
+        DependencyCondition(Dependency dependency) {
+            this.dependency = dependency;
+        }
+
+        @Override
+        public boolean test(ConditionContext conditionContext) throws InternalException {
+            if (dependency.namespace != null && !conditionContext.getExecution().getNamespace().equals(dependency.namespace)) {
+                return false;
+            }
+
+            if (dependency.flowId != null && !conditionContext.getExecution().getFlowId().equals(dependency.flowId)) {
+                return false;
+            }
+
+            // we need to only evaluate on namespace and flow for simulated executions
+            if (ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(SIMULATED_EXECUTION)) {
+                return true;
+            }
+
+            if (dependency.states != null && !dependency.states.contains(conditionContext.getExecution().getState().getCurrent())) {
+                return false;
+            }
+
+            if (dependency.labels != null) {
+                boolean notMatched = dependency.labels.entrySet().stream()
+                    .map(entry -> new Label(entry.getKey(), String.valueOf(entry.getValue())))
+                    .anyMatch(label -> !ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(label));
+                if (notMatched) {
+                    return false;
+                }
+            }
+
+            return TruthUtils.isTruthy(conditionContext.getRunContext().render(dependency.when).as(String.class).orElse("true"));
+        }
+    }
+
+    @Hidden
+    public static class DependsOnMultipleCondition implements MultipleCondition {
+        private final List<Dependency> dependencies;
+        private final String id;
+        private final Window window;
+
+        DependsOnMultipleCondition(List<Dependency> dependencies, String id, Window window) {
+            this.dependencies = dependencies;
+            this.id = id;
+            this.window = window;
+        }
+
+
+        @Override
+        public String getId() {
+            return DEPENDS_ON_CONDITION_PREFIX + id;
+        }
+
+        @Override
+        public TimeWindow getTimeWindow() {
+            return window == null ? TimeWindow.builder().build() : window.toTimeWindow();
+        }
+
+        @Override
+        public Boolean getResetOnSuccess() {
+            return window == null ? Boolean.TRUE : window.isFireOnce();
+        }
+
+        @Override
+        public Map<String, Condition> getConditions() {
+            AtomicInteger conditionId = new AtomicInteger();
+            return ListUtils.emptyOnNull(dependencies).stream()
+                .map(
+                    dependency -> Map.entry(
+                        "condition_" + conditionId.incrementAndGet(),
+                        new DependencyCondition(dependency)
+                    )
+                )
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        @Override
+        public Logger logger() {
+            return log;
         }
     }
 

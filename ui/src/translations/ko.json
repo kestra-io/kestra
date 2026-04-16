@@ -597,7 +597,7 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
-    "execution_failed": "실행 실패!\n마지막 오류는",
+    "execution_failed": "실행 실패!",
     "execution_guide": {
       "get_started": {
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요.",

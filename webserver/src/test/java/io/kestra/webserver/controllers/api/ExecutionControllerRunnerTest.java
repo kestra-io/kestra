@@ -426,8 +426,8 @@ class ExecutionControllerRunnerTest {
         executionEventQueue.addListener(execution ->
         {
             if (execution.flowId().equals("webhook-plugin") && execution.eventType() == ExecutionEventType.TERMINATED) {
-                queueCount.countDown();
                 executionId.set(execution.executionId());
+                queueCount.countDown();
             }
         });
 

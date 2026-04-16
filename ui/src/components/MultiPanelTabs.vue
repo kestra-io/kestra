@@ -353,7 +353,6 @@
             return
         }
 
-
         const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
         const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
 
@@ -656,7 +655,6 @@
             return;
         }
 
-
         const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
         el.scrollLeft += delta;
     }
@@ -852,6 +850,10 @@
                 background-color: var(--ks-content-secondary);
             }
         }
+
+        :deep(.el-splitter-bar) {
+            z-index: 0;
+        }
     }
 
     .content-panel{
@@ -914,6 +916,5 @@
     .right-drop-zone {
         border-left-width: 2px;
     }
-
 
 </style>

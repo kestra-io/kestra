@@ -771,6 +771,10 @@
       "no options found": "Nie znaleziono opcji",
       "operator": "Operator filtrowania",
       "options": "Opcje Danych",
+      "parentId": {
+        "description": "Filtruj według ID wykonania nadrzędnego",
+        "label": "ID Wykonania Rodzica"
+      },
       "periodic refresh": "Okresowe odświeżanie",
       "refresh": "Odśwież dane",
       "reset": "Wyczyść wszystko",

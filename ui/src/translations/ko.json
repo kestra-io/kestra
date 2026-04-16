@@ -771,6 +771,10 @@
       "no options found": "옵션을 찾을 수 없습니다.",
       "operator": "필터 연산자",
       "options": "데이터 옵션",
+      "parentId": {
+        "description": "상위 execution ID로 필터링",
+        "label": "상위 Execution ID"
+      },
       "periodic refresh": "주기적 새로 고침",
       "refresh": "데이터 새로 고침",
       "reset": "모두 지우기",

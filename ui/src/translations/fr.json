@@ -771,6 +771,10 @@
       "no options found": "Aucune option trouvée",
       "operator": "Opérateur de filtre",
       "options": "Options de Données",
+      "parentId": {
+        "description": "Filtrer par ID d'exécution parent",
+        "label": "ID d'exécution parent"
+      },
       "periodic refresh": "Rafraîchissement périodique",
       "refresh": "Rafraîchir les données",
       "reset": "Tout effacer",

@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,6 +22,7 @@ import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.services.ai.AiServiceManager;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -63,6 +63,9 @@ public class MiscController {
 
     @Inject
     Optional<BasicAuthService> basicAuthService = Optional.empty();
+
+    @Inject
+    Optional<AiServiceManager> aiServiceManager = Optional.empty();
 
     @Inject
     KestraConfig kestraConfig;
@@ -131,6 +134,7 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(kestraConfig.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -234,6 +238,8 @@ public class MiscController {
         List<String> hiddenLabelsPrefixes;
 
         Boolean isAiEnabled;
+
+        Boolean isAiApiKeyConfigured;
 
         Boolean isBasicAuthInitialized;
 

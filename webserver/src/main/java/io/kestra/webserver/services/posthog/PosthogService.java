@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Singleton
 public class PosthogService {
-    private final PostHog postHog;
+    private PostHog postHog;
+    private boolean initAttempted = false;
 
+    private final HttpClient httpClient;
     private final InstanceService instanceService;
     private final VersionProvider versionProvider;
     private final EditionProvider editionProvider;
@@ -29,16 +31,31 @@ public class PosthogService {
         this.instanceService = instanceService;
         this.versionProvider = versionProvider;
         this.editionProvider = editionProvider;
+        this.httpClient = httpClient;
+    }
 
-        ApiConfig apiConfig = httpClient.toBlocking().retrieve("/v1/config", ApiConfig.class);
-
-        this.postHog = new PostHog.Builder(apiConfig.posthog().token())
-            .host(apiConfig.posthog().apiHost())
-            .logger(new DefaultPostHogLogger())
-            .build();
+    private synchronized PostHog getOrInitPostHog() {
+        if (!initAttempted) {
+            initAttempted = true;
+            try {
+                ApiConfig apiConfig = httpClient.toBlocking().retrieve("/v1/config", ApiConfig.class);
+                postHog = new PostHog.Builder(apiConfig.posthog().token())
+                    .host(apiConfig.posthog().apiHost())
+                    .logger(new DefaultPostHogLogger())
+                    .build();
+            } catch (Exception e) {
+                log.warn("Failed to initialize PostHog analytics (api.kestra.io may be unreachable), analytics will be disabled.", e);
+            }
+        }
+        return postHog;
     }
 
     public void capture(String distinctId, String event, Map<String, Object> properties) {
+        PostHog client = getOrInitPostHog();
+        if (client == null) {
+            return;
+        }
+
         properties = new HashMap<>(properties);
         properties.putAll(
             Map.of(
@@ -51,12 +68,15 @@ public class PosthogService {
             )
         );
 
-        postHog.capture(distinctId, event, properties);
+        client.capture(distinctId, event, properties);
     }
 
     /** Gracefully shuts down the PostHog client, flushing any pending events. */
     @PreDestroy
     public void shutdown() {
+        if (postHog == null) {
+            return;
+        }
         try {
             postHog.shutdown();
         } catch (Exception e) {

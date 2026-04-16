@@ -1,6 +1,7 @@
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
+import configureAxios from "../src/utils/axios";
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
@@ -34,13 +35,13 @@ const preview = {
 
 setup(async (app) => {
   const {piniaStore} = await initApp(app, [], {}, en);
+  configureAxios(() => {}, null, undefined, true)
   piniaStore.use(({store}) => {
     store.$http = {
         get: () => Promise.resolve({data: []}),
     }
   });
 })
-
 
 window.addEventListener("unhandledrejection", (evt) => {
     if (evt?.reason?.stack?.includes?.("/monaco/esm/vs") || evt?.reason?.stack?.includes?.("/monaco/min/vs")) {

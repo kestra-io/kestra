@@ -1,13 +1,11 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {inject} from "vue"
-import {Router, routerKey} from "vue-router"
+import {Router} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "./basicAuth"
 import {useAuthStore} from "override/stores/auth"
-import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 import {client} from "kestra-api/client.gen"
 
@@ -305,22 +303,10 @@ function configureAxios(
 
 export default configureAxios
 
-export function useClient(){
-    // for storybook tests we need to allow router to be undefined
-    const router = inject(routerKey, undefined as any) as Router | undefined;
-
-    const miscStore = useMiscStore();
-    const {edition} = miscStore.configs || {};
-
-    if (!clientInstance) {
-        clientInstance = createAxios(router, edition === "OSS");
+export function useAxios(){
+    if(!clientInstance) {
+        throw new Error("Axios instance not initialized. Please call configureAxios first.")
     }
 
-    return clientInstance;
-};
-
-export function useAxios(){
-    const axiosInstance = useClient();
-
-    return axiosInstance.instance;
+    return clientInstance.instance;
 };

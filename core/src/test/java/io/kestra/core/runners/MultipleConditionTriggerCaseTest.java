@@ -168,7 +168,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThrows(
             RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
                 e -> e.getState().getCurrent().equals(Type.SUCCESS),
-                MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen", Duration.ofSeconds(1)
+                MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen", Duration.ofSeconds(3)
             )
         );
     }
@@ -194,7 +194,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThrows(
             RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
                 e -> e.getState().getCurrent().equals(Type.SUCCESS),
-                MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions", "flow-trigger-multiple-conditions-flow-listen", Duration.ofSeconds(1)
+                MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions", "flow-trigger-multiple-conditions-flow-listen", Duration.ofSeconds(3)
             )
         );
     }
@@ -222,7 +222,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThrows(
             RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
                 e -> e.getState().getCurrent().equals(Type.SUCCESS),
-                MAIN_TENANT, "io.kestra.tests.trigger.when.condition", "flow-trigger-when-condition-flow-listen", Duration.ofSeconds(1)
+                MAIN_TENANT, "io.kestra.tests.trigger.when.condition", "flow-trigger-when-condition-flow-listen", Duration.ofSeconds(3)
             )
         );
     }
@@ -328,7 +328,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
             e -> e.getState().getCurrent().equals(Type.SUCCESS) && !e.getId().equals(triggerExecution.getId()),
             MAIN_TENANT, "io.kestra.tests.trigger.fire.once.true", "flow-trigger-fire-once-true-flow-listen",
-            Duration.ofSeconds(1)
+            Duration.ofSeconds(3)
         ));
     }
 
@@ -353,7 +353,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThrows(
             RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
                 e -> e.getState().getCurrent().equals(Type.SUCCESS),
-                MAIN_TENANT, "io.kestra.tests.trigger.mixed.conditions", "flow-trigger-mixed-conditions-flow-listen", Duration.ofSeconds(1)
+                MAIN_TENANT, "io.kestra.tests.trigger.mixed.conditions", "flow-trigger-mixed-conditions-flow-listen", Duration.ofSeconds(3)
             )
         );
     }

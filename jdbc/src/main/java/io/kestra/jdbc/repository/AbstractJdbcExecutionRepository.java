@@ -775,7 +775,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             "state.duration", "state_duration",
             "namespace", "namespace",
             "flowId", "flow_id",
-            "state.current", "state_current"
+            "state.current", "state_current",
+            "loopRunIndex", "loop_run_index"
         );
 
         return mapper::get;

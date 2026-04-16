@@ -661,6 +661,18 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-outputs-store.yaml")
+    protected void loopOutputsStore(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsStore(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-auto.yaml")
+    protected void loopOutputsAuto(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsAuto(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);

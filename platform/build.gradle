@@ -79,6 +79,7 @@ dependencies {
         // Kafka
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
+        api "org.apache.kafka:kafka-server-common:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
         api 'software.amazon.awssdk.crt:aws-crt:0.45.0'
 
@@ -151,6 +152,7 @@ dependencies {
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.59.0"
         api "org.awaitility:awaitility:4.3.0"
+        api "com.tngtech.archunit:archunit-junit5:1.4.1"
 
         // Kestra components
         api "io.kestra:core:$version"

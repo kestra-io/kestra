@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import io.kestra.core.serializers.JacksonMapper;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.debug.Breakpoint;
@@ -1714,7 +1713,7 @@ public class ExecutionController {
 
             // Check if execution exists
             try {
-                Execution execution = Awaitility.await()
+                Execution execution = Await.await()
                     .atMost(Duration.ofSeconds(10))
                     .pollInterval(Duration.ofMillis(500))
                     .until(
@@ -2209,7 +2208,7 @@ public class ExecutionController {
         //  This should not be an issue as long as it executes on an IO thread.
 
         // Check if execution exists
-        Execution current = Awaitility.await()
+        Execution current = Await.await()
             .atMost(Duration.ofSeconds(10))
             .pollInterval(Duration.ofMillis(500))
             .until(

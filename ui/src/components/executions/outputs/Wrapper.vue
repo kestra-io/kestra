@@ -173,7 +173,6 @@
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
     import * as outputsSDK from "kestra-api/sdk/ks-Outputs.gen";
-    import {TaskOutput} from "../../../generated/kestra-api";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -394,7 +393,7 @@
         return result;
     };
 
-    const selectedTaskOutputs = ref<TaskOutput | undefined>();
+    const selectedTaskOutputs = ref();
 
     watch(selectedTask, async (task) => {
         if(task?.id && executionsStore.execution?.id){
@@ -404,15 +403,12 @@
             }, {
                 validateStatus: (status) => status === 200 || status === 404,
             })
-            if(res?.data?.value){
-                const valueToEval = atob(res.data.value)
-                // FIXME: hack hack hack, why would we need to eval the output of a task run ?!?!?!!?
-                selectedTaskOutputs.value = eval(`(()=>{return ${valueToEval}})()`);
-                return
-            }
+            
+            selectedTaskOutputs.value = res.data;
+            return
         }
         selectedTaskOutputs.value = undefined;
-    });
+    }, {immediate: true});
 
     const outputs = computed(() => {
         const tasks = executionsStore?.execution?.taskRunList?.map((task) => {

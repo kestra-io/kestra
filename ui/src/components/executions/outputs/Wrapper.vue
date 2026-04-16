@@ -444,7 +444,7 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
 }
 
@@ -464,7 +464,7 @@
 }
 
 :deep(.el-cascader-menu__list) {
-    min-height: 100vh;
+    min-height: 100%;
 }
 
 :deep(.el-cascader-panel) {
@@ -532,7 +532,7 @@
             & .task-label {
                 width: 100%;
                 max-width: 100%;
-                
+
                 & .task-iteration-value {
                     display: inline-block;
                     width: 80px;
@@ -556,7 +556,7 @@
     }
 }
 .content-container {
-    height: calc(100vh - 0px);
+    height: 100%;
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-gutter: stable;

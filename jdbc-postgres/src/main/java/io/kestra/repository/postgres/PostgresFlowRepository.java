@@ -38,4 +38,9 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     protected Condition findSourceCodeCondition(String query) {
         return PostgresFlowRepositoryService.findSourceCodeCondition(this.jdbcRepository, query);
     }
+
+    @Override
+    protected Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        return PostgresFlowRepositoryService.findTriggerClassCondition(triggerClass);
+    }
 }

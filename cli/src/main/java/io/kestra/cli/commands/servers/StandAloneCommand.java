@@ -23,6 +23,7 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "standalone",
@@ -139,7 +140,7 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
-            Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
+            Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }
 
         return 0;

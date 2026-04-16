@@ -14,6 +14,7 @@ import org.awaitility.Awaitility;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "indexer",
@@ -48,7 +49,7 @@ public class IndexerCommand extends AbstractServerCommand {
         Indexer indexer = applicationContext.getBean(Indexer.class);
         indexer.run();
 
-        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

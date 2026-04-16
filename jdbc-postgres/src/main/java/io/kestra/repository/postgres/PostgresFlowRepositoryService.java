@@ -37,6 +37,23 @@ public abstract class PostgresFlowRepositoryService {
         return jdbcRepository.fullTextCondition(Collections.singletonList("FULLTEXT_INDEX(source_code)"), query);
     }
 
+    /**
+     * Builds a condition that matches flows containing at least one trigger of the given class type.
+     * Uses jsonb_path_exists to check if any element in the triggers array has a matching type field.
+     *
+     * @param triggerClass the trigger class to filter by, or {@code null} to match all flows
+     * @return a jOOQ {@link Condition}
+     */
+    public static Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        if (triggerClass == null) {
+            return DSL.trueCondition();
+        }
+        return DSL.condition(
+            "jsonb_path_exists(value, '$.triggers[*] ? (@.type == $triggerType)', jsonb_build_object('triggerType', {0}::text))",
+            DSL.val(triggerClass.getName(), String.class)
+        );
+    }
+
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
 

@@ -265,6 +265,16 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
+        { "flows/valids/flow-trigger-stable-condition-id-flow-listen.yaml",
+            "flows/valids/flow-trigger-stable-condition-id-flow-a.yaml",
+            "flows/valids/flow-trigger-stable-condition-id-flow-b.yaml" }
+    )
+    void flowTriggerDependsOnWithStableConditionId() throws Exception {
+        flowTriggerCaseTest.triggerDependsOnWithStableConditionId();
+    }
+
+    @Test
+    @LoadFlows(
         { "flows/valids/flow-trigger-preconditions-flow-listen.yaml",
             "flows/valids/flow-trigger-preconditions-flow-a.yaml",
             "flows/valids/flow-trigger-preconditions-flow-b.yaml" }

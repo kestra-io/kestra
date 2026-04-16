@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Window;
+import io.kestra.core.utils.*;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
@@ -31,10 +32,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
-import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.FlowTriggerValidation;
 import io.kestra.core.validations.PreconditionFilterValidation;
 
@@ -406,6 +403,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         }
     }
 
+    // WARNING: when adding a new attribute to this class, update the hashing function inside the DependsOnMultipleCondition class.
     @Builder
     @Getter
     public static class Dependency {
@@ -516,11 +514,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
 
         @Override
         public Map<String, Condition> getConditions() {
-            AtomicInteger conditionId = new AtomicInteger();
             return ListUtils.emptyOnNull(dependencies).stream()
                 .map(
                     dependency -> Map.entry(
-                        "condition_" + conditionId.incrementAndGet(),
+                        hash(dependency),
                         new DependencyCondition(dependency)
                     )
                 )
@@ -540,6 +537,17 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public Integer getMinSatisfied() {
             return minSatisfied;
+        }
+
+        private String hash(Dependency dependency) {
+            return Hashing.hashToString(
+                dependency.namespace,
+                "_", // avoid possible mismatch between namespace and flowId
+                dependency.flowId,
+                dependency.when != null ? dependency.when.toString() : null,
+                ListUtils.emptyOnNull(dependency.states).stream().sorted().map(Enum::name).collect(Collectors.joining(",")),
+                MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
+            );
         }
     }
 

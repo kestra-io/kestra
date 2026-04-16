@@ -28,6 +28,7 @@ import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
@@ -168,6 +169,45 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateWhenTriggerUpdated() {
+        // GIVEN
+        ZonedDateTime staleNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, staleNextEvaluationDate));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(staleNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldNotMutateTriggerStateWhenFlowRevisionUpdated() {
+        // GIVEN
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().plusMinutes(5);
+        TriggerState initial = triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate);
+        triggerStateStore.save(initial);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerFlowRevisionUpdated event = new TriggerFlowRevisionUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> after = triggerStateStore.findById(triggerId);
+        assertThat(after).isPresent();
+        assertThat(after.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
+        assertThat(after.get().getUpdatedAt()).isEqualTo(initial.getUpdatedAt());
+        assertThat(after.get().getLastEventId()).isEqualTo(initial.getLastEventId());
     }
 
     @Test

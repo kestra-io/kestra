@@ -34,6 +34,7 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
@@ -94,6 +95,7 @@ public class TriggerEventHandler {
             case TriggerCreated evt -> onTriggerCreated(clock, evt, vNode);
             case TriggerDeleted evt -> onTriggerDeleted(evt);
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
+            case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
@@ -304,10 +306,24 @@ public class TriggerEventHandler {
             if (data.getRight() != null) {
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight());
+                    .update(clock, data.getRight())
+                    .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
                 triggerStateStore.save(state);
             }
         });
+    }
+
+    /**
+     * Handler method for {@link TriggerFlowRevisionUpdated}.
+     * <p>
+     * The trigger definition is unchanged; this event only forces the scheduler's
+     * flow metadata cache to refresh to the latest revision. No trigger state mutation.
+     *
+     * @param event the event.
+     */
+    void onTriggerFlowRevisionUpdated(TriggerFlowRevisionUpdated event) {
+        // Side-effect: CachedFlowMetaStore refreshes its cache on newer revision.
+        findFlow(event, event.revision());
     }
 
     /**

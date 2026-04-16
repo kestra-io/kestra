@@ -216,6 +216,13 @@ public class FlowService {
     private void recomputeTriggers(FlowWithSource flow) {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
+        // If the previous revision was soft-deleted, the scheduler already dropped its
+        // trigger state on TriggerDeleted. Re-creating the flow must emit TriggerCreated
+        // so the state is rebuilt; treat it as if there was no previous.
+        if (previous != null && previous.isDeleted()) {
+            previous = null;
+        }
+
         if (flow.isDeleted()) {
             ListUtils.emptyOnNull(flow.getTriggers()).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))

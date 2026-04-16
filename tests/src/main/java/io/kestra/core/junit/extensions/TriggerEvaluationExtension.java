@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import io.kestra.core.tenant.TenantService;
 import org.junit.jupiter.api.extension.*;
 
 import io.kestra.core.junit.annotations.EvaluateTrigger;
@@ -22,6 +23,8 @@ import io.kestra.core.serializers.YamlParser;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 import lombok.SneakyThrows;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 /**
  * JUnit 5 extension to evaluate triggers and inject its Optional<Execution>.
@@ -103,7 +106,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
         return ConditionContext.builder()
             .runContext(
                 runContextInitializer.forScheduler(
-                    (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
+                    (DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger
                 )
             )
             .flow(flow)
@@ -116,6 +119,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             .flowId(flow.getId())
             .triggerId(trigger.getId())
             .date(ZonedDateTime.now())
+            .tenantId(flow.getTenantId() != null ? flow.getTenantId() : TenantService.MAIN_TENANT)
             .build();
     }
 

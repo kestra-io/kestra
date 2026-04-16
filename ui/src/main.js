@@ -2,12 +2,16 @@ import {createApp} from "vue"
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import configureAxios from "./utils/axios"
+import {configureAxios} from "./utils/axios"
 import routes from "./routes/routes";
 import en from "./translations/en.json";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
+import {useCoreStore} from "./stores/core";
+import {useLayoutStore} from "./stores/layout";
+import {useUnsavedChangesStore} from "./stores/unsavedChanges";
 import {useMiscStore} from "override/stores/misc";
+import {useAuthStore} from "override/stores/auth";
 
 
 const app = createApp(App)
@@ -84,12 +88,23 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
     // Setup tenant router
     setupTenantRouter(router, app);
 
+    const coreStore = useCoreStore();
+    const authStore = useAuthStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
+    const layoutStore = useLayoutStore();
+
+
     // axios
     configureAxios((instance) => {
         piniaStore.use(({store: piniaStoreLocal}) => {
             piniaStoreLocal.$http = instance;
         });
-    }, null, router, true);
+    }, true, router, coreStore, authStore,  () => {
+        document.body.classList.add("login")
+        unsavedChangesStore.unsavedChange = false
+        layoutStore.setTopNavbar(undefined)
+        BasicAuth.logout()
+    });
 
     // mount
     router.isReady().then(() => app.mount("#app"))

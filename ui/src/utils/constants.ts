@@ -30,7 +30,6 @@ export const storageKeys = {
     DEFAULT_NAMESPACE: "defaultNamespace",
     LATEST_NAMESPACE: "latestNamespace",
     PAGINATION_SIZE: "paginationSize",
-    IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
     AUTO_REFRESH_ENABLED: "autoRefreshEnabled",

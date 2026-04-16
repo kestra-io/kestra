@@ -1,12 +1,6 @@
-import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
+import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
-import {storageKeys} from "./constants"
-import {useLayoutStore} from "../stores/layout"
-import {useCoreStore} from "../stores/core"
-import * as BasicAuth from "./basicAuth"
-import {useAuthStore} from "override/stores/auth"
-import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 import {client} from "kestra-api/client.gen"
 
 let pendingRoute = false
@@ -73,8 +67,21 @@ interface QueueItem {
 }
 
 const createAxios = (
-    router: Router | undefined,
-    oss: boolean
+    oss: boolean,
+    router?: Router,
+    coreStore?: {
+        message?: {
+            variant?: string;
+            response?: any;
+            content?: any;
+        };
+        error?: any;
+    },
+    authStore?: {
+        isLogged?: boolean;
+        logout: () => Promise<void>;
+    },
+    beforeLogout?: () => void
 ) => {
     const instance = axios.create({
         timeout: 15000,
@@ -96,11 +103,12 @@ const createAxios = (
         async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
 
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
-                const coreStore = useCoreStore()
-                coreStore.message = {
-                    variant: "error",
-                    response: errorResponse.response,
-                    content: errorResponse,
+                if (coreStore) {
+                    coreStore.message = {
+                        variant: "error",
+                        response: errorResponse.response,
+                        content: errorResponse,
+                    }
                 }
                 return Promise.reject(errorResponse)
             }
@@ -110,15 +118,14 @@ const createAxios = (
             }
 
             if (errorResponse.response.status === 404) {
-                const coreStore = useCoreStore()
-                coreStore.error = errorResponse.response.status
+                if (coreStore) {
+                    coreStore.error = errorResponse.response.status
+                }
                 return Promise.reject(errorResponse)
             }
 
-            const authStore = useAuthStore()
-
             if (errorResponse.response.status === 401
-                && (oss || !authStore.isLogged)) {
+                && (oss || !authStore?.isLogged)) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH
 
                 if (window.location.pathname.startsWith(base_path + "/ui/login")) {
@@ -130,11 +137,11 @@ const createAxios = (
                 return
             }
 
-            const impersonate = window.sessionStorage.getItem(storageKeys.IMPERSONATE)
+            const impersonate = window.sessionStorage.getItem("impersonate")
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&
-                authStore.isLogged && !oss &&
+                authStore?.isLogged && !oss &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
                 && !impersonate) {
 
@@ -150,13 +157,10 @@ const createAxios = (
                     refreshing = false
                     toRefreshQueue = []
 
-                    document.body.classList.add("login")
-                    useUnsavedChangesStore().unsavedChange = false
-                    useLayoutStore().setTopNavbar(undefined)
-                    BasicAuth.logout()
-                    delete instance.defaults.headers.common["Authorization"]
+                    beforeLogout?.()
 
-                    authStore.logout().catch(() => {})
+                    delete instance.defaults.headers.common["Authorization"]
+                    authStore?.logout().catch(() => {})
 
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
@@ -208,13 +212,9 @@ const createAxios = (
                         refreshing = false
                         toRefreshQueue = []
 
-                        document.body.classList.add("login")
-                        useUnsavedChangesStore().unsavedChange = false
-                        useLayoutStore().setTopNavbar(undefined)
-                        BasicAuth.logout()
+                        beforeLogout?.()
                         delete instance.defaults.headers.common["Authorization"]
-
-                        authStore.logout().catch(() => {})
+                        authStore?.logout().catch(() => {})
 
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
@@ -247,11 +247,12 @@ const createAxios = (
             }
 
             if (errorResponse.response.data && errorResponse?.config?.showMessageOnError !== false) {
-                const coreStore = useCoreStore()
-                coreStore.message = {
-                    variant: "error",
-                    response: errorResponse.response,
-                    content: errorResponse.response.data
+                if(coreStore){
+                    coreStore.message = {
+                        variant: "error",
+                        response: errorResponse.response,
+                        content: errorResponse.response.data
+                    }
                 }
                 return Promise.reject(errorResponse)
             }
@@ -289,9 +290,8 @@ const createAxios = (
 
 let clientInstance: ReturnType<typeof createAxios> | null = null;
 
-function configureAxios(
+export function configureAxios(
     callback: (clientInstance: ReturnType<typeof createAxios>["instance"]) => void,
-    _store: any,
     ...args: Parameters<typeof createAxios>
 ) {
     if (!clientInstance) {
@@ -301,12 +301,16 @@ function configureAxios(
     callback(clientInstance.instance);
 }
 
-export default configureAxios
 
-export function useAxios(){
-    if(!clientInstance) {
-        throw new Error("Axios instance not initialized. Please call configureAxios first.")
-    }
-
-    return clientInstance.instance;
+export function useAxios(): AxiosInstance {
+    return new Proxy({} as AxiosInstance, {
+        get(_target, prop) {
+            if (!clientInstance) {
+                throw new Error("Axios instance not initialized. Please call configureAxios first.")
+            }
+            const instance = clientInstance.instance
+            const value = (instance as any)[prop]
+            return typeof value === "function" ? value.bind(instance) : value
+        }
+    })
 };

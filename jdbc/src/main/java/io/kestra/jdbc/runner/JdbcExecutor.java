@@ -340,7 +340,10 @@ public class JdbcExecutor implements ExecutorInterface {
         );
         this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
-        this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
+        this.receiveCancellations.addFirst(
+            ((JdbcQueue<SubflowExecutionEnd>) this.subflowExecutionEndQueue)
+                .receiveTransaction(null, Executor.class, (dslContext, eithers) -> eithers.forEach(this::subflowExecutionEndQueue))
+        );
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
         this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override

@@ -1,0 +1,251 @@
+package io.kestra.core.migration;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/**
+ * Unit tests for {@link MigrationRunner} using in-memory stubs.
+ */
+class MigrationRunnerTest {
+
+    private MigrationLock noOpLock;
+
+    @BeforeEach
+    void setUp() {
+        noOpLock = new MigrationLock() {
+            @Override public void acquire() {}
+            @Override public void release() {}
+        };
+    }
+
+    @Test
+    void runAlways_appliesScriptsInLexicographicOrder() throws Exception {
+        // Given: scripts provided out of order
+        List<String> executionOrder = new ArrayList<>();
+        List<MigrationScript> scripts = List.of(
+            simpleScript("2.0", () -> executionOrder.add("2.0")),
+            simpleScript("0-init", () -> executionOrder.add("0-init")),
+            simpleScript("0-init-ee", () -> executionOrder.add("0-init-ee"))
+        );
+        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(), scripts);
+
+        // When
+        runner.runAlways();
+
+        // Then: lexicographic order: "0-init" < "0-init-ee" < "2.0"
+        assertThat(executionOrder).containsExactly("0-init", "0-init-ee", "2.0");
+    }
+
+    @Test
+    void runAlways_skipsAlreadyAppliedScripts() throws Exception {
+        // Given
+        AtomicInteger callCount = new AtomicInteger(0);
+        MigrationScript script = simpleScript("2.0", callCount::incrementAndGet);
+
+        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(), List.of(script));
+
+        // When: run twice
+        runner.runAlways();
+        runner.runAlways();
+
+        // Then: script ran exactly once
+        assertThat(callCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void runAlways_skipsInitScriptOnFlywayUpgrade() throws Exception {
+        // Given: simulate Flyway upgrade — history store reports detectFlywayUpgrade()=true
+        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
+        historyStore.simulateFlywayUpgrade = true;
+
+        AtomicInteger initCalls = new AtomicInteger(0);
+        AtomicInteger upgradeCalls = new AtomicInteger(0);
+        List<MigrationScript> scripts = List.of(
+            simpleScript("0-init", initCalls::incrementAndGet),
+            simpleScript("2.0", upgradeCalls::incrementAndGet)
+        );
+        MigrationRunner runner = new MigrationRunner(noOpLock, historyStore, scripts);
+
+        // When
+        runner.runAlways();
+
+        // Then: "0-init" is in INIT_SCRIPT_IDS, skipped without execution on Flyway upgrade
+        assertThat(initCalls.get()).isEqualTo(0);
+        // "2.0" is a versioned upgrade script, should run
+        assertThat(upgradeCalls.get()).isEqualTo(1);
+        // Init script must be recorded in history (executionMs=0) so second startup doesn't see it as pending
+        assertThat(historyStore.isApplied("0-init")).isTrue();
+    }
+
+    @Test
+    void runAlways_throwsOnChecksumMismatch() throws Exception {
+        // Given: a script runs once with checksum "original"
+        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
+        MigrationRunner runner1 = new MigrationRunner(noOpLock, historyStore, List.of(
+            scriptWithChecksum("2.0", "original-checksum")
+        ));
+        runner1.runAlways();
+
+        // Now the same scriptId has a different checksum
+        MigrationRunner runner2 = new MigrationRunner(noOpLock, historyStore, List.of(
+            scriptWithChecksum("2.0", "tampered-checksum")
+        ));
+
+        // When / Then
+        assertThatThrownBy(runner2::runAlways)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Checksum mismatch");
+    }
+
+    @Test
+    void runAlways_releasesLockEvenOnFailure() throws Exception {
+        // Given
+        AtomicInteger releaseCount = new AtomicInteger(0);
+        MigrationLock trackingLock = new MigrationLock() {
+            @Override public void acquire() {}
+            @Override public void release() { releaseCount.incrementAndGet(); }
+        };
+
+        MigrationScript failingScript = simpleScript("2.0", () -> {
+            throw new RuntimeException("migration failed");
+        });
+        MigrationRunner runner = new MigrationRunner(trackingLock, new InMemoryHistoryStore(), List.of(failingScript));
+
+        // When / Then
+        assertThatThrownBy(runner::runAlways).hasMessage("migration failed");
+        assertThat(releaseCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void pendingScripts_returnsOnlyUnappliedScripts() throws Exception {
+        // Given: run "2.0" and "2.1" first
+        InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
+        MigrationRunner runner = new MigrationRunner(noOpLock, historyStore, List.of(
+            simpleScript("2.0", () -> {}),
+            simpleScript("2.1", () -> {})
+        ));
+        runner.runAlways(); // applies both
+
+        // Add a new script not yet applied
+        MigrationScript newScript = simpleScript("2.2", () -> {});
+        MigrationRunner runner2 = new MigrationRunner(noOpLock, historyStore, List.of(
+            simpleScript("2.0", () -> {}),
+            simpleScript("2.1", () -> {}),
+            newScript
+        ));
+
+        // When
+        List<MigrationScript> pending = runner2.pendingScripts();
+
+        // Then
+        assertThat(pending).hasSize(1).extracting(MigrationScript::scriptId).containsExactly("2.2");
+    }
+
+    @Test
+    void run_doesNotReExecuteAfterRunAlways() throws Exception {
+        // Given: runAlways() already ran (simulating @PostConstruct)
+        AtomicInteger callCount = new AtomicInteger(0);
+        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", callCount::incrementAndGet)));
+        runner.runAlways();
+
+        // When: run() is called (simulating maybeRunMigrations())
+        runner.run();
+
+        // Then: script ran exactly once — run() was a no-op due to hasRun guard
+        assertThat(callCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void runAlways_acquiresAndReleasesLock() throws Exception {
+        // Given
+        List<String> lockEvents = new ArrayList<>();
+        MigrationLock trackingLock = new MigrationLock() {
+            @Override public void acquire() { lockEvents.add("acquire"); }
+            @Override public void release() { lockEvents.add("release"); }
+        };
+        MigrationRunner runner = new MigrationRunner(trackingLock, new InMemoryHistoryStore(), List.of(
+            simpleScript("2.0", () -> {})
+        ));
+
+        // When
+        runner.runAlways();
+
+        // Then: lock acquired then released
+        assertThat(lockEvents).containsExactly("acquire", "release");
+    }
+
+    // --- Helpers ---
+
+    private MigrationScript simpleScript(final String scriptId, final Runnable migrationLogic) {
+        return new MigrationScript() {
+            @Override public String scriptId() { return scriptId; }
+            @Override public String description() { return "Migration " + scriptId; }
+            @Override public String checksum() { return "checksum-" + scriptId; }
+            @Override public void migrate() { migrationLogic.run(); }
+        };
+    }
+
+    private MigrationScript scriptWithChecksum(final String scriptId, final String checksum) {
+        return new MigrationScript() {
+            @Override public String scriptId() { return scriptId; }
+            @Override public String description() { return "Migration " + scriptId; }
+            @Override public String checksum() { return checksum; }
+            @Override public void migrate() {}
+        };
+    }
+
+    /**
+     * In-memory {@link MigrationHistoryStore} for unit testing {@link MigrationRunner}
+     * without any external dependencies.
+     */
+    private static class InMemoryHistoryStore implements MigrationHistoryStore {
+
+        /** Flip to {@code true} to simulate an upgrade from a pre-migration-system deployment. */
+        boolean simulateFlywayUpgrade = false;
+
+        private final Map<String, String> applied = new HashMap<>();
+
+        @Override
+        public void bootstrapIfNeeded() {}
+
+        @Override
+        public boolean hasAnyApplied() {
+            return !applied.isEmpty();
+        }
+
+        @Override
+        public boolean isApplied(final String scriptId) {
+            return applied.containsKey(scriptId);
+        }
+
+        @Override
+        public void validateChecksum(final MigrationScript script) {
+            String stored = applied.get(script.scriptId());
+            if (stored != null && !stored.equals(script.checksum())) {
+                throw new IllegalStateException(
+                    "Checksum mismatch for script [" + script.scriptId() + "]: stored=" + stored + ", current=" + script.checksum()
+                );
+            }
+        }
+
+        @Override
+        public void markApplied(final MigrationScript script, final long executionMs) {
+            applied.put(script.scriptId(), script.checksum());
+        }
+
+        @Override
+        public boolean detectFlywayUpgrade() {
+            return simulateFlywayUpgrade;
+        }
+    }
+}

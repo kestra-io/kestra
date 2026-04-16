@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS logs_timestamp ON logs ("timestamp");

@@ -12,7 +12,6 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("com.mysql:mysql-connector-j")
-    runtimeOnly('org.flywaydb:flyway-mysql')
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output

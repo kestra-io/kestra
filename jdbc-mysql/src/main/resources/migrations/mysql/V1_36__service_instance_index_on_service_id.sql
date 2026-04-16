@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX ix_service_id ON service_instance (`service_id`);

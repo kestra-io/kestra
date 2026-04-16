@@ -25,6 +25,7 @@ class ServerCommandValidatorTest {
         Assertions.assertDoesNotThrow(
             () -> ApplicationContext.builder()
                 .deduceEnvironment(false)
+                .environments("test")
                 .properties(
                     Map.of(
                         "kestra.server-type", "webserver",

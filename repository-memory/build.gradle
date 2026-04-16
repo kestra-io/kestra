@@ -4,7 +4,6 @@ configurations {
 
 dependencies {
     testImplementation project(":core")
-    implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     api project(":jdbc")
     implementation project(":jdbc-h2")

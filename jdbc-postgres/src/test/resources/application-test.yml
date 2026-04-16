@@ -6,21 +6,6 @@ datasources:
     password: k3str4
     dialect: POSTGRES
 
-flyway:
-  datasources:
-    postgres:
-      enabled: true
-      locations:
-        - classpath:migrations/postgres
-      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-      properties:
-        flyway:
-          postgresql:
-            transactional:
-              lock: false
-
 kestra:
   server-type: STANDALONE
   queue:

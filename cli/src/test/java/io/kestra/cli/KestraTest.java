@@ -46,7 +46,7 @@ class KestraTest {
 
         assertThat(Kestra.runCli(args)).isZero();
 
-        assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
+        assertThat(out.toString()).contains("Usage: kestra server " + serverType);
     }
 
     @Test

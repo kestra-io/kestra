@@ -19,6 +19,7 @@ import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.core.migration.MigrationRunnerInterface;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -85,11 +86,11 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
         initLogger();
         sendServerLog();
+        maybeInitPlugins();
+        maybeRunMigrations();
         if (this.startupHook != null) {
             this.startupHook.start(this);
         }
-
-        maybeInitPlugins();
         maybeStartWebserver();
         return 0;
     }
@@ -159,6 +160,37 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         if (log.isTraceEnabled() && pluginRegistry != null) {
             pluginRegistry.plugins().forEach(c -> log.trace(c.toString()));
         }
+    }
+
+    /**
+     * Runs pending database migrations before the server starts.
+     * Only executed when a {@link MigrationRunnerInterface} bean is present in the context
+     * (i.e. when a JDBC or compatible backend is configured) and {@link #shouldAutoMigrate()}
+     * returns {@code true}.
+     *
+     * <p>Commands that manage migrations explicitly (e.g. {@code kestra migrate run}) can
+     * override {@link #shouldAutoMigrate()} to return {@code false} and call
+     * {@link MigrationRunnerInterface#runAlways()} directly.
+     */
+    private void maybeRunMigrations() throws Exception {
+        if (!shouldAutoMigrate() || applicationContext == null) {
+            return;
+        }
+        Optional<MigrationRunnerInterface> runner = applicationContext.findBean(MigrationRunnerInterface.class);
+        if (runner.isPresent()) {
+            runner.get().run();
+        }
+    }
+
+    /**
+     * Whether automatic migrations should run as part of this command's startup sequence.
+     * Returns {@code true} by default. Override to return {@code false} in commands that
+     * manage migrations explicitly.
+     *
+     * @return {@code true} to run migrations automatically on startup
+     */
+    protected boolean shouldAutoMigrate() {
+        return true;
     }
 
     private void maybeStartWebserver() {

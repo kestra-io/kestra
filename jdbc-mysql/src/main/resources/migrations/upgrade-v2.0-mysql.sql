@@ -26,29 +26,28 @@ CREATE TABLE IF NOT EXISTS task_outputs (
     `uri`          VARCHAR(250)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE INDEX task_outputs_execution_id ON task_outputs (`execution_id`);
+CREATE INDEX IF NOT EXISTS task_outputs_execution_id ON task_outputs (`execution_id`);
 
 -- Scheduler 2.0: VNode-based scheduler columns on triggers
--- (safe to add without IF NOT EXISTS: Flyway-upgraded DBs never had these columns)
-ALTER TABLE triggers ADD COLUMN `vnode`                 INT         GENERATED ALWAYS AS (CAST(value ->> '$.vnode' AS SIGNED)) STORED;
-ALTER TABLE triggers ADD COLUMN `locked`                BOOL        GENERATED ALWAYS AS (value ->> '$.locked' = 'true') STORED;
-ALTER TABLE triggers ADD COLUMN `next_evaluation_epoch` BIGINT      GENERATED ALWAYS AS (CAST(value ->> '$.nextEvaluationEpoch' AS SIGNED)) STORED;
-ALTER TABLE triggers ADD COLUMN `next_evaluation_date`  DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.nextEvaluationDate', '%Y-%m-%dT%H:%i:%s.%fZ')) STORED;
+ALTER TABLE triggers ADD COLUMN IF NOT EXISTS `vnode`                 INT         GENERATED ALWAYS AS (CAST(value ->> '$.vnode' AS SIGNED)) STORED;
+ALTER TABLE triggers ADD COLUMN IF NOT EXISTS `locked`                BOOL        GENERATED ALWAYS AS (value ->> '$.locked' = 'true') STORED;
+ALTER TABLE triggers ADD COLUMN IF NOT EXISTS `next_evaluation_epoch` BIGINT      GENERATED ALWAYS AS (CAST(value ->> '$.nextEvaluationEpoch' AS SIGNED)) STORED;
+ALTER TABLE triggers ADD COLUMN IF NOT EXISTS `next_evaluation_date`  DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.nextEvaluationDate', '%Y-%m-%dT%H:%i:%s.%fZ')) STORED;
 -- next_execution_date existed in the Flyway schema; dropping it also removes its index
-ALTER TABLE triggers DROP COLUMN `next_execution_date`;
+ALTER TABLE triggers DROP COLUMN IF EXISTS `next_execution_date`;
 
-CREATE INDEX idx_trigger_scheduler            ON triggers (vnode, next_evaluation_epoch, locked);
-CREATE INDEX idx_trigger_next_evaluation_date ON triggers (next_evaluation_date);
+CREATE INDEX IF NOT EXISTS idx_trigger_scheduler            ON triggers (vnode, next_evaluation_epoch, locked);
+CREATE INDEX IF NOT EXISTS idx_trigger_next_evaluation_date ON triggers (next_evaluation_date);
 
 -- Executions: trigger reference
-ALTER TABLE executions ADD COLUMN `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.trigger.id') STORED;
-CREATE INDEX idx_executions_trigger_id ON executions (`trigger_id`);
+ALTER TABLE executions ADD COLUMN IF NOT EXISTS `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.trigger.id') STORED;
+CREATE INDEX IF NOT EXISTS idx_executions_trigger_id ON executions (`trigger_id`);
 
 -- Worker 2.0: replace worker_uuid with worker_uid
-DROP INDEX worker_job_running_worker_uuid ON worker_job_running;
-ALTER TABLE worker_job_running DROP COLUMN `worker_uuid`;
-ALTER TABLE worker_job_running ADD COLUMN `worker_uid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.uid') STORED NOT NULL;
-CREATE INDEX worker_job_running_worker_uid ON worker_job_running (`worker_uid`);
+DROP INDEX IF EXISTS worker_job_running_worker_uuid ON worker_job_running;
+ALTER TABLE worker_job_running DROP COLUMN IF EXISTS `worker_uuid`;
+ALTER TABLE worker_job_running ADD COLUMN IF NOT EXISTS `worker_uid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.uid') STORED NOT NULL;
+CREATE INDEX IF NOT EXISTS worker_job_running_worker_uid ON worker_job_running (`worker_uid`);
 
 -- Executions: parent execution ID and loop run index
 ALTER TABLE executions ADD COLUMN IF NOT EXISTS parent_id VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.parentId') STORED;

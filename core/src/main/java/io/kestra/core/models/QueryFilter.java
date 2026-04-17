@@ -278,7 +278,7 @@ public record QueryFilter(
         RESOURCES("resources") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.CONTAINS, Op.IN);
+                return List.of(Op.IN);
             }
         },
         DETAILS("details") {

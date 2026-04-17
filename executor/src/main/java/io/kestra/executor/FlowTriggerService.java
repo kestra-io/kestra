@@ -20,6 +20,7 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -111,7 +112,7 @@ public class FlowTriggerService {
                     .map(
                         multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                             flowWithFlowTrigger.getFlow(),
-                            multipleConditionStorage.getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition, execution.getOutputs()),
+                            multipleConditionStorage.getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition, buildOutputs(execution)),
                             flowWithFlowTrigger.getTrigger(),
                             multipleCondition
                         )
@@ -191,14 +192,24 @@ public class FlowTriggerService {
                     )
                 )
                 .filter(
-                    e -> !Boolean.FALSE.equals(e.getKey().getResetOnSuccess()) &&
-                        e.getKey().getConditions().size() == Optional.ofNullable(e.getValue().getResults()).map(Map::size).orElse(0)
+                    e -> !Boolean.FALSE.equals(e.getKey().getResetOnSuccess()) && isConditionSatisfied(e.getKey(), e.getValue())
                 )
                 .map(Map.Entry::getValue),
             multipleConditionStorage.expired(execution.getTenantId()).stream()
         ).forEach(multipleConditionStorage::delete);
 
         return executions;
+    }
+
+    private Map<String, Object> buildOutputs(Execution execution) {
+        if (execution.getOutputs() == null) {
+            return null;
+        }
+
+        return Map.of(
+            execution.getNamespace(), Map.of(
+                execution.getFlowId(), execution.getOutputs()
+        ));
     }
 
     private List<FlowWithFlowTrigger> computeFlowTriggers(Execution execution, Flow flow) {
@@ -236,6 +247,19 @@ public class FlowTriggerService {
             Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
         );
 
+    }
+
+    /**
+     * Determines whether a multiple condition is satisfied based on its mode and the current results.
+     * Used to decide whether to purge the condition window after a successful evaluation.
+     */
+    private boolean isConditionSatisfied(MultipleCondition condition, MultipleConditionWindow window) {
+        int satisfiedCount = Optional.ofNullable(window.getResults()).map(Map::size).orElse(0);
+        return switch (condition.getMode()) {
+            case ALL -> condition.getConditions().size() == satisfiedCount;
+            case ANY -> satisfiedCount > 0;
+            case AT_LEAST -> satisfiedCount >= condition.getMinSatisfied();
+        };
     }
 
     @AllArgsConstructor

@@ -42,12 +42,14 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
@@ -215,6 +217,13 @@ public class FlowService {
     private void recomputeTriggers(FlowWithSource flow) {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
+        // If the previous revision was soft-deleted, the scheduler already dropped its
+        // trigger state on TriggerDeleted. Re-creating the flow must emit TriggerCreated
+        // so the state is rebuilt; treat it as if there was no previous.
+        if (previous != null && previous.isDeleted()) {
+            previous = null;
+        }
+
         if (flow.isDeleted()) {
             ListUtils.emptyOnNull(flow.getTriggers()).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
@@ -249,7 +258,7 @@ public class FlowService {
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                 .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+                    trigger -> sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             return;
         }
@@ -481,6 +490,14 @@ public class FlowService {
                 }
             }
         });
+
+        // warn when @PluginProperty(secret=true) fields have plain-text values
+        flow.allTasksWithChilds().forEach(task ->
+            SecretUtils.validateSecretFields(task)
+                .forEach(msg -> warnings.add("Task '" + task.getId() + "': " + msg)));
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger ->
+            SecretUtils.validateSecretFields(trigger)
+                .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg)));
 
         return warnings;
     }

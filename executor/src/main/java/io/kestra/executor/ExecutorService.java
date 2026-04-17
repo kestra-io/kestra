@@ -681,7 +681,6 @@ public class ExecutorService {
                             }
                         }
 
-                        // TODO we may need to also start the attempts...
                         executor.withExecution(executor.getExecution()
                             .withTaskRun(taskRun.withState(State.Type.RUNNING)), "handleLoop");
                     }

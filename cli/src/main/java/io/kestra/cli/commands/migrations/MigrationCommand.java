@@ -14,9 +14,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         MetadataMigrationCommand.class,
-        V2TriggerMigrationCommand.class,
-        V2ExecutionResubmitMigrationCommand.class,
-        V2ExecutionOutputMigrationCommand.class
+        V2TriggerMigrationCommand.class
     }
 )
 @Slf4j

@@ -3,13 +3,12 @@ package io.kestra.executor.handler;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import java.io.IOException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.executions.TerminatedLoopExecution;
+
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
@@ -45,6 +44,9 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
 
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
+
+    @Inject
+    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
 
     @Override
     public Optional<ExecutorContext> handle(TerminatedLoopExecution message) {
@@ -103,8 +105,8 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                                 executionQueue.emit(loopExecution);
                             }
                         }
-                        // we don't update the execution itself as the loop is still running
-                        // TODO we may need to send a follow execution message to update the UI
+                        // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
+                        followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
                         return null;
                     } else {
                         // All iterations have been started — save the decremented counts and either
@@ -115,7 +117,8 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                             return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS);
                         } else {
                             // Some iterations are still running — wait for them.
-                            // TODO we may need to send a follow execution message to update the UI
+                            // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
+                            followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
                             return null;
                         }
                     }

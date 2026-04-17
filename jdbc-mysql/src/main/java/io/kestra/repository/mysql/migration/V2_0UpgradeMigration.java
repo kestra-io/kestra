@@ -1,5 +1,9 @@
 package io.kestra.repository.mysql.migration;
 
+import io.kestra.core.migration.AbstractV2UpgradeMigration;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 import io.kestra.repository.mysql.MysqlRepositoryEnabled;
 import jakarta.inject.Inject;
@@ -14,7 +18,7 @@ import javax.sql.DataSource;
  * (Kestra &le; 1.3): drops {@code templates} and {@code executorstate}, creates {@code locks}
  * and {@code task_outputs}, adds scheduler VNode columns on {@code triggers}, adds
  * {@code trigger_id} on {@code executions}, and renames {@code worker_uuid} to {@code worker_uid}
- * on {@code worker_job_running}.
+ * on {@code worker_job_running}. Also migrates all V1 trigger rows to TriggerState.
  *
  * <p>On fresh installations the runner skips this script (schema already exists from the
  * {@code "0-init"} migration). The SQL is idempotent ({@code IF NOT EXISTS} / {@code IF EXISTS})
@@ -22,21 +26,21 @@ import javax.sql.DataSource;
  */
 @Singleton
 @MysqlRepositoryEnabled
-public class V2_0UpgradeMigration extends AbstractSQLMigrationScript {
+public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
-    private static final String SCRIPT_ID = "2.0";
     private static final String CHECKSUM = "mysql-upgrade-v2.0";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0UpgradeMigration(final DataSource dataSource) {
+    public V2_0UpgradeMigration(
+        final DataSource dataSource,
+        final TriggerRepositoryInterface triggerRepository,
+        final TriggerStateStore triggerStateStore,
+        final SchedulerConfiguration schedulerConfiguration
+    ) {
+        super(triggerRepository, triggerStateStore, schedulerConfiguration);
         this.dataSource = dataSource;
-    }
-
-    @Override
-    public String scriptId() {
-        return SCRIPT_ID;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class V2_0UpgradeMigration extends AbstractSQLMigrationScript {
     }
 
     @Override
-    public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/upgrade-v2.0-mysql.sql");
+    protected void doSchemaUpgrade() throws Exception {
+        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/upgrade-v2.0-mysql.sql");
     }
 }

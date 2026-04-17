@@ -40,7 +40,33 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      */
     protected void executeSqlResource(final DataSource dataSource, final String resourcePath)
         throws IOException, SQLException {
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+        executeSqlScript(dataSource, resourcePath);
+    }
+
+    /**
+     * Loads a SQL file from the classpath and executes all statements against the given
+     * {@link DataSource}.
+     *
+     * <p>The SQL is split into individual statements using a parser that correctly handles:
+     * <ul>
+     *   <li>Single-quoted string literals ({@code '...'})</li>
+     *   <li>PostgreSQL dollar-quoted blocks ({@code $$...$$}, {@code $tag$...$tag$})</li>
+     *   <li>Single-line comments ({@code --})</li>
+     *   <li>Block comments ({@code /* ... *\/})</li>
+     * </ul>
+     *
+     * <p>Also available as a static method for classes that extend
+     * {@link io.kestra.core.migration.AbstractV2UpgradeMigration} instead of this class.
+     *
+     * @param dataSource   the data source to obtain a connection from
+     * @param resourcePath classpath resource path to the SQL file (e.g.
+     *                     {@code "/migrations/baseline-h2.sql"})
+     * @throws IOException  if the resource cannot be read
+     * @throws SQLException if a statement fails to execute
+     */
+    public static void executeSqlScript(final DataSource dataSource, final String resourcePath)
+        throws IOException, SQLException {
+        try (InputStream is = AbstractSQLMigrationScript.class.getResourceAsStream(resourcePath)) {
             if (is == null) {
                 throw new IllegalArgumentException("SQL resource not found on classpath: " + resourcePath);
             }

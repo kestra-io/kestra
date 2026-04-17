@@ -199,6 +199,7 @@ section.container.mt-4:has(> section.empty) {
     margin: 0 !important;
     padding: 0;
     flex-grow: 1;
+    min-height: 0;
 }
 
 .no-overflow {

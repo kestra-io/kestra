@@ -181,22 +181,12 @@
     const debugCollapse = ref<string>("");
     const debugExpression = ref<string>("");
 
+    function isValidVariable(path: string){
+        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(path);
+    }
+
     const formatTask = (tsk: string) => {
-        if (!tsk) return "";
-        return tsk.includes("-") ? `["${tsk}"]` : `.${tsk}`;
-    };
-
-    const formatPath = (path: string) => {
-        if (!path.includes("-")) return `.${path}`;
-
-        const bracketIndex = path.indexOf("[");
-        if(bracketIndex === -1) {
-            return `["${path}"]`;
-        }
-        const taskInPath = path.substring(0, bracketIndex);
-        const rest = path.substring(bracketIndex);
-
-        return `["${taskInPath}"]${rest}`;
+        return isValidVariable(tsk) ? `.${tsk}` : `["${tsk}"]`;
     };
 
     const computedDebugValue = computed(() => {
@@ -206,7 +196,7 @@
         let path = expandedValue.value;
         if (!path) return `{{ outputs${formatTask(task)} }}`;
 
-        return `{{ outputs${formatPath(path)} }}`;
+        return `{{ outputs${path} }}`;
     });
 
     const debugError = ref("");
@@ -388,7 +378,8 @@
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
-            const currentPath = `${path}["${key}"]`;
+            const keyStep = isValidVariable(key) ? `.${key}` : `["${key}"]`;
+            const currentPath = `${path}${keyStep}`;
 
             // If the value is an array with exactly one element, use that element as the value
             if (Array.isArray(value) && value.length === 1) {
@@ -455,7 +446,7 @@
                 iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
                 leaf: !tasksWithOutputs.value?.includes(task.taskId), // Only mark tasks with outputs as non-leaf to trigger lazy loading
-                path: task.taskId,
+                path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
             };
         });
 

@@ -345,10 +345,6 @@ public abstract class AbstractJdbcRepository {
             return resourceTypesCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.ACTION) {
-            return actionCondition(value, operation);
-        }
-
         if (field == QueryFilter.Field.DETAILS) {
             return detailsCondition(value, operation);
         }
@@ -461,10 +457,6 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition resourceTypesCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.RESOURCES, value, operation);
-    }
-
-    protected Condition actionCondition(Object value, QueryFilter.Op operation) {
-        return defaultHandlers(QueryFilter.Field.ACTION, value, operation);
     }
 
     protected Condition detailsCondition(Object value, QueryFilter.Op operation) {

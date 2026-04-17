@@ -559,14 +559,6 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.ACTION, Resource.AUDIT_LOG,
-                Set.of(
-                    Op.EQUALS,
-                    Op.IN
-                )
-            ),
-
-            buildQueryFiltersForOperations(
                 Field.DETAILS, Resource.AUDIT_LOG,
                 Set.of(
                     Op.EQUALS
@@ -1317,23 +1309,6 @@ public class QueryFilterTest {
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
                     Op.EQUALS,
-                    Op.NOT_EQUALS,
-                    Op.GREATER_THAN,
-                    Op.LESS_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.NOT_IN,
-                    Op.STARTS_WITH,
-                    Op.ENDS_WITH,
-                    Op.CONTAINS,
-                    Op.REGEX,
-                    Op.PREFIX
-                )
-            ),
-
-            buildQueryFiltersForOperations(
-                Field.ACTION, Resource.AUDIT_LOG,
-                Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,

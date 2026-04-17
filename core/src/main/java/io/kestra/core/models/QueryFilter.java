@@ -269,12 +269,6 @@ public record QueryFilter(
                 return List.of(Op.EQUALS);
             }
         },
-        ACTION("action") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.IN);
-            }
-        },
         RESOURCES("resources") {
             @Override
             public List<Op> supportedOp() {
@@ -564,7 +558,6 @@ public record QueryFilter(
                     Field.USER_ID,
                     Field.TYPE,
                     Field.RESOURCES,
-                    Field.ACTION,
                     Field.DETAILS,
                     Field.START_DATE,
                     Field.END_DATE

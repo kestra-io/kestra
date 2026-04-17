@@ -667,7 +667,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                     .and(NORMAL_KIND_CONDITION)
                     .and(
                         DSL.or(
-                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.trueCondition()
+                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.noCondition()
                                 : DSL.or(
                                     flows.stream()
                                         .map(
@@ -775,7 +775,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             "state.duration", "state_duration",
             "namespace", "namespace",
             "flowId", "flow_id",
-            "state.current", "state_current"
+            "state.current", "state_current",
+            "loopRunIndex", "loop_run_index"
         );
 
         return mapper::get;

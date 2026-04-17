@@ -463,6 +463,138 @@ public class QueryFilterTest {
                     Op.EQUALS,
                     Op.NOT_EQUALS
                 )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.FLOW_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.EXECUTION_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.USER_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.RESOURCES, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ACTION, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.DETAILS, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.START_DATE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.END_DATE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
             )
         ).flatMap(s -> s);
     }
@@ -1089,6 +1221,174 @@ public class QueryFilterTest {
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.NAMESPACE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.FLOW_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.EXECUTION_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.USER_ID, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.RESOURCES, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ACTION, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.DETAILS, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.START_DATE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.END_DATE, Resource.AUDIT_LOG,
+                Set.of(
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
                 )
             )
         ).flatMap(s -> s);

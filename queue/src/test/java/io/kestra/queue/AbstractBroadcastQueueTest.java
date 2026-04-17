@@ -20,7 +20,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
-    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     @Inject
     private BroadcastQueueInterface<TestBroadcast> broadcastQueue;

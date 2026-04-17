@@ -839,6 +839,46 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void shouldFindByParentId() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        Execution parent = executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, null).build()
+        );
+
+        for (int i = 0; i < 3; i++) {
+            executionRepository.save(
+                builder(tenant, State.Type.SUCCESS, null)
+                    .parentId(parent.getId())
+                    .build()
+            );
+        }
+
+        // Save an execution with a different parent — must not appear in results
+        Execution otherParent = executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, null).build()
+        );
+        executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, null)
+                .parentId(otherParent.getId())
+                .build()
+        );
+
+        // When
+        ArrayListTotal<Execution> result = executionRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.PARENT_ID).operation(Op.EQUALS).value(parent.getId()).build())
+        );
+
+        // Then
+        assertThat(result.getTotal()).isEqualTo(3L);
+        assertThat(result).hasSize(3)
+            .allMatch(e -> parent.getId().equals(e.getParentId()));
+    }
+
+    @Test
     protected void shouldFindByLabel() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var exec1 = executionRepository.save(

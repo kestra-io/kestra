@@ -7695,6 +7695,7 @@ components:
       - STATUS
       - EMAIL
       - TIME_RANGE
+      - PARENT_ID
       - TRIGGER_EXECUTION_ID
       - TRIGGER_ID
       - TRIGGER_STATE

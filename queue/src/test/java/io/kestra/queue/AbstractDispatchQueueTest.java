@@ -56,18 +56,25 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     void singleConsumer() throws QueueException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+        Set<String> expectedKeys = Collections.synchronizedSet(new HashSet<>());
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
             .subscribe(e ->
             {
-                list.add(e.getLeft().id);
-                countDownLatch.countDown();
+                if (expectedKeys.contains(e.getLeft().key)) {
+                    list.add(e.getLeft().id);
+                    countDownLatch.countDown();
+                }
             });
 
         String prefix = this.keyPrefix();
-        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 1));
-        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 2));
+        String key1 = prefix + "_" + IdUtils.create();
+        String key2 = prefix + "_" + IdUtils.create();
+        expectedKeys.add(key1);
+        expectedKeys.add(key2);
+        dispatchQueue.emit(new TestDispatch(key1, 1));
+        dispatchQueue.emit(new TestDispatch(key2, 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();

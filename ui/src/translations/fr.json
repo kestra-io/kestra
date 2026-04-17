@@ -597,7 +597,7 @@
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
     },
-    "execution_failed": "Échec de l'exécution !\nLa dernière erreur était",
+    "execution_failed": "Échec de l'exécution !",
     "execution_guide": {
       "get_started": {
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",

@@ -76,6 +76,8 @@
 </script>
 
 <style scoped lang="scss">
+    $post-line-height: 1.6;
+
     .post {
         padding: 1rem 1rem 0rem 1rem;
 
@@ -127,8 +129,7 @@
 
     .lastPost{
         .postParagraph {
-            -webkit-line-clamp: 6;
-            line-clamp: 6;
+            max-height: calc(6 * #{$post-line-height}em);
         }
 
         img {
@@ -142,14 +143,12 @@
     }
 
     .postParagraph {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
+        max-height: calc(4 * #{$post-line-height}em);
         overflow: hidden;
-        line-height: 1.6;
+        line-height: $post-line-height;
         .expanded & {
-            -webkit-line-clamp: unset;
+            max-height: none;
+            overflow: visible;
         }
     }
 

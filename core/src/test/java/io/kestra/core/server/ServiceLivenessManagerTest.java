@@ -161,6 +161,59 @@ public class ServiceLivenessManagerTest {
             .execute(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.eq(true));
     }
 
+    @Test
+    void shouldRegisterNewInstanceAfterPreviousOneTerminated() {
+        // Given - a service that completed a terminal state transition (isStateUpdatable = false)
+        Service terminating = newServiceForState(Service.ServiceState.TERMINATING);
+        serviceLivenessManager.updateServiceInstance(terminating, serviceInstanceFor(terminating));
+
+        Service terminated = newServiceForState(Service.ServiceState.TERMINATED_FORCED);
+        ServiceInstance terminatedInstance = serviceInstanceFor(terminated);
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(SUCCEEDED, terminatedInstance));
+        serviceLivenessManager.onServiceStateChangeEvent(new ServiceStateChangeEvent(terminated));
+        // At this point isStateUpdatable is false for ServiceType.WORKER
+
+        // When - a CREATED event arrives for a new service of the same type (new worker restarts)
+        Mockito.clearInvocations(serviceLivenessUpdater);
+        Service newWorker = newServiceForState(Service.ServiceState.CREATED);
+        serviceLivenessManager.onServiceStateChangeEvent(new ServiceStateChangeEvent(newWorker));
+
+        // Then - the new CREATED instance is persisted to the DB
+        Mockito.verify(serviceLivenessUpdater, Mockito.atLeastOnce()).update(workerInstanceCaptor.capture());
+        Assertions.assertEquals(Service.ServiceState.CREATED, workerInstanceCaptor.getValue().state());
+
+        // And - the heartbeat resumes for the new instance (isStateUpdatable reset to true)
+        Mockito.clearInvocations(serviceLivenessUpdater);
+        ServiceInstance newInstance = serviceLivenessManager.allServiceInstances().getFirst();
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(SUCCEEDED, newInstance));
+        serviceLivenessManager.onSchedule(Instant.now());
+        Mockito.verify(serviceLivenessUpdater, Mockito.atLeastOnce())
+            .update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class));
+    }
+
+    @Test
+    void shouldDisableHeartbeatAfterTerminalStateTransition() {
+        // Given - a service in TERMINATING state
+        Service terminating = newServiceForState(Service.ServiceState.TERMINATING);
+        serviceLivenessManager.updateServiceInstance(terminating, serviceInstanceFor(terminating));
+
+        Service terminated = newServiceForState(Service.ServiceState.TERMINATED_FORCED);
+        ServiceInstance terminatedInstance = serviceInstanceFor(terminated);
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(SUCCEEDED, terminatedInstance));
+
+        // When - the service transitions to TERMINATED_FORCED
+        serviceLivenessManager.onServiceStateChangeEvent(new ServiceStateChangeEvent(terminated));
+
+        // Then - the heartbeat should no longer fire for this service
+        Mockito.clearInvocations(serviceLivenessUpdater);
+        serviceLivenessManager.onSchedule(Instant.now());
+        Mockito.verify(serviceLivenessUpdater, Mockito.never())
+            .update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class));
+    }
+
     public static Service newServiceForState(final Service.ServiceState state) {
         return new Service() {
 

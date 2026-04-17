@@ -1258,7 +1258,7 @@
     "items": "items",
     "cron": "Cron",
     "execution_started": "Execution has started!",
-    "execution_failed": "Execution failed!\nLast error was",
+    "execution_failed": "Execution failed!",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",
     "execution replayed": "This execution has been replayed.",
@@ -2095,7 +2095,7 @@
     "no_history": "No history available",
     "export_as": "Export as .{format}",
     "save_and_execute": "Save & Execute",
-    "welcome_copilot": {      
+    "welcome_copilot": {
         "button_cta": "Create flow from scratch",
         "title": "Turn your idea into a workflow",
         "need_help": "Need Help?",

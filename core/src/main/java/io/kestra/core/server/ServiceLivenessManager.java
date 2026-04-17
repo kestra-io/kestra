@@ -80,6 +80,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             return; // invalid service event.
         }
 
+        // CREATED events always register a new service instance and must bypass the isStateUpdatable
+        // check below, because a new service of the same type may start after a previous one terminated.
+        if (newState == Service.ServiceState.CREATED) {
+            onCreateState(event);
+            return;
+        }
+
         // Check whether the state for this service is updatable.
         // A service (e.g., Worker) is not updatable when its state has already been transitioned to
         // a completed state (e.g., NOT_RUNNING) by an external service (e.g. Executor).
@@ -97,10 +104,14 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         }
 
         switch (newState) {
-            case CREATED:
-                onCreateState(event);
-                break;
             case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED, MAINTENANCE:
+                // Disable further heartbeat updates before persisting the terminal state.
+                // This prevents updatedAt from being refreshed after the transition, allowing
+                // the liveness coordinator to reliably detect that the termination grace period
+                // has elapsed.
+                if (newState.hasCompletedTermination() && holder != null) {
+                    holder.isStateUpdatable().set(false);
+                }
                 updateServiceInstanceState(Instant.now(), event.getService(), newState, NOOP);
                 break;
             default:

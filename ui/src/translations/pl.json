@@ -597,7 +597,7 @@
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
     },
-    "execution_failed": "Wykonanie nie powiodło się!  \nOstatni błąd to",
+    "execution_failed": "Wykonanie nie powiodło się!",
     "execution_guide": {
       "get_started": {
         "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów.",

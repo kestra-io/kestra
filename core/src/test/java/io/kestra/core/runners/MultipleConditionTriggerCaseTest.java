@@ -100,7 +100,12 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
-        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
+        var outputs = (Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs");
+        assertThat(outputs).containsKey("io.kestra.tests.trigger.preconditions");
+        outputs = (Map<String, Object>) outputs.get("io.kestra.tests.trigger.preconditions");
+        assertThat(outputs).containsKey("flow-trigger-preconditions-flow-b");
+        outputs = (Map<String, Object>) outputs.get("flow-trigger-preconditions-flow-b");
+        assertThat(outputs).containsEntry("some", "value");
     }
 
     public void flowTriggerOnPaused() throws TimeoutException, QueueException {
@@ -330,6 +335,56 @@ public class MultipleConditionTriggerCaseTest {
             MAIN_TENANT, "io.kestra.tests.trigger.fire.once.true", "flow-trigger-fire-once-true-flow-listen",
             Duration.ofSeconds(3)
         ));
+    }
+
+    public void flowTriggerAnyMode() throws TimeoutException, QueueException {
+        // Run only flow-a — flow-b is not run
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.any.mode",
+            "flow-trigger-any-mode-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Trigger fires because mode is ANY and one condition (flow-a) is satisfied
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.any.mode", "flow-trigger-any-mode-flow-listen"
+        );
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void flowTriggerAtLeastMode() throws TimeoutException, QueueException {
+        // Run flow-a and flow-b (2 out of 3 conditions) — flow-c is not run
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode",
+            "flow-trigger-at-least-mode-flow-a"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // only one condition: trigger should not have been fired yet
+         assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen",
+             Duration.ofMillis(500)
+        ));
+
+        execution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode",
+            "flow-trigger-at-least-mode-flow-b"
+        );
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Trigger fires because mode is AT_LEAST with minSatisfied=2 and 2 conditions are satisfied
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.at.least.mode", "flow-trigger-at-least-mode-flow-listen"
+        );
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     public void flowTriggerMixedConditions() throws TimeoutException, QueueException {

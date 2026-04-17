@@ -6,7 +6,7 @@
                     <el-cascader-panel
                         ref="cascader"
                         v-model="selected"
-                        :options="outputs"
+                        :props="cascaderProps"
                         :border="false"
                         class="flex-grow-1 cascader"
                         @expand-change="() => scrollRight()"
@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {ElTree} from "element-plus";
+    import {CascaderOption, CascaderProps, ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
@@ -216,6 +216,51 @@
         return taskRunList.find((e) => e.taskId === filter);
     });
 
+    const cascaderProps: CascaderProps = {
+        lazy: true,
+        lazyLoad(node, resolve) {
+            const {level} = node;
+            const data = node.data as TransformedTask;
+            if(level === 0) {
+                resolve(outputs.value);
+                return;
+            }
+
+            if(level === 1) {
+                if(!data.id || !execution.value?.id) {
+                    resolve([]);
+                    return;
+                }
+                outputsSDK.getTaskRunOutputs({
+                    executionId: execution.value.id,
+                    taskRunId: data.id,
+                }, {
+                    validateStatus: (status) => status === 200 || status === 404,
+                }).then((res) => {
+                    if(res.status === 200) {
+                        resolve(transform(res.data, true, data.path));
+                    } else {
+                        resolve([]);
+                    }
+                });
+                return;
+            }
+
+            if(level > 1) {
+                resolve(data.children || data.value ? [
+                    {
+                        label: data.value,
+                        value: data.value,
+                        leaf: true,
+                    },
+                ] : []);
+                return;
+            }
+
+            resolve([]);
+        },
+    }
+
     const axios = useAxios();
     const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask.value;
@@ -275,17 +320,10 @@
     }
 
     const processedValue = (data: TransformedTask) => {
-        const regular = false;
+        const regular = false;      
 
-        if (!data.value && !data.children?.length) {
-            return {label: data.value, regular};
-        } else if (data?.children?.length) {
-            const message = (length: number) => ({label: `${length} items`, regular});
-            const length = data.children.length;
-
-            return data.children[0].isFirstPass
-                ? message(length - 1)
-                : message(length);
+        if(!data.leaf) {
+            return {label: "", regular};
         }
 
         // Check if the value is a valid URL and not an internal "kestra:///" link
@@ -294,6 +332,7 @@
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
+        
 
         return {label: trim(data.value), regular: true};
     };
@@ -344,14 +383,13 @@
         return {label, value};
     };
 
-    interface TransformedTask {
-        label: string;
-        heading?: boolean;
+    interface TransformedTask extends CascaderOption{
         component?: any;
         isFirstPass?: boolean;
         value?: any;
         children?: TransformedTask[];
         path?: string;
+        id?: string;
     }
 
     const transform = (o: any, isFirstPass: boolean, path = "") => {
@@ -359,7 +397,8 @@
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
-            const currentPath = `${path}["${key}"]`;
+            const pathStep = /[a-zA-Z][a-zA-Z0-9_]*/.test(key) ? `.${key}` : `["${key}"]` ;
+            const currentPath = `${path}${pathStep}`;
 
             // If the value is an array with exactly one element, use that element as the value
             if (Array.isArray(value) && value.length === 1) {
@@ -367,6 +406,7 @@
                     label: key,
                     value: value[0],
                     children: [],
+                    leaf: true,
                     path: currentPath,
                 };
             }
@@ -375,6 +415,7 @@
                 label: key,
                 value: isObject && !Array.isArray(value) ? key : value,
                 children: isObject ? transform(value, false, currentPath) : [],
+                leaf: !isObject,
                 path: currentPath,
             };
         });
@@ -386,6 +427,7 @@
                 component: shallowRef(TextBoxSearchOutline),
                 isFirstPass: true,
                 path: path,
+                leaf: true,
             };
             result.unshift(OUTPUTS);
         }
@@ -393,24 +435,7 @@
         return result;
     };
 
-    const selectedTaskOutputs = ref();
-
-    watch(selectedTask, async (task) => {
-        if(task?.id && executionsStore.execution?.id){
-            const res = await outputsSDK.getTaskRunOutputs({
-                executionId: executionsStore.execution.id,
-                taskRunId: task.id,
-            }, {
-                validateStatus: (status) => status === 200 || status === 404,
-            })
-            
-            selectedTaskOutputs.value = res.data;
-            return
-        }
-        selectedTaskOutputs.value = undefined;
-    }, {immediate: true});
-
-    const outputs = computed(() => {
+    const outputs = computed<TransformedTask[] | undefined>(() => {
         const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
                 label: task.taskId,
@@ -418,9 +443,8 @@
                 ...task,
                 iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
-                children: task?.outputs
-                    ? transform(task.outputs, true, task.taskId)
-                    : [],
+                leaf: false,
+                path: task.taskId,
             };
         });
 
@@ -428,14 +452,11 @@
             return undefined
         };
 
-        if(selectedTaskOutputs.value){
-            tasks.find(t => t.taskId === selectedTask.value?.taskId)!.children = transform(selectedTaskOutputs.value, true, selectedTask.value?.taskId);
-        }
-
         const HEADING = {
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
+            leaf: true,
         } as any;
 
         tasks.unshift(HEADING);

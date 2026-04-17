@@ -3,6 +3,7 @@ import ElementPlus, {INSTALLED_KEY} from "element-plus"
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
+import KsGraph from "./components/Charts/KsGraph.vue"
 import KsLine from "./components/Charts/KsLine.vue"
 import KsBar from "./components/Charts/KsBar.vue"
 import KsPie from "./components/Charts/KsPie.vue"
@@ -105,6 +106,7 @@ export * as dateUtils from "./utils/date.ts"
 // ─── Types ──────────────────────────────────────────────────────────────────
 export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
+export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
 export {LOG_LEVELS, STATES} from "./utils/state.ts"
@@ -123,6 +125,7 @@ export type {YamlElement} from "./utils/flowYamlUtils.ts"
 export {
     KsAlert,
     KsEchart,
+    KsGraph,
     KsLine,
     KsBar,
     KsPie,
@@ -219,6 +222,7 @@ const KestraDesignSystem = {
 
         app.component("KsAlert", KsAlert)
         app.component("KsEchart", KsEchart)
+        app.component("KsGraph", KsGraph)
         app.component("KsLine", KsLine)
         app.component("KsBar", KsBar)
         app.component("KsPie", KsPie)
@@ -312,6 +316,7 @@ declare module "vue" {
     export interface GlobalComponents {
         KsAlert: typeof KsAlert
         KsEchart: typeof KsEchart
+        KsGraph: typeof KsGraph
         KsLine: typeof KsLine
         KsBar: typeof KsBar
         KsPie: typeof KsPie

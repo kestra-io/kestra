@@ -43,10 +43,12 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts"],
+            dedupe: ["echarts", "vue-echarts", "dayjs"],
             alias: [
-                {find: /^@kestra-io\/ui-design-system$/, replacement: path.join(__dirname, "node_modules/@kestra-io/ui-design-system/src/index.ts")},
-                {find: /^@kestra-io\/ui-design-system\/(.*)$/, replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-design-system") + "/$1"},
+                {find: /^echarts(.*)$/, replacement: path.resolve(__dirname, "node_modules/echarts") + "$1"},
+                {find: /^vue-echarts$/, replacement: path.resolve(__dirname, "node_modules/vue-echarts")},
+                {find: /^@kestra-io\/ui-design-system$/, replacement: path.resolve(__dirname, "../ui-design-system/src/index.ts")},
+                {find: /^@kestra-io\/ui-design-system\/(.*)$/, replacement: path.resolve(__dirname, "../ui-design-system") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
                 {find: "@storybook/addon-actions", replacement: "storybook/actions"},
@@ -90,10 +92,7 @@ export default defineConfig(({mode}) => {
         optimizeDeps: {
             include: [
                 "lodash",
-                // the 3 dependencies below are used by ui-libs
-                // optimizing them allows storybook to run properly
-                // without allowing interop in typescript
-                "dayjs",
+                "element-plus",
                 "debug",
                 "@braintree/sanitize-url",
                 "monaco-yaml/yaml.worker",

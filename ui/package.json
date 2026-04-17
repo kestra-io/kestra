@@ -36,7 +36,6 @@
         "bootstrap": "^5.3.8",
         "buffer": "^6.0.3",
         "cronstrue": "^3.14.0",
-        "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
         "dotenv": "^17.4.2",
         "echarts": "^5.6.0",

@@ -3,7 +3,14 @@
     <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <KsSplitter v-else class="dependencies">
         <KsSplitterPanel id="graph" v-bind="PANEL">
-            <div v-ks-loading="isRendering" ref="container" />
+            <KsGraph
+                ref="graphRef"
+                class="graph-canvas"
+                :nodes="graphNodes"
+                :edges="graphEdges"
+                :loading="isRendering"
+                @node-click="handleNodeClick"
+            />
 
             <div class="controls">
                 <KsButton
@@ -70,6 +77,8 @@
     import Table from "./components/Table.vue";
     import Empty from "../layout/empty/Empty.vue";
 
+    import {KsGraph} from "@kestra-io/ui-design-system";
+
     import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
     import type {Types} from "./utils/types";
@@ -84,6 +93,8 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import {use} from "echarts/core";
+    import {TitleComponent} from "echarts/components";
 
     const props = defineProps<{
         fetchAssetDependencies?: () => Promise<{
@@ -94,18 +105,23 @@
 
     const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
-    const container = ref(null);
+    const graphRef = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
+    use([TitleComponent]);
+
     const {
         getElements,
+        graphNodes,
+        graphEdges,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
+        handleNodeClick,
         handlers,
-    } = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
 </script>
 
 <style scoped lang="scss">
@@ -117,9 +133,9 @@
     & div#graph {
         position: relative; // for absolute positioning of controls
 
-        & > div:not(.controls) {
+        & .graph-canvas {
             height: 100%;
-            overflow: hidden scroll;
+            overflow: hidden;
             background-color: transparent;
             background-image: radial-gradient(circle, var(--ks-dots-topology) 1px, transparent 1px);
             background-repeat: repeat;

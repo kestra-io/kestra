@@ -10,11 +10,6 @@ import {
 import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
 
-import cytoscape from "cytoscape";
-
-cytoscape.warnings(false)
-
-
 
 export default {
     title: "Dependencies/Graph",

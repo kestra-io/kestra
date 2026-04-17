@@ -94,6 +94,30 @@ export default () => {
                 borderWidth: 0
             },
         },
+        graph: {
+            label: {
+                show: true,
+                position: "bottom",
+                fontSize: 10,
+                textBorderWidth: 1,
+                color: cssVar("--ks-content-primary"),
+                textBorderColor: cssVar("--ks-background-body"),
+            },
+            lineStyle: {
+                color: cssVar("--kel-text-color-placeholder"),
+                curveness: 0.1,
+            },
+            emphasis: {
+                focus: "none",
+                scale: 1.1,
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: "rgba(0,0,0,0.3)",
+                },
+            },
+            edgeSymbol: ["none", "arrow"],
+            edgeSymbolSize: [0, 8],
+        },
         categoryAxis: deepMerge(axis, {
             nameTextStyle: {
                 align: "center",
@@ -120,7 +144,7 @@ export default () => {
             },
         }),
         tooltip: {
-            backgroundColor: cssVar("--kel-bg-color-overlay"), 
+            backgroundColor: cssVar("--kel-bg-color-overlay"),
             borderColor: cssVar("--kel-border-color"),
             borderWidth: 1,
             borderRadius: 4,

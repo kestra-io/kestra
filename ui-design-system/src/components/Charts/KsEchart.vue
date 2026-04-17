@@ -8,12 +8,14 @@
         placement="bottom"
     >
         <div
+            ref="wrapperRef"
             v-ks-loading="loading"
             class="ks-chart-wrapper"
             v-bind="$attrs"
             @mouseleave="onMouseleave"
         >
             <VChart
+                v-if="canRender"
                 ref="vChartRef"
                 class="ks-chart__inner"
                 :theme="currentTheme"
@@ -28,11 +30,13 @@
 
     <div
         v-else
+        ref="wrapperRef"
         v-ks-loading="loading"
         class="ks-chart-wrapper"
         v-bind="$attrs"
     >
         <VChart
+            v-if="canRender"
             ref="vChartRef"
             class="ks-chart__inner"
             :theme="currentTheme"
@@ -46,7 +50,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted} from "vue"
+    import {ref, computed, onMounted, onUnmounted, watch} from "vue"
+    import {useElementSize} from "@vueuse/core"
     import VChart from "vue-echarts"
     import type {ECharts} from "echarts/core"
     import {use} from "echarts/core"
@@ -115,7 +120,6 @@
     }
 
     let observer: MutationObserver | null = null
-    let rafId: number | null = null
 
     onMounted(() => {
         detectDark()
@@ -124,20 +128,9 @@
             attributes: true,
             attributeFilter: ["class"],
         })
-        // Defer resize until after the browser has done its first layout pass,
-        // preventing the "Can't get DOM width or height" ECharts warning when
-        // the container dimensions are not yet resolved at Vue mount time.
-        rafId = requestAnimationFrame(() => {
-            rafId = null
-            ;(vChartRef.value?.chart as ECharts)?.resize()
-        })
     })
 
     onUnmounted(() => {
-        if (rafId !== null) {
-            cancelAnimationFrame(rafId)
-            rafId = null
-        }
         observer?.disconnect()
     })
 
@@ -183,8 +176,25 @@
     // ─── External tooltip ─────────────────────────────────────────────────────
 
     const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
+    const wrapperRef = ref<HTMLElement | null>(null)
     const tooltipVisible = ref(false)
     const tooltipContent = ref("")
+
+    // Defer mounting VChart until the wrapper has real dimensions. ECharts
+    // emits "Can't get DOM width or height" if it initializes inside a 0×0
+    // container — common when the chart is revealed by a v-if/v-else flip
+    // (e.g. after async data load) and the parent layout (splitter, flex)
+    // has not resolved yet. One-way latch so a later collapse-to-zero
+    // (splitter dragged shut) does not unmount the chart.
+    const {width, height} = useElementSize(wrapperRef)
+    const canRender = ref(false)
+    let stopSizeWatch: (() => void) | null = null
+    stopSizeWatch = watch([width, height], ([w, h]) => {
+        if (w > 0 && h > 0) {
+            canRender.value = true
+            stopSizeWatch?.()
+        }
+    }, {immediate: true})
 
     interface EChartsTooltipParam {
         seriesName?: string

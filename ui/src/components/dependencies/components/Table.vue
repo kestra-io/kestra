@@ -76,22 +76,20 @@
 <script setup lang="ts">
     import {watch, nextTick, ref, computed} from "vue";
 
-    import type cytoscape from "cytoscape";
-
     import Link from "./Link.vue";
     import {KsExecutionStatus} from "@kestra-io/ui-design-system";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
     import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
-    import type {Types, Node} from "../utils/types";
+    import type {Types, Node, Element} from "../utils/types";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
-        elements: cytoscape.ElementDefinition[];
+        elements: Element[];
         highlightShown?: (nodeIDs: string[]) => void;
         selected: Node["id"] | undefined;
         subtype?: Types;
@@ -122,10 +120,12 @@
 
     const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__";
 
+    const isNodeElement = (e: Element): e is {data: Node} => e?.data?.type === NODE;
+
     const namespaces = computed(() => {
         const unique = new Set<string>(
             props.elements
-                ?.filter(e => e?.data?.type === NODE && e?.data?.namespace)
+                ?.filter((e): e is {data: Node} => isNodeElement(e) && !!e.data.namespace)
                 .map(e => e.data.namespace)
         );
 
@@ -145,7 +145,7 @@
         const query = search.value.trim().toLowerCase();
 
         const results = props.elements
-            .filter(({data}) => data.type === NODE)
+            .filter(isNodeElement)
             .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
             .filter(({data}) => {
                 if (!namespace.value) return true;

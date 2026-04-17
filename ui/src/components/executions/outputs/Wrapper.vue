@@ -181,22 +181,25 @@
     const debugCollapse = ref<string>("");
     const debugExpression = ref<string>("");
 
+    const formatTask = (tsk: string) => {
+        if (!tsk) return "";
+        return tsk.includes("-") ? `["${tsk}"]` : `.${tsk}`;
+    };
+
+    const formatPath = (path: string) => {
+        if (!path.includes("-")) return `.${path}`;
+
+        const bracketIndex = path.indexOf("[");
+        if(bracketIndex === -1) {
+            return `["${path}"]`;
+        }
+        const taskInPath = path.substring(0, bracketIndex);
+        const rest = path.substring(bracketIndex);
+
+        return `["${taskInPath}"]${rest}`;
+    };
+
     const computedDebugValue = computed(() => {
-        const formatTask = (task: string) => {
-            if (!task) return "";
-            return task.includes("-") ? `["${task}"]` : `.${task}`;
-        };
-
-        const formatPath = (path: string) => {
-            if (!path.includes("-")) return `.${path}`;
-
-            const bracketIndex = path.indexOf("[");
-            const task = path.substring(0, bracketIndex);
-            const rest = path.substring(bracketIndex);
-
-            return `["${task}"]${rest}`;
-        };
-
         let task = selectedTask.value?.taskId;
         if (!task) return "";
 

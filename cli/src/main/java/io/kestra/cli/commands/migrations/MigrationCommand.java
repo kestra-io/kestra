@@ -12,7 +12,10 @@ import picocli.CommandLine;
     description = "handle migrations",
     mixinStandardHelpOptions = true,
     subcommands = {
-        RunMigrationCommand.class
+        RunMigrationCommand.class,
+        V2TriggerMigrationCommand.class,
+        V2ExecutionResubmitMigrationCommand.class,
+        V2ExecutionOutputMigrationCommand.class
     }
 )
 @Slf4j

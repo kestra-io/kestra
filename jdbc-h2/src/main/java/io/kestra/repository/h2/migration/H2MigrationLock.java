@@ -4,10 +4,13 @@ import io.kestra.core.migration.MigrationLock;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
- * No-op {@link MigrationLock} for H2.
+ * In-memory {@link MigrationLock} for H2 using a {@link ReentrantLock}.
  *
  * <p>H2 is an embedded, single-process database, so distributed locking is not needed.
+ * A JVM-level lock is still used to guard against concurrent threads (e.g. in tests).
  * <p>Active only when H2 is the <em>repository</em> backend, not just the queue, to avoid
  * conflicting with the Elasticsearch repository backend when H2 is used only as the queue.
  */
@@ -15,13 +18,15 @@ import jakarta.inject.Singleton;
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
 public class H2MigrationLock implements MigrationLock {
 
+    private final ReentrantLock lock = new ReentrantLock();
+
     @Override
     public void acquire() {
-        // No-op: H2 is embedded and single-process
+        lock.lock();
     }
 
     @Override
     public void release() {
-        // No-op: H2 is embedded and single-process
+        lock.unlock();
     }
 }

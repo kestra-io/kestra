@@ -1,6 +1,7 @@
 -- PostgreSQL queue baseline schema (Queue 2.0)
 -- Creates the JDBC queue table used by the PostgreSQL queue backend.
 
+DROP TABLE IF EXISTS queues;
 CREATE TABLE IF NOT EXISTS queues (
     "offset" SERIAL PRIMARY KEY,
     type INT NOT NULL,

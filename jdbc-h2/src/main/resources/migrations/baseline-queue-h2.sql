@@ -1,6 +1,7 @@
 -- H2 queue baseline schema (Queue 2.0)
 -- Creates the JDBC queue table used by the memory/H2 queue backend.
 
+DROP TABLE IF EXISTS queues;
 CREATE TABLE IF NOT EXISTS queues (
     "offset" BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     "type" INT NOT NULL,

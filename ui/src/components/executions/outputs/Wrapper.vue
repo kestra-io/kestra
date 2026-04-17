@@ -217,6 +217,24 @@
         return taskRunList.find((e) => e.taskId === filter);
     });
 
+    async function getTaskRunOutputs(id?: string, path?: string): Promise<TransformedTask[]> {
+        if(!id || !execution.value?.id) {
+            return [];
+        }
+        const {data, status} = await outputsSDK.getTaskRunOutputs({
+            executionId: execution.value.id,
+            taskRunId: id,
+        }, {
+            validateStatus: (status) => status === 200 || status === 404,
+        })
+        if(status === 200) {
+            return transform(data, true, path);
+        } else {
+            return [];
+        }
+                
+    }
+
     const cascaderProps: CascaderProps = {
         lazy: true,
         lazyLoad(node, resolve) {
@@ -228,21 +246,8 @@
             }
 
             if(level === 1) {
-                if(!data.id || !execution.value?.id) {
-                    resolve([]);
-                    return;
-                }
-                outputsSDK.getTaskRunOutputs({
-                    executionId: execution.value.id,
-                    taskRunId: data.id,
-                }, {
-                    validateStatus: (status) => status === 200 || status === 404,
-                }).then((res) => {
-                    if(res.status === 200) {
-                        resolve(transform(res.data, true, data.path));
-                    } else {
-                        resolve([]);
-                    }
+                getTaskRunOutputs(data.id, data.path).then((outputs) => {
+                    resolve(outputs);
                 });
                 return;
             }
@@ -342,24 +347,6 @@
     const selected = ref<(string | {uri: string})[]>([]);
 
     onMounted(() => {
-        const task = outputs.value?.[1];
-        if (!task) return;
-
-        selected.value = [task.value];
-        expandedValue.value = task.value;
-
-        const child = task.children?.[1];
-        if (child?.path) {
-            selected.value.push(child.value);
-            expandedValue.value = child.path;
-
-            const grandChild = child.children?.[1];
-            if (grandChild?.path) {
-                selected.value.push(grandChild.value);
-                expandedValue.value = grandChild.path;
-            }
-        }
-
         debugCollapse.value = "debug";
     });
 
@@ -484,6 +471,34 @@
 
         return tasks;
     });
+
+    watch(outputs, (o) => {
+        if(o?.some(t => t.leaf === false)) {
+            const task = o?.filter(t => t.leaf === false)[0];
+            if (!task) return;
+
+            const selectedLocal = [task.value]
+            let expandedValueLocal = task.path;
+
+            getTaskRunOutputs(task.id, task.path).then((children) => {
+                let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
+                
+                do {
+                    selectedLocal.push(child.value);
+                    if(child?.path) {
+                        expandedValueLocal = child.path;
+                    }
+
+                    child = child.children?.filter(t => !t.heading)[0];
+                } while(child?.path)
+
+                selected.value = selectedLocal;
+                if(expandedValueLocal){
+                    expandedValue.value = expandedValueLocal;
+                }
+            })  
+        }
+    })
 
     const pluginsStore = usePluginsStore();
 

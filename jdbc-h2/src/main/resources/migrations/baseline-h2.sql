@@ -1,4 +1,5 @@
--- OSS H2 baseline schema (consolidated from individual Flyway migration scripts)
+-- OSS H2 baseline schema — represents the Kestra 1.3 (Flyway-era) database.
+-- The 2.0 upgrade script (upgrade-v2.0-h2.sql) bridges the gap from this schema to 2.0.
 
 /* ----------------------- functions ----------------------- */
 CREATE ALIAS IF NOT EXISTS JQ_STRING FOR "io.kestra.runner.h2.H2Functions.jqString" ;
@@ -66,10 +67,7 @@ CREATE TABLE IF NOT EXISTS executions (
     ),
     "tenant_id" VARCHAR(250) GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
     "trigger_execution_id" VARCHAR(100) GENERATED ALWAYS AS (JQ_STRING("value", '.trigger.variables.executionId')),
-    "kind" VARCHAR(32) GENERATED ALWAYS AS (JQ_STRING("value", '.kind')),
-    "trigger_id" VARCHAR(150) GENERATED ALWAYS AS (JQ_STRING("value", '.trigger.id')),
-    "parent_id" VARCHAR(100) GENERATED ALWAYS AS (JQ_STRING("value", '.parentId')),
-    "loop_run_index" INT GENERATED ALWAYS AS (JQ_INTEGER("value", '.loopRun.index'))
+    "kind" VARCHAR(32) GENERATED ALWAYS AS (JQ_STRING("value", '.kind'))
 );
 
 CREATE INDEX IF NOT EXISTS executions_namespace ON executions ("deleted", "tenant_id", "namespace");
@@ -79,8 +77,6 @@ CREATE INDEX IF NOT EXISTS executions_start_date ON executions ("deleted", "star
 CREATE INDEX IF NOT EXISTS executions_end_date ON executions ("deleted", "end_date");
 CREATE INDEX IF NOT EXISTS executions_state_duration ON executions ("deleted", "tenant_id", "state_duration");
 CREATE INDEX IF NOT EXISTS executions_trigger_execution_id ON executions ("deleted", "tenant_id", "trigger_execution_id");
-CREATE INDEX idx_executions_trigger_id ON executions ("trigger_id");
-CREATE INDEX IF NOT EXISTS executions_parent_id ON executions ("deleted", "tenant_id", "parent_id");
 
 
 /* ----------------------- triggers ----------------------- */
@@ -100,16 +96,12 @@ CREATE TABLE IF NOT EXISTS triggers (
     "tenant_id" VARCHAR(250) GENERATED ALWAYS AS (JQ_STRING("value", '.tenantId')),
     "worker_id" VARCHAR(250) GENERATED ALWAYS AS (JQ_STRING("value", '.workerId')),
     "disabled" BOOL NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.disabled')),
-    "vnode" INT GENERATED ALWAYS AS (JQ_INTEGER("value", '.vnode')),
-    "locked" BOOLEAN GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.locked')),
-    "next_evaluation_epoch" BIGINT GENERATED ALWAYS AS (JQ_LONG("value", '.nextEvaluationEpoch')),
-    "next_evaluation_date" TIMESTAMP GENERATED ALWAYS AS (CAST(LEFT(JQ_STRING("value", '.nextEvaluationDate'), 26) AS TIMESTAMP))
+    "next_execution_date" TIMESTAMP GENERATED ALWAYS AS (PARSEDATETIME(JQ_STRING("value", '.nextExecutionDate'), 'yyyy-MM-dd''T''HH:mm:ss.SSSXXX'))
 );
 
 CREATE INDEX IF NOT EXISTS triggers_execution_id ON triggers ("execution_id");
 CREATE INDEX IF NOT EXISTS triggers__tenant ON triggers ("tenant_id");
-CREATE INDEX idx_trigger_scheduler ON triggers ("vnode", "next_evaluation_epoch", "locked");
-CREATE INDEX idx_trigger_next_evaluation_date ON triggers ("next_evaluation_date");
+CREATE INDEX IF NOT EXISTS ix_next_execution_date ON triggers ("next_execution_date");
 
 
 /* ----------------------- logs ----------------------- */
@@ -349,36 +341,34 @@ CREATE INDEX IF NOT EXISTS ix_last_deleted_tenant_namespace_version ON namespace
 CREATE INDEX IF NOT EXISTS ix_last_deleted_tenant_path_version ON namespace_file_metadata ("last", "deleted", "tenant_id", "path", "version");
 
 
-/* ----------------------- locks ----------------------- */
-CREATE TABLE IF NOT EXISTS locks (
+/* ----------------------- templates ----------------------- */
+CREATE TABLE IF NOT EXISTS templates (
     "key" VARCHAR(250) NOT NULL PRIMARY KEY,
     "value" TEXT NOT NULL,
-    "category" VARCHAR(250) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.category')),
-    "id" VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.id')),
-    "owner" VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.owner'))
+    "deleted" BOOL NOT NULL GENERATED ALWAYS AS (JQ_BOOLEAN("value", '.deleted')),
+    "id" VARCHAR(100) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.id')),
+    "namespace" VARCHAR(150) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.namespace')),
+    "fulltext" TEXT NOT NULL GENERATED ALWAYS AS (
+        JQ_STRING("value", '.id') || JQ_STRING("value", '.namespace')
+    )
 );
 
-CREATE INDEX IF NOT EXISTS locks__category_id ON locks ("category", "id");
+CREATE INDEX IF NOT EXISTS templates_namespace ON templates ("deleted", "namespace");
+CREATE INDEX IF NOT EXISTS templates_namespace__id ON templates ("deleted", "namespace", "id");
+
+
+/* ----------------------- executorstate ----------------------- */
+CREATE TABLE IF NOT EXISTS executorstate (
+    "key" VARCHAR(250) NOT NULL PRIMARY KEY,
+    "value" TEXT NOT NULL
+);
 
 
 /* ----------------------- worker_job_running ----------------------- */
 CREATE TABLE IF NOT EXISTS worker_job_running (
     "key" VARCHAR(250) NOT NULL PRIMARY KEY,
     "value" TEXT NOT NULL,
-    "worker_uid" VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.workerInstance.uid'))
+    "worker_uuid" VARCHAR(36) NOT NULL GENERATED ALWAYS AS (JQ_STRING("value", '.workerInstance.workerUuid'))
 );
 
-CREATE INDEX IF NOT EXISTS worker_job_running_worker_uid ON worker_job_running ("worker_uid");
-
-
-/* ----------------------- task_outputs ----------------------- */
-CREATE TABLE IF NOT EXISTS task_outputs (
-    "key" VARCHAR(250) PRIMARY KEY,
-    "task_run_id" VARCHAR(150) NOT NULL,
-    "tenant_id" VARCHAR(150) NOT NULL,
-    "execution_id" VARCHAR(150) NOT NULL,
-    "value" LONGBLOB,
-    "uri" VARCHAR(250)
-);
-
-CREATE INDEX IF NOT EXISTS task_outputs_execution_id ON task_outputs ("execution_id");
+CREATE INDEX IF NOT EXISTS worker_job_running_worker_uuid ON worker_job_running ("worker_uuid");

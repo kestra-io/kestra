@@ -1,4 +1,5 @@
--- OSS MySQL baseline schema (consolidated from individual Flyway migration scripts)
+-- OSS MySQL baseline schema — represents the Kestra 1.3 (Flyway-era) database.
+-- The 2.0 upgrade script (upgrade-v2.0-mysql.sql) bridges the gap from this schema to 2.0.
 
 CREATE FUNCTION IF NOT EXISTS PARSE_ISO8601_DURATION(duration VARCHAR(20))
     RETURNS bigint
@@ -86,9 +87,6 @@ CREATE TABLE IF NOT EXISTS `executions` (
     `tenant_id` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.tenantId') STORED,
     `trigger_execution_id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.trigger.variables.executionId') STORED,
     `kind` VARCHAR(32) GENERATED ALWAYS AS (value ->> '$.kind') STORED,
-    `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.trigger.id') STORED,
-    `parent_id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.parentId') STORED,
-    `loop_run_index` INT GENERATED ALWAYS AS (value ->> '$.loopRun.index') STORED,
     INDEX ix_namespace (deleted, tenant_id, namespace),
     INDEX ix_flowId (deleted, tenant_id, flow_id),
     INDEX ix_state_current (deleted, tenant_id, state_current),
@@ -96,8 +94,6 @@ CREATE TABLE IF NOT EXISTS `executions` (
     INDEX ix_end_date (deleted, tenant_id, end_date),
     INDEX ix_state_duration (deleted, tenant_id, state_duration),
     INDEX ix_trigger_execution_id (deleted, tenant_id, trigger_execution_id),
-    INDEX idx_executions_trigger_id (trigger_id),
-    INDEX executions_parent_id (deleted, tenant_id, parent_id),
     FULLTEXT ix_fulltext (namespace, flow_id, id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -113,14 +109,20 @@ CREATE TABLE IF NOT EXISTS triggers (
     `tenant_id` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.tenantId') STORED,
     `worker_id` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.workerId') STORED,
     `disabled` BOOL GENERATED ALWAYS AS (value ->> '$.disabled' = 'true') STORED NOT NULL,
-    `vnode` INT GENERATED ALWAYS AS (CAST(value ->> '$.vnode' AS SIGNED)) STORED,
-    `locked` BOOL GENERATED ALWAYS AS (value ->> '$.locked' = 'true') STORED,
-    `next_evaluation_epoch` BIGINT GENERATED ALWAYS AS (CAST(value ->> '$.nextEvaluationEpoch' AS SIGNED)) STORED,
-    `next_evaluation_date` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.nextEvaluationDate', '%Y-%m-%dT%H:%i:%s.%fZ')) STORED,
+    `next_execution_date` DATETIME(6) GENERATED ALWAYS AS (
+        IF(
+            SUBSTRING(value ->> '$.nextExecutionDate', LENGTH(value ->> '$.nextExecutionDate'), LENGTH(value ->> '$.nextExecutionDate')) = 'Z',
+            STR_TO_DATE(value ->> '$.nextExecutionDate', '%Y-%m-%dT%H:%i:%s.%fZ'),
+            CONVERT_TZ(
+                STR_TO_DATE(SUBSTRING(value ->> '$.nextExecutionDate', 1, LENGTH(value ->> '$.nextExecutionDate') - 6), '%Y-%m-%dT%H:%i:%s.%f'),
+                SUBSTRING(value ->> '$.nextExecutionDate', LENGTH(value ->> '$.nextExecutionDate') - 5, 5),
+                'UTC'
+                )
+        )
+    ) STORED,
     INDEX ix_execution_id (execution_id),
     INDEX ix_tenant_id (tenant_id),
-    INDEX idx_trigger_scheduler (vnode, next_evaluation_epoch, locked),
-    INDEX idx_trigger_next_evaluation_date (next_evaluation_date),
+    INDEX ix_next_execution_date (next_execution_date),
     FULLTEXT ix_fulltext (namespace, flow_id, trigger_id, execution_id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -367,14 +369,23 @@ CREATE TABLE IF NOT EXISTS namespace_file_metadata (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-/* ----------------------- locks ----------------------- */
-CREATE TABLE IF NOT EXISTS locks (
+/* ----------------------- templates ----------------------- */
+CREATE TABLE IF NOT EXISTS `templates` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
-    `category` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.category') STORED NOT NULL,
-    `id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
-    `owner` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.owner') STORED NOT NULL,
-    INDEX ix_category_id (category, id)
+    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
+    `id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
+    `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
+    INDEX ix_namespace (deleted, namespace),
+    INDEX ix_namespace__id (deleted, namespace, id),
+    FULLTEXT ix_fulltext (namespace, id)
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+/* ----------------------- executorstate ----------------------- */
+CREATE TABLE IF NOT EXISTS `executorstate` (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
@@ -382,18 +393,6 @@ CREATE TABLE IF NOT EXISTS locks (
 CREATE TABLE IF NOT EXISTS worker_job_running (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
-    `worker_uid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.uid') STORED NOT NULL,
-    INDEX ix_worker_uid (worker_uid)
-) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-
-/* ----------------------- task_outputs ----------------------- */
-CREATE TABLE IF NOT EXISTS task_outputs (
-    `key` VARCHAR(250) PRIMARY KEY,
-    `task_run_id` VARCHAR(150) NOT NULL,
-    `tenant_id` VARCHAR(150) NOT NULL,
-    `execution_id` VARCHAR(150) NOT NULL,
-    `value` LONGBLOB,
-    `uri` VARCHAR(250),
-    INDEX task_outputs_execution_id (`execution_id`)
+    `worker_uuid` VARCHAR(36) GENERATED ALWAYS AS (value ->> '$.workerInstance.workerUuid') STORED NOT NULL,
+    INDEX ix_worker_uuid (worker_uuid)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

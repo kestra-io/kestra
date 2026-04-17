@@ -1,3 +1,4 @@
+
 package io.kestra.core.services;
 
 import java.util.Arrays;
@@ -408,6 +409,12 @@ class ConditionServiceTest {
 
             @Override
             public Logger logger() { return LoggerFactory.getLogger(ConditionServiceTest.class); }
+
+            @Override
+            public Mode getMode() { return Mode.ALL; }
+
+            @Override
+            public Integer getMinSatisfied() { return null; }
         };
 
         // When
@@ -448,6 +455,12 @@ class ConditionServiceTest {
 
             @Override
             public Logger logger() { return LoggerFactory.getLogger(ConditionServiceTest.class); }
+
+            @Override
+            public Mode getMode() { return Mode.ALL; }
+
+            @Override
+            public Integer getMinSatisfied() { return null; }
 
             @Override
             public boolean test(ConditionContext conditionContext) throws InternalException {

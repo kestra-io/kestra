@@ -30,7 +30,7 @@ public abstract class PostgresFlowRepositoryService {
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
@@ -70,7 +70,7 @@ public abstract class PostgresFlowRepositoryService {
                 }
             });
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
 }

@@ -17,6 +17,6 @@ public abstract class PostgresKvMetadataRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(List.of("fulltext"), query));
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

@@ -18,6 +18,6 @@ public abstract class MysqlDashboardRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(Arrays.asList("title"), query));
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

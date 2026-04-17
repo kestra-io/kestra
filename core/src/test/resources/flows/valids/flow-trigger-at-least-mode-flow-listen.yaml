@@ -1,0 +1,23 @@
+id: flow-trigger-at-least-mode-flow-listen
+namespace: io.kestra.tests.trigger.at.least.mode
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    mode: AT_LEAST
+    minSatisfied: 2
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.at.least.mode
+        flowId: flow-trigger-at-least-mode-flow-a
+        states: [SUCCESS]
+      - namespace: io.kestra.tests.trigger.at.least.mode
+        flowId: flow-trigger-at-least-mode-flow-b
+        states: [SUCCESS]
+      - namespace: io.kestra.tests.trigger.at.least.mode
+        flowId: flow-trigger-at-least-mode-flow-c
+        states: [SUCCESS]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

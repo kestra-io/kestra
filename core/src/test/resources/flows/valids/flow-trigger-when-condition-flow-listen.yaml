@@ -5,7 +5,7 @@ triggers:
   - id: on_completion
     type: io.kestra.plugin.core.trigger.Flow
     states: [ SUCCESS ]
-    when: '{{ labels.source ??? labels.source == "when-test" }}'
+    when: '{{ labels contains "source" ? labels.source == "when-test" : false }}'
 
 tasks:
   - id: only

@@ -23,6 +23,10 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
 
     Logger logger();
 
+    Mode getMode();
+
+    Integer getMinSatisfied();
+
     /**
      * This conditions will only validate previously calculated value on
      * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) and {@link MultipleConditionStateStore#save(List)} by the executor.
@@ -55,7 +59,11 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
             .filter(Map.Entry::getValue)
             .count();
 
-        boolean result = getConditions().size() == validatedCount;
+        boolean result = switch(getMode()) {
+            case Mode.ALL -> getConditions().size() == validatedCount;
+            case Mode.ANY -> validatedCount > 0;
+            case Mode.AT_LEAST -> validatedCount >= getMinSatisfied();
+        };
 
         Logger log = logger();
         if (result && log.isDebugEnabled()) {
@@ -76,5 +84,9 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
         }
 
         return result;
+    }
+
+    enum Mode {
+        ALL, ANY, AT_LEAST
     }
 }

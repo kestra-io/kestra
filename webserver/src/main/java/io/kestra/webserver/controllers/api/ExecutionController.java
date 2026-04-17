@@ -13,11 +13,14 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.webserver.models.api.ApiExecution;
+import io.kestra.webserver.models.api.ApiLightExecution;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
@@ -158,9 +161,6 @@ public class ExecutionController {
     protected ExecutionService executionService;
 
     @Inject
-    private ConditionService conditionService;
-
-    @Inject
     private ExecutionStreamingService streamingService;
 
     @Inject
@@ -220,7 +220,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
-    public PagedResults<Execution> searchExecutions(
+    public PagedResults<ApiLightExecution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
@@ -235,13 +235,15 @@ public class ExecutionController {
         ) @QueryFilterFormat List<QueryFilter> filters
 
     ) {
-        return PagedResults.of(
-            executionRepository.find(
-                PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
-                tenantService.resolveTenant(),
-                QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
-            )
+        var executions = executionRepository.find(
+            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            tenantService.resolveTenant(),
+            QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
         );
+        var apiExecution = executions.stream()
+            .map(execution -> ApiLightExecution.of(execution))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -359,10 +361,11 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}")
     @Operation(tags = { "Executions" }, summary = "Get an execution")
-    public Execution getExecution(
+    public ApiExecution getExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
+            .map(ApiExecution::of)
             .orElse(null);
     }
 
@@ -452,15 +455,16 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get
     @Operation(tags = { "Executions" }, summary = "Search for executions for a flow")
-    public PagedResults<Execution> searchExecutionsByFlowId(
+    public PagedResults<ApiLightExecution> searchExecutionsByFlowId(
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size) {
-        return PagedResults.of(
-            executionRepository
-                .findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size))
-        );
+        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
+        var apiExecution = executions.stream()
+            .map(execution -> ApiLightExecution.of(execution))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
 
     @ExecuteOn(TaskExecutors.IO)

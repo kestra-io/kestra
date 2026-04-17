@@ -1165,7 +1165,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_Execution_"
+                $ref: "#/components/schemas/PagedResults_ApiLightExecution_"
   /api/v1/{tenant}/executions/by-ids:
     delete:
       tags:
@@ -2061,7 +2061,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedResults_Execution_"
+                $ref: "#/components/schemas/PagedResults_ApiLightExecution_"
   /api/v1/{tenant}/executions/unqueue/by-ids:
     post:
       tags:
@@ -2405,7 +2405,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Execution"
+                $ref: "#/components/schemas/ApiExecution"
     delete:
       tags:
       - Executions
@@ -5824,6 +5824,108 @@ components:
             type: string
         existingOnly:
           type: boolean
+    ApiExecution:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        id:
+          type: string
+        namespace:
+          type: string
+        flowId:
+          type: string
+        flowRevision:
+          type: integer
+          format: int32
+        taskRunList:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiTaskRun"
+        inputs:
+          type: object
+          additionalProperties:
+            type: object
+        outputs:
+          type: object
+          additionalProperties:
+            type: object
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        variables:
+          type: object
+          additionalProperties:
+            type: object
+        state:
+          $ref: "#/components/schemas/State"
+        parentId:
+          type: string
+        originalId:
+          type: string
+        trigger:
+          $ref: "#/components/schemas/ExecutionTrigger"
+        metadata:
+          $ref: "#/components/schemas/ExecutionMetadata"
+        scheduleDate:
+          type: string
+          format: date-time
+        traceParent:
+          type: string
+        fixtures:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskFixture"
+        kind:
+          $ref: "#/components/schemas/ExecutionKind"
+        breakpoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Breakpoint"
+        loopRun:
+          $ref: "#/components/schemas/LoopRun"
+    ApiLightExecution:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        id:
+          type: string
+        namespace:
+          type: string
+        flowId:
+          type: string
+        flowRevision:
+          type: integer
+          format: int32
+        inputs:
+          type: object
+          additionalProperties:
+            type: object
+        outputs:
+          type: object
+          additionalProperties:
+            type: object
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        state:
+          $ref: "#/components/schemas/State"
+        parentId:
+          type: string
+        originalId:
+          type: string
+        trigger:
+          $ref: "#/components/schemas/ExecutionTrigger"
+        scheduleDate:
+          type: string
+          format: date-time
+        kind:
+          $ref: "#/components/schemas/ExecutionKind"
+        loopRun:
+          $ref: "#/components/schemas/LoopRun"
     ApiSecretListResponse_ApiSecretMeta_:
       required:
       - readOnly
@@ -5846,6 +5948,32 @@ components:
       properties:
         key:
           type: string
+    ApiTaskRun:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        parentTaskRunId:
+          type: string
+        value:
+          type: string
+        attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskRunAttempt"
+        assets:
+          $ref: "#/components/schemas/AssetsInOut"
+        state:
+          $ref: "#/components/schemas/State"
+        iteration:
+          type: integer
+          format: int32
+        dynamic:
+          type: boolean
+        forceExecution:
+          type: boolean
     ApiTriggerAndState:
       type: object
       properties:
@@ -7269,6 +7397,19 @@ components:
           format: int32
         inline:
           type: boolean
+    PagedResults_ApiLightExecution_:
+      required:
+      - results
+      - total
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiLightExecution"
+        total:
+          type: integer
+          format: int64
     PagedResults_ApiTriggerAndState_:
       required:
       - results
@@ -7331,19 +7472,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DashboardController.DashboardResponse"
-        total:
-          type: integer
-          format: int64
-    PagedResults_Execution_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/Execution"
         total:
           type: integer
           format: int64
@@ -7905,9 +8033,6 @@ components:
     State:
       required:
       - current
-      - getDuration
-      - getEndDate
-      - getStartDate
       type: object
       properties:
         duration:
@@ -7931,6 +8056,7 @@ components:
             $ref: "#/components/schemas/State.History"
         getDuration:
           type: string
+          nullable: true
           readOnly: true
         getStartDate:
           type: string
@@ -7939,6 +8065,7 @@ components:
         getEndDate:
           type: string
           format: date-time
+          nullable: true
           readOnly: true
     State.History:
       required:

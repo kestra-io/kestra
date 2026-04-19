@@ -591,7 +591,7 @@
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
-                    const val = input.type === "MULTISELECT" 
+                    const val = input.type === "MULTISELECT"
                         ? multiSelectInputs[input.id] as unknown[] | undefined
                         : inputsValues[input.id] as unknown[] | string | undefined;
                     if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
@@ -622,7 +622,7 @@
 
     function addNewArrayItem(input: InputMetaData): void {
         if (!editableItems[input.id]) {
-            editableItems[input.id] = parseArrayValue(input.id).map(item => 
+            editableItems[input.id] = parseArrayValue(input.id).map(item =>
                 item?.toString() || ""
             );
         }

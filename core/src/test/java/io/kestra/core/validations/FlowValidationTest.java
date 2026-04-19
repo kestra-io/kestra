@@ -265,6 +265,48 @@ class FlowValidationTest {
         );
     };
 
+    @Test
+    void shouldNotFailValidationWhenSecretPropertyHasPlainTextValue() {
+        // Given
+        SecretFieldTask task = SecretFieldTask.builder()
+            .id("secret-task")
+            .type(SecretFieldTask.class.getName())
+            .secretField("plain-text-value")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.tests")
+            .tasks(List.of(task))
+            .build();
+
+        // When
+        Optional<ConstraintViolationException> violation = modelValidator.isValid(flow);
+
+        // Then: plain-text secret is a warning, not a hard validation error
+        assertThat(violation).isEmpty();
+    }
+
+    @Test
+    void shouldProduceWarningWhenSecretPropertyHasPlainTextValue() {
+        // Given
+        SecretFieldTask task = SecretFieldTask.builder()
+            .id("secret-task")
+            .type(SecretFieldTask.class.getName())
+            .secretField("plain-text-value")
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.tests")
+            .tasks(List.of(task))
+            .build();
+
+        // When
+        List<String> warnings = flowService.warnings(flow, TenantService.MAIN_TENANT);
+
+        // Then
+        assertThat(warnings).anyMatch(w -> w.contains("secret-task") && w.contains("secretField"));
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

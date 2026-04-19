@@ -1,22 +1,14 @@
 <template>
     <el-alert id="error" type="error" showIcon :closable="false">
         <template #title>
-            <div v-if="logs.length" @click="isExpanded = !isExpanded">
-                <Markdown
-                    v-if="logs.at(-1)?.message"
-                    :source="`${$t('execution_failed')}: ${logs.at(-1)!.message}`"
-                    :html="false"
-                />
-                <component :is="isExpanded ? ChevronUp : ChevronDown" />
-            </div>
-            <span v-else>{{ $t("error detected") }}</span>
+            <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
 
-        <div v-if="isExpanded && logs" class="logs">
+        <div v-if="logs" class="logs">
             <div v-for="(log, lIdx) in logs.slice(0, 4)" :key="lIdx">
                 <LogLine
                     :level="log.level"
-                    :log="log"
+                    :log="{...log, message: stripBackticks(log.message ?? '')}"
                     :excludeMetas="['namespace', 'flowId', 'executionId']"
                 />
             </div>
@@ -42,15 +34,13 @@
 
     import {Log} from "../../../../../stores/logs";
 
-    import Markdown from "../../../../layout/Markdown.vue";
     import LogLine from "../../../../logs/LogLine.vue";
-
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
     const props = defineProps<{ execution: Execution }>();
 
-    const isExpanded = ref(false);
+    function stripBackticks(message: string): string {
+        return message.replace(/`([^`]*)`/g, "$1");
+    }
 
     const to = {
         name: "executions/update",
@@ -93,14 +83,10 @@
             & span {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
                 font-size: var(--el-alert-title-font-size);
                 line-height: 24px;
                 color: var(--el-color-error);
 
-                & .markdown p {
-                    margin-bottom: 0;
-                }
             }
         }
 

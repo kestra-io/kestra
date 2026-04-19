@@ -34,6 +34,7 @@ import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +58,15 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class WorkerJobFetcher extends WorkerLoop {
+
+    /**
+     * Qualifier of the worker-local cluster-event broadcast bus.
+     * <p>
+     * Bound only on a dedicated worker process, which has no direct access to the shared
+     * broadcast queue backend. In every other topology the qualifier is unbound and the
+     * gRPC relay is a no-op.
+     */
+    public static final String WORKER_LOCAL_CLUSTER_EVENTS = "workerLocalClusterEvents";
 
     /**
      * Interval for checking capacity changes and sending permit updates.
@@ -120,13 +130,16 @@ public class WorkerJobFetcher extends WorkerLoop {
      * @param workerControllerServiceStub the gRPC worker controller service stub.
      * @param workerQueueRegistry the worker queue registry.
      * @param executionKilledManager the execution killed manager.
-     * @param clusterEventQueue the local cluster event broadcast queue for re-emitting events received from the controller.
+     * @param clusterEventQueue the worker-local cluster-event broadcast queue used to relay events
+     *                          received from the controller to in-process subscribers. May be {@code null}
+     *                          when the process has direct access to the shared broadcast queue (see
+     *                          {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
         final WorkerQueueRegistry workerQueueRegistry,
         final ExecutionKilledManager executionKilledManager,
-        @Nullable final BroadcastQueueInterface<ClusterEvent> clusterEventQueue) {
+        @Nullable @Named(WORKER_LOCAL_CLUSTER_EVENTS) final BroadcastQueueInterface<ClusterEvent> clusterEventQueue) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
@@ -285,8 +298,6 @@ public class WorkerJobFetcher extends WorkerLoop {
                         if (clusterEventQueue != null) {
                             log.debug("Received cluster event via gRPC: type={}", clusterBroadcast.payload().eventType());
                             clusterEventQueue.emit(clusterBroadcast.payload());
-                        } else {
-                            log.warn("Received cluster event but no BroadcastQueue<ClusterEvent> is available, ignoring: type={}", clusterBroadcast.payload().eventType());
                         }
                     }
                 }

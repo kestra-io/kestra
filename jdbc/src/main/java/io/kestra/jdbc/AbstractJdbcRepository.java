@@ -244,7 +244,7 @@ public abstract class AbstractJdbcRepository<T> {
                     .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
                     .asTable("page")
             )
-            .where(DSL.trueCondition());
+            .where(DSL.noCondition());
     }
 
     @SneakyThrows

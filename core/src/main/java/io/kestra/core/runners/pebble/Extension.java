@@ -120,6 +120,9 @@ public class Extension extends AbstractExtension {
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
         filters.put("string", new StringFilter());
+        filters.put(RegexMatchFilter.NAME, new RegexMatchFilter());
+        filters.put(RegexReplaceFilter.NAME, new RegexReplaceFilter());
+        filters.put(RegexExtractFilter.NAME, new RegexExtractFilter());
         return filters;
     }
 
@@ -137,41 +140,48 @@ public class Extension extends AbstractExtension {
     public Map<String, Function> getFunctions() {
         Map<String, Function> functions = new HashMap<>();
 
-        functions.put("now", new NowFunction());
-        functions.put("fromJson", new FromJsonFunction());
-        functions.put("currentEachOutput", new CurrentEachOutputFunction());
+        functions.put(NowFunction.NAME, new NowFunction());
+        functions.put(FromJsonFunction.NAME, new FromJsonFunction());
+        functions.put(CurrentEachOutputFunction.NAME, new CurrentEachOutputFunction());
         functions.put(SecretFunction.NAME, secretFunction);
-        functions.put("kv", kvFunction);
-        functions.put("read", readFileFunction);
-        functions.put("fileURI", fileURIFunction);
+        functions.put(KvFunction.NAME, kvFunction);
+        functions.put(ReadFileFunction.NAME, readFileFunction);
+        functions.put(FileURIFunction.NAME, fileURIFunction);
         if (renderFunction != null) {
-            functions.put(renderFunction.functionName(), renderFunction);
+            functions.put(RenderFunction.NAME, renderFunction);
         }
         if (renderOnceFunction != null) {
-            functions.put(renderOnceFunction.functionName(), renderOnceFunction);
+            functions.put(RenderOnceFunction.NAME, renderOnceFunction);
         }
-        functions.put("encrypt", new EncryptFunction());
-        functions.put("decrypt", new DecryptFunction());
-        functions.put("yaml", new YamlFunction());
-        functions.put("printContext", new FetchContextFunction());
-        functions.put("fetchContext", new FetchContextFunction());
-        functions.put("uuid", new UUIDFunction());
-        functions.put("id", new IDFunction());
-        functions.put("ksuid", new KSUIDFunction());
-        functions.put("fromIon", new FromIonFunction());
-        functions.put("fileSize", fileSizeFunction);
+        functions.put(EncryptFunction.NAME, new EncryptFunction());
+        functions.put(DecryptFunction.NAME, new DecryptFunction());
+        functions.put(YamlFunction.NAME, new YamlFunction());
+        functions.put(FetchContextFunction.ALIAS, new FetchContextFunction());
+        functions.put(FetchContextFunction.NAME, new FetchContextFunction());
+        functions.put(UUIDFunction.NAME, new UUIDFunction());
+        functions.put(IDFunction.NAME, new IDFunction());
+        functions.put(KSUIDFunction.NAME, new KSUIDFunction());
+        functions.put(FromIonFunction.NAME, new FromIonFunction());
+        functions.put(FileSizeFunction.NAME, fileSizeFunction);
         if (this.errorLogsFunction != null) {
-            functions.put("errorLogs", errorLogsFunction);
+            functions.put(ErrorLogsFunction.NAME, errorLogsFunction);
         }
-        functions.put("randomInt", new RandomIntFunction());
-        functions.put("randomPort", new RandomPortFunction());
-        functions.put("fileExists", fileExistsFunction);
-        functions.put("isFileEmpty", isFileEmptyFunction);
-        functions.put("nanoId", new NanoIDFunction());
-        functions.put("tasksWithState", new TasksWithStateFunction());
+        functions.put(RandomIntFunction.NAME, new RandomIntFunction());
+        functions.put(RandomPortFunction.NAME, new RandomPortFunction());
+        functions.put(FileExistsFunction.NAME, fileExistsFunction);
+        functions.put(IsFileEmptyFunction.NAME, isFileEmptyFunction);
+        functions.put(NanoIDFunction.NAME, new NanoIDFunction());
+        functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
         functions.put(IterationOutputFunction.NAME, new IterationOutputFunction());
         functions.put(HttpFunction.NAME, httpFunction);
-        functions.put("parentOutput", new ParentOutputFunction());
+        functions.put(ParentOutputFunction.NAME, new ParentOutputFunction());
+        functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
+        functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
+        functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
+        functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
+        functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
+        functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
+        functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
         return functions;
     }
 

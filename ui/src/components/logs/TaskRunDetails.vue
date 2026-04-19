@@ -1035,7 +1035,7 @@
 
     .log-lines {
         transition: max-height 0.2s ease-out;
-        max-height: 50vh;
+        max-height: 300px;
 
         &.single-line {
             max-height: calc(100vh - 250px);

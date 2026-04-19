@@ -18,6 +18,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
@@ -27,14 +28,21 @@ public abstract class AbstractLoaderExtension {
 
     protected void loadApplicationContext(ExtensionContext extensionContext) {
         if (context == null) {
-            extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).put("test", "bla");
+            // Try KestraTestExtension namespace (used by @KestraTest)
+            context = extensionContext.getRoot().getStore(
+                ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())
+            ).get(ApplicationContext.class, ApplicationContext.class);
 
-            context = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
-                .get(ApplicationContext.class, ApplicationContext.class);
+            // Fallback to MicronautJunit5Extension namespace (used by @MicronautTest)
+            if (context == null) {
+                context = extensionContext.getRoot().getStore(
+                    ExtensionContext.Namespace.create(MicronautJunit5Extension.class)
+                ).get(ApplicationContext.class, ApplicationContext.class);
+            }
 
             if (context == null) {
                 throw new IllegalStateException(
-                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'"
+                    "No application context, to use this annotation you need to add '@KestraTest' or '@MicronautTest'"
                 );
             }
         }

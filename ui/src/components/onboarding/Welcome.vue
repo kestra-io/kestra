@@ -154,11 +154,18 @@
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
+    :global(main:has(section#welcome)) {
+        max-height: 100%;
+        overflow: hidden;
+    }
+
     section#welcome {
         position: relative;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
         background: url("./assets/background.svg") center top / cover no-repeat;
-        min-height: calc(100vh - 60px);
+        height: 100%;
+        padding-bottom: 2rem;
 
         .welcome-copilot-tags {
             display: flex;

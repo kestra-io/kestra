@@ -12,7 +12,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
+
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.Await;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
@@ -57,7 +58,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
@@ -232,63 +232,16 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        ) @QueryFilterFormat List<QueryFilter> filters
 
     ) {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            startDate,
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
         return PagedResults.of(
             executionRepository.find(
                 PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
                 tenantService.resolveTenant(),
-                filters
+                QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
             )
         );
-    }
-
-    @VisibleForTesting
-    ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
-        if (timeRange != null) {
-            if (absoluteDateTime != null) {
-                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
-            }
-            return now.minus(timeRange.abs());
-        }
-
-        return absoluteDateTime;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -320,6 +273,31 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/eval", consumes = MediaType.TEXT_PLAIN)
+    @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this execution")
+    public EvalResult evalExpression(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "The Pebble expression that should be evaluated") @Body String expression) {
+        Execution execution = executionRepository
+            .findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
+
+        Flow flow = flowRepository
+            .findByExecution(execution);
+
+        try {
+            return EvalResult.builder()
+                .result(runContextRender(flow, execution, expression))
+                .build();
+        } catch (IllegalVariableEvaluationException e) {
+            return EvalResult.builder()
+                .error(e.getMessage())
+                .stackTrace(ExceptionUtils.getStackTrace(e))
+                .build();
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this taskrun")
     public EvalResult evalTaskRunExpression(
@@ -348,6 +326,14 @@ public class ExecutionController {
                 .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
+    }
+
+    private String runContextRender(Flow flow, Execution execution, String expression) throws IllegalVariableEvaluationException {
+        return runContextFactory.of(
+            flow,
+            execution,
+            false
+        ).render(expression);
     }
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
@@ -454,46 +440,11 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return deleteExecutionsByIds(ids, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
@@ -645,22 +596,6 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/trigger/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = { "Executions" }, summary = "Trigger a new execution for a flow")
-    @ApiResponse(responseCode = "409", description = "if the flow is disabled")
-    @SingleResult
-    @Deprecated
-    public Publisher<ExecutionResponse> triggerExecution(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @Nullable @PathVariable String id,
-        @RequestBody(description = "The inputs") @Nullable @Body MultipartBody inputs,
-        @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
-        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision) throws IOException {
-        return this.createExecution(namespace, id, inputs, labels, wait, revision, Optional.empty(), Optional.empty(), Optional.empty());
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{id}/validate", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = { "Executions" }, summary = "Validate the creation of a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
@@ -808,10 +743,10 @@ public class ExecutionController {
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs,
             List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
-            Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, URI url) {
+            Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
                 tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
-                traceParent, fixtures, kind, breakpoints
+                traceParent, fixtures, kind, breakpoints, loopRun
             );
 
             this.url = url;
@@ -840,6 +775,7 @@ public class ExecutionController {
                 execution.getFixtures(),
                 execution.getKind(),
                 execution.getBreakpoints(),
+                execution.getLoopRun(),
                 url
             );
         }
@@ -1009,10 +945,10 @@ public class ExecutionController {
         }
         this.controlRevision(execution.get(), revision);
 
-        if (!(execution.get().getState().isFailed())) {
+        if (!(execution.get().getState().canBeRestarted())) {
             throw new IllegalStateException(
-                "Execution must be failed to be restarted, current state is '" +
-                    execution.get().getState().getCurrent() + "' !"
+                "Execution must be terminated or paused to be restarted, " +
+                    "current state is '" + execution.get().getState().getCurrent() + "' !"
             );
         }
 
@@ -1037,7 +973,8 @@ public class ExecutionController {
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "execution not in state PAUSED or terminated, or is KILLED",
+                        "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                            "current state is '" + execution.get().getState().getCurrent() + "' !",
                         executionId,
                         String.class,
                         "execution",
@@ -1082,43 +1019,8 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
         return restartExecutionsByIds(ids);
     }
 
@@ -1346,42 +1248,8 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return updateExecutionsStatusByIds(ids, newStatus);
     }
@@ -1654,43 +1522,8 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return resumeExecutionsByIds(ids);
     }
@@ -1774,43 +1607,8 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return pauseExecutionsByIds(ids);
     }
@@ -1822,43 +1620,8 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return killExecutionsByIds(ids);
     }
@@ -1872,43 +1635,8 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return replayExecutionsByIds(ids, latestRevision);
     }
@@ -1985,11 +1713,13 @@ public class ExecutionController {
 
             // Check if execution exists
             try {
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500),
-                    Duration.ofSeconds(10)
-                );
+                Execution execution = Await.await()
+                    .atMost(Duration.ofSeconds(10))
+                    .pollInterval(Duration.ofMillis(500))
+                    .until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Objects::nonNull
+                    );
 
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
@@ -2211,43 +1941,8 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return setLabelsOnTerminatedExecutionsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }
@@ -2337,43 +2032,8 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return unqueueExecutionsByIds(ids, newState);
     }
@@ -2469,43 +2129,8 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return forceRunByIds(ids);
     }
@@ -2575,7 +2200,7 @@ public class ExecutionController {
     public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
-        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) throws TimeoutException {
+        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) {
         String subscriberId = UUID.randomUUID().toString();
 
         // NOTE: ideally, we should load the execution inside the Flux.
@@ -2583,11 +2208,13 @@ public class ExecutionController {
         //  This should not be an issue as long as it executes on an IO thread.
 
         // Check if execution exists
-        Execution current = Await.until(
-            () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-            Duration.ofMillis(500),
-            Duration.ofSeconds(10)
-        );
+        Execution current = Await.await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(500))
+            .until(
+                () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                Objects::nonNull
+            );
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 
@@ -2684,7 +2311,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportExecutions(
+    public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2693,7 +2320,7 @@ public class ExecutionController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
@@ -2780,7 +2407,7 @@ public class ExecutionController {
 
     /**
      * For override purpose.
-     * 
+     *
      * @param execution
      * @return true if the user has the authorization, false else.
      */

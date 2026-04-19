@@ -92,8 +92,8 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "scope",
                     label: t("filter.scope.label"),
                     description: t("filter.scope.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "radio",
+                    comparators: [Comparators.IN, Comparators.NOT_IN],
+                    valueType: "multi-select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.SCOPES;
@@ -139,6 +139,17 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH
+                    ],
+                    valueType: "text",
+                    searchable: true
+                },
+                {
+                    key: "parentId",
+                    label: t("filter.parentId.label"),
+                    description: t("filter.parentId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
                     searchable: true

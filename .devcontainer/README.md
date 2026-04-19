@@ -112,7 +112,7 @@ Then add the following settings to the `.vscode/launch.json` file:
       "type": "java",
       "name": "Kestra Standalone",
       "request": "launch",
-      "mainClass": "io.kestra.cli.App",
+      "mainClass": "io.kestra.cli.Kestra",
       "projectName": "cli",
       "args": "server standalone"
     }

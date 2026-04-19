@@ -42,12 +42,14 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
@@ -215,12 +217,28 @@ public class FlowService {
     private void recomputeTriggers(FlowWithSource flow) {
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
-        if (flow.isDeleted() || previous != null) {
-            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ? ListUtils.emptyOnNull(flow.getTriggers()) : FlowService.findRemovedTrigger(flow, previous);
+        // If the previous revision was soft-deleted, the scheduler already dropped its
+        // trigger state on TriggerDeleted. Re-creating the flow must emit TriggerCreated
+        // so the state is rebuilt; treat it as if there was no previous.
+        if (previous != null && previous.isDeleted()) {
+            previous = null;
+        }
 
-            triggersDeleted.forEach(
+        if (flow.isDeleted()) {
+            ListUtils.emptyOnNull(flow.getTriggers()).forEach(
                 trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
             );
+            return;
+        }
+
+        if (previous != null) {
+            FlowService.findRemovedTrigger(flow, previous).forEach(
+                trigger -> sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
+            );
+
+            if (flow.isDeleted()) {
+                return;
+            }
         }
 
         if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
@@ -234,7 +252,13 @@ public class FlowService {
                 .stream()
                 .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                 .forEach(
-                    trigger -> sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
+                    trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
+                );
+            FlowService.findUnchangedTrigger(flow, previous)
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(
+                    trigger -> sendTriggerEvent(new TriggerFlowRevisionUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
             return;
         }
@@ -267,7 +291,7 @@ public class FlowService {
     /**
      * Evaluates all checks defined in the given flow using the provided inputs.
      * <p>
-     * Each check's {@link Check#getCondition()} is evaluated in the context of the flow.
+     * Each check's {@link Check#getWhen()} is evaluated in the context of the flow.
      * If a condition evaluates to {@code false} or fails to evaluate due to a
      * variable error, the corresponding {@link Check} is added to the returned list.
      * </p>
@@ -282,7 +306,7 @@ public class FlowService {
             List<Check> falseConditions = new ArrayList<>();
             for (Check check : flow.getChecks()) {
                 try {
-                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getCondition()));
+                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getWhen()));
                     if (!result) {
                         falseConditions.add(check);
                     }
@@ -440,7 +464,10 @@ public class FlowService {
             .toList();
         flowTriggers.forEach(flowTrigger ->
         {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty()
+                && flowTrigger.getPreconditions() == null
+                && ListUtils.isEmpty(flowTrigger.getDependsOn())
+                && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
                 warnings.add(
                     "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId()
                         + "'."
@@ -463,6 +490,14 @@ public class FlowService {
                 }
             }
         });
+
+        // warn when @PluginProperty(secret=true) fields have plain-text values
+        flow.allTasksWithChilds().forEach(task ->
+            SecretUtils.validateSecretFields(task)
+                .forEach(msg -> warnings.add("Task '" + task.getId() + "': " + msg)));
+        ListUtils.emptyOnNull(flow.getTriggers()).forEach(trigger ->
+            SecretUtils.validateSecretFields(trigger)
+                .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg)));
 
         return warnings;
     }
@@ -681,6 +716,17 @@ public class FlowService {
                 oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                     .stream()
                     .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
+            )
+            .toList();
+    }
+
+    public static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(flow.getTriggers())
+            .stream()
+            .filter(
+                current -> ListUtils.emptyOnNull(previous.getTriggers())
+                    .stream()
+                    .anyMatch(prev -> prev.getId().equals(current.getId()) && EqualsBuilder.reflectionEquals(prev, current))
             )
             .toList();
     }

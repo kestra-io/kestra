@@ -10,7 +10,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.ServiceStateTransition.Result;
 
 import io.micronaut.context.annotation.Context;
@@ -30,7 +29,6 @@ import static io.kestra.core.server.ServiceLivenessManager.OnStateTransitionFail
 @Context
 @Requires(property = "kestra.server-type")
 @Requires(beans = ServiceLivenessUpdater.class)
-@Requires(beans = ServiceInstanceRepositoryInterface.class)
 @Slf4j
 public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
@@ -41,6 +39,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
     protected final OnStateTransitionFailureCallback onStateTransitionFailureCallback;
     private final ServerInstanceFactory serverInstanceFactory;
     private final ServiceRegistry serviceRegistry;
+    private final List<ServiceLivenessListener> livenessListeners;
 
     private Instant lastSucceedStateUpdated;
 
@@ -49,8 +48,18 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         final ServiceRegistry serviceRegistry,
         final LocalServiceStateFactory localServiceStateFactory,
         final ServerInstanceFactory serverInstanceFactory,
+        final ServiceLivenessUpdater serviceLivenessUpdater,
+        final List<ServiceLivenessListener> livenessListeners) {
+        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(), livenessListeners);
+    }
+
+    @VisibleForTesting
+    public ServiceLivenessManager(final ServerConfig configuration,
+        final ServiceRegistry serviceRegistry,
+        final LocalServiceStateFactory localServiceStateFactory,
+        final ServerInstanceFactory serverInstanceFactory,
         final ServiceLivenessUpdater serviceLivenessUpdater) {
-        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback());
+        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, new DefaultStateTransitionFailureCallback(), List.of());
     }
 
     @VisibleForTesting
@@ -60,12 +69,24 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         final ServerInstanceFactory serverInstanceFactory,
         final ServiceLivenessUpdater serviceLivenessUpdater,
         final OnStateTransitionFailureCallback onStateTransitionFailureCallback) {
+        this(configuration, serviceRegistry, localServiceStateFactory, serverInstanceFactory, serviceLivenessUpdater, onStateTransitionFailureCallback, List.of());
+    }
+
+    @VisibleForTesting
+    public ServiceLivenessManager(final ServerConfig configuration,
+        final ServiceRegistry serviceRegistry,
+        final LocalServiceStateFactory localServiceStateFactory,
+        final ServerInstanceFactory serverInstanceFactory,
+        final ServiceLivenessUpdater serviceLivenessUpdater,
+        final OnStateTransitionFailureCallback onStateTransitionFailureCallback,
+        final List<ServiceLivenessListener> livenessListeners) {
         super(TASK_NAME, configuration);
         this.serviceRegistry = serviceRegistry;
         this.localServiceStateFactory = localServiceStateFactory;
         this.serverInstanceFactory = serverInstanceFactory;
         this.serviceLivenessUpdater = serviceLivenessUpdater;
         this.onStateTransitionFailureCallback = onStateTransitionFailureCallback;
+        this.livenessListeners = livenessListeners == null ? List.of() : List.copyOf(livenessListeners);
     }
 
     /**
@@ -80,6 +101,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
 
         if (newState == null) {
             return; // invalid service event.
+        }
+
+        // CREATED events always register a new service instance and must bypass the isStateUpdatable
+        // check below, because a new service of the same type may start after a previous one terminated.
+        if (newState == Service.ServiceState.CREATED) {
+            onCreateState(event);
+            return;
         }
 
         // Check whether the state for this service is updatable.
@@ -99,10 +127,14 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         }
 
         switch (newState) {
-            case CREATED:
-                onCreateState(event);
-                break;
             case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED, MAINTENANCE:
+                // Disable further heartbeat updates before persisting the terminal state.
+                // This prevents updatedAt from being refreshed after the transition, allowing
+                // the liveness coordinator to reliably detect that the termination grace period
+                // has elapsed.
+                if (newState.hasCompletedTermination() && holder != null) {
+                    holder.isStateUpdatable().set(false);
+                }
                 updateServiceInstanceState(Instant.now(), event.getService(), newState, NOOP);
                 break;
             default:
@@ -310,6 +342,13 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             }
             // Update the local instance
             this.serviceRegistry.register(localServiceState.with(remoteInstance));
+
+            // Notify listeners on successful state update (SUCCEEDED or recovered ABORTED).
+            // Not invoked on FAILED so downstream sinks (e.g., discovery registry) stop
+            // refreshing when the coordinator has lost track of the service.
+            if (isStateTransitionSucceed) {
+                notifyLivenessListeners(now, remoteInstance, remoteInstance.state());
+            }
         } catch (Exception e) {
             final ServiceInstance localInstance = localServiceState.instance();
             log.error(
@@ -329,6 +368,26 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             }
         }
         return Optional.ofNullable(localServiceState(service)).map(LocalServiceState::instance).orElse(null);
+    }
+
+    /**
+     * Invokes every registered {@link ServiceLivenessListener}. Listener failures are
+     * caught and logged so that a broken listener cannot break the heartbeat pipeline.
+     */
+    private void notifyLivenessListeners(final Instant now,
+        final ServiceInstance instance,
+        final Service.ServiceState newState) {
+        if (livenessListeners.isEmpty()) {
+            return;
+        }
+        for (ServiceLivenessListener listener : livenessListeners) {
+            try {
+                listener.onLivenessUpdate(now, instance, newState);
+            } catch (Exception e) {
+                log.warn("Liveness listener [{}] threw an exception; ignoring",
+                    listener.getClass().getName(), e);
+            }
+        }
     }
 
     private void mayDisableStateUpdate(final Service service, final ServiceInstance instance) {

@@ -152,7 +152,7 @@ public class State {
 
     @JsonIgnore
     public boolean canBeRestarted() {
-        return (this.current.isTerminated() || this.current.isPaused()) && !this.current.isKilled();
+        return this.current.isFailed() || this.current.isPaused();
     }
 
     @JsonIgnore
@@ -269,6 +269,10 @@ public class State {
 
         public boolean isTerminatedNoFail() {
             return this == Type.WARNING || this == Type.SUCCESS || this == Type.RETRIED || this == Type.SKIPPED || this == Type.RESUBMITTED;
+        }
+
+        public boolean isTerminatedInError() {
+            return this == Type.FAILED || this == Type.KILLED || this == Type.CANCELLED;
         }
 
         public boolean isCreated() {

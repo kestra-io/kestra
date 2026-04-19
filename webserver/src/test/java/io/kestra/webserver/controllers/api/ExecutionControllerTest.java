@@ -3,8 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -49,10 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Slf4j
 @KestraTest
 class ExecutionControllerTest {
-
-    @Inject
-    private ExecutionController executionController;
-
     @Inject
     private ExecutionRepositoryInterface executionRepository;
 
@@ -251,17 +245,6 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void resolveAbsoluteDateTime() {
-        final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6, 10, 0, ZoneId.systemDefault());
-        final Duration offset = Duration.ofSeconds(5L);
-        final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6, 10, 0, ZoneId.systemDefault());
-
-        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null)).isEqualTo(absoluteTimestamp);
-        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp)).isEqualTo(baseTimestamp.minus(offset));
-        assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
-    }
-
-    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 
@@ -375,7 +358,7 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(exception.getMessage()).isEqualTo(
-            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND"
+            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID"
         );
 
         exception = assertThrows(
@@ -387,16 +370,6 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
-
-        HttpClientResponseException exception_oldParameters = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                GET(
-                    "/api/v1/main/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"
-                ), PagedResults.class
-            )
-        );
-        assertThat(exception_oldParameters.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception_oldParameters.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
     }
 
     @Test
@@ -494,7 +467,7 @@ class ExecutionControllerTest {
             .id(flowId)
             .tenantId(MAIN_TENANT)
             .namespace(namespaceId)
-            .checks(List.of(Check.builder().condition("{{ [] | length > 0 }}").message("No VM provided").style(Check.Style.ERROR).behavior(Check.Behavior.BLOCK_EXECUTION).build()))
+            .checks(List.of(Check.builder().when("{{ [] | length > 0 }}").message("No VM provided").style(Check.Style.ERROR).behavior(Check.Behavior.BLOCK_EXECUTION).build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
 

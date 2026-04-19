@@ -34,6 +34,7 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
@@ -94,6 +95,7 @@ public class TriggerEventHandler {
             case TriggerCreated evt -> onTriggerCreated(clock, evt, vNode);
             case TriggerDeleted evt -> onTriggerDeleted(evt);
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
+            case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
@@ -140,7 +142,7 @@ public class TriggerEventHandler {
 
             if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
                 ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
-                state.updateForNextEvaluationDate(clock, nextEvaluationDate);
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate);
             }
 
             triggerStateStore.save(state);
@@ -221,7 +223,7 @@ public class TriggerEventHandler {
                 state
                     .lastEventId(clock, event.eventId())
                     .locked(clock, false)
-                    .updateForExecutionState(clock, event.executionState())
+                    .updateOnExecutionTerminated(clock, event.executionState())
             );
         });
     }
@@ -241,18 +243,18 @@ public class TriggerEventHandler {
 
             TriggerState newState = state;
             if (data.getRight() != null) {
-                newState = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
             }
 
-            if (event.execution() != null) {
-                newState.updateForExecution(clock, event.execution());
+            if (event.evaluation() != null) {
+                newState = newState.updateOnExecutionCreated(clock, event.evaluation().stateType());
             }
 
-            newState = state.lastEventId(clock, event.eventId());
+            newState = newState.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
 
-            if (event.execution() != null) {
-                Execution execution = event.execution().withTenantId(state.getTenantId());
+            if (event.evaluation() != null) {
+                Execution execution = event.evaluation().toExecution(event.id());
                 triggerExecutionPublisher.send(execution);
             }
         });
@@ -281,9 +283,13 @@ public class TriggerEventHandler {
     void onResetTrigger(Clock clock, ResetTrigger event) {
         findTriggerState(event).ifPresent(state ->
         {
+            Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
             state = state
                 .lastEventId(clock, event.eventId())
                 .reset(clock);
+            if (data.getRight() != null) {
+                state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+            }
             triggerStateStore.save(state);
         });
     }
@@ -300,10 +306,24 @@ public class TriggerEventHandler {
             if (data.getRight() != null) {
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight());
+                    .update(clock, data.getRight())
+                    .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
                 triggerStateStore.save(state);
             }
         });
+    }
+
+    /**
+     * Handler method for {@link TriggerFlowRevisionUpdated}.
+     * <p>
+     * The trigger definition is unchanged; this event only forces the scheduler's
+     * flow metadata cache to refresh to the latest revision. No trigger state mutation.
+     *
+     * @param event the event.
+     */
+    void onTriggerFlowRevisionUpdated(TriggerFlowRevisionUpdated event) {
+        // Side-effect: CachedFlowMetaStore refreshes its cache on newer revision.
+        findFlow(event, event.revision());
     }
 
     /**
@@ -345,9 +365,11 @@ public class TriggerEventHandler {
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
+            AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(data.getRight()), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
-                .lastEventId(clock, event.eventId());
+                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
+                .lastEventId(clock, event.eventId())
+                .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger));
             triggerStateStore.save(state);
         }
     }

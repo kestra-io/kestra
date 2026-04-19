@@ -23,6 +23,8 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 
+import io.kestra.core.encryption.EncryptionConfig;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
@@ -53,8 +55,8 @@ public class RunContextInitializer {
     @Inject
     protected NamespaceService namespaceService;
 
-    @Value("${kestra.encryption.secret-key}")
-    protected Optional<String> secretKey;
+    @Inject
+    protected EncryptionConfig encryptionConfig;
 
     @Inject
     protected RunContextCache runContextCache;
@@ -231,8 +233,8 @@ public class RunContextInitializer {
         }
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
-        variables.put("outputs", new Secret(secretKey, runContext::logger).decrypt(outputs));
-        variables.put("trigger", new Secret(secretKey, runContext::logger).decrypt(triggerOutputs));
+        variables.put("outputs", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(outputs));
+        variables.put("trigger", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(triggerOutputs));
 
         runContext.setVariables(variables);
         return runContext;

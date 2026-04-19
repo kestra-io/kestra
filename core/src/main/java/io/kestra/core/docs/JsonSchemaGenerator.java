@@ -144,7 +144,7 @@ public class JsonSchemaGenerator {
                     .map(JsonNode::asText)
                     .collect(Collectors.toList());
 
-                properties.fields().forEachRemaining(e ->
+                properties.properties().forEach(e ->
                 {
                     int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
                     if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {
@@ -186,7 +186,9 @@ public class JsonSchemaGenerator {
                             Map.entry("default", Optional.empty()),
                             Map.entry("title", Optional.empty()),
                             Map.entry("description", Optional.empty()),
-                            Map.entry("$deprecated", Optional.empty())
+                            Map.entry("$deprecated", Optional.empty()),
+                            Map.entry("$group", Optional.empty()),
+                            Map.entry("$index", Optional.empty())
                         )
                     );
                     // find nodes to pull up
@@ -295,7 +297,8 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END)
+            .without(Option.FLATTENED_OPTIONALS);
 
         // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule
         // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
@@ -398,6 +401,11 @@ public class JsonSchemaGenerator {
                 return List.of(
                     context.resolve(String.class)
                 );
+            } else if (javaType.isInstanceOf(Optional.class) && !javaType.getTypeParameters().isEmpty()) {
+                // Unwrap Optional<T> to T to avoid null type in schema
+                return List.of(
+                    javaType.getTypeParameters().getFirst()
+                );
             }
 
             return null;
@@ -420,6 +428,12 @@ public class JsonSchemaGenerator {
                 }
                 if (!pluginPropertyAnnotation.group().isEmpty()) {
                     memberAttributes.put("$group", pluginPropertyAnnotation.group());
+                }
+                if (pluginPropertyAnnotation.secret()) {
+                    memberAttributes.put("$secret", true);
+                }
+                if (pluginPropertyAnnotation.index() != -1) {
+                    memberAttributes.put("$index", pluginPropertyAnnotation.index());
                 }
             }
 

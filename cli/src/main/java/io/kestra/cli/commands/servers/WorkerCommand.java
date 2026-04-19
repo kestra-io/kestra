@@ -5,12 +5,13 @@ import java.util.Map;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "worker",
@@ -46,7 +47,7 @@ public class WorkerCommand extends AbstractServerCommand {
         Worker worker = applicationContext.getBean(Worker.class);
         worker.start(this.thread, this.workerGroupKey);
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

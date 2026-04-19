@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.4.0"
+    id "com.gradleup.shadow" version "9.4.1"
     id "application"
 
     // test
@@ -37,10 +37,10 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.0" apply false
+    id "org.owasp.dependencycheck" version "12.2.1" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
+    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
 }
 
 idea {
@@ -53,7 +53,7 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-final mainClassName = "io.kestra.cli.App"
+final mainClassName = "io.kestra.cli.Kestra"
 
 application {
     mainClass = mainClassName
@@ -239,6 +239,8 @@ subprojects {subProj ->
             //assertj
             testImplementation 'org.assertj:assertj-core'
 
+            testImplementation "com.tngtech.archunit:archunit-junit5"
+
             // awaitility
             testImplementation 'org.awaitility:awaitility'
 
@@ -253,7 +255,6 @@ subprojects {subProj ->
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
-                project.develocity.buildScan.value("${t.path}#maxHeapSize", t.maxHeapSize)
             }
             t.doLast {
                 logger.lifecycle("[TASK END]   ${t.path}")

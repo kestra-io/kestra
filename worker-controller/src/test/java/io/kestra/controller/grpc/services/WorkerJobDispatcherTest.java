@@ -36,12 +36,15 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.utils.Either;
 
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.search.Search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -63,6 +66,7 @@ class WorkerJobDispatcherTest {
     private DispatchQueueInterface<WorkerTaskResult> mockResultQueue = mock(DispatchQueueInterface.class);
     private WorkerJobDispatcher dispatcher;
     private TriggerEventQueue mockTriggerEventQueue = mock(TriggerEventQueue.class);
+    private MetricRegistry mockMetricRegistry = mock(MetricRegistry.class);
 
     // Captures for verifying interactions
     private List<MockQueueSubscriber> createdSubscribers;
@@ -82,7 +86,29 @@ class WorkerJobDispatcherTest {
         mockClusterEventQueue = mock(BroadcastQueueInterface.class);
         mockResultQueue = mock(DispatchQueueInterface.class);
         mockTriggerEventQueue = mock(TriggerEventQueue.class);
+        mockMetricRegistry = mock(MetricRegistry.class);
         createdSubscribers = new ArrayList<>();
+
+        // Mock workerGroupTags to return proper tag arrays
+        when(mockMetricRegistry.workerGroupTags(any())).thenAnswer(invocation -> {
+            String group = invocation.getArgument(0);
+            return new String[] { "worker_group", group != null ? group : "__default__" };
+        });
+
+        // Mock counter to return a no-op counter
+        io.micrometer.core.instrument.Counter mockCounter = mock(io.micrometer.core.instrument.Counter.class);
+        when(mockMetricRegistry.counter(anyString(), anyString(), any(String[].class))).thenReturn(mockCounter);
+
+        // Mock gauge to return a no-op gauge
+        io.micrometer.core.instrument.Gauge mockGauge = mock(io.micrometer.core.instrument.Gauge.class);
+        when(mockMetricRegistry.gauge(anyString(), anyString(), any(java.util.function.Supplier.class), any(String[].class))).thenReturn(mockGauge);
+        when(mockMetricRegistry.gauge(anyString(), anyString(), any(java.util.function.Supplier.class))).thenReturn(mockGauge);
+
+        // Mock find().tag().gauges() chain for removeGroupGauges
+        Search mockSearch = mock(Search.class);
+        when(mockMetricRegistry.find(anyString())).thenReturn(mockSearch);
+        when(mockSearch.tag(anyString(), anyString())).thenReturn(mockSearch);
+        when(mockSearch.gauges()).thenReturn(java.util.Collections.emptyList());
 
         // Mock kill queue subscriber
         @SuppressWarnings("unchecked")
@@ -109,7 +135,7 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue);
+        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry);
     }
 
     @AfterEach
@@ -117,6 +143,7 @@ class WorkerJobDispatcherTest {
         if (dispatcher != null) {
             dispatcher.close();
         }
+        KestraContext.setContext(null);
     }
 
     private WorkerStreamContext<WorkerJobResponse> createWorkerContext(String workerId, String workerGroup, int maxConcurrency) {
@@ -497,25 +524,27 @@ class WorkerJobDispatcherTest {
             CountDownLatch latch = new CountDownLatch(numWorkers);
             ExecutorService executor = Executors.newFixedThreadPool(numWorkers);
 
-            // When
-            for (int i = 0; i < numWorkers; i++) {
-                final int workerId = i;
-                executor.submit(() ->
-                {
-                    try {
-                        barrier.await(); // Sync start
-                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
-                        dispatcher.registerWorker(context);
-                    } catch (Exception e) {
-                        // Ignore
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+            try {
+                // When
+                for (int i = 0; i < numWorkers; i++) {
+                    final int workerId = i;
+                    executor.submit(() ->
+                    {
+                        try {
+                            barrier.await(); // Sync start
+                            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-" + workerId, WORKER_GROUP_A, 10);
+                            dispatcher.registerWorker(context);
+                        } catch (Exception e) {
+                            // Ignore
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then
             assertThat(dispatcher.getActiveWorkerCount(WORKER_GROUP_A)).isEqualTo(numWorkers);
@@ -535,36 +564,38 @@ class WorkerJobDispatcherTest {
             ExecutorService executor = Executors.newFixedThreadPool(10);
             AtomicInteger errors = new AtomicInteger(0);
 
-            // When
-            for (int i = 0; i < numIterations; i++) {
-                final String workerId = "worker-" + i;
+            try {
+                // When
+                for (int i = 0; i < numIterations; i++) {
+                    final String workerId = "worker-" + i;
+                    executor.submit(() ->
+                        {
+                            try {
+                                WorkerStreamContext<WorkerJobResponse> context = createWorkerContext(workerId, WORKER_GROUP_A, 10);
+                                dispatcher.registerWorker(context);
+                            } catch (Exception e) {
+                                errors.incrementAndGet();
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
 
-                executor.submit(() ->
-                {
-                    try {
-                        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext(workerId, WORKER_GROUP_A, 10);
-                        dispatcher.registerWorker(context);
-                    } catch (Exception e) {
-                        errors.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                    executor.submit(() ->
+                    {
+                        try {
+                            dispatcher.unregisterWorker(workerId);
+                        } catch (Exception e) {
+                            errors.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
 
-                executor.submit(() ->
-                {
-                    try {
-                        dispatcher.unregisterWorker(workerId);
-                    } catch (Exception e) {
-                        errors.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then - no exceptions
             assertThat(errors.get()).isEqualTo(0);
@@ -580,21 +611,23 @@ class WorkerJobDispatcherTest {
             CountDownLatch latch = new CountDownLatch(numUpdates);
             ExecutorService executor = Executors.newFixedThreadPool(10);
 
-            // When - permits are SET (not added), so concurrent updates with increasing values
-            for (int i = 0; i < numUpdates; i++) {
-                final int permits = i + 1;
-                executor.submit(() ->
-                {
-                    try {
-                        dispatcher.onPermitsReceived(context, permits);
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+            try {
+                // When - permits are SET (not added), so concurrent updates with increasing values
+                for (int i = 0; i < numUpdates; i++) {
+                    final int permits = i + 1;
+                    executor.submit(() ->
+                    {
+                        try {
+                            dispatcher.onPermitsReceived(context, permits);
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+                latch.await(10, TimeUnit.SECONDS);
+            } finally {
+                executor.shutdownNow();
             }
-
-            latch.await(10, TimeUnit.SECONDS);
-            executor.shutdownNow();
 
             // Then - with SET semantics, permits should be one of the values sent (no race condition crashes)
             // The final value depends on thread scheduling, but should be between 1 and numUpdates
@@ -729,6 +762,140 @@ class WorkerJobDispatcherTest {
         // Then — both workers should receive the event
         verify(context1.getResponseObserver()).onNext(any(WorkerJobResponse.class));
         verify(context2.getResponseObserver()).onNext(any(WorkerJobResponse.class));
+    }
+
+    @Test
+    void shouldRegisterGlobalGaugesOnConstruction() {
+        // Then - global gauges should have been registered during setUp()
+        verify(mockMetricRegistry).gauge(
+            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION),
+            any(java.util.function.Supplier.class)
+        );
+        verify(mockMetricRegistry).gauge(
+            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION),
+            any(java.util.function.Supplier.class)
+        );
+    }
+
+    @Test
+    void shouldRegisterPerGroupGaugesOnFirstWorkerRegistration() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+
+        // When
+        dispatcher.registerWorker(context);
+
+        // Then
+        verify(mockMetricRegistry).gauge(
+            eq(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION),
+            any(java.util.function.Supplier.class),
+            any(String[].class)
+        );
+        verify(mockMetricRegistry).gauge(
+            eq(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION),
+            any(java.util.function.Supplier.class),
+            any(String[].class)
+        );
+        verify(mockMetricRegistry).gauge(
+            eq(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION),
+            any(java.util.function.Supplier.class),
+            any(String[].class)
+        );
+    }
+
+    @Test
+    void shouldIncrementWorkerRegisteredCounterOnRegister() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+
+        // When
+        dispatcher.registerWorker(context);
+
+        // Then
+        verify(mockMetricRegistry).counter(
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT_DESCRIPTION),
+            any(String[].class)
+        );
+    }
+
+    @Test
+    void shouldIncrementWorkerUnregisteredCounterOnUnregister() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        // When
+        dispatcher.unregisterWorker("worker-1");
+
+        // Then
+        verify(mockMetricRegistry).counter(
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT_DESCRIPTION),
+            any(String[].class)
+        );
+    }
+
+    @Test
+    void shouldIncrementJobDispatchedCounterOnDispatch() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        context.addPermits(5);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+        WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A);
+
+        // When
+        subscriber.deliverJob(event);
+
+        // Then
+        verify(mockMetricRegistry).counter(
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT_DESCRIPTION),
+            any(String[].class)
+        );
+    }
+
+    @Test
+    void shouldIncrementJobRequeuedCounterWhenNoPermits() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        // No permits
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
+        WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A);
+
+        // When
+        subscriber.deliverJob(event);
+
+        // Then
+        verify(mockMetricRegistry).counter(
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT_DESCRIPTION),
+            any(String[].class)
+        );
+    }
+
+    @Test
+    void shouldRemovePerGroupGaugesWhenLastWorkerDisconnects() {
+        // Given
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(context);
+
+        // When
+        dispatcher.unregisterWorker("worker-1");
+
+        // Then - find should be called to locate gauges for removal
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT);
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT);
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT);
     }
 
     /**

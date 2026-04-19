@@ -87,12 +87,30 @@
             );
     };
 
+    const getScrollableParent = (el: HTMLElement): HTMLElement | null => {
+        let parent = el.parentElement;
+        while (parent) {
+            const style = getComputedStyle(parent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                return parent;
+            }
+            parent = parent.parentElement;
+        }
+        return null;
+    };
+
     const scrollToActivePlugin = () => {
         const activePlugin = localStorage.getItem("activePlugin");
         if (activePlugin) {
             const pluginElement = pluginRefs[activePlugin];
             if (pluginElement) {
-                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "start"});
+                const el = pluginElement.$el as HTMLElement;
+                const scrollContainer = getScrollableParent(el);
+                if (scrollContainer) {
+                    const elRect = el.getBoundingClientRect();
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"});
+                }
             }
         }
     };
@@ -124,16 +142,19 @@
             });
     });
 
-    watch(route, () => {
+    watch(() => route.params.cls, (cls) => {
+        if (!cls) return;
         props.plugins.forEach(plugin => {
             if (Object.entries(plugin).some(([key, value]) => {
                 if (isEntryAPluginElementPredicate(key, value)) {
-                    return (value as PluginElement[]).some(({cls}) => cls === route.params.cls);
+                    return (value as PluginElement[]).some(({cls: c}) => c === cls);
                 }
                 return false;
             })) {
-                activeNames.value = [plugin.group];
-                localStorage.setItem("activePlugin", plugin.group);
+                if (activeNames.value[0] !== plugin.group) {
+                    activeNames.value = [plugin.group];
+                    localStorage.setItem("activePlugin", plugin.group);
+                }
             }
         });
         nextTick(() => {
@@ -191,6 +212,8 @@
     .plugins-list {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        height: 100%;
 
         .search {
             flex-shrink: 0;

@@ -173,7 +173,7 @@
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
-    import * as outputsSDK from "kestra-api/sdk/ks-Outputs.gen";
+    import * as outputsSDK from "@kestra-io/sdk-js/sdk/ks-Outputs.gen";
 
     const {t} = useI18n({useScope: "global"});
 

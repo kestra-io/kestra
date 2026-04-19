@@ -19,7 +19,7 @@ const generateHash = (str: string) => {
 export default {
   input: "../openapi.yml",
   output: {
-    path: path.resolve(__dirname, "./src/generated/kestra-api"),
+    path: path.resolve(__dirname, "./packages/sdk-js/src"),
     postProcess: ["eslint"],
   },
   

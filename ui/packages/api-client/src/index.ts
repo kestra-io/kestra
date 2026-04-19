@@ -1,6 +1,7 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
+import {client} from "@kestra-io/sdk-js/client.gen"
 
 declare global {
     interface Window {
@@ -285,6 +286,8 @@ const createAxios = (
             pendingRoute = false;
         }
     })
+
+    client.setConfig({axios: instance})
 
     return instance;
 };

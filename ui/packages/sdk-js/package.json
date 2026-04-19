@@ -1,0 +1,17 @@
+{
+    "name": "@kestra-io/sdk-js",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./client.gen": "./src/client.gen.ts",
+        "./sdk/*": "./src/sdk/*.ts"
+    },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "peerDependencies": {
+        "axios": "*"
+    }
+}

@@ -6,6 +6,12 @@
     "exports": {
         ".": "./src/index.ts"
     },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "dependencies": {
+        "@kestra-io/sdk-js": "*"
+    },
     "peerDependencies": {
         "axios": "*",
         "nprogress": "*",

@@ -30,6 +30,7 @@
     "dependencies": {
         "@js-joda/core": "^6.0.1",
         "@kestra-io/api-client": "*",
+        "@kestra-io/sdk-js": "*",
         "@kestra-io/ui-libs": "^0.0.301",
         "@module-federation/enhanced": "^2.3.1",
         "@module-federation/vite": "^1.14.1",
@@ -133,6 +134,7 @@
         "storybook": "^10.3.3",
         "storybook-vue3-router": "^7.0.0",
         "ts-node": "^10.9.2",
+        "tsdown": "latest",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.58.2",
         "uuid": "^13.0.0",

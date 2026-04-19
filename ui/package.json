@@ -4,6 +4,9 @@
     "private": true,
     "type": "module",
     "packageManager": "npm@10.9.0",
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "dev": "vite --host",
         "build": "vite build --emptyOutDir",
@@ -26,6 +29,7 @@
     },
     "dependencies": {
         "@js-joda/core": "^6.0.1",
+        "@kestra-io/api-client": "*",
         "@kestra-io/ui-libs": "^0.0.301",
         "@module-federation/enhanced": "^2.3.1",
         "@module-federation/vite": "^1.14.1",

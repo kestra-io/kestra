@@ -11,15 +11,16 @@ import io.kestra.core.utils.Enums;
 /**
  * Category bucket for the "Add Trigger" catalog in the UI.
  *
- * <p>Derived from the owning {@link RegisteredPlugin#group()} and the interfaces the trigger class
- * implements:
+ * <p>Derived from the owning {@link RegisteredPlugin}'s provenance and the interfaces the trigger
+ * class implements:
  * <ul>
- *     <li>{@link #CORE} - trigger ships with Kestra Core (manifest {@code X-Kestra-Group} is null).</li>
- *     <li>{@link #REALTIME} - non-core trigger implementing {@link RealtimeTriggerInterface}.</li>
- *     <li>{@link #APP} - non-core trigger implementing {@link PollingTriggerInterface}.</li>
+ *     <li>{@link #CORE} - trigger is bundled with Kestra (no external plugin location).</li>
+ *     <li>{@link #REALTIME} - external trigger implementing {@link RealtimeTriggerInterface}.</li>
+ *     <li>{@link #APP} - external trigger, typically implementing {@link PollingTriggerInterface}.</li>
  * </ul>
  *
- * Core precedence wins over realtime/app so a core realtime trigger (e.g. Webhook) is still CORE.
+ * Core precedence wins over realtime/app so a bundled core trigger (for example Webhook) is CORE
+ * even if it otherwise looks like a realtime or polling trigger.
  */
 public enum TriggerPluginCategory {
     CORE,
@@ -41,16 +42,16 @@ public enum TriggerPluginCategory {
     }
 
     public static TriggerPluginCategory classify(RegisteredPlugin plugin, Class<?> triggerClass) {
-        if (plugin.group() == null) {
+        // Core = bundled with Kestra. External plugins always have an ExternalPlugin location.
+        // PluginRegistry marks bundled plugins with null externalPlugin (see DefaultPluginRegistry
+        // .PluginBundleIdentifier#of). Relying on manifest X-Kestra-Group is unreliable because the
+        // uber-jar sets it for bundled core too.
+        if (plugin.getExternalPlugin() == null) {
             return CORE;
         }
 
         if (RealtimeTriggerInterface.class.isAssignableFrom(triggerClass)) {
             return REALTIME;
-        }
-
-        if (PollingTriggerInterface.class.isAssignableFrom(triggerClass)) {
-            return APP;
         }
 
         return APP;

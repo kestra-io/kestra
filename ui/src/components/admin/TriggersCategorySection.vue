@@ -1,14 +1,8 @@
 <template>
     <section class="category-section">
         <header class="category-header">
-            <div class="category-heading">
-                <span :class="['category-badge', `category-badge--${category}`]">
-                    {{ title }}
-                </span>
-                <p class="category-description">
-                    {{ description }}
-                </p>
-            </div>
+            <span class="category-pill">{{ title }}</span>
+            <span class="category-description">{{ description }}</span>
         </header>
 
         <div v-if="triggers.length === 0" class="empty-row">
@@ -24,19 +18,23 @@
             />
         </div>
 
-        <div v-if="canCollapse" class="see-more-row">
-            <el-button link type="primary" @click="expanded = !expanded">
+        <button v-if="canCollapse" type="button" class="see-more-button" @click="expanded = !expanded">
+            <ChevronUp v-if="expanded" class="chevron" />
+            <ChevronDown v-else class="chevron" />
+            <span>
                 {{ expanded
                     ? $t("triggers.add.see_less")
-                    : $t("triggers.add.see_more", {count: triggers.length - DEFAULT_VISIBLE_ROWS * COLUMNS})
+                    : $t("triggers.add.see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
                 }}
-            </el-button>
-        </div>
+            </span>
+        </button>
     </section>
 </template>
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
     import TriggerCatalogCard from "./TriggerCatalogCard.vue";
     import type {TriggerPluginDto} from "../../stores/plugins";
@@ -53,9 +51,7 @@
         (e: "add", trigger: TriggerPluginDto): void;
     }>();
 
-    const COLUMNS = 4;
-    const DEFAULT_VISIBLE_ROWS = 2;
-    const DEFAULT_VISIBLE_COUNT = COLUMNS * DEFAULT_VISIBLE_ROWS;
+    const DEFAULT_VISIBLE_COUNT = 8;
 
     const expanded = ref(false);
 
@@ -73,51 +69,69 @@
 
 <style scoped lang="scss">
     .category-section {
-        margin-bottom: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .category-header {
-        margin-bottom: 1rem;
-    }
-
-    .category-heading {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 12px;
         flex-wrap: wrap;
     }
 
-    .category-badge {
-        padding: .25rem .75rem;
-        border-radius: 4px;
-        font-size: .85rem;
+    .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
+        background: var(--ks-background-card, var(--bs-body-bg));
+        font-size: 12px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        background: var(--bs-gray-200);
-        color: var(--bs-gray-800);
+        color: var(--ks-content-primary, var(--bs-body-color));
     }
 
     .category-description {
-        margin: 0;
-        color: var(--bs-gray-600);
-        font-size: .9rem;
+        font-size: 13px;
+        color: var(--ks-content-tertiary, var(--bs-gray-600));
+    }
+
+    .empty-row {
+        padding: 24px 16px;
+        color: var(--ks-content-tertiary, var(--bs-gray-600));
+        font-size: 13px;
     }
 
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: .75rem;
+        gap: 12px;
     }
 
-    .empty-row {
-        padding: 1rem;
-        color: var(--bs-gray-600);
-        text-align: center;
-    }
+    .see-more-button {
+        align-self: flex-start;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        margin-left: -8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ks-content-secondary, var(--bs-gray-600));
+        font-size: 13px;
+        font-weight: 500;
 
-    .see-more-row {
-        margin-top: .75rem;
-        text-align: center;
+        &:hover {
+            color: var(--ks-content-primary, var(--bs-body-color));
+        }
+
+        .chevron {
+            display: inline-flex;
+            font-size: 14px;
+        }
     }
 </style>

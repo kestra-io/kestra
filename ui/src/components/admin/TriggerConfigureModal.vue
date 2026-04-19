@@ -1,31 +1,67 @@
 <template>
     <el-dialog
         v-model="visibleProxy"
-        :title="modalTitle"
         width="720"
         destroyOnClose
         appendToBody
+        :showClose="false"
         class="trigger-configure-modal"
     >
+        <template #header>
+            <div class="modal-header">
+                <div class="header-main">
+                    <div class="header-icon" :class="{'header-icon--mcp': isMcp}">
+                        <TaskIcon :cls="trigger.type" :icons="pluginsStore.icons" onlyIcon />
+                    </div>
+                    <div class="header-text">
+                        <div class="header-title-row">
+                            <h2 class="header-title">
+                                {{ displayName }}
+                            </h2>
+                            <span v-if="trigger.ee" class="ee-badge">EE</span>
+                        </div>
+                        <code class="header-fqcn">{{ trigger.type }}</code>
+                    </div>
+                </div>
+                <button type="button" class="close-button" @click="$emit('cancel')">
+                    <Close />
+                </button>
+            </div>
+            <nav class="tab-bar" role="tablist">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.key"
+                    type="button"
+                    role="tab"
+                    :aria-selected="activeTab === tab.key"
+                    class="tab-button"
+                    :class="{active: activeTab === tab.key}"
+                    @click="activeTab = tab.key"
+                >
+                    {{ tab.label }}
+                </button>
+            </nav>
+        </template>
+
         <el-alert
             v-if="trigger.ee"
             type="warning"
             :closable="false"
-            show-icon
+            showIcon
             class="ee-notice"
         >
             {{ $t("triggers.add.modal.ee_notice") }}
         </el-alert>
 
-        <el-tabs v-model="activeTab" class="modal-tabs">
-            <el-tab-pane :label="$t('triggers.add.modal.tab.form')" name="form">
-                <el-form label-position="top" :model="formModel">
+        <div class="tab-panel">
+            <div v-show="activeTab === 'form'" class="form-panel">
+                <el-form labelPosition="top" :model="formModel">
                     <el-form-item :label="$t('namespace')" required>
                         <el-select
                             v-model="formModel.namespace"
                             filterable
                             remote
-                            :remote-method="searchNamespaces"
+                            :remoteMethod="searchNamespaces"
                             :loading="namespacesLoading"
                             :placeholder="$t('triggers.add.modal.namespace_placeholder')"
                             @change="onNamespaceChange"
@@ -67,33 +103,34 @@
                 <p class="form-hint">
                     {{ $t("triggers.add.modal.properties_hint") }}
                 </p>
-            </el-tab-pane>
+            </div>
 
-            <el-tab-pane :label="$t('triggers.add.modal.tab.source')" name="source">
-                <div class="source-tab">
-                    <div class="source-header">
-                        <span class="source-label">triggers:</span>
-                        <el-button
-                            size="small"
-                            :icon="ContentCopy"
-                            @click="copySource"
-                        >
-                            {{ $t("copy") }}
-                        </el-button>
-                    </div>
-                    <pre class="source-yaml"><code>{{ previewYaml }}</code></pre>
+            <div v-show="activeTab === 'source'" class="source-panel">
+                <div class="editor-wrapper">
+                    <button type="button" class="copy-button" @click="copySource">
+                        <CheckIcon v-if="copied" class="copy-icon copy-icon--ok" />
+                        <ContentCopy v-else class="copy-icon" />
+                        <span>{{ copied ? $t("copied") : $t("copy") }}</span>
+                    </button>
+                    <Editor
+                        :modelValue="previewYamlWithDash"
+                        lang="yaml"
+                        :navbar="false"
+                        :readOnly="true"
+                        :fullHeight="false"
+                    />
                 </div>
-            </el-tab-pane>
+            </div>
 
-            <el-tab-pane :label="$t('triggers.add.modal.tab.documentation')" name="documentation" lazy>
+            <div v-show="activeTab === 'documentation'" class="doc-panel">
                 <PluginDocumentation
                     v-if="documentationPlugin"
                     :plugin="documentationPlugin"
                     :fetchPluginDocumentation="true"
                 />
                 <el-skeleton v-else :rows="6" animated />
-            </el-tab-pane>
-        </el-tabs>
+            </div>
+        </div>
 
         <template #footer>
             <div class="modal-footer">
@@ -117,12 +154,15 @@
     import {useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import CheckIcon from "vue-material-design-icons/Check.vue";
+    import Close from "vue-material-design-icons/Close.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../stores/plugins";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useTriggerDraftStore} from "../../stores/triggerDraft";
-    import {useToast} from "../../utils/toast";
+    import Editor from "../inputs/Editor.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
 
     const props = defineProps<{
@@ -136,7 +176,6 @@
     }>();
 
     const router = useRouter();
-    const toast = useToast();
     const {t} = useI18n({useScope: "global"});
     const flowStore = useFlowStore();
     const pluginsStore = usePluginsStore();
@@ -150,6 +189,12 @@
 
     const activeTab = ref<"form" | "source" | "documentation">("form");
 
+    const tabs = computed(() => [
+        {key: "form" as const, label: t("triggers.add.modal.tab.form")},
+        {key: "source" as const, label: t("triggers.add.modal.tab.source")},
+        {key: "documentation" as const, label: t("triggers.add.modal.tab.documentation")},
+    ]);
+
     const formModel = ref({
         namespace: "",
         flowId: "",
@@ -161,16 +206,54 @@
     const flowOptions = ref<{id: string; namespace: string}[]>([]);
     const flowsLoading = ref(false);
     const documentationPlugin = ref<PluginComponent | null>(null);
+    const copied = ref(false);
+    let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const modalTitle = computed(() =>
-        t("triggers.add.modal.title", {name: props.trigger.name})
-    );
+    const isMcp = computed(() => props.trigger.type.endsWith(".McpTool"));
+
+    const SUBGROUP_OVERRIDES: Record<string, string> = {
+        bigquery: "BigQuery",
+        mongodb: "MongoDB",
+        dynamodb: "DynamoDB",
+        eventbridge: "EventBridge",
+        servicebus: "ServiceBus",
+        postgresql: "PostgreSQL",
+        mysql: "MySQL",
+        mssql: "MSSQL",
+        graphql: "GraphQL",
+        pubsub: "PubSub",
+        opensearch: "OpenSearch",
+        elasticsearch: "Elasticsearch",
+    };
+
+    function humanize(segment: string): string {
+        if (!segment) return segment;
+        const lower = segment.toLowerCase();
+        if (SUBGROUP_OVERRIDES[lower]) return SUBGROUP_OVERRIDES[lower];
+        if (segment.length <= 4 && segment === lower) return segment.toUpperCase();
+        if (segment !== lower) return segment;
+        return segment.charAt(0).toUpperCase() + segment.slice(1);
+    }
+
+    const displayName = computed(() => {
+        const parts = props.trigger.type.split(".");
+        const simple = parts[parts.length - 1];
+        if (simple && simple !== "Trigger") return simple;
+        return humanize(parts[parts.length - 2] ?? simple);
+    });
 
     const canSubmit = computed(() =>
         Boolean(formModel.value.namespace && formModel.value.flowId && formModel.value.triggerId.trim())
     );
 
     const previewYaml = computed(() => buildTriggerYaml(formModel.value.triggerId, props.trigger.type));
+
+    const previewYamlWithDash = computed(() => {
+        const lines = previewYaml.value.split("\n").filter(line => line.length > 0);
+        return lines
+            .map((line, index) => (index === 0 ? `  - ${line}` : `    ${line}`))
+            .join("\n");
+    });
 
     function generateDefaultTriggerId(): string {
         const suffix = Math.floor(10000 + Math.random() * 90000);
@@ -179,7 +262,7 @@
 
     function buildTriggerYaml(id: string, type: string): string {
         const safeId = id.trim() || "mytrigger";
-        return `- id: ${safeId}\n  type: ${type}\n`;
+        return `id: ${safeId}\ntype: ${type}\n`;
     }
 
     async function searchNamespaces(query: string) {
@@ -213,10 +296,14 @@
 
     async function copySource() {
         try {
-            await navigator.clipboard.writeText(previewYaml.value);
-            toast.saved(t("copied_to_clipboard"));
-        } catch (_err) {
-            toast.error(t("copy_failed"));
+            await navigator.clipboard.writeText(`triggers:\n${previewYamlWithDash.value}\n`);
+            copied.value = true;
+            if (copiedTimer) clearTimeout(copiedTimer);
+            copiedTimer = setTimeout(() => {
+                copied.value = false;
+            }, 1600);
+        } catch {
+            // Swallow: modern browsers only allow clipboard in secure contexts.
         }
     }
 
@@ -224,7 +311,7 @@
         try {
             const doc = await pluginsStore.load({cls: props.trigger.type, commit: false});
             documentationPlugin.value = {...doc, cls: props.trigger.type};
-        } catch (_err) {
+        } catch {
             documentationPlugin.value = null;
         }
     }
@@ -256,6 +343,7 @@
     watch(() => props.visible, visible => {
         if (visible) {
             activeTab.value = "form";
+            copied.value = false;
             formModel.value = {
                 namespace: "",
                 flowId: "",
@@ -275,56 +363,228 @@
 </script>
 
 <style scoped lang="scss">
+    // Lighter purple that reads well on dark mode without losing contrast on light mode.
+    $ks-tab-active: #a78bfa;
+
+    .trigger-configure-modal :deep(.el-dialog__header) {
+        padding: 0;
+        margin: 0;
+        border-bottom: 1px solid var(--ks-border-secondary, var(--bs-border-color));
+    }
+
     .trigger-configure-modal :deep(.el-dialog__body) {
-        padding-top: 0;
+        padding: 0;
+    }
+
+    .trigger-configure-modal :deep(.el-dialog__footer) {
+        padding: 12px 20px;
+        border-top: 1px solid var(--ks-border-secondary, var(--bs-border-color));
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px 0;
+    }
+
+    .header-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .header-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: color-mix(in srgb, #{$ks-tab-active} 18%, transparent);
+        color: #{$ks-tab-active};
+
+        :deep(img), :deep(svg) {
+            width: 22px;
+            height: 22px;
+        }
+
+        &--mcp {
+            background: color-mix(in srgb, #ec4899 18%, transparent);
+            color: #ec4899;
+        }
+    }
+
+    .header-text {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .header-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .header-title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ks-content-primary, #fff);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ee-badge {
+        flex-shrink: 0;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        padding: 1px 6px;
+        border-radius: 3px;
+        color: #{$ks-tab-active};
+        background: color-mix(in srgb, #{$ks-tab-active} 18%, transparent);
+    }
+
+    .header-fqcn {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        font-family: var(--font-monospace, monospace);
+        color: var(--ks-content-secondary, var(--bs-gray-500));
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .close-button {
+        background: transparent;
+        border: none;
+        padding: 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--ks-content-tertiary, var(--bs-gray-600));
+
+        &:hover {
+            background: var(--ks-background-hover, rgba(255, 255, 255, 0.05));
+            color: var(--ks-content-primary, #fff);
+        }
+    }
+
+    .tab-bar {
+        display: flex;
+        gap: 0;
+        margin-top: 14px;
+        margin-bottom: -1px;
+        padding: 0 20px;
+    }
+
+    .tab-button {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        color: var(--ks-content-secondary, var(--bs-gray-500));
+        transition: color 0.12s ease, border-color 0.12s ease;
+
+        &:hover {
+            color: var(--ks-content-primary, #fff);
+        }
+
+        &.active {
+            color: #{$ks-tab-active};
+            border-bottom-color: #{$ks-tab-active};
+        }
     }
 
     .ee-notice {
-        margin-bottom: 1rem;
+        margin: 16px 20px 0;
     }
 
-    .modal-tabs {
-        min-height: 360px;
+    .tab-panel {
+        padding: 16px 20px 20px;
+    }
+
+    .form-panel :deep(.el-form-item):first-of-type {
+        margin-top: 0;
     }
 
     .form-hint {
-        margin-top: 1rem;
-        font-size: .85rem;
-        color: var(--bs-gray-600);
+        margin-top: 0.25rem;
+        margin-bottom: 0;
+        font-size: 13px;
+        color: var(--ks-content-secondary, var(--bs-body-color));
     }
 
-    .source-tab {
+    .source-panel {
         display: flex;
         flex-direction: column;
-        gap: .5rem;
     }
 
-    .source-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .source-label {
-        font-family: var(--font-monospace, monospace);
-        color: var(--bs-emphasis-color);
-        font-weight: 600;
-    }
-
-    .source-yaml {
-        background: var(--bs-gray-100);
+    .editor-wrapper {
+        position: relative;
+        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
         border-radius: 6px;
-        padding: 1rem;
-        font-family: var(--font-monospace, monospace);
-        font-size: .85rem;
-        white-space: pre-wrap;
-        overflow-x: auto;
-        margin: 0;
+        overflow: hidden;
+        height: 80px;
+
+        :deep(.monaco-editor),
+        :deep(.monaco-editor .overflow-guard) {
+            height: 100% !important;
+        }
+    }
+
+    // Floating copy button in the editor's top-right corner so the source
+    // panel doesn't waste a full row on a single small button.
+    .copy-button {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 2;
+        background: var(--ks-background-card, rgba(30, 30, 40, 0.9));
+        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 11px;
+        color: var(--ks-content-secondary, var(--bs-body-color));
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        &:hover {
+            color: var(--ks-content-primary, #fff);
+        }
+    }
+
+    .copy-icon {
+        display: inline-flex;
+        font-size: 13px;
+
+        &--ok {
+            color: #22c55e;
+        }
+    }
+
+    // The plugin-doc wrapper ships with its own card background which clashes
+    // with the modal body in dark mode. Strip only the outer wrapper so nested
+    // elements (code, pre, schema cards) keep their native styling in both themes.
+    .doc-panel :deep(.plugin-doc) {
+        max-width: 100%;
+        background: transparent !important;
     }
 
     .modal-footer {
         display: flex;
         justify-content: space-between;
-        gap: .5rem;
+        gap: 0.5rem;
     }
 </style>

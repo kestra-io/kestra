@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "dev": "vite --host",
-    "build": "npm run build -w packages/sdk-ts && npm run build -w packages/api-client && vite build --emptyOutDir",
+    "build:packages": "npm run build -w packages/sdk-ts && npm run build -w packages/api-client",
+    "build": "npm run build:packages && vite build --emptyOutDir",
     "preview": "vite preview",
+    "precheck:types": "npm run build:packages",
     "check:types": "vue-tsc --noEmit",
     "test:lint": "eslint",
     "test:all": "vitest run --coverage",

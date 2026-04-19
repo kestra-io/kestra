@@ -3,10 +3,16 @@ package io.kestra.executor.handler;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
@@ -21,14 +27,17 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionService executionService;
     private final ExecutionStateStore executionStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
+    private final TaskOutputService taskOutputService;
 
     @Inject
     public ExecutionCommandMessageHandler(ExecutionService executionService,
         ExecutionStateStore executionStateStore,
-        FlowMetaStoreInterface flowMetaStore) {
+        FlowMetaStoreInterface flowMetaStore,
+        TaskOutputService taskOutputService) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
+        this.taskOutputService = taskOutputService;
     }
 
     @Override
@@ -63,7 +72,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(newExecution, "ExecutionCommandMessageHandler") : null;
+                return newExecution != null ? executorContext.withExecution(migrateTaskOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (FlowNotFoundException e) {
                 // FIXME we ignore commands for flows that are not found: is it the right thing to do?
                 //  we may instead fail the execution
@@ -74,5 +83,24 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    /**
+     * Pre-2.0 backward compatibility: if a task run carries inline outputs (deprecated {@code Variables outputs} field),
+     * persist them into the task output repository so the rest of the executor can work uniformly with the modern storage.
+     */
+    @SuppressWarnings("deprecation")
+    private Execution migrateTaskOutputs(Execution execution) throws InternalException {
+        if (ListUtils.isEmpty(execution.getTaskRunList())) {
+            return execution;
+        }
+
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (taskRun.getOutputs() != null) {
+                taskOutputService.saveOutputs(taskRun, taskRun.getOutputs());
+                execution = execution.withTaskRun(taskRun.clearOutputs());
+            }
+        }
+        return execution;
     }
 }

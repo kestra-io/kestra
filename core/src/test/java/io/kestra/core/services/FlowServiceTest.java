@@ -33,6 +33,7 @@ import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 
 import io.micronaut.context.annotation.Replaces;
@@ -637,7 +638,7 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldEmitTriggerUpdatedForUnchangedTriggersWhenFlowTasksChange() throws FlowProcessingException, QueueException {
+    void shouldEmitTriggerFlowRevisionUpdatedForUnchangedTriggersWhenFlowTasksChange() throws FlowProcessingException, QueueException {
         // Given — a flow with a trigger
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -655,10 +656,39 @@ class FlowServiceTest {
             .build();
         flowService.update(GenericFlow.of(updated), GenericFlow.of(flow));
 
-        // Then — a TriggerUpdated event is emitted for the unchanged trigger (to refresh cache)
+        // Then — a TriggerFlowRevisionUpdated event is emitted for the unchanged trigger (to refresh cache)
         var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
         verify(triggerEventQueue).send(captor.capture());
-        assertThat(captor.getValue()).isInstanceOf(TriggerUpdated.class);
+        assertThat(captor.getValue()).isInstanceOf(TriggerFlowRevisionUpdated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenRecreatingFlowAfterSoftDelete() throws FlowProcessingException, QueueException {
+        // Given — a flow with a trigger, then soft-deleted
+        String flowId = IdUtils.create();
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build()))
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        flowService.delete(created);
+        reset(triggerEventQueue);
+
+        // When — re-create a flow with the same id (trigger definition unchanged)
+        Flow recreated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("revived")).build()))
+            .build();
+        flowService.create(GenericFlow.of(recreated));
+
+        // Then — a TriggerCreated event is emitted, since the scheduler's trigger state
+        // was dropped on the previous TriggerDeleted and must be rebuilt from scratch.
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
         assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 

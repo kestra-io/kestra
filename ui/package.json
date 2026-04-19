@@ -26,7 +26,7 @@
     },
     "dependencies": {
         "@js-joda/core": "^6.0.1",
-        "@kestra-io/ui-libs": "^0.0.299",
+        "@kestra-io/ui-libs": "^0.0.301",
         "@module-federation/enhanced": "^2.3.1",
         "@module-federation/vite": "^1.14.1",
         "@vue-flow/background": "^1.3.2",

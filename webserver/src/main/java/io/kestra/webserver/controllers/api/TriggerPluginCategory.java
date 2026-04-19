@@ -50,6 +50,16 @@ public enum TriggerPluginCategory {
             return CORE;
         }
 
+        // Some EE modules extend the core trigger surface (for example
+        // io.kestra.plugin.core.trigger.AssetEvent). They ship as separate
+        // plugin jars but are conceptually part of "core" from the user's
+        // perspective, so show them in the Core bucket with the EE badge.
+        String packageName = triggerClass.getPackageName();
+        if (packageName.startsWith("io.kestra.plugin.core.")
+            || packageName.startsWith("io.kestra.core.")) {
+            return CORE;
+        }
+
         if (RealtimeTriggerInterface.class.isAssignableFrom(triggerClass)) {
             return REALTIME;
         }

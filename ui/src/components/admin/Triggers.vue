@@ -1,19 +1,34 @@
 <template>
-    <TopNavBar :title="routeInfo.title" class="triggers-top-nav" />
-    <Tabs :tabs="tabs" routeName="admin/triggers" class="triggers-tab-bar" />
+    <TopNavBar :title="routeInfo.title" class="triggers-top-nav">
+        <template v-if="isManageTab" #additional-right>
+            <ul>
+                <li>
+                    <el-button :icon="Download" @click="exportTriggers()">
+                        {{ $t("export_csv") }}
+                    </el-button>
+                </li>
+            </ul>
+        </template>
+    </TopNavBar>
+    <Tabs :tabs="tabs" routeName="admin/triggers" />
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw} from "vue";
+    import {computed, markRaw, onBeforeUnmount, onMounted, watch} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
+    import Download from "vue-material-design-icons/Download.vue";
 
     import TopNavBar from "../layout/TopNavBar.vue";
     import Tabs from "../Tabs.vue";
     import TriggersAdd from "./TriggersAdd.vue";
     import TriggersManage from "./TriggersManage.vue";
     import useRouteContext from "../../composables/useRouteContext";
+    import {useTriggerStore} from "../../stores/trigger";
 
     const {t} = useI18n({useScope: "global"});
+    const route = useRoute();
+    const triggerStore = useTriggerStore();
 
     const routeInfo = computed(() => ({
         title: t("triggers"),
@@ -25,31 +40,51 @@
         {name: "add", title: t("triggers.tabs.add"), component: markRaw(TriggersAdd)},
         {name: "manage", title: t("triggers.tabs.manage"), component: markRaw(TriggersManage)},
     ]);
+
+    const isManageTab = computed(() => route.params.tab === "manage");
+
+    async function exportTriggers() {
+        await triggerStore.exportTriggersAsCSV(route.query);
+    }
+
+    // The Tabs component sticks at `top: var(--top-navbar-height)` which is
+    // a fixed 79px globally. Pages like Flow detail have a breadcrumb and
+    // action buttons that push the nav past that, so the sticky offset lands
+    // inside the nav and tabs appear flush. This page has only a title and
+    // a conditional export button, so the nav renders shorter than 79px,
+    // leaving a visible gap between nav and tabs. Measure the nav on mount
+    // (and on size changes / tab changes) and set the variable to match.
+    const NAVBAR_HEIGHT_VAR = "--top-navbar-height";
+    let previous = "";
+    let observer: ResizeObserver | null = null;
+
+    function applyMeasured() {
+        const nav = document.querySelector(".triggers-top-nav") as HTMLElement | null;
+        if (!nav) return;
+        const height = Math.round(nav.getBoundingClientRect().height);
+        if (height > 0) {
+            document.documentElement.style.setProperty(NAVBAR_HEIGHT_VAR, `${height}px`);
+        }
+    }
+
+    onMounted(() => {
+        previous = document.documentElement.style.getPropertyValue(NAVBAR_HEIGHT_VAR);
+        applyMeasured();
+        const nav = document.querySelector(".triggers-top-nav");
+        if (nav) {
+            observer = new ResizeObserver(applyMeasured);
+            observer.observe(nav);
+        }
+    });
+
+    watch(isManageTab, () => applyMeasured());
+
+    onBeforeUnmount(() => {
+        observer?.disconnect();
+        if (previous) {
+            document.documentElement.style.setProperty(NAVBAR_HEIGHT_VAR, previous);
+        } else {
+            document.documentElement.style.removeProperty(NAVBAR_HEIGHT_VAR);
+        }
+    });
 </script>
-
-<style scoped lang="scss">
-    // The Triggers page has no breadcrumb and no description, so TopNavBar's
-    // default 79px height leaves visible empty space below the title before
-    // the tab bar (which sticks at --top-navbar-height). Shrink the nav to
-    // its content and retarget the tab bar's sticky offset to match, so the
-    // Add/Manage tabs sit flush under the title like on other pages
-    // (e.g. Namespaces) that do fill the nav vertically.
-    .triggers-top-nav {
-        :deep(nav) {
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
-        }
-        :deep(.description) {
-            display: none;
-        }
-        :deep(h1) {
-            line-height: 1.3;
-        }
-    }
-
-    // Nav is ~50px after the padding trim above; stick the tab bar right
-    // below it instead of at the default 79px offset.
-    .triggers-tab-bar :deep(.el-tabs.top) {
-        top: 50px;
-    }
-</style>

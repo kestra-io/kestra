@@ -4,6 +4,7 @@
         placement="top"
         :showAfter="250"
         :hideAfter="0"
+        effect="light"
         popperClass="trigger-card-tooltip"
         :rawContent="true"
         :content="fullDescriptionHtml"
@@ -200,6 +201,7 @@
         min-width: 0;
     }
 
+    // Lighter purple, matching the modal header's EE badge.
     .ee-badge {
         flex-shrink: 0;
         font-size: 10px;
@@ -207,8 +209,8 @@
         letter-spacing: 0.05em;
         padding: 1px 6px;
         border-radius: 3px;
-        color: var(--el-color-primary);
-        background: color-mix(in srgb, var(--el-color-primary) 14%, transparent);
+        color: #a78bfa;
+        background: color-mix(in srgb, #a78bfa 18%, transparent);
     }
 
     .trigger-description {

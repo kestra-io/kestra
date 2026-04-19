@@ -188,9 +188,12 @@ public class PluginController {
 
     /**
      * A trigger is classified as Enterprise Edition when either the owning plugin's manifest marks
-     * the module as EE (via the {@code X-Kestra-License} attribute) or the class lives in a known
-     * EE package. The package check is a fallback for bundled core-ee triggers that share the core
-     * manifest; avoid relying on it for external plugins.
+     * the module as EE (via the {@code X-Kestra-License} attribute) or the class lives in an EE
+     * package. EE classes show up under several package shapes depending on where they're housed:
+     * {@code io.kestra.ee.*} and {@code io.kestra.plugin.ee.*} for bundled EE modules, plus any
+     * external plugin that carves out an {@code .ee.} namespace (for example
+     * {@code io.kestra.plugin.kestra.ee.assets}). The package fallback matters because uber-jars
+     * strip module-level manifests, so the license attribute alone isn't reliable.
      */
     protected boolean isEnterpriseEdition(RegisteredPlugin registeredPlugin, Class<?> triggerClass) {
         String license = registeredPlugin.license();
@@ -199,7 +202,9 @@ public class PluginController {
         }
 
         String packageName = triggerClass.getPackageName();
-        return packageName.startsWith("io.kestra.plugin.ee.") || packageName.startsWith("io.kestra.ee.");
+        return packageName.startsWith("io.kestra.ee.")
+            || packageName.startsWith("io.kestra.plugin.ee.")
+            || packageName.contains(".ee.");
     }
 
     @Get(uri = "icons")

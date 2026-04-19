@@ -1,10 +1,5 @@
 <template>
     <div v-if="ready" class="triggers-manage">
-        <div class="d-flex justify-content-end mb-2">
-            <el-button :icon="Download" @click="exportTriggersAsStream()">
-                {{ $t('export_csv') }}
-            </el-button>
-        </div>
         <div>
             <DataTable
                 @page-changed="onPageChanged"
@@ -354,7 +349,6 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
-    import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
     import IconButton from "../IconButton.vue";
@@ -807,11 +801,6 @@
         }
     });
 
-    async function exportTriggersAsStream() {
-        await triggerStore.exportTriggersAsCSV(route.query);
-    }
-
-    defineExpose({exportTriggersAsStream});
 </script>
 
 <style scoped lang="scss">

@@ -43,16 +43,6 @@
             </nav>
         </template>
 
-        <el-alert
-            v-if="trigger.ee"
-            type="warning"
-            :closable="false"
-            showIcon
-            class="ee-notice"
-        >
-            {{ $t("triggers.add.modal.ee_notice") }}
-        </el-alert>
-
         <div class="tab-panel">
             <div v-show="activeTab === 'form'" class="form-panel">
                 <el-form labelPosition="top" :model="formModel">
@@ -113,11 +103,12 @@
                         <span>{{ copied ? $t("copied") : $t("copy") }}</span>
                     </button>
                     <Editor
-                        :modelValue="previewYamlWithDash"
+                        :modelValue="sourceYaml"
                         lang="yaml"
                         :navbar="false"
-                        :readOnly="true"
+                        :readOnly="false"
                         :fullHeight="false"
+                        @update:model-value="onSourceEdit"
                     />
                 </div>
             </div>
@@ -246,14 +237,32 @@
         Boolean(formModel.value.namespace && formModel.value.flowId && formModel.value.triggerId.trim())
     );
 
-    const previewYaml = computed(() => buildTriggerYaml(formModel.value.triggerId, props.trigger.type));
-
-    const previewYamlWithDash = computed(() => {
-        const lines = previewYaml.value.split("\n").filter(line => line.length > 0);
+    function formatWithDash(yaml: string): string {
+        const lines = yaml.split("\n").filter(line => line.length > 0);
         return lines
             .map((line, index) => (index === 0 ? `  - ${line}` : `    ${line}`))
             .join("\n");
-    });
+    }
+
+    // Editable YAML buffer for the Source tab. Form fields keep it in sync
+    // until the user edits it directly, at which point their edits win and
+    // form changes stop overwriting the buffer.
+    const sourceYaml = ref("");
+    const sourceUserEdited = ref(false);
+
+    function onSourceEdit(value: string) {
+        sourceYaml.value = value;
+        sourceUserEdited.value = true;
+    }
+
+    watch(
+        () => [formModel.value.triggerId, props.trigger.type] as const,
+        ([id, type]) => {
+            if (sourceUserEdited.value) return;
+            sourceYaml.value = formatWithDash(buildTriggerYaml(id, type));
+        },
+        {immediate: true},
+    );
 
     function generateDefaultTriggerId(): string {
         const suffix = Math.floor(10000 + Math.random() * 90000);
@@ -296,7 +305,7 @@
 
     async function copySource() {
         try {
-            await navigator.clipboard.writeText(`triggers:\n${previewYamlWithDash.value}\n`);
+            await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`);
             copied.value = true;
             if (copiedTimer) clearTimeout(copiedTimer);
             copiedTimer = setTimeout(() => {
@@ -316,13 +325,31 @@
         }
     }
 
+    function unformatDash(yaml: string): string {
+        // Reverse of formatWithDash: strip the "- " on the first non-empty
+        // line and the 4-space indent on subsequent lines, so downstream YAML
+        // insertion can re-indent relative to the target flow's triggers list.
+        const lines = yaml.split("\n");
+        return lines
+            .map((line, index) => {
+                if (index === 0) return line.replace(/^\s*-\s*/, "");
+                return line.replace(/^ {4}/, "");
+            })
+            .join("\n")
+            .trimEnd() + "\n";
+    }
+
     function addTriggerToFlow() {
         if (!canSubmit.value) return;
+
+        const triggerYaml = sourceUserEdited.value
+            ? unformatDash(sourceYaml.value)
+            : buildTriggerYaml(formModel.value.triggerId, props.trigger.type);
 
         triggerDraftStore.setDraft({
             namespace: formModel.value.namespace,
             flowId: formModel.value.flowId,
-            triggerYaml: buildTriggerYaml(formModel.value.triggerId, props.trigger.type),
+            triggerYaml,
         });
 
         emit("update:visible", false);
@@ -344,6 +371,7 @@
         if (visible) {
             activeTab.value = "form";
             copied.value = false;
+            sourceUserEdited.value = false;
             formModel.value = {
                 namespace: "",
                 flowId: "",
@@ -505,10 +533,6 @@
         }
     }
 
-    .ee-notice {
-        margin: 16px 20px 0;
-    }
-
     .tab-panel {
         padding: 16px 20px 20px;
     }
@@ -518,7 +542,7 @@
     }
 
     .form-hint {
-        margin-top: 0.25rem;
+        margin-top: 0.5rem;
         margin-bottom: 0;
         font-size: 13px;
         color: var(--ks-content-secondary, var(--bs-body-color));

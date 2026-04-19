@@ -24,7 +24,7 @@ import reactor.core.publisher.FluxSink;
  * If the child repository uses a default filter, it should override it.
  * <p>
  * For example, to avoid supporting allowDeleted:
- * 
+ *
  * <pre>
  * {@code
  * &#64;Override
@@ -122,6 +122,51 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     public void deleteWithoutAcl(T item) {
         T deleted = (T) ((SoftDeletable<?>) item).toDeleted();
         this.jdbcRepository.persist(deleted);
+    }
+
+    /**
+     * Delete an item.
+     * If the entity implements {@link SoftDeletable}, it will be soft-deleted
+     * Otherwise, it will be hard-deleted
+     *
+     * @param item the item to delete.
+     * @return the deleted item.
+     */
+    @SuppressWarnings("unchecked")
+    public T delete(T item) {
+        if (item instanceof SoftDeletable<?> softDeletable) {
+            T deleted = (T) softDeletable.toDeleted();
+            this.jdbcRepository.persist(deleted);
+            return deleted;
+        }
+
+        this.jdbcRepository.delete(item);
+        return item;
+    }
+
+    /**
+     * Hard-delete an item from the database
+     * Use this for physical purge operations.
+     *
+     * @param item the item to purge.
+     */
+    public Integer purge(T item) {
+        return this.jdbcRepository.delete(item);
+    }
+
+    /**
+     * Hard-delete all items matching the given condition within a transaction context.
+     * Use this for bulk purge operations.
+     *
+     * @param context   the DSL context (transaction-aware).
+     * @param condition the condition to match items for deletion.
+     * @return the number of deleted rows.
+     */
+    protected Integer purgeByCondition(DSLContext context, Condition condition) {
+        return context
+            .delete(this.jdbcRepository.getTable())
+            .where(condition)
+            .execute();
     }
 
     /**

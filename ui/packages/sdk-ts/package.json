@@ -1,0 +1,46 @@
+{
+  "name": "@kestra-io/sdk-ts",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "SDK for Kestra API in TypeScript",
+  "author": "Kestra Team <team@kestra.io>",
+  "license": "MIT",
+  "homepage": "https://kestra.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kestra-io/kestra"
+  },
+  "bugs": {
+    "url": "https://github.com/kestra-io/kestra/issues"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json",
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "play": "vite",
+    "typecheck": "vue-tsc --noEmit",
+    "release": "bumpp",
+    "prepublishOnly": "npm run build",
+    "generate:openapi": "openapi-ts",
+    "postinstall": "openapi-ts",
+    "prebuild": "openapi-ts"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.96.0",
+    "@types/node": "^25.5.0",
+    "bumpp": "^11.0.1",
+    "tsdown": "^0.21.7",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3"
+  }
+}

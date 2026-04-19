@@ -1,7 +1,7 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
-import {client} from "@kestra-io/sdk-js/client.gen"
+import {client} from "@kestra-io/sdk-ts/client.gen"
 
 declare global {
     interface Window {
@@ -106,7 +106,7 @@ const createAxios = (
 
     instance.interceptors.response.use(
         (response) => response,
-        async (errorResponse: AxiosError & QueueItem & {config:{showMessageOnError: boolean}}) => {
+        async (errorResponse: AxiosError & QueueItem & { config: { showMessageOnError: boolean } }) => {
 
             if (errorResponse?.code === "ERR_BAD_RESPONSE" && !errorResponse?.response?.data) {
                 if (coreStore) {
@@ -139,7 +139,7 @@ const createAxios = (
                 }
 
                 window.location.assign(`${base_path}/ui/login?from=${window.location.pathname +
-                (window.location.search ?? "")}`)
+                    (window.location.search ?? "")}`)
                 return
             }
 
@@ -154,7 +154,7 @@ const createAxios = (
                 // Keep original request
                 const originalRequest = errorResponse.config
 
-                if(!originalRequest) {
+                if (!originalRequest) {
                     return Promise.reject(errorResponse)
                 }
 
@@ -166,7 +166,7 @@ const createAxios = (
                     beforeLogout?.()
 
                     delete instance.defaults.headers.common["Authorization"]
-                    authStore?.logout().catch(() => {})
+                    authStore?.logout().catch(() => { })
 
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
@@ -220,7 +220,7 @@ const createAxios = (
 
                         beforeLogout?.()
                         delete instance.defaults.headers.common["Authorization"]
-                        authStore?.logout().catch(() => {})
+                        authStore?.logout().catch(() => { })
 
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
@@ -253,7 +253,7 @@ const createAxios = (
             }
 
             if (errorResponse.response.data && errorResponse?.config?.showMessageOnError !== false) {
-                if(coreStore){
+                if (coreStore) {
                     coreStore.message = {
                         variant: "error",
                         response: errorResponse.response,

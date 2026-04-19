@@ -173,7 +173,7 @@
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
-    import * as outputsSDK from "@kestra-io/sdk-js/sdk/ks-Outputs.gen";
+    import * as outputsSDK from "@kestra-io/sdk-ts/ks-Outputs.gen";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -225,7 +225,7 @@
         } else {
             return [];
         }
-                
+
     }
 
     const cascaderProps: CascaderProps = {
@@ -319,7 +319,7 @@
     }
 
     const processedValue = (data: TransformedTask) => {
-        const regular = false;      
+        const regular = false;
 
         if(!data.leaf || data.taskId) {
             return {label: "", regular};
@@ -331,7 +331,7 @@
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
-        
+
 
         return {label: trim(data.value), regular: true};
     };
@@ -431,7 +431,7 @@
                         }
                     }
                 }
-                    
+
             }
         },
         {immediate: true},
@@ -476,7 +476,7 @@
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
-                
+
                 do {
                     selectedLocal.push(child.value);
                     if(child?.path) {
@@ -490,7 +490,7 @@
                 if(expandedValueLocal){
                     expandedValue.value = expandedValueLocal;
                 }
-            })  
+            })
         }
     })
 
@@ -657,7 +657,7 @@
             & .task-label {
                 width: 100%;
                 max-width: 100%;
-                
+
                 & .task-iteration-value {
                     display: inline-block;
                     width: 80px;

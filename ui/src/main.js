@@ -2,7 +2,7 @@ import {createApp} from "vue"
 
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {configureAxios} from "./utils/axios"
+import {configureAxios} from "@kestra-io/api-client"
 import routes from "./routes/routes";
 import en from "./translations/en.json";
 import {setupTenantRouter} from "./composables/useTenant";

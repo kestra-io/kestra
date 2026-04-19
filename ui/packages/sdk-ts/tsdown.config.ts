@@ -2,15 +2,21 @@ import {defineConfig} from "tsdown"
 import {readdirSync} from "fs"
 import {join} from "path"
 
-const sdkEntries = readdirSync(join(import.meta.dirname, "src/sdk"))
-    .filter(f => f.endsWith(".gen.ts"))
-    .map(f => `src/sdk/${f}`)
+const sdkEntries = Object.fromEntries(
+    readdirSync(join(import.meta.dirname, "src/sdk"))
+        .filter(f => f.endsWith(".gen.ts"))
+        .map(f => {
+            // Strip "ks-" prefix and ".gen.ts" suffix: "ks-Outputs.gen.ts" → "Outputs"
+            const name = f.replace(/^ks-/, "").replace(/\.gen\.ts$/, "")
+            return [name, `src/sdk/${f}`]
+        })
+)
 
-const allEntries = [
-    "src/index.ts",
-    "src/client.gen.ts",
+const allEntries = {
+    "index": "src/index.ts",
+    "client": "src/client.gen.ts",
     ...sdkEntries,
-]
+}
 
 export default defineConfig({
     platform: "browser",

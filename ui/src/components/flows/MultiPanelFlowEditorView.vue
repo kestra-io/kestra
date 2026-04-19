@@ -55,10 +55,12 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
+    import {useTriggerDraftStore} from "../../stores/triggerDraft";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
     import {useTopologyPanels} from "./useTopologyPanels";
@@ -118,16 +120,34 @@
                 editorView.value?.focusTab("nocode")
             }
 
-            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
-            const blockSchemaPath = [
-                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
-            ].join("/");
-            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            // When the "Add Trigger" tenant-level modal redirected us here, splice the
+            // configured trigger into the flow YAML so the user can review and Save.
+            const draft = triggerDraftStore.consumeDraft(
+                flowStore.flow?.namespace ?? "",
+                flowStore.flow?.id ?? ""
+            );
+            if (draft?.triggerYaml) {
+                flowStore.flowYaml = YAML_UTILS.insertBlockWithPath({
+                    source: flowStore.flowYaml ?? "",
+                    newBlock: draft.triggerYaml,
+                    parentPath: "triggers",
+                    refPath: null,
+                    position: "after",
+                });
+            } else {
+                const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+                const blockSchemaPath = [
+                    pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+                ].join("/");
+                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            }
 
             const {createTrigger: _, ...query} = route.query;
             router.replace({...route, query});
         }
     })
+
+    const triggerDraftStore = useTriggerDraftStore();
 
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()

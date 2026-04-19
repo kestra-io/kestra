@@ -1,11 +1,20 @@
 <template>
-    <TopNavBar :title="routeInfo.title">
+    <TopNavBar :title="routeInfo.title" :description="routeInfo.description">
         <template #additional-right>
-            <el-button :icon="Download" @click="exportTriggersAsStream()">
+            <el-button
+                v-if="activeTab === 'manage'"
+                :icon="Download"
+                @click="exportTriggersAsStream()"
+            >
                 {{ $t('export_csv') }}
             </el-button>
         </template>
     </TopNavBar>
+    <el-tabs v-model="activeTab" class="triggers-tabs">
+        <el-tab-pane :label="$t('triggers.tabs.add')" name="add" lazy>
+            <TriggersAdd />
+        </el-tab-pane>
+        <el-tab-pane :label="$t('triggers.tabs.manage')" name="manage">
     <section class="container" v-if="ready">
         <div>
             <DataTable
@@ -328,13 +337,15 @@
             </el-dialog>
         </div>
     </section>
+        </el-tab-pane>
+    </el-tabs>
 </template>
 <script setup lang="ts">
     import _merge from "lodash/merge";
     import {ref, computed, watch} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {ElMessage} from "element-plus";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -371,12 +382,14 @@
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
+    import TriggersAdd from "./TriggersAdd.vue";
     import useRouteContext from "../../composables/useRouteContext";
 
     const triggerFilter = useTriggerFilter();
 
 
     const route = useRoute();
+    const router = useRouter();
     const toast = useToast();
     const {t} = useI18n({useScope: "global"});
 
@@ -497,10 +510,21 @@
     });
 
     const routeInfo = computed(() => ({
-        title: t("triggers")
+        title: t("triggers"),
+        description: t("triggers.header.description")
     }));
 
     useRouteContext(routeInfo);
+
+    const activeTab = ref<"add" | "manage">(
+        route.query?.tab === "manage" ? "manage" : "add"
+    );
+
+    watch(activeTab, newTab => {
+        if (newTab !== route.query?.tab) {
+            router.replace({query: {...route.query, tab: newTab}});
+        }
+    });
 
     const updateDisplayColumns = (newColumns: string[]) => {
         updateVisibleColumns(newColumns);

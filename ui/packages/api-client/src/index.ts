@@ -1,7 +1,7 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
-import {client} from "@kestra-io/sdk-ts/client.gen"
+import {client} from "@kestra-io/sdk-ts/client"
 
 declare global {
     interface Window {

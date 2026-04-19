@@ -9,9 +9,9 @@
     ],
     "scripts": {
         "dev": "vite --host",
-        "build": "vite build --emptyOutDir",
+        "build": "npm run build -w packages/sdk-js && npm run build -w packages/api-client && vite build --emptyOutDir",
         "preview": "vite preview",
-        "precheck:types": "openapi-ts",
+        "precheck:types": "npm run generate:openapi -w packages/sdk-js",
         "check:types": "vue-tsc --noEmit",
         "test:lint": "eslint",
         "test:all": "vitest run --coverage",
@@ -24,8 +24,8 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
-        "generate:openapi": "openapi-ts",
-        "postinstall": "patch-package && openapi-ts"
+        "generate:openapi": "npm run generate:openapi -w packages/sdk-js",
+        "postinstall": "patch-package && npm run generate:openapi -w packages/sdk-js"
     },
     "dependencies": {
         "@js-joda/core": "^6.0.1",
@@ -39,7 +39,6 @@
         "@vue-flow/core": "^1.48.2",
         "@vueuse/core": "^14.2.1",
         "ansi-to-html": "^0.7.2",
-        "axios": "1.13.6",
         "bootstrap": "^5.3.8",
         "buffer": "^6.0.3",
         "chart.js": "^4.5.1",

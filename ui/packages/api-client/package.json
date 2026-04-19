@@ -4,16 +4,20 @@
     "private": true,
     "type": "module",
     "exports": {
-        ".": "./src/index.ts"
+        ".": {
+            "types": "./src/index.ts",
+            "development": "./src/index.ts",
+            "default": "./dist/index.js"
+        }
     },
     "scripts": {
         "build": "tsdown"
     },
     "dependencies": {
-        "@kestra-io/sdk-js": "*"
+        "@kestra-io/sdk-js": "*",
+        "axios": "1.13.6"
     },
     "peerDependencies": {
-        "axios": "*",
         "nprogress": "*",
         "vue-router": "*"
     }

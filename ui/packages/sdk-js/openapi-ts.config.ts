@@ -17,12 +17,12 @@ const generateHash = (str: string) => {
 };
 
 export default {
-  input: "../openapi.yml",
+  input: path.resolve(__dirname, "../../../openapi.yml"),
   output: {
-    path: path.resolve(__dirname, "./packages/sdk-js/src"),
+    path: path.resolve(__dirname, "./src"),
     postProcess: ["eslint"],
   },
-  
+
   plugins: [
     {
         name: "@hey-api/client-axios",

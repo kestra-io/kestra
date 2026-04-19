@@ -1,7 +1,7 @@
 <template>
     <div class="w-100 p-4">
         <Sections
-            :key="dashboardStore.sourceCode"
+            :key="previewSectionsKey"
             :dashboard="{id: 'default', charts: []}"
             :charts="charts.map(chart => chart.data).filter(chart => chart !== null)"
             showDefault
@@ -10,12 +10,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, watch} from "vue";
+    import {computed, onBeforeUnmount, ref, watch} from "vue";
     import Sections from "../sections/Sections.vue";
     import {Chart} from "../types.ts";
     import {useDashboardStore} from "../../../stores/dashboard";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import throttle from "lodash/throttle";
+    import debounce from "lodash/debounce";
 
     interface Result {
         error: string[] | null;
@@ -26,8 +26,14 @@
     const charts = ref<Result[]>([])
 
     const dashboardStore = useDashboardStore();
+    const previewSectionsKey = computed(() => {
+        const id = dashboardStore.parsedSource?.id;
+        return typeof id === "string" && id.length > 0 ? id : "dashboard-preview";
+    });
 
-    const validateAndLoadAllChartsThrottled = throttle(validateAndLoadAllCharts, 500);
+    // Wait until editing pauses so the preview does not flicker on every keystroke
+    // (no-code and YAML both write `sourceCode` continuously while typing).
+    const debouncedValidateAndLoadAllCharts = debounce(validateAndLoadAllCharts, 600);
 
     async function validateAndLoadAllCharts() {
         const allCharts = YAML_UTILS.getAllCharts(dashboardStore.sourceCode) ?? [];
@@ -36,14 +42,24 @@
         }));
     }
 
+    let initialPreviewLoadDone = false;
+
     watch(
         () => dashboardStore.sourceCode,
         () => {
-            validateAndLoadAllChartsThrottled();
-        }
-        , {immediate: true}
+            if (!initialPreviewLoadDone) {
+                initialPreviewLoadDone = true;
+                void validateAndLoadAllCharts();
+                return;
+            }
+            debouncedValidateAndLoadAllCharts();
+        },
+        {immediate: true}
     );
 
+    onBeforeUnmount(() => {
+        debouncedValidateAndLoadAllCharts.cancel();
+    });
 
 
     async function loadChart(chart: any) {

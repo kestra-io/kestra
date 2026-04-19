@@ -18,6 +18,7 @@ export default
         entry: [entry],
         format: ["esm"] as const,
         dts: true,
+        exports: true,
         clean: i === 0,
     }))
 

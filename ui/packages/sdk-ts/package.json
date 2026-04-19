@@ -15,8 +15,27 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./package.json": "./package.json",
-    "./style.css": "./dist/style.css"
+    "./client.gen": "./dist/client.gen.js",
+    "./ks-AI.gen": "./dist/ks-AI.gen.js",
+    "./ks-Blueprint Tags.gen": "./dist/ks-Blueprint Tags.gen.js",
+    "./ks-Blueprints.gen": "./dist/ks-Blueprints.gen.js",
+    "./ks-Dashboards.gen": "./dist/ks-Dashboards.gen.js",
+    "./ks-Executions.gen": "./dist/ks-Executions.gen.js",
+    "./ks-Files.gen": "./dist/ks-Files.gen.js",
+    "./ks-Flows.gen": "./dist/ks-Flows.gen.js",
+    "./ks-KV.gen": "./dist/ks-KV.gen.js",
+    "./ks-Logs.gen": "./dist/ks-Logs.gen.js",
+    "./ks-Metrics.gen": "./dist/ks-Metrics.gen.js",
+    "./ks-Misc.gen": "./dist/ks-Misc.gen.js",
+    "./ks-Namespaces.gen": "./dist/ks-Namespaces.gen.js",
+    "./ks-Outputs.gen": "./dist/ks-Outputs.gen.js",
+    "./ks-Plugins.gen": "./dist/ks-Plugins.gen.js",
+    "./ks-Secrets.gen": "./dist/ks-Secrets.gen.js",
+    "./ks-Services.gen": "./dist/ks-Services.gen.js",
+    "./ks-shared.gen": "./dist/ks-shared.gen.js",
+    "./ks-Tenants.gen": "./dist/ks-Tenants.gen.js",
+    "./ks-Triggers.gen": "./dist/ks-Triggers.gen.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -42,5 +61,8 @@
     "tsdown": "^0.21.7",
     "typescript": "^6.0.2",
     "vite": "^8.0.3"
+  },
+  "inlinedDependencies": {
+    "axios": "1.13.6"
   }
 }

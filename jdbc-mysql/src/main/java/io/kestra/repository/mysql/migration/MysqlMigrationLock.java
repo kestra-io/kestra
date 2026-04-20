@@ -2,6 +2,7 @@ package io.kestra.repository.mysql.migration;
 
 import io.kestra.core.migration.MigrationLock;
 import io.kestra.repository.mysql.MysqlRepositoryEnabled;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jdbc.DataSourceResolver;
 import jakarta.inject.Inject;
@@ -13,12 +14,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 
 /**
  * MySQL {@link MigrationLock} implementation using {@code GET_LOCK} / {@code RELEASE_LOCK}.
  *
  * <p>The lock is session-scoped and persists across transactions, making it safe for
- * multi-node deployments. The lock times out after 5 minutes if not acquired.
+ * multi-node deployments. The acquire timeout is configurable via
+ * {@code kestra.migration.lock-acquire-timeout} (default 1 hour).
  */
 @Slf4j
 @Singleton
@@ -26,9 +29,9 @@ import java.sql.SQLException;
 public class MysqlMigrationLock implements MigrationLock {
 
     private static final String LOCK_NAME = "kestra_migration";
-    private static final int LOCK_TIMEOUT_SECONDS = 300;
 
     private final DataSource dataSource;
+    private final Duration lockTimeout;
 
     /** Dedicated connection held open for the duration of the lock. {@code volatile} because
      * {@link #acquire()} and {@link #release()} can be called from different JVM instances or
@@ -38,8 +41,10 @@ public class MysqlMigrationLock implements MigrationLock {
 
     @Inject
     public MysqlMigrationLock(final DataSource dataSource,
-                               @Nullable final DataSourceResolver dataSourceResolver) {
+                               @Nullable final DataSourceResolver dataSourceResolver,
+                               @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
+        this.lockTimeout = lockTimeout;
     }
 
     @Override
@@ -48,14 +53,14 @@ public class MysqlMigrationLock implements MigrationLock {
         lockConnection = dataSource.getConnection();
         try (PreparedStatement ps = lockConnection.prepareStatement("SELECT GET_LOCK(?, ?)")) {
             ps.setString(1, LOCK_NAME);
-            ps.setInt(2, LOCK_TIMEOUT_SECONDS);
+            ps.setInt(2, (int) lockTimeout.toSeconds());
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next() || rs.getInt(1) != 1) {
                     lockConnection.close();
                     lockConnection = null;
                     throw new SQLException(
-                        "Could not acquire MySQL migration lock '%s' within %d seconds"
-                            .formatted(LOCK_NAME, LOCK_TIMEOUT_SECONDS)
+                        "Could not acquire MySQL migration lock '%s' within %s (configurable via kestra.migration.lock-acquire-timeout)"
+                            .formatted(LOCK_NAME, lockTimeout)
                     );
                 }
             }

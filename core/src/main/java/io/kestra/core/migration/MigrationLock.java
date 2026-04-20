@@ -18,7 +18,8 @@ package io.kestra.core.migration;
 public interface MigrationLock {
 
     /**
-     * Acquires the migration lock, blocking until the lock is available.
+     * Acquires the migration lock, blocking until the lock is available or the configured
+     * timeout ({@code kestra.migration.lock-acquire-timeout}, default 1 hour) is exceeded.
      *
      * @throws Exception if the lock cannot be acquired
      */

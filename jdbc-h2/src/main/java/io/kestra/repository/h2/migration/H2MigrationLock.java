@@ -1,9 +1,13 @@
 package io.kestra.repository.h2.migration;
 
 import io.kestra.core.migration.MigrationLock;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -19,10 +23,20 @@ import java.util.concurrent.locks.ReentrantLock;
 public class H2MigrationLock implements MigrationLock {
 
     private final ReentrantLock lock = new ReentrantLock();
+    private final Duration lockTimeout;
+
+    @Inject
+    public H2MigrationLock(
+        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
+        this.lockTimeout = lockTimeout;
+    }
 
     @Override
-    public void acquire() {
-        lock.lock();
+    public void acquire() throws Exception {
+        if (!lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
+            throw new IllegalStateException(
+                "Could not acquire H2 migration lock within " + lockTimeout);
+        }
     }
 
     @Override

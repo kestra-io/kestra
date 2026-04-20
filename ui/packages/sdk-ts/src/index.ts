@@ -1,7 +1,9 @@
-import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
+import axios from "axios"
+import type {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
-import {Router} from "vue-router"
-import {client} from "@kestra-io/sdk-ts/client"
+import {client} from "./openapi/client.gen"
+
+export * from "./openapi/index"
 
 declare global {
     interface Window {
@@ -74,7 +76,11 @@ interface QueueItem {
 
 const createAxios = (
     oss: boolean,
-    router?: Router,
+    router?: {
+        push: (location: {name: string, query?: Record<string, string>}) => void;
+        beforeEach: (callback: (to: any, from: any, next: () => void) => void) => void;
+        afterEach: (callback: () => void) => void;
+    },
     coreStore?: {
         message?: {
             variant?: string;

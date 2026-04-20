@@ -1,18 +1,8 @@
 {
   "name": "@kestra-io/sdk-ts",
+  "version": "0.0.1",
+  "private": true,
   "type": "module",
-  "version": "0.0.0",
-  "description": "SDK for Kestra API in TypeScript",
-  "author": "Kestra Team <team@kestra.io>",
-  "license": "MIT",
-  "homepage": "https://kestra.io",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kestra-io/kestra"
-  },
-  "bugs": {
-    "url": "https://github.com/kestra-io/kestra/issues"
-  },
   "exports": {
     ".": "./dist/index.js",
     "./AI": "./dist/AI.js",
@@ -37,12 +27,6 @@
     "./Triggers": "./dist/Triggers.js",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -54,15 +38,19 @@
     "postinstall": "openapi-ts",
     "prebuild": "openapi-ts"
   },
+  "dependencies": {
+    "axios": "1.13.6"
+  },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.96.0",
     "@types/node": "^25.5.0",
     "bumpp": "^11.0.1",
+    "nprogress": "^0.2.0",
     "tsdown": "^0.21.7",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.3"
+    "typescript": "^6.0.2"
   },
+  "peerDependencies": {},
   "inlinedDependencies": {
-    "axios": "1.13.6"
+    "nprogress": "0.2.0"
   }
 }

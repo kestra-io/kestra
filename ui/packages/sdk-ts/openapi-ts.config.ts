@@ -18,7 +18,7 @@ const generateHash = (str: string) => {
 export default {
     input: path.resolve(__dirname, "../../../openapi.yml"),
     output: {
-        path: path.resolve(__dirname, "./src"),
+        path: path.resolve(__dirname, "./src/openapi"),
         postProcess: ["eslint"],
     },
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="triggers-add">
+    <div class="triggers-grid">
         <div class="toolbar">
             <div class="search-wrapper">
                 <SearchField
@@ -160,7 +160,7 @@
 </script>
 
 <style scoped lang="scss">
-    .triggers-add {
+    .triggers-grid {
         display: flex;
         flex-direction: column;
         gap: 1.125rem;

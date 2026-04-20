@@ -23,7 +23,7 @@
 
     import TopNavBar from "../layout/TopNavBar.vue";
     import Tabs from "../Tabs.vue";
-    import TriggersAdd from "./TriggersAdd.vue";
+    import TriggersGrid from "./TriggersGrid.vue";
     import TriggersManage from "./TriggersManage.vue";
 
     import useRouteContext from "../../composables/useRouteContext";
@@ -44,7 +44,7 @@
     useRouteContext(routeInfo);
 
     const tabs = computed(() => [
-        {name: "add", title: t("triggers.tabs.add"), component: markRaw(TriggersAdd)},
+        {name: "add", title: t("triggers.tabs.add"), component: markRaw(TriggersGrid)},
         {name: "manage", title: t("triggers.tabs.manage"), component: markRaw(TriggersManage)},
     ]);
 

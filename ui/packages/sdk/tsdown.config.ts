@@ -6,8 +6,8 @@ const sdkEntries = Object.fromEntries(
     readdirSync(join(import.meta.dirname, "src/openapi/sdk"))
         .filter(f => f.endsWith(".gen.ts"))
         .map(f => {
-            // Strip "ks-" prefix and ".gen.ts" suffix: "ks-Outputs.gen.ts" → "Outputs"
-            const name = f.replace(/^ks-/, "").replace(/\.gen\.ts$/, "")
+            // Strip "ks-" prefix and ".gen.ts" suffix: "ks-Outputs.gen.ts" → "outputs"
+            const name = f.replace(/^ks-/, "").replace(/\.gen\.ts$/, "").replace(/ /g, "-").toLowerCase()
             return [name, `src/openapi/sdk/${f}`]
         })
 )

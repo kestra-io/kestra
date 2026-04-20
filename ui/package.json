@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run build -w @kestra-io/sdk  & vite --host",
+    "dev": "npm run dev -w @kestra-io/sdk & vite --host",
     "build:packages": "npm run build -w @kestra-io/sdk",
     "build": "npm run build:packages && vite build --emptyOutDir",
     "preview": "vite preview",

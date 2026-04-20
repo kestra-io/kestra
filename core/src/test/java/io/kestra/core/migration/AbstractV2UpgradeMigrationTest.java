@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Unit tests for {@link AbstractV2UpgradeMigration} trigger migration logic.
+ * Unit tests for {@link V2_0TriggerMigration} and {@link AbstractV2UpgradeMigration}.
  */
 class AbstractV2UpgradeMigrationTest {
 
@@ -40,32 +40,45 @@ class AbstractV2UpgradeMigrationTest {
         new SchedulerConfiguration(VNODES, Duration.ofSeconds(5), 100);
 
     private TrackingTriggerStateStore store;
-    private List<String> schemaUpgradeCalls;
 
     @BeforeEach
     void setUp() {
         store = new TrackingTriggerStateStore();
-        schemaUpgradeCalls = new ArrayList<>();
     }
 
     @Test
-    void migrate_callsSchemaUpgradeThenMigratesTriggers() throws Exception {
+    void shouldRunSchemaUpgrade() throws Exception {
         List<String> callOrder = new ArrayList<>();
-        ZonedDateTime now = ZonedDateTime.now();
-        Trigger trigger1 = trigger("ns", "flow1", "cron", now, now.plusHours(1));
-        Trigger trigger2 = trigger("ns", "flow2", "schedule", now, now.plusHours(2));
-
         ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
-            List.of(trigger1, trigger2), store, SCHEDULER_CONFIG,
             () -> callOrder.add("schema")
         );
 
         migration.migrate();
 
-        // Schema upgrade ran first
         assertThat(callOrder).containsExactly("schema");
+    }
 
-        // Both triggers saved
+    @Test
+    void shouldPropagateSchemaUpgradeFailure() {
+        ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
+            () -> { throw new RuntimeException("schema failed"); }
+        );
+
+        assertThatThrownBy(migration::migrate).hasMessage("schema failed");
+    }
+
+    @Test
+    void shouldMigrateTriggers() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        Trigger trigger1 = trigger("ns", "flow1", "cron", now, now.plusHours(1));
+        Trigger trigger2 = trigger("ns", "flow2", "schedule", now, now.plusHours(2));
+
+        V2_0TriggerMigration migration = new V2_0TriggerMigration(
+            new StubTriggerRepository(List.of(trigger1, trigger2)), store, SCHEDULER_CONFIG
+        );
+
+        migration.migrate();
+
         assertThat(store.saved).hasSize(2);
 
         TriggerState saved1 = store.saved.get(0);
@@ -83,7 +96,7 @@ class AbstractV2UpgradeMigrationTest {
     }
 
     @Test
-    void migrate_lockedWhenTriggerHasExecutionId() throws Exception {
+    void shouldSetLockedWhenTriggerHasExecutionId() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         Trigger locked = Trigger.builder()
             .namespace("ns").flowId("flow").triggerId("t")
@@ -91,8 +104,8 @@ class AbstractV2UpgradeMigrationTest {
             .executionId("exec-123")
             .build();
 
-        ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
-            List.of(locked), store, SCHEDULER_CONFIG, () -> {}
+        V2_0TriggerMigration migration = new V2_0TriggerMigration(
+            new StubTriggerRepository(List.of(locked)), store, SCHEDULER_CONFIG
         );
 
         migration.migrate();
@@ -102,38 +115,24 @@ class AbstractV2UpgradeMigrationTest {
     }
 
     @Test
-    void migrate_withNoTriggers_onlyCallsSchemaUpgrade() throws Exception {
-        List<String> callOrder = new ArrayList<>();
-        ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
-            List.of(), store, SCHEDULER_CONFIG,
-            () -> callOrder.add("schema")
+    void shouldHandleEmptyTriggerList() throws Exception {
+        V2_0TriggerMigration migration = new V2_0TriggerMigration(
+            new StubTriggerRepository(List.of()), store, SCHEDULER_CONFIG
         );
 
         migration.migrate();
 
-        assertThat(callOrder).containsExactly("schema");
         assertThat(store.saved).isEmpty();
     }
 
     @Test
-    void migrate_propagatesSchemaUpgradeFailure() {
-        ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
-            List.of(), store, SCHEDULER_CONFIG,
-            () -> { throw new RuntimeException("schema failed"); }
-        );
-
-        assertThatThrownBy(migration::migrate).hasMessage("schema failed");
-        assertThat(store.saved).isEmpty();
-    }
-
-    @Test
-    void migrate_propagatesTriggerMigrationFailure() {
+    void shouldPropagateTriggerMigrationFailure() {
         ZonedDateTime now = ZonedDateTime.now();
         Trigger trigger = trigger("ns", "flow", "t", now, now.plusHours(1));
 
         store.failOnSave = true;
-        ConcreteUpgradeMigration migration = new ConcreteUpgradeMigration(
-            List.of(trigger), store, SCHEDULER_CONFIG, () -> {}
+        V2_0TriggerMigration migration = new V2_0TriggerMigration(
+            new StubTriggerRepository(List.of(trigger)), store, SCHEDULER_CONFIG
         );
 
         assertThatThrownBy(migration::migrate).hasMessage("save failed");
@@ -153,22 +152,11 @@ class AbstractV2UpgradeMigrationTest {
             .build();
     }
 
-    /**
-     * Concrete subclass of {@link AbstractV2UpgradeMigration} for testing.
-     */
     private static class ConcreteUpgradeMigration extends AbstractV2UpgradeMigration {
 
-        private final List<Trigger> triggers;
         private final ThrowingRunnable schemaUpgrade;
 
-        ConcreteUpgradeMigration(
-            List<Trigger> triggers,
-            TriggerStateStore store,
-            SchedulerConfiguration config,
-            ThrowingRunnable schemaUpgrade
-        ) {
-            super(new StubTriggerRepository(triggers), store, config);
-            this.triggers = triggers;
+        ConcreteUpgradeMigration(ThrowingRunnable schemaUpgrade) {
             this.schemaUpgrade = schemaUpgrade;
         }
 
@@ -184,10 +172,6 @@ class AbstractV2UpgradeMigrationTest {
         public String checksum() { return "test-checksum"; }
     }
 
-    /**
-     * Stub {@link TriggerRepositoryInterface} returning a fixed list from
-     * {@code findAllForAllTenantsV1()}. All other methods throw {@link UnsupportedOperationException}.
-     */
     private static class StubTriggerRepository implements TriggerRepositoryInterface {
 
         private final List<Trigger> triggers;
@@ -214,9 +198,6 @@ class AbstractV2UpgradeMigrationTest {
         @Override public Double fetchValue(String tenantId, DataFilterKPI<Triggers.Fields, ? extends ColumnDescriptor<Triggers.Fields>> descriptors, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) throws IOException { throw new UnsupportedOperationException(); }
     }
 
-    /**
-     * Tracking {@link TriggerStateStore} that records saved states.
-     */
     private static class TrackingTriggerStateStore implements TriggerStateStore {
 
         final List<TriggerState> saved = new ArrayList<>();

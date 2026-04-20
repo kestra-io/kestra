@@ -46,6 +46,9 @@ public interface MigrationHistoryStore {
      * current script's checksum. Throws if they differ — migration scripts must not
      * be modified after they have been applied.
      *
+     * <p>Implementations must skip validation when {@link MigrationScript#checksum()}
+     * returns {@code null} (Java-only migrations with no stable checksum source).
+     *
      * @param script the script whose checksum should be validated
      * @throws IllegalStateException if the checksum does not match
      * @throws Exception             on backend error

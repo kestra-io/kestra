@@ -4,9 +4,6 @@ import javax.sql.DataSource;
 
 import io.kestra.core.migration.AbstractV2UpgradeMigration;
 import io.kestra.core.migration.MigrationScript;
-import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
 import io.micronaut.context.annotation.Requires;
@@ -37,12 +34,7 @@ public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
     private final DataSource dataSource;
 
     @Inject
-    public V2_0UpgradeMigration(
-        final DataSource dataSource,
-        final TriggerRepositoryInterface triggerRepository,
-        final TriggerStateStore triggerStateStore,
-        final SchedulerConfiguration schedulerConfiguration) {
-        super(triggerRepository, triggerStateStore, schedulerConfiguration);
+    public V2_0UpgradeMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

@@ -230,6 +230,9 @@ class MigrationRunnerTest {
 
         @Override
         public void validateChecksum(final MigrationScript script) {
+            if (script.checksum() == null) {
+                return;
+            }
             String stored = applied.get(script.scriptId());
             if (stored != null && !stored.equals(script.checksum())) {
                 throw new IllegalStateException(

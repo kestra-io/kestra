@@ -1,5 +1,7 @@
 package io.kestra.core.migration;
 
+import io.micronaut.core.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -51,11 +53,20 @@ public interface MigrationScript {
     String description();
 
     /**
-     * A stable, developer-defined constant used for integrity verification.
+     * A stable checksum used for integrity verification.
      * If a script is found in the history table with a different checksum, startup fails.
      *
-     * @return a non-null, non-empty stable string identifying this script version
+     * <p>For SQL-based migrations, use {@link #checksumOfResources(String...)} to derive the
+     * checksum from the SQL file content — any change to the file is detected automatically.
+     *
+     * <p>For Java-only migrations (no SQL resource), return {@code null} to skip checksum
+     * validation. This follows the Flyway convention: Java bytecode is not a stable hash
+     * source (it varies across JDK versions), so checksum verification is not meaningful
+     * for pure Java scripts.
+     *
+     * @return a stable checksum string for SQL migrations, or {@code null} for Java-only migrations
      */
+    @Nullable
     String checksum();
 
     /**

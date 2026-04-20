@@ -60,7 +60,7 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
                 CREATE TABLE IF NOT EXISTS %s (
                     script_id    VARCHAR(255) NOT NULL,
                     description  VARCHAR(500) NOT NULL,
-                    checksum     VARCHAR(64)  NOT NULL,
+                    checksum     VARCHAR(64),
                     installed_on TIMESTAMP    NOT NULL,
                     execution_ms BIGINT       NOT NULL,
                     success      BOOLEAN      NOT NULL,
@@ -102,6 +102,9 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public void validateChecksum(final MigrationScript script) throws SQLException {
+        if (script.checksum() == null) {
+            return;
+        }
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = connection.prepareStatement(
                  "SELECT checksum FROM " + HISTORY_TABLE + " WHERE script_id = ?")) {

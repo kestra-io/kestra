@@ -1,1 +1,1 @@
-export {useAxios} from "@kestra-io/api-client"
+export {useAxios} from "@kestra-io/sdk"

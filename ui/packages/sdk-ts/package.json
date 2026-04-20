@@ -1,5 +1,5 @@
 {
-  "name": "@kestra-io/sdk-ts",
+  "name": "@kestra-io/sdk",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -39,18 +39,15 @@
     "prebuild": "openapi-ts"
   },
   "dependencies": {
+    "nprogress": "0.2.0",
     "axios": "1.13.6"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.96.0",
     "@types/node": "^25.5.0",
     "bumpp": "^11.0.1",
-    "nprogress": "^0.2.0",
     "tsdown": "^0.21.7",
     "typescript": "^6.0.2"
   },
-  "peerDependencies": {},
-  "inlinedDependencies": {
-    "nprogress": "0.2.0"
-  }
+  "peerDependencies": {}
 }

@@ -1,6 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
 import {watch} from "vue";
-import {setSelectedTenant} from "@kestra-io/sdk-ts";
+import {setSelectedTenant} from "@kestra-io/sdk";
 import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";

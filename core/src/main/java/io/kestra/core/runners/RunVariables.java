@@ -413,21 +413,29 @@ public final class RunVariables {
 
         @SuppressWarnings("unchecked")
         private void decodeInput(Secret secret, String id, Map<String, Object> inputs) {
+            if (inputs == null) {
+                return;
+            }
+
             // find the input value that can be nested in case the input has a '.' in it.
             if (id.indexOf('.') > -1) {
                 String nestedId = id.substring(0, id.indexOf('.'));
                 String restOfId = id.substring(id.indexOf('.') + 1);
-                decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
-            } else if (inputs.containsKey(id)) {
-                try {
-                    Map<String, String> encryptedString = (Map<String, String>) inputs.get(id);
-                    if (encryptedString != null) {
-                        String decoded = secret.decrypt(encryptedString.get("value"));
-                        inputs.put(id, decoded);
-                    }
-                } catch (GeneralSecurityException e) {
-                    throw new RuntimeException(e);
+                Object nested = inputs.get(nestedId);
+                if (nested instanceof Map<?, ?> nestedMap) {
+                    decodeInput(secret, restOfId, (Map<String, Object>) nestedMap);
                 }
+            } else if (inputs.containsKey(id)) {
+                Object value = inputs.get(id);
+                if (value instanceof Map<?, ?> encryptedString) {
+                    try {
+                        String decoded = secret.decrypt((String) encryptedString.get("value"));
+                        inputs.put(id, decoded);
+                    } catch (GeneralSecurityException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                // if the value is already a String (e.g. already decrypted), leave it as-is
             }
         }
     }

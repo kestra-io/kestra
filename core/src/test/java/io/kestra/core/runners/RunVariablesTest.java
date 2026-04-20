@@ -16,6 +16,9 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.BoolInput;
+import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -35,6 +38,8 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+
+import java.security.GeneralSecurityException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -246,5 +251,97 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldDecryptSecretInputFromEncryptedMap() throws GeneralSecurityException {
+        // Given
+        String secretKey = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK";
+        String plaintext = "my-secret-value";
+        String encrypted = EncryptionService.encrypt(secretKey, plaintext);
+
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("test")
+            .inputs(List.of(
+                SecretInput.builder().id("mySecret").type(Type.SECRET).build()
+            ))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .inputs(Map.of("mySecret", Map.of("type", EncryptedString.TYPE, "value", encrypted)))
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder(Optional.of(secretKey))
+            .withFlow(flow)
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then
+        Map<String, Object> inputs = (Map<String, Object>) variables.get("inputs");
+        assertThat(inputs.get("mySecret")).isEqualTo(plaintext);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldNotFailWhenSecretInputIsAlreadyDecryptedString() {
+        // Given - simulates the subflow execution end scenario where the input is already a plain String
+        String secretKey = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK";
+
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("test")
+            .inputs(List.of(
+                SecretInput.builder().id("mySecret").type(Type.SECRET).build()
+            ))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .inputs(Map.of("mySecret", "already-decrypted-value"))
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder(Optional.of(secretKey))
+            .withFlow(flow)
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then - should not throw ClassCastException, value remains as-is
+        Map<String, Object> inputs = (Map<String, Object>) variables.get("inputs");
+        assertThat(inputs.get("mySecret")).isEqualTo("already-decrypted-value");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleNestedSecretInputWithNonMapValue() {
+        // Given - nested input id with '.' where the nested value is not a Map
+        String secretKey = "I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK";
+
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("test")
+            .inputs(List.of(
+                SecretInput.builder().id("parent.mySecret").type(Type.SECRET).build()
+            ))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .inputs(Map.of("parent", "not-a-map"))
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder(Optional.of(secretKey))
+            .withFlow(flow)
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then - should not throw ClassCastException
+        Map<String, Object> inputs = (Map<String, Object>) variables.get("inputs");
+        assertThat(inputs.get("parent")).isEqualTo("not-a-map");
     }
 }

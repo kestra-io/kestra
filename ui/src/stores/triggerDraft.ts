@@ -8,20 +8,17 @@ export interface TriggerDraft {
 }
 
 export const useTriggerDraftStore = defineStore("triggerDraft", () => {
-    const draft = ref<TriggerDraft | undefined>();
+    const draft = ref<TriggerDraft>();
 
-    function setDraft(value: TriggerDraft) {
-        draft.value = value;
-    }
+    const setDraft = (value: TriggerDraft) => draft.value = value;
 
-    function consumeDraft(namespace: string, flowId: string): TriggerDraft | undefined {
+    const consumeDraft = (namespace: string, flowId: string): TriggerDraft | undefined => {
         const current = draft.value;
-        if (!current || current.namespace !== namespace || current.flowId !== flowId) {
-            return undefined;
+        if (current?.namespace === namespace && current?.flowId === flowId) {
+            draft.value = undefined;
+            return current;
         }
-        draft.value = undefined;
-        return current;
-    }
+    };
 
     return {setDraft, consumeDraft};
 });

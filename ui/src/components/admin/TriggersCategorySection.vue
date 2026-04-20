@@ -18,16 +18,19 @@
             />
         </div>
 
-        <button v-if="canCollapse" type="button" class="see-more-button" @click="expanded = !expanded">
-            <ChevronUp v-if="expanded" class="chevron" />
-            <ChevronDown v-else class="chevron" />
-            <span>
-                {{ expanded
-                    ? $t("triggers.add.see_less")
-                    : $t("triggers.add.see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
-                }}
-            </span>
-        </button>
+        <el-button
+            v-if="canCollapse"
+            type="primary"
+            link
+            class="see-more-button"
+            :icon="expanded ? ChevronUp : ChevronDown"
+            @click="expanded = !expanded"
+        >
+            {{ expanded
+                ? $t("triggers.add.see_less")
+                : $t("triggers.add.see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
+            }}
+        </el-button>
     </section>
 </template>
 
@@ -40,7 +43,6 @@
     import type {TriggerPluginDto} from "../../stores/plugins";
 
     const props = defineProps<{
-        category: "core" | "realtime" | "app";
         title: string;
         description: string;
         triggers: TriggerPluginDto[];
@@ -59,79 +61,68 @@
         !props.expandAll && props.triggers.length > DEFAULT_VISIBLE_COUNT
     );
 
-    const visibleTriggers = computed(() => {
-        if (props.expandAll || expanded.value || !canCollapse.value) {
-            return props.triggers;
-        }
-        return props.triggers.slice(0, DEFAULT_VISIBLE_COUNT);
-    });
+    const visibleTriggers = computed(() => (props.expandAll || expanded.value || !canCollapse.value)
+        ? props.triggers
+        : props.triggers.slice(0, DEFAULT_VISIBLE_COUNT)
+    );
 </script>
 
 <style scoped lang="scss">
     .category-section {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 0.75rem;
     }
 
     .category-header {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 0.75rem;
         flex-wrap: wrap;
     }
 
     .category-pill {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
-        background: var(--ks-background-card, var(--bs-body-bg));
-        font-size: 12px;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 62.5rem;
+        border: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-card);
+        font-size: 0.75rem;
         font-weight: 600;
-        color: var(--ks-content-primary, var(--bs-body-color));
+        color: var(--ks-content-primary);
     }
 
     .category-description {
-        font-size: 13px;
-        color: var(--ks-content-tertiary, var(--bs-gray-600));
+        font-size: 0.8125rem;
+        color: var(--ks-content-tertiary);
     }
 
     .empty-row {
-        padding: 24px 16px;
-        color: var(--ks-content-tertiary, var(--bs-gray-600));
-        font-size: 13px;
+        padding: 1.5rem 1rem;
+        color: var(--ks-content-tertiary);
+        font-size: 0.8125rem;
     }
 
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 12px;
+        gap: 0.75rem;
     }
 
     .see-more-button {
         align-self: flex-start;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        padding: 6px 8px;
-        margin-left: -8px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--ks-content-secondary, var(--bs-gray-600));
-        font-size: 13px;
+        margin-left: -0.5rem;
+        font-size: 0.8125rem;
         font-weight: 500;
 
         &:hover {
-            color: var(--ks-content-primary, var(--bs-body-color));
+            color: var(--ks-content-tertiary);
         }
 
-        .chevron {
-            display: inline-flex;
-            font-size: 14px;
+        :deep(.el-icon) {
+            font-size: 0.875rem;
         }
     }
 </style>

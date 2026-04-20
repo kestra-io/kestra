@@ -2,13 +2,11 @@
     <div class="triggers-add">
         <div class="toolbar">
             <div class="search-wrapper">
-                <Magnify class="search-icon" />
-                <input
-                    v-model="searchQuery"
-                    type="text"
-                    class="search-input"
-                    :placeholder="$t('triggers.add.search_placeholder')"
-                >
+                <SearchField
+                    :router="false"
+                    placeholder="triggers.add.search_placeholder"
+                    @search="searchQuery = $event"
+                />
             </div>
             <el-radio-group v-model="activeCategoryFilter" class="filter-group">
                 <el-radio-button
@@ -32,31 +30,15 @@
         </div>
 
         <template v-else>
-            <TriggersCategorySection
-                v-if="showCategory('core')"
-                category="core"
-                :title="$t('triggers.add.category.core.title')"
-                :description="$t('triggers.add.category.core.description')"
-                :triggers="coreTriggers"
-                :expandAll="true"
-                @add="openConfigureModal"
-            />
-            <TriggersCategorySection
-                v-if="showCategory('realtime')"
-                category="realtime"
-                :title="$t('triggers.add.category.realtime.title')"
-                :description="$t('triggers.add.category.realtime.description')"
-                :triggers="realtimeTriggers"
-                @add="openConfigureModal"
-            />
-            <TriggersCategorySection
-                v-if="showCategory('app')"
-                category="app"
-                :title="$t('triggers.add.category.app.title')"
-                :description="$t('triggers.add.category.app.description')"
-                :triggers="appTriggers"
-                @add="openConfigureModal"
-            />
+            <template v-for="section in SECTIONS" :key="section.key">
+                <TriggersCategorySection
+                    v-if="showCategory(section.key)"
+                    v-bind="section.props"
+                    :triggers="groupedTriggers[section.key]"
+                    :expandAll="section.expandAll"
+                    @add="openConfigureModal"
+                />
+            </template>
         </template>
 
         <TriggerConfigureModal
@@ -71,14 +53,18 @@
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue";
     import {useI18n} from "vue-i18n";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    import {usePluginsStore, type TriggerPluginDto} from "../../stores/plugins";
+    import SearchField from "../layout/SearchField.vue";
     import TriggersCategorySection from "./TriggersCategorySection.vue";
     import TriggerConfigureModal from "./TriggerConfigureModal.vue";
+
+    import {usePluginsStore, type TriggerPluginDto} from "../../stores/plugins";
     import {MCP_TOOL_TYPE} from "./triggerCatalog";
 
     type CategoryFilter = "all" | "core" | "realtime" | "app";
+    type TriggerGroup = Exclude<CategoryFilter, "all">;
+
+    const CATEGORY_FILTER_VALUES: CategoryFilter[] = ["all", "core", "realtime", "app"];
 
     const {t} = useI18n({useScope: "global"});
     const pluginsStore = usePluginsStore();
@@ -90,16 +76,40 @@
     const selectedTrigger = ref<TriggerPluginDto | null>(null);
     const configureModalVisible = ref(false);
 
-    const filterOptions = computed<{value: CategoryFilter; label: string}[]>(() => [
-        {value: "all", label: t("triggers.add.filter.all")},
-        {value: "core", label: t("triggers.add.filter.core")},
-        {value: "realtime", label: t("triggers.add.filter.realtime")},
-        {value: "app", label: t("triggers.add.filter.app")},
+    const SECTIONS = computed(() => [
+        {
+            key: "core" as TriggerGroup,
+            expandAll: true,
+            props: {
+                title: t("triggers.add.category.core.title"),
+                description: t("triggers.add.category.core.description"),
+            }
+        },
+        {
+            key: "realtime" as TriggerGroup,
+            props: {
+                title: t("triggers.add.category.realtime.title"),
+                description: t("triggers.add.category.realtime.description"),
+            }
+        },
+        {
+            key: "app" as TriggerGroup,
+            props: {
+                title: t("triggers.add.category.app.title"),
+                description: t("triggers.add.category.app.description"),
+            }
+        }
     ]);
+
+    const filterOptions = computed(() => CATEGORY_FILTER_VALUES.map(value => ({
+        value,
+        label: t(`triggers.add.filter.${value}`)
+    })));
 
     function filterBySearch(triggers: TriggerPluginDto[]) {
         const q = searchQuery.value.trim().toLowerCase();
         if (!q) return triggers;
+
         return triggers.filter(tr =>
             tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
@@ -107,30 +117,28 @@
         );
     }
 
-    const coreTriggers = computed(() =>
-        filterBySearch(allTriggers.value.filter(tr => tr.group === "core")).sort((a, b) => {
-            if (a.type === MCP_TOOL_TYPE) return -1;
-            if (b.type === MCP_TOOL_TYPE) return 1;
-            return a.name.localeCompare(b.name);
-        })
-    );
+    const groupedTriggers = computed(() => {
+        const filtered = filterBySearch(allTriggers.value);
 
-    const realtimeTriggers = computed(() =>
-        filterBySearch(allTriggers.value.filter(tr => tr.group === "realtime"))
-    );
+        return {
+            core: filtered
+                .filter(tr => tr.group === "core")
+                .sort((a, b) => {
+                    if (a.type === MCP_TOOL_TYPE) return -1;
+                    if (b.type === MCP_TOOL_TYPE) return 1;
+                    return a.name.localeCompare(b.name);
+                }),
+            realtime: filtered.filter(tr => tr.group === "realtime"),
+            app: filtered.filter(tr => tr.group === "app")
+        };
+    });
 
-    const appTriggers = computed(() =>
-        filterBySearch(allTriggers.value.filter(tr => tr.group === "app"))
-    );
-
-    function showCategory(group: "core" | "realtime" | "app"): boolean {
+    function showCategory(group: TriggerGroup): boolean {
         return activeCategoryFilter.value === "all" || activeCategoryFilter.value === group;
     }
 
     const hasAnyVisibleTrigger = computed(() =>
-        coreTriggers.value.length > 0 ||
-        realtimeTriggers.value.length > 0 ||
-        appTriggers.value.length > 0
+        Object.values(groupedTriggers.value).some(triggers => triggers.length > 0)
     );
 
     function openConfigureModal(trigger: TriggerPluginDto) {
@@ -169,36 +177,6 @@
         position: relative;
         flex: 1 1 17.5rem;
         max-width: 32.5rem;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--ks-content-tertiary, #888);
-        pointer-events: none;
-        font-size: 1rem;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-        background: var(--ks-background-input);
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 0.375rem;
-        color: var(--ks-content-primary);
-        font-size: 0.875rem;
-
-        &:focus {
-            outline: none;
-            border-color: var(--el-color-primary);
-            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
-        }
-
-        &::placeholder {
-            color: var(--ks-content-tertiary, #888);
-        }
     }
 
     .state-empty {

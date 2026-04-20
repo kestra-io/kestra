@@ -1,5 +1,5 @@
 <template>
-    <div ref="rootEl" :style="{'--top-navbar-height': navbarHeight ? `${navbarHeight}px` : undefined}">
+    <div :style="{'--top-navbar-height': navbarHeight ? `${navbarHeight}px` : undefined}">
         <TopNavBar ref="navEl" :title="routeInfo.title">
             <template v-if="isManageTab" #additional-right>
                 <ul>
@@ -25,6 +25,7 @@
     import Tabs from "../Tabs.vue";
     import TriggersAdd from "./TriggersAdd.vue";
     import TriggersManage from "./TriggersManage.vue";
+
     import useRouteContext from "../../composables/useRouteContext";
     import {useTriggerStore} from "../../stores/trigger";
 
@@ -50,7 +51,7 @@
     const isManageTab = computed(() => route.params.tab === "manage");
 
     watch(() => route.params.tab, (tab) => {
-        if (tab !== undefined && !(VALID_TABS as readonly string[]).includes(String(tab))) {
+        if (tab !== undefined && !VALID_TABS.includes(tab as any)) {
             router.replace({name: "admin/triggers", params: {...route.params, tab: DEFAULT_TAB}});
         }
     }, {immediate: true});
@@ -65,13 +66,18 @@
 
     function measure(el: HTMLElement) {
         const height = Math.round(el.getBoundingClientRect().height);
-        if (height > 0) navbarHeight.value = height;
+        if (height > 0) {
+            navbarHeight.value = height;
+        }
     }
 
     onMounted(() => {
-        const instance = navEl.value as {$el?: HTMLElement} | HTMLElement | null;
-        const el = (instance && "$el" in instance ? instance.$el : instance) as HTMLElement | undefined;
+        const instance = navEl.value;
+        if (!instance) return;
+
+        const el = ("$el" in instance ? instance.$el : instance) as HTMLElement;
         if (!el) return;
+
         measure(el);
         observer = new ResizeObserver(() => measure(el));
         observer.observe(el);
@@ -79,3 +85,4 @@
 
     onBeforeUnmount(() => observer?.disconnect());
 </script>
+

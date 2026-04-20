@@ -1,5 +1,9 @@
 <template>
-    <div class="ks-data-table-wrapper">
+    <template v-if="$slots.empty && hasEmpty && showEmpty">
+        <slot name="empty" />
+    </template>
+
+    <div class="ks-data-table-wrapper" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar mb-3">
             <slot name="navbar" />
         </nav>
@@ -109,10 +113,21 @@
         "ready": []
     }>()
 
+    defineSlots<{
+        default?(): unknown
+        navbar?(): unknown
+        top?(): unknown
+        table?(): unknown
+        empty?(): unknown
+        'bulk-actions'?(): unknown
+        'select-actions'?(): unknown
+    }>()
+
     const slots = useSlots()
     const hasNavBar = computed(() => !!slots["navbar"])
     const hasTableSlot = computed(() => !!slots["table"])
     const hasBulkActions = computed(() => !!slots["bulk-actions"])
+    const hasEmpty = computed(() => !!slots["empty"])
 
     const isLoading = ref(props.loading)
     const isReady = ref(false)
@@ -238,6 +253,16 @@
             }
         }
     }
+    //
+    // const hasActiveFilters = computed(() =>
+    //     route.query["filters[q][EQUALS]"] !== undefined
+    //     || route.query[TAGS_QUERY_KEY] !== undefined
+    // );
+
+
+    const showEmpty = computed(() =>
+        props.data.length == 0 && !isLoading.value
+    );
 
     const reload = () => callLoad()
 

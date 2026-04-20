@@ -11,6 +11,9 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
+        <template v-if="$slots.empty" #empty>
+            <slot name="empty" />
+        </template>
     </ElTable>
 </template>
 
@@ -24,7 +27,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-         
+
         data?: any[]
         tableLayout?: "fixed" | "auto"
         size?: "large" | "default" | "small"
@@ -34,9 +37,7 @@
         showHeader?: boolean
         maxHeight?: string | number
         fit?: boolean
-         
         cellClassName?: string | ((data: any) => string)
-         
         rowClassName?: string | ((data: any) => string)
     }>(), {
         showHeader: undefined,
@@ -44,20 +45,16 @@
     })
 
     const emit = defineEmits<{
-         
         selectionChange: [selection: any[]]
-         
         select: [selection: any[], row: any]
-         
         sortChange: [sort: {column: any; prop: string; order: string | null}]
-         
         rowClick: [row: any, column: any, event: Event]
-         
         rowDblclick: [row: any, column: any, event: Event]
     }>()
 
     defineSlots<{
         default?(): unknown
+        empty?(): unknown
     }>()
 
     const tableRef = ref<InstanceType<typeof ElTable>>()

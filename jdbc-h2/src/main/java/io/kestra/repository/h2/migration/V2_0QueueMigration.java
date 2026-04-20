@@ -1,16 +1,19 @@
 package io.kestra.repository.h2.migration;
 
+import javax.sql.DataSource;
+
+import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import javax.sql.DataSource;
-
 /**
  * H2 queue init migration script.
  *
- * <p>Creates the {@code queues} table for the JDBC queue backend when using
+ * <p>
+ * Creates the {@code queues} table for the JDBC queue backend when using
  * H2 or memory queue type. Active independently of the repository backend —
  * this allows the ELS repository to use an H2-backed queue.
  */
@@ -19,7 +22,7 @@ import javax.sql.DataSource;
 public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init-queue";
-    private static final String CHECKSUM = "h2-init-queue-v2.0";
+    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/baseline-queue-h2.sql");
 
     private final DataSource dataSource;
 

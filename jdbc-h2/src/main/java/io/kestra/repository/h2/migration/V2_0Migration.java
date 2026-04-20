@@ -1,19 +1,23 @@
 package io.kestra.repository.h2.migration;
 
+import javax.sql.DataSource;
+
+import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import javax.sql.DataSource;
-
 /**
  * OSS H2 init migration script.
  *
- * <p>Creates the full Kestra OSS schema from scratch on fresh H2 installations.
+ * <p>
+ * Creates the full Kestra OSS schema from scratch on fresh H2 installations.
  * For databases already migrated by Flyway (Kestra &le; 1.3), this script is skipped
  * automatically by {@link io.kestra.core.migration.MigrationRunner} (schema already exists).
- * <p>Activates only when H2 is the <em>repository</em> backend (not just the queue),
+ * <p>
+ * Activates only when H2 is the <em>repository</em> backend (not just the queue),
  * using an explicit property check to avoid confusion with {@code @H2RepositoryEnabled}
  * which also matches when H2 is the queue type.
  */
@@ -22,7 +26,7 @@ import javax.sql.DataSource;
 public class V2_0Migration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init";
-    private static final String CHECKSUM = "h2-init-v2.0";
+    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/baseline-h2.sql");
 
     private final DataSource dataSource;
 

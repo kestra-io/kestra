@@ -1,21 +1,25 @@
 package io.kestra.repository.h2.migration;
 
+import javax.sql.DataSource;
+
+import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
+
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import javax.sql.DataSource;
-
 /**
  * H2 queue Flyway upgrade migration script.
  *
- * <p>Recreates the {@code queues} table with the Queue 2.0 schema (INT {@code type} column
+ * <p>
+ * Recreates the {@code queues} table with the Queue 2.0 schema (INT {@code type} column
  * replacing the old ENUM, added {@code routing_key} column) on top of a Flyway-managed schema.
  * The queue is transient: in-flight messages are lost on restart and replayed from executions state,
  * so it is safe to drop and recreate the table.
  *
- * <p>On fresh installations the runner skips this script (schema already exists from the
+ * <p>
+ * On fresh installations the runner skips this script (schema already exists from the
  * {@code "0-init-queue"} migration). The SQL is idempotent so it is safe to execute in any environment.
  */
 @Singleton
@@ -23,7 +27,7 @@ import javax.sql.DataSource;
 public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "2.0-queue";
-    private static final String CHECKSUM = "h2-upgrade-queue-v2.0";
+    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-queue-h2.sql");
 
     private final DataSource dataSource;
 

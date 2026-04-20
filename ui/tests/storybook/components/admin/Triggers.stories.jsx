@@ -8,8 +8,8 @@ const meta = {
     decorators: [
         vueRouter([
             {
-                path: "/",
-                name: "home",
+                path: "/:tab?",
+                name: "admin/triggers",
                 component: Triggers
             },
             {

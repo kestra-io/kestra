@@ -89,8 +89,12 @@ public class AiServiceManager {
                 aiServices.put(provider.id(), aiService);
             }
         } else {
-            defaultProviderId = "api";
-            aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
+            try {
+                defaultProviderId = "api";
+                aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
+            } catch (Exception e) {
+                log.warn("Failed to initialize API AI service (api.kestra.io may be unreachable), AI Copilot will be disabled.", e);
+            }
         }
     }
 

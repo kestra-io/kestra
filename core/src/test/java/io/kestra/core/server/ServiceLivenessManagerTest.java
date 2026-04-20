@@ -27,6 +27,8 @@ import io.kestra.core.utils.Network;
 import static io.kestra.core.server.ServiceStateTransition.Result.ABORTED;
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith({ MockitoExtension.class })
@@ -42,6 +44,7 @@ public class ServiceLivenessManagerTest {
     ArgumentCaptor<ServiceInstance> workerInstanceCaptor;
 
     private ServiceLivenessManager serviceLivenessManager;
+    private ServiceLivenessListener livenessListener;
 
     @Mock
     private ServiceLivenessManager.OnStateTransitionFailureCallback onStateTransitionFailureCallback;
@@ -64,13 +67,15 @@ public class ServiceLivenessManagerTest {
         KestraContext context = Mockito.mock(KestraContext.class);
         KestraContext.setContext(context);
         when(context.getServerType()).thenReturn(ServerType.INDEXER);
+        this.livenessListener = Mockito.mock(ServiceLivenessListener.class);
         this.serviceLivenessManager = new ServiceLivenessManager(
             config,
             new ServiceRegistry(),
             new LocalServiceStateFactory(config, new ServerInstanceFactory(context, null)),
             new ServerInstanceFactory(kestraContext, null),
             serviceLivenessUpdater,
-            onStateTransitionFailureCallback
+            onStateTransitionFailureCallback,
+            List.of(livenessListener)
         );
     }
 
@@ -161,6 +166,84 @@ public class ServiceLivenessManagerTest {
             .execute(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.eq(true));
     }
 
+    @Test
+    void shouldNotifyLivenessListenerOnScheduledSuccess() {
+        // Given
+        Service running = newServiceForState(Service.ServiceState.RUNNING);
+        serviceLivenessManager.updateServiceInstance(running, serviceInstanceFor(running));
+
+        ServiceInstance updated = serviceInstanceFor(running);
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(SUCCEEDED, updated));
+
+        // When
+        Instant now = Instant.now();
+        serviceLivenessManager.onSchedule(now);
+
+        // Then
+        verify(livenessListener).onLivenessUpdate(
+            Mockito.eq(now),
+            Mockito.any(ServiceInstance.class),
+            Mockito.eq(Service.ServiceState.RUNNING)
+        );
+    }
+
+    @Test
+    void shouldNotifyLivenessListenerOnRecoveredAbortedTransition() {
+        // Given
+        Service running = newServiceForState(Service.ServiceState.RUNNING);
+        serviceLivenessManager.updateServiceInstance(running, serviceInstanceFor(running));
+
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(ABORTED));
+
+        // When
+        serviceLivenessManager.onSchedule(Instant.now());
+
+        // Then — ABORTED is recovered and treated as success
+        verify(livenessListener).onLivenessUpdate(
+            Mockito.any(Instant.class),
+            Mockito.any(ServiceInstance.class),
+            Mockito.any(Service.ServiceState.class)
+        );
+    }
+
+    @Test
+    void shouldNotNotifyLivenessListenerOnFailedTransition() {
+        // Given
+        Service running = newServiceForState(Service.ServiceState.RUNNING);
+        serviceLivenessManager.updateServiceInstance(running, serviceInstanceFor(running));
+
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(FAILED, serviceInstanceFor(running)));
+
+        // When
+        serviceLivenessManager.onSchedule(Instant.now());
+
+        // Then
+        verifyNoInteractions(livenessListener);
+    }
+
+    @Test
+    void shouldSwallowLivenessListenerException() {
+        // Given
+        Service running = newServiceForState(Service.ServiceState.RUNNING);
+        serviceLivenessManager.updateServiceInstance(running, serviceInstanceFor(running));
+
+        ServiceInstance updated = serviceInstanceFor(running);
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+            .thenReturn(new ServiceStateTransition.Response(SUCCEEDED, updated));
+
+        Mockito.doThrow(new RuntimeException("listener-boom"))
+            .when(livenessListener).onLivenessUpdate(Mockito.any(), Mockito.any(), Mockito.any());
+
+        // When / Then — exception must not propagate
+        serviceLivenessManager.onSchedule(Instant.now());
+
+        verify(livenessListener).onLivenessUpdate(Mockito.any(), Mockito.any(), Mockito.any());
+        Assertions.assertEquals(updated, serviceLivenessManager.allServiceInstances().getFirst());
+    }
+    
     @Test
     void shouldRegisterNewInstanceAfterPreviousOneTerminated() {
         // Given - a service that completed a terminal state transition (isStateUpdatable = false)

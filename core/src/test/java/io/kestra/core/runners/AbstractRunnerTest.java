@@ -265,6 +265,16 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
+        { "flows/valids/flow-trigger-stable-condition-id-flow-listen.yaml",
+            "flows/valids/flow-trigger-stable-condition-id-flow-a.yaml",
+            "flows/valids/flow-trigger-stable-condition-id-flow-b.yaml" }
+    )
+    void flowTriggerDependsOnWithStableConditionId() throws Exception {
+        flowTriggerCaseTest.triggerDependsOnWithStableConditionId();
+    }
+
+    @Test
+    @LoadFlows(
         { "flows/valids/flow-trigger-preconditions-flow-listen.yaml",
             "flows/valids/flow-trigger-preconditions-flow-a.yaml",
             "flows/valids/flow-trigger-preconditions-flow-b.yaml" }
@@ -361,6 +371,15 @@ public abstract class AbstractRunnerTest {
     })
     void flowTriggerAtLeastMode() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerAtLeastMode();
+    }
+
+    @Test
+    @LoadFlows({
+        "flows/valids/flow-trigger-invalid-inputs-flow-a.yaml",
+        "flows/valids/flow-trigger-invalid-inputs-flow-listen.yaml"
+    })
+    void flowTriggerWithInvalidInputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerWithInvalidInputs();
     }
 
     @Test
@@ -691,6 +710,12 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-outputs-auto.yaml")
     protected void loopOutputsAuto(Execution execution) throws Exception {
         loopCaseTest.loopOutputsAuto(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-outputs-failed-render.yaml")
+    protected void loopOutputsFailedRender(Execution execution) throws Exception {
+        loopCaseTest.loopOutputsFailedRender(execution);
     }
 
     @Test

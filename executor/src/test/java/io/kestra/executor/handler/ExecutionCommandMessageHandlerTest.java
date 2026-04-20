@@ -3,6 +3,7 @@ package io.kestra.executor.handler;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -15,10 +16,12 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.ExecutorContext;
@@ -37,6 +40,9 @@ class ExecutionCommandMessageHandlerTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private TaskOutputRepositoryInterface taskOutputRepository;
 
     @Test
     @ExecuteFlow("flows/valids/failed-first.yaml")
@@ -206,6 +212,46 @@ class ExecutionCommandMessageHandlerTest {
         Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
 
         assertThat(handle).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    @LoadFlows("flows/valids/minimal.yaml")
+    void handleShouldMigrateInlineTaskRunOutputsToRepository() throws Exception {
+        // Given: an execution with a task run carrying deprecated inline outputs (pre-2.0 format)
+        var flow = flowRepository.findById(TenantService.MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.RUNNING);
+
+        String taskRunId = IdUtils.create();
+        Map<String, Object> inlineOutputs = Map.of("value", "migrated");
+        var taskRun = TaskRun.builder()
+            .id(taskRunId)
+            .taskId("date")
+            .executionId(execution.getId())
+            .namespace(flow.getNamespace())
+            .tenantId(flow.getTenantId())
+            .flowId(flow.getId())
+            .state(new State())
+            .outputs(Variables.inMemory(inlineOutputs))
+            .build();
+
+        execution = execution.withTaskRunList(List.of(taskRun));
+        executionRepository.save(execution);
+        var command = Pause.from(execution);
+
+        // When
+        Optional<ExecutorContext> handle = executionCommandMessageHandler.handle(command);
+
+        // Then: inline outputs were persisted to the task output repository
+        var savedOutput = taskOutputRepository.findById(flow.getTenantId(), taskRunId);
+        assertThat(savedOutput).isPresent();
+        assertThat(savedOutput.get().taskRunId()).isEqualTo(taskRunId);
+        assertThat(savedOutput.get().executionId()).isEqualTo(execution.getId());
+
+        // And: the returned execution has the deprecated outputs field cleared
+        assertThat(handle).isPresent();
+        var migratedTaskRun = handle.get().getExecution().findTaskRunByTaskRunId(taskRunId);
+        assertThat(migratedTaskRun.getOutputs()).isNull();
     }
 
     @Test

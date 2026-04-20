@@ -398,6 +398,23 @@ public class LoopCaseTest {
         }
     }
 
+    public void loopOutputsFailedRender(Execution execution) {
+        // Then — the loop output expression references a non-existent task, causing render to fail.
+        // The TerminatedLoopExecution carries FAILED state and, with transmitFailed=true (default),
+        // immediately terminates the loop and propagates the failure to the parent execution.
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // Only one sub-execution ran before the loop was terminated (transmitFailed=true by default).
+        // The sub-execution itself is FAILED (output rendering failed), but its inner tasks succeeded.
+        List<Execution> subExecutions = loopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(1);
+        Execution subExecution = subExecutions.getFirst();
+        assertThat(subExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(subExecution.getTaskRunList()).allMatch(tr -> tr.getState().getCurrent() == State.Type.SUCCESS);
+    }
+
     public void loopOutputsAuto(Execution execution) throws InternalException, IOException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);

@@ -116,6 +116,7 @@
         margin-left: -0.5rem;
         font-size: 0.8125rem;
         font-weight: 500;
+        color: var(--ks-content-primary);
 
         &:hover {
             color: var(--ks-content-tertiary);

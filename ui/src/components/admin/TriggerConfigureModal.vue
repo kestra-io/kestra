@@ -234,7 +234,7 @@
 </script>
 
 <style scoped lang="scss">
-    $ks-tab-active: var(--el-color-primary);
+    $ks-tab-active: var(--ks-content-link);
 
     .trigger-configure-modal {
         :deep(.el-dialog__header) {
@@ -358,8 +358,13 @@
             }
 
             &.is-active {
-                color: var(--el-color-primary);
+                color: var(--ks-content-link);
             }
+        }
+
+        :deep(.el-tabs__active-bar) {
+            background-color: var(--ks-content-link) !important;
+            height: 2px;
         }
     }
 

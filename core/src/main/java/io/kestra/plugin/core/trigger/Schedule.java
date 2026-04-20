@@ -33,8 +33,6 @@ import lombok.AccessLevel;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwPredicate;
-
 @Slf4j
 @SuperBuilder
 @ToString
@@ -220,6 +218,9 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     @Getter(AccessLevel.NONE)
     private transient Cron cachedCron;
+
+    @Getter(AccessLevel.NONE)
+    private transient List<ScheduleCondition> cachedScheduleConditions;
 
     private RecoverMissedSchedules recoverMissedSchedules;
 
@@ -571,27 +572,36 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         return output;
     }
 
+    /**
+     * Evaluates all {@link ScheduleCondition}s against the given context. Every caller must
+     * provide a context that already contains the {@code trigger} and {@code schedule}
+     * variables (see {@link #conditionContext(ConditionContext, Output)}).
+     */
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
-        final ConditionContext finalConditionContext;
-        if (!conditionContext.getVariables().containsKey("trigger") && conditionContext.getVariables().containsKey("schedule")) {
-            finalConditionContext = conditionContext.withVariables(
-                ImmutableMap.<String, Object> builder()
-                    .putAll(conditionContext.getVariables())
-                    .put("trigger", conditionContext.getVariables().get("schedule"))
-                    .build()
-            );
-        } else {
-            finalConditionContext = conditionContext;
+        for (ScheduleCondition condition : scheduleConditions()) {
+            if (!condition.test(conditionContext)) {
+                return false;
+            }
         }
-
-        if (conditions != null) {
-            return conditions.stream()
-                .filter(c -> c instanceof ScheduleCondition)
-                .map(c -> (ScheduleCondition) c)
-                .allMatch(throwPredicate(condition -> condition.test(finalConditionContext)));
-        }
-
         return true;
+    }
+
+    /**
+     * Returns (and memoizes) the subset of {@link #conditions} that implement
+     * {@link ScheduleCondition}. The list is computed once per {@link Schedule} instance
+     * rather than re-filtered on every hot-loop iteration through
+     * {@link #findNextDateMatchingConditions} / {@link #findPreviousDateMatchingConditions}.
+     */
+    private synchronized List<ScheduleCondition> scheduleConditions() {
+        if (this.cachedScheduleConditions == null) {
+            this.cachedScheduleConditions = conditions == null
+                ? List.of()
+                : conditions.stream()
+                    .filter(c -> c instanceof ScheduleCondition)
+                    .map(c -> (ScheduleCondition) c)
+                    .toList();
+        }
+        return this.cachedScheduleConditions;
     }
 
     @SuperBuilder

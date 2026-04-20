@@ -22,7 +22,15 @@ export interface PluginComponent {
 }
 
 export type {Plugin} from "../utils/pluginUtils";
-
+export interface TriggerPluginDto {
+    type: string;
+    name: string;
+    description: string | null;
+    group: "core" | "realtime" | "app";
+    ee: boolean;
+    icon: string;
+    deprecated: boolean | null;
+}
 interface LoadOptions {
     cls: string;
     version?: string;
@@ -186,6 +194,13 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function list() {
         const response = await axios.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins`);
         plugins.value = response.data;
+        return response.data;
+    }
+
+    async function listTriggers(options: {group?: "core" | "realtime" | "app"; includeDeprecated?: boolean} = {}) {
+        const response = await axios.get<TriggerPluginDto[]>(`${apiUrlWithoutTenants()}/plugins/triggers`, {
+            params: options
+        });
         return response.data;
     }
 
@@ -367,6 +382,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         resolveRef,
         filteredPlugins,
         list,
+        listTriggers,
         listWithSubgroup,
         load,
         loadVersions,

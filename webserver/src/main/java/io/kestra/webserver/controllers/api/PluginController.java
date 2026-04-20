@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
@@ -136,6 +137,74 @@ public class PluginController {
             .stream()
             .map(p -> Plugin.of(p, null))
             .toList();
+    }
+
+    @Get(uri = "triggers")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get list of trigger plugins grouped by category",
+        description = "Feeds the 'Add Trigger' catalog UI. Returns one entry per non-internal, non-deprecated " +
+            "trigger class, classified as core (bundled with Kestra Core), realtime (implements " +
+            "RealtimeTriggerInterface) or app (implements PollingTriggerInterface). Optionally filter by " +
+            "group. The 'ee' flag is true when the trigger ships with an Enterprise Edition module."
+    )
+    public List<TriggerPluginDto> listTriggerPlugins(
+        @Parameter(description = "Optional category filter: core, realtime, or app")
+        @Nullable @QueryValue(value = "group") TriggerPluginCategory group,
+        @Parameter(description = "Include deprecated triggers")
+        @Nullable @QueryValue(value = "includeDeprecated", defaultValue = "false") Boolean includeDeprecated
+    ) {
+        return pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
+                .filter(c -> !io.kestra.core.models.Plugin.isInternal(c))
+                .filter(c -> !c.getName().startsWith("org.kestra."))
+                .filter(c -> Boolean.TRUE.equals(includeDeprecated) || !io.kestra.core.models.Plugin.isDeprecated(c))
+                .map(c -> toTriggerPluginDto(registeredPlugin, c))
+            )
+            .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .filter(dto -> group == null || group == TriggerPluginCategory.UNKNOWN || dto.group() == group)
+            .sorted(Comparator.comparing((TriggerPluginDto dto) -> dto.group().ordinal())
+                .thenComparing(TriggerPluginDto::name, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+    }
+
+    private TriggerPluginDto toTriggerPluginDto(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+        io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        String title = schema != null && !schema.title().isEmpty() ? schema.title() : triggerClass.getSimpleName();
+        String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
+        Boolean deprecated = io.kestra.core.models.Plugin.isDeprecated(triggerClass) ? Boolean.TRUE : null;
+
+        return new TriggerPluginDto(
+            triggerClass.getName(),
+            title,
+            description,
+            TriggerPluginCategory.classify(registeredPlugin, triggerClass),
+            isEnterpriseEdition(registeredPlugin, triggerClass),
+            triggerClass.getName(),
+            deprecated
+        );
+    }
+
+    /**
+     * A trigger is classified as Enterprise Edition when either the owning plugin's manifest marks
+     * the module as EE (via the {@code X-Kestra-License} attribute) or the class lives in an EE
+     * package. EE classes show up under several package shapes depending on where they're housed:
+     * {@code io.kestra.ee.*} and {@code io.kestra.plugin.ee.*} for bundled EE modules, plus any
+     * external plugin that carves out an {@code .ee.} namespace (for example
+     * {@code io.kestra.plugin.kestra.ee.assets}). The package fallback matters because uber-jars
+     * strip module-level manifests, so the license attribute alone isn't reliable.
+     */
+    protected boolean isEnterpriseEdition(RegisteredPlugin registeredPlugin, Class<?> triggerClass) {
+        String license = registeredPlugin.license();
+        if (license != null && license.toUpperCase(Locale.ROOT).contains("EE")) {
+            return true;
+        }
+
+        String packageName = triggerClass.getPackageName();
+        return packageName.startsWith("io.kestra.ee.")
+            || packageName.startsWith("io.kestra.plugin.ee.")
+            || packageName.contains(".ee.");
     }
 
     @Get(uri = "icons")

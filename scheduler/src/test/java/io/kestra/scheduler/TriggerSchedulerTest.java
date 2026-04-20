@@ -595,6 +595,28 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldDeleteOrphanTriggerStateOnScheduleGivenSoftDeletedFlow() {
+        // region [GIVEN]
+        FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
+
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(initialState);
+
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNull();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
     void shouldScheduleScheduleTriggerWithBackfill() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);

@@ -45,7 +45,7 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
 
     @Override
     public Optional<TriggerState> findById(TriggerId triggerId) {
-        return Optional.ofNullable(store.get(triggerId));
+        return Optional.ofNullable(store.get(TriggerId.of(triggerId)));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
 
     @Override
     public void delete(TriggerId triggerId) {
-        store.remove(triggerId);
+        store.remove(TriggerId.of(triggerId));
     }
 
     @Override

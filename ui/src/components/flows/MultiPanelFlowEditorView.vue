@@ -55,10 +55,12 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
+    import {useTriggerDraftStore} from "../../stores/triggerDraft";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
     import {useTopologyPanels} from "./useTopologyPanels";
@@ -104,7 +106,7 @@
         route.name === "flows/create" && route.query.onboardingPreset === "true",
     );
 
-    onMounted(() => {
+    onMounted(async () => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
@@ -118,16 +120,61 @@
                 editorView.value?.focusTab("nocode")
             }
 
-            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
-            const blockSchemaPath = [
-                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
-            ].join("/");
-            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            // Capture the draft synchronously so the Pinia store doesn't get emptied
+            // by a re-mount before we use it.
+            const draft = triggerDraftStore.consumeDraft(
+                flowStore.flow?.namespace ?? "",
+                flowStore.flow?.id ?? ""
+            );
 
+            // Strip the createTrigger query param BEFORE mutating flowYaml. If we mutated
+            // first, the flow would be dirty and the resulting router.replace would be
+            // caught by the unsaved-changes navigation guard, surfacing a confusing
+            // "Unsaved Changes" dialog the user never asked for.
             const {createTrigger: _, ...query} = route.query;
-            router.replace({...route, query});
+            await router.replace({...route, query});
+
+            if (draft?.triggerYaml) {
+                flowStore.flowYaml = spliceTriggerIntoFlow(flowStore.flowYaml ?? "", draft.triggerYaml);
+            } else {
+                const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+                const blockSchemaPath = [
+                    pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+                ].join("/");
+                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            }
         }
     })
+
+    const triggerDraftStore = useTriggerDraftStore();
+
+    // Splice a trigger block ("id: ...\ntype: ...\n") into a flow YAML source.
+    // If the flow already has a "triggers:" array, delegate to the YAML util which
+    // handles indentation and appends a new list item. If not, append a fresh
+    // "triggers:" key at the end of the flow so the new trigger becomes the first
+    // item in a new sequence.
+    function spliceTriggerIntoFlow(source: string, triggerBlock: string): string {
+        const hasTriggersKey = /^triggers\s*:/m.test(source);
+
+        if (hasTriggersKey) {
+            return YAML_UTILS.insertBlockWithPath({
+                source,
+                newBlock: triggerBlock,
+                parentPath: "triggers",
+                refPath: null,
+                position: "after",
+            });
+        }
+
+        const normalizedSource = source.endsWith("\n") ? source : source + "\n";
+        const indentedBlock = triggerBlock
+            .split("\n")
+            .map((line, idx) => (line.length === 0 ? "" : (idx === 0 ? `  - ${line}` : `    ${line}`)))
+            .join("\n")
+            .replace(/\s+$/, "");
+
+        return `${normalizedSource}\ntriggers:\n${indentedBlock}\n`;
+    }
 
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()

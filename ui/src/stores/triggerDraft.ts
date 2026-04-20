@@ -7,11 +7,6 @@ export interface TriggerDraft {
     triggerYaml: string;
 }
 
-/**
- * Carries a pre-configured trigger YAML block from the tenant-level "Add Trigger" modal
- * to the flow editor. The flow editor reads the draft on mount, inserts it into the flow
- * YAML, and clears the draft. Keyed by the latest draft (one in-flight draft at a time).
- */
 export const useTriggerDraftStore = defineStore("triggerDraft", () => {
     const draft = ref<TriggerDraft | undefined>();
 
@@ -28,14 +23,5 @@ export const useTriggerDraftStore = defineStore("triggerDraft", () => {
         return current;
     }
 
-    function clear() {
-        draft.value = undefined;
-    }
-
-    return {
-        draft,
-        setDraft,
-        consumeDraft,
-        clear,
-    };
+    return {setDraft, consumeDraft};
 });

@@ -23,9 +23,9 @@
                         <code class="header-fqcn">{{ trigger.type }}</code>
                     </div>
                 </div>
-                <button type="button" class="close-button" @click="$emit('cancel')">
+                <el-button link class="close-button" @click="$emit('cancel')">
                     <Close />
-                </button>
+                </el-button>
             </div>
             <nav class="tab-bar" role="tablist">
                 <button
@@ -97,18 +97,17 @@
 
             <div v-show="activeTab === 'source'" class="source-panel">
                 <div class="editor-wrapper">
-                    <button type="button" class="copy-button" @click="copySource">
+                    <el-button size="small" class="copy-button" @click="copySource">
                         <CheckIcon v-if="copied" class="copy-icon copy-icon--ok" />
                         <ContentCopy v-else class="copy-icon" />
                         <span>{{ copied ? $t("copied") : $t("copy") }}</span>
-                    </button>
+                    </el-button>
                     <Editor
                         :modelValue="sourceYaml"
                         lang="yaml"
                         :navbar="false"
-                        :readOnly="false"
+                        :readOnly="true"
                         :fullHeight="false"
-                        @update:model-value="onSourceEdit"
                     />
                 </div>
             </div>
@@ -141,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref, watch} from "vue";
+    import {computed, ref, watch} from "vue";
     import {useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -153,6 +152,7 @@
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../stores/plugins";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useTriggerDraftStore} from "../../stores/triggerDraft";
+    import {isMcpTrigger, triggerDisplayName} from "./triggerCatalog";
     import Editor from "../inputs/Editor.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
 
@@ -200,69 +200,17 @@
     const copied = ref(false);
     let copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const isMcp = computed(() => props.trigger.type.endsWith(".McpTool"));
-
-    const SUBGROUP_OVERRIDES: Record<string, string> = {
-        bigquery: "BigQuery",
-        mongodb: "MongoDB",
-        dynamodb: "DynamoDB",
-        eventbridge: "EventBridge",
-        servicebus: "ServiceBus",
-        postgresql: "PostgreSQL",
-        mysql: "MySQL",
-        mssql: "MSSQL",
-        graphql: "GraphQL",
-        pubsub: "PubSub",
-        opensearch: "OpenSearch",
-        elasticsearch: "Elasticsearch",
-    };
-
-    function humanize(segment: string): string {
-        if (!segment) return segment;
-        const lower = segment.toLowerCase();
-        if (SUBGROUP_OVERRIDES[lower]) return SUBGROUP_OVERRIDES[lower];
-        if (segment.length <= 4 && segment === lower) return segment.toUpperCase();
-        if (segment !== lower) return segment;
-        return segment.charAt(0).toUpperCase() + segment.slice(1);
-    }
-
-    const displayName = computed(() => {
-        const parts = props.trigger.type.split(".");
-        const simple = parts[parts.length - 1];
-        if (simple && simple !== "Trigger") return simple;
-        return humanize(parts[parts.length - 2] ?? simple);
-    });
+    const isMcp = computed(() => isMcpTrigger(props.trigger));
+    const displayName = computed(() => triggerDisplayName(props.trigger));
 
     const canSubmit = computed(() =>
         Boolean(formModel.value.namespace && formModel.value.flowId && formModel.value.triggerId.trim())
     );
 
-    function formatWithDash(yaml: string): string {
-        const lines = yaml.split("\n").filter(line => line.length > 0);
-        return lines
-            .map((line, index) => (index === 0 ? `  - ${line}` : `    ${line}`))
-            .join("\n");
-    }
-
-    // Editable YAML buffer for the Source tab. Form fields keep it in sync
-    // until the user edits it directly, at which point their edits win and
-    // form changes stop overwriting the buffer.
-    const sourceYaml = ref("");
-    const sourceUserEdited = ref(false);
-
-    function onSourceEdit(value: string) {
-        sourceYaml.value = value;
-        sourceUserEdited.value = true;
-    }
-
-    watch(
-        () => [formModel.value.triggerId, props.trigger.type] as const,
-        ([id, type]) => {
-            if (sourceUserEdited.value) return;
-            sourceYaml.value = formatWithDash(buildTriggerYaml(id, type));
-        },
-        {immediate: true},
-    );
+    const sourceYaml = computed(() => {
+        const id = formModel.value.triggerId.trim() || "mytrigger";
+        return `  - id: ${id}\n    type: ${props.trigger.type}\n`;
+    });
 
     function generateDefaultTriggerId(): string {
         const suffix = Math.floor(10000 + Math.random() * 90000);
@@ -311,9 +259,7 @@
             copiedTimer = setTimeout(() => {
                 copied.value = false;
             }, 1600);
-        } catch {
-            // Swallow: modern browsers only allow clipboard in secure contexts.
-        }
+        } catch { /* */ }
     }
 
     async function loadDocumentation() {
@@ -325,31 +271,13 @@
         }
     }
 
-    function unformatDash(yaml: string): string {
-        // Reverse of formatWithDash: strip the "- " on the first non-empty
-        // line and the 4-space indent on subsequent lines, so downstream YAML
-        // insertion can re-indent relative to the target flow's triggers list.
-        const lines = yaml.split("\n");
-        return lines
-            .map((line, index) => {
-                if (index === 0) return line.replace(/^\s*-\s*/, "");
-                return line.replace(/^ {4}/, "");
-            })
-            .join("\n")
-            .trimEnd() + "\n";
-    }
-
     function addTriggerToFlow() {
         if (!canSubmit.value) return;
-
-        const triggerYaml = sourceUserEdited.value
-            ? unformatDash(sourceYaml.value)
-            : buildTriggerYaml(formModel.value.triggerId, props.trigger.type);
 
         triggerDraftStore.setDraft({
             namespace: formModel.value.namespace,
             flowId: formModel.value.flowId,
-            triggerYaml,
+            triggerYaml: buildTriggerYaml(formModel.value.triggerId, props.trigger.type),
         });
 
         emit("update:visible", false);
@@ -371,7 +299,6 @@
         if (visible) {
             activeTab.value = "form";
             copied.value = false;
-            sourceUserEdited.value = false;
             formModel.value = {
                 namespace: "",
                 flowId: "",
@@ -381,23 +308,15 @@
             loadDocumentation();
         }
     }, {immediate: true});
-
-    onMounted(() => {
-        if (props.visible) {
-            searchNamespaces("");
-            loadDocumentation();
-        }
-    });
 </script>
 
 <style scoped lang="scss">
-    // Lighter purple that reads well on dark mode without losing contrast on light mode.
     $ks-tab-active: #a78bfa;
 
     .trigger-configure-modal :deep(.el-dialog__header) {
         padding: 0;
         margin: 0;
-        border-bottom: 1px solid var(--ks-border-secondary, var(--bs-border-color));
+        border-bottom: 1px solid var(--ks-border-secondary);
     }
 
     .trigger-configure-modal :deep(.el-dialog__body) {
@@ -405,30 +324,30 @@
     }
 
     .trigger-configure-modal :deep(.el-dialog__footer) {
-        padding: 12px 20px;
-        border-top: 1px solid var(--ks-border-secondary, var(--bs-border-color));
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid var(--ks-border-secondary);
     }
 
     .modal-header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 12px;
-        padding: 16px 20px 0;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem 0;
     }
 
     .header-main {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 0.75rem;
         min-width: 0;
         flex: 1;
     }
 
     .header-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.5rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -437,8 +356,8 @@
         color: #{$ks-tab-active};
 
         :deep(img), :deep(svg) {
-            width: 22px;
-            height: 22px;
+            width: 1.375rem;
+            height: 1.375rem;
         }
 
         &--mcp {
@@ -455,12 +374,12 @@
     .header-title-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
     }
 
     .header-title {
         margin: 0;
-        font-size: 16px;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--ks-content-primary, #fff);
         white-space: nowrap;
@@ -470,10 +389,10 @@
 
     .ee-badge {
         flex-shrink: 0;
-        font-size: 10px;
+        font-size: 0.625rem;
         font-weight: 600;
         letter-spacing: 0.05em;
-        padding: 1px 6px;
+        padding: 1px 0.375rem;
         border-radius: 3px;
         color: #{$ks-tab-active};
         background: color-mix(in srgb, #{$ks-tab-active} 18%, transparent);
@@ -482,9 +401,9 @@
     .header-fqcn {
         display: block;
         margin-top: 2px;
-        font-size: 12px;
+        font-size: 0.75rem;
         font-family: var(--font-monospace, monospace);
-        color: var(--ks-content-secondary, var(--bs-gray-500));
+        color: var(--ks-content-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -493,10 +412,10 @@
     .close-button {
         background: transparent;
         border: none;
-        padding: 6px;
+        padding: 0.375rem;
         border-radius: 4px;
         cursor: pointer;
-        color: var(--ks-content-tertiary, var(--bs-gray-600));
+        color: var(--ks-content-tertiary);
 
         &:hover {
             background: var(--ks-background-hover, rgba(255, 255, 255, 0.05));
@@ -507,20 +426,20 @@
     .tab-bar {
         display: flex;
         gap: 0;
-        margin-top: 14px;
+        margin-top: 0.875rem;
         margin-bottom: -1px;
-        padding: 0 20px;
+        padding: 0 1.25rem;
     }
 
     .tab-button {
         background: transparent;
         border: none;
         cursor: pointer;
-        padding: 8px 14px;
-        font-size: 13px;
+        padding: 0.5rem 0.875rem;
+        font-size: 0.8125rem;
         font-weight: 500;
         border-bottom: 2px solid transparent;
-        color: var(--ks-content-secondary, var(--bs-gray-500));
+        color: var(--ks-content-secondary);
         transition: color 0.12s ease, border-color 0.12s ease;
 
         &:hover {
@@ -534,7 +453,7 @@
     }
 
     .tab-panel {
-        padding: 16px 20px 20px;
+        padding: 1rem 1.25rem 1.25rem;
     }
 
     .form-panel :deep(.el-form-item):first-of-type {
@@ -544,8 +463,8 @@
     .form-hint {
         margin-top: 0.5rem;
         margin-bottom: 0;
-        font-size: 13px;
-        color: var(--ks-content-secondary, var(--bs-body-color));
+        font-size: 0.8125rem;
+        color: var(--ks-content-secondary);
     }
 
     .source-panel {
@@ -555,10 +474,10 @@
 
     .editor-wrapper {
         position: relative;
-        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
-        border-radius: 6px;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.375rem;
         overflow: hidden;
-        height: 80px;
+        height: 5rem;
 
         :deep(.monaco-editor),
         :deep(.monaco-editor .overflow-guard) {
@@ -566,41 +485,22 @@
         }
     }
 
-    // Floating copy button in the editor's top-right corner so the source
-    // panel doesn't waste a full row on a single small button.
     .copy-button {
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 0.375rem;
+        right: 0.375rem;
         z-index: 2;
-        background: var(--ks-background-card, rgba(30, 30, 40, 0.9));
-        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
-        border-radius: 4px;
-        padding: 3px 8px;
-        font-size: 11px;
-        color: var(--ks-content-secondary, var(--bs-body-color));
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-
-        &:hover {
-            color: var(--ks-content-primary, #fff);
-        }
     }
 
     .copy-icon {
         display: inline-flex;
-        font-size: 13px;
+        font-size: 0.8125rem;
 
         &--ok {
             color: #22c55e;
         }
     }
 
-    // The plugin-doc wrapper ships with its own card background which clashes
-    // with the modal body in dark mode. Strip only the outer wrapper so nested
-    // elements (code, pre, schema cards) keep their native styling in both themes.
     .doc-panel :deep(.plugin-doc) {
         max-width: 100%;
         background: transparent !important;

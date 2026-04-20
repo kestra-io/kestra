@@ -34,13 +34,13 @@
                         <h3>{{ $t("welcome_copilot.execute_hint.title") }}</h3>
                         <p>{{ $t("welcome_copilot.execute_hint.description") }}</p>
                     </div>
-                    <button
+                    <el-button
+                        link
                         class="onboarding-execute-hint__close"
-                        type="button"
                         @click="showExecuteHint = false"
                     >
                         <Close />
-                    </button>
+                    </el-button>
                 </div>
             </div>
         </Transition>
@@ -120,26 +120,29 @@
                 editorView.value?.focusTab("nocode")
             }
 
-            // Capture the draft synchronously so the Pinia store doesn't get emptied
-            // by a re-mount before we use it.
             const draft = triggerDraftStore.consumeDraft(
                 flowStore.flow?.namespace ?? "",
                 flowStore.flow?.id ?? ""
             );
 
-            // Strip the createTrigger query param BEFORE mutating flowYaml. If we mutated
-            // first, the flow would be dirty and the resulting router.replace would be
-            // caught by the unsaved-changes navigation guard, surfacing a confusing
-            // "Unsaved Changes" dialog the user never asked for.
             const {createTrigger: _, ...query} = route.query;
             await router.replace({...route, query});
 
             if (draft?.triggerYaml) {
-                flowStore.flowYaml = spliceTriggerIntoFlow(flowStore.flowYaml ?? "", draft.triggerYaml);
+                flowStore.flowYaml = spliceTriggerIntoFlow(
+                    flowStore.flowYaml ?? "",
+                    draft.triggerYaml,
+                );
             } else {
-                const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+                const panelIndex = Math.max(
+                    0,
+                    panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))),
+                );
                 const blockSchemaPath = [
-                    pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+                    pluginsStore.flowSchema?.$ref,
+                    "properties",
+                    "triggers",
+                    "items",
                 ].join("/");
                 actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
             }
@@ -148,11 +151,6 @@
 
     const triggerDraftStore = useTriggerDraftStore();
 
-    // Splice a trigger block ("id: ...\ntype: ...\n") into a flow YAML source.
-    // If the flow already has a "triggers:" array, delegate to the YAML util which
-    // handles indentation and appends a new list item. If not, append a fresh
-    // "triggers:" key at the end of the flow so the new trigger becomes the first
-    // item in a new sequence.
     function spliceTriggerIntoFlow(source: string, triggerBlock: string): string {
         const hasTriggersKey = /^triggers\s*:/m.test(source);
 
@@ -161,7 +159,6 @@
                 source,
                 newBlock: triggerBlock,
                 parentPath: "triggers",
-                refPath: null,
                 position: "after",
             });
         }
@@ -303,14 +300,14 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 1rem;
-        width: min(100%, 360px);
+        width: min(100%, 22.5rem);
         padding: calc(1.75rem - 1px) calc(1.75rem - 1px) calc(1.5rem - 1px);
         border: 1px solid transparent;
-        border-radius: 12px;
+        border-radius: 0.75rem;
         background:
             linear-gradient(var(--ks-background-card), var(--ks-background-card)) padding-box,
             var(--hint-gradient) border-box;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.06);
         pointer-events: auto;
         animation: onboardingHintBorderSpin 3s linear infinite;
     }
@@ -333,14 +330,7 @@
     }
 
     .onboarding-execute-hint__close {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        border: 0;
-        background: transparent;
         color: var(--ks-content-tertiary);
-        cursor: pointer;
         flex-shrink: 0;
     }
 

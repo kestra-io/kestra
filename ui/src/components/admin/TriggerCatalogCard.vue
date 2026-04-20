@@ -9,13 +9,7 @@
         :rawContent="true"
         :content="fullDescriptionHtml"
     >
-        <div
-            class="trigger-card"
-            role="button"
-            tabindex="0"
-            @click="$emit('add', trigger)"
-            @keydown.enter.space.prevent="$emit('add', trigger)"
-        >
+        <div class="trigger-card" @click="$emit('add', trigger)">
             <div class="icon-chip" :class="{'icon-chip--mcp': isMcp}">
                 <TaskIcon
                     :cls="trigger.type"
@@ -27,7 +21,11 @@
             <div class="card-body">
                 <div class="card-title-row">
                     <span class="trigger-name">{{ displayName }}</span>
-                    <span v-if="trigger.ee" class="ee-badge" :title="$t('triggers.add.ee_tooltip')">EE</span>
+                    <span
+                        v-if="trigger.ee"
+                        class="ee-badge"
+                        :title="$t('triggers.add.ee_tooltip')"
+                    >EE</span>
                 </div>
                 <div
                     v-if="trigger.description"
@@ -36,131 +34,80 @@
                 />
             </div>
 
-            <button type="button" class="add-button" @click.stop="$emit('add', trigger)">
+            <el-button
+                type="primary"
+                @click="$emit('add', trigger)"
+            >
                 {{ $t("triggers.add.card.add") }}
-            </button>
+            </el-button>
         </div>
     </el-tooltip>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed, ref, watchEffect} from "vue";
     import {TaskIcon} from "@kestra-io/ui-libs";
 
     import {usePluginsStore, type TriggerPluginDto} from "../../stores/plugins";
+    import {isMcpTrigger, triggerDisplayName} from "./triggerCatalog";
     import * as Markdown from "../../utils/markdown";
 
     const props = defineProps<{
-        trigger: TriggerPluginDto;
+        trigger: TriggerPluginDto
     }>();
 
-    defineEmits<{
-        (e: "add", trigger: TriggerPluginDto): void;
-    }>();
+    defineEmits<{(e: "add", trigger: TriggerPluginDto): void}>();
 
     const pluginsStore = usePluginsStore();
 
-    const isMcp = computed(() => props.trigger.type.endsWith(".McpTool"));
+    const isMcp = computed(() => isMcpTrigger(props.trigger));
+    const displayName = computed(() => triggerDisplayName(props.trigger));
 
-    // Prefer the simple class name. Plugins that name their trigger just `Trigger`
-    // (e.g. io.kestra.plugin.gcp.gcs.Trigger) fall back to the last package segment
-    // so users see "GCS", "BigQuery", etc. instead of a wall of identical "Trigger"s.
-    const displayName = computed(() => {
-        const parts = props.trigger.type.split(".");
-        const simple = parts[parts.length - 1];
-        if (simple && simple !== "Trigger") {
-            return simple;
-        }
-        const subgroup = parts[parts.length - 2] ?? simple;
-        return humanize(subgroup);
-    });
-
-    // Truncated inline preview: escape HTML, then turn `code` into <code>.
-    // Descriptions from plugin @Schema annotations often embed identifiers like
-    // `interval` or `uri` in backticks, and the catalog looks much cleaner with
-    // those formatted as inline code than rendered literally.
-    const descriptionHtml = computed(() => {
-        const raw = props.trigger.description ?? "";
-        const escaped = raw
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-        return escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
-    });
-
-    // Full rendered markdown for the hover tooltip. The card's inline preview
-    // is truncated by CSS; the tooltip shows the complete description so users
-    // can read long or multi-paragraph schema docs without leaving the page.
-    const fullDescriptionHtml = ref<string>("");
-    watch(
-        () => props.trigger.description,
-        async (description) => {
-            if (!description) {
-                fullDescriptionHtml.value = "";
-                return;
-            }
-            fullDescriptionHtml.value = await Markdown.render(description, {});
-        },
-        {immediate: true},
-    );
-
-    // Known subgroup → display-name overrides for CamelCase acronyms that simple
-    // casing can't guess right (BigQuery vs Bigquery, etc.).
-    const SUBGROUP_OVERRIDES: Record<string, string> = {
-        bigquery: "BigQuery",
-        mongodb: "MongoDB",
-        dynamodb: "DynamoDB",
-        eventbridge: "EventBridge",
-        servicebus: "ServiceBus",
-        postgresql: "PostgreSQL",
-        mysql: "MySQL",
-        mssql: "MSSQL",
-        graphql: "GraphQL",
-        pubsub: "PubSub",
-        opensearch: "OpenSearch",
-        elasticsearch: "Elasticsearch",
-        githubactions: "GitHub Actions",
+    const HTML_ENTITIES: Record<string, string> = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
     };
 
-    function humanize(segment: string): string {
-        if (!segment) return segment;
-        const lower = segment.toLowerCase();
-        if (SUBGROUP_OVERRIDES[lower]) return SUBGROUP_OVERRIDES[lower];
-        // Short acronyms (gcs, sqs, http, sftp, ftp, aws, gcp...) → uppercase.
-        if (segment.length <= 4 && segment === lower) return segment.toUpperCase();
-        // Already has caps (Kafka, Airflow) → leave as-is.
-        if (segment !== lower) return segment;
-        // Default: capitalize.
-        return segment.charAt(0).toUpperCase() + segment.slice(1);
-    }
+    const descriptionHtml = computed(() => {
+        const raw = props.trigger.description ?? "";
+        return raw
+            .replace(/[&<>"']/g, c => HTML_ENTITIES[c])
+            .replace(/`([^`]+)`/g, "<code>$1</code>");
+    });
+
+    const fullDescriptionHtml = ref<string>("");
+    watchEffect(async () => {
+        const description = props.trigger.description;
+        fullDescriptionHtml.value = description
+            ? await Markdown.render(description, {})
+            : "";
+    });
 </script>
 
 <style scoped lang="scss">
     .trigger-card {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 16px;
-        border: 1px solid var(--ks-border-primary, var(--bs-border-color));
-        border-radius: 8px;
-        background: var(--ks-background-card, var(--bs-body-bg));
-        cursor: pointer;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.5rem;
+        background: var(--ks-background-card);
         transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
-        &:hover,
-        &:focus-visible {
+        &:hover {
             border-color: var(--el-color-primary);
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-            outline: none;
         }
     }
 
     .icon-chip {
-        width: 36px;
-        height: 36px;
-        border-radius: 6px;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.375rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -168,9 +115,10 @@
         background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
         color: var(--el-color-primary);
 
-        :deep(img), :deep(svg) {
-            width: 20px;
-            height: 20px;
+        :deep(img),
+        :deep(svg) {
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
         &--mcp {
@@ -187,27 +135,26 @@
     .card-title-row {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 0.375rem;
         min-width: 0;
     }
 
     .trigger-name {
-        font-size: 14px;
+        font-size: 0.875rem;
         font-weight: 600;
-        color: var(--ks-content-primary, var(--bs-body-color));
+        color: var(--ks-content-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         min-width: 0;
     }
 
-    // Lighter purple, matching the modal header's EE badge.
     .ee-badge {
         flex-shrink: 0;
-        font-size: 10px;
+        font-size: 0.625rem;
         font-weight: 600;
         letter-spacing: 0.05em;
-        padding: 1px 6px;
+        padding: 1px 0.375rem;
         border-radius: 3px;
         color: #a78bfa;
         background: color-mix(in srgb, #a78bfa 18%, transparent);
@@ -215,9 +162,9 @@
 
     .trigger-description {
         margin-top: 2px;
-        font-size: 12px;
+        font-size: 0.75rem;
         line-height: 1.4;
-        color: var(--ks-content-tertiary, var(--bs-gray-600));
+        color: var(--ks-content-tertiary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -225,28 +172,20 @@
         :deep(code) {
             font-family: var(--font-monospace, monospace);
             font-size: 0.92em;
-            padding: 1px 4px;
+            padding: 1px 0.25rem;
             border-radius: 3px;
             background: var(--ks-background-code, rgba(124, 58, 237, 0.08));
-            color: var(--ks-content-primary, var(--bs-body-color));
+            color: var(--ks-content-primary);
         }
     }
+</style>
 
-    .add-button {
-        flex-shrink: 0;
-        padding: 6px 14px;
-        background: var(--el-color-primary);
-        border: 1px solid var(--el-color-primary);
-        border-radius: 6px;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.12s ease, border-color 0.12s ease;
-
-        &:hover {
-            background: var(--el-color-primary-dark-2, #6d28d9);
-            border-color: var(--el-color-primary-dark-2, #6d28d9);
-        }
+<style lang="scss">
+    .trigger-card-tooltip {
+        max-width: 26.25rem;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        padding: 0.625rem 0.75rem;
+        color: var(--ks-content-primary);
     }
 </style>

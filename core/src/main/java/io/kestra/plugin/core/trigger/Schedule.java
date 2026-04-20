@@ -218,6 +218,9 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @Getter(AccessLevel.NONE)
     private transient ExecutionTime executionTime;
 
+    @Getter(AccessLevel.NONE)
+    private transient Cron cachedCron;
+
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
@@ -382,9 +385,23 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         return Optional.of(execution);
     }
 
-    public Cron parseCron() {
-        CronParser parser = Boolean.TRUE.equals(withSeconds) ? CRON_PARSER_WITH_SECONDS : CRON_PARSER;
-        return parser.parse(this.cron);
+    /**
+     * Parses and validates this trigger's cron expression.
+     * <p>
+     * The parsed {@link Cron} is memoized on the instance so repeat callers (e.g. every
+     * {@link ScheduleValidation} invocation on the scheduling hot path) do not reconstruct
+     * a new {@link CronParser} and rebuild its internal regex patterns each time. Throws
+     * {@link IllegalArgumentException} on the first call if the cron is invalid; once the
+     * cached value is returned the call is O(1).
+     */
+    public synchronized Cron parseCron() {
+        if (this.cachedCron == null) {
+            CronParser parser = Boolean.TRUE.equals(withSeconds) ? CRON_PARSER_WITH_SECONDS : CRON_PARSER;
+            Cron parsed = parser.parse(this.cron);
+            parsed.validate();
+            this.cachedCron = parsed;
+        }
+        return this.cachedCron;
     }
 
     private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
@@ -420,7 +437,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @VisibleForTesting
-    synchronized ExecutionTime executionTime() {
+    synchronized ExecutionTime 
+    executionTime() {
         if (this.executionTime == null) {
             Cron parsed = parseCron();
             this.executionTime = ExecutionTime.forCron(parsed);

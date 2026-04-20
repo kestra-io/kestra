@@ -4,7 +4,7 @@
             <div class="search-wrapper">
                 <SearchField
                     :router="false"
-                    placeholder="triggers.add.search_placeholder"
+                    placeholder="triggers_add_search_placeholder"
                     @search="searchQuery = $event"
                 />
             </div>
@@ -25,8 +25,8 @@
         </div>
 
         <div v-else-if="!hasAnyVisibleTrigger" class="state-empty">
-            <h4>{{ $t("triggers.add.empty.title") }}</h4>
-            <p>{{ $t("triggers.add.empty.hint") }}</p>
+            <h4>{{ $t("triggers_add_empty_title") }}</h4>
+            <p>{{ $t("triggers_add_empty_hint") }}</p>
         </div>
 
         <template v-else>
@@ -81,29 +81,29 @@
             key: "core" as TriggerGroup,
             expandAll: true,
             props: {
-                title: t("triggers.add.category.core.title"),
-                description: t("triggers.add.category.core.description"),
+                title: t("triggers_add_category_core_title"),
+                description: t("triggers_add_category_core_description"),
             }
         },
         {
             key: "realtime" as TriggerGroup,
             props: {
-                title: t("triggers.add.category.realtime.title"),
-                description: t("triggers.add.category.realtime.description"),
+                title: t("triggers_add_category_realtime_title"),
+                description: t("triggers_add_category_realtime_description"),
             }
         },
         {
             key: "app" as TriggerGroup,
             props: {
-                title: t("triggers.add.category.app.title"),
-                description: t("triggers.add.category.app.description"),
+                title: t("triggers_add_category_app_title"),
+                description: t("triggers_add_category_app_description"),
             }
         }
     ]);
 
     const filterOptions = computed(() => CATEGORY_FILTER_VALUES.map(value => ({
         value,
-        label: t(`triggers.add.filter.${value}`)
+        label: t(`triggers_add_filter_${value}`)
     })));
 
     function filterBySearch(triggers: TriggerPluginDto[]) {

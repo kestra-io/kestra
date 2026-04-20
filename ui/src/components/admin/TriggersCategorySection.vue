@@ -6,7 +6,7 @@
         </header>
 
         <div v-if="triggers.length === 0" class="empty-row">
-            {{ $t("triggers.add.category.empty") }}
+            {{ $t("triggers_add_category_empty") }}
         </div>
 
         <div v-else class="card-grid">
@@ -27,8 +27,8 @@
             @click="expanded = !expanded"
         >
             {{ expanded
-                ? $t("triggers.add.see_less")
-                : $t("triggers.add.see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
+                ? $t("triggers_add_see_less")
+                : $t("triggers_add_see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
             }}
         </el-button>
     </section>

@@ -17,7 +17,7 @@
             <div class="card-body">
                 <div class="card-title-row">
                     <span class="trigger-name">{{ displayName }}</span>
-                    <span v-if="trigger.ee" class="ee-badge" :title="$t('triggers.add.ee_tooltip')">
+                    <span v-if="trigger.ee" class="ee-badge" :title="$t('triggers_add_ee_tooltip')">
                         EE
                     </span>
                 </div>
@@ -32,7 +32,7 @@
             </div>
 
             <el-button type="primary" @click="$emit('add', trigger)">
-                {{ $t("triggers.add.card.add") }}
+                {{ $t("triggers_add_card_add") }}
             </el-button>
         </div>
     </el-tooltip>

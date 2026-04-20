@@ -44,8 +44,8 @@
     useRouteContext(routeInfo);
 
     const tabs = computed(() => [
-        {name: "add", title: t("triggers.tabs.add"), component: markRaw(TriggersGrid)},
-        {name: "manage", title: t("triggers.tabs.manage"), component: markRaw(TriggersManage)},
+        {name: "add", title: t("triggers_tabs_add"), component: markRaw(TriggersGrid)},
+        {name: "manage", title: t("triggers_tabs_manage"), component: markRaw(TriggersManage)},
     ]);
 
     const isManageTab = computed(() => route.params.tab === "manage");

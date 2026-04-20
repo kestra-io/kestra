@@ -30,7 +30,7 @@
         </template>
 
         <el-tabs v-model="activeTab" class="modal-tabs">
-            <el-tab-pane :label="$t('triggers.add.modal.tab.form')" name="form" class="tab-panel">
+            <el-tab-pane :label="$t('triggers_add_modal_tab_form')" name="form" class="tab-panel">
                 <div class="form-panel">
                     <el-form labelPosition="top" :model="formModel">
                         <el-form-item :label="$t('namespace')" required>
@@ -40,7 +40,7 @@
                                 remote
                                 :remoteMethod="searchNamespaces"
                                 :loading="namespacesLoading"
-                                :placeholder="$t('triggers.add.modal.namespace_placeholder')"
+                                :placeholder="$t('triggers_add_modal_namespace_placeholder')"
                                 @change="onNamespaceChange"
                             >
                                 <el-option v-for="ns in namespaceOptions" :key="ns" :label="ns" :value="ns" />
@@ -51,7 +51,7 @@
                             <el-select
                                 v-model="formModel.flowId"
                                 filterable
-                                :placeholder="$t('triggers.add.modal.flow_placeholder')"
+                                :placeholder="$t('triggers_add_modal_flow_placeholder')"
                                 :disabled="!formModel.namespace"
                                 :loading="flowsLoading"
                             >
@@ -59,21 +59,21 @@
                             </el-select>
                         </el-form-item>
 
-                        <el-form-item :label="$t('triggers.add.modal.trigger_id')" required>
+                        <el-form-item :label="$t('triggers_add_modal_trigger_id')" required>
                             <el-input
                                 v-model="formModel.triggerId"
-                                :placeholder="$t('triggers.add.modal.trigger_id_placeholder')"
+                                :placeholder="$t('triggers_add_modal_trigger_id_placeholder')"
                             />
                         </el-form-item>
                     </el-form>
 
                     <p class="form-hint">
-                        {{ $t("triggers.add.modal.properties_hint") }}
+                        {{ $t("triggers_add_modal_properties_hint") }}
                     </p>
                 </div>
             </el-tab-pane>
 
-            <el-tab-pane :label="$t('triggers.add.modal.tab.source')" name="source" class="tab-panel">
+            <el-tab-pane :label="$t('triggers_add_modal_tab_source')" name="source" class="tab-panel">
                 <div class="source-panel">
                     <div class="editor-wrapper">
                         <el-button size="small" class="copy-button" @click="copySource">
@@ -86,7 +86,7 @@
                 </div>
             </el-tab-pane>
 
-            <el-tab-pane :label="$t('triggers.add.modal.tab.documentation')" name="documentation" class="tab-panel">
+            <el-tab-pane :label="$t('triggers_add_modal_tab_documentation')" name="documentation" class="tab-panel">
                 <div class="doc-panel">
                     <PluginDocumentation
                         v-if="documentationPlugin"
@@ -104,7 +104,7 @@
                     {{ $t("cancel") }}
                 </el-button>
                 <el-button type="primary" :disabled="!canSubmit" @click="addTriggerToFlow">
-                    + {{ $t("triggers.add.modal.add_button") }}
+                    + {{ $t("triggers_add_modal_add_button") }}
                 </el-button>
             </div>
         </template>
@@ -157,12 +157,12 @@
 
     const isMcp = computed(() => isMcpTrigger(props.trigger));
     const displayName = computed(() => triggerDisplayName(props.trigger));
-    const canSubmit = computed(() => 
+    const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim()
     );
 
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger";
-    const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n type: ${props.trigger.type}\n`);
+    const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}\n`);
 
     const searchNamespaces = async (query: string) => {
         namespacesLoading.value = true;

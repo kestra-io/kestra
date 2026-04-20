@@ -237,11 +237,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             // previous present & conditions
             if (this.getConditions() != null) {
                 try {
-                    Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
+                    Optional<ZonedDateTime> next = this.findNextDateMatchingConditions(
                         executionTime,
                         conditionContext,
-                        lastDate,
-                        true
+                        lastDate
                     );
 
                     if (next.isPresent()) {
@@ -294,11 +293,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         ExecutionTime executionTime = this.executionTime();
         if (this.getConditions() != null) {
             try {
-                Optional<ZonedDateTime> previous = this.truePreviousNextDateWithCondition(
+                Optional<ZonedDateTime> previous = this.findPreviousDateMatchingConditions(
                     executionTime,
                     conditionContext,
-                    SchedulerClock.now(),
-                    false
+                    SchedulerClock.now()
                 );
 
                 if (previous.isPresent()) {
@@ -451,56 +449,82 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true)
+        this.findNextDateMatchingConditions(executionTime, conditionContext, ZonedDateTime.from(output.getDate()))
             .ifPresent(outputBuilder::next);
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false)
+        this.findPreviousDateMatchingConditions(executionTime, conditionContext, ZonedDateTime.from(output.getDate()))
             .ifPresent(outputBuilder::previous);
 
         return outputBuilder.build();
     }
 
+    /**
+     * Walks forward from {@code fromDate} through successive cron executions and returns the
+     * first one where all schedule conditions match. Gives up after 10 years of lookahead.
+     */
     @VisibleForTesting
-    Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
+    Optional<ZonedDateTime> findNextDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
         int upperYearBound = SchedulerClock.now().getYear() + 10;
-        int lowerYearBound = SchedulerClock.now().getYear() - 10;
 
-        while ((next && toTestDate.getYear() < upperYearBound) || (!next && toTestDate.getYear() > lowerYearBound)) {
-
-            Optional<ZonedDateTime> currentDate = next ? executionTime.nextExecution(toTestDate) : executionTime.lastExecution(toTestDate);
-
-            if (currentDate.isEmpty()) {
-                return currentDate;
+        while (fromDate.getYear() < upperYearBound) {
+            Optional<ZonedDateTime> candidate = executionTime.nextExecution(fromDate);
+            if (candidate.isEmpty()) {
+                return candidate;
             }
 
-            Optional<Output> currentOutput = this.scheduleDates(executionTime, currentDate.get());
-
-            if (currentOutput.isEmpty()) {
+            Optional<Output> candidateOutput = this.scheduleDates(executionTime, candidate.get());
+            if (candidateOutput.isEmpty()) {
                 return Optional.empty();
             }
 
-            ConditionContext currentConditionContext = this.conditionContext(conditionContext, currentOutput.get());
-
-            if (!currentConditionContext.getVariables().containsKey("trigger")) {
-                currentConditionContext = currentConditionContext.withVariables(
-                    ImmutableMap.<String, Object> builder()
-                        .putAll(currentConditionContext.getVariables())
-                        .put("trigger", currentOutput.get().toMap())
-                        .build()
-                );
+            if (allScheduleConditionsMatch(conditionContext, candidateOutput.get())) {
+                return candidate;
             }
 
-            boolean conditionResults = this.validateScheduleCondition(currentConditionContext);
-            if (conditionResults) {
-                return currentDate;
-            }
-
-            toTestDate = next
-                ? currentDate.get().plusSeconds(1)
-                : currentDate.get().minusSeconds(1);
+            fromDate = candidate.get().plusSeconds(1);
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Walks backward from {@code fromDate} through preceding cron executions and returns the
+     * first one where all schedule conditions match. Gives up after 10 years of lookback.
+     */
+    @VisibleForTesting
+    Optional<ZonedDateTime> findPreviousDateMatchingConditions(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime fromDate) throws InternalException {
+        int lowerYearBound = SchedulerClock.now().getYear() - 10;
+
+        while (fromDate.getYear() > lowerYearBound) {
+            Optional<ZonedDateTime> candidate = executionTime.lastExecution(fromDate);
+            if (candidate.isEmpty()) {
+                return candidate;
+            }
+
+            Optional<Output> candidateOutput = this.scheduleDates(executionTime, candidate.get());
+            if (candidateOutput.isEmpty()) {
+                return Optional.empty();
+            }
+
+            if (allScheduleConditionsMatch(conditionContext, candidateOutput.get())) {
+                return candidate;
+            }
+
+            fromDate = candidate.get().minusSeconds(1);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Evaluates all {@link ScheduleCondition}s for a single cron-execution candidate, after
+     * injecting {@code schedule} and {@code trigger} variables derived from that candidate's
+     * schedule dates (so conditions like {@link io.kestra.plugin.core.condition.DayWeek} can
+     * render {@code {{ trigger.date }}}).
+     */
+    private boolean allScheduleConditionsMatch(ConditionContext baseContext, Output candidateOutput) throws InternalException {
+        ConditionContext contextWithSchedule = this.conditionContext(baseContext, candidateOutput);
+        return this.validateScheduleCondition(contextWithSchedule);
     }
 
     private Output handleMaxDelay(Output output) {

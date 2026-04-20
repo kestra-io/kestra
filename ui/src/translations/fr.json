@@ -2010,6 +2010,8 @@
     "triggered done": "L'exécution <em>{name}</em> est déclenchée !",
     "triggerflow disabled": "Déclencheur désactivé depuis la définition du flow",
     "triggers": "Déclencheurs",
+    "triggers.add.card.add": "Ajouter",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "Désactivé",

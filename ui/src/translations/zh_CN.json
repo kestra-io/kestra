@@ -2010,6 +2010,8 @@
     "triggered done": "执行 <em>{name}</em> 成功触发",
     "triggerflow disabled": "触发器在流程定义中被禁用",
     "triggers": "触发器",
+    "triggers.add.card.add": "添加",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "禁用",

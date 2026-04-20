@@ -2010,6 +2010,8 @@
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",
     "triggers": "Triggers",
+    "triggers.add.card.add": "追加",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "無効",

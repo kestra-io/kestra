@@ -2010,6 +2010,8 @@
     "triggered done": "<em>{name}</em>이(가) 성공적으로 Trigger 되었습니다.",
     "triggerflow disabled": "Flow 정의에서 trigger가 비활성화되었습니다.",
     "triggers": "Triggers",
+    "triggers.add.card.add": "추가",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "비활성화됨",

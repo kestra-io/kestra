@@ -2010,6 +2010,8 @@
     "triggered done": "Ausführung <em>{name}</em> ist erfolgreich ausgelöst",
     "triggerflow disabled": "Trigger ist in der Flow-Definition deaktiviert",
     "triggers": "Trigger",
+    "triggers.add.card.add": "Hinzufügen",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "Deaktiviert",

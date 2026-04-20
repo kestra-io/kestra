@@ -2010,6 +2010,8 @@
     "triggered done": "Выполнение <em>{name}</em> успешно запущено",
     "triggerflow disabled": "Trigger отключен в определении flow",
     "triggers": "Triggers",
+    "triggers.add.card.add": "Добавить",
+    "triggers.add.modal.title": "{name}",
     "triggers_state": {
       "options": {
         "disabled": "Отключено",

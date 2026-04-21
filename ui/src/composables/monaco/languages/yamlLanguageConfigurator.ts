@@ -48,7 +48,8 @@ export function pluginSuggestionRank(label: string, input: string): [number, num
     let bestDistanceFromEnd = Number.POSITIVE_INFINITY;
     let bestPosition = Number.POSITIVE_INFINITY;
 
-    segments.forEach((segment, index) => {
+    for (let index = 0; index < segments.length; index++) {
+        const segment = segments[index];
         const distanceFromEnd = lastSegmentIndex - index;
         const exactMatch = segment === normalizedInput;
         const startsWith = segment.startsWith(normalizedInput);
@@ -86,7 +87,11 @@ export function pluginSuggestionRank(label: string, input: string): [number, num
             bestDistanceFromEnd = distanceFromEnd;
             bestPosition = position;
         }
-    });
+
+        if (bestRank === 0) {
+            break;
+        }
+    }
 
     if (bestRank !== Number.POSITIVE_INFINITY) {
         return [bestRank, bestDistanceFromEnd, bestPosition, normalizedLabel.length];
@@ -117,6 +122,24 @@ export function pluginSuggestionSortText(label: string, input: string): string {
     ].join("-");
 }
 
+function plainSuggestionSortText(label: string, input: string): string | undefined {
+    const normalizedLabel = label.toLowerCase();
+    const normalizedInput = input.toLowerCase();
+    const includesAt = normalizedLabel.indexOf(normalizedInput);
+
+    if (includesAt < 0) {
+        return undefined;
+    }
+
+    const rank = normalizedLabel.startsWith(normalizedInput) ? 6 : 7;
+    return [
+        rank.toString().padStart(2, "0"),
+        "09",
+        includesAt.toString().padStart(3, "0"),
+        normalizedLabel.length.toString().padStart(4, "0"),
+        normalizedLabel,
+    ].join("-");
+}
 function isTaskLike(value: unknown): value is TaskLike {
     return (
         typeof value === "object" &&
@@ -350,17 +373,17 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 ].join(" ");
                             } else {
                                 suggestion.filterText =
-                                    (suggestion.label.includes(wordAtPosition)
+                                    (suggestion.label.toLowerCase().includes(wordAtPosition)
                                         ? wordAtPosition + " "
                                         : "") + suggestion.label.toLowerCase();
                             }
                         }
 
-                        if (
-                            suggestion.sortText === undefined &&
-                            suggestion.label.includes(wordAtPosition)
-                        ) {
-                            suggestion.sortText = `08-09-999-${suggestion.label.length.toString().padStart(4, "0")}-${suggestion.label.toLowerCase()}`;
+                        if (suggestion.sortText === undefined) {
+                            suggestion.sortText = plainSuggestionSortText(
+                                suggestion.label,
+                                wordAtPosition,
+                            );
                         }
                     }
 
@@ -371,7 +394,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     if (requiredProperties.includes(suggestion.label)) {
                         suggestion.detail = "required";
                     }
-
                     return suggestion;
                 })
                 // ---- Keep `type:` filtering scoped to plugin type suggestions ----

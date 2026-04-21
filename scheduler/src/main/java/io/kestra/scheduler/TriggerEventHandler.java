@@ -20,6 +20,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -137,12 +138,8 @@ public class TriggerEventHandler {
                 return;
             }
 
-            RunContext runContext = runContextFactory.of(flow, trigger);
-            ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-
-            if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-                ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
-                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate);
+            if (trigger instanceof PollingTriggerInterface) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 
             triggerStateStore.save(state);
@@ -204,7 +201,7 @@ public class TriggerEventHandler {
             if (wasDisabled && !event.disabled()) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
                 if (data.getRight() != null) {
-                    state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                    state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 }
             }
             triggerStateStore.save(state);
@@ -243,7 +240,7 @@ public class TriggerEventHandler {
 
             TriggerState newState = state;
             if (data.getRight() != null) {
-                newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                newState = newState.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
             }
 
             if (event.evaluation() != null) {
@@ -288,7 +285,7 @@ public class TriggerEventHandler {
                 .lastEventId(clock, event.eventId())
                 .reset(clock);
             if (data.getRight() != null) {
-                state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
             }
             triggerStateStore.save(state);
         });
@@ -307,7 +304,7 @@ public class TriggerEventHandler {
                 state = state
                     .lastEventId(clock, event.eventId())
                     .update(clock, data.getRight())
-                    .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                    .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 triggerStateStore.save(state);
             }
         });
@@ -365,13 +362,24 @@ public class TriggerEventHandler {
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
+            Flow flow = data.getLeft();
             AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
                 .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
-                .lastEventId(clock, event.eventId())
-                .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger));
+                .lastEventId(clock, event.eventId());
+            state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             triggerStateStore.save(state);
         }
+    }
+
+    /**
+     * Computes the next evaluation date for the given trigger, taking the trigger's conditions into account
+     * so handlers don't overwrite a condition-aware date (e.g. {@code DayWeek=SUNDAY}) with the next raw cron tick.
+     */
+    private ZonedDateTime nextEvaluationDate(Clock clock, Flow flow, AbstractTrigger trigger, TriggerContext triggerContext) {
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+        return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
     }
 
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {

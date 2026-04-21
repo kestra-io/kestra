@@ -1,11 +1,15 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -73,6 +77,11 @@ class TriggerEventHandlerTest {
         triggerId = Fixtures.triggerId();
         triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
         executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SchedulerClock.setClock(Clock.systemDefaultZone());
     }
 
     TriggerEventHandler newTriggerEventHandler(List<FlowWithSource> flows) {
@@ -539,5 +548,103 @@ class TriggerEventHandlerTest {
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(previousNextEvaluationDate.toInstant());
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
+    }
+
+    // Fixed clock on Wednesday 2024-01-03 at 10:00 in the system default zone.
+    // With cron "*/1 * * * *" + DayWeek=SUNDAY condition, the next matching tick is the next
+    // Sunday 00:00 in the Schedule's timezone (system default). The exact instant depends on
+    // the system zone, so the tests assert on day-of-week rather than a hard-coded instant.
+    private static final ZonedDateTime FIXED_WEDNESDAY = LocalDateTime.of(2024, 1, 3, 10, 0)
+        .atZone(ZoneId.systemDefault());
+
+    private Clock fixWedClock() {
+        Clock fixed = Clock.fixed(FIXED_WEDNESDAY.toInstant(), ZoneId.systemDefault());
+        SchedulerClock.setClock(fixed);
+        return fixed;
+    }
+
+    private void assertMatchesNextSunday(TriggerState state) {
+        assertThat(state.getNextEvaluationDate()).isNotNull();
+        ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
+        assertThat(nextZoned.getDayOfWeek())
+            .as("nextEvaluationDate should fall on a SUNDAY in the schedule's timezone, but was %s", nextZoned)
+            .isEqualTo(DayOfWeek.SUNDAY);
+        assertThat(nextZoned).isAfter(FIXED_WEDNESDAY);
+    }
+
+    @Test
+    void shouldComputeNextEvaluationDateRespectingConditionsWhenTriggerCreated() {
+        // GIVEN a brand-new trigger (evaluatedAt=null) with DayWeek=SUNDAY condition, clock on Friday
+        Clock clock = fixWedClock();
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        TriggerCreated event = new TriggerCreated(triggerId, 0);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN persisted nextEvaluationDate falls on SUNDAY, not the next raw cron tick
+        Optional<TriggerState> saved = triggerStateStore.findById(triggerId);
+        assertThat(saved).isPresent();
+        assertMatchesNextSunday(saved.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerUpdated() {
+        // GIVEN a trigger evaluated once before the update event fires
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+        handler = newTriggerEventHandler(List.of(flow));
+        TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReset() {
+        // GIVEN
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        ResetTrigger event = new ResetTrigger(triggerId);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
+        // GIVEN a trigger evaluated once before being disabled and re-enabled
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+            .disabled(clock, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertMatchesNextSunday(updated.get());
     }
 }

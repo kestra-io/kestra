@@ -72,7 +72,7 @@ public class DayWeek extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         RunContext runContext = conditionContext.getRunContext();
-        String render = runContext.render(date).as(String.class, conditionContext.getVariables()).orElseThrow();
+        String render = runContext.render(date).skipCache().as(String.class, conditionContext.getVariables()).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
 
         return currentDate.getDayOfWeek().equals(runContext.render(dayOfWeek).as(DayOfWeek.class, conditionContext.getVariables()).orElseThrow());

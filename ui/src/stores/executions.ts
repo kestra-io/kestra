@@ -485,7 +485,8 @@ export const useExecutionsStore = defineStore("executions", () => {
     const _filePreview = ref<any | undefined>(undefined);
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
-            params: options
+            params: options,
+            showMessageOnError: false
         }).then(response => {
             let data = {...response.data};
 

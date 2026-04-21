@@ -147,7 +147,10 @@
     const getFileSize = async (): Promise<void> => {
         if (isFile(props.value) && props.execution?.id) {
             try {
-                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`);
+                const response = await axios.get<FileMetadata>(
+                    `${apiUrl()}/executions/${props.execution.id}/file/metas`,
+                    {params: {path: props.value}, showMessageOnError: false}
+                );
                 humanSize.value = Utils.humanFileSize(response.data.size);
             } catch (error) {
                 console.error("Failed to fetch file size:", error);

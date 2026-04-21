@@ -8,6 +8,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
+import java.nio.file.NoSuchFileException;
+import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -1004,22 +1006,34 @@ public class ExecutionController {
             return httpResponse;
         }
 
-        long size = switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME ->
-                storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
-            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
-            case Namespace.NAMESPACE_FILE_SCHEME -> {
-                URI uri = nsFileToInternalStorageURI(path, execution.get());
-                yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), uri).getSize();
-            }
-            default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
-        };
+        try {
+            long size = switch (path.getScheme()) {
+                case StorageContext.KESTRA_SCHEME ->
+                    storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), path).getSize();
+                case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().getAttributes(path).size();
+                case Namespace.NAMESPACE_FILE_SCHEME -> {
+                    URI uri = nsFileToInternalStorageURI(path, execution.get());
+                    yield storageInterface.getAttributes(execution.get().getTenantId(), execution.get().getNamespace(), uri).getSize();
+                }
+                default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
+            };
 
-        return HttpResponse.ok(
-            FileMetas.builder()
-                .size(size)
-                .build()
-        );
+            return HttpResponse.ok(
+                FileMetas.builder()
+                    .size(size)
+                    .build()
+            );
+        } catch (IOException e) {
+            if (e instanceof FileNotFoundException || e instanceof NoSuchFileException) {
+                return HttpResponse.ok(
+                    FileMetas.builder()
+                        .size(0)
+                        .build()
+                );
+            }
+
+            throw e;
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

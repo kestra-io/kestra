@@ -459,15 +459,6 @@
         if (!execution.value) return [];
 
         return [
-            ...(execution.value.tenantId
-                ? [
-                    {
-                        field: "tenant",
-                        operation: "EQUALS",
-                        value: execution.value.tenantId,
-                    },
-                ]
-                : []),
             {
                 field: "namespace",
                 operation: "EQUALS",

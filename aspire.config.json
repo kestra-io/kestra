@@ -1,0 +1,22 @@
+{
+  "appHost": {
+    "path": "AppHost.java",
+    "language": "java"
+  },
+  "sdk": {
+    "version": "13.3.0-preview.1.26221.2"
+  },
+  "channel": "daily",
+  "profiles": {
+    "https": {
+      "applicationUrl": "https://localhost:19751;http://localhost:22347",
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:35384",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:51827"
+      }
+    }
+  },
+  "packages": {
+    "Aspire.Hosting.PostgreSQL": "13.3.0-preview.1.26221.3"
+  }
+}

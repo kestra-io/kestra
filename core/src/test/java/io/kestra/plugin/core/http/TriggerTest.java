@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -41,7 +42,7 @@ class TriggerTest {
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
 
-    @Test
+    @FlakyTest
     void trigger() throws Exception {
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(1);

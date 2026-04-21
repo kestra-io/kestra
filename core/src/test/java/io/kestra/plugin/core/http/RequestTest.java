@@ -60,6 +60,9 @@ class RequestTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private ApplicationContext applicationContext;
+
     @Test
     void run() throws Exception {
         try (
@@ -85,7 +88,9 @@ class RequestTest {
 
     @Test
     void head() throws Exception {
-        final String url = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
+        EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class);
+        server.start();
+        String url = server.getURL().toString() + "/hello";
 
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -98,8 +103,7 @@ class RequestTest {
 
         Request.Output output = task.run(runContext);
 
-        assertThat(output.getUri()).isEqualTo(URI.create(url));
-        assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test

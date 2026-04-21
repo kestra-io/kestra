@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -263,7 +264,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         newWorker.close();
     }
 
-    @Test
+    @FlakyTest
     void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         worker.run();

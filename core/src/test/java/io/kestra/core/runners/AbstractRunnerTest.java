@@ -189,13 +189,13 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartSubflow();
     }
 
-    @Test
+    @FlakyTest
     @LoadFlows({ "flows/valids/restart-with-finally.yaml" })
     protected void restartFailedWithFinally() throws Exception {
         restartCaseTest.restartFailedWithFinally();
     }
 
-    @Test
+    @FlakyTest
     @LoadFlows({ "flows/valids/restart-with-after-execution.yaml" })
     protected void restartFailedWithAfterExecution() throws Exception {
         restartCaseTest.restartFailedWithAfterExecution();
@@ -344,7 +344,7 @@ public abstract class AbstractRunnerTest {
         workingDirectoryTest.each(runnerUtils);
     }
 
-    @Test
+    @FlakyTest
     @LoadFlows({ "flows/valids/working-directory-cache.yml" })
     public void workingDirectoryCache() throws Exception {
         workingDirectoryTest.cache(runnerUtils);

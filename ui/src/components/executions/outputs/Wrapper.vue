@@ -1,9 +1,9 @@
 <template>
     <div class="outputs">
-        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
+        <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <KsSplitterPanel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-auto left">
-                    <ElCascaderPanel
+                    <KsCascaderPanel
                         v-if="tasksWithOutputs"
                         ref="cascader"
                         v-model="selected"
@@ -52,10 +52,10 @@
                                 </code>
                             </div>
                         </template>
-                    </ElCascaderPanel>
+                    </KsCascaderPanel>
                 </div>
-            </el-splitter-panel>
-            <el-splitter-panel>
+            </KsSplitterPanel>
+            <KsSplitterPanel>
                 <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
@@ -67,11 +67,11 @@
                             </code>
                         </div>
 
-                        <el-collapse
+                        <KsCollapse
                             v-model="debugCollapse"
                             class="mb-3 debug bordered"
                         >
-                            <el-collapse-item name="debug">
+                            <KsCollapseItem name="debug">
                                 <template #title>
                                     <span>{{ $t("eval.title") }}</span>
                                 </template>
@@ -89,17 +89,17 @@
                                         class="w-100"
                                     />
 
-                                    <el-button
+                                    <KsButton
                                         type="primary"
                                         @click="
                                             onDebugExpression(
                                                 editorValue.length > 0 ? editorValue : computedDebugValue,
                                             )
                                         "
-                                        class="mt-3 el-button--wrap"
+                                        class="mt-3 kel-button--wrap"
                                     >
                                         {{ $t("eval.title") }}
-                                    </el-button>
+                                    </KsButton>
 
                                     <Editor
                                         v-if="debugExpression"
@@ -114,10 +114,10 @@
                                         class="mt-3"
                                     />
                                 </div>
-                            </el-collapse-item>
-                        </el-collapse>
+                            </KsCollapseItem>
+                        </KsCollapse>
 
-                        <el-alert
+                        <KsAlert
                             v-if="debugError"
                             type="error"
                             :closable="false"
@@ -136,7 +136,7 @@
                             <pre class="mb-0" style="overflow: scroll">{{
                                 debugStackTrace
                             }}</pre>
-                        </el-alert>
+                        </KsAlert>
 
                         <VarValue
                             v-if="displayVarValue()"
@@ -149,8 +149,8 @@
                         />
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
     </div>
 </template>
 
@@ -162,7 +162,7 @@
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/ui-design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";

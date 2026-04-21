@@ -14,7 +14,7 @@ export default defineConfig({
         },
         rollupOptions: {
             // Externalize peer deps – they must be provided by the host app
-            external: ["vue", /^vue\//, /^element-plus/, "vue-i18n", "shiki", "mermaid"],
+            external: ["vue", /^vue\//, /^element-plus/, "element-plus", "vue-i18n", "shiki", "mermaid"],
             output: {
                 globals: {
                     vue: "Vue",

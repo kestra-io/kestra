@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.http;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -36,7 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class DownloadTest {
-    public static final String FILE = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
+    private static final String CSV_CONTENT = "id,name,value\n1,foo,100\n2,bar,200\n3,baz,300\n";
+
     @Inject
     private TestRunContextFactory runContextFactory;
 
@@ -48,10 +48,15 @@ class DownloadTest {
 
     @Test
     void run() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        String url = embeddedServer.getURI() + "/sample.csv";
+
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.ofValue(FILE))
+            .uri(Property.ofValue(url))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -59,7 +64,7 @@ class DownloadTest {
         Download.Output output = task.run(runContext);
 
         assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8))
-            .isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
+            .isEqualTo(CSV_CONTENT);
         assertThat(output.getUri().toString()).endsWith(".csv");
     }
 
@@ -278,6 +283,12 @@ class DownloadTest {
 
     @Controller()
     public static class SlackWebController {
+        @Get("sample.csv")
+        public HttpResponse<byte[]> csv() {
+            return HttpResponse.ok(CSV_CONTENT.getBytes(StandardCharsets.UTF_8))
+                .contentType(io.micronaut.http.MediaType.TEXT_CSV_TYPE);
+        }
+
         @Get("500")
         public HttpResponse<String> error() {
             return HttpResponse.serverError();

@@ -95,21 +95,26 @@ class RequestTest {
 
     @Test
     void head() throws Exception {
-        final String url = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            String url = server.getURL().toString() + "/headonly";
 
-        Request task = Request.builder()
-            .id(RequestTest.class.getSimpleName())
-            .type(RequestTest.class.getName())
-            .uri(Property.ofValue(url))
-            .method(Property.ofValue("HEAD"))
-            .build();
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(url))
+                .method(Property.ofValue("HEAD"))
+                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-        Request.Output output = task.run(runContext);
+            Request.Output output = task.run(runContext);
 
-        assertThat(output.getUri()).isEqualTo(URI.create(url));
-        assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
+            assertThat(output.getUri()).isEqualTo(URI.create(url));
+            assertThat(output.getCode()).isEqualTo(200);
+        }
     }
 
     @Test
@@ -848,6 +853,11 @@ class RequestTest {
 
         @Head("/hello")
         HttpResponse<String> head() {
+            return HttpResponse.ok();
+        }
+
+        @Head("/headonly")
+        HttpResponse<Void> headonly() {
             return HttpResponse.ok();
         }
 

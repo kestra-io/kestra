@@ -23,13 +23,13 @@
             <div class="ai-onboarding-hero">
                 <div class="ai-onboarding-icon">
                     <img
-                        src="/favicon-192x192.png"
+                        :src="kestraIcon"
                         alt="Kestra"
                         class="ai-onboarding-logo"
                     >
                 </div>
                 <h2 class="ai-onboarding-title">
-                    {{ $t("welcome_copilot.title") }}
+                    {{ props.heading ?? $t("welcome_copilot.title") }}
                 </h2>
             </div>
 
@@ -278,6 +278,7 @@
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
     import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
+    import kestraIcon from "../../assets/icon.svg";
 
     const aiStore = useAiStore();
     const apiStore = useApiStore();
@@ -299,6 +300,7 @@
         generationType?: AiGenerationType,
         namespace?: string,
         onboarding?: boolean,
+        heading?: string,
         initialPrompt?: string,
         onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,

@@ -18,5 +18,10 @@ dependencies {
     api 'org.assertj:assertj-core:3.27.7'
     api "org.junit.platform:junit-platform-launcher"
 
+    // AutoTestcontainersExtension references these at runtime (not just compile time),
+    // so they must be api to appear on consumers' runtime classpaths.
+    api "org.testcontainers:testcontainers"
+    api "org.testcontainers:junit-jupiter"
+
     testImplementation "com.tngtech.archunit:archunit-junit5"
 }

@@ -3,6 +3,32 @@ configurations {
     implementation.extendsFrom(micronaut)
 }
 
+// ── Develocity Test Distribution ──────────────────────────────────────────────
+//
+// Phase 1 — local verification (default):
+//   ./gradlew :core:test
+//   Runs with distribution mechanics but all executors are local.
+//   Proves tests are serialisation-safe before remote agents are involved.
+//
+// Phase 2 — remote agents (5 executors, bump to 10 once validated):
+//   ./gradlew :core:test -PtestDistributionRemote
+//   Agents must be registered in your Develocity server (see README section
+//   "Spinning up local test-distribution agents").
+//
+// NOTE: The Mockito and AspectJ javaagents are resolved locally via
+// jvmArgumentProviders (see root build.gradle). For Phase 2 those JARs must
+// also be present on each remote agent, or transferred via the Develocity
+// distribution classpath mechanism — revisit before promoting to Kubernetes.
+tasks.named('test', Test) { t ->
+    final boolean remotePhase = providers.gradleProperty("testDistributionRemote").isPresent()
+
+    t.develocity.testDistribution {
+        enabled = true
+        maxLocalExecutors  = remotePhase ? 0 : Runtime.getRuntime().availableProcessors()
+        maxRemoteExecutors = remotePhase ? 5 : 0
+    }
+}
+
 tasks.register('copyGradleProperties', Copy) {
     group = "build"
     shouldRunAfter compileJava

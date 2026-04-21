@@ -256,6 +256,11 @@ subprojects {subProj ->
             t.environment 'ENV_TEST1', "true"
             t.environment 'ENV_TEST2', "Pass by env"
 
+            // Propagate DOCKER_HOST to forked test JVMs for Testcontainers.
+            // Colima and OrbStack export DOCKER_HOST automatically — no setup needed.
+            // Docker Desktop: Settings → General → enable "Allow the default Docker socket to be used".
+            // CI: set DOCKER_HOST in the pipeline environment.
+            t.environment 'DOCKER_HOST', (System.getenv('DOCKER_HOST') ?: 'unix:///var/run/docker.sock')
 
             // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
             if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {

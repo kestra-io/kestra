@@ -29,6 +29,7 @@ public class AiServiceManager {
     private final Map<String, AiServiceInterface> aiServices = new HashMap<>();
     private final AiProvidersConfiguration providersConfiguration;
     private String defaultProviderId;
+    private boolean hasConfiguredProvider = false;
     protected final NamespaceContextTool namespaceContextTool;
 
     public AiServiceManager(
@@ -87,6 +88,7 @@ public class AiServiceManager {
                     defaultProviderId = provider.id();
                 }
                 aiServices.put(provider.id(), aiService);
+                hasConfiguredProvider = true;
             }
         } else {
             try {
@@ -158,5 +160,9 @@ public class AiServiceManager {
 
     public String getDefaultProviderId() {
         return defaultProviderId;
+    }
+
+    public boolean hasConfiguredProvider() {
+        return hasConfiguredProvider;
     }
 }

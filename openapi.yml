@@ -7193,6 +7193,8 @@ components:
             type: string
         isAiEnabled:
           type: boolean
+        isAiApiKeyConfigured:
+          type: boolean
         isBasicAuthInitialized:
           type: boolean
         pluginsHash:

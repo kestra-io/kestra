@@ -1,11 +1,18 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,10 +33,10 @@ class VariableRendererTest {
     VariableRenderer variableRenderer;
 
     @Inject
-    ApplicationContext applicationContext;
+    VariableRenderer.VariableConfiguration variableConfiguration;
 
     @Inject
-    VariableRenderer.VariableConfiguration variableConfiguration;
+    private PebbleEngineFactory pebbleEngineFactory;
 
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
@@ -57,6 +64,7 @@ class VariableRendererTest {
 
     @Test
     void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         for (Object o : List.of(
             42, // Integer
             3.14, // Double
@@ -80,7 +88,7 @@ class VariableRendererTest {
         Mockito.when(mockEngine.getLiteralTemplate(Mockito.anyString()))
             .thenThrow(new RuntimeException("unexpected runtime exception"));
 
-        VariableRenderer renderer = new VariableRenderer(applicationContext, variableConfiguration);
+        VariableRenderer renderer = new VariableRenderer(pebbleEngineFactory, variableConfiguration);
         renderer.setPebbleEngine(mockEngine);
 
         // When / Then
@@ -110,4 +118,13 @@ class VariableRendererTest {
         final Map<String, Object> result_value3 = (Map<String, Object>) result.get("foo-3");
         assertThat(result_value3.keySet()).containsExactly("bar-1", "bar-2", "bar-3");
     }
+
+    public static class TestVariableRenderer extends VariableRenderer {
+
+        public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,
+            VariableConfiguration variableConfiguration) {
+            super(pebbleEngineFactory, variableConfiguration);
+        }
+    }
+
 }

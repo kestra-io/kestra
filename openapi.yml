@@ -7193,6 +7193,8 @@ components:
             type: string
         isAiEnabled:
           type: boolean
+        isAiApiKeyConfigured:
+          type: boolean
         isBasicAuthInitialized:
           type: boolean
         pluginsHash:
@@ -7695,6 +7697,7 @@ components:
       - STATUS
       - EMAIL
       - TIME_RANGE
+      - PARENT_ID
       - TRIGGER_EXECUTION_ID
       - TRIGGER_ID
       - TRIGGER_STATE

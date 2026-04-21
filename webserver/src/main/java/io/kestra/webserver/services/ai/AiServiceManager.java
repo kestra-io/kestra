@@ -29,6 +29,7 @@ public class AiServiceManager {
     private final Map<String, AiServiceInterface> aiServices = new HashMap<>();
     private final AiProvidersConfiguration providersConfiguration;
     private String defaultProviderId;
+    private boolean hasConfiguredProvider = false;
     protected final NamespaceContextTool namespaceContextTool;
 
     public AiServiceManager(
@@ -87,10 +88,15 @@ public class AiServiceManager {
                     defaultProviderId = provider.id();
                 }
                 aiServices.put(provider.id(), aiService);
+                hasConfiguredProvider = true;
             }
         } else {
-            defaultProviderId = "api";
-            aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
+            try {
+                defaultProviderId = "api";
+                aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
+            } catch (Exception e) {
+                log.warn("Failed to initialize API AI service (api.kestra.io may be unreachable), AI Copilot will be disabled.", e);
+            }
         }
     }
 
@@ -154,5 +160,9 @@ public class AiServiceManager {
 
     public String getDefaultProviderId() {
         return defaultProviderId;
+    }
+
+    public boolean hasConfiguredProvider() {
+        return hasConfiguredProvider;
     }
 }

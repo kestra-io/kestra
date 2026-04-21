@@ -1,0 +1,22 @@
+id: flow-trigger-invalid-inputs-flow-listen
+namespace: io.kestra.tests.trigger.invalid.inputs
+
+inputs:
+  - id: someInput
+    type: STRING
+    required: false
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.invalid.inputs
+        flowId: flow-trigger-invalid-inputs-flow-a
+        states: [SUCCESS]
+    inputs:
+      someInput: "{{ trigger.outputs.nonExistentField }}"
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

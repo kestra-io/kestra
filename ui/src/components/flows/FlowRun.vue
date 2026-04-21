@@ -11,6 +11,7 @@
         </div>
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
             <InputsForm
+                ref="inputsFormRef"
                 :initialInputs="flow.inputs"
                 :selectedTrigger="selectedTrigger"
                 :flow="flow"
@@ -179,7 +180,8 @@
                 const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
                 this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
-                if (!this.flow.inputs) {
+                const inputsForm = this.$refs.inputsFormRef;
+                if (!inputsForm || !this.flow.inputs) {
                     return;
                 }
 
@@ -188,7 +190,11 @@
                     .filter(input => nonEmptyInputNames.includes(input.id))
                     .forEach(input => {
                         let value = this.execution.inputs[input.id];
-                        this.inputs[input.id] = normalize(input.type, value);
+                        inputsForm.inputsValues[input.id] = normalize(input.type, value);
+                        const meta = inputsForm.inputsMetaData.find(m => m.id === input.id);
+                        if (meta) {
+                            meta.isDefault = false;
+                        }
                     });
             },
             onSubmit(formRef) {

@@ -13,6 +13,7 @@ import io.kestra.core.runners.WorkerJobEvent;
 
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Provider;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -25,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class QueueLagPoller {
     private final MetricRegistry metricRegistry;
     private final WorkerGroupMetaStore workerGroupExecutor;
-    private final BeanProvider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider;
+    private final Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider;
 
     private final Cache<CacheKey, Integer> queueLagCache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofSeconds(30))
@@ -34,7 +35,7 @@ public class QueueLagPoller {
     public QueueLagPoller(
         MetricRegistry metricRegistry,
         WorkerGroupMetaStore workerGroupExecutor,
-        BeanProvider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider) {
+        Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider) {
         this.metricRegistry = metricRegistry;
         this.workerJobQueueProvider = workerJobQueueProvider;
         this.workerGroupExecutor = workerGroupExecutor;

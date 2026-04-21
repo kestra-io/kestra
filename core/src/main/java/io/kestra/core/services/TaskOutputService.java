@@ -118,7 +118,13 @@ public class TaskOutputService {
     /**
      * Get the outputs of a task run. This method will read the outputs from the database or from the internal storage depending on where they are stored.
      */
+    @SuppressWarnings("deprecation")
     public Map<String, Object> getOutputs(TaskRun taskRun) throws InternalException {
+        // pre 2.0 compatibility layer
+        if (taskRun.getOutputs() != null) {
+            return taskRun.getOutputs();
+        }
+
         return outputRepository.findById(taskRun.getTenantId(), taskRun.getId())
             .map(throwFunction(output -> readOutput(taskRun, output)))
             .orElse(Collections.emptyMap());
@@ -151,25 +157,34 @@ public class TaskOutputService {
             {
                 Map<String, Object> taskOutputs = new LinkedHashMap<>();
                 for (TaskRun current : taskRuns) {
-                    var outputs = allTaskOutputs.stream().filter(it -> it.taskRunId().equals(current.getId())).findAny();
-                    if (outputs.isPresent()) {
-                        try {
-                            var outputMap = readOutput(current, outputs.get());
-                            if (current.getIteration() != null) {
-                                Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, outputMap, byIds));
-                                // If one of two of the map is null in the merge() method, we just return the other
-                                // And if the not null map is a Variables (= read-only), we cast it back to a simple
-                                // hashmap to avoid taskOutputs becoming read-only
-                                // i.e this happens in nested loopUntil tasks
-                                if (merged instanceof Variables) {
-                                    merged = new HashMap<>(merged);
-                                }
-                                taskOutputs = merged;
-                            } else {
-                                taskOutputs.putAll(outputs(current, outputMap, byIds));
+                    // pre 2.0 compatibility layer
+                    @SuppressWarnings("deprecation")
+                    Map<String, Object> outputMap = current.getOutputs();
+                    if (outputMap == null) {
+                        var outputs = allTaskOutputs.stream().filter(it -> it.taskRunId().equals(current.getId()))
+                            .findAny();
+                        if (outputs.isPresent()) {
+                            try {
+                                outputMap = readOutput(current, outputs.get());
+                            } catch (InternalException e) {
+                                throw new KestraRuntimeException(e);
                             }
-                        } catch (InternalException e) {
-                            throw new KestraRuntimeException(e);
+                        }
+                    }
+
+                    if (outputMap != null) {
+                        if (current.getIteration() != null) {
+                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, outputMap, byIds));
+                            // If one of two of the map is null in the merge() method, we just return the other
+                            // And if the not null map is a Variables (= read-only), we cast it back to a simple
+                            // hashmap to avoid taskOutputs becoming read-only
+                            // i.e this happens in nested loopUntil tasks
+                            if (merged instanceof Variables) {
+                                merged = new HashMap<>(merged);
+                            }
+                            taskOutputs = merged;
+                        } else {
+                            taskOutputs.putAll(outputs(current, outputMap, byIds));
                         }
                     }
                 }

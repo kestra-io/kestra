@@ -45,12 +45,14 @@
     import AITriggerButton from "./AITriggerButton.vue";
     import {useAuthStore} from "override/stores/auth";
     import {useApiStore} from "../../stores/api";
+    import {useMiscStore} from "override/stores/misc";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Utils from "../../utils/utils";
+    import {aiGenerationTypes} from "../../utils/constants";
     import type {AiGenerationType} from "../../utils/constants";
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         flow: string;
         generationType: AiGenerationType;
         namespace?: string;
@@ -68,11 +70,20 @@
     const router = useRouter();
     const authStore = useAuthStore();
     const apiStore = useApiStore();
+    const miscStore = useMiscStore();
 
     const rootEl = ref<HTMLDivElement>();
     const aiCopilotOpened = ref(false);
     const conversationId = ref<string>(Utils.uid());
-    const aiCopilotAllowed = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ));
+    const aiCopilotAllowed = computed(() => {
+        if (!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ)) {
+            return false;
+        }
+        if (props.generationType === aiGenerationTypes.APP || props.generationType === aiGenerationTypes.TEST) {
+            return miscStore.configs?.isAiApiKeyConfigured === true;
+        }
+        return true;
+    });
 
     function openAiCopilot() {
         apiStore.posthogEvents({

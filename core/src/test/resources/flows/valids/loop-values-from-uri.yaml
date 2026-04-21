@@ -11,7 +11,7 @@ tasks:
     extension: .ion
   - id: loop
     type: io.kestra.plugin.core.flow.Loop
-    values: '"{{ outputs.write.uri }}"'
+    values: "{{ outputs.write.uri }}"
     tasks:
       - id: item
         type: io.kestra.plugin.core.debug.Return

@@ -32,9 +32,13 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/progress';
+</style>
+
+<style lang="scss" scoped>
+    @use '../../assets/styles/el-ns';
 
     .kel-progress {
         :deep(.kel-progress-bar__outer) {

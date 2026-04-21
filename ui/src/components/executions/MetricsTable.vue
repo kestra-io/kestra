@@ -91,6 +91,7 @@
     import {useExecutionsStore} from "../../stores/executions"
 
     import {useTableColumns} from "../../composables/useTableColumns"
+    import Utils from "../../utils/utils.ts"
 
     const {t} = useI18n()
 

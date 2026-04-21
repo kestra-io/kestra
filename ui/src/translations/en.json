@@ -617,9 +617,12 @@
     "sum": "Sum",
     "min": "Min",
     "max": "Max",
+    "bar": "Bar",
+    "line": "Line",
     "metric": "Metric",
     "aggregation": "Aggregation",
-    "metric choice": "Please choose a metric and an aggregation",
+    "chart type": "Chart type",
+    "metric choice": "No metrics available for this flow",
     "of": "of",
     "see_all_states": "See all states",
     "save draft": {

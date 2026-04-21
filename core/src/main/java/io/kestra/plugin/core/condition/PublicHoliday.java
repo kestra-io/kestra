@@ -109,7 +109,7 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
         var renderedSubDivision = conditionContext.getRunContext().render(this.subDivision).as(String.class).orElse(null);
 
         HolidayManager holidayManager = renderedCountry != null ? HolidayManager.getInstance(ManagerParameters.create(renderedCountry)) : HolidayManager.getInstance();
-        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class, variables).orElseThrow());
+        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).skipCache().as(String.class, variables).orElseThrow());
         return renderedSubDivision == null ? holidayManager.isHoliday(currentDate) : holidayManager.isHoliday(currentDate, renderedSubDivision);
     }
 }

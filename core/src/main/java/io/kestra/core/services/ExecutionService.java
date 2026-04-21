@@ -346,9 +346,10 @@ public class ExecutionService {
             newTaskRuns.removeIf(taskRun -> taskRunToRestartMapped.contains(taskRun.getId()));
 
             for (TaskRun originalTaskRun : tasksToRestart) {
+                TaskRun normalizedTaskRun = originalTaskRun.onRunningResend();
                 TaskRun restartedTaskRun = this.mapTaskRun(
                     flow,
-                    originalTaskRun,
+                    normalizedTaskRun,
                     mappingTaskRunId,
                     newExecutionId,
                     State.Type.RESTARTED,

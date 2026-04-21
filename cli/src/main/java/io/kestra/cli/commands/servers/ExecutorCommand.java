@@ -15,8 +15,8 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
 import org.awaitility.Awaitility;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 import io.kestra.core.utils.Await;
 
@@ -29,10 +29,16 @@ public class ExecutorCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
+
+    @Inject
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
+
+    @Inject
+    private Provider<Executor> executorService;
 
     @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -66,26 +72,22 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
 
         super.call();
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        Executor executorService = applicationContext.getBean(Executor.class);
-        executorService.run();
+        executorService.get().run();
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 

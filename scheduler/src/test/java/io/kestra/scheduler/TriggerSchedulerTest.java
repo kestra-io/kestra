@@ -317,6 +317,31 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldStoreNextConditionMatchingDateOnFirstEvaluationWhenConditionFails() {
+        // GIVEN clock fixed on a Friday at 10:00, a */1 min cron + DayWeek=SUNDAY condition
+        ZonedDateTime friday = java.time.LocalDateTime.of(2024, 1, 5, 10, 0)
+            .atZone(ZoneId.systemDefault());
+        SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
+
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // WHEN the first cron tick fires (1 minute later)
+        SchedulerClock.offset(Duration.ofMinutes(1));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN the condition failed (Friday ≠ Sunday) and the persisted nextEvaluationDate is on a Sunday
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
+        assertThat(nextZoned.getDayOfWeek())
+            .as("nextEvaluationDate should fall on a SUNDAY, but was %s", nextZoned)
+            .isEqualTo(DayOfWeek.SUNDAY);
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
     void shouldRecoverMissingScheduleGivenALL() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
@@ -566,6 +591,28 @@ class TriggerSchedulerTest {
         assertThat(state.getUpdatedAt()).isEqualTo(initialState.getUpdatedAt());
 
         // Check NO execution was created
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldDeleteOrphanTriggerStateOnScheduleGivenSoftDeletedFlow() {
+        // region [GIVEN]
+        FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
+
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(initialState);
+
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNull();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 

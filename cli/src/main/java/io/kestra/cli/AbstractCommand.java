@@ -21,6 +21,7 @@ import io.kestra.core.utils.Rethrow;
 import io.kestra.webserver.services.FlowAutoLoaderService;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
@@ -28,6 +29,20 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
+import io.kestra.core.utils.Rethrow;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -44,6 +59,12 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     @Inject
     private io.kestra.core.utils.VersionProvider versionProvider;
+
+    @Inject
+    private Optional<EmbeddedServer> embeddedServer;
+
+    @Inject
+    private BeanProvider<FlowAutoLoaderService> flowAutoLoaderService;
 
     @Inject
     protected Provider<PluginRegistry> pluginRegistryProvider;
@@ -145,8 +166,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             return;
         }
 
-        applicationContext
-            .findBean(EmbeddedServer.class)
+        embeddedServer
             .ifPresent(server ->
             {
                 server.start();
@@ -169,9 +189,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 }
 
                 if (isFlowAutoLoadEnabled()) {
-                    applicationContext
-                        .findBean(FlowAutoLoaderService.class)
-                        .ifPresent(FlowAutoLoaderService::load);
+                    flowAutoLoaderService.ifPresent(FlowAutoLoaderService::load);
                 }
             });
     }

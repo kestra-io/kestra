@@ -184,7 +184,7 @@ import java.util.Optional;
                               - id: full_table_name
                                 type: io.kestra.plugin.core.log.Log
                                 message: |
-                                  Full table name: {{item.parents[1].item.value }}_{{item.parent.value}}_{{item.value}}
+                                  Full table name: {{item.parents[1].value }}_{{item.parent.value}}_{{item.value}}
                                   Direct/current loop (months): {{item.value}}
                                   Value of loop one higher up (years): {{item.parents[0].value}}
                                   Further up (table types): {{item.parents[1].value}}

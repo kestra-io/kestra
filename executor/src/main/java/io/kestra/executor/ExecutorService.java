@@ -53,9 +53,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class ExecutorService {
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private RunContextFactory runContextFactory;
 
     @Inject
@@ -67,6 +64,7 @@ public class ExecutorService {
     @Inject
     private WorkerJobRunningStateStore workerJobRunningStateStore;
 
+    @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -95,15 +93,6 @@ public class ExecutorService {
 
     @Inject
     private TaskOutputService taskOutputService;
-
-    private FlowMetaStoreInterface flowExecutorInterface() {
-        // bean is injected late, so we need to wait
-        if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
-        }
-
-        return this.flowExecutorInterface;
-    }
 
     public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
         // if concurrency was removed, it can be null as we always get the latest flow definition
@@ -1132,7 +1121,7 @@ public class ExecutorService {
                         executableTaskRun
                     );
                     List<SubflowExecution<?>> subflowExecutions = executableTask
-                        .createSubflowExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
+                        .createSubflowExecutions(runContext, flowExecutorInterface, executor.getFlow(), executor.getExecution(), executableTaskRun);
                     if (subflowExecutions.isEmpty()) {
                         // if no executions we move the task to SUCCESS immediately
                         executor.withExecution(

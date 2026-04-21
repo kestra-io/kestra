@@ -26,6 +26,7 @@ class ServicesTest {
         assertThat(services.taskLogLineMatcher()).isNotNull();
         assertThat(services.tracerFactory()).isNotNull();
         assertThat(services.uriProvider()).isNotNull();
+        assertThat(services.jsonSchemaGenerator()).isNotNull();
         assertThat(services.additionalService(FlowRepositoryInterface.class)).isNotNull();
     }
 
@@ -39,6 +40,7 @@ class ServicesTest {
         assertThat(services.taskLogLineMatcher()).isNotNull();
         assertThat(services.tracerFactory()).isNotNull();
         assertThat(services.uriProvider()).isNotNull();
+        assertThat(services.jsonSchemaGenerator()).isNotNull();
         var exception = assertThrows(RuntimeException.class, () -> services.additionalService(FlowRepositoryInterface.class));
         assertThat(exception.getMessage()).isEqualTo("Services.additionalService() cannot be used inside the Worker");
     }

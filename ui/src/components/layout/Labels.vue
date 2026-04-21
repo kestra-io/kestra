@@ -1,5 +1,5 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex flex-wrap gap-1">
+    <span v-if="props.labels.length" class="d-flex gap-1 labels-container">
         <KsCheckTag
             v-for="(label, index) in props.labels"
             :key="index"
@@ -97,6 +97,13 @@
     background-color: var(--ks-tag-background);
     font-weight: normal;
     color: var(--ks-tag-content);
+    white-space: nowrap;
+}
+
+.labels-container {
+    overflow: hidden;
+    flex-wrap: nowrap;
+    min-width: 0;
 }
 
 .label.kel-check-tag.is-checked {

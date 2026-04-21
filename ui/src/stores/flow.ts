@@ -772,14 +772,14 @@ function deleteFlowAndDependencies() {
                 return response.data
             })
     }
-    function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string }) {
+    function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
             .then(response => {
                 aggregatedMetrics.value = response.data
                 return response.data
             })
     }
-    function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string }) {
+    function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
             .then(response => {
                 aggregatedMetrics.value = response.data

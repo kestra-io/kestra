@@ -56,6 +56,22 @@
                     </KsTag>
                 </template>
             </KsTableColumn>
+
+
+            <KsTableColumn className="row-action">
+                <template #default="scope">
+                    <router-link
+                        :to="{name: 'flows/update',
+                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tab: 'metrics', tenant: scope.row.tenant},
+                              query: {'filters[q][EQUALS]': scope.row.name}
+                        }"
+                    >
+                        <KsIconButton>
+                            <ChartAreaspline />
+                        </KsIconButton>
+                    </router-link>
+                </template>
+            </KsTableColumn>
         </template>
     </KsDataTable>
 </template>
@@ -66,6 +82,7 @@
 
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
 
 
     import type {Execution} from "../../stores/executions";
@@ -74,6 +91,7 @@
     import {useExecutionsStore} from "../../stores/executions";
 
     import {useTableColumns} from "../../composables/useTableColumns";
+    import Utils from "../../utils/utils.ts";
 
     const {t} = useI18n();
 

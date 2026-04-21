@@ -75,17 +75,6 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     searchable: true
                 },
                 {
-                    key: "aggregation",
-                    label: t("filter.aggregation.label"),
-                    description: t("filter.aggregation.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("metrics");
-                        return [...VALUES.AGGREGATIONS, {label: "Count", value: "COUNT"}];
-                    }
-                },
-                {
                     key: "timeRange",
                     label: t("filter.timeRange_metric.label"),
                     description: t("filter.timeRange_metric.description"),

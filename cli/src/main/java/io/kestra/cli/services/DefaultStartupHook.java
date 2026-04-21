@@ -8,13 +8,22 @@ import io.kestra.core.services.VersionService;
 import io.kestra.core.utils.EditionProvider;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Singleton
 public class DefaultStartupHook implements StartupHookInterface {
     @Inject
-    private ApplicationContext applicationContext;
+    private BeanProvider<VersionService> versionService;
+
+    @Inject
+    private Optional<EditionProvider> editionProvider;
+
+    @Inject
+    private Optional<SettingRepositoryInterface> settingRepositoryProvider;
 
     @Override
     public void start(AbstractCommand cmd) {
@@ -24,12 +33,11 @@ public class DefaultStartupHook implements StartupHookInterface {
         }
     }
 
-    private void saveKestraVersion() {
-        applicationContext.findBean(VersionService.class).ifPresent(VersionService::maybeSaveOrUpdateInstanceVersion);
-    }
+   private void saveKestraVersion() {
+      versionService.ifPresent(VersionService::maybeSaveOrUpdateInstanceVersion);
+   }
 
     private void saveKestraEdition() {
-        applicationContext.findBean(EditionProvider.class).ifPresent(editionProvider -> applicationContext
-                .findBean(SettingRepositoryInterface.class).ifPresent(editionProvider::persistEdition));
+        editionProvider.ifPresent(editionProvider -> settingRepositoryProvider.ifPresent(editionProvider::persistEdition));
     }
 }

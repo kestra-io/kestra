@@ -20,6 +20,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.utils.Await;
@@ -41,7 +42,19 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private ExecutorsUtils executorsUtils;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultExecutor defaultExecutor;
+
+    @Inject
+    private Provider<Controller> controllerProvider;
+
+    @Inject
+    private Provider<Worker> workerProvider;
+
+    @Inject
+    private Provider<Scheduler> schedulerProvider;
+
+    @Inject
+    private Provider<Indexer> indexerProvider;
 
     @Value("${kestra.server.standalone.running.timeout:PT1M}")
     private Duration runningTimeout;
@@ -57,28 +70,28 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(DefaultExecutor.class));
+        poolExecutor.execute(defaultExecutor);
 
         if (controllerEnabled) {
-            Controller controller = applicationContext.getBean(Controller.class);
+            Controller controller = controllerProvider.get();
             poolExecutor.execute(controller::start);
             servers.add(controller);
         }
 
         if (workerEnabled) {
-            Worker worker = applicationContext.getBean(Worker.class);
+            Worker worker = workerProvider.get();
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);
         }
 
         if (schedulerEnabled) {
-            Scheduler scheduler = applicationContext.getBean(Scheduler.class);
+            Scheduler scheduler = schedulerProvider.get();
             poolExecutor.execute(scheduler);
             servers.add(scheduler);
         }
 
         if (indexerEnabled) {
-            Indexer indexer = applicationContext.getBean(Indexer.class);
+            Indexer indexer = indexerProvider.get();
             poolExecutor.execute(indexer);
             servers.add(indexer);
         }

@@ -7,6 +7,7 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.VersionProvider;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 public class VersionService {
     private static final String MIN_VERSION = "1.0.0";
 
-    private final SettingRepositoryInterface settingRepository;
-    private final VersionProvider versionProvider;
+    private final Provider<SettingRepositoryInterface> settingRepository;
+    private final Provider<VersionProvider> versionProvider;
 
     /**
      * Creates a new {@link VersionService} instance.
@@ -29,8 +30,8 @@ public class VersionService {
      * @param settingRepository the repository to manage settings.
      */
     @Inject
-    public VersionService(final SettingRepositoryInterface settingRepository,
-        final VersionProvider versionProvider) {
+    public VersionService(final Provider<SettingRepositoryInterface> settingRepository,
+        final Provider<VersionProvider> versionProvider) {
         this.settingRepository = settingRepository;
         this.versionProvider = versionProvider;
     }
@@ -41,7 +42,7 @@ public class VersionService {
      * @return an {@link Optional} containing the instance version if it exists, or an empty {@link Optional} if it does not.
      */
     public Optional<String> getInstanceVersion() {
-        return settingRepository.findByKey(Setting.INSTANCE_VERSION).map(Setting::getValue).map(Object::toString);
+        return settingRepository.get().findByKey(Setting.INSTANCE_VERSION).map(Setting::getValue).map(Object::toString);
     }
 
     /**
@@ -50,7 +51,7 @@ public class VersionService {
      */
     public void maybeSaveOrUpdateInstanceVersion() {
         Optional<String> settingVersion = getInstanceVersion();
-        final String softwareVersion = versionProvider.getVersion();
+        final String softwareVersion = versionProvider.get().getVersion();
         if (settingVersion.isEmpty() || !settingVersion.get().equals(softwareVersion)) {
             // check that the settings version is not too old for supporting the migration
             // the check is basic: it will work up to version 10.0.0...
@@ -68,7 +69,7 @@ public class VersionService {
             }
 
             log.info("Updating instance version from {} to {}", settingVersion.orElse("none"), softwareVersion);
-            settingRepository.save(
+            settingRepository.get().save(
                 Setting.builder()
                     .key(Setting.INSTANCE_VERSION)
                     .value(softwareVersion)

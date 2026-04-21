@@ -730,7 +730,7 @@ class ScheduleTest {
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
             .build();
 
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
         assertThat(result).isNotEmpty();
     }
 
@@ -764,7 +764,7 @@ class ScheduleTest {
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
             .build();
 
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
         assertThat(result).isNotEmpty();
     }
 
@@ -793,7 +793,7 @@ class ScheduleTest {
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
             .build();
 
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
         assertThat(result).isNotEmpty();
     }
 

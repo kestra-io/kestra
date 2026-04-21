@@ -1,7 +1,5 @@
 package io.kestra.core.validations.validator;
 
-import com.cronutils.model.Cron;
-
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.plugin.core.trigger.Schedule;
 
@@ -25,8 +23,9 @@ public class ScheduleValidator implements ConstraintValidator<ScheduleValidation
 
         if (value.getCron() != null) { // if null, the standard @NotNull will do its job
             try {
-                Cron parsed = value.parseCron();
-                parsed.validate();
+                // parseCron() now parses + validates on first call and caches the result,
+                // so repeated validation runs on the scheduler hot path are O(1).
+                value.parseCron();
             } catch (IllegalArgumentException e) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate("invalid cron expression '" + value.getCron() + "': " + e.getMessage())

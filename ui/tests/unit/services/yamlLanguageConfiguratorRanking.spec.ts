@@ -34,11 +34,11 @@ describe("YamlLanguageConfigurator ranking", () => {
 
     it("prioritizes exact final-segment matches over earlier-segment exact matches", () => {
         expect(pluginSuggestionSortText(
-            "io.kestra.plugin.core.condition.If",
-            "if",
+            "io.kestra.plugin.core.trigger.Flow",
+            "flow",
         ) < pluginSuggestionSortText(
-            "io.kestra.plugin.if.core.Condition",
-            "if",
+            "io.kestra.plugin.core.flow.If",
+            "flow",
         )).toBe(true);
     });
 

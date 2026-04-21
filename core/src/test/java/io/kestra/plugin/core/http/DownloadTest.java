@@ -205,25 +205,21 @@ class DownloadTest {
 
     @Test
     void failed() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
 
-        ) {
-            Download task = Download.builder()
-                .id(Download.class.getSimpleName())
-                .type(Download.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
-                .options(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build())
-                .build();
+        Download task = Download.builder()
+            .id(Download.class.getSimpleName())
+            .type(Download.class.getName())
+            .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
+            .options(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build())
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            Download.Output output = task.run(runContext);
+        Download.Output output = task.run(runContext);
 
-            assertThat(output.getHeaders().get("content-type")).isEqualTo(List.of("application/json"));
-            assertThat(output.getCode()).isEqualTo(417);
-        }
+        assertThat(output.getHeaders().get("content-type")).isEqualTo(List.of("application/json"));
+        assertThat(output.getCode()).isEqualTo(417);
     }
 
     @Test

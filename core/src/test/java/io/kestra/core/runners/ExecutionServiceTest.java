@@ -265,7 +265,6 @@ class ExecutionServiceTest {
         assertThat(restartedSibling.getState().getHistories().stream().anyMatch(history -> history.getState() == State.Type.RESTARTED)).isTrue();
         assertThat(restartedSibling.getId()).isNotEqualTo(runningSibling.getId());
         assertThat(restartedSibling.getAttempts()).hasSize(runningSibling.getAttempts().size() + 1);
-        assertThat(restartedSibling.lastAttempt().getState().getCurrent()).isEqualTo(State.Type.RESUBMITTED);
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 

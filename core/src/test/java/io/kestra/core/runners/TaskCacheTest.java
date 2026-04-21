@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,6 +76,20 @@ public class TaskCacheTest {
         assertThat(taskOutputService.getOutputs(notCached.getTaskRunList().getFirst()).get("counter")).isEqualTo(2);
     }
 
+    @Test
+    @LoadFlows("flows/valids/cache_with_file_and_purge.yaml")
+    void shouldIgnoreTaskCacheEntryWhenReferencedFilesWerePurged() throws Exception {
+        Execution firstExecution = runnerUtils.runOne("main", "io.kestra.tests", "cache_with_file_and_purge");
+        assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(firstExecution.getTaskRunList().getFirst()).get("counter")).isEqualTo(1);
+        assertThat(taskOutputService.getOutputs(firstExecution.getTaskRunList().get(1)).get("content")).isEqualTo("counter-1");
+
+        Execution secondExecution = runnerUtils.runOne("main", "io.kestra.tests", "cache_with_file_and_purge");
+        assertThat(secondExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(secondExecution.getTaskRunList().getFirst()).get("counter")).isEqualTo(2);
+        assertThat(taskOutputService.getOutputs(secondExecution.getTaskRunList().get(1)).get("content")).isEqualTo("counter-2");
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode
@@ -99,5 +115,62 @@ public class TaskCacheTest {
             private int counter;
         }
 
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class FileProducerTask extends Task implements RunnableTask<FileProducerTask.Output> {
+        @Override
+        public Output run(RunContext runContext) throws Exception {
+            int counter = COUNTER.incrementAndGet();
+            URI uri = runContext.storage().putFile(
+                runContext.workingDir().createFile("cached.txt", ("counter-" + counter).getBytes(StandardCharsets.UTF_8)).toFile()
+            );
+
+            return Output.builder()
+                .counter(counter)
+                .uri(uri)
+                .build();
+        }
+
+        @SuperBuilder(toBuilder = true)
+        @Getter
+        public static class Output implements io.kestra.core.models.tasks.Output {
+            private int counter;
+            private URI uri;
+        }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class FileConsumerTask extends Task implements RunnableTask<FileConsumerTask.Output> {
+        private String uri;
+
+        @Override
+        public Output run(RunContext runContext) throws Exception {
+            URI renderedUri = URI.create(runContext.render(this.uri));
+            String content;
+            try (var inputStream = runContext.storage().getFile(renderedUri)) {
+                content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+
+            return Output.builder()
+                .content(content)
+                .build();
+        }
+
+        @SuperBuilder(toBuilder = true)
+        @Getter
+        public static class Output implements io.kestra.core.models.tasks.Output {
+            private String content;
+        }
     }
 }

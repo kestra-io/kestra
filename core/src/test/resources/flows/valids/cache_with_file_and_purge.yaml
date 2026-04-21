@@ -1,0 +1,15 @@
+id: cache_with_file_and_purge
+namespace: io.kestra.tests
+
+tasks:
+  - id: producer
+    type: io.kestra.core.runners.TaskCacheTest$FileProducerTask
+    taskCache:
+      enabled: true
+
+  - id: consumer
+    type: io.kestra.core.runners.TaskCacheTest$FileConsumerTask
+    uri: "{{ outputs.producer.uri }}"
+
+  - id: purge
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

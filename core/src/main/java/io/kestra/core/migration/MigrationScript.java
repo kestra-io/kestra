@@ -12,10 +12,14 @@ import java.util.HexFormat;
  * Represents a single versioned migration script.
  *
  * <p>
- * Implementations are Micronaut {@code @Singleton} beans that {@code @Inject} whatever
- * dependencies they need (e.g. {@code DSLContext}, repositories, OpenSearch client). No context
- * object is passed to {@link #migrate()}; the script is fully responsible for obtaining its own
- * resources through DI.
+ * Implementations are Micronaut {@code @Singleton} beans. Because {@code MigrationRunner} is a
+ * {@code @Context} bean, all dependencies injected into a script are eagerly instantiated during
+ * application startup. Scripts must only depend on low-level infrastructure:
+ * {@code DataSource} / {@code JooqDSLContextWrapper} for JDBC, {@code OpenSearchClient} for
+ * Elasticsearch, storages, and simple {@code @ConfigurationProperties} records. Never inject
+ * repositories or services — their transitive dependencies will fail to initialize at this early
+ * stage. No context object is passed to {@link #migrate()}; the script is fully responsible for
+ * obtaining its own resources through DI.
  *
  * <p>
  * Scripts are collected by the active migration runner, sorted lexicographically by

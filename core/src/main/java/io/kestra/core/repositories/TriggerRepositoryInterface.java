@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -76,11 +75,4 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();
     }
-
-    /**
-     * FOR KESTRA 2.0 MIGRATION
-     */
-    @SuppressWarnings("removal")
-    @Deprecated(forRemoval = true)
-    List<Trigger> findAllForAllTenantsV1();
 }

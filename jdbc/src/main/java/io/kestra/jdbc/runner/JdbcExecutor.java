@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Configuration;
 import org.slf4j.event.Level;
@@ -510,60 +511,80 @@ public class JdbcExecutor implements ExecutorInterface {
             {
                 // WorkerTaskRunning
                 if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-                    if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
-                        // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
-                        log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
-                        workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
-                    } else {
-                        try {
-                            workerJobQueue.emit(
-                                workerTaskRunning.getWorkerInstance().workerGroup(), WorkerTask.builder()
-                                    .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
-                                    .task(workerTaskRunning.getTask())
-                                    .runContext(workerTaskRunning.getRunContext())
-                                    .build()
-                            );
-                            Logs.logTaskRun(
-                                workerTaskRunning.getTaskRun(),
-                                Level.WARN,
-                                "Re-resubmitting WorkerTask."
-                            );
-                        } catch (QueueException e) {
-                            Logs.logTaskRun(
-                                workerTaskRunning.getTaskRun(),
-                                Level.ERROR,
-                                "Unable to re-resubmit WorkerTask.",
-                                e
-                            );
-                        }
-                    }
+                    resubmitWorkerTask(workerTaskRunning);
                 }
 
                 // WorkerTriggerRunning
                 if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
-                    try {
-                        workerJobQueue.emit(
-                            workerTriggerRunning.getWorkerInstance().workerGroup(), WorkerTrigger.builder()
-                                .trigger(workerTriggerRunning.getTrigger())
-                                .conditionContext(workerTriggerRunning.getConditionContext())
-                                .triggerContext(workerTriggerRunning.getTriggerContext())
-                                .build()
-                        );
-                        Logs.logTrigger(
-                            workerTriggerRunning.getTriggerContext(),
-                            Level.WARN,
-                            "Re-emitting WorkerTrigger."
-                        );
-                    } catch (QueueException e) {
-                        Logs.logTrigger(
-                            workerTriggerRunning.getTriggerContext(),
-                            Level.ERROR,
-                            "Unable to re-emit WorkerTrigger.",
-                            e
-                        );
-                    }
+                    resubmitWorkerTrigger(workerTriggerRunning);
                 }
             });
+    }
+
+    void reEmitRealtimeTriggerForWorker(final Configuration configuration,
+                                    final List<String> ids) {
+        workerJobRunningRepository.getWorkerJobWithWorkerDead(configuration.dsl(), ids)
+            .forEach(workerJobRunning ->
+            {
+                // WorkerTriggerRunning for realtime workers
+                if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning && workerTriggerRunning.getTrigger() instanceof RealtimeTriggerInterface) {
+                    resubmitWorkerTrigger(workerTriggerRunning);
+                }
+            });
+    }
+
+    private void resubmitWorkerTask(WorkerTaskRunning workerTaskRunning) {
+        if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
+            // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
+            log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
+            workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
+        } else {
+            try {
+                workerJobQueue.emit(
+                    workerTaskRunning.getWorkerInstance().workerGroup(), WorkerTask.builder()
+                        .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
+                        .task(workerTaskRunning.getTask())
+                        .runContext(workerTaskRunning.getRunContext())
+                        .build()
+                );
+                Logs.logTaskRun(
+                    workerTaskRunning.getTaskRun(),
+                    Level.WARN,
+                    "Re-resubmitting WorkerTask."
+                );
+            } catch (QueueException e) {
+                Logs.logTaskRun(
+                    workerTaskRunning.getTaskRun(),
+                    Level.ERROR,
+                    "Unable to re-resubmit WorkerTask.",
+                    e
+                );
+            }
+        }
+    }
+
+    private void resubmitWorkerTrigger(WorkerTriggerRunning workerTriggerRunning) {
+        try {
+            workerJobQueue.emit(
+                workerTriggerRunning.getWorkerInstance().workerGroup(), WorkerTrigger.builder()
+                    .trigger(workerTriggerRunning.getTrigger())
+                    .conditionContext(workerTriggerRunning.getConditionContext())
+                    .triggerContext(workerTriggerRunning.getTriggerContext())
+                    .build()
+            );
+            Logs.logTrigger(
+                workerTriggerRunning.getTriggerContext(),
+                Level.WARN,
+                "Re-emitting WorkerTrigger."
+            );
+        } catch (QueueException e) {
+            Logs.logTrigger(
+                workerTriggerRunning.getTriggerContext(),
+                Level.ERROR,
+                "Unable to re-emit WorkerTrigger.",
+                e
+            );
+        }
     }
 
     private void executionQueue(Either<Execution, DeserializationException> either) {

@@ -85,9 +85,9 @@
 
         &.kel-button--playground {
             #{--kel-button-disabled-text-color}: var(--ks-blue-50);
-            #{--kel-button-text-color}: var(--ks-white);
-            #{--kel-button-hover-text-color}: var(--ks-white);
-            #{--kel-button-bg-color}: var(--ks-blue-500);
+            #{--kel-button-text-color}: var(--ks-button-content-primary);
+            #{--kel-button-hover-text-color}: var(--ks-button-content-primary);
+            #{--kel-button-bg-color}: var(--ks-playground-bg-color);
             #{--kel-button-hover-bg-color}: var(--ks-blue-400);
             #{--kel-button-active-bg-color}: var(--ks-blue-600);
             #{--kel-button-active-border-color}: var(--ks-blue-700);
@@ -147,8 +147,8 @@
         }
 
         &--success {
-            #{--kel-button-bg-color}: var(--ks-green-500);
-            #{--kel-button-hover-bg-color}: var(--ks-green-400);
+            #{--kel-button-bg-color}: var(--ks-button-background-success);
+            #{--kel-button-hover-bg-color}: var(--ks-button-background-success-hover);
         }
     }
 </style>

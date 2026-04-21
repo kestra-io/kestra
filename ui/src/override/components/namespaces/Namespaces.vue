@@ -212,7 +212,7 @@
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     &.system {
-        border-color: var(--ks-blue-300);
+        border-color: var(--ks-border-info);
 
         & span.system {
             line-height: 1.5rem;

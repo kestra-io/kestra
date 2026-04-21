@@ -1,3 +1,5 @@
+@use "color-palette" as palette;
+
 // font family
 $font-family-sans-serif: "Public Sans", sans-serif;
 $font-family-monospace: "Source Code Pro", monospace;
@@ -22,110 +24,28 @@ $box-shadow: 0 .5rem 1rem rgba($black, .15);
 $box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
 $box-shadow-lg: 0 1rem 3rem rgba($black, .175);
 
-// grey
-$gray-50: #f9f9fa;
-$gray-100: #ecebef;
-$gray-200: #cfd3d6;
-$gray-300: #9797a6;
-$gray-400: #404559;
-$gray-500: #2f3342;
-$gray-600: #2c303f;
-$gray-700: #262a35;
-$gray-800: #20232d;
-$gray-900: #1e202a;
-$gray-950: #14181f;
-
-$gray-dark-950: #f9f9fa;
-$gray-dark-900: #CAC5DA;
-$gray-dark-800: #A69FC1;
-$gray-dark-700: #918BA9;
-$gray-dark-600: #404559;
-$gray-dark-500: #2F3342;
-$gray-dark-400: #2C303F;
-$gray-dark-300: #202435;
-$gray-dark-200: #21242E;
+$gray-dark-50:  #14181f;
 $gray-dark-100: #1C1E27;
-$gray-dark-50: #14181f;
-
-// all colors
-$blue-50: #c7f0ff;
-$blue-100: #a2cdff;
-$blue-200: #7fbbff;
-$blue-300: #5bb8ff;
-$blue-400: #3991ff;
-$blue-500: #1761fd;
-$blue-600: #134ecc;
-$blue-700: #0e3b9a;
-$blue-800: #0a2869;
-$blue-900: #051538;
-
-$green-50: #e4f9f3;
-$green-100: #beefe2;
-$green-200: #7cdfc4;
-$green-300: #21ce9c;
-$green-400: #02be8a;
-$green-500: #029e73;
-$green-600: #017f5c;
-$green-700: #016046;
-$green-800: #014230;
-$green-900: #002319;
-
-$orange-50: #fff2ea;
-$orange-100: #f3c4a1;
-$orange-200: #eeae7e;
-$orange-300: #e9985b;
-$orange-400: #e58238;
-$orange-500: #dd5f00;
-$orange-600: #c15300;
-$orange-700: #a64700;
-$orange-800: #8a3b00;
-$orange-900: #6f3000;
-
-$purple-50: #e0e0ff;
-$purple-100: #bbbbff;
-$purple-200: #a396ff;
-$purple-300: #9470ff;
-$purple-400: #8c4bff;
-$purple-500: #8405ff;
-$purple-600: #7400df;
-$purple-700: #6300bf;
-$purple-800: #53009f;
-$purple-900: #420080;
-
-$red-50: #fff2f3;
-$red-100: #fec9cb;
-$red-200: #fd9297;
-$red-300: #fd7278;
-$red-400: #e3262f;
-$red-500: #ab0009;
-$red-600: #870007;
-$red-700: #5a0005;
-$red-800: #470004;
-$red-900: #260002;
-
-$yellow-50: #fffbef;
-$yellow-100: #fdedb3;
-$yellow-200: #fdeaa8;
-$yellow-300: #fde89d;
-$yellow-400: #fde592;
-$yellow-500: #fce07c;
-$yellow-600: #ddc46d;
-$yellow-700: #bda85d;
-$yellow-800: #9e8c4e;
-$yellow-900: #7e703e;
+$gray-dark-200: #21242E;
+$gray-dark-300: #202435;
+$gray-dark-400: #2C303F;
+$gray-dark-500: #2F3342;
+$gray-dark-600: #404559;
+$gray-dark-700: #918BA9;
+$gray-dark-800: #A69FC1;
+$gray-dark-900: #CAC5DA;
+$gray-dark-950: #f9f9fa;
 
 $colors: (
-    'primary': $purple-500,
-    'success': $green-500,
-    'warning': $orange-500,
-    'danger': $red-500,
-    'error': $red-500,
-    'info': $blue-500,
+    'primary': palette.$base-purple-500,
+    'success': palette.$base-green-500,
+    'warning': palette.$base-orange-500,
+    'danger': palette.$base-red-500,
+    'error': palette.$base-red-500,
+    'info': palette.$base-blue-500,
 );
 
 // border radius
 $border-radius: 0.25rem !default;
 $border-radius-lg: 0.5rem !default;
 $border-radius-sm: 0.15rem !default;
-
-

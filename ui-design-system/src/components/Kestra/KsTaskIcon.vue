@@ -15,7 +15,6 @@
     import {computed} from "vue";
     import KsTooltip from "../Feedback/KsTooltip.vue";
     import {cssVar} from "../../utils/css";
-    import {useTheme} from "../../composables/useTheme";
 
     defineOptions({
         name: "KsTaskIcon",
@@ -29,8 +28,6 @@
         onlyIcon?: boolean;
         variable?: string;
     }>()
-
-    const {isDark} = useTheme()
 
     const backgroundImage = computed(() => {
         return `data:image/svg+xml;base64,${imageBase64.value}`
@@ -61,10 +58,10 @@
                 "</svg>";
         }
 
-        let color = (isDark ? cssVar("--ks-gray-900") : cssVar("--ks-black")) || cssVar("--ks-white");
+        let color = cssVar("--ks-content-primary") || cssVar("--ks-content-inverse");
 
         if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-gray-900") : cssVar("--ks-black")) || color;
+            color = (props.theme === "dark" ? cssVar("--ks-content-inverse") : cssVar("--ks-content-primary")) || color;
         }
 
         if (props.variable) {

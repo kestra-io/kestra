@@ -31,7 +31,7 @@
 
     .kel-dropdown__popper {
         font-size: var(--kel-font-size-small);
-        --kel-dropdown-menuItem-hover-fill: var(--ks-gray-300);
+        --kel-dropdown-menuItem-hover-fill: var(--ks-dropdown-background-hover);
         --kel-dropdown-menuItem-hover-color: var(--ks-content-primary);
 
         &.separator-m-0 .kel-dropdown-menu__item--divided {

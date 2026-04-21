@@ -265,8 +265,8 @@
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: var(--ks-white);
-                background-color: var(--ks-blue-500);
+                color: var(--ks-button-content-primary);
+                background-color: var(--ks-playground-bg-color);
             }
         }
     }

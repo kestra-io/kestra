@@ -172,7 +172,7 @@
             }
 
             &.active {
-                color: var(--ks-purple-300);
+                color: var(--ks-content-link-hover);
             }
         }
 

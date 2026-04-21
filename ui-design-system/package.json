@@ -30,7 +30,8 @@
         "storybook:build": "storybook build",
         "lint:fix": "eslint --fix",
         "lint:test": "eslint",
-        "types:test": "vue-tsc --noEmit"
+        "types:test": "vue-tsc --noEmit",
+        "generate:palette": "node scripts/generate-palette.mjs"
     },
     "peerDependencies": {
         "@vueuse/core": ">=11.0.0",

@@ -11,7 +11,6 @@ $prefix: 'kbs-';
 @import "bootstrap/scss/utilities";
 @import "bootstrap/scss/utilities/api";
 
-// Inline only the root CSS vars consumed by reboot.scss (light + dark)
 :root {
     --kbs-root-font-size: #{$font-size-root};
     --kbs-font-sans-serif: #{inspect($font-family-sans-serif)};
@@ -22,35 +21,20 @@ $prefix: 'kbs-';
     --kbs-body-line-height: #{$line-height-base};
     --kbs-body-text-align: #{$body-text-align};
 
-    --kbs-body-color: #{$body-color};
-    --kbs-body-bg: #{$body-bg};
+    --kbs-body-color: var(--ks-content-primary);
+    --kbs-body-bg: var(--ks-background-body);
 
-    --kbs-heading-color: #{$headings-color};
+    --kbs-heading-color: var(--ks-content-primary);
 
-    --kbs-link-color-rgb: #{to-rgb($link-color)};
-    --kbs-link-hover-color-rgb: #{to-rgb($link-hover-color)};
-
-    --kbs-code-color: #{$code-color};
+    --kbs-code-color: var(--ks-content-link);
     --kbs-highlight-color: #{$mark-color};
     --kbs-highlight-bg: #{$mark-bg};
 }
 
-html.dark {
-    color-scheme: dark;
-
-    --kbs-body-color: #{$body-color-dark};
-    --kbs-body-bg: #{$body-bg-dark};
-
-    --kbs-heading-color: #{$headings-color-dark};
-
-    --kbs-link-color-rgb: #{to-rgb($link-color-dark)};
-    --kbs-link-hover-color-rgb: #{to-rgb($link-hover-color-dark)};
-
-    --kbs-code-color: #{$code-color-dark};
-    --kbs-highlight-color: #{$mark-color-dark};
-    --kbs-highlight-bg: #{$mark-bg-dark};
+a {
+    color: var(--ks-content-link);
 }
 
 a:hover {
-    --kbs-link-color-rgb: var(--ks-content-link-hover);
+    color: var(--ks-content-link-hover);
 }

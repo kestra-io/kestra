@@ -611,7 +611,7 @@
                 }
 
                 > .th {
-                    background-color: var(--ks-gray-100-darken-5);
+                    background-color: var(--ks-tag-background-hover);
                 }
 
                 > :not(.th) {

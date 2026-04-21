@@ -88,13 +88,13 @@
 
         outline: 1px solid var(--ks-border-primary);
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-gray-100-lighten-2);
+        background-color: var(--ks-background-body);
         border-bottom-width: 0;
         font-size: var(--kel-font-size-small);
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
-                background: var(--ks-gray-100-darken-2);
+                background: var(--ks-tag-background);
 
                 html.dark & {
                     background: var(--ks-background-body);

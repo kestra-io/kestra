@@ -103,7 +103,7 @@
         }
 
         hr {
-            border-top-color: var(--ks-gray-700);
+            border-top-color: var(--ks-border-primary);
             margin-top: .5rem;
             margin-bottom: .5rem;
         }

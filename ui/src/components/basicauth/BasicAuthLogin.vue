@@ -297,7 +297,7 @@
         }
 
         .kel-button.kel-button--default {
-            background: var(--ks-gray-200);
+            background: var(--ks-tag-background-hover);
 
             html.dark & {
                 background: var(--ks-background-input);

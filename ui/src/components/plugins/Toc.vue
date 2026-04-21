@@ -227,7 +227,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--ks-gray-100);
+            background-color: var(--ks-tag-background);
         }
 
         .kel-collapse-item__header {

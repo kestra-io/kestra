@@ -40,11 +40,7 @@
         :deep(.kel-progress-bar__outer) {
             border-radius: var(--kel-border-radius-small);
 
-            background-color: var(--ks-gray-100);
-
-            html.dark & {
-                background-color: var(--ks-gray-900);
-            }
+            background-color: var(--ks-scrollbar-background);
         }
 
         :deep(.kel-progress-bar__inner) {

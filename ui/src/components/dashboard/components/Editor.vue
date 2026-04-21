@@ -276,10 +276,6 @@
         > * {
             flex: 1;
         }
-
-        html.dark & {
-            background-color: var(--ks-gray-100);
-        }
     }
 
     .kel-empty {
@@ -331,7 +327,7 @@
 
         &.enhance-readability {
             padding: calc(1rem * 1.5);
-            background-color: var(--ks-gray-100);
+            background-color: var(--ks-tag-background);
         }
     }
 

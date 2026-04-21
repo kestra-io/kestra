@@ -52,7 +52,7 @@
 
         .kel-input-number__increase:hover, .kel-input-number__decrease:hover {
             html.dark & {
-                color: var(--ks-gray-700);
+                color: var(--ks-content-secondary);
             }
         }
     }

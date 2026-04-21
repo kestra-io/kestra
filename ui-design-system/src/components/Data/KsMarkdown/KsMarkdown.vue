@@ -552,13 +552,12 @@
                     .ks-markdown__copy-btn-ok {
                         transition: opacity 0.15s ease;
                         margin-right: 0.25rem;
-                        color: var(--ks-green-500);
+                        color: var(--ks-content-success);
                         opacity: 0;
                     }
                 }
             }
 
-            // Plain pre — shown before Shiki loads or when Shiki is unavailable
             .ks-markdown__code-plain {
                 margin: 0;
                 padding: 1rem;

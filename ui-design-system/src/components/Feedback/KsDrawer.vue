@@ -155,15 +155,11 @@
         .kel-drawer__header {
             padding: 1rem;
             margin-bottom: 0;
-            background-color: var(--ks-gray-100);
+            background-color: var(--ks-background-panel);
             border-bottom: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             font-weight: bold;
             font-size: var(--kel-font-size-medium);
-
-            html.dark & {
-                background-color: var(--ks-gray-900);
-            }
         }
     }
 

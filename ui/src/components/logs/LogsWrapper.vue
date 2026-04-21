@@ -303,7 +303,7 @@
             border: 1px solid var(--ks-border-primary);
 
             html.dark & {
-                background-color: var(--ks-gray-900);
+                background-color: var(--ks-background-left-menu);
             }
 
             > * + * {

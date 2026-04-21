@@ -776,10 +776,6 @@
         border-radius: var(--kel-border-radius-round);
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
-
-        html.dark & {
-            background-color: var(--ks-gray-100);
-        }
     }
 
     .editor-absolute-container {
@@ -823,7 +819,7 @@
             }
 
             &.theme-light {
-                background-color: var(--ks-white);
+                background-color: var(--ks-background-card);
             }
         }
 

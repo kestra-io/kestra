@@ -853,7 +853,7 @@
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
         border: 1px solid var(--ks-border-primary);
-        background: var(--ks-gray-100);
+        background: var(--ks-tag-background);
 
         .kel-collapse-item__header {
             background: transparent;
@@ -862,7 +862,7 @@
         }
 
         .kel-collapse-item__content {
-            background: var(--ks-gray-100);
+            background: var(--ks-tag-background);
             border-bottom: 1px solid var(--ks-border-primary);
         }
 

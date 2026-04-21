@@ -772,13 +772,13 @@
 
 .hint {
     font-size: var(--kel-font-size-extra-small);
-    color: var(--ks-gray-700);
+    color: var(--ks-content-secondary);
 }
 
 .text-description {
     width: 100%;
     font-size: var(--kel-font-size-extra-small);
-    color: var(--ks-gray-700);
+    color: var(--ks-content-secondary);
 }
 
 :deep(.boolean-inputs) {
@@ -789,7 +789,7 @@
         &.is-active {
             .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
                 color: var(--ks-content-primary);
-                background-color: var(--ks-gray-100);
+                background-color: var(--ks-button-background-secondary-active);
                 box-shadow: 0 0 0 0 var(--ks-border-active);
             }
         }

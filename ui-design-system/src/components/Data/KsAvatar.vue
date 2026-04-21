@@ -35,7 +35,7 @@
     @use 'element-plus/theme-chalk/src/avatar';
 
     .kel-avatar {
-        --kel-avatar-bg-color: var(--ks-gray-400);
+        --kel-avatar-bg-color: var(--ks-border-primary);
         --kel-avatar-text-color: var(--ks-content-primary);
 
         &.kel-avatar--small {

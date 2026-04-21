@@ -110,8 +110,8 @@
     }
 
     .playground-run-task{
-        color: var(--ks-white);
-        background-color: var(--ks-blue-400);
+        color: var(--ks-button-content-primary);
+        background-color: var(--ks-playground-bg-color);
         height: 16px;
         width: 16px;
         font-size: 4px;
@@ -123,7 +123,7 @@
         border: none;
     }
 
-    .delete-element {        color: var(--ks-white);
+    .delete-element {        color: var(--ks-button-content-primary);
         border: none;
         background-color: transparent;
     }

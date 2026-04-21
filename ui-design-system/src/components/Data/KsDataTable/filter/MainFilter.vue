@@ -168,9 +168,6 @@
     :deep(svg) {
         color: var(--ks-content-tertiary) !important;
         font-size: var(--kel-font-size-medium);
-        position: absolute;
-        bottom: -0.24rem;
-        right: 0.125rem;
     }
 }
 

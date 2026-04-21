@@ -487,7 +487,7 @@
         }
 
         .attempt-number {
-            background: var(--ks-gray-400);
+            background: var(--ks-tag-background);
             padding: .375rem .75rem;
             white-space: nowrap;
         }

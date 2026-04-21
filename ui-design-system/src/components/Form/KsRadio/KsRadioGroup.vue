@@ -64,7 +64,7 @@
 
         .kel-radio-button__original-radio:checked + .kel-radio-button__inner {
             box-shadow: none;
-            background: var(--ks-gray-500);
+            background: var(--ks-content-paused);
         }
     }
 </style>

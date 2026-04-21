@@ -1026,7 +1026,7 @@
 
     pre {
         border: 1px solid var(--light);
-        background-color: var(--ks-gray-200);
+        background-color: var(--ks-scrollbar-content);
         padding: 10px;
         margin-top: 5px;
         margin-bottom: var(--kel-font-size-large);
@@ -1044,7 +1044,7 @@
             padding: 1rem;
 
             &.cursor {
-                background-color: var(--ks-gray-300);
+                background-color: var(--ks-tooltip-border);
             }
         }
     }

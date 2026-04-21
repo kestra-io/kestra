@@ -75,14 +75,14 @@
         h2 {
             margin: 1rem 0;
             line-height: var(--kel-font-size-large);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--kel-font-size-medium);
             font-weight: 600;
             text-align: center;
         }
 
         p {
             line-height: 16px;
-            font-size: 11px;
+            font-size: var(--kel-font-size-small);
             text-align: left;
             color: var(--ks-content-secondary);
         }

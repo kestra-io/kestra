@@ -106,7 +106,7 @@
 
              &.is-disabled {
                  html.dark & {
-                     background-color: var(--ks-gray-400);
+                     background-color: var(--ks-border-primary);
                  }
 
                  .kel-select__suffix {

@@ -219,8 +219,8 @@
 <style lang="scss" scoped>
 
     .playgroundMode :deep(.tabs-wrapper) {
-        #{--kel-color-primary}: var(--ks-blue-500);
-        color: var(--ks-white);
+        #{--kel-color-primary}: var(--ks-playground-bg-color);
+        color: var(--ks-button-content-primary);
         background-position: 10% 0;
     }
 

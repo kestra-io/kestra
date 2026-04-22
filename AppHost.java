@@ -12,6 +12,7 @@ void main(String[] args) throws Exception {
     var storageDir = storagePath.toAbsolutePath().toString().replace("\\", "/");
     var tempDir = tempPath.resolve("tmp").toAbsolutePath().toString().replace("\\", "/");
     var javaHome = System.getProperty("java.home");
+    var gradleJavaHome = "-Dorg.gradle.java.home=" + javaHome;
     var kestraExecutable = "./build/executable/kestra-2.0.0-SNAPSHOT";
     var kestraConfigDir = Path.of(builder.appHostDirectory(), "build", "executable", "confs");
 
@@ -64,6 +65,10 @@ void main(String[] args) throws Exception {
         .withDataBindMount(postgresDataPath.toString());
 
     var kestraDatabase = postgres.addDatabase("kestra-db", "kestra");
+    var kestraBuild = builder.addExecutable("kestra-build", "./gradlew", builder.appHostDirectory(), new String[] { "writeExecutableJar", "--no-daemon" })
+        .excludeFromManifest()
+        .withEnvironment("JAVA_HOME", javaHome)
+        .withEnvironment("GRADLE_OPTS", gradleJavaHome);
 
     var kestra = builder.addExecutable("kestra", "/bin/sh", builder.appHostDirectory(), new String[] { kestraExecutable, "server", "standalone", "--worker-thread", "1", "--no-indexer", "--no-tutorials" })
         .withOtlpExporter()
@@ -77,6 +82,7 @@ void main(String[] args) throws Exception {
         .withHttpEndpoint(new WithHttpEndpointOptions().name("management").env("KESTRA_MANAGEMENT_PORT"))
         .withExternalHttpEndpoints()
         .withHttpHealthCheck(new WithHttpHealthCheckOptions().path("/health").endpointName("management"))
+        .waitForCompletion(kestraBuild)
         .waitFor(kestraDatabase);
 
     builder.build().run();

@@ -150,7 +150,6 @@
         background: var(--ks-background-card);
 
         .title-section {
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -158,22 +157,13 @@
             flex: 1 0 0;
             min-width: 0;
             overflow: hidden;
-
-            &::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                right: 0;
-                width: 40px;
-                height: 100%;
-                background: linear-gradient(to left, var(--ks-background-card), transparent);
-                pointer-events: none;
-            }
+            mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
         }
 
         .description {
             font-size: var(--font-size-sm);
             color: var(--ks-content-secondary);
+            white-space: nowrap;
         }
 
         .icon {

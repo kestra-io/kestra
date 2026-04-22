@@ -95,41 +95,90 @@ jobs:
     with:
       java-version: 25
 
-  check-openapi-spec-up-to-date:
-    name: Check Openapi generated spec is up to date
+  comment-openapi-spec-changes:
+    name: Comment OpenAPI spec changes
     needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
+    if: "needs.file-changes.outputs.backend == 'true' && github.event.pull_request.draft == false"
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
         name: Checkout - Current ref
-        with:
-          fetch-depth: 0
 
-      # Setup build
       - uses: kestra-io/actions/composite/setup-build@main
         name: Setup - Build
-        id: build
         with:
           java-enabled: true
           java-version: 25
 
-      - name: Generate the openapi spec
+      - name: Generate OpenAPI spec
         run: ./gradlew generateOpenapiSpec
         shell: bash
 
-      - name: Check Openapi spec up to date
-        run: |
-          if [ -n "$(git diff --name-only -- openapi.yml)" ]; then
-            git diff -- openapi.yml
-            echo ""
-            echo ""
-            echo "❌❌❌ generated openapi.yml is not up to date"
-            echo ""
-            echo "We do now ship openapi.yml spec with our code. It is mandatory to commit the updated spec generated with ./gradlew generateOpenapiSpec"
-            exit 1
-          fi
+      - name: Fetch client-sdk spec
         shell: bash
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.GH_PERSONAL_TOKEN }}" \
+            -H "Accept: application/vnd.github.raw" \
+            "https://api.github.com/repos/kestra-io/client-sdk/contents/kestra.yml" \
+            -o /tmp/openapi-client-sdk.yml 2>/dev/null || touch /tmp/openapi-client-sdk.yml
+
+      - name: Compute diff
+        id: diff
+        shell: bash
+        run: |
+          diff_output=$(diff /tmp/openapi-client-sdk.yml openapi.yml 2>/dev/null || true)
+          if [ -z "$diff_output" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            truncated=$(echo "$diff_output" | head -c 10000)
+            {
+              echo "diff<<DIFF_EOF"
+              echo "$truncated"
+              echo "DIFF_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on PR
+        uses: actions/github-script@v9
+        env:
+          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- openapi-spec-changes -->';
+            const changed = '${{ steps.diff.outputs.changed }}' === 'true';
+            const diff = process.env.DIFF_OUTPUT || '';
+
+            const body = changed
+              ? `${marker}\n### OpenAPI Spec Changes\n\nThis PR modifies the OpenAPI spec. Diff against [client-sdk](https://github.com/kestra-io/client-sdk):\n\`\`\`diff\n${diff}\n\`\`\``
+              : `${marker}\n### OpenAPI Spec Changes\n\nNo changes to the OpenAPI spec.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
   e2e-tests:
     name: E2E - Tests

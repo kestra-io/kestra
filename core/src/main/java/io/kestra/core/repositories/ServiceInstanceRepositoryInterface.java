@@ -111,7 +111,8 @@ public interface ServiceInstanceRepositoryInterface {
         final Instant to);
 
     /**
-     * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}, then process them using the consumer.
+     * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}, {@link Service.ServiceState#CREATED} or {@link Service.ServiceState#INACTIVE},
+     * then process them using the consumer.
      */
     void processAllNonRunningInstances(BiConsumer<TransactionContext, ServiceInstance> consumer);
 

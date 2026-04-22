@@ -139,7 +139,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             var query = dslContext
                 .select(VALUE_FIELD)
                 .from(table())
-                .where(STATE.notIn(Service.ServiceState.CREATED.name(), Service.ServiceState.RUNNING.name()));
+                .where(STATE.notIn(Service.ServiceState.CREATED.name(), Service.ServiceState.RUNNING.name(), Service.ServiceState.INACTIVE.name()));
 
             var txContext = new JdbcTransactionContext(dslContext);
             this.jdbcRepository.fetch(query.forUpdate().skipLocked()).forEach(instance -> consumer.accept(txContext, instance));

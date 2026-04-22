@@ -18,6 +18,7 @@ import org.jooq.impl.DSL;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JdbcQueueItem;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcQueueConfiguration;
@@ -95,7 +96,7 @@ public class JdbcQueueClient {
                 fields.put(field("type"), queueNameToType(queue));
                 fields.put(field("routing_key"), (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
                 fields.put(field("key"), key);
-                fields.put(field("value"), JSONB.valueOf(value));
+                fields.put(field("value"), JdbcJsonbUtils.valueOf(value));
                 fields.put(field("created"), Instant.now());
 
                 var insert = context
@@ -154,7 +155,7 @@ public class JdbcQueueClient {
                         queueNameToType(entry.queue),
                         (entry.routingKey == null || entry.routingKey.isEmpty()) ? null : entry.routingKey,
                         entry.key,
-                        JSONB.valueOf(entry.value),
+                        JdbcJsonbUtils.valueOf(entry.value),
                         now
                     );
                 }

@@ -1,13 +1,13 @@
 package io.kestra.core.migration;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,9 +22,22 @@ class MigrationRunnerTest {
     @BeforeEach
     void setUp() {
         noOpLock = new MigrationLock() {
-            @Override public void acquire() {}
-            @Override public void release() {}
-            @Override public boolean tryAcquire() { return true; }
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
     }
 
@@ -91,15 +104,19 @@ class MigrationRunnerTest {
     void runAlways_throwsOnChecksumMismatch() throws Exception {
         // Given: a script runs once with checksum "original"
         InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
-        MigrationRunner runner1 = new MigrationRunner(noOpLock, historyStore, List.of(
-            scriptWithChecksum("2.0", "original-checksum")
-        ));
+        MigrationRunner runner1 = new MigrationRunner(
+            noOpLock, historyStore, List.of(
+                scriptWithChecksum("2.0", "original-checksum")
+            )
+        );
         runner1.runAlways();
 
         // Now the same scriptId has a different checksum
-        MigrationRunner runner2 = new MigrationRunner(noOpLock, historyStore, List.of(
-            scriptWithChecksum("2.0", "tampered-checksum")
-        ));
+        MigrationRunner runner2 = new MigrationRunner(
+            noOpLock, historyStore, List.of(
+                scriptWithChecksum("2.0", "tampered-checksum")
+            )
+        );
 
         // When / Then
         assertThatThrownBy(runner2::runAlways)
@@ -112,12 +129,27 @@ class MigrationRunnerTest {
         // Given
         AtomicInteger releaseCount = new AtomicInteger(0);
         MigrationLock trackingLock = new MigrationLock() {
-            @Override public void acquire() {}
-            @Override public void release() { releaseCount.incrementAndGet(); }
-            @Override public boolean tryAcquire() { return true; }
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+                releaseCount.incrementAndGet();
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
 
-        MigrationScript failingScript = simpleScript("2.0", () -> {
+        MigrationScript failingScript = simpleScript("2.0", () ->
+        {
             throw new RuntimeException("migration failed");
         });
         MigrationRunner runner = new MigrationRunner(trackingLock, new InMemoryHistoryStore(), List.of(failingScript));
@@ -131,19 +163,33 @@ class MigrationRunnerTest {
     void pendingScripts_returnsOnlyUnappliedScripts() throws Exception {
         // Given: run "2.0" and "2.1" first
         InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
-        MigrationRunner runner = new MigrationRunner(noOpLock, historyStore, List.of(
-            simpleScript("2.0", () -> {}),
-            simpleScript("2.1", () -> {})
-        ));
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, historyStore, List.of(
+                simpleScript("2.0", () ->
+                {
+                }),
+                simpleScript("2.1", () ->
+                {
+                })
+            )
+        );
         runner.runAlways(); // applies both
 
         // Add a new script not yet applied
-        MigrationScript newScript = simpleScript("2.2", () -> {});
-        MigrationRunner runner2 = new MigrationRunner(noOpLock, historyStore, List.of(
-            simpleScript("2.0", () -> {}),
-            simpleScript("2.1", () -> {}),
-            newScript
-        ));
+        MigrationScript newScript = simpleScript("2.2", () ->
+        {
+        });
+        MigrationRunner runner2 = new MigrationRunner(
+            noOpLock, historyStore, List.of(
+                simpleScript("2.0", () ->
+                {
+                }),
+                simpleScript("2.1", () ->
+                {
+                }),
+                newScript
+            )
+        );
 
         // When
         List<MigrationScript> pending = runner2.pendingScripts();
@@ -156,8 +202,10 @@ class MigrationRunnerTest {
     void run_doesNotReExecuteAfterRunAlways() throws Exception {
         // Given: runAlways() already ran (simulating @PostConstruct)
         AtomicInteger callCount = new AtomicInteger(0);
-        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", callCount::incrementAndGet)));
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", callCount::incrementAndGet))
+        );
         runner.runAlways();
 
         // When: run() is called (simulating maybeRunMigrations())
@@ -172,13 +220,33 @@ class MigrationRunnerTest {
         // Given
         List<String> lockEvents = new ArrayList<>();
         MigrationLock trackingLock = new MigrationLock() {
-            @Override public void acquire() { lockEvents.add("acquire"); }
-            @Override public void release() { lockEvents.add("release"); }
-            @Override public boolean tryAcquire() { lockEvents.add("tryAcquire"); return true; }
+            @Override
+            public void acquire() {
+                lockEvents.add("acquire");
+            }
+
+            @Override
+            public void release() {
+                lockEvents.add("release");
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                lockEvents.add("tryAcquire");
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
-        MigrationRunner runner = new MigrationRunner(trackingLock, new InMemoryHistoryStore(), List.of(
-            simpleScript("2.0", () -> {})
-        ));
+        MigrationRunner runner = new MigrationRunner(
+            trackingLock, new InMemoryHistoryStore(), List.of(
+                simpleScript("2.0", () ->
+                {
+                })
+            )
+        );
 
         // When
         runner.runAlways();
@@ -191,8 +259,10 @@ class MigrationRunnerTest {
     void initOnStartup_skipsWhenSkipAutoRunIsTrue() {
         // Given
         AtomicInteger callCount = new AtomicInteger(0);
-        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", callCount::incrementAndGet)));
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", callCount::incrementAndGet))
+        );
 
         try {
             MigrationRunner.setSkipAutoRun(true);
@@ -211,8 +281,10 @@ class MigrationRunnerTest {
     void runOrFailIfLocked_succeedsWhenLockFree() throws Exception {
         // Given
         AtomicInteger callCount = new AtomicInteger(0);
-        MigrationRunner runner = new MigrationRunner(noOpLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", callCount::incrementAndGet)));
+        MigrationRunner runner = new MigrationRunner(
+            noOpLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", callCount::incrementAndGet))
+        );
 
         // When
         runner.runOrFailIfLocked();
@@ -225,12 +297,29 @@ class MigrationRunnerTest {
     void runOrFailIfLocked_throwsWhenLocked() {
         // Given
         MigrationLock lockedLock = new MigrationLock() {
-            @Override public void acquire() {}
-            @Override public void release() {}
-            @Override public boolean tryAcquire() { return false; }
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return false;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
-        MigrationRunner runner = new MigrationRunner(lockedLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", () -> {})));
+        MigrationRunner runner = new MigrationRunner(
+            lockedLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", () ->
+            {
+            }))
+        );
 
         // When / Then
         assertThatThrownBy(runner::runOrFailIfLocked)
@@ -242,12 +331,31 @@ class MigrationRunnerTest {
         // Given
         AtomicInteger acquireCount = new AtomicInteger(0);
         MigrationLock countingLock = new MigrationLock() {
-            @Override public void acquire() { acquireCount.incrementAndGet(); }
-            @Override public void release() {}
-            @Override public boolean tryAcquire() { acquireCount.incrementAndGet(); return true; }
+            @Override
+            public void acquire() {
+                acquireCount.incrementAndGet();
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                acquireCount.incrementAndGet();
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
-        MigrationRunner runner = new MigrationRunner(countingLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", () -> {})));
+        MigrationRunner runner = new MigrationRunner(
+            countingLock, new InMemoryHistoryStore(),
+            List.of(simpleScript("2.0", () ->
+            {
+            }))
+        );
         runner.runAlways();
         int acquiresAfterRunAlways = acquireCount.get();
 
@@ -263,11 +371,26 @@ class MigrationRunnerTest {
         // Given
         AtomicInteger releaseCount = new AtomicInteger(0);
         MigrationLock trackingLock = new MigrationLock() {
-            @Override public void acquire() {}
-            @Override public void release() { releaseCount.incrementAndGet(); }
-            @Override public boolean tryAcquire() { return true; }
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+                releaseCount.incrementAndGet();
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
-        MigrationScript failingScript = simpleScript("2.0", () -> {
+        MigrationScript failingScript = simpleScript("2.0", () ->
+        {
             throw new RuntimeException("migration failed");
         });
         MigrationRunner runner = new MigrationRunner(trackingLock, new InMemoryHistoryStore(), List.of(failingScript));
@@ -282,9 +405,24 @@ class MigrationRunnerTest {
         // Given
         AtomicInteger acquireCount = new AtomicInteger(0);
         MigrationLock countingLock = new MigrationLock() {
-            @Override public void acquire() { acquireCount.incrementAndGet(); }
-            @Override public void release() {}
-            @Override public boolean tryAcquire() { acquireCount.incrementAndGet(); return true; }
+            @Override
+            public void acquire() {
+                acquireCount.incrementAndGet();
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                acquireCount.incrementAndGet();
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+            }
         };
         MigrationRunner runner = new MigrationRunner(countingLock, new InMemoryHistoryStore(), List.of());
 
@@ -295,23 +433,120 @@ class MigrationRunnerTest {
         assertThat(acquireCount.get()).isEqualTo(0);
     }
 
+    @Test
+    void forceRelease_canBeCalledWithoutPriorAcquire() throws Exception {
+        // Given: a lock that tracks forceRelease calls — simulates the unlock CLI scenario
+        // where forceRelease() is called on a fresh process that never acquired the lock
+        AtomicInteger forceReleaseCount = new AtomicInteger(0);
+        MigrationLock trackingLock = new MigrationLock() {
+            @Override
+            public void acquire() {
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+                forceReleaseCount.incrementAndGet();
+            }
+        };
+
+        // When: forceRelease is called directly (no prior acquire)
+        trackingLock.forceRelease();
+
+        // Then
+        assertThat(forceReleaseCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void forceRelease_releasesAcquiredLock() throws Exception {
+        // Given: a lock that was previously acquired
+        boolean[] locked = { false };
+        MigrationLock statefulLock = new MigrationLock() {
+            @Override
+            public void acquire() {
+                locked[0] = true;
+            }
+
+            @Override
+            public void release() {
+                locked[0] = false;
+            }
+
+            @Override
+            public boolean tryAcquire() {
+                locked[0] = true;
+                return true;
+            }
+
+            @Override
+            public void forceRelease() {
+                locked[0] = false;
+            }
+        };
+        statefulLock.acquire();
+        assertThat(locked[0]).isTrue();
+
+        // When
+        statefulLock.forceRelease();
+
+        // Then
+        assertThat(locked[0]).isFalse();
+    }
+
     // --- Helpers ---
 
     private MigrationScript simpleScript(final String scriptId, final Runnable migrationLogic) {
         return new MigrationScript() {
-            @Override public String scriptId() { return scriptId; }
-            @Override public String description() { return "Migration " + scriptId; }
-            @Override public String checksum() { return "checksum-" + scriptId; }
-            @Override public void migrate() { migrationLogic.run(); }
+            @Override
+            public String scriptId() {
+                return scriptId;
+            }
+
+            @Override
+            public String description() {
+                return "Migration " + scriptId;
+            }
+
+            @Override
+            public String checksum() {
+                return "checksum-" + scriptId;
+            }
+
+            @Override
+            public void migrate() {
+                migrationLogic.run();
+            }
         };
     }
 
     private MigrationScript scriptWithChecksum(final String scriptId, final String checksum) {
         return new MigrationScript() {
-            @Override public String scriptId() { return scriptId; }
-            @Override public String description() { return "Migration " + scriptId; }
-            @Override public String checksum() { return checksum; }
-            @Override public void migrate() {}
+            @Override
+            public String scriptId() {
+                return scriptId;
+            }
+
+            @Override
+            public String description() {
+                return "Migration " + scriptId;
+            }
+
+            @Override
+            public String checksum() {
+                return checksum;
+            }
+
+            @Override
+            public void migrate() {
+            }
         };
     }
 
@@ -327,7 +562,8 @@ class MigrationRunnerTest {
         private final Map<String, String> applied = new HashMap<>();
 
         @Override
-        public void bootstrapIfNeeded() {}
+        public void bootstrapIfNeeded() {
+        }
 
         @Override
         public boolean hasAnyApplied() {

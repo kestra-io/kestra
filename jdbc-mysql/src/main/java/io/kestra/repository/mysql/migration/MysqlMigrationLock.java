@@ -1,7 +1,16 @@
 package io.kestra.repository.mysql.migration;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Duration;
+
+import javax.sql.DataSource;
+
 import io.kestra.core.migration.MigrationLock;
 import io.kestra.repository.mysql.MysqlRepositoryEnabled;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jdbc.DataSourceResolver;
@@ -9,17 +18,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.Duration;
-
 /**
  * MySQL {@link MigrationLock} implementation using {@code GET_LOCK} / {@code RELEASE_LOCK}.
  *
- * <p>The lock is session-scoped and persists across transactions, making it safe for
+ * <p>
+ * The lock is session-scoped and persists across transactions, making it safe for
  * multi-node deployments. The acquire timeout is configurable via
  * {@code kestra.migration.lock-acquire-timeout} (default 1 hour).
  */
@@ -33,16 +36,18 @@ public class MysqlMigrationLock implements MigrationLock {
     private final DataSource dataSource;
     private final Duration lockTimeout;
 
-    /** Dedicated connection held open for the duration of the lock. {@code volatile} because
+    /**
+     * Dedicated connection held open for the duration of the lock. {@code volatile} because
      * {@link #acquire()} and {@link #release()} can be called from different JVM instances or
      * threads in a multi-node deployment. Without visibility, {@link #release()} could observe
-     * {@code null} and silently skip the GET_LOCK release, leaving other nodes blocked. */
+     * {@code null} and silently skip the GET_LOCK release, leaving other nodes blocked.
+     */
     private volatile Connection lockConnection;
 
     @Inject
     public MysqlMigrationLock(final DataSource dataSource,
-                               @Nullable final DataSourceResolver dataSourceResolver,
-                               @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
+        @Nullable final DataSourceResolver dataSourceResolver,
+        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
         this.lockTimeout = lockTimeout;
     }
@@ -97,6 +102,14 @@ public class MysqlMigrationLock implements MigrationLock {
             }
             throw e;
         }
+    }
+
+    @Override
+    public void forceRelease() {
+        log.warn(
+            "MySQL named locks are session-scoped and cannot be released from another process. "
+                + "The lock will be automatically released when the holding process terminates or its connection closes."
+        );
     }
 
     @Override

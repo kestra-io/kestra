@@ -1,25 +1,28 @@
 package io.kestra.repository.postgres.migration;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import javax.sql.DataSource;
+
 import io.kestra.core.migration.MigrationLock;
 import io.kestra.repository.postgres.PostgresRepositoryEnabled;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jdbc.DataSourceResolver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 /**
  * PostgreSQL {@link MigrationLock} implementation using {@code pg_advisory_lock} /
  * {@code pg_advisory_unlock}.
  *
- * <p>Advisory locks are session-scoped in PostgreSQL: they persist across transactions and
- * are automatically released when the connection is closed.  This makes them safe for
+ * <p>
+ * Advisory locks are session-scoped in PostgreSQL: they persist across transactions and
+ * are automatically released when the connection is closed. This makes them safe for
  * multi-node deployments where multiple instances may start concurrently.
  */
 @Slf4j
@@ -32,15 +35,17 @@ public class PostgresMigrationLock implements MigrationLock {
 
     private final DataSource dataSource;
 
-    /** Dedicated connection held open for the duration of the lock. {@code volatile} because
+    /**
+     * Dedicated connection held open for the duration of the lock. {@code volatile} because
      * {@link #acquire()} and {@link #release()} can be called from different JVM instances or
      * threads in a multi-node deployment. Without visibility, {@link #release()} could observe
-     * {@code null} and silently skip the advisory-lock release, leaving other nodes blocked. */
+     * {@code null} and silently skip the advisory-lock release, leaving other nodes blocked.
+     */
     private volatile Connection lockConnection;
 
     @Inject
     public PostgresMigrationLock(final DataSource dataSource,
-                                 @Nullable final DataSourceResolver dataSourceResolver) {
+        @Nullable final DataSourceResolver dataSourceResolver) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
     }
 
@@ -62,8 +67,10 @@ public class PostgresMigrationLock implements MigrationLock {
     public boolean tryAcquire() throws SQLException {
         log.debug("Trying to acquire PostgreSQL advisory migration lock (key={}, non-blocking)", LOCK_KEY);
         lockConnection = dataSource.getConnection();
-        try (Statement stmt = lockConnection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT pg_try_advisory_lock(" + LOCK_KEY + ")")) {
+        try (
+            Statement stmt = lockConnection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT pg_try_advisory_lock(" + LOCK_KEY + ")")
+        ) {
             if (rs.next() && rs.getBoolean(1)) {
                 log.debug("PostgreSQL advisory migration lock acquired (key={})", LOCK_KEY);
                 return true;
@@ -77,6 +84,14 @@ public class PostgresMigrationLock implements MigrationLock {
             lockConnection = null;
             throw e;
         }
+    }
+
+    @Override
+    public void forceRelease() {
+        log.warn(
+            "PostgreSQL advisory locks are session-scoped and cannot be released from another process. "
+                + "The lock will be automatically released when the holding process terminates or its connection closes."
+        );
     }
 
     @Override

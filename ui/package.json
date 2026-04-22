@@ -20,7 +20,7 @@
         "lint": "eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
+        "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
         "generate:openapi": "openapi-ts",
         "postinstall": "patch-package && openapi-ts"
     },

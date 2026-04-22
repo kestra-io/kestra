@@ -65,14 +65,22 @@ public class PluginDefaultService {
     };
 
     @Nullable
-    @Inject
     protected PluginGlobalDefaultConfiguration pluginGlobalDefault;
 
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
+    private final RunContextLoggerFactory runContextLoggerFactory;
+
+    protected final PluginRegistry pluginRegistry;
 
     @Inject
-    protected PluginRegistry pluginRegistry;
+    public PluginDefaultService(
+        @Nullable PluginGlobalDefaultConfiguration pluginGlobalDefault,
+        RunContextLoggerFactory runContextLoggerFactory,
+        PluginRegistry pluginRegistry
+    ) {
+        this.pluginGlobalDefault = pluginGlobalDefault;
+        this.runContextLoggerFactory = runContextLoggerFactory;
+        this.pluginRegistry = pluginRegistry;
+    }
 
     @PostConstruct
     void validateGlobalPluginDefault() {

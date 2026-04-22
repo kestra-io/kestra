@@ -78,7 +78,7 @@
     const bookmarksStore = useBookmarksStore();
 
     const breadcrumbItems = computed(() => [
-        {label: t("dashboards.labels.singular"), link: {name: "home"}},
+        {label: t("home"), link: {name: "home"}},
         ...(props.breadcrumb ?? []),
     ]);
 

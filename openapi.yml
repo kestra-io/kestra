@@ -306,7 +306,6 @@ paths:
       - name: all
         in: query
         description: Include all the properties
-        required: true
         explode: false
         schema:
           type: boolean
@@ -360,7 +359,6 @@ paths:
       - name: all
         in: query
         description: Include all the properties
-        required: true
         explode: false
         schema:
           type: boolean
@@ -427,7 +425,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -437,7 +434,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -679,7 +675,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -689,7 +684,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -1031,7 +1025,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -1041,7 +1034,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -2775,7 +2767,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -2785,7 +2776,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -2952,7 +2942,6 @@ paths:
       - name: wait
         in: query
         description: If the server will wait the end of the execution
-        required: true
         explode: false
         schema:
           type: boolean
@@ -3677,7 +3666,6 @@ paths:
       - name: encoding
         in: query
         description: The file encoding as Java charset name. Defaults to UTF-8
-        required: true
         explode: false
         schema:
           type: string
@@ -3765,7 +3753,6 @@ paths:
         in: query
         description: "If true, list only destination dependencies, otherwise list\
           \ also source dependencies"
-        required: true
         explode: false
         schema:
           type: boolean
@@ -3773,7 +3760,6 @@ paths:
       - name: expandAll
         in: query
         description: "If true, expand all dependencies recursively"
-        required: true
         explode: false
         schema:
           type: boolean
@@ -3869,7 +3855,6 @@ paths:
         in: query
         description: Specifies whether killing the execution also kill all subflow
           executions.
-        required: true
         explode: false
         schema:
           type: boolean
@@ -4284,7 +4269,6 @@ paths:
       - name: wait
         in: query
         description: If the server will wait the end of the execution
-        required: true
         explode: false
         schema:
           type: boolean
@@ -4406,538 +4390,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ExecutionController.ApiValidateExecutionInputsResponse"
-  /api/v1/{tenant}/flows:
-    post:
-      tags:
-      - Flows
-      summary: Create a flow from yaml source
-      operationId: createFlow
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: The flow source code
-        content:
-          application/x-yaml:
-            schema:
-              type: string
-        required: true
-      responses:
-        "200":
-          description: createFlow 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowWithSource"
-  /api/v1/{tenant}/flows/bulk:
-    post:
-      tags:
-      - Flows
-      summary: Update from multiples yaml sources
-      description: |-
-        All flow will be created / updated for this namespace.
-        Flow that already created but not in `flows` will be deleted if the query delete is `true`
-      operationId: bulkUpdateFlows
-      parameters:
-      - name: delete
-        in: query
-        description: If missing flow should be deleted
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: true
-      - name: namespace
-        in: query
-        description: The namespace where to update flows
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: allowNamespaceChild
-        in: query
-        description: If namespace child should are allowed to be updated
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of flows source code split with "---"
-        content:
-          application/x-yaml:
-            schema:
-              type: string
-              nullable: true
-      responses:
-        "200":
-          description: bulkUpdateFlows 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FlowInterface"
-  /api/v1/{tenant}/flows/delete/by-ids:
-    delete:
-      tags:
-      - Flows
-      summary: Delete flows by their IDs.
-      operationId: deleteFlowsByIds
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of tuple flow ID and namespace as flow identifiers
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/IdWithNamespace"
-        required: true
-      responses:
-        "200":
-          description: deleteFlowsByIds 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/delete/by-query:
-    delete:
-      tags:
-      - Flows
-      summary: Delete flows returned by the query parameters.
-      operationId: deleteFlowsByQuery
-      parameters:
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: q
-        in: query
-        description: A string filter
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: scope
-        in: query
-        description: The scope of the flows to include
-        deprecated: true
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            $ref: "#/components/schemas/FlowScope"
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: labels
-        in: query
-        description: A labels filter as a list of 'key:value'
-        deprecated: true
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: deleteFlowsByQuery 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/deprecated:
-    get:
-      tags:
-      - Flows
-      summary: List flows containing deprecated tasks
-      operationId: listDeprecated
-      parameters:
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: listDeprecated 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FlowController.FlowWithDeprecatedTasks"
-  /api/v1/{tenant}/flows/disable/by-ids:
-    post:
-      tags:
-      - Flows
-      summary: Disable flows by their IDs.
-      operationId: disableFlowsByIds
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of tuple flow ID and namespace as flow identifiers
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/IdWithNamespace"
-        required: true
-      responses:
-        "200":
-          description: disableFlowsByIds 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/disable/by-query:
-    post:
-      tags:
-      - Flows
-      summary: Disable flows returned by the query parameters.
-      operationId: disableFlowsByQuery
-      parameters:
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: q
-        in: query
-        description: A string filter
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: scope
-        in: query
-        description: The scope of the flows to include
-        deprecated: true
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            $ref: "#/components/schemas/FlowScope"
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: labels
-        in: query
-        description: A labels filter as a list of 'key:value'
-        deprecated: true
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: disableFlowsByQuery 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/distinct-namespaces:
-    get:
-      tags:
-      - Flows
-      summary: List all distinct namespaces
-      operationId: listDistinctNamespaces
-      parameters:
-      - name: q
-        in: query
-        description: A string filter
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: listDistinctNamespaces 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-  /api/v1/{tenant}/flows/enable/by-ids:
-    post:
-      tags:
-      - Flows
-      summary: Enable flows by their IDs.
-      operationId: enableFlowsByIds
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of tuple flow ID and namespace as flow identifiers
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/IdWithNamespace"
-        required: true
-      responses:
-        "200":
-          description: enableFlowsByIds 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/enable/by-query:
-    post:
-      tags:
-      - Flows
-      summary: Enable flows returned by the query parameters.
-      operationId: enableFlowsByQuery
-      parameters:
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: q
-        in: query
-        description: A string filter
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: scope
-        in: query
-        description: The scope of the flows to include
-        deprecated: true
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            $ref: "#/components/schemas/FlowScope"
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: labels
-        in: query
-        description: A labels filter as a list of 'key:value'
-        deprecated: true
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: enableFlowsByQuery 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkResponse"
-  /api/v1/{tenant}/flows/export/by-ids:
-    post:
-      tags:
-      - Flows
-      summary: Export flows as a ZIP archive of yaml sources.
-      operationId: exportFlowsByIds
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of tuple flow ID and namespace as flow identifiers
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/IdWithNamespace"
-        required: true
-      responses:
-        "200":
-          description: exportFlowsByIds 200 response
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: byte
-  /api/v1/{tenant}/flows/export/by-query:
-    get:
-      tags:
-      - Flows
-      summary: Export flows as a ZIP archive of yaml sources.
-      operationId: exportFlowsByQuery
-      parameters:
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: q
-        in: query
-        description: A string filter
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: scope
-        in: query
-        description: The scope of the flows to include
-        deprecated: true
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            $ref: "#/components/schemas/FlowScope"
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: labels
-        in: query
-        description: A labels filter as a list of 'key:value'
-        deprecated: true
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: exportFlowsByQuery 200 response
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: byte
-  /api/v1/{tenant}/flows/export/by-query/csv:
-    get:
-      tags:
-      - Flows
-      summary: Export all flows as a streamed CSV file
-      operationId: exportFlows
-      parameters:
-      - name: filters
-        in: query
-        description: A list of filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: exportFlows 200 response
-          content:
-            text/csv:
-              schema:
-                type: array
-                items:
-                  type: object
   /api/v1/{tenant}/flows/graph:
     post:
       tags:
@@ -4973,547 +4425,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FlowGraph"
-  /api/v1/{tenant}/flows/import:
-    post:
-      tags:
-      - Flows
-      summary: |2
-            Import flows as a ZIP archive of yaml sources or a multi-objects YAML file.
-            When sending a Yaml that contains one or more flows, a list of index is returned.
-            When sending a ZIP archive, a list of files that couldn't be imported is returned.
-      operationId: importFlows
-      parameters:
-      - name: failOnError
-        in: query
-        description: If should fail on invalid flows
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                fileUpload:
-                  type: string
-                  description: "The file to import, can be a ZIP archive or a multi-objects\
-                    \ YAML file"
-                  format: binary
-            encoding:
-              fileUpload:
-                contentType: application/octet-stream
-                explode: false
-        required: true
-      responses:
-        "200":
-          description: On success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-  /api/v1/{tenant}/flows/search:
-    get:
-      tags:
-      - Flows
-      summary: Search for flows
-      operationId: searchFlows
-      parameters:
-      - name: page
-        in: query
-        description: The current page
-        required: true
-        explode: false
-        schema:
-          minimum: 1
-          type: integer
-          format: int32
-          default: 1
-      - name: size
-        in: query
-        description: The current page size
-        required: true
-        explode: false
-        schema:
-          minimum: 1
-          type: integer
-          format: int32
-          default: 10
-      - name: sort
-        in: query
-        description: The sort of current page
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: q
-        in: query
-        description: A string filter
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: scope
-        in: query
-        description: The scope of the flows to include
-        deprecated: true
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            $ref: "#/components/schemas/FlowScope"
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        deprecated: true
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: labels
-        in: query
-        description: A labels filter as a list of 'key:value'
-        deprecated: true
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: searchFlows 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PagedResults_Flow_"
-  /api/v1/{tenant}/flows/source:
-    get:
-      tags:
-      - Flows
-      summary: Search for flows source code
-      operationId: searchFlowsBySourceCode
-      parameters:
-      - name: page
-        in: query
-        description: The current page
-        required: true
-        explode: false
-        schema:
-          minimum: 1
-          type: integer
-          format: int32
-          default: 1
-      - name: size
-        in: query
-        description: The current page size
-        required: true
-        explode: false
-        schema:
-          minimum: 1
-          type: integer
-          format: int32
-          default: 10
-      - name: sort
-        in: query
-        description: The sort of current page
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: q
-        in: query
-        description: A string filter
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: namespace
-        in: query
-        description: A namespace filter prefix
-        explode: false
-        schema:
-          type: string
-          nullable: true
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: searchFlowsBySourceCode 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PagedResults_SearchResult_Flow__"
-  /api/v1/{tenant}/flows/validate:
-    post:
-      tags:
-      - Flows
-      summary: Validate a list of flows
-      operationId: validateFlows
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: Flows as YAML string or multipart files
-        content:
-          application/x-yaml:
-            schema:
-              type: string
-          multipart/form-data:
-            schema:
-              type: object
-        required: true
-      responses:
-        "200":
-          description: validateFlows 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ValidateConstraintViolation"
-  /api/v1/{tenant}/flows/validate/task:
-    post:
-      tags:
-      - Flows
-      summary: Validate a task
-      operationId: validateTask
-      parameters:
-      - name: section
-        in: query
-        description: The type of task
-        required: true
-        explode: false
-        schema:
-          $ref: "#/components/schemas/FlowController.TaskValidationType"
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A task definition that can be from tasks or triggers
-        content:
-          application/x-yaml:
-            schema:
-              type: object
-          application/json:
-            schema:
-              type: object
-            example: null
-        required: true
-      responses:
-        "200":
-          description: validateTask 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidateConstraintViolation"
-  /api/v1/{tenant}/flows/validate/trigger:
-    post:
-      tags:
-      - Flows
-      summary: Validate trigger
-      operationId: validateTrigger
-      parameters:
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: The trigger
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        "200":
-          description: validateTrigger 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidateConstraintViolation"
-  /api/v1/{tenant}/flows/{namespace}:
-    get:
-      tags:
-      - Flows
-      summary: Retrieve all flows from a given namespace
-      operationId: listFlowsByNamespace
-      parameters:
-      - name: namespace
-        in: path
-        description: Namespace to filter flows
-        required: true
-        schema:
-          type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: listFlowsByNamespace 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Flow"
-    post:
-      tags:
-      - Flows
-      summary: Update a complete namespace from yaml source
-      description: |-
-        All flows will be created / updated for this namespace.
-        Existing flows missing from `flows` will be deleted if the query delete is `true`
-      operationId: updateFlowsInNamespace
-      parameters:
-      - name: delete
-        in: query
-        description: If missing flow should be deleted
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: true
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: override
-        in: query
-        description: If namespace of all provided flows should be overridden
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: A list of flow files
-        content:
-          application/x-yaml:
-            schema:
-              type: string
-              nullable: true
-      responses:
-        "200":
-          description: updateFlowsInNamespace 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FlowInterface"
-  /api/v1/{tenant}/flows/{namespace}/{id}:
-    get:
-      tags:
-      - Flows
-      summary: Get a flow
-      operationId: getFlow
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: source
-        in: query
-        description: Include the source code
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: revision
-        in: query
-        description: Get latest revision by default
-        explode: false
-        schema:
-          type: integer
-          format: int32
-          nullable: true
-      - name: allowDeleted
-        in: query
-        description: Get flow even if deleted
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: On success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowWithSource"
-    put:
-      tags:
-      - Flows
-      summary: Update a flow
-      operationId: updateFlow
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: The flow source code
-        content:
-          application/x-yaml:
-            schema:
-              type: string
-        required: true
-      responses:
-        "200":
-          description: On success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowWithSource"
-    delete:
-      tags:
-      - Flows
-      summary: Delete a flow
-      operationId: deleteFlow
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: On success
-  /api/v1/{tenant}/flows/{namespace}/{id}/dependencies:
-    get:
-      tags:
-      - Flows
-      summary: Get flow dependencies
-      operationId: getFlowDependencies
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: destinationOnly
-        in: query
-        description: "If true, list only destination dependencies, otherwise list\
-          \ also source dependencies"
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: expandAll
-        in: query
-        description: "If true, expand all dependencies recursively"
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: getFlowDependencies 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowTopologyGraph"
+  /api/v1/{tenant}/flows/{namespace}/{id}: {}
   /api/v1/{tenant}/flows/{namespace}/{id}/graph:
     get:
       tags:
@@ -5521,26 +4433,12 @@ paths:
       summary: Generate a graph for a flow
       operationId: generateFlowGraph
       parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
       - name: id
         in: path
         description: The flow id
         required: true
         schema:
           type: string
-      - name: revision
-        in: query
-        description: The flow revision
-        explode: false
-        schema:
-          type: integer
-          format: int32
-          nullable: true
       - name: subflows
         in: query
         description: The subflow tasks to display
@@ -5550,6 +4448,25 @@ paths:
           nullable: true
           items:
             type: string
+      - name: revision
+        in: query
+        description: The flow revision
+        explode: false
+        schema:
+          oneOf:
+          - allOf:
+            - type: integer
+              format: int32
+              nullable: true
+          - type: integer
+            format: int32
+            nullable: true
+      - name: namespace
+        in: path
+        description: The flow namespace
+        required: true
+        schema:
+          type: string
       - name: tenant
         in: path
         required: true
@@ -5562,174 +4479,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FlowGraph"
-  /api/v1/{tenant}/flows/{namespace}/{id}/revisions:
-    get:
-      tags:
-      - Flows
-      summary: Get revisions for a flow
-      operationId: listFlowRevisions
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: allowDelete
-        in: query
-        required: true
-        explode: false
-        schema:
-          type: boolean
-          default: false
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: listFlowRevisions 200 response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FlowWithSource"
-    delete:
-      tags:
-      - Flows
-      summary: Delete revisions for a flow
-      operationId: deleteRevisions
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: revisions
-        in: query
-        required: true
-        explode: false
-        schema:
-          minItems: 1
-          type: array
-          items:
-            minimum: 1
-            type: integer
-            format: int32
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: deleteRevisions 200 response
-  /api/v1/{tenant}/flows/{namespace}/{id}/tasks/{taskId}:
-    get:
-      tags:
-      - Flows
-      summary: Get a flow task
-      operationId: getTaskFromFlow
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: taskId
-        in: path
-        description: The task id
-        required: true
-        schema:
-          type: string
-      - name: revision
-        in: query
-        description: The flow revision
-        explode: false
-        schema:
-          type: integer
-          format: int32
-          nullable: true
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: getTaskFromFlow 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Task"
-  /api/v1/{tenant}/flows/{namespace}/{id}/{taskId}:
-    patch:
-      tags:
-      - Flows
-      summary: Update a single task on a flow
-      operationId: updateTask
-      parameters:
-      - name: namespace
-        in: path
-        description: The flow namespace
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: The flow id
-        required: true
-        schema:
-          type: string
-      - name: taskId
-        in: path
-        description: The task id
-        required: true
-        schema:
-          type: string
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: The task
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Task"
-        required: true
-      responses:
-        "200":
-          description: updateTask 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Flow"
-      deprecated: true
-      x-deprecated-message: should not be used anymore
   /api/v1/{tenant}/kv:
     get:
       tags:
@@ -5740,7 +4489,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           type: integer
@@ -5749,7 +4497,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           type: integer
@@ -5795,7 +4542,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -5805,7 +4551,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -6171,7 +4916,6 @@ paths:
       - name: aggregation
         in: query
         description: "The type of aggregation: avg, sum, min or max"
-        required: true
         explode: false
         schema:
           type: string
@@ -6236,7 +4980,6 @@ paths:
       - name: aggregation
         in: query
         description: "The type of aggregation: avg, sum, min or max"
-        required: true
         explode: false
         schema:
           type: string
@@ -6369,7 +5112,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -6379,7 +5121,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -6473,7 +5214,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -6483,7 +5223,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -6505,7 +5244,6 @@ paths:
         explode: false
         schema:
           type: boolean
-          nullable: true
           default: false
       - name: tenant
         in: path
@@ -6561,7 +5299,6 @@ paths:
         in: query
         description: "if true, list only destination dependencies, otherwise list\
           \ also source dependencies"
-        required: true
         explode: false
         schema:
           type: boolean
@@ -7137,7 +5874,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           type: integer
@@ -7146,7 +5882,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           type: integer
@@ -7193,7 +5928,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           type: integer
@@ -7202,7 +5936,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           type: integer
@@ -7649,7 +6382,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -7659,7 +6391,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -7763,7 +6494,6 @@ paths:
       - name: disabled
         in: query
         description: The disabled state
-        required: true
         explode: false
         schema:
           type: boolean
@@ -7886,7 +6616,6 @@ paths:
       - name: page
         in: query
         description: The current page
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -7896,7 +6625,6 @@ paths:
       - name: size
         in: query
         description: The current page size
-        required: true
         explode: false
         schema:
           minimum: 1
@@ -8160,8 +6888,6 @@ components:
         timestamp:
           type: string
           format: date-time
-    AbstractRetry:
-      type: object
     AbstractTrigger:
       required:
       - id
@@ -8482,15 +7208,6 @@ components:
         count:
           type: integer
           format: int32
-    Cache:
-      required:
-      - enabled
-      type: object
-      properties:
-        enabled:
-          type: boolean
-        ttl:
-          type: string
     ChartFiltersOverrides:
       type: object
       properties:
@@ -8532,22 +7249,6 @@ components:
           type: string
         chartOptions:
           type: object
-    Check:
-      required:
-      - condition
-      - message
-      type: object
-      properties:
-        condition:
-          minLength: 1
-          type: string
-        message:
-          minLength: 1
-          type: string
-        style:
-          $ref: "#/components/schemas/Check.Style"
-        behavior:
-          $ref: "#/components/schemas/Check.Behavior"
     Check.Behavior:
       type: string
       enum:
@@ -8561,24 +7262,6 @@ components:
       - SUCCESS
       - WARNING
       - INFO
-    Concurrency:
-      required:
-      - behavior
-      - limit
-      type: object
-      properties:
-        limit:
-          minimum: 1
-          type: integer
-          format: int32
-        behavior:
-          $ref: "#/components/schemas/Concurrency.Behavior"
-    Concurrency.Behavior:
-      type: string
-      enum:
-      - QUEUE
-      - CANCEL
-      - FAIL
     ConcurrencyLimit:
       required:
       - flowId
@@ -9086,130 +7769,6 @@ components:
         size:
           type: integer
           format: int64
-    Flow:
-      required:
-      - deleted
-      - disabled
-      - id
-      - namespace
-      - tasks
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/AbstractFlow"
-      - type: object
-        properties:
-          id:
-            maxLength: 100
-            minLength: 1
-            pattern: "^[a-zA-Z0-9][a-zA-Z0-9._-]*"
-            type: string
-          namespace:
-            maxLength: 150
-            minLength: 1
-            pattern: "^[a-z0-9][a-z0-9._-]*"
-            type: string
-          revision:
-            minimum: 1
-            type: integer
-            format: int32
-          description:
-            type: string
-          inputs:
-            type: array
-            items:
-              $ref: "#/components/schemas/Input_Object_"
-          disabled:
-            type: boolean
-          labels:
-            description: Labels as a list of Label (key/value pairs) or as a map of
-              string to string.
-            oneOf:
-            - $ref: "#/components/schemas/Map_Object.Object_"
-          workerGroup:
-            $ref: "#/components/schemas/WorkerGroup"
-          deleted:
-            type: boolean
-          finally:
-            type: array
-            items:
-              $ref: "#/components/schemas/Task"
-          taskDefaults:
-            type: array
-            deprecated: true
-            items:
-              $ref: "#/components/schemas/PluginDefault"
-          variables:
-            type: object
-            additionalProperties: false
-          tasks:
-            minItems: 1
-            type: array
-            additionalProperties: true
-            items:
-              $ref: "#/components/schemas/Task"
-          errors:
-            type: array
-            items:
-              $ref: "#/components/schemas/Task"
-          listeners:
-            type: array
-            deprecated: true
-            items:
-              $ref: "#/components/schemas/Listener"
-          afterExecution:
-            type: array
-            items:
-              $ref: "#/components/schemas/Task"
-          triggers:
-            type: array
-            items:
-              $ref: "#/components/schemas/AbstractTrigger"
-          pluginDefaults:
-            type: array
-            items:
-              $ref: "#/components/schemas/PluginDefault"
-          concurrency:
-            $ref: "#/components/schemas/Concurrency"
-          outputs:
-            title: Output values available and exposes to other flows.
-            type: array
-            description: Output values make information about the execution of your
-              Flow available and expose for other Kestra flows to use. Output values
-              are similar to return values in programming languages.
-            items:
-              $ref: "#/components/schemas/Output"
-          retry:
-            $ref: "#/components/schemas/AbstractRetry"
-          sla:
-            type: array
-            items:
-              $ref: "#/components/schemas/SLA"
-          checks:
-            title: Conditions evaluated before the flow is executed.
-            type: array
-            description: "A list of conditions that are evaluated before the flow\
-              \ is executed.  If no checks are defined, the flow executes normally."
-            items:
-              $ref: "#/components/schemas/Check"
-    FlowController.FlowWithDeprecatedTasks:
-      type: object
-      properties:
-        namespace:
-          type: string
-        flowId:
-          type: string
-        revision:
-          type: integer
-          format: int32
-        deprecatedTasks:
-          type: array
-          items:
-            $ref: "#/components/schemas/FlowService.TaskDeprecation"
-    FlowController.TaskValidationType:
-      type: string
-      enum:
-      - TASKS
-      - TRIGGERS
     FlowForExecution:
       required:
       - deleted
@@ -9340,58 +7899,6 @@ components:
           type: string
         relation:
           $ref: "#/components/schemas/Relation"
-    FlowId:
-      type: object
-      properties:
-        id:
-          type: string
-        namespace:
-          type: string
-        revision:
-          type: integer
-          format: int32
-        tenantId:
-          type: string
-    FlowInterface:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/FlowId"
-      - $ref: "#/components/schemas/SoftDeletable_FlowInterface_"
-      - $ref: "#/components/schemas/TenantInterface"
-      - type: object
-        properties:
-          description:
-            type: string
-          disabled:
-            type: boolean
-          deleted:
-            type: boolean
-          labels:
-            type: array
-            items:
-              $ref: "#/components/schemas/Label"
-          inputs:
-            type: array
-            items:
-              $ref: "#/components/schemas/Input_Object_"
-          outputs:
-            type: array
-            items:
-              $ref: "#/components/schemas/Output"
-          variables:
-            type: object
-            additionalProperties:
-              type: object
-          workerGroup:
-            $ref: "#/components/schemas/WorkerGroup"
-          concurrency:
-            $ref: "#/components/schemas/Concurrency"
-          sla:
-            type: array
-            items:
-              $ref: "#/components/schemas/SLA"
-          source:
-            type: string
     FlowNode:
       required:
       - uid
@@ -9413,16 +7920,6 @@ components:
       enum:
       - USER
       - SYSTEM
-    FlowService.TaskDeprecation:
-      type: object
-      properties:
-        taskId:
-          type: string
-        taskType:
-          type: string
-        replacement:
-          type: string
-          nullable: true
     FlowTopologyGraph:
       type: object
       properties:
@@ -9467,75 +7964,6 @@ components:
           additionalProperties:
             type: integer
             format: int64
-    FlowWithSource:
-      required:
-      - deleted
-      - disabled
-      - id
-      - namespace
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/Flow"
-      - $ref: "#/components/schemas/AbstractFlow"
-      - type: object
-        properties:
-          id:
-            maxLength: 100
-            minLength: 1
-            pattern: "^[a-zA-Z0-9][a-zA-Z0-9._-]*"
-            type: string
-          namespace:
-            maxLength: 150
-            minLength: 1
-            pattern: "^[a-z0-9][a-z0-9._-]*"
-            type: string
-          revision:
-            minimum: 1
-            type: integer
-            format: int32
-          description:
-            type: string
-          inputs:
-            type: array
-            items:
-              $ref: "#/components/schemas/Input_Object_"
-          disabled:
-            type: boolean
-          labels:
-            description: Labels as a list of Label (key/value pairs) or as a map of
-              string to string.
-            oneOf:
-            - $ref: "#/components/schemas/Map_Object.Object_"
-          workerGroup:
-            $ref: "#/components/schemas/WorkerGroup"
-          deleted:
-            type: boolean
-          variables:
-            type: object
-            additionalProperties: false
-          concurrency:
-            $ref: "#/components/schemas/Concurrency"
-          outputs:
-            title: Output values available and exposes to other flows.
-            type: array
-            description: Output values make information about the execution of your
-              Flow available and expose for other Kestra flows to use. Output values
-              are similar to return values in programming languages.
-            items:
-              $ref: "#/components/schemas/Output"
-          sla:
-            type: array
-            items:
-              $ref: "#/components/schemas/SLA"
-          source:
-            type: string
-    IdWithNamespace:
-      type: object
-      properties:
-        namespace:
-          type: string
-        id:
-          type: string
     InputType:
       type: object
       properties:
@@ -9671,22 +8099,6 @@ components:
       - INFO
       - DEBUG
       - TRACE
-    Listener:
-      required:
-      - tasks
-      type: object
-      properties:
-        description:
-          type: string
-        conditions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Condition"
-        tasks:
-          minItems: 1
-          type: array
-          items:
-            $ref: "#/components/schemas/Task"
     LogEntry:
       required:
       - flowId
@@ -9982,19 +8394,6 @@ components:
         total:
           type: integer
           format: int64
-    PagedResults_Flow_:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/Flow"
-        total:
-          type: integer
-          format: int64
     PagedResults_KVEntry_:
       required:
       - results
@@ -10059,19 +8458,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NamespaceLight"
-        total:
-          type: integer
-          format: int64
-    PagedResults_SearchResult_Flow__:
-      required:
-      - results
-      - total
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/SearchResult_Flow_"
         total:
           type: integer
           format: int64
@@ -10212,18 +8598,6 @@ components:
           type: array
           items:
             type: string
-    PluginDefault:
-      required:
-      - type
-      type: object
-      properties:
-        type:
-          type: string
-        forced:
-          type: boolean
-        values:
-          type: object
-          additionalProperties: false
     PluginIcon:
       type: object
       properties:
@@ -10275,16 +8649,6 @@ components:
           type: string
         value:
           type: boolean
-      oneOf:
-      - type: object
-      - type: string
-    Property_Duration_:
-      type: object
-      properties:
-        expression:
-          type: string
-        value:
-          type: string
       oneOf:
       - type: object
       - type: string
@@ -10410,35 +8774,6 @@ components:
       - AFTER_EXECUTION
       - PARALLEL
       - DYNAMIC
-    SLA:
-      required:
-      - behavior
-      - id
-      - type
-      type: object
-      properties:
-        id:
-          minLength: 1
-          type: string
-        type:
-          $ref: "#/components/schemas/SLA.Type"
-        behavior:
-          $ref: "#/components/schemas/SLA.Behavior"
-        labels:
-          oneOf:
-          - type: array
-          - $ref: "#/components/schemas/Map_Object.Object_"
-    SLA.Behavior:
-      type: string
-      enum:
-      - FAIL
-      - CANCEL
-      - NONE
-    SLA.Type:
-      type: string
-      enum:
-      - MAX_DURATION
-      - EXECUTION_ASSERTION
     SchemaType:
       type: string
       enum:
@@ -10450,15 +8785,6 @@ components:
       - APPS
       - TESTSUITES
       - DASHBOARD
-    SearchResult_Flow_:
-      type: object
-      properties:
-        model:
-          $ref: "#/components/schemas/Flow"
-        fragments:
-          type: array
-          items:
-            type: string
     ServerConfig:
       required:
       - terminationGracePeriod
@@ -10596,14 +8922,12 @@ components:
       - WEBSERVER
       - WORKER
       - INVALID
-    SoftDeletable_FlowInterface_:
-      type: object
-      properties:
-        deleted:
-          type: boolean
     State:
       required:
       - current
+      - getDuration
+      - getEndDate
+      - getStartDate
       type: object
       properties:
         duration:
@@ -10625,6 +8949,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/State.History"
+        getDuration:
+          type: string
+          readOnly: true
+        getStartDate:
+          type: string
+          format: date-time
+          readOnly: true
+        getEndDate:
+          type: string
+          format: date-time
+          readOnly: true
     State.History:
       required:
       - date
@@ -10656,60 +8991,6 @@ components:
       - SKIPPED
       - BREAKPOINT
       - RESUBMITTED
-    Task:
-      required:
-      - id
-      - type
-      type: object
-      properties:
-        id:
-          maxLength: 256
-          minLength: 1
-          pattern: "^[a-zA-Z0-9][a-zA-Z0-9_-]*"
-          type: string
-          x-size-message: Task id must be at most 256 characters
-        type:
-          title: The class name of this task.
-          minLength: 1
-          pattern: "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$"
-          type: string
-        version:
-          title: Plugin Version
-          type: string
-          description: |
-            Defines the version of the plugin to use.
-
-            The version must follow the Semantic Versioning (SemVer) specification:
-              - A single-digit MAJOR version (e.g., `1`).
-              - A MAJOR.MINOR version (e.g., `1.1`).
-              - A MAJOR.MINOR.PATCH version, optionally with any qualifier
-                (e.g., `1.1.2`, `1.1.0-SNAPSHOT`).
-        description:
-          type: string
-        retry:
-          $ref: "#/components/schemas/AbstractRetry"
-        timeout:
-          $ref: "#/components/schemas/Property_Duration_"
-        disabled:
-          type: boolean
-        workerGroup:
-          $ref: "#/components/schemas/WorkerGroup"
-        logLevel:
-          $ref: "#/components/schemas/Level"
-        allowFailure:
-          type: boolean
-        logToFile:
-          type: boolean
-        runIf:
-          type: string
-        allowWarning:
-          type: boolean
-        taskCache:
-          $ref: "#/components/schemas/Cache"
-        assets:
-          nullable: true
-          allOf:
-          - $ref: "#/components/schemas/AssetsDeclaration"
     TaskFixture:
       required:
       - id
@@ -10833,11 +9114,6 @@ components:
           type: string
           format: uri
           nullable: true
-    TenantInterface:
-      type: object
-      properties:
-        tenantId:
-          type: string
     TimeWindow:
       type: object
       properties:

@@ -46,9 +46,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public abstract ChatModel chatModel(List<ChatModelListener> listeners);
 
+    protected String baseUrl() {
+        return null;
+    }
+
     protected List<ChatModelListener> listeners(String spanName, String conversationId) {
         List<ChatModelListener> listeners = new ArrayList<>(this.listeners);
-        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, () -> metadataByConversationId.get(conversationId)));
+        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, this.baseUrl(), () -> metadataByConversationId.get(conversationId)));
         return listeners;
     }
 

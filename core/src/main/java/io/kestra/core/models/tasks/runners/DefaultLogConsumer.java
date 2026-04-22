@@ -8,7 +8,11 @@ import io.kestra.core.runners.RunContext;
  * Default implementation of an @{link {@link AbstractLogConsumer}}
  */
 public class DefaultLogConsumer extends AbstractLogConsumer {
+    private static final String LOG_DEBUG_MARKER = "##kestra:log:debug##";
+    private static final String LOG_INFO_MARKER = "##kestra:log:info##";
+
     private final RunContext runContext;
+    private volatile boolean debugMode = false;
 
     public DefaultLogConsumer(RunContext runContext) {
         this.runContext = runContext;
@@ -20,7 +24,15 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
     }
 
     public void accept(String line, Boolean isStdErr, Instant instant) {
-        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant));
+        if (LOG_DEBUG_MARKER.equals(line)) {
+            debugMode = true;
+            return;
+        }
+        if (LOG_INFO_MARKER.equals(line)) {
+            debugMode = false;
+            return;
+        }
+        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant, debugMode));
 
         if (isStdErr) {
             this.stdErrCount.incrementAndGet();

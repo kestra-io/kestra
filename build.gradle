@@ -249,6 +249,9 @@ subprojects {subProj ->
         }
 
         def commonTestConfig = { Test t ->
+            t.timeout = java.time.Duration.ofMinutes(
+                (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+            )
             t.ignoreFailures = true
             t.finalizedBy jacocoTestReport
             t.doFirst {

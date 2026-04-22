@@ -163,10 +163,19 @@ public class CommandsWrapper implements TaskCommands {
         List<String> renderedBeforeCommands = this.renderCommands(runContext, beforeCommands);
         List<String> renderedInterpreter = this.renderCommands(runContext, interpreter);
 
+        List<String> effectiveBeforeCommands = this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands;
+        if (!renderedBeforeCommands.isEmpty()) {
+            List<String> marked = new ArrayList<>();
+            marked.add("echo '##kestra:log:debug##'");
+            marked.addAll(effectiveBeforeCommands);
+            marked.add("echo '##kestra:log:info##'");
+            effectiveBeforeCommands = marked;
+        }
+
         List<String> finalCommands = renderedBeforeCommands.isEmpty() && renderedInterpreter.isEmpty() ? renderedCommands
             : ScriptService.scriptCommands(
                 renderedInterpreter,
-                this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands,
+                effectiveBeforeCommands,
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );

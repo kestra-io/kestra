@@ -32,7 +32,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.10.11")
+    api platform("io.micronaut.platform:micronaut-platform:4.10.12")
     api platform("io.qameta.allure:allure-bom:2.34.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.80.0')
@@ -84,7 +84,7 @@ dependencies {
         api 'software.amazon.awssdk.crt:aws-crt:0.45.0'
 
         // Other libs
-        api("org.projectlombok:lombok:1.18.44")
+        api("org.projectlombok:lombok:1.18.46")
         api("org.codehaus.janino:janino:3.1.12")
         api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.25.4'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
@@ -141,7 +141,7 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:4.0.3' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.21.1")
+        api ("org.jooq:jooq:3.21.2")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"

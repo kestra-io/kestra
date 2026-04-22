@@ -5,9 +5,11 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.kestra.core.validations.ConstantRetryValidation;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-@ConstantRetryValidation
+@Schema(title = "Constant retry", description = "Retry with a fixed delay between attempts.")
 public class Constant extends AbstractRetry {
     @NotNull
     @JsonInclude
@@ -36,5 +38,12 @@ public class Constant extends AbstractRetry {
     @Override
     public Instant nextRetryDate(Integer attemptCount, Instant lastAttempt) {
         return lastAttempt.plus(interval);
+    }
+
+    @AssertTrue(message = "'interval' must be less than 'maxDuration'")
+    @JsonIgnore
+    boolean isIntervalLessThanMaxDuration() {
+        if (getMaxDuration() == null || interval == null) return true;
+        return getMaxDuration().compareTo(interval) > 0;
     }
 }

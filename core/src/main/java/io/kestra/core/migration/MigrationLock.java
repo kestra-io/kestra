@@ -32,4 +32,12 @@ public interface MigrationLock {
      * @throws Exception if the lock cannot be released
      */
     void release() throws Exception;
+
+    /**
+     * Attempts to acquire the migration lock without blocking.
+     *
+     * @return {@code true} if the lock was acquired, {@code false} if it is held by another process
+     * @throws Exception if an error occurs while attempting to acquire the lock
+     */
+    boolean tryAcquire() throws Exception;
 }

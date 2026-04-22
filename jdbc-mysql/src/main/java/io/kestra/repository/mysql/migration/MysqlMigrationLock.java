@@ -75,6 +75,31 @@ public class MysqlMigrationLock implements MigrationLock {
     }
 
     @Override
+    public boolean tryAcquire() throws SQLException {
+        log.debug("Trying to acquire MySQL migration lock '{}' (non-blocking)", LOCK_NAME);
+        lockConnection = dataSource.getConnection();
+        try (PreparedStatement ps = lockConnection.prepareStatement("SELECT GET_LOCK(?, 0)")) {
+            ps.setString(1, LOCK_NAME);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) == 1) {
+                    log.debug("MySQL migration lock '{}' acquired", LOCK_NAME);
+                    return true;
+                }
+                lockConnection.close();
+                lockConnection = null;
+                log.debug("MySQL migration lock '{}' is held by another process", LOCK_NAME);
+                return false;
+            }
+        } catch (SQLException e) {
+            if (lockConnection != null) {
+                lockConnection.close();
+                lockConnection = null;
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public void release() throws SQLException {
         if (lockConnection == null) {
             return;

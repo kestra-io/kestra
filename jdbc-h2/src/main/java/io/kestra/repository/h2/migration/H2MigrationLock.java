@@ -40,6 +40,11 @@ public class H2MigrationLock implements MigrationLock {
     }
 
     @Override
+    public boolean tryAcquire() {
+        return lock.tryLock();
+    }
+
+    @Override
     public void release() {
         lock.unlock();
     }

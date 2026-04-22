@@ -1,10 +1,14 @@
 package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
+import io.kestra.core.migration.MigrationLockedException;
+import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+
+import java.util.Map;
 
 /**
  * CLI command that explicitly applies all pending database migration scripts.
@@ -29,6 +33,12 @@ public class RunMigrationCommand extends AbstractCommand {
     @Inject
     private MigrationRunnerInterface migrationRunner;
 
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        MigrationRunner.setSkipAutoRun(true);
+        return Map.of();
+    }
+
     /** Disable the automatic migration in super.call(); we run it explicitly below. */
     @Override
     protected boolean shouldAutoMigrate() {
@@ -38,8 +48,13 @@ public class RunMigrationCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-        migrationRunner.runAlways();
-        log.info("All pending migrations have been applied successfully.");
-        return 0;
+        try {
+            migrationRunner.runOrFailIfLocked();
+            log.info("All pending migrations have been applied successfully.");
+            return 0;
+        } catch (MigrationLockedException e) {
+            log.error(e.getMessage());
+            return 1;
+        }
     }
 }

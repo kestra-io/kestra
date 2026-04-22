@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -55,6 +56,27 @@ public class PostgresMigrationLock implements MigrationLock {
             throw e;
         }
         log.debug("PostgreSQL advisory migration lock acquired (key={})", LOCK_KEY);
+    }
+
+    @Override
+    public boolean tryAcquire() throws SQLException {
+        log.debug("Trying to acquire PostgreSQL advisory migration lock (key={}, non-blocking)", LOCK_KEY);
+        lockConnection = dataSource.getConnection();
+        try (Statement stmt = lockConnection.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT pg_try_advisory_lock(" + LOCK_KEY + ")")) {
+            if (rs.next() && rs.getBoolean(1)) {
+                log.debug("PostgreSQL advisory migration lock acquired (key={})", LOCK_KEY);
+                return true;
+            }
+            lockConnection.close();
+            lockConnection = null;
+            log.debug("PostgreSQL advisory migration lock is held by another process (key={})", LOCK_KEY);
+            return false;
+        } catch (SQLException e) {
+            lockConnection.close();
+            lockConnection = null;
+            throw e;
+        }
     }
 
     @Override

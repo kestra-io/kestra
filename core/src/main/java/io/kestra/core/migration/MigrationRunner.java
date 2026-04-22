@@ -60,6 +60,12 @@ public class MigrationRunner implements MigrationRunnerInterface {
      * avoiding a wasteful lock + N DB roundtrips on every CLI command startup.
      * {@code volatile} because {@link #initOnStartup()} and {@link #run()} may run on different threads.
      */
+    private static volatile boolean skipAutoRun = false;
+
+    public static void setSkipAutoRun(boolean skip) {
+        skipAutoRun = skip;
+    }
+
     protected volatile boolean hasRun = false;
 
     private final MigrationLock lock;
@@ -85,6 +91,10 @@ public class MigrationRunner implements MigrationRunnerInterface {
     @PostConstruct
     @SneakyThrows
     protected void initOnStartup() {
+        if (skipAutoRun) {
+            log.debug("Migration auto-run skipped (skipAutoRun flag set).");
+            return;
+        }
         autoRun();
     }
 
@@ -130,20 +140,27 @@ public class MigrationRunner implements MigrationRunnerInterface {
 
         lock.acquire();
         try {
-            historyStore.bootstrapIfNeeded();
+            executeMigrations();
+        } finally {
+            lock.release();
+        }
+        hasRun = true;
+    }
 
-            boolean isFlywayUpgrade = historyStore.detectFlywayUpgrade();
-            if (isFlywayUpgrade) {
-                log.info("Detected existing Flyway-managed schema. Init scripts will be marked as applied without execution.");
-            }
-
-            List<MigrationScript> sortedScripts = scripts.stream()
-                .sorted(Comparator.comparing(MigrationScript::scriptId))
-                .toList();
-
-            for (MigrationScript script : sortedScripts) {
-                runScript(script, isFlywayUpgrade);
-            }
+    @Override
+    public void runOrFailIfLocked() throws MigrationLockedException, Exception {
+        if (hasRun) {
+            return;
+        }
+        if (scripts.isEmpty()) {
+            log.debug("No migration scripts found, skipping migration.");
+            return;
+        }
+        if (!lock.tryAcquire()) {
+            throw new MigrationLockedException();
+        }
+        try {
+            executeMigrations();
         } finally {
             lock.release();
         }
@@ -180,6 +197,23 @@ public class MigrationRunner implements MigrationRunnerInterface {
     }
 
     // --- Private helpers ---
+
+    private void executeMigrations() throws Exception {
+        historyStore.bootstrapIfNeeded();
+
+        boolean isFlywayUpgrade = historyStore.detectFlywayUpgrade();
+        if (isFlywayUpgrade) {
+            log.info("Detected existing Flyway-managed schema. Init scripts will be marked as applied without execution.");
+        }
+
+        List<MigrationScript> sortedScripts = scripts.stream()
+            .sorted(Comparator.comparing(MigrationScript::scriptId))
+            .toList();
+
+        for (MigrationScript script : sortedScripts) {
+            runScript(script, isFlywayUpgrade);
+        }
+    }
 
     private void runScript(final MigrationScript script, final boolean isFlywayUpgrade) throws Exception {
         String scriptId = script.scriptId();

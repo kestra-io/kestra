@@ -28,4 +28,14 @@ public interface MigrationRunnerInterface {
      * @throws Exception if a migration fails
      */
     void runAlways() throws Exception;
+
+    /**
+     * Runs all pending migrations, but fails immediately if the lock is held by another process.
+     * Used by {@code kestra migrate run} CLI (always single-node, should not wait).
+     * Server commands use {@link #runAlways()} which waits for the lock.
+     *
+     * @throws MigrationLockedException if the lock is held by another process
+     * @throws Exception if a migration fails
+     */
+    void runOrFailIfLocked() throws MigrationLockedException, Exception;
 }

@@ -8,8 +8,7 @@ test.describe("Executions' view Bulk Actions", () => {
     // Use specific flow to create executions
     test.use({flow: {fileName: "hello.yaml", flowId: "my-hello-flow-1"}});
 
-    // TODO debug flakiness and re enable
-    test.skip("Labels changed only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
+    test("Labels changed only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
         test.slow(); // creating many executions
         expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
 

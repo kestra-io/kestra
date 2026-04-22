@@ -90,7 +90,7 @@ class RequestTest {
     void head() throws Exception {
         EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class);
         server.start();
-        String url = server.getURL().toString() + "/hello";
+        String url = server.getURL().toString() + "/headonly";
 
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -707,8 +707,8 @@ class RequestTest {
             return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 
-        @Head("/hello")
-        HttpResponse<String> head() {
+        @Head("/headonly")
+        HttpResponse<Void> headonly() {
             return HttpResponse.ok();
         }
 

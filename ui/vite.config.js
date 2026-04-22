@@ -43,11 +43,15 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia"],
             alias: [
                 {find: /^echarts(.*)$/, replacement: path.resolve(__dirname, "node_modules/echarts") + "$1"},
                 {find: /^vue-echarts$/, replacement: path.resolve(__dirname, "node_modules/vue-echarts")},
                 {find: /^element-plus(.*)$/, replacement: path.resolve(__dirname, "node_modules/element-plus") + "$1"},
+                {find: /^vue$/, replacement: path.resolve(__dirname, "node_modules/vue")},
+                {find: /^vue-router$/, replacement: path.resolve(__dirname, "node_modules/vue-router")},
+                {find: /^vue-i18n$/, replacement: path.resolve(__dirname, "node_modules/vue-i18n")},
+                {find: /^@vueuse\/core$/, replacement: path.resolve(__dirname, "node_modules/@vueuse/core")},
                 {find: /^@kestra-io\/ui-design-system$/, replacement: path.resolve(__dirname, "../ui-design-system/src/index.ts")},
                 {find: /^@kestra-io\/ui-design-system\/(.*)$/, replacement: path.resolve(__dirname, "../ui-design-system") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},

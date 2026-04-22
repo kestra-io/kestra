@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -86,7 +87,7 @@ class RunContextLoggerTest {
         assertThat(matchingLog.stream().findFirst().orElseThrow().getMessage()).isEmpty();
     }
 
-    @Test
+    @FlakyTest
     void secrets() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;

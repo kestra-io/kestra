@@ -8,6 +8,9 @@
                 :placeholder="placeholder ?? $t('filter.select_option')"
                 :showArrow="false"
             >
+                <template #label="{value}">
+                    {{ options.find(opt => opt.value === value)?.label ?? value }}
+                </template>
                 <ks-option
                     v-for="option in options"
                     :key="option.value"

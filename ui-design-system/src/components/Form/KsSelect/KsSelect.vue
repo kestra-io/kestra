@@ -36,7 +36,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-         
+
         modelValue?: any
         placeholder?: string
         disabled?: boolean
@@ -63,9 +63,9 @@
     const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
-         
+
         "update:modelValue": [value: any]
-         
+
         change: [value: any]
     }>()
 
@@ -74,7 +74,7 @@
         prefix?(): unknown
         header?(): unknown
         footer?(): unknown
-         
+
         label?(props: { value: any; label: string }): any
         tag?(): unknown
     }>()
@@ -99,7 +99,6 @@
         .kel-select__caret {
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
         }
-
 
          .kel-select__wrapper {
              background-color: var(--ks-background-input);

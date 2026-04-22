@@ -5,6 +5,9 @@
             v-model="comparatorModel"
             class="select"
         >
+            <template #label="{value}">
+                {{ getLabel(value) }}
+            </template>
             <ks-option
                 v-for="comparator in filterKey.comparators"
                 :key="comparator"

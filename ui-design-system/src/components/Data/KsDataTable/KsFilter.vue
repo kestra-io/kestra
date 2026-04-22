@@ -14,8 +14,6 @@
 
 <script setup lang="ts">
     import {ref, computed, provide, onMounted, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import locale from "./KsFilter.locale.ts";
     import {
         AppliedFilter,
         FilterConfiguration,
@@ -30,11 +28,6 @@
     import MainFilter from "./filter/MainFilter.vue";
     import RightFilter from "./filter/RightFilter.vue";
     import FilterOptions from "./filter/FilterOptions.vue";
-
-    const {mergeLocaleMessage} = useI18n({useScope: "global"});
-    for (const [lang, messages] of Object.entries(locale)) {
-        mergeLocaleMessage(lang, messages);
-    }
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;

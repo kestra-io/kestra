@@ -20,7 +20,6 @@
     import {useI18n} from "vue-i18n"
     import {useFilteredProps} from "../../utils/filteredProps"
     import noDataImage from "../../assets/images/no-data.png"
-    import locale from "./KsEmpty.locale.ts"
 
     provideGlobalConfig({namespace: "kel"})
 
@@ -43,10 +42,7 @@
 
     const filteredProps = useFilteredProps(props, slots.image ? ["image", "description"] : ["description"])
 
-    const {t, mergeLocaleMessage} = useI18n({useScope: "global"})
-    for (const [lang, messages] of Object.entries(locale)) {
-        mergeLocaleMessage(lang, messages)
-    }
+    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style lang="scss">

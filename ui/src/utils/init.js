@@ -24,7 +24,7 @@ import {createPinia} from "pinia";
 import Toast from "./toast";
 import filters from "./filters";
 import KestraDesignSystem from "@kestra-io/ui-design-system";
-import {setDesignSystemLocale, setMomentInstance, setDateFormatter} from "@kestra-io/ui-design-system";
+import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/ui-design-system";
 import {date as dateFilter} from "./filters";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
@@ -96,6 +96,10 @@ export default async (app, routes, _stores, translations, additionalTranslations
         legacy: false,
         warnHtmlMessage: false,
     });
+
+    // Merge design-system locales before first render, so parent computeds
+    // that call t() on design-system keys don't cache the raw key.
+    registerDesignSystemI18n(i18n);
 
     if(locale !== "en"){
         await loadLocaleMessages(i18n, locale, additionalTranslations);

@@ -92,7 +92,7 @@ import KsUpload from "./components/Form/KsUpload.vue"
 import {vKsLoading} from "./components/Feedback/KsLoading"
 
 // ─── i18n ───────────────────────────────────────────────────────────────────
-export {designSystemLocale, setDesignSystemLocale} from "./i18n"
+export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 
 // ─── utils ─────────────────────────────────────────────────────────────
 export {setMomentInstance, setDateFormatter} from "./date/index"

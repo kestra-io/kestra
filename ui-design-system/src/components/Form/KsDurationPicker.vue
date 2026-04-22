@@ -84,15 +84,8 @@
 <script setup lang="ts">
     import {provideGlobalConfig} from "element-plus"
     import {ref, watch, onMounted} from "vue"
-    import {useI18n} from "vue-i18n"
-    import locale from "./KsDurationPicker.locale.ts"
 
     provideGlobalConfig({namespace: "kel"})
-
-    const {mergeLocaleMessage} = useI18n({useScope: "global"})
-    for (const [lang, messages] of Object.entries(locale)) {
-        mergeLocaleMessage(lang, messages)
-    }
 
     defineOptions({inheritAttrs: false})
 

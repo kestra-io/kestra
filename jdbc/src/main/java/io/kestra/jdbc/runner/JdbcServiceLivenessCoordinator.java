@@ -95,6 +95,21 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                 }
             }
 
+            // Re-emit all realtime triggers for TERMINATED_GRACEFULLY workers
+            List<ServiceInstance> terminatedGracefully = nonRunningWorkers.stream()
+                .filter(nonRunning -> nonRunning.is(ServiceState.TERMINATED_GRACEFULLY))
+                .toList();
+            if (!terminatedGracefully.isEmpty()) {
+                List<String> ids = terminatedGracefully.stream()
+                    .filter(instance -> instance.config().workerTaskRestartStrategy().isRestartable())
+                    .map(ServiceInstance::uid)
+                    .toList();
+                if (!ids.isEmpty()) {
+                    log.info("Trigger realtime trigger restart for terminated gracefully worker: {}.", ids);
+                    executor.get().reEmitRealtimeTriggerForWorker(configuration, ids);
+                }
+            }
+
             // Transit all GRACEFUL AND UNCLEAN SHUTDOWN workers to NOT_RUNNING.
             Stream<ServiceInstance> cleanShutdownWorkers = nonRunningWorkers.stream()
                 .filter(nonRunning -> nonRunning.is(ServiceState.TERMINATED_GRACEFULLY));

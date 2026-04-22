@@ -293,9 +293,11 @@ public class ExecutorService {
                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
                         .map(ArrayList::new)
                         .orElseGet(ArrayList::new);
-                    State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
-                    TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                    attempts.set(attempts.size() - 1, updated);
+                    if (!attempts.isEmpty()) { // can occur on migration from pre-1.2
+                        State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                        TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                        attempts.set(attempts.size() - 1, updated);
+                    }
 
                     return Optional.of(
                         new WorkerTaskResult(

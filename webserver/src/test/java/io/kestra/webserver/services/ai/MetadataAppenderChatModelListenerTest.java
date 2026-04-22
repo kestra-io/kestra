@@ -21,7 +21,7 @@ class MetadataAppenderChatModelListenerTest {
             "conv-1", "192.168.1.1", "parent-span-1", "browser-uid-123"
         );
         MetadataAppenderChatModelListener listener = new MetadataAppenderChatModelListener(
-            "instance-uid-456", "google", "FlowGeneration", () -> metadata
+            "instance-uid-456", "google", "FlowGeneration", null, () -> metadata
         );
 
         ChatRequest request = ChatRequest.builder()
@@ -41,6 +41,31 @@ class MetadataAppenderChatModelListenerTest {
             .containsEntry(MetadataAppenderChatModelListener.IP, "192.168.1.1")
             .containsEntry(MetadataAppenderChatModelListener.PARENT_ID, "parent-span-1")
             .containsEntry(MetadataAppenderChatModelListener.SPAN_NAME, "FlowGeneration")
-            .containsEntry(MetadataAppenderChatModelListener.PROVIDER, "google");
+            .containsEntry(MetadataAppenderChatModelListener.PROVIDER, "google")
+            .doesNotContainKey(MetadataAppenderChatModelListener.BASE_URL);
+    }
+
+    @Test
+    void shouldIncludeBaseUrlWhenProvided() {
+        // Given
+        AiService.ConversationMetadata metadata = new AiService.ConversationMetadata(
+            "conv-2", "10.0.0.1", "parent-span-2", "user-uid-789"
+        );
+        MetadataAppenderChatModelListener listener = new MetadataAppenderChatModelListener(
+            "instance-uid-456", "gemini", "FlowGeneration", "https://generativelanguage.googleapis.com", () -> metadata
+        );
+
+        ChatRequest request = ChatRequest.builder()
+            .messages(List.of(UserMessage.from("test")))
+            .modelName("gemini-2.0-flash")
+            .build();
+        ChatModelRequestContext requestContext = new ChatModelRequestContext(request, null, new HashMap<>());
+
+        // When
+        listener.onRequest(requestContext);
+
+        // Then
+        assertThat(requestContext.attributes())
+            .containsEntry(MetadataAppenderChatModelListener.BASE_URL, "https://generativelanguage.googleapis.com");
     }
 }

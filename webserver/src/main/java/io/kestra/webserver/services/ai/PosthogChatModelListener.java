@@ -96,7 +96,9 @@ public class PosthogChatModelListener implements ChatModelListener {
         if (attributes.containsKey(MetadataAppenderChatModelListener.PROVIDER)) {
             properties.put("$ai_provider", attributes.get(MetadataAppenderChatModelListener.PROVIDER));
         }
-        properties.put("$ai_base_url", "https://generativelanguage.googleapis.com");
+        if (attributes.containsKey(MetadataAppenderChatModelListener.BASE_URL)) {
+            properties.put("$ai_base_url", attributes.get(MetadataAppenderChatModelListener.BASE_URL));
+        }
 
         if (attributes.containsKey(MetadataAppenderChatModelListener.IP)) {
             properties.put("$ip", attributes.get(MetadataAppenderChatModelListener.IP));

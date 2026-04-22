@@ -29,12 +29,12 @@
                 </slot>
             </div>
         </div>
-        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
+        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center">
             <div class="d-none d-lg-flex align-items-center">
                 <GlobalSearch class="trigger-flow-guided-step" />
             </div>
-            <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
+            <div v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" class="d-flex side gap-2 flex-shrink-0 align-items-center">
+                <el-button @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
                 </el-button>
@@ -153,7 +153,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 4px;
+            gap: 0.5rem;
             flex: 1 0 0;
             min-width: 0;
             overflow: hidden;
@@ -198,25 +198,6 @@
 
         @media (max-width: 768px) {
             padding: 0.5rem;
-
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
-        }
-        @media (max-width: 664px) {
-            padding: 0.5rem;
-
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
         }
     }
 </style>

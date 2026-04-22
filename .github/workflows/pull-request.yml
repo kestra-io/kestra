@@ -52,6 +52,19 @@ jobs:
         client-payload: >-
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_repo":"${{ github.repository }}"}
 
+      # Always trigger EE OpenAPI check on non-fork PRs (regardless of EE same-name branch)
+    - name: Trigger EE OpenAPI spec check
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false }}
+      with:
+        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-pr-openapi-check"
+        client-payload: >-
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}
     name: File changes detection
@@ -94,91 +107,6 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25
-
-  comment-openapi-spec-changes:
-    name: Comment OpenAPI spec changes
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-        name: Checkout - Current ref
-
-      - uses: kestra-io/actions/composite/setup-build@main
-        name: Setup - Build
-        with:
-          java-enabled: true
-          java-version: 25
-
-      - name: Generate OpenAPI spec
-        run: ./gradlew generateOpenapiSpec
-        shell: bash
-
-      - name: Fetch client-sdk spec
-        shell: bash
-        run: |
-          curl -sf \
-            -H "Authorization: Bearer ${{ secrets.GH_PERSONAL_TOKEN }}" \
-            -H "Accept: application/vnd.github.raw" \
-            "https://api.github.com/repos/kestra-io/client-sdk/contents/kestra.yml" \
-            -o /tmp/openapi-client-sdk.yml 2>/dev/null || touch /tmp/openapi-client-sdk.yml
-
-      - name: Compute diff
-        id: diff
-        shell: bash
-        run: |
-          diff_output=$(diff /tmp/openapi-client-sdk.yml openapi.yml 2>/dev/null || true)
-          if [ -z "$diff_output" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            truncated=$(echo "$diff_output" | head -c 10000)
-            {
-              echo "diff<<DIFF_EOF"
-              echo "$truncated"
-              echo "DIFF_EOF"
-            } >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Comment on PR
-        uses: actions/github-script@v9
-        env:
-          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const marker = '<!-- openapi-spec-changes -->';
-            const changed = '${{ steps.diff.outputs.changed }}' === 'true';
-            const diff = process.env.DIFF_OUTPUT || '';
-
-            const body = changed
-              ? `${marker}\n### OpenAPI Spec Changes\n\nThis PR modifies the OpenAPI spec. Diff against [client-sdk](https://github.com/kestra-io/client-sdk):\n\`\`\`diff\n${diff}\n\`\`\``
-              : `${marker}\n### OpenAPI Spec Changes\n\nNo changes to the OpenAPI spec.`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existing = comments.find(c => c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
 
   e2e-tests:
     name: E2E - Tests

@@ -273,6 +273,24 @@
     import _merge from "lodash/merge";
     const dataTable = useTemplateRef("dataTable");
     const router = useRouter();
+    const route = useRoute();
+    const toast = useToast();
+
+    const props = withDefaults(defineProps<{
+        namespace?: string;
+        paneView?: boolean;
+        includeInherited?: boolean;
+    }>(), {
+        namespace: undefined,
+        paneView: false,
+        includeInherited: false
+    });
+
+    const kvFilter = useKvFilter();
+
+    const authStore = useAuthStore();
+    const namespacesStore = useNamespacesStore();
+    const kvStore = useKvStore();
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const kvsResponse = await kvStore.find(loadQuery({
@@ -330,25 +348,6 @@
     watch(filterQuery, () => {
         dataTable.value?.resetAndReload();
     }, {deep: true});
-
-    const props = withDefaults(defineProps<{
-        namespace?: string;
-        paneView?: boolean;
-        includeInherited?: boolean;
-    }>(), {
-        namespace: undefined,
-        paneView: false,
-        includeInherited: false
-    });
-
-    const route = useRoute();
-    const toast = useToast();
-
-    const kvFilter = useKvFilter();
-
-    const authStore = useAuthStore();
-    const namespacesStore = useNamespacesStore();
-    const kvStore = useKvStore();
 
     interface KvItem {
         namespace?: string;

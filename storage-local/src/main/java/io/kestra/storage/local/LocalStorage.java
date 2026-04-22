@@ -188,6 +188,9 @@ public class LocalStorage implements StorageInterface {
      * Converts a file path to a relative URI against the given base path.
      * Uses the encoded raw path from file.toUri() to safely handle filenames
      * containing special characters such as spaces or non-ASCII characters.
+     *
+     * @throws IllegalArgumentException if the file path is not under the base path,
+     *         preventing path traversal attacks
      */
     private static URI toRelativeUri(Path basePath, Path file) {
         String baseRawPath = basePath.toUri().getRawPath();
@@ -195,10 +198,12 @@ public class LocalStorage implements StorageInterface {
             baseRawPath += "/";
         }
         String fileRawPath = file.toUri().getRawPath();
-        String encodedRelative = fileRawPath.startsWith(baseRawPath)
-            ? fileRawPath.substring(baseRawPath.length())
-            : fileRawPath;
-        return URI.create(encodedRelative);
+        if (!fileRawPath.startsWith(baseRawPath)) {
+            throw new IllegalArgumentException(
+                "File path '" + fileRawPath + "' is not under base path '" + baseRawPath + "'"
+            );
+        }
+        return URI.create(fileRawPath.substring(baseRawPath.length()));
     }
 
     @Override

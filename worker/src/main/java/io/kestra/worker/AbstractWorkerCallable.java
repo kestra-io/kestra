@@ -72,6 +72,8 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
             // bad behavior that throws errors and not exceptions.
             return this.exceptionHandler(e);
         } finally {
+            // Clear the interrupt flag so it doesn't leak to the caller (e.g., queue emission after timeout)
+            Thread.interrupted();
             shutdownLatch.countDown();
         }
     }

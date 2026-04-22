@@ -98,7 +98,7 @@ jobs:
   comment-openapi-spec-changes:
     name: Comment OpenAPI spec changes
     needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true' && github.event.pull_request.draft == false"
+    if: "needs.file-changes.outputs.backend == 'true'"
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

@@ -7,7 +7,7 @@ import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 import io.micrometer.core.instrument.Clock;
 
-public record MetadataAppenderChatModelListener(String instanceUid, String provider, String spanName,
+public record MetadataAppenderChatModelListener(String instanceUid, String provider, String spanName, String baseUrl,
     Supplier<AiService.ConversationMetadata> conversationMetadataGetter) implements ChatModelListener {
 
     public static final String SPAN_NAME = "spanName";
@@ -18,6 +18,7 @@ public record MetadataAppenderChatModelListener(String instanceUid, String provi
     public static final String INSTANCE_UID = "instanceUid";
     public static final String USER_UID = "userUid";
     public static final String PROVIDER = "provider";
+    public static final String BASE_URL = "baseUrl";
 
     @Override
     public void onRequest(ChatModelRequestContext requestContext) {
@@ -34,5 +35,8 @@ public record MetadataAppenderChatModelListener(String instanceUid, String provi
                 USER_UID, conversationMetadata.uid()
             )
         );
+        if (this.baseUrl() != null) {
+            requestContext.attributes().put(BASE_URL, this.baseUrl());
+        }
     }
 }

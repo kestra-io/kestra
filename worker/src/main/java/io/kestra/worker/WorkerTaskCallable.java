@@ -89,6 +89,9 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
             return SUCCESS;
         } catch (dev.failsafe.TimeoutExceededException e) {
             kill(false);
+            // Clear the interrupt flag set by Failsafe's withInterrupt() so it doesn't leak
+            // to the caller (e.g., queue emission after timeout).
+            Thread.interrupted();
             return this.exceptionHandler(new TimeoutExceededException(workerTaskTimeout));
         } catch (RunnableTaskException e) {
             taskOutput = e.getOutput();

@@ -212,6 +212,55 @@ class WorkerTest {
 
     }
 
+    @Test
+    void timeout() throws TimeoutException, QueueException {
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
+        worker.run();
+
+        List<WorkerTaskResult> workerTaskResults = new CopyOnWriteArrayList<>();
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResults.add(either.getLeft()));
+
+        Sleep task = Sleep.builder()
+            .type(Sleep.class.getName())
+            .id("timeout-test")
+            .duration(Property.ofValue(Duration.ofSeconds(60)))
+            .timeout(Property.ofValue(Duration.ofSeconds(1)))
+            .build();
+
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unit-test")
+            .tasks(Collections.singletonList(task))
+            .build();
+
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+        ResolvedTask resolvedTask = ResolvedTask.of(task);
+        String executionId = execution.getId();
+
+        WorkerTask workerTask = WorkerTask.builder()
+            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+            .task(task)
+            .taskRun(TaskRun.of(execution, resolvedTask))
+            .build();
+
+        workerTaskQueue.emit(workerTask);
+
+        Await.until(
+            () -> workerTaskResults.stream()
+                .anyMatch(r -> r.getTaskRun().getExecutionId().equals(executionId) && r.getTaskRun().getState().isTerminated()),
+            Duration.ofMillis(100),
+            Duration.ofMinutes(1)
+        );
+        receive.blockLast();
+        worker.shutdown();
+
+        WorkerTaskResult result = workerTaskResults.stream()
+            .filter(r -> r.getTaskRun().getExecutionId().equals(executionId) && r.getTaskRun().getState().isTerminated())
+            .findFirst()
+            .orElseThrow();
+        assertThat(result.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     private WorkerTask workerTask(long sleepDuration) {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())

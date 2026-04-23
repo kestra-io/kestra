@@ -30,6 +30,13 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration);
     }
 
+    private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
+
+    @Override
+    protected String baseUrl() {
+        return getAiConfiguration().baseUrl() != null ? getAiConfiguration().baseUrl() : DEFAULT_BASE_URL;
+    }
+
     public ChatModel chatModel(List<ChatModelListener> listeners) {
         GoogleAiGeminiChatModel.GoogleAiGeminiChatModelBuilder builder = GoogleAiGeminiChatModel.builder()
             .baseUrl(getAiConfiguration().baseUrl())

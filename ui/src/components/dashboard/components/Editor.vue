@@ -126,7 +126,6 @@
     import {usePluginsStore} from "../../../stores/plugins";
     import {useDashboardStore} from "../../../stores/dashboard";
 
-
     const props = defineProps<{
         allowSaveUnchanged?: boolean;
         initialSource?: string;

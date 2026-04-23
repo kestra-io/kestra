@@ -82,8 +82,8 @@
 </template>
 
 <script setup lang="ts">
-    import {provideGlobalConfig} from "element-plus"
     import {ref, watch, onMounted} from "vue"
+    import {provideGlobalConfig} from "element-plus"
 
     provideGlobalConfig({namespace: "kel"})
 

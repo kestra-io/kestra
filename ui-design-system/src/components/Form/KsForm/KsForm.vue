@@ -18,14 +18,10 @@
     const props = defineProps<{
         model?: object
         rules?: object
-        disabled?: boolean
         size?: "large" | "default" | "small"
         labelPosition?: "left" | "right" | "top"
         labelWidth?: string | number
-        statusIcon?: boolean
     }>()
-
-    const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
         submit: [evt: Event]
@@ -37,13 +33,12 @@
 
     const formRef = ref<InstanceType<typeof ElForm>>()
 
+    const filteredProps = useFilteredProps(props)
+
     defineExpose({
         validate: (...args: Parameters<NonNullable<InstanceType<typeof ElForm>>["validate"]>) => formRef.value?.validate(...args),
-         
         resetFields: (...args: any[]) => formRef.value?.resetFields(...args),
-         
         clearValidate: (...args: any[]) => formRef.value?.clearValidate(...args),
-         
         validateField: (...args: any[]) => formRef.value?.validateField(...args),
         scrollToField: (prop: string) => formRef.value?.scrollToField(prop),
     })

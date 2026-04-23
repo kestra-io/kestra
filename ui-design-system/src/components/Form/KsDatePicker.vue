@@ -1,7 +1,7 @@
 <template>
     <ElDatePicker
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     />
 </template>
@@ -14,30 +14,33 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<Date | Date[] | string | string[] | null>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: Date | Date[] | string | string[] | null
         type?: string
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-        format?: string
-        valueFormat?: string
         disabledDate?: (date: Date) => boolean
-        disabledTime?: (date: Date) => object
         unlinkPanels?: boolean
         size?: "large" | "default" | "small"
         startPlaceholder?: string
         endPlaceholder?: string
     }>(), {
+        type: undefined,
+        placeholder: undefined,
         clearable: undefined,
+        disabledDate: undefined,
+        size: undefined,
+        startPlaceholder: undefined,
+        endPlaceholder: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: any]
         change: [value: any]
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

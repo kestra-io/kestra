@@ -1,7 +1,7 @@
 <template>
     <ElDialog
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @close="emit('close')"
     >
         <template v-if="$slots.default" #default>
@@ -24,8 +24,9 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<boolean>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: boolean
         title?: string
         destroyOnClose?: boolean
         lockScroll?: boolean
@@ -36,16 +37,16 @@
         width?: string | number
         top?: string
     }>(), {
+        title: undefined,
         lockScroll: undefined,
         closeOnClickModal: undefined,
         closeOnPressEscape: undefined,
         showClose: undefined,
+        width: undefined,
+        top: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: boolean]
         close: []
     }>()
 
@@ -54,6 +55,8 @@
         header?(): unknown
         footer?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">
@@ -98,7 +101,6 @@
                 .kel-dialog__close {
 
                     color: var(--ks-dialog-headerbtn) !important;
-
 
                     &:hover {
                         color: var(--ks-dialog-headerbtn-hover) !important;

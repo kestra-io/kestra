@@ -31,14 +31,15 @@
         description?: string
     }>(), {
         image: noDataImage,
-        imageSize: 180
+        imageSize: 180,
+        description: undefined,
     })
 
     const slots = defineSlots<{
         default?(): unknown
         description?(): unknown
         image?(): unknown
-    }>();
+    }>()
 
     const filteredProps = useFilteredProps(props, slots.image ? ["image", "description"] : ["description"])
 

@@ -1,7 +1,7 @@
 <template>
     <ElDropdown
         :persistent="false"
-        v-bind="({...$attrs} as any)"
+        v-bind="$attrs"
     >
         <template v-if="$slots.default" #default>
             <slot />

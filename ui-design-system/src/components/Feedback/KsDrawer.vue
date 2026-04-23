@@ -1,13 +1,13 @@
 <template>
     <ElDrawer
+        v-model="model"
         destroyOnClose
         lockScroll
         size=""
         :appendToBody="true"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
-        @before-close="emit('before-close', $event)"
         :class="{'full-screen': fullScreen}"
+        @before-close="emit('before-close', $event)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -28,36 +28,28 @@
 </template>
 
 <script setup lang="ts">
+    import {ref} from "vue"
     import {ElDrawer, provideGlobalConfig} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
-    import {ref} from "vue";
+    import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<boolean>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: boolean
         title?: string
-        closeOnClickModal?: boolean
-        closeOnPressEscape?: boolean
-        showClose?: boolean
         isFullScreen?: boolean
         withHeader?: boolean
     }>(), {
-        closeOnClickModal: undefined,
-        closeOnPressEscape: undefined,
-        showClose: undefined,
-        isFullScreen: false,
         title: undefined,
+        isFullScreen: false,
         withHeader: true,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: boolean]
         "before-close": [done: () => void]
     }>()
 
@@ -67,12 +59,13 @@
         footer?(): unknown
     }>()
 
-    const fullScreen = ref(props.isFullScreen);
+    const fullScreen = ref(props.isFullScreen)
 
     const toggleFullScreen = () => {
-        fullScreen.value = !fullScreen.value;
+        fullScreen.value = !fullScreen.value
     }
 
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

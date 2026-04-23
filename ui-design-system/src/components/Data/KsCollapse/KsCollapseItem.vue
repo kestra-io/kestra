@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
     import {ElCollapseItem, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -23,7 +24,6 @@
         name?: string | number
         title?: string
         disabled?: boolean
-         
         icon?: any
     }>()
 

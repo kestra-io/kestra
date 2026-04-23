@@ -1,7 +1,7 @@
 <template>
     <ElCollapse
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string | string[])"
         @change="emit('change', $event as string | string[])"
     >
         <template v-if="$slots.default" #default>
@@ -12,27 +12,28 @@
 
 <script setup lang="ts">
     import {ElCollapse, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | string[]>()
+
     const props = defineProps<{
-        modelValue?: string | string[]
         accordion?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: string | string[]]
         change: [value: string | string[]]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

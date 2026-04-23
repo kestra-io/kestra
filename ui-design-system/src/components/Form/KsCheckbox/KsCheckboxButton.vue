@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
     import {ElCheckboxButton, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -18,22 +19,18 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        value?: boolean | string | number
         label?: string | boolean | number
-        disabled?: boolean
-        checked?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
         change: [value: any]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

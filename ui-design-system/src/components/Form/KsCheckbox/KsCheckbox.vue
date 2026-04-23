@@ -1,7 +1,7 @@
 <template>
     <ElCheckbox
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -12,31 +12,27 @@
 
 <script setup lang="ts">
     import {ElCheckbox, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<boolean | string | number | any[]>()
+
     const props = withDefaults(defineProps<{
-         
-        modelValue?: boolean | string | number | any[]
         value?: boolean | string | number
         label?: string | boolean | number | object
         disabled?: boolean
         checked?: boolean
         indeterminate?: boolean
-        trueValue?: boolean | string | number
-        falseValue?: boolean | string | number
     }>(), {
-        trueValue: undefined,
-        falseValue: undefined,
+        value: undefined,
+        label: undefined,
     })
 
     const emit = defineEmits<{
-         
-        "update:modelValue": [value: any]
-         
         change: [value: any]
     }>()
 

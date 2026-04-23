@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
     import {ElCheckTag, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -26,8 +27,6 @@
         size: "small",
     })
 
-    const filteredProps = useFilteredProps(props, ["size"])
-
     const emit = defineEmits<{
         change: [checked: boolean]
     }>()
@@ -35,6 +34,8 @@
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props, ["size"])
 </script>
 
 <style lang="scss">

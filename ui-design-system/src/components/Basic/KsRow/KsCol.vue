@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
     import {ElCol, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -21,10 +22,6 @@
         md?: number | object
         lg?: number | object
         xl?: number | object
-        offset?: number
-        push?: number
-        pull?: number
-        tag?: string
     }>()
 
     const filteredProps = useFilteredProps(props)

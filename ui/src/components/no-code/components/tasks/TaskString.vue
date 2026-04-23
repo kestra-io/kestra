@@ -15,7 +15,7 @@
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
-            @update:model-value="onInput($event.toISOString())"
+            @update:model-value="(v) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <KsInputNumber
             v-if="!pebble && showDurationDays"

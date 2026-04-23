@@ -66,6 +66,7 @@ public class PluginDefaultService {
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy()
         .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
     private static final String PLUGIN_DEFAULTS_FIELD = "pluginDefaults";
+    private static final String TASK_DEFAULTS_FIELD = "taskDefaults";
 
     private static final TypeReference<List<PluginDefault>> PLUGIN_DEFAULTS_TYPE_REF = new TypeReference<>() {
     };
@@ -130,6 +131,12 @@ public class PluginDefaultService {
      */
     protected List<PluginDefault> getFlowDefaults(final Map<String, Object> flow) {
         Object defaults = flow.get(PLUGIN_DEFAULTS_FIELD);
+        if (defaults == null) {
+            // Fallback to the deprecated 'taskDefaults' field for backward compatibility.
+            // The deprecation itself is surfaced to the UI via FlowService.deprecationPaths,
+            // which relies on Flow.taskDefaults being populated by Jackson during deserialization.
+            defaults = flow.get(TASK_DEFAULTS_FIELD);
+        }
         if (defaults != null) {
             return OBJECT_MAPPER.convertValue(defaults, PLUGIN_DEFAULTS_TYPE_REF);
         } else {

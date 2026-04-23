@@ -316,6 +316,93 @@ class PluginDefaultServiceTest {
     }
 
     @Test
+    void shouldInjectFlowDefaultsGivenDeprecatedTaskDefaults() throws FlowProcessingException {
+        // Given
+        String source = """
+                id: default-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  set: 666
+
+                taskDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  forced: false
+                  values:
+                    set: 123
+                    value: 1
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then - taskDefaults should behave identically to pluginDefaults
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(666)); // task value takes precedence over non-forced default
+    }
+
+    @Test
+    void shouldInjectForcedDefaultsGivenDeprecatedTaskDefaults() throws FlowProcessingException {
+        // Given - forced defaults declared via the deprecated 'taskDefaults' key
+        String source = """
+                id: default-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  set: 666
+
+                taskDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  forced: true
+                  values:
+                    set: 123
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then - forced default overrides the task-level value
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(123));
+    }
+
+    @Test
+    void shouldPreferPluginDefaultsOverTaskDefaults() throws FlowProcessingException {
+        // Given - flow has both pluginDefaults and taskDefaults; pluginDefaults should win
+        String source = """
+                id: default-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  set: 666
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  values:
+                    value: 42
+
+                taskDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  values:
+                    value: 99
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then - pluginDefaults takes precedence
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(42));
+    }
+
+    @Test
     public void shouldNotInjectDefaultsGivenExistingTaskValue() throws FlowProcessingException {
         // Given
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());

@@ -152,7 +152,7 @@ public class State {
 
     @JsonIgnore
     public boolean canBeRestarted() {
-        return this.current.isFailed() || this.current.isPaused();
+        return this.current.isFailed() || this.current.isPaused() || this.current.isKilled();
     }
 
     @JsonIgnore
@@ -214,7 +214,7 @@ public class State {
 
     @JsonIgnore
     public boolean isRestartable() {
-        return this.current.isFailed() || this.isPaused();
+        return this.current.isFailed() || this.isPaused() || this.current.isKilled();
     }
 
     @JsonIgnore

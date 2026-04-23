@@ -6,8 +6,12 @@ import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
@@ -28,16 +32,19 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionStateStore executionStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     public ExecutionCommandMessageHandler(ExecutionService executionService,
         ExecutionStateStore executionStateStore,
         FlowMetaStoreInterface flowMetaStore,
-        TaskOutputService taskOutputService) {
+        TaskOutputService taskOutputService,
+        BroadcastQueueInterface<ExecutionKilled> killQueue) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
+        this.killQueue = killQueue;
     }
 
     @Override
@@ -48,8 +55,12 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 var flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);
                 var newExecution = switch (message) {
-                    case Restart restartCommand ->
-                        executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
+                    case Restart restartCommand -> {
+                        if (execution.getState().getCurrent() == State.Type.KILLED) {
+                            revokeKill(execution);
+                        }
+                        yield executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
+                    }
                     case Pause ignored ->
                         executionService.pause(execution);
                     case Unqueue unqueueCommand ->
@@ -83,6 +94,20 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private void revokeKill(Execution execution) {
+        try {
+            killQueue.emit(
+                ExecutionKilledExecution.builder()
+                    .tenantId(execution.getTenantId())
+                    .executionId(execution.getId())
+                    .state(ExecutionKilled.State.REVOKED)
+                    .build()
+            );
+        } catch (QueueException e) {
+            log.error("Unable to revoke kill for execution {}", execution.getId(), e);
+        }
     }
 
     /**

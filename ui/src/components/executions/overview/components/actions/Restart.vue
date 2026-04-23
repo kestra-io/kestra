@@ -270,7 +270,8 @@
         }
 
         const isRunning = State.isRunning(props.execution.state.current)
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+        const current = props.execution.state.current
+        return props.isReplay ? !isRunning : (current === State.FAILED || current === State.KILLED)
     })
 
     const tooltip = computed(() =>

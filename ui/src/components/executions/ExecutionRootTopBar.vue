@@ -127,7 +127,7 @@
                     };
                 }
 
-                if (this.execution.state.current === State.FAILED) {
+                if (this.execution.state.current === State.FAILED || this.execution.state.current === State.KILLED) {
                     return {
                         component: Restart,
                         props: {}

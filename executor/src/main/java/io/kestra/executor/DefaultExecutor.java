@@ -412,8 +412,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
         final ExecutionKilled event = either.getLeft();
 
         // Check whether the event should be handled by the executor.
-        if (event.getState() == ExecutionKilled.State.EXECUTED) {
-            // Event was already handled by the Executor. Ignore it.
+        if (event.getState() == ExecutionKilled.State.EXECUTED || event.getState() == ExecutionKilled.State.REVOKED) {
+            // EXECUTED: already handled by the Executor. REVOKED: informational for workers only (e.g. restart of a killed execution).
             return;
         }
 

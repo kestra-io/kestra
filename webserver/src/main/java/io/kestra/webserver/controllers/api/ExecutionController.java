@@ -951,7 +951,7 @@ public class ExecutionController {
 
         if (!(execution.get().getState().canBeRestarted())) {
             throw new IllegalStateException(
-                "Execution must be terminated or paused to be restarted, " +
+                "Execution must be failed, paused, or killed to be restarted, " +
                     "current state is '" + execution.get().getState().getCurrent() + "' !"
             );
         }
@@ -977,7 +977,7 @@ public class ExecutionController {
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                        "Execution '" + execution.get().getId() + "' must be failed, paused, or killed to be restarted, " +
                             "current state is '" + execution.get().getState().getCurrent() + "' !",
                         executionId,
                         String.class,

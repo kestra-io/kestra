@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.TaskRun;
@@ -373,6 +374,27 @@ class ExecutionKilledManagerTest {
         // Then
         assertThat(killed.get()).isTrue();
         assertThat(manager.isExecutionKilled("exec-1")).isTrue();
+    }
+
+    @Test
+    void shouldForgetCachedKillWhenRevoked() {
+        // Given: an execution that was killed and is still in the cache
+        ExecutionKilledExecution kill = ExecutionKilledExecution.builder()
+            .executionId("exec-1")
+            .state(ExecutionKilled.State.REQUESTED)
+            .build();
+        manager.onKillReceived(kill);
+        assertThat(manager.isExecutionKilled("exec-1")).isTrue();
+
+        // When: a revoke arrives (e.g. the execution is being restarted with the same id)
+        ExecutionKilledExecution revoke = ExecutionKilledExecution.builder()
+            .executionId("exec-1")
+            .state(ExecutionKilled.State.REVOKED)
+            .build();
+        manager.onKillReceived(revoke);
+
+        // Then: new worker tasks for that execution id are no longer treated as killed
+        assertThat(manager.isExecutionKilled("exec-1")).isFalse();
     }
 
     @Test

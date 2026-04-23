@@ -178,6 +178,37 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
+    void restartKilled() throws Exception {
+        // Given: a failed execution transformed to look killed (both execution and last task run)
+        Execution failed = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_last_failed");
+        assertThat(failed.getTaskRunList()).hasSize(3);
+        assertThat(failed.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        TaskRun lastTaskRun = failed.getTaskRunList().getLast();
+
+        Execution killed = failed
+            .withTaskRunList(
+                failed.getTaskRunList().stream()
+                    .map(taskRun -> taskRun.getId().equals(lastTaskRun.getId())
+                        ? taskRun.withState(State.Type.KILLED)
+                        : taskRun)
+                    .toList()
+            )
+            .withState(State.Type.KILLED);
+
+        // When: the killed execution is restarted
+        Flow flow = flowRepository.findByExecution(killed);
+        Execution restart = executionService.restart(killed, flow, null);
+
+        // Then: the restarted execution reuses the same id and marks the killed task for restart
+        assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restart.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restart.getId()).isEqualTo(killed.getId());
+        assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
     void replayFromBeginning() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");

@@ -14,12 +14,14 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
- * The Kestra event for killing an execution. A {@link ExecutionKilled} can be in two states:
+ * The Kestra event for killing an execution. A {@link ExecutionKilled} can be in three states:
  * <p>
- * 
+ *
  * <pre>
  *  - {@link State#REQUESTED}: The event was requested either by an Executor or by an external request.
  *  - {@link State#EXECUTED}: The event was consumed and processed by the Executor.
+ *  - {@link State#REVOKED}: A previously sent kill is revoked (e.g. when an execution is restarted with the same id);
+ *    listeners should forget any cached kill state for the target execution.
  *  </pre>
  *
  * A {@link ExecutionKilled} will always transit from {@link State#REQUESTED} to {@link State#EXECUTED}
@@ -47,7 +49,8 @@ abstract public class ExecutionKilled implements TenantInterface, HasUID, Broadc
 
     public enum State {
         REQUESTED,
-        EXECUTED
+        EXECUTED,
+        REVOKED
     }
 
     /**

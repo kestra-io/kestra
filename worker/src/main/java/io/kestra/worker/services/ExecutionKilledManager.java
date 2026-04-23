@@ -64,6 +64,11 @@ public class ExecutionKilledManager {
      */
     public void onKillReceived(ExecutionKilled killed) {
         if (killed instanceof ExecutionKilledExecution killedExecution) {
+            if (killed.getState() == ExecutionKilled.State.REVOKED) {
+                log.info("[tenant: {}] [execution: {}] Received kill-revoke; forgetting cached kill", killedExecution.getTenantId(), killedExecution.getExecutionId());
+                killedExecutions.invalidate(killedExecution.getExecutionId());
+                return;
+            }
             log.info("[tenant: {}] [execution: {}] Received kill command", killedExecution.getTenantId(), killedExecution.getExecutionId());
             killedExecutions.put(killedExecution.getExecutionId(), killedExecution);
 

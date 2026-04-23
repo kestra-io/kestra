@@ -159,6 +159,8 @@ public class WorkerJobDispatcher {
             ExecutionKilled killed = either.getLeft();
             if (killed.getState() == ExecutionKilled.State.EXECUTED) {
                 onExecutionKilled(killed);
+            } else if (killed.getState() == ExecutionKilled.State.REVOKED) {
+                onExecutionKillRevoked(killed);
             }
         });
 
@@ -201,6 +203,19 @@ public class WorkerJobDispatcher {
         }
 
         broadcastEvent(new WorkerBroadcastEvent.KillEvent(killed), "kill command");
+    }
+
+    /**
+     * Handles a kill-revoke event (e.g. when a killed execution is restarted with the same id).
+     * Drops the local cache entry and forwards the revoke to connected workers so they do the same.
+     */
+    private void onExecutionKillRevoked(ExecutionKilled killed) {
+        if (killed instanceof ExecutionKilledExecution killedExecution) {
+            killedExecutionIds.invalidate(killedExecution.getExecutionId());
+            log.info("Received kill-revoke for execution '{}'", killedExecution.getExecutionId());
+        }
+
+        broadcastEvent(new WorkerBroadcastEvent.KillEvent(killed), "kill revoke");
     }
 
     /**

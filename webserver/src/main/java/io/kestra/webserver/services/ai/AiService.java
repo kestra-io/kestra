@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -225,7 +226,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             return null;
         }
         String parentSpanId = IdUtils.create();
-        String uid = userInfo.uid();
+        String uid = Objects.requireNonNullElse(userInfo.uid(), "api-call");
         this.postHogService.capture(
             uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,

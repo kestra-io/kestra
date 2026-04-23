@@ -1,6 +1,19 @@
 import {beforeAll} from "vitest"
 import {setProjectAnnotations} from "@storybook/vue3-vite"
 import * as projectAnnotations from "./preview"
+import {vi} from "vitest";
+import {type AppContext} from "vue";
+
+vi.mock("vue-i18n", () => ({
+  useI18n: () => ({
+    t: (key:string) => key,
+  }),
+  createI18n: () => ({
+    install(app:AppContext) {
+      app.config.globalProperties.$t = (key:string) => key;
+    },
+  }),
+}));
 
 // Story templates are runtime-compiled by Vue in the browser, which triggers
 // "@vue/compiler-core: decodeEntities option is passed but will be ignored in

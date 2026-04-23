@@ -17,7 +17,9 @@
 
 <script setup lang="ts">
     import type {Component} from "vue"
+
     import {ElButton, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -31,21 +33,15 @@
         icon?: string | Component
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
-        loadingIcon?: string | Component
         plain?: boolean
         text?: boolean
         link?: boolean
         bg?: boolean
-        autofocus?: boolean
         round?: boolean
         circle?: boolean
         color?: string
-        dark?: boolean
-        autoInsertSpace?: boolean
         tag?: string | Component
     }>()
-
-    const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -56,6 +52,8 @@
         loading?(): unknown
         icon?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

@@ -14,6 +14,7 @@
 
 <script setup lang="ts">
     import {ElCard, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
@@ -22,7 +23,6 @@
 
     const props = defineProps<{
         shadow?: "always" | "hover" | "never"
-        bodyStyle?: string | object | any[]
     }>()
 
     const filteredProps = useFilteredProps(props)

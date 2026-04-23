@@ -1,7 +1,7 @@
 <template>
     <ElAutocomplete
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string)"
         @select="emit('select', $event)"
     >
         <template v-if="$slots.default" #default="p">
@@ -18,39 +18,40 @@
 
 <script setup lang="ts">
     import {ElAutocomplete, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: string
         placeholder?: string
         disabled?: boolean
         clearable?: boolean
-         
         fetchSuggestions?: (query: string, callback: (results: any[]) => void) => void
         triggerOnFocus?: boolean
         valueKey?: string
     }>(), {
+        placeholder: undefined,
+        fetchSuggestions: undefined,
         triggerOnFocus: undefined,
+        valueKey: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: string]
-         
         select: [item: any]
     }>()
 
     defineSlots<{
-         
         default?: (scope: {item: any}) => unknown
         prepend?(): unknown
         suffix?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">
@@ -79,7 +80,6 @@
         }
 
         li {
-            // highlight of keyboard selection & element plus hover
             --kel-fill-color-light: var(--ks-select-hover);
             padding: 0 1rem;
             border-radius: 5px;

@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
     import {ElAlert, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})

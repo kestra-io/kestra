@@ -16,24 +16,22 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
+
     import {use} from "echarts/core"
     import {PieChart} from "echarts/charts"
-    import type {KsChartSeriesItem} from "./KsEchart.vue"
+
     import KsEchart from "./KsEchart.vue"
+    import type {KsChartSeriesItem} from "./KsEchart.vue"
     import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
 
     use([PieChart])
 
     defineOptions({inheritAttrs: false})
 
-    // ─── Emits ────────────────────────────────────────────────────────────────
-
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
     }>()
-
-    // ─── Props ────────────────────────────────────────────────────────────────
 
     const props = withDefaults(
         defineProps<{
@@ -44,7 +42,7 @@
             /** Show the loading spinner. Defaults to `true` when data is null/undefined. */
             loading?: boolean
             /** Render as a donut ring when `true`. */
-            donut?: boolean,
+            donut?: boolean
             /** Tooltip rendering mode: NATIVE uses ECharts built-in tooltip, EXTERNAL uses KsTooltip. */
             tooltipType?: TooltipType
             /** Features to disable (LEGEND, AXIS, AXIS_SPLITLINE, TOOLTIP). */
@@ -63,7 +61,7 @@
         },
     )
 
-    // ─── Computed ─────────────────────────────────────────────────────────────
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     const isLoading = computed(() => {
         if (props.loading !== undefined) return props.loading
@@ -71,18 +69,18 @@
     })
 
     const mergedOption = computed(() => {
-        let base: Record<string, unknown> = {
+        const legendHidden = (props.options.legend as {show?: boolean})?.show === false
+            || props.disableFeatures.includes(ChartFeature.LEGEND)
+        const base: Record<string, unknown> = {
             tooltip: {trigger: "item", formatter: "{b}: {c} ({d}%)"},
             legend: {orient: "vertical", right: "5%", top: "center"},
             series: [
                 {
                     type: "pie",
                     radius: props.donut ? ["40%", "70%"] : "60%",
-                    center: (props.options.legend as {show?: boolean})?.show == false || props.disableFeatures.includes(ChartFeature.LEGEND) ? ["50%", "50%"] : ["40%", "50%"],
-                    data: (props.data ?? []) as KsChartSeriesItem[],
-                    emphasis: {
-                        scale: false
-                    }
+                    center: legendHidden ? ["50%", "50%"] : ["40%", "50%"],
+                    data: props.data ?? [],
+                    emphasis: {scale: false},
                 },
             ],
         }
@@ -90,12 +88,7 @@
         return deepMerge(base, props.options ?? {})
     })
 
-    // ─── Expose ───────────────────────────────────────────────────────────────
-
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
-
     defineExpose({
         getEchartsInstance: () => ksEchartRef.value?.getEchartsInstance() ?? null,
     })
-
 </script>

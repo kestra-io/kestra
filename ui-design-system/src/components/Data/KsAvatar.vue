@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
     import {ElAvatar, provideGlobalConfig} from "element-plus"
+
     import {useFilteredProps} from "../../utils/filteredProps"
 
     provideGlobalConfig({namespace: "kel"})

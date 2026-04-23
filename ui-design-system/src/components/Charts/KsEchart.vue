@@ -51,10 +51,11 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, watch} from "vue"
+
     import {useElementSize} from "@vueuse/core"
     import VChart from "vue-echarts"
-    import type {ECharts} from "echarts/core"
     import {use} from "echarts/core"
+    import type {ECharts} from "echarts/core"
     import {CanvasRenderer, SVGRenderer} from "echarts/renderers"
     import {
         GridComponent,
@@ -63,6 +64,7 @@
         DataZoomComponent,
         GraphicComponent,
     } from "echarts/components"
+
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
@@ -72,21 +74,15 @@
 
     use([CanvasRenderer, SVGRenderer, GridComponent, GraphicComponent, TooltipComponent, LegendComponent, DataZoomComponent])
 
-    // ─── Types ────────────────────────────────────────────────────────────────
-
     export interface KsChartSeriesItem {
         name?: string
         [key: string]: unknown
     }
 
-    // ─── Emits ────────────────────────────────────────────────────────────────
-
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
     }>()
-
-    // ─── Props ────────────────────────────────────────────────────────────────
 
     const props = withDefaults(
         defineProps<{
@@ -111,8 +107,6 @@
         },
     )
 
-    // ─── Dark-mode detection ──────────────────────────────────────────────────
-
     const isDark = ref(false)
 
     function detectDark() {
@@ -133,8 +127,6 @@
     onUnmounted(() => {
         observer?.disconnect()
     })
-
-    // ─── Effective option (redirect native tooltip in external mode) ─────────
 
     const effectiveOption = computed(() => {
         let base = props.options
@@ -166,14 +158,10 @@
         return base
     })
 
-    // ─── Theme builder ────────────────────────────────────────────────────────
-
     const currentTheme = computed(() => {
         void isDark.value // reactive dependency — triggers rebuild on theme change
         return KsTheme()
     })
-
-    // ─── External tooltip ─────────────────────────────────────────────────────
 
     const vChartRef = ref<InstanceType<typeof VChart> | null>(null)
     const wrapperRef = ref<HTMLElement | null>(null)
@@ -243,8 +231,6 @@
     function onMouseleave() {
         tooltipVisible.value = false
     }
-
-    // ─── Expose ───────────────────────────────────────────────────────────────
 
     defineExpose({
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,

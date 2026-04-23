@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
     import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -119,8 +120,8 @@
         top?(): unknown
         table?(): unknown
         empty?(): unknown
-        'bulk-actions'?(): unknown
-        'select-actions'?(): unknown
+        "bulk-actions"?(): unknown
+        "select-actions"?(): unknown
     }>()
 
     const slots = useSlots()
@@ -201,7 +202,6 @@
             const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
                 const row = props.data.find(r => isFunction
-
                     ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
                     : r[props.rowKey as string] === sel[props.rowKey as string])
                 if (row) tableRef.value?.toggleRowSelection(row, true)
@@ -253,16 +253,8 @@
             }
         }
     }
-    //
-    // const hasActiveFilters = computed(() =>
-    //     route.query["filters[q][EQUALS]"] !== undefined
-    //     || route.query[TAGS_QUERY_KEY] !== undefined
-    // );
 
-
-    const showEmpty = computed(() =>
-        props.data.length == 0 && !isLoading.value
-    );
+    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
 
     const reload = () => callLoad()
 
@@ -289,7 +281,6 @@
             const validSelection = currentSelection.filter((sel: unknown) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
-
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
                     : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
             })

@@ -17,24 +17,22 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
+
     import {use} from "echarts/core"
     import {LineChart} from "echarts/charts"
-    import type {KsChartSeriesItem} from "./KsEchart.vue"
+
     import KsEchart from "./KsEchart.vue"
+    import type {KsChartSeriesItem} from "./KsEchart.vue"
     import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
 
     use([LineChart])
 
     defineOptions({inheritAttrs: false})
 
-    // ─── Emits ────────────────────────────────────────────────────────────────
-
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
     }>()
-
-    // ─── Props ────────────────────────────────────────────────────────────────
 
     const props = withDefaults(
         defineProps<{
@@ -64,8 +62,6 @@
         },
     )
 
-    // ─── Computed ─────────────────────────────────────────────────────────────
-
     const isLoading = computed(() => {
         if (props.loading !== undefined) return props.loading
         return props.data === null || props.data === undefined
@@ -84,7 +80,7 @@
     })
 
     const mergedOption = computed(() => {
-        let base: Record<string, unknown> = {
+        const base: Record<string, unknown> = {
             grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
             xAxis: {type: "category", boundaryGap: false, data: props.categories},
             yAxis: {type: "value"},
@@ -98,8 +94,6 @@
 
         return deepMerge(base, props.options ?? {})
     })
-
-    // ─── Expose ───────────────────────────────────────────────────────────────
 
     const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 

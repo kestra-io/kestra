@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import {getMomentInstance, getDateFormatter} from "../../date"
 
@@ -20,7 +21,10 @@
         className?: string
         showTooltip?: boolean
     }>(), {
+        date: undefined,
         inverted: false,
+        format: undefined,
+        className: undefined,
         showTooltip: true,
     })
 

@@ -232,11 +232,6 @@
                 @update:model-value="onChange(input)"
             />
             <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
-            <template v-for="err in input.errors ?? []" :key="err.message">
-                <KsText type="warning">
-                    {{ err.message }}
-                </KsText>
-            </template>
         </KsFormItem>
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />

@@ -271,13 +271,13 @@
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
     import Microphone from "vue-material-design-icons/Microphone.vue";
+    import kestraIcon from "../../assets/icon.svg";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
     import {useApiStore} from "../../stores/api";
     import type {InputInstance} from "@kestra-io/ui-design-system";
     import {useMiscStore} from "override/stores/misc";
     import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
-    import kestraIcon from "../../assets/icon.svg";
 
     const aiStore = useAiStore();
     const apiStore = useApiStore();
@@ -299,8 +299,8 @@
         generationType?: AiGenerationType,
         namespace?: string,
         onboarding?: boolean,
-        heading?: string,
         initialPrompt?: string,
+        heading?: string,
         onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,
         selectedFromTag?: boolean,
@@ -962,10 +962,6 @@
     margin-top: -2px;
 }
 
-.ai-provider-select {
-    width: min(240px, 100%);
-}
-
 .footer-right {
     display: flex;
     gap: 8px;
@@ -1032,6 +1028,14 @@
     color: var(--ks-content-tertiary);
 }
 
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
 @media (max-width: 768px) {
     .ai-body-onboarding {
         gap: 24px;
@@ -1069,11 +1073,6 @@
 
     .ai-footer-onboarding {
         flex-wrap: wrap;
-    }
-
-    .ai-provider-select {
-        width: 100%;
-        order: 3;
     }
 
     .footer-left {

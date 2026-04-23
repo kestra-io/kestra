@@ -25,7 +25,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.53.0"
+    id "com.github.ben-manes.versions" version "0.54.0"
 
     // front
     id 'com.github.node-gradle.node' version '7.1.0'
@@ -249,6 +249,9 @@ subprojects {subProj ->
         }
 
         def commonTestConfig = { Test t ->
+            t.timeout = java.time.Duration.ofMinutes(
+                (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+            )
             t.ignoreFailures = true
             t.finalizedBy jacocoTestReport
             t.doFirst {

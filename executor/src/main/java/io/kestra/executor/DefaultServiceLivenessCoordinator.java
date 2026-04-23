@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import org.slf4j.event.Level;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -163,6 +164,12 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     log.info("Trigger task restart for non-responding worker after termination grace period: {}.", serviceInstance.uid());
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
+            } else if (serviceInstance.is(Service.ServiceState.TERMINATED_GRACEFULLY)) {
+                // realtime triggers need to be resubmitted even when terminated gracefully
+                if (serviceInstance.config().workerTaskRestartStrategy().isRestartable()) {
+                    log.info("Trigger realtime trigger restart for terminated gracefully worker: {}.", serviceInstance.uid());
+                    reEmitRealtimeTriggerForWorker(txContext, serviceInstance.uid());
+                }
             }
 
             // Transit GRACEFUL or UNCLEAN SHUTDOWN worker to NOT_RUNNING.
@@ -237,6 +244,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) ->
         {
             resubmitWorkerJobRunning(txContext2, workerJobRunning);
+        });
+    }
+
+    private void reEmitRealtimeTriggerForWorker(final TransactionContext txContext, final String id) {
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) ->
+        {
+            resubmitRealtimeTrigger(txContext2, workerJobRunning);
         });
     }
 
@@ -364,62 +378,77 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private void resubmitWorkerJobRunning(TransactionContext txContext, WorkerJobRunning workerJobRunning) {
         // WorkerTaskRunning
         if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
-            if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
-                // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
-                log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
-                workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
-            } else {
-                try {
-                    String raw = workerTaskRunning.getWorkerInstance().workerGroup();
-                    String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
-                    WorkerTask workerTask = WorkerTask.builder()
-                        .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
-                        .task(workerTaskRunning.getTask())
-                        .data(workerTaskRunning.getData())
-                        .build();
-                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
-                    Logs.logTaskRun(
-                        workerTaskRunning.getTaskRun(),
-                        Level.WARN,
-                        "Resubmit WorkerTask."
-                    );
-                } catch (QueueException e) {
-                    Logs.logTaskRun(
-                        workerTaskRunning.getTaskRun(),
-                        Level.ERROR,
-                        "Unable to resubmit WorkerTask.",
-                        e
-                    );
-                }
-            }
+            resubmitWorkerTask(txContext, workerTaskRunning);
         }
 
         // WorkerTriggerRunning
         if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+            resubmitWorkerTrigger(workerTriggerRunning);
+        }
+    }
+
+    private void resubmitRealtimeTrigger(TransactionContext txContext, WorkerJobRunning workerJobRunning) {
+        // we only resubmit realtime triggers
+        if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning && workerTriggerRunning.getTrigger() instanceof RealtimeTriggerInterface) {
+            resubmitWorkerTrigger(workerTriggerRunning);
+        }
+    }
+
+    private void resubmitWorkerTask(TransactionContext txContext, WorkerTaskRunning workerTaskRunning) {
+        if (killSwitchService.evaluate(workerTaskRunning.getTaskRun()) != EvaluationType.PASS) {
+            // if the execution is switch-killed, we remove the workerTaskRunning and skip its resubmission
+            log.warn("Ignoring worker job resubmission for execution {} because there is a kill switch for it", workerTaskRunning.getTaskRun().getExecutionId());
+            workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
+        } else {
             try {
-                String raw = workerTriggerRunning.getWorkerInstance().workerGroup();
+                String raw = workerTaskRunning.getWorkerInstance().workerGroup();
                 String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
-                WorkerTrigger workerTrigger = WorkerTrigger.builder()
-                    .trigger(workerTriggerRunning.getTrigger())
-                    .data(workerTriggerRunning.getData())
+                WorkerTask workerTask = WorkerTask.builder()
+                    .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
+                    .task(workerTaskRunning.getTask())
+                    .data(workerTaskRunning.getData())
                     .build();
-                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
-                Logs.logTrigger(
-                    workerTrigger.triggerId(),
+                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
+                Logs.logTaskRun(
+                    workerTaskRunning.getTaskRun(),
                     Level.WARN,
-                    "Re-emitting WorkerTrigger."
+                    "Resubmit WorkerTask."
                 );
             } catch (QueueException e) {
-                Logs.logTrigger(
-                    TriggerId.of(
-                        workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(),
-                        workerTriggerRunning.getTrigger().getId()
-                    ),
+                Logs.logTaskRun(
+                    workerTaskRunning.getTaskRun(),
                     Level.ERROR,
-                    "Unable to re-emit WorkerTrigger.",
+                    "Unable to resubmit WorkerTask.",
                     e
                 );
             }
+        }
+    }
+
+    private void resubmitWorkerTrigger(WorkerTriggerRunning workerTriggerRunning) {
+        try {
+            String raw = workerTriggerRunning.getWorkerInstance().workerGroup();
+            String workerGroupKey = (raw == null || raw.isEmpty()) ? null : raw;
+            WorkerTrigger workerTrigger = WorkerTrigger.builder()
+                .trigger(workerTriggerRunning.getTrigger())
+                .data(workerTriggerRunning.getData())
+                .build();
+            workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
+            Logs.logTrigger(
+                workerTrigger.triggerId(),
+                Level.WARN,
+                "Re-emitting WorkerTrigger."
+            );
+        } catch (QueueException e) {
+            Logs.logTrigger(
+                TriggerId.of(
+                    workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(),
+                    workerTriggerRunning.getTrigger().getId()
+                ),
+                Level.ERROR,
+                "Unable to re-emit WorkerTrigger.",
+                e
+            );
         }
     }
 }

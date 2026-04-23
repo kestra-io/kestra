@@ -85,12 +85,18 @@ public class PosthogChatModelListener implements ChatModelListener {
     }
 
     private void send(Map<Object, Object> attributes, Map<String, Object> properties) {
-        properties.put("$ai_parent_id", attributes.get(MetadataAppenderChatModelListener.PARENT_ID).toString());
+        Object parentId = attributes.get(MetadataAppenderChatModelListener.PARENT_ID);
+        if (parentId == null) {
+            log.warn("No parent ID found in attributes, skipping PostHog event");
+            return;
+        }
+        properties.put("$ai_parent_id", parentId.toString());
         properties.put("$ai_span_name", attributes.get(MetadataAppenderChatModelListener.SPAN_NAME));
         properties.put("$ai_span_id", IdUtils.create());
 
+        Object rawUid = attributes.get(MetadataAppenderChatModelListener.USER_UID);
         posthogService.capture(
-            attributes.get(MetadataAppenderChatModelListener.USER_UID).toString(),
+            rawUid != null ? rawUid.toString() : "api-call",
             "$ai_generation",
             properties
         );
@@ -107,8 +113,9 @@ public class PosthogChatModelListener implements ChatModelListener {
             properties.put("$ai_base_url", attributes.get(MetadataAppenderChatModelListener.BASE_URL));
         }
 
-        if (attributes.containsKey(MetadataAppenderChatModelListener.IP)) {
-            properties.put("$ip", attributes.get(MetadataAppenderChatModelListener.IP));
+        Object ip = attributes.get(MetadataAppenderChatModelListener.IP);
+        if (ip instanceof String ipStr && !ipStr.isBlank()) {
+            properties.put("$ip", ipStr);
         }
 
         Map<String, Object> parameters = Maps.newHashMap();

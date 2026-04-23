@@ -1,6 +1,6 @@
 <template>
     <div class="ks-password w-100">
-        <ks-input
+        <KsInput
             :class="hidden || disabled ? 'ks-password--masked' : ''"
             v-bind="({...filteredProps(), ...$attrs} as any)"
             @update:model-value="emit('update:modelValue', $event)"
@@ -17,8 +17,8 @@
             <template v-if="$slots.default" #default>
                 <slot />
             </template>
-        </ks-input>
-        <ks-button class="hide" link v-if="!disabled && modelValue" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+        </KsInput>
+        <KsButton class="hide" link v-if="!disabled && modelValue" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
     </div>
 </template>
 

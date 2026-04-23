@@ -1,5 +1,5 @@
 <template>
-    <ks-tooltip
+    <KsTooltip
         v-if="tooltip"
         :content="tooltip"
         :rawContent="true"
@@ -14,7 +14,7 @@
                 <slot />
             </template>
         </ElIcon>
-    </ks-tooltip>
+    </KsTooltip>
     <ElIcon
         v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"

@@ -5,7 +5,7 @@
                 <span class="title">{{ $t("filter.hierarchy.all") }}</span>
                 <span class="desc">{{ $t("filter.show default") }}</span>
             </div>
-            <ks-radio :modelValue="selectedOption" :value="'ALL'" label="" />
+            <KsRadio :modelValue="selectedOption" :value="'ALL'" label="" />
         </div>
 
         <div
@@ -19,7 +19,7 @@
                 <span class="title">{{ option.label }}</span>
                 <span v-if="option.description" class="desc">{{ option.description }}</span>
             </div>
-            <ks-radio :modelValue="selectedOption" :value="option.value" label="" />
+            <KsRadio :modelValue="selectedOption" :value="option.value" label="" />
         </div>
     </div>
 </template>

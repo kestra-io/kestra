@@ -1,6 +1,6 @@
 <template>
     <div class="p-3">
-        <ks-date-picker
+        <KsDatePicker
             :modelValue="dateValue"
             type="datetime"
             :placeholder="`Select ${label.toLowerCase()}`"

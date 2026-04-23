@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <ks-button
+        <KsButton
             link
             size="default"
             :icon="isVisible(column) ? EyeOutline : EyeOffOutline"

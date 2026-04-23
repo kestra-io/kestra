@@ -143,7 +143,7 @@
                 size="large"
                 style="width: 240px"
             >
-                <ks-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -151,7 +151,7 @@
                 />
             </el-select>
             <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
-                <ks-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -164,7 +164,7 @@
                 size="small"
                 style="width: 240px"
             >
-                <ks-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -180,7 +180,7 @@
                 placeholder="Select"
                 style="width: 240px"
             >
-                <ks-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"

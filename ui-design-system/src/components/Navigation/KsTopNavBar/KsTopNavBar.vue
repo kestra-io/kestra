@@ -53,14 +53,14 @@
                 <slot name="pre-action" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center" v-if="$slots['more-actions']">
-                <ks-dropdown>
+                <KsDropdown>
                     <KsButton class="more-actions" type="default" :icon="DotsVertical" />
                     <template #dropdown>
-                        <ks-dropdown-menu>
+                        <KsDropdownMenu>
                             <slot v-if="$slots['more-actions']" name="more-actions" />
-                        </ks-dropdown-menu>
+                        </KsDropdownMenu>
                     </template>
-                </ks-dropdown>
+                </KsDropdown>
             </div>
             <slot v-if="$slots.actions" name="actions" />
         </div>

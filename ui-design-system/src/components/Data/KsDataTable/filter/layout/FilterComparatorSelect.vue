@@ -1,14 +1,14 @@
 <template>
     <div v-if="shouldShowComparator" class="comp-container">
         <label class="label">{{ $t("filter.operator") }}</label>
-        <ks-select
+        <KsSelect
             v-model="comparatorModel"
             class="select"
         >
             <template #label="{value}">
                 {{ getLabel(value) }}
             </template>
-            <ks-option
+            <KsOption
                 v-for="comparator in filterKey.comparators"
                 :key="comparator"
                 :label="getLabel(comparator)"
@@ -22,8 +22,8 @@
                         {{ getDescription(comparator) }}
                     </div>
                 </div>
-            </ks-option>
-        </ks-select>
+            </KsOption>
+        </KsSelect>
     </div>
 </template>
 

@@ -2,7 +2,7 @@
     <div class="multi-select-panel">
         <div class="panel-header">
             <div v-if="props.searchable" class="search-section">
-                <ks-input
+                <KsInput
                     v-model="searchQuery"
                     size="default"
                     clearable
@@ -12,22 +12,22 @@
             </div>
             <div class="controls-section">
                 <div class="check-border">
-                    <ks-checkbox
+                    <KsCheckbox
                         v-model="allSelected"
                         size="default"
                         :indeterminate="isPartiallySelected"
                         @change="handleSelectAllChange"
                     >
                         {{ $t('filter.select all') }}
-                    </ks-checkbox>
+                    </KsCheckbox>
                 </div>
                 <div class="check-border">
-                    <ks-checkbox
+                    <KsCheckbox
                         size="default"
                         @change="handleDeselectAllChange"
                     >
                         {{ $t('filter.deselect all') }}
-                    </ks-checkbox>
+                    </KsCheckbox>
                 </div>
             </div>
         </div>
@@ -46,13 +46,13 @@
                     />
                     <span v-else class="option-label">{{ option.label }}</span>
                 </div>
-                <ks-checkbox
+                <KsCheckbox
                     :modelValue="modelValue.includes(option.value)"
                     label=""
                     @update-model-value="(checked: boolean) => handleOptionChange(option.value, checked)"
                 />
             </div>
-            <ks-alert
+            <KsAlert
                 v-if="filteredOptions.length === 0"
                 type="info"
                 showIcon
@@ -63,7 +63,7 @@
                 <template #icon>
                     <InformationOutline />
                 </template>
-            </ks-alert>
+            </KsAlert>
         </div>
     </div>
 </template>

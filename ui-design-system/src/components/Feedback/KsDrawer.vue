@@ -17,9 +17,9 @@
                 {{ props.title }}
                 <slot name="header" />
             </span>
-            <ks-button link @click="toggleFullScreen">
+            <KsButton link @click="toggleFullScreen">
                 <Fullscreen class="full-screen" />
-            </ks-button>
+            </KsButton>
         </template>
         <template v-if="$slots.footer" #footer>
             <slot name="footer" />

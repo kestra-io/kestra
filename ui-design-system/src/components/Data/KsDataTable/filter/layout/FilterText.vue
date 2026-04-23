@@ -1,6 +1,6 @@
 <template>
     <div class="p-3">
-        <ks-input
+        <KsInput
             :modelValue="textValue"
             :placeholder="`Enter ${label.toLowerCase()}`"
             @update:model-value="emits('update:textValue', String($event))"

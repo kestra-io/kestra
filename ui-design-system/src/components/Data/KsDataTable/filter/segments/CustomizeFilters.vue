@@ -5,7 +5,7 @@
                 <h6>{{ $t("filter.customize") }}</h6>
                 <small>{{ $t("filter.select filter") }}</small>
             </div>
-            <ks-button
+            <KsButton
                 link
                 :icon="Close"
                 @click="$emit('close')"
@@ -26,7 +26,7 @@
                     <small :class="{'selected': isSelected(key)}">{{ key.description }}</small>
                 </div>
 
-                <ks-button
+                <KsButton
                     link
                     size="default"
                     :icon="isSelected(key) ? undefined : Plus"

@@ -4,7 +4,7 @@
             <h6>
                 {{ $t("filter.saved filters") }}
             </h6>
-            <ks-button
+            <KsButton
                 link
                 :icon="Close"
                 @click="$emit('close')"
@@ -26,32 +26,32 @@
                     </small>
                 </div>
                 <div class="action-buttons">
-                    <ks-tooltip :content="$t('filter.edit filter')" placement="top">
-                        <ks-button
+                    <KsTooltip :content="$t('filter.edit filter')" placement="top">
+                        <KsButton
                             link
                             size="small"
                             class="edit-button"
                             :icon="PencilOutline"
                             @click.stop="$emit('edit', savedFilter)"
                         />
-                    </ks-tooltip>
-                    <ks-tooltip :content="$t('filter.delete filter')" placement="top">
-                        <ks-button
+                    </KsTooltip>
+                    <KsTooltip :content="$t('filter.delete filter')" placement="top">
+                        <KsButton
                             link
                             size="small"
                             class="delete-button"
                             :icon="Delete"
                             @click.stop="deleteFilter(savedFilter)"
                         />
-                    </ks-tooltip>
+                    </KsTooltip>
                 </div>
             </div>
-            <ks-alert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
+            <KsAlert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
                 {{ $t("filter.empty") }}
                 <template #icon>
                     <InformationOutline />
                 </template>
-            </ks-alert>
+            </KsAlert>
         </div>
     </div>
 </template>

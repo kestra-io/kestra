@@ -5,13 +5,13 @@
             <span v-if="!hasValue(filter.value)" class="in">in</span>
             <span v-if="!hasValue(filter.value)" class="val">any</span>
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
-            <ks-tooltip
+            <KsTooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
                 placement="top"
             >
                 <component :is="renderValueResult" />
-            </ks-tooltip>
+            </KsTooltip>
         </span>
         <FilterEditPopover
             ref="editPopover"
@@ -21,7 +21,7 @@
             @update="emit('update', $event)"
             @remove="emit('remove', $event)"
         />
-        <ks-button
+        <KsButton
             link
             size="small"
             class="close"

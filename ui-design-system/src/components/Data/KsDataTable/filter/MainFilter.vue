@@ -1,6 +1,6 @@
 <template>
     <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
-        <ks-popover
+        <KsPopover
             v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
             placement="bottom-start"
@@ -12,20 +12,20 @@
             @hide="isCustomizeFiltersVisible = false"
         >
             <template #reference>
-                <ks-button
+                <KsButton
                     :icon="FilterOutline"
                     size="default"
                     class="customize-button"
                     :disabled="filter.readOnly?.value"
                 >
-                    <ks-tooltip
+                    <KsTooltip
                         placement="top"
                         :content="$t('filter.customize tooltip')"
                         :disabled="filter.readOnly?.value"
                     >
                         <span>{{ $t("filter.customize") }}</span>
-                    </ks-tooltip>
-                </ks-button>
+                    </KsTooltip>
+                </KsButton>
             </template>
 
             <CustomizeFilters
@@ -35,7 +35,7 @@
                 @remove-filter="filter.removeFilter"
                 @close="isCustomizeFiltersVisible = false"
             />
-        </ks-popover>
+        </KsPopover>
 
         <div
             v-if="filter.showSearchInput?.value"
@@ -68,21 +68,21 @@
             @update="filter.updateFilter"
         />
 
-        <ks-tooltip
+        <KsTooltip
             v-if="filter.hasFilterKeys?.value"
             placement="top"
             :content="$t('filter.reset_all')"
             :disabled="filter.readOnly?.value"
         >
-            <ks-button
+            <KsButton
                 link
                 class="refresh-btn"
                 @click="handleReset"
                 :disabled="!canReset || filter.readOnly?.value"
             >
                 {{ $t("filter.reset") }}
-            </ks-button>
-        </ks-tooltip>
+            </KsButton>
+        </KsTooltip>
     </div>
 </template>
 

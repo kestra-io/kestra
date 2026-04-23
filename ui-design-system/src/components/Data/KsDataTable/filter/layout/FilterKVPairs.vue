@@ -8,7 +8,7 @@
                 {{ $t('none') }}
             </div>
             <div v-else class="pairs-container">
-                <ks-tag
+                <KsTag
                     v-for="(pair, index) in detailPairs"
                     :key="index"
                     closable
@@ -17,14 +17,14 @@
                     class="detail-tag"
                 >
                     <span class="detail-key">{{ pair.key }}:</span><span class="detail-value">{{ pair.value }}</span>
-                </ks-tag>
+                </KsTag>
             </div>
         </div>
 
         <div class="add-pair">
             <div class="input-group">
                 <label class="input-label">{{ $t('filter.key') }}</label>
-                <ks-input
+                <KsInput
                     v-model="newKey"
                     placeholder="e.g. flowId"
                     @keydown.enter="addPair"
@@ -32,14 +32,14 @@
             </div>
             <div class="input-group">
                 <label class="input-label">{{ $t('filter.value') }}</label>
-                <ks-input
+                <KsInput
                     v-model="newValue"
                     placeholder="e.g. orchestrator-1234"
                     @keydown.enter="addPair"
                 />
             </div>
 
-            <ks-button
+            <KsButton
                 type="default"
                 size="small"
                 class="add-btn"
@@ -47,7 +47,7 @@
                 @click="addPair"
             >
                 {{ $t('add') }}
-            </ks-button>
+            </KsButton>
         </div>
     </div>
 </template>

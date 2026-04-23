@@ -1,6 +1,6 @@
 <template>
-    <ks-tabs class="ks-router-tab" :class="{top}" v-model="activeName" type="box">
-        <ks-tab-pane
+    <KsTabs class="ks-router-tab" :class="{top}" v-model="activeName" type="box">
+        <KsTabPane
             v-for="tab in visibleTabs"
             :key="tab.name ?? 'default'"
             :label="tab.title"
@@ -16,7 +16,7 @@
                     <slot name="tab-label" :tab="tab">
                         <span class="ks-router-tab__label">
                             {{ tab.title }}
-                            <ks-badge
+                            <KsBadge
                                 v-if="tab.count !== undefined"
                                 :value="tab.count"
                                 type="primary"
@@ -26,8 +26,8 @@
                     </slot>
                 </component>
             </template>
-        </ks-tab-pane>
-    </ks-tabs>
+        </KsTabPane>
+    </KsTabs>
     <section
         v-if="hasContent"
         ref="container"

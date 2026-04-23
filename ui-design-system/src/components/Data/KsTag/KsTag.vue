@@ -5,10 +5,10 @@
         @close="emit('close')"
     >
         <template #default>
-            <ks-icon v-if="icon || $slots.icon">
+            <KsIcon v-if="icon || $slots.icon">
                 <component :is="icon" v-if="icon" />
                 <slot v-else name="icon" />
-            </ks-icon>
+            </KsIcon>
             <span v-if="label">{{ label }}</span>
             <span v-else-if="$slots.default"><slot /></span>
         </template>

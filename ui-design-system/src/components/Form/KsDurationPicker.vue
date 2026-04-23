@@ -3,7 +3,7 @@
         <div class="ks-duration-picker__fields">
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-years">{{ $t('years') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-years"
@@ -13,7 +13,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-months">{{ $t('months') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-months"
@@ -23,7 +23,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-weeks">{{ $t('weeks') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-weeks"
@@ -33,7 +33,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-days">{{ $t('days') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-days"
@@ -43,7 +43,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-hours">{{ $t('hours') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-hours"
@@ -53,7 +53,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-minutes">{{ $t('minutes') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-minutes"
@@ -63,7 +63,7 @@
             </div>
             <div class="ks-duration-picker__field">
                 <label for="ks-duration-seconds">{{ $t('seconds') }}</label>
-                <ks-input-number
+                <KsInputNumber
                     size="small"
                     controlsPosition="right"
                     id="ks-duration-seconds"
@@ -73,10 +73,10 @@
             </div>
         </div>
         <div class="ks-duration-picker__custom">
-            <ks-text size="small" :type="durationIssue ? 'danger': ''">
+            <KsText size="small" :type="durationIssue ? 'danger': ''">
                 {{ durationIssue ?? $t('input_custom_duration') }}
-            </ks-text>
-            <ks-input type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
+            </KsText>
+            <KsInput type="text" id="ks-duration-custom" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
         </div>
     </div>
 </template>

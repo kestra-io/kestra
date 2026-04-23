@@ -4,7 +4,7 @@
             <div class="options-left">
                 <div v-if="filter.tableOptions.value?.chart?.shown !== false" class="option-item">
                     <span class="option-label">{{ $t("filter.show chart") }}</span>
-                    <ks-switch
+                    <KsSwitch
                         v-model="localChartVisible"
                     />
                 </div>
@@ -12,15 +12,15 @@
 
             <div class="options-right">
                 <div class="option-item">
-                    <ks-switch
+                    <KsSwitch
                         v-model="periodicRefreshEnabled"
                     />
-                    <ks-tooltip :content="refreshTooltip" placement="top">
+                    <KsTooltip :content="refreshTooltip" placement="top">
                         <span class="option-label periodic">{{ $t("filter.periodic refresh") }}</span>
-                    </ks-tooltip>
+                    </KsTooltip>
                 </div>
 
-                <ks-popover
+                <KsPopover
                     v-if="filter.tableOptions.value?.columns?.shown !== false"
                     v-model:visible="isColumnsPanelVisible"
                     placement="bottom-end"
@@ -31,11 +31,11 @@
                     @hide="isColumnsPanelVisible = false"
                 >
                     <template #reference>
-                        <ks-button size="default" class="columns-button" :icon="CogOutline">
-                            <ks-tooltip :content="$t('filter.customize columns')" placement="top">
+                        <KsButton size="default" class="columns-button" :icon="CogOutline">
+                            <KsTooltip :content="$t('filter.customize columns')" placement="top">
                                 <span>{{ $t("filter.columns") }}</span>
-                            </ks-tooltip>
-                        </ks-button>
+                            </KsTooltip>
+                        </KsButton>
                     </template>
 
                     <CustomColumns
@@ -45,7 +45,7 @@
                         @update-columns="filter.updateProperties"
                         @close="isColumnsPanelVisible = false"
                     />
-                </ks-popover>
+                </KsPopover>
             </div>
         </div>
     </div>

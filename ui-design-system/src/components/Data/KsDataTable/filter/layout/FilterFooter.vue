@@ -9,16 +9,16 @@
         </div>
 
         <div class="action-buttons">
-            <ks-tooltip :content="$t('filter.reset_tooltip')" placement="top">
-                <ks-button size="small" :icon="Restore" @click="emits('reset')" />
-            </ks-tooltip>
-            <ks-button
+            <KsTooltip :content="$t('filter.reset_tooltip')" placement="top">
+                <KsButton size="small" :icon="Restore" @click="emits('reset')" />
+            </KsTooltip>
+            <KsButton
                 type="primary"
                 size="small"
                 @click="emits('apply')"
             >
                 {{ $t("filter.footer_apply") }}
-            </ks-button>
+            </KsButton>
         </div>
     </div>
 </template>

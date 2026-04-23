@@ -3,7 +3,7 @@
         <TimeRangeSwitch v-if="filterKey?.key === 'timeRange'" v-model="local.timeRangeMode" />
 
         <div v-if="local.timeRangeMode === 'predefined'" class="section">
-            <ks-select
+            <KsSelect
                 v-model="local.value"
                 :placeholder="placeholder ?? $t('filter.select_option')"
                 :showArrow="false"
@@ -11,7 +11,7 @@
                 <template #label="{value}">
                     {{ options.find(opt => opt.value === value)?.label ?? value }}
                 </template>
-                <ks-option
+                <KsOption
                     v-for="option in options"
                     :key="option.value"
                     :label="option.label"
@@ -24,14 +24,14 @@
                         />
                         {{ option.label }}
                     </span>
-                </ks-option>
-            </ks-select>
+                </KsOption>
+            </KsSelect>
         </div>
 
         <div v-else class="section">
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.start_date") }}</label>
-                <ks-date-picker
+                <KsDatePicker
                     v-model="local.startDateValue"
                     type="datetime"
                     :placeholder="$t('filter.select_start_date')"
@@ -39,7 +39,7 @@
             </div>
             <div class="date-field">
                 <label class="form-label">{{ $t("filter.end_date") }}</label>
-                <ks-date-picker
+                <KsDatePicker
                     v-model="local.endDateValue"
                     type="datetime"
                     :placeholder="$t('filter.select_end_date')"

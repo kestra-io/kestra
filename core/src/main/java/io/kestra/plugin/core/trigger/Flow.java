@@ -28,7 +28,6 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
@@ -330,24 +329,13 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Positive
     private Integer minSatisfied;
 
-    public Optional<Execution> evaluate(Optional<MultipleConditionStateStore> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
         // merge outputs from all the matched executions
         Map<String, Object> outputs = current.getOutputs();
-        if (multipleConditionStorage.isPresent()) {
-            if (this.preconditions != null) {
-                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, this.preconditions.getId());
-                if (multipleConditionWindow.isPresent()) {
-                    outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
-                }
-            }
-            if (!ListUtils.isEmpty(this.dependsOn)) {
-                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, DEPENDS_ON_CONDITION_PREFIX + this.getId());
-                if (multipleConditionWindow.isPresent()) {
-                    outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
-                }
-            }
+        if (multipleConditionWindow.isPresent()) {
+            outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
         }
 
         List<Label> labels = LabelService.fromTrigger(runContext, flow, this);

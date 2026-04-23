@@ -10,6 +10,7 @@
     "scripts": {
         "dev": "vite --host",
         "build": "vite build --emptyOutDir",
+        "build:design": "npm run build --workspace=@kestra-io/design-system",
         "preview": "vite preview",
         "precheck:types": "openapi-ts",
         "check:types": "vue-tsc --noEmit",

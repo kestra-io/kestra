@@ -3,12 +3,17 @@ import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
-    globalIgnores(["node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -33,7 +38,12 @@ export default defineConfig([
     ...pluginVue.configs["flat/strongly-recommended"],
     {
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
-        languageOptions: {parserOptions: {parser: tseslint.parser}},
+        languageOptions: {parserOptions: {
+            parser: tseslint.parser,
+            project: ["./tsconfig.json", "./packages/design-system/tsconfig.json"],
+            tsconfigRootDir: __dirname,
+            extraFileExtensions: [".vue", ".tsx", ".jsx"],
+        }},
         rules: {
             "vue/block-lang": ["warn",
                 {

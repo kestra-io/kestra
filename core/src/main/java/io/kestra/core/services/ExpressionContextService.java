@@ -433,7 +433,7 @@ public class ExpressionContextService {
     @SuppressWarnings("unchecked")
     private List<String> buildSecrets(Flow flow) {
         try {
-            Map<String, Set<String>> inherited = secretService.inheritedSecrets(
+            Map<String, Set<String>> inherited = secretService.ownAndInheritedSecrets(
                 flow.getTenantId(), flow.getNamespace()
             );
             return inherited.values().stream()

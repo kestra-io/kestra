@@ -58,7 +58,7 @@ class ExpressionContextServiceSecretsKvTest {
         String tenantId = "tenant-42";
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.inheritedSecrets(eq(tenantId), any())).thenReturn(
+        when(secretService.ownAndInheritedSecrets(eq(tenantId), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("TENANT_SECRET"))
         );
         KVStore kvStore = mock(KVStore.class);
@@ -84,7 +84,7 @@ class ExpressionContextServiceSecretsKvTest {
         ExpressionContext result = service.buildExpressionContext(flow, null);
 
         // Then — downstream services receive the correct tenantId, not null
-        verify(secretService).inheritedSecrets(eq(tenantId), any());
+        verify(secretService).ownAndInheritedSecrets(eq(tenantId), any());
         verify(kvStoreService).get(eq(tenantId), any());
 
         List<String> secrets = result.categories().get(ExpressionCategory.SECRETS);
@@ -100,7 +100,7 @@ class ExpressionContextServiceSecretsKvTest {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.inheritedSecrets(any(), any())).thenReturn(
+        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("DB_PASSWORD", "API_KEY"))
         );
         KVStore kvStore = mock(KVStore.class);
@@ -134,7 +134,7 @@ class ExpressionContextServiceSecretsKvTest {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of());
         when(pebbleExpressionService.functions()).thenReturn(List.of());
-        when(secretService.inheritedSecrets(any(), any())).thenReturn(Map.of());
+        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(Map.of());
 
         KVStore kvStore = mock(KVStore.class);
         when(kvStore.list()).thenReturn(List.of(
@@ -166,6 +166,40 @@ class ExpressionContextServiceSecretsKvTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldIncludeOwnNamespaceSecrets() throws Exception {
+        // Given — own namespace has a secret, parent namespace has another
+        when(pebbleExpressionService.filters()).thenReturn(List.of());
+        when(pebbleExpressionService.functions()).thenReturn(List.of());
+        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
+            Map.of(
+                "io.kestra", Set.of("PARENT_SECRET"),
+                "io.kestra.test", Set.of("OWN_SECRET")
+            )
+        );
+        KVStore kvStore = mock(KVStore.class);
+        when(kvStore.list()).thenReturn(List.of());
+        when(kvStoreService.get(any(), any())).thenReturn(kvStore);
+
+        ExpressionContextService service = new ExpressionContextService(
+            jsonSchemaGenerator, pebbleExpressionService, runContextCache, secretService, kvStoreService, storageInterface, namespaceFactory
+        );
+
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .tasks(List.of())
+            .build();
+
+        // When
+        ExpressionContext result = service.buildExpressionContext(flow, null);
+
+        // Then — both own and parent secrets appear in autocomplete
+        List<String> secrets = result.categories().get(ExpressionCategory.SECRETS);
+        assertThat(secrets).contains("secret('OWN_SECRET')", "secret('PARENT_SECRET')");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldReturnBothSecretsAndKvPairs() throws Exception {
         // Given
         when(pebbleExpressionService.filters()).thenReturn(List.of("upper", "lower"));
@@ -174,7 +208,7 @@ class ExpressionContextServiceSecretsKvTest {
             new PebbleFunction("secret", List.of(new PebbleFunction.Argument("key", "'MY_SECRET'")))
         ));
 
-        when(secretService.inheritedSecrets(any(), any())).thenReturn(
+        when(secretService.ownAndInheritedSecrets(any(), any())).thenReturn(
             Map.of("io.kestra.test", Set.of("SECRET_A", "SECRET_B"))
         );
 

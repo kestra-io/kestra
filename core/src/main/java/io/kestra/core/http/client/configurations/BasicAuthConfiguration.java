@@ -10,6 +10,7 @@ import org.apache.hc.core5.http.message.BasicHeader;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 
@@ -32,6 +33,7 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
     private Property<String> username;
 
     @Schema(title = "The password for HTTP basic authentication.")
+    @PluginProperty(secret = true)
     private Property<String> password;
 
     @Override

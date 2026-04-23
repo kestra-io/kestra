@@ -25,7 +25,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string>()
+    const model = defineModel<any>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string

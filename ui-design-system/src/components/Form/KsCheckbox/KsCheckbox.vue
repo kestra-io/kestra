@@ -19,7 +19,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<boolean | string | number | any[]>()
+    const model = defineModel<any>()
 
     const props = withDefaults(defineProps<{
         value?: boolean | string | number

@@ -14,7 +14,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<Date | Date[] | string | string[] | null>()
+    const model = defineModel<any>()
 
     const props = withDefaults(defineProps<{
         type?: string

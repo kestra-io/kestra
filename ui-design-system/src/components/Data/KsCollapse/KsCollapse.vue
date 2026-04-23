@@ -19,7 +19,7 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | string[]>()
+    const model = defineModel<any>()
 
     const props = defineProps<{
         accordion?: boolean

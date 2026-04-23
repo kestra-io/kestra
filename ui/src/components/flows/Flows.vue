@@ -2,24 +2,31 @@
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul class="header-actions-list">
-                <li>
-                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ $t('export_csv') }}
-                    </el-button>
-                </li>
-                <li>
-                    <el-button :icon="Upload" @click="file?.click()">
-                        {{ $t("import") }}
-                    </el-button>
-                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
-                </li>
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
-                            {{ $t("source search") }}
-                        </el-button>
-                    </router-link>
-                </li>
+                <el-dropdown trigger="click">
+                    <el-button :icon="DotsVertical" />
+                    
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                                {{ $t('export_csv') }}
+                            </el-dropdown-item>
+
+                            <el-dropdown-item :icon="Upload" @click="file?.click()">
+                                {{ $t("import") }}
+
+                                <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
+                            </el-dropdown-item>
+                            
+                            
+                            <el-dropdown-item class="p-0">
+                                <router-link :to="{name: 'flows/search'}" class="dropdown-router-link">
+                                    <TextBoxSearch />
+                                    {{ $t("source search") }}
+                                </router-link>
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
                 <li>
                     <router-link
                         :to="{
@@ -294,6 +301,7 @@
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
@@ -716,6 +724,16 @@
 </script>
 
 <style scoped lang="scss">
+.dropdown-router-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 5px 16px;
+    color: inherit;
+    text-decoration: none;
+}
+
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
@@ -749,11 +767,6 @@
     padding: 0;
     margin: 0;
     gap: 0.5rem;
-
-    @media (max-width: 570px) {
-        flex-direction: column;
-        align-items: flex-end;
-    }
 }
 
 .flow-actions-cell {

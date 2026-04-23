@@ -22,25 +22,25 @@
                 </span>
             </EnterpriseBadge>
         </template>
-        <template #content="{activeTab}">
+        <template #content="{activeTab: activeTabLocal}">
             <BlueprintDetail
                 v-if="selectedBlueprintId"
                 :blueprintId="selectedBlueprintId"
                 blueprintType="community"
                 @back="selectedBlueprintId = undefined"
                 :combinedView="true"
-                :kind="(activeTab as Tab).props?.blueprintKind"
-                :embed="(activeTab as Tab).props?.embed ?? true"
+                :kind="(activeTabLocal as Tab).props?.blueprintKind"
+                :embed="(activeTabLocal as Tab).props?.embed ?? true"
             />
             <component
-                v-else-if="isEditorActiveTab(activeTab as Tab) || activeTab.component"
-                v-bind="{...(activeTab as Tab).props, ...attrsWithoutClass}"
-                v-on="(activeTab as Tab)['v-on'] ?? {}"
+                v-else-if="isEditorActiveTab(activeTabLocal as Tab) || activeTabLocal.component"
+                v-bind="{...(activeTabLocal as Tab).props, ...attrsWithoutClass}"
+                v-on="(activeTabLocal as Tab)['v-on'] ?? {}"
                 ref="tabContent"
-                :is="activeTab.component"
-                :namespace="getNamespaceToForward(activeTab as Tab)"
+                :is="activeTabLocal.component"
+                :namespace="getNamespaceToForward(activeTabLocal as Tab)"
                 @go-to-detail="(blueprintId: string) => selectedBlueprintId = blueprintId"
-                :embed="(activeTab as Tab).props?.embed ?? true"
+                :embed="(activeTabLocal as Tab).props?.embed ?? true"
             />
         </template>
     </KsRouterTab>

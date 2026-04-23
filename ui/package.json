@@ -4,6 +4,9 @@
     "private": true,
     "type": "module",
     "packageManager": "npm@10.9.0",
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "dev": "vite --host",
         "build": "vite build --emptyOutDir",
@@ -25,7 +28,7 @@
         "postinstall": "patch-package && openapi-ts"
     },
     "dependencies": {
-        "@kestra-io/ui-design-system": "file:../ui-design-system",
+        "@kestra-io/design-system": "*",
         "@kestra-io/ui-libs": "^0.0.301",
         "shiki": "^4.0.2",
         "@vue-flow/background": "^1.3.2",

@@ -34,7 +34,7 @@
       "@vue/runtime-dom": ["./node_modules/@vue/runtime-dom/dist/runtime-dom.d.ts"],
       "@vue/reactivity": ["./node_modules/@vue/reactivity/dist/reactivity.d.ts"],
       "@vue/compiler-dom": ["./node_modules/@vue/compiler-dom/dist/compiler-dom.d.ts"],
-      "@kestra-io/ui-design-system/*": ["./node_modules/@kestra-io/ui-design-system/*"],
+      "@kestra-io/design-system/*": ["./node_modules/@kestra-io/design-system/*"],
       "element-plus": ["./node_modules/element-plus"],
       "element-plus/*": ["./node_modules/element-plus/*"],
       "moment": ["./node_modules/moment"],

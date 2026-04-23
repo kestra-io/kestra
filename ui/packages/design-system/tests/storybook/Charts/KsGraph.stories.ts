@@ -103,7 +103,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsGraph},
         setup() { return {args} },
-        template: `<div style="padding:24px;height:480px"><ks-graph v-bind="args" /></div>`,
+        template: "<div style=\"padding:24px;height:480px\"><ks-graph v-bind=\"args\" /></div>",
     }),
     args: {
         nodes: NPM_NODES,
@@ -141,7 +141,7 @@ export const CircularLayout: Story = {
 export const Loading: Story = {
     render: () => ({
         components: {KsGraph},
-        template: `<div style="padding:24px;height:480px"><ks-graph :nodes="null" /></div>`,
+        template: "<div style=\"padding:24px;height:480px\"><ks-graph :nodes=\"null\" /></div>",
     }),
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()

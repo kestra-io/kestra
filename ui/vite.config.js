@@ -133,7 +133,7 @@ export default defineConfig(({mode}) => {
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",
-                "@kestra-io/ui-design-system"
+                "@kestra-io/design-system"
             ]
         },
     };

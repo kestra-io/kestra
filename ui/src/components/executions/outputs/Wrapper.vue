@@ -173,7 +173,6 @@
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
-    import * as outputsSDK from "kestra-api/sdk/ks-Outputs.gen";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -214,7 +213,7 @@
         if(!id || !execution.value?.id) {
             return [];
         }
-        const {data, status} = await outputsSDK.getTaskRunOutputs({
+        const {data, status} = await axios.post(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
             executionId: execution.value.id,
             taskRunId: id,
         }, {
@@ -422,7 +421,7 @@
         () => executionsStore.execution?.id,
         async (id) => {
             if(id) {
-                const {data, status} = await outputsSDK.getTaskOutputsInformation({executionId: id})
+                const {data, status} = await axios.post(`${apiUrl()}/outputs/${id}`);
                 if(status === 200 && data) {
                     tasksWithOutputs.value = [];
                     for(const task of data){

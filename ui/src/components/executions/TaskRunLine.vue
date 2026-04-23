@@ -492,10 +492,8 @@
             white-space: nowrap;
         }
     }
-</style>
 
-<style lang="scss">
-.attempt-select > .kel-select__wrapper {
-    height: 100%;
-}
+    :deep(.attempt-select > .kel-select__wrapper) {
+        height: 100%;
+    }
 </style>

@@ -32,10 +32,10 @@
     import {computed, onMounted, reactive, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import {
-        AppliedFilter,
+        type AppliedFilter,
+        type FilterKeyConfig,
+        type FilterValue,
         COMPARATOR_LABELS,
-        FilterKeyConfig,
-        FilterValue,
         TEXT_COMPARATORS,
         KV_COMPARATORS
     } from "../utils/filterTypes";

@@ -59,7 +59,7 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import {KsMessageBox} from "../../../../Feedback/KsMessageBox";
-    import {SavedFilter} from "../utils/filterTypes";
+    import type {SavedFilter} from "../utils/filterTypes";
     import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
 
     const {t} = useI18n({useScope: "global"});

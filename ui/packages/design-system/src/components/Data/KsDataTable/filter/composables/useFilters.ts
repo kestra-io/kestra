@@ -9,9 +9,9 @@ import {
     clearFilterQueryParams
 } from "../utils/helpers";
 import {
-    AppliedFilter,
-    FilterConfiguration,
-    FilterKeyConfig,
+    type AppliedFilter,
+    type FilterConfiguration,
+    type FilterKeyConfig,
     COMPARATOR_LABELS,
     Comparators,
     TEXT_COMPARATORS,

@@ -1,11 +1,11 @@
 import {computed, ref, watch} from "vue";
 import {
-    LocationQuery,
-    LocationQueryRaw,
+    type LocationQuery,
+    type LocationQueryRaw,
     useRoute,
     useRouter
 } from "vue-router";
-import {AppliedFilter} from "../utils/filterTypes";
+import type {AppliedFilter} from "../utils/filterTypes";
 
 type QueryLike = LocationQuery | LocationQueryRaw | Record<string, any>;
 

@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
     import {ref, computed, provide, onMounted, watch} from "vue";
-    import {
+    import type {
         AppliedFilter,
         FilterConfiguration,
         SavedFilter,

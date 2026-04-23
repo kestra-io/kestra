@@ -68,8 +68,6 @@ export default defineConfig(({mode}) => {
                 {find: /^shiki\/engine\/oniguruma$/, replacement: path.resolve(__dirname, "node_modules/shiki/dist/engine-oniguruma.mjs")},
                 {find: /^shiki$/, replacement: path.resolve(__dirname, "node_modules/shiki/dist/index.mjs")},
                 {find: /^vue-material-design-icons\/(.*)$/, replacement: path.resolve(__dirname, "node_modules/vue-material-design-icons") + "/$1"},
-                {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
-                {find: /^@kestra-io\/design-system\/(.*)$/, replacement: path.resolve(__dirname, "packages/design-system") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
                 {find: "@storybook/addon-actions", replacement: "storybook/actions"},

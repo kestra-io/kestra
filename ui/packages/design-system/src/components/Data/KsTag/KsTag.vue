@@ -49,8 +49,8 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tag';
-    @import "element-plus/theme-chalk/src/common/var.scss";
-    @import "../../../assets/styles/variables.scss";
+    @use "element-plus/theme-chalk/src/common/var.scss" as *;
+    @use "../../../assets/styles/variables.scss" as *;
 
     .kel-tag {
         .kel-tag__content {

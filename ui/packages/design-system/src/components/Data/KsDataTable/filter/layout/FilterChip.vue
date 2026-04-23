@@ -36,7 +36,11 @@
     import {useI18n} from "vue-i18n";
     import KsTag from "../../../KsTag/KsTag.vue";
     import {Close} from "../utils/icons";
-    import {AppliedFilter, FilterKeyConfig, Comparators} from "../utils/filterTypes";
+    import {
+        type AppliedFilter,
+        type FilterKeyConfig,
+        Comparators
+    } from "../utils/filterTypes";
     import FilterEditPopover from "./FilterEditPopover.vue";
 
     const {t} = useI18n({useScope: "global"});

@@ -96,7 +96,7 @@
     import SearchInput from "./layout/SearchInput.vue";
     import CustomizeFilters from "./segments/CustomizeFilters.vue";
 
-    import {AppliedFilter} from "./utils/filterTypes";
+    import type {AppliedFilter} from "./utils/filterTypes";
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
 
     const isCustomizeFiltersVisible = ref(false);

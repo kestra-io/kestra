@@ -45,7 +45,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {Close, Plus} from "../utils/icons";
-    import {
+    import type {
         FilterConfiguration,
         FilterKeyConfig,
         AppliedFilter

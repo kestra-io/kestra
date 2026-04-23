@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue";
-import {FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties} from "./filterTypes";
+import type {FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties} from "./filterTypes";
 
 export interface FilterContext {
     searchQuery: Ref<string>;

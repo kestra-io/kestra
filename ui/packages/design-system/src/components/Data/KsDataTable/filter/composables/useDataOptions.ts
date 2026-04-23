@@ -1,5 +1,5 @@
 import {ref, computed, watch} from "vue";
-import {TableOptions} from "../utils/filterTypes";
+import type {TableOptions} from "../utils/filterTypes";
 
 export function useDataOptions(options: TableOptions) {
     const showOptions = ref((localStorage.getItem("filterDataOptions") ?? "false").toLowerCase() === "true");

@@ -122,7 +122,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
     import yaml from "yaml";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useDashboardStore} from "../../../stores/dashboard";
 

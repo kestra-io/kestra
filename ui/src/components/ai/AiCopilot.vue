@@ -275,7 +275,7 @@
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
     import {useApiStore} from "../../stores/api";
-    import type {InputInstance} from "@kestra-io/ui-design-system";
+    import type {InputInstance} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
     import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
 

@@ -1,7 +1,7 @@
 import {computed} from "vue";
 import {useTheme} from "./utils"
-import {STATES, LOG_LEVELS} from "@kestra-io/ui-design-system";
-import {cssVar} from "@kestra-io/ui-design-system"
+import {STATES, LOG_LEVELS} from "@kestra-io/design-system";
+import {cssVar} from "@kestra-io/design-system"
 
 export const getSchemes = () => {
     const executions = {} as Record<string, string>

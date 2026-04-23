@@ -107,10 +107,10 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Errors from "../../../components/errors/Errors.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {editorViewTypes} from "../../../utils/constants";
     import Utils from "../../../utils/utils";
     import {usePluginsStore} from "../../../stores/plugins";

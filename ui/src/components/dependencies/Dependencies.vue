@@ -77,7 +77,7 @@
     import Table from "./components/Table.vue";
     import Empty from "../layout/empty/Empty.vue";
 
-    import {KsGraph} from "@kestra-io/ui-design-system";
+    import {KsGraph} from "@kestra-io/design-system";
 
     import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";

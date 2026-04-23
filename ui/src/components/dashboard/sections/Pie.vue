@@ -28,9 +28,9 @@
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {FilterObject} from "../../../utils/filters";
-    import {KsPie, durationUtils} from "@kestra-io/ui-design-system";
-    import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
-    import {TooltipType, ChartFeature} from "@kestra-io/ui-design-system";
+    import {KsPie, durationUtils} from "@kestra-io/design-system";
+    import type {KsChartSeriesItem} from "@kestra-io/design-system";
+    import {TooltipType, ChartFeature} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
 
     import moment from "moment";

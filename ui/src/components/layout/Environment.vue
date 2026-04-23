@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-    import {cssVar} from "@kestra-io/ui-design-system"
+    import {cssVar} from "@kestra-io/design-system"
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
     import {computed} from "vue";

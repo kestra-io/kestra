@@ -25,8 +25,8 @@
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
-    import {KsEchart, cssVar, durationUtils} from "@kestra-io/ui-design-system";
-    import {TooltipType, ChartFeature} from "@kestra-io/ui-design-system";
+    import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system";
+    import {TooltipType, ChartFeature} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
 

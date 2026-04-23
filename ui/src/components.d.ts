@@ -1,4 +1,4 @@
-import type {KsSelect, KsOption, KsButton, KsButtonGroup} from "@kestra-io/ui-design-system"
+import type {KsSelect, KsOption, KsButton, KsButtonGroup} from "@kestra-io/design-system"
 
 declare module "vue" {
     interface GlobalComponents {

@@ -51,7 +51,7 @@
     import {useRoute} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
-    import type {RouterTab} from "@kestra-io/ui-design-system";
+    import type {RouterTab} from "@kestra-io/design-system";
 
     interface Tab extends RouterTab {
         locked?: boolean;

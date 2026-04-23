@@ -1,7 +1,7 @@
 import {computed, ComputedRef, h, markRaw, Ref, Suspense} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
 import {useFlowStore} from "../../stores/flow";
 import {NoCodeProps} from "./noCodeTypes";

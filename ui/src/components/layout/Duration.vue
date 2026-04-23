@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {State, durationUtils} from "@kestra-io/ui-design-system"
+    import {State, durationUtils} from "@kestra-io/design-system"
 
     const ts = date => new Date(date).getTime();
 

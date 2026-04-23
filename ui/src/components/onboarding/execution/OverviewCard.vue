@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
 
     defineProps<{
         title: string;

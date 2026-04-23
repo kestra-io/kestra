@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
 
     interface Props {
         icon?: string;

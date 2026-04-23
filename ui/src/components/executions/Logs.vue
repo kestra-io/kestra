@@ -112,12 +112,12 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import ViewList from "vue-material-design-icons/ViewList.vue";
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
-    import {KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsIconButton} from "@kestra-io/design-system";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
-    import {State} from "@kestra-io/ui-design-system"
+    import {State} from "@kestra-io/design-system"
 
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
@@ -126,14 +126,14 @@
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {storageKeys} from "../../utils/constants";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "@kestra-io/ui-design-system";
-    import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
+    } from "@kestra-io/design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/design-system";
 
     function distinctFilter(value, index, array) {
         return array.indexOf(value) === index;

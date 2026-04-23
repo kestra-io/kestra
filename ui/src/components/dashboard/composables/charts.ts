@@ -1,7 +1,7 @@
 import _merge from "lodash/merge";
 import Utils from "../../../utils/utils";
-import {State} from "@kestra-io/ui-design-system";
-import {cssVar} from "@kestra-io/ui-design-system"
+import {State} from "@kestra-io/design-system";
+import {cssVar} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme";
 
 import {useMiscStore} from "override/stores/misc";

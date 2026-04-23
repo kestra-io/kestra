@@ -22,13 +22,13 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
     import {processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import Sections from "./sections/Sections.vue";
 
     import {

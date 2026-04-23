@@ -69,7 +69,7 @@
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {KsMarkdown, KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide";

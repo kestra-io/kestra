@@ -71,9 +71,9 @@
     import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
     import {getFormat} from "../dashboard/composables/charts";
-    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/ui-design-system";
-    import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system";
+    import type {KsChartSeriesItem} from "@kestra-io/design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {useFlowMetricFilter} from "../filter/configurations";
 
     defineOptions({

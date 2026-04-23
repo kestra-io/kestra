@@ -195,15 +195,15 @@
     import {createLink} from "./utils/links";
     import {FilterObject} from "../../../utils/filters";
 
-    import {State, durationUtils} from "@kestra-io/ui-design-system";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {State, durationUtils} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
 
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
-    import {KsId} from "@kestra-io/ui-design-system";
+    import {KsId} from "@kestra-io/design-system";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";

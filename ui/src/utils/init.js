@@ -23,8 +23,8 @@ import {createPinia} from "pinia";
 
 import Toast from "./toast";
 import filters from "./filters";
-import KestraDesignSystem from "@kestra-io/ui-design-system";
-import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/ui-design-system";
+import KestraDesignSystem from "@kestra-io/design-system";
+import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/design-system";
 import {date as dateFilter} from "./filters";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";

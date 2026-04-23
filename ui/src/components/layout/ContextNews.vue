@@ -53,7 +53,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import ContextInfoContent from "../ContextInfoContent.vue";
 
     import {useApiStore} from "../../stores/api";

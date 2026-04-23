@@ -56,7 +56,7 @@
     import {ref, computed, watch, nextTick, reactive} from "vue";
     import {useRoute} from "vue-router";
     import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../stores/plugins";
     import {cap} from "../../utils/filters";
 

@@ -14,7 +14,7 @@
     import Sections from "../sections/Sections.vue";
     import {Chart} from "../types.ts";
     import {useDashboardStore} from "../../../stores/dashboard";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import throttle from "lodash/throttle";
 
     interface Result {

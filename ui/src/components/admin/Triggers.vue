@@ -315,7 +315,7 @@
     import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {KsMessage} from "@kestra-io/ui-design-system";
+    import {KsMessage} from "@kestra-io/design-system";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -336,14 +336,14 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsId, KsIconButton} from "@kestra-io/design-system";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
 
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
 

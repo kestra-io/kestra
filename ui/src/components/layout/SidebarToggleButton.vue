@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import {KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsIconButton} from "@kestra-io/design-system";
 
     defineEmits<{
         (e: "toggle"): void;

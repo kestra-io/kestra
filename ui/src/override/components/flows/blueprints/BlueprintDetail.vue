@@ -99,7 +99,7 @@
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
 
     import {useFlowStore} from "../../../../stores/flow";
     import {usePluginsStore} from "../../../../stores/plugins";
@@ -107,7 +107,7 @@
     import {useApiStore} from "../../../../stores/api";
 
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     const props = withDefaults(defineProps<{
         blueprintId: string;

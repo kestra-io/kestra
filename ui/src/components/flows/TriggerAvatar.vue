@@ -29,7 +29,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import Utils from "../../utils/utils";
     import TriggerVars from "./TriggerVars.vue";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {Execution} from "../../stores/executions";

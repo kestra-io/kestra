@@ -4,7 +4,7 @@
 </template>
 
 <script setup lang="ts">
-    import {durationUtils} from "@kestra-io/ui-design-system";
+    import {durationUtils} from "@kestra-io/design-system";
     import {computed} from "vue";
 
     const props = defineProps<{

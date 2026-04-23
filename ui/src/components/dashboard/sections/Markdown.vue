@@ -12,7 +12,7 @@
     import type {Chart} from "../composables/useDashboards";
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({

@@ -24,7 +24,7 @@
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
     import {useAuthStore} from "override/stores/auth";
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";

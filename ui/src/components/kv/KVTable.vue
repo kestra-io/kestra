@@ -247,11 +247,11 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsId, KsIconButton} from "@kestra-io/design-system";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
 
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 

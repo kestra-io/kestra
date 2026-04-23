@@ -67,7 +67,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-design-system"
+    import {State} from "@kestra-io/design-system"
     import {shallowRef, ref} from "vue";
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast";

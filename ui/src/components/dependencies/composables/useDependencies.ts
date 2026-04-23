@@ -14,8 +14,8 @@ import type {RouteParams} from "vue-router";
 
 import {v4 as uuid} from "uuid";
 
-import {State, cssVar} from "@kestra-io/ui-design-system";
-import type {KsGraphNode, KsGraphEdge} from "@kestra-io/ui-design-system";
+import {State, cssVar} from "@kestra-io/design-system";
+import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system";
 
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
 import type {Types, Node, Edge, Element} from "../utils/types";

@@ -40,7 +40,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import {KsMessageBox} from "@kestra-io/ui-design-system";
+    import {KsMessageBox} from "@kestra-io/design-system";
     import {useBookmarksStore} from "../../stores/bookmarks";
 
     const {t} = useI18n({useScope: "global"});

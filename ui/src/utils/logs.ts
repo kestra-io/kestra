@@ -1,5 +1,5 @@
-import {LOG_LEVELS} from "@kestra-io/ui-design-system";
-import {cssVar} from "@kestra-io/ui-design-system"
+import {LOG_LEVELS} from "@kestra-io/design-system";
+import {cssVar} from "@kestra-io/design-system"
 
 export type LevelKey = typeof LOG_LEVELS[number];
 

@@ -29,7 +29,7 @@
 <script>
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/ui-design-system"
+    import {State} from "@kestra-io/design-system"
     import FlowUtils from "../../../../../utils/flowUtils";
     import * as ExecutionUtils from "../../../../../utils/executionUtils";
     import InputsForm from "../../../../../components/inputs/InputsForm.vue";

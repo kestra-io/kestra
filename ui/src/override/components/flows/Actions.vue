@@ -30,7 +30,7 @@
     import {computed} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useFlowStore} from "../../../stores/flow";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";

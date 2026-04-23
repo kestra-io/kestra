@@ -39,7 +39,7 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
     } from "../../../injectionKeys";
 
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 

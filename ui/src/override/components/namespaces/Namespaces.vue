@@ -84,7 +84,7 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";

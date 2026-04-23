@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
         FULL_SCHEMA_INJECTION_KEY,

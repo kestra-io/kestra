@@ -225,7 +225,7 @@
 
 <script>
     import LogLine from "./LogLine.vue";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
     import _xor from "lodash/xor";
     import _groupBy from "lodash/groupBy";
     import moment from "moment";

@@ -175,8 +175,8 @@
 <script>
     import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
-    import {State} from "@kestra-io/ui-design-system";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
@@ -192,8 +192,8 @@
     import AiIcon from "../ai/AiIcon.vue";
     import FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
-    import {SECTIONS} from "@kestra-io/ui-design-system";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {SECTIONS} from "@kestra-io/design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";

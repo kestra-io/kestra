@@ -52,7 +52,7 @@
 
     import {computed} from "vue";
     import {SchemaToHtml} from "@kestra-io/ui-libs";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {useMiscStore} from "override/stores/misc";
     import {usePluginsStore} from "../../stores/plugins";

@@ -1,8 +1,8 @@
 import {computed, h, ref, watch} from "vue";
-import {KsMarkdown, KsMessageBox} from "@kestra-io/ui-design-system";
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
 import permission from "../models/permission";
 import action from "../models/action";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";

@@ -39,7 +39,7 @@
     import Duration from "./table/columns/Duration.vue";
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
 
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},

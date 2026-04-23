@@ -60,7 +60,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     const {isOnline} = useNetwork()
 
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import PluginCount from "./PluginCount.vue";
     import WhatsNew from "../content/WhatsNew.vue";
     import SupportLinks from "../content/SupportLinks.vue";

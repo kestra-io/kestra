@@ -1,4 +1,4 @@
-import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/ui-design-system"
+import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
 

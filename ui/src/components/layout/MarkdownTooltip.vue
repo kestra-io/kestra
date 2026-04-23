@@ -20,7 +20,7 @@
 <script setup lang="ts">
     import {ref} from "vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
 
     defineProps({
         id: {

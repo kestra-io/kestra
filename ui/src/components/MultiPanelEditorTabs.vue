@@ -39,7 +39,7 @@
 </script>
 
 <style scoped lang="scss">
-    @use "@kestra-io/ui-design-system/src/assets/styles/_color-palette" as colorPalette;
+    @use "@kestra-io/design-system/src/assets/styles/_color-palette" as colorPalette;
 
     .tabs-wrapper {
         display: flex;

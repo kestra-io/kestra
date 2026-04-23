@@ -215,7 +215,7 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import type {FormInstance} from "@kestra-io/ui-design-system";
+    import type {FormInstance} from "@kestra-io/design-system";
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
     import _merge from "lodash/merge";
 
@@ -229,9 +229,9 @@
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import {KsId, KsIconButton, KsPassword} from "@kestra-io/ui-design-system";
+    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system";
     import Labels from "../layout/Labels.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import action from "../../models/action";

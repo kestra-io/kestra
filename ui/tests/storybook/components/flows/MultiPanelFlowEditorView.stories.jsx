@@ -1,6 +1,6 @@
 import {vueRouter} from "storybook-vue3-router";
 import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
 import {useAxios} from "../../../../src/utils/axios";

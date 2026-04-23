@@ -177,7 +177,7 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/ui-design-system"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -186,7 +186,7 @@
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import {KsId} from "@kestra-io/ui-design-system"
+    import {KsId} from "@kestra-io/design-system"
 
     defineOptions({inheritAttrs: false})
 

@@ -87,7 +87,7 @@
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {SchemaToHtml} from "@kestra-io/ui-libs";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import DocsLayout from "../docs/DocsLayout.vue";
     import PluginHome from "./PluginHome.vue";
     import Toc from "./Toc.vue";

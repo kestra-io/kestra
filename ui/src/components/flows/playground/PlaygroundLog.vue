@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import {date, humanizeDuration} from "../../../utils/filters";
     import {Execution, useExecutionsStore} from "../../../stores/executions";
 

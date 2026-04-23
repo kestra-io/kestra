@@ -106,7 +106,7 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 

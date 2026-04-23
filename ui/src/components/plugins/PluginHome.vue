@@ -64,10 +64,10 @@
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
-    import {KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";

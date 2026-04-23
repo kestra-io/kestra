@@ -11,7 +11,7 @@
 <script setup lang="ts">
     import {computed, ref, h} from "vue";
 
-    import {KsMessageBox, KsCheckbox} from "@kestra-io/ui-design-system";
+    import {KsMessageBox, KsCheckbox} from "@kestra-io/design-system";
 
     import {
         Execution,
@@ -23,7 +23,7 @@
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
 
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
 
     import {useToast} from "../../../../../utils/toast";
     const toast = useToast();

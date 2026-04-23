@@ -32,7 +32,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useMetricFilter} from "../filter/configurations";
     import MetricsTable from "../executions/MetricsTable.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
 
     const {t} = useI18n();
     const route = useRoute();

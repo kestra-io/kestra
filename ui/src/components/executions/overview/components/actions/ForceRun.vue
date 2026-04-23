@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
     import {useExecutionsStore} from "../../../../../stores/executions";

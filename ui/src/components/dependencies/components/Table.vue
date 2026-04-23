@@ -77,7 +77,7 @@
     import {watch, nextTick, ref, computed} from "vue";
 
     import Link from "./Link.vue";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 

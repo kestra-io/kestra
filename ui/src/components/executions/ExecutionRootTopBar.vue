@@ -65,7 +65,7 @@
 
 <script>
     import {mapStores} from "pinia";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
 
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import Pause from "./overview/components/actions/Pause.vue";

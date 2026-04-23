@@ -370,8 +370,8 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {ref, computed, watch, h, useTemplateRef} from "vue";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system";
 
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -389,12 +389,12 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import {KsId} from "@kestra-io/ui-design-system";
-    import {State} from "@kestra-io/ui-design-system";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsId} from "@kestra-io/design-system";
+    import {State} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import Labels from "../layout/Labels.vue";
 
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";

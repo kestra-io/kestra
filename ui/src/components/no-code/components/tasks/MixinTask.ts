@@ -1,4 +1,4 @@
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import {defineComponent} from "vue";
 
 export function collapseEmptyValues(value: any): any {

@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted, watch} from "vue";
-    import {State} from "@kestra-io/ui-design-system";
+    import {State} from "@kestra-io/design-system";
     import {stateDisplayValues} from "../../utils/constants";
     import throttle from "lodash/throttle";
 

@@ -20,8 +20,8 @@
 <script setup lang="ts">
     import {computed, ref, watch, PropType} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/ui-design-system";
-    import type {KsChartSeriesItem} from "@kestra-io/ui-design-system";
+    import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/design-system";
+    import type {KsChartSeriesItem} from "@kestra-io/design-system";
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
     import {useTheme} from "../../../utils/utils";

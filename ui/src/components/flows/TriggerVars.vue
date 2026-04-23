@@ -31,7 +31,7 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import VarValue from "../executions/VarValue.vue";
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import Cron from "../layout/Cron.vue";
     import {Execution} from "../../stores/executions";
 

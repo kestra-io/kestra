@@ -138,7 +138,7 @@
     import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {State, durationUtils} from "@kestra-io/ui-design-system";
+    import {State, durationUtils} from "@kestra-io/design-system";
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     // @ts-expect-error JS module without declarations
@@ -152,15 +152,15 @@
     import ExecutionPending from "./ExecutionPending.vue";
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue";
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
-    import {Comparators, type AppliedFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import {Comparators, type AppliedFilter} from "@kestra-io/design-system";
     import {useGanttExecutionFilter} from "../filter/configurations";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "@kestra-io/ui-design-system";
-    import {useRouteFilterPolicy} from "@kestra-io/ui-design-system";
+    } from "@kestra-io/design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/design-system";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
 
     interface TaskRun {

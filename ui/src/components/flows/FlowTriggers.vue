@@ -275,15 +275,15 @@
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
-    import {KsId, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsId, KsIconButton} from "@kestra-io/design-system";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
-    import {KsMarkdown} from "@kestra-io/ui-design-system";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import Empty from "../layout/empty/Empty.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
 
     import action from "../../models/action";
     import permission from "../../models/permission";

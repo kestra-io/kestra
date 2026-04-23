@@ -162,7 +162,7 @@
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
-    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/ui-design-system";
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";

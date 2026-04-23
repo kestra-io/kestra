@@ -274,7 +274,7 @@
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {useFlowFilter} from "../filter/configurations";
 
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -286,13 +286,13 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import Play from "vue-material-design-icons/Play.vue";
 
-    import {KsExecutionStatus, KsIconButton} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system";
     import Labels from "../layout/Labels.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
 
     //@ts-expect-error no declaration file
     import FlowRun from "./FlowRun.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/ui-design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";

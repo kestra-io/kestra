@@ -131,11 +131,11 @@
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import {STATES} from "@kestra-io/ui-design-system";
+    import {STATES} from "@kestra-io/design-system";
 
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
-    import {KsDatePicker, KsTaskIcon} from "@kestra-io/ui-design-system";
+    import {KsDatePicker, KsTaskIcon} from "@kestra-io/design-system";
     import moment, {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
     import Utils from "../../utils/utils";

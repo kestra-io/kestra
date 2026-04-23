@@ -224,7 +224,7 @@
 
 <script setup lang="ts">
     import {onMounted, ref} from "vue"
-    import {KsMessage} from "@kestra-io/ui-design-system"
+    import {KsMessage} from "@kestra-io/design-system"
     import Search from "vue-material-design-icons/SearchWeb.vue"
     import Edit from "vue-material-design-icons/Pencil.vue"
     import Check from "vue-material-design-icons/Check.vue"

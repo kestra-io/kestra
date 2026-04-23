@@ -1,5 +1,5 @@
 import {computed, ref, Ref, watch} from "vue";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/ui-design-system";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
 import {usePlaygroundStore} from "../../stores/playground";
 import Editor from "../../components/inputs/Editor.vue";

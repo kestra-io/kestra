@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {stringUtils} from "@kestra-io/ui-design-system";
+    import {stringUtils} from "@kestra-io/design-system";
     import LowCodeEditor from "./LowCodeEditor.vue";
     import {useFlowStore} from "../../stores/flow";
 

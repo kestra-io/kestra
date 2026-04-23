@@ -44,7 +44,7 @@
     import {ref, computed, watch, onMounted} from "vue";
     import Executions from "../executions/Executions.vue";
     import Empty from "../layout/empty/Empty.vue";
-    import {KsExecutionStatus} from "@kestra-io/ui-design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useAxios} from "../../utils/axios";
     import {apiUrl} from "override/utils/route";

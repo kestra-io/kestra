@@ -143,7 +143,8 @@
         }
 
         if (selectedTextSearch.value) {
-            return metrics.filter((m) => m.indexOf(selectedTextSearch.value) !== -1);
+            const search = selectedTextSearch.value;
+            return metrics.filter((m) => m.indexOf(search) !== -1);
         }
 
         return metrics;

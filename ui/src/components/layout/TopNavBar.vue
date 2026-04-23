@@ -43,7 +43,7 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRoute, RouterLink} from "vue-router";
+    import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import {useLogsStore} from "../../stores/logs";
@@ -52,18 +52,13 @@
     import {useFlowStore} from "../../stores/flow";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
-
-    type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
+    import type {BreadcrumbItem} from "./breadcrumbTypes";
 
     const props = defineProps<{
         title: string;
         description?: string;
         longDescription?: string;
-        breadcrumb?: {
-            label: string;
-            link?: RouterLinkTo;
-            disabled?: boolean;
-        }[];
+        breadcrumb?: BreadcrumbItem[];
         beta?: boolean;
     }>();
 

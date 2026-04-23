@@ -154,7 +154,12 @@ html.full-screen {
 
     --kel-transition-duration: 0.2s;
     --kel-transition-duration-fast: 0.2s;
-    --top-navbar-height: 79px;
+
+    --top-navbar-height: 49px;
+    &:has(.top-bar .description) {
+        --top-navbar-height: 74px;
+    }
+
     #{--menu-width}: 268px;
     #{--menu-collapsed-width}: 65px;
 }

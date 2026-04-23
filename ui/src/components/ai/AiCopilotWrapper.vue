@@ -41,7 +41,7 @@
     import {useAuthStore} from "override/stores/auth";
     import {useApiStore} from "../../stores/api";
     import {useMiscStore} from "override/stores/misc";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import Utils from "../../utils/utils";
     import {aiGenerationTypes} from "../../utils/constants";
@@ -80,7 +80,7 @@
     );
 
     const aiCopilotAllowed = computed(() => {
-        if (!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ)) {
+        if (!authStore.user?.hasAnyActionOnAnyNamespace(resource.COPILOT, action.USE)) {
             return false;
         }
         if (props.generationType === aiGenerationTypes.APP || props.generationType === aiGenerationTypes.TEST) {

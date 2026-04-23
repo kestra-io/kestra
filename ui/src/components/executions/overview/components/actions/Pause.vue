@@ -22,7 +22,7 @@
 <script setup lang="ts">
     import Pause from "vue-material-design-icons/Pause.vue";
     import {useExecutionsStore} from "../../../../../stores/executions";
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
     import {State} from "@kestra-io/design-system";
     import {useAuthStore} from "override/stores/auth";
@@ -45,7 +45,7 @@
     const isDrawerOpen = ref(false);
 
     const enabled = computed(() => {
-        if (!authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)) {
+        if (!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)) {
             return false;
         }
         return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current);

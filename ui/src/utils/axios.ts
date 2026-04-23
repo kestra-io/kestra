@@ -116,6 +116,12 @@ const createAxios = (
                 return Promise.reject(errorResponse)
             }
 
+            if (errorResponse.response.status === 403 && errorResponse?.config?.showMessageOnError !== false) {
+                const coreStore = useCoreStore()
+                coreStore.error = errorResponse.response.status
+                return Promise.reject(errorResponse)
+            }
+
             const authStore = useAuthStore()
 
             if (errorResponse.response.status === 401

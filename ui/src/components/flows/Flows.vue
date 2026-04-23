@@ -137,7 +137,7 @@
                     />
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
                         prop="state.startDate"
                         :label="$t('last execution date')"
                     >
@@ -161,7 +161,7 @@
                     </KsTableColumn>
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state.current' && user?.hasAny(resource.EXECUTION)"
                         prop="state.current"
                         :label="$t('last execution status')"
                     >
@@ -188,7 +188,7 @@
                     </KsTableColumn>
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
                         prop="state"
                         :label="$t('execution statistics')"
                         className="row-graph"
@@ -286,7 +286,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import {useToast} from "../../utils/toast";
 
@@ -379,12 +379,12 @@
 
     const user = computed(() => authStore.user);
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
-    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
+    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE));
     const routeNamespace = computed(() => route.query.namespace as string | undefined);
-    const canRead = computed(() => user?.value?.isAllowed(permission.FLOW, action.READ, routeNamespace.value));
-    const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
-    const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
+    const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value));
+    const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value));
+    const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value));
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -405,7 +405,7 @@
                 })
             )
             .then((data: any) => {
-                if (user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
+                if (user.value?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.LIST)) {
                     executionsStore.loadLatestExecutions({
                         flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
                     }).then((latestExecs: any) => {

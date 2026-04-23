@@ -4,7 +4,7 @@ import {useI18n} from "vue-i18n";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
-import permission from "../../../models/permission";
+import resource from "../../../models/resource";
 import action from "../../../models/action";
 
 export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
@@ -30,7 +30,7 @@ export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
                         valueType: "multi-select" as const,
                         valueProvider: async () => {
                             const user = useAuthStore().user;
-                            if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
                                 const namespacesStore = useNamespacesStore();
                                 const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
                                 return [...new Set(namespaces

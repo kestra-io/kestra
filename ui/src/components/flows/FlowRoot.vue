@@ -21,7 +21,7 @@
     import RouteContext from "../../mixins/routeContext";
     import {mapStores} from "pinia";
     import {useFlowStore} from "../../stores/flow";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
@@ -139,7 +139,7 @@
                     },
                 ];
 
-                if (this.user.hasAny(permission.EXECUTION)) {
+                if (this.user.hasAny(resource.EXECUTION)) {
                     tabs[0].name = "topology";
 
                     tabs = [
@@ -156,8 +156,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.EXECUTION,
-                        action.READ,
+                        resource.EXECUTION,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -172,8 +172,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.FLOW,
-                        action.READ,
+                        resource.FLOW,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -190,8 +190,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.FLOW,
-                        action.READ,
+                        resource.FLOW,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -207,8 +207,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.FLOW,
-                        action.READ,
+                        resource.FLOW,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -223,8 +223,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.EXECUTION,
-                        action.READ,
+                        resource.EXECUTION,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -244,8 +244,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.EXECUTION,
-                        action.READ,
+                        resource.EXECUTION,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {
@@ -259,8 +259,8 @@
                     this.user &&
                     this.flowStore.flow &&
                     this.user.isAllowed(
-                        permission.FLOW,
-                        action.READ,
+                        resource.FLOW,
+                        action.VIEW,
                         this.flowStore.flow.namespace,
                     )
                 ) {

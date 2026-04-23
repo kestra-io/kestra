@@ -61,7 +61,7 @@
     import {useToast} from "../../utils/toast";
     const toast = useToast();
 
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
 
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -91,7 +91,7 @@
     const enabled = computed(() => {
         if (
             !authStore.user?.isAllowed(
-                permission.EXECUTION,
+                resource.EXECUTION,
                 action.UPDATE,
                 props.execution.namespace,
             )

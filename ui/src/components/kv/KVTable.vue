@@ -259,7 +259,7 @@
     const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
@@ -476,11 +476,11 @@
     });
 
     function canUpdate(kvItem: {namespace: string}) {
-        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.UPDATE, kvItem.namespace);
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.UPDATE, kvItem.namespace);
     }
 
     function canDelete(kvItem: {namespace: string}) {
-        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kvItem.namespace);
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, kvItem.namespace);
     }
 
     function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
@@ -551,7 +551,7 @@
 
     function removeKvs() {
         const groupedByNamespace = _groupBy(selection.value, "namespace");
-        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)));
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(

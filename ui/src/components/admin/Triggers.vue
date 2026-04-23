@@ -173,7 +173,7 @@
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                    v-if="authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)"
                     columnKey="action"
                     className="row-action"
                 >
@@ -214,7 +214,7 @@
 
                             <KsButton
                                 :icon="CalendarCollapseHorizontalOutline"
-                                v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                v-if="authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)"
                                 @click="setBackfillModal(scope.row, true)"
                                 size="small"
                                 type="primary"
@@ -330,7 +330,7 @@
     const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";

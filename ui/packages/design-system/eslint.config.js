@@ -1,8 +1,14 @@
+// @ts-check
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
+import {dirname} from "path";
+import {fileURLToPath} from "url";
+
+// resolve current directory for tsconfig
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
@@ -25,7 +31,10 @@ export default defineConfig([
     ...pluginVue.configs["flat/strongly-recommended"],
     {
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
-        languageOptions: {parserOptions: {parser: tseslint.parser}},
+        languageOptions: {parserOptions: {
+            parser: tseslint.parser,
+            tsConfigRootDir: __dirname,
+        }},
         rules: {
             "vue/block-lang": ["warn",
                 {

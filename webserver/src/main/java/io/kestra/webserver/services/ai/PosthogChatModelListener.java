@@ -11,6 +11,7 @@ import io.kestra.webserver.services.posthog.PosthogService;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -39,11 +40,17 @@ public class PosthogChatModelListener implements ChatModelListener {
         properties.put("$ai_http_status", 200);
         properties.put("$ai_response_id", response.metadata().id());
 
+        AiMessage aiMessage = response.aiMessage();
+        // Intermediate tool-call responses are captured in the inputs of the final generation — skip them.
+        if (aiMessage.hasToolExecutionRequests()) {
+            return;
+        }
+
         properties.put("$ai_input", inputs(request));
         properties.put(
             "$ai_output_choices", Map.of(
                 "content", Map.of(
-                    "text", response.aiMessage().text(),
+                    "text", Optional.ofNullable(aiMessage.text()).orElse(""),
                     "type", "text"
                 ),
                 "role", "assistant"
@@ -144,11 +151,16 @@ public class PosthogChatModelListener implements ChatModelListener {
             .stream()
             .map(chatMessage ->
             {
-                if (chatMessage instanceof AiMessage aiMessage) {
-                    return Map.of(
-                        "role", "assistant",
-                        "content", aiMessage.text()
-                    );
+                if (chatMessage instanceof AiMessage msg) {
+                    String content = msg.hasToolExecutionRequests()
+                        ? msg.toolExecutionRequests().stream()
+                            .map(req -> req.name() + "(" + req.arguments() + ")")
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("")
+                        : Optional.ofNullable(msg.text()).orElse("");
+                    return Map.of("role", "assistant", "content", content);
+                } else if (chatMessage instanceof ToolExecutionResultMessage msg) {
+                    return Map.of("role", "tool", "content", Optional.ofNullable(msg.text()).orElse(""));
                 } else if (chatMessage instanceof UserMessage userMessage) {
                     return Map.of(
                         "role", "user",

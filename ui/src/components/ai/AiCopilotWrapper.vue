@@ -2,6 +2,7 @@
     <div ref="rootEl" class="ai-copilot-wrapper">
         <AITriggerButton
             v-if="sticky && aiCopilotAllowed"
+            ref="triggerBtn"
             class="no-code-ai-trigger"
             :show="true"
             :opened="aiCopilotOpened"
@@ -15,17 +16,10 @@
             :closeAiCopilot="closeAiCopilot"
         />
 
-        <Transition name="backdrop-fade">
-            <div
-                v-if="aiCopilotOpened"
-                class="ai-copilot-backdrop"
-                @click="closeAiCopilot"
-            />
-        </Transition>
-
         <Transition name="copilot-slide">
             <AiCopilot
                 v-if="aiCopilotOpened"
+                ref="copilotEl"
                 class="position-absolute prompt ai-copilot-popup"
                 @close="closeAiCopilot"
                 :flow="flow"
@@ -41,6 +35,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import {onClickOutside} from "@vueuse/core";
     import AiCopilot from "./AiCopilot.vue";
     import AITriggerButton from "./AITriggerButton.vue";
     import {useAuthStore} from "override/stores/auth";
@@ -73,8 +68,17 @@
     const miscStore = useMiscStore();
 
     const rootEl = ref<HTMLDivElement>();
+    const copilotEl = ref<InstanceType<typeof AiCopilot>>();
+    const triggerBtn = ref<InstanceType<typeof AITriggerButton>>();
     const aiCopilotOpened = ref(false);
     const conversationId = ref<string>(Utils.uid());
+
+    onClickOutside(
+        computed(() => copilotEl.value?.$el),
+        () => { if (aiCopilotOpened.value) closeAiCopilot(); },
+        {ignore: [computed(() => triggerBtn.value?.$el), ".ai-provider-pill-popper"]},
+    );
+
     const aiCopilotAllowed = computed(() => {
         if (!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ)) {
             return false;
@@ -154,29 +158,9 @@
         padding-top: calc(1.5rem + 32px) !important; // 0.75rem top offset + button height + 0.75rem gap
     }
 
-    .ai-copilot-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        z-index: 1000;
-    }
-
     .ai-copilot-popup {
         z-index: 1001;
         transform-origin: center bottom;
-    }
-
-    .backdrop-fade-enter-active,
-    .backdrop-fade-leave-active {
-        transition: opacity 0.2s ease;
-    }
-
-    .backdrop-fade-enter-from,
-    .backdrop-fade-leave-to {
-        opacity: 0;
     }
 
     .copilot-slide-enter-active {

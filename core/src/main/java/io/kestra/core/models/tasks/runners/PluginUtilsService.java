@@ -112,6 +112,10 @@ abstract public class PluginUtilsService {
     }
 
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
+        return parseOut(line, logger, runContext, isStdErr, customInstant, false);
+    }
+
+    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant, boolean debug) {
 
         TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).services().taskLogLineMatcher();
 
@@ -123,6 +127,8 @@ abstract public class PluginUtilsService {
                 outputs.putAll(taskLogMatch.outputs());
             } else if (isStdErr) {
                 runContext.logger().error(line);
+            } else if (debug) {
+                runContext.logger().debug(line);
             } else {
                 runContext.logger().info(line);
             }

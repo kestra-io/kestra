@@ -85,22 +85,33 @@
                     </div>
 
                     <div v-if="configured" class="ai-footer ai-footer-onboarding">
-                        <el-select
-                            v-if="providers.length > 1"
-                            class="ai-provider-select"
-                            :modelValue="selectedProvider"
-                            @update:model-value="onProviderChange"
-                            :placeholder="$t('ai.flow.select_provider')"
-                        >
-                            <el-option
-                                v-for="p in providers"
-                                :key="p.id"
-                                :label="p.displayName"
-                                :value="p.id"
-                            />
-                        </el-select>
-
                         <div class="footer-right">
+                            <el-dropdown
+                                v-if="providers.length > 1"
+                                trigger="click"
+                                placement="top-end"
+                                @command="onProviderChange"
+                                @visible-change="isProviderOpen = $event"
+                                class="ai-provider-dropdown"
+                                popperClass="ai-provider-pill-popper"
+                            >
+                                <button class="ai-provider-pill" :class="{'is-open': isProviderOpen}">
+                                    <span class="ai-provider-label">{{ providers.find(p => p.id === selectedProvider)?.displayName }}</span>
+                                    <ChevronDown class="ai-provider-chevron" />
+                                </button>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item
+                                            v-for="p in providers"
+                                            :key="p.id"
+                                            :command="p.id"
+                                        >
+                                            <span class="provider-option-label">{{ p.displayName }}</span>
+                                            <Check v-if="p.id === selectedProvider" class="provider-option-check" />
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
                             <template v-if="waitingForReply">
                                 <template v-if="props.onboarding">
                                     <el-button
@@ -203,22 +214,33 @@
                     <span class="shortcut-hint">(⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}</span>
                 </div>
 
-                <el-select
-                    v-if="providers.length > 1"
-                    class="w-50 mx-3"
-                    :modelValue="selectedProvider"
-                    @update:model-value="onProviderChange"
-                    :placeholder="$t('ai.flow.select_provider')"
-                >
-                    <el-option
-                        v-for="p in providers"
-                        :key="p.id"
-                        :label="p.displayName"
-                        :value="p.id"
-                    />
-                </el-select>
-
                 <div class="footer-right">
+                    <el-dropdown
+                        v-if="providers.length > 1"
+                        trigger="click"
+                        placement="top-end"
+                        @command="onProviderChange"
+                        @visible-change="isProviderOpen = $event"
+                        class="ai-provider-dropdown"
+                        popperClass="ai-provider-pill-popper"
+                    >
+                        <button class="ai-provider-pill" :class="{'is-open': isProviderOpen}">
+                            <span class="ai-provider-label">{{ providers.find(p => p.id === selectedProvider)?.displayName }}</span>
+                            <ChevronDown class="ai-provider-chevron" />
+                        </button>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item
+                                    v-for="p in providers"
+                                    :key="p.id"
+                                    :command="p.id"
+                                >
+                                    <span class="provider-option-label">{{ p.displayName }}</span>
+                                    <Check v-if="p.id === selectedProvider" class="provider-option-check" />
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
                     <template v-if="waitingForReply">
                         <span class="generating-label">
                             <el-icon class="is-loading"><Loading /></el-icon>
@@ -271,6 +293,8 @@
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
     import Microphone from "vue-material-design-icons/Microphone.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import kestraIcon from "../../assets/icon.svg";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
     import {useApiStore} from "../../stores/api";
@@ -278,7 +302,6 @@
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
     import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
-    import kestraIcon from "../../assets/icon.svg";
 
     const aiStore = useAiStore();
     const apiStore = useApiStore();
@@ -300,8 +323,8 @@
         generationType?: AiGenerationType,
         namespace?: string,
         onboarding?: boolean,
-        heading?: string,
         initialPrompt?: string,
+        heading?: string,
         onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,
         selectedFromTag?: boolean,
@@ -391,6 +414,7 @@
     });
 
     const providers = ref<{id: string, displayName: string}[]>([]);
+    const isProviderOpen = ref(false);
     const selectedProvider = ref<string | undefined>(undefined);
 
     async function fetchProviders() {
@@ -983,8 +1007,52 @@
     margin-top: -2px;
 }
 
-.ai-provider-select {
-    width: min(240px, 100%);
+.ai-provider-dropdown {
+    flex-shrink: 0;
+}
+
+.ai-provider-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ks-content-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+    &:hover,
+    &.is-open {
+        border-color: var(--ks-border-secondary);
+        background: var(--ks-background-card);
+        color: var(--ks-content-primary);
+    }
+}
+
+.ai-provider-chevron {
+    font-size: 12px;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+:global(.ai-provider-pill-popper .el-dropdown-menu__item) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 140px;
+}
+
+:global(.ai-provider-pill-popper .provider-option-check) {
+    font-size: 14px;
+    flex-shrink: 0;
+    color: var(--ks-content-primary);
 }
 
 .footer-right {
@@ -1053,6 +1121,14 @@
     color: var(--ks-content-tertiary);
 }
 
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
 @media (max-width: 768px) {
     .ai-body-onboarding {
         gap: 24px;
@@ -1090,11 +1166,6 @@
 
     .ai-footer-onboarding {
         flex-wrap: wrap;
-    }
-
-    .ai-provider-select {
-        width: 100%;
-        order: 3;
     }
 
     .footer-left {

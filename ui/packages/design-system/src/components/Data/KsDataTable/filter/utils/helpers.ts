@@ -1,5 +1,5 @@
-import {LocationQuery} from "vue-router";
-import {AppliedFilter, Comparators} from "./filterTypes";
+import type {LocationQuery} from "vue-router";
+import {type AppliedFilter, Comparators} from "./filterTypes";
 
 const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)

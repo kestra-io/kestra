@@ -4,7 +4,7 @@ import type {
     LocationQueryValue,
     LocationQueryValueRaw
 } from "vue-router";
-import {AppliedFilter} from "./filterTypes";
+import type {AppliedFilter} from "./filterTypes";
 
 const LEVEL_FILTER_PREFIX = "filters[level][";
 const LEVEL_EQUALS_FILTER_KEY = "filters[level][EQUALS]";

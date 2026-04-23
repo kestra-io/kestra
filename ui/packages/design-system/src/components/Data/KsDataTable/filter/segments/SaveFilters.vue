@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {AppliedFilter, SavedFilter} from "../utils/filterTypes";
+    import type {AppliedFilter, SavedFilter} from "../utils/filterTypes";
     import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons";
 
     const props = defineProps<{

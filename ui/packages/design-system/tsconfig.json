@@ -1,36 +1,21 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "module": "ESNext",
-        "lib": ["ES2023.Array", "ES2020", "DOM", "DOM.Iterable", "ES2021.String", "ES2022.Array"],
-        "skipLibCheck": true,
-        "incremental": true,
-
-        /* Bundler mode */
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": true,
-        "isolatedModules": true,
-        "moduleDetection": "force",
-        "noEmit": true,
-        "jsx": "preserve",
-        "jsxImportSource": "vue",
-
-        /* Linting */
-        "strict": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        "useDefineForClassFields": true,
-
-        "declaration": true,
-        "declarationDir": "./dist"
-    },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.vue",
-        "tests/**/*.ts",
-        "tests/**/*.vue",
-        ".storybook/**/*.ts",
-        "vitest.workspace.ts"
-    ]
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["es2023", "DOM"],
+    "moduleDetection": "force",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+  },
+  "include": ["src"]
 }

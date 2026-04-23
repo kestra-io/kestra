@@ -4,7 +4,7 @@ import {
     YAMLMap,
     YAMLSeq,
     Document,
-    Node,
+   type Node,
     Pair,
     LineCounter,
     parseDocument,
@@ -12,8 +12,8 @@ import {
     isMap,
     isSeq,
     visit,
-    Range,
-    ToStringOptions,
+    type Range,
+    type ToStringOptions,
 } from "yaml";
 import {cloneDeep} from "./util";
 

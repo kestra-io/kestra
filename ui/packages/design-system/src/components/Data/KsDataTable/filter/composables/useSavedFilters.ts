@@ -1,7 +1,7 @@
 import {computed} from "vue";
 import {useRoute} from "vue-router";
 import {useStorage} from "@vueuse/core";
-import {SavedFilter} from "../utils/filterTypes";
+import type {SavedFilter} from "../utils/filterTypes";
 
 const isDateString = (value: any) =>
     typeof value === "string" && !isNaN(Date.parse(value)) && value.includes("T");

@@ -47,8 +47,8 @@
 </script>
 
 <style lang="scss">
-    @use '../../assets/styles/el-ns';
-    @use 'element-plus/theme-chalk/src/empty';
+    @use '../../assets/styles/el-ns' as *;
+    @use 'element-plus/theme-chalk/src/empty' as *;
 
     .kel-empty {
         background-color: var(--ks-background-card);

@@ -1,5 +1,5 @@
 import {nextTick, onMounted} from "vue";
-import {LocationQuery, useRoute, useRouter} from "vue-router";
+import {type LocationQuery, useRoute, useRouter} from "vue-router";
 
 interface DefaultFilterOptions {
     namespace?: string | null;

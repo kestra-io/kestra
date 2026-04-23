@@ -11,7 +11,7 @@ export class ExecutionsPage extends BasePage {
 
     async goto() {
         await this.login();
-        await this.page.goto("/ui/main/executions");
+        await this.page.goto("/ui/executions");
 
         await expect(this.page.getByRole("heading", {name: "Executions"})).toBeVisible();
     }
@@ -104,6 +104,8 @@ export class ExecutionsPage extends BasePage {
         await this.page.getByRole("button", {name: "OK"}).click();
         // Confirm
         await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.reload();
+        await this.page.waitForLoadState("networkidle");
     }
 
     async setPaginationTo(size: Pagination) {

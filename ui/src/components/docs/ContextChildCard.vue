@@ -1,6 +1,6 @@
 <template>
-    <kel-row :gutter="16">
-        <kel-col :span="12" v-for="item in navigation" :key="item.path" class="mb-3">
+    <KsRow :gutter="16">
+        <KsCol :span="12" v-for="item in navigation" :key="item.path" class="mb-3">
             <ContextDocsLink
                 :href="item.path"
                 class="flex-1"
@@ -28,8 +28,8 @@
                     </div>
                 </div>
             </ContextDocsLink>
-        </kel-col>
-    </kel-row>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">

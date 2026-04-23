@@ -69,9 +69,9 @@ jobs:
             ui:
               - 'ui/**'
             ui-design-system:
-              - 'ui-design-system/**'
+              - 'ui/packages/design-system/**'
             backend:
-              - '!{ui,ui-design-system,.github}/**'
+              - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:

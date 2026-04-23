@@ -9,9 +9,9 @@
     >
         <template v-if="canCreateFlow" #cta>
             <router-link :to="{name: 'flows/create'}">
-                <el-button type="primary">
+                <KsButton type="primary">
                     {{ $t("welcome_copilot.button_cta") }}
-                </el-button>
+                </KsButton>
             </router-link>
         </template>
     </WelcomeCopilot>

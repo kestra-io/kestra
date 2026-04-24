@@ -29,10 +29,8 @@
                 </slot>
             </div>
         </div>
-        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center">
-            <div class="d-none d-lg-flex align-items-center">
-                <GlobalSearch class="trigger-flow-guided-step" />
-            </div>
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+            <GlobalSearch class="trigger-flow-guided-step" />
             <div v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" class="d-flex side gap-2 flex-shrink-0 align-items-center">
                 <el-button @click="deleteLogs()">
                     <TrashCan class="me-2" />

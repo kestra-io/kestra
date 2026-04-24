@@ -1,10 +1,12 @@
 <template>
-    <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="ChartLineVariant" class="selected">
-            <span v-if="!verticalLayout" class="text-truncate">
-                {{ selected?.title ?? $t('dashboards.default') }}
-            </span>
-        </el-button>
+    <el-dropdown trigger="click" hideOnClick :placement :teleported>
+        <slot :selected>
+            <el-button :icon="ChartLineVariant" class="selected">
+                <span v-if="!verticalLayout" class="text-truncate">
+                    {{ selected?.title ?? $t('dashboards.default') }}
+                </span>
+            </el-button>
+        </slot>
 
         <template #dropdown>
             <el-dropdown-menu class="p-3 dropdown">
@@ -86,6 +88,9 @@
 
 
     const emits = defineEmits(["dashboard"]);
+
+    import type {Placement} from "element-plus";
+    const {placement = "bottom-end", teleported = true} = defineProps<{placement?: Placement; teleported?: boolean}>();
 
     const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home");
     const query = computed(() => {

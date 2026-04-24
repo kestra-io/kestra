@@ -1,22 +1,48 @@
 <template>
-    <Dashboards
-        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
-        @dashboard="onSelectDashboard"
-    />
-    <Action
-        v-if="deleted"
-        type="default"
-        :icon="BackupRestore"
-        :label="$t('restore')"
-        @click="restoreFlow"
-    />
-    <Action
-        v-if="canEdit && !deleted && tab !== 'edit'"
-        type="default"
-        :icon="Pencil"
-        :label="$t('edit flow')"
-        @click="editFlow"
-    />
+    <template v-if="secondaryActionCount < 2">
+        <Dashboards
+            v-if="showDashboards"
+            @dashboard="onSelectDashboard"
+        />
+        <Action
+            v-for="a in simpleActions"
+            :key="a.label"
+            type="default"
+            :icon="a.icon"
+            :label="a.label"
+            @click="a.handler"
+        />
+    </template>
+
+    <el-dropdown v-else trigger="click" popperClass="nested-dropdown">
+        <el-button :icon="DotsVertical" />
+        <template #dropdown>
+            <el-dropdown-menu>
+                <Dashboards
+                    v-if="showDashboards"
+                    placement="left-start"
+                    :teleported="false"
+                    @dashboard="onSelectDashboard"
+                    v-slot="{selected}"
+                >
+                    <li class="el-dropdown-menu__item" role="menuitem">
+                        <i class="el-icon"><ChartLineVariant /></i>
+                        {{ selected?.title ?? $t("dashboards.default") }}
+                    </li>
+                </Dashboards>
+
+                <el-dropdown-item
+                    v-for="a in simpleActions"
+                    :key="a.label"
+                    :icon="a.icon"
+                    @click="a.handler"
+                >
+                    {{ a.label }}
+                </el-dropdown-item>
+            </el-dropdown-menu>
+        </template>
+    </el-dropdown>
+
     <TriggerFlow
         v-if="flow && !deleted && tab !== 'apps' && canExecute"
         type="primary"
@@ -28,11 +54,14 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
+    import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {useFlowStore} from "../../../stores/flow";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
@@ -43,8 +72,9 @@
     import {useAuthStore} from "override/stores/auth";
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
     import {useDashboardStore} from "../../../stores/dashboard.ts";
+    import type {Component} from "vue";
 
-
+    const {t} = useI18n({useScope: "global"});
 
     const unsavedChangesStore = useUnsavedChangesStore();
     const flowStore = useFlowStore();
@@ -60,11 +90,15 @@
 
     const onSelectDashboard = (value: any) => {
         const key = dashboardStore.getUserDashboardStorageKey(route);
-        localStorage.setItem(key, value)
+        localStorage.setItem(key, value);
         router.replace({
             params: {...route.params, dashboard: value}
         });
     };
+
+    const showDashboards = computed(() =>
+        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name))
+    );
 
     const canExecute = computed(() =>
         flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
@@ -94,4 +128,13 @@
             router.go(0);
         });
     };
+
+    const simpleActions = computed(() => [
+        deleted.value && {icon: BackupRestore, label: t("restore"), handler: restoreFlow},
+        canEdit.value && !deleted.value && tab.value !== "edit" && {icon: Pencil, label: t("edit flow"), handler: editFlow},
+    ].filter(Boolean) as {icon: Component; label: string; handler: () => void}[]);
+
+    const secondaryActionCount = computed(() =>
+        Number(showDashboards.value) + simpleActions.value.length
+    );
 </script>

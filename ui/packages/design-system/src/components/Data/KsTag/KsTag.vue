@@ -31,10 +31,8 @@
         effect?: "dark" | "light" | "plain"
         icon?: string | Component
         round?: boolean
-        label?: string;
+        label?: string
     }>()
-
-    const filteredProps = useFilteredProps(props, ["icon", "label"])
 
     const emit = defineEmits<{
         close: []
@@ -44,6 +42,8 @@
         default?(): unknown
         icon?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props, ["icon", "label"])
 </script>
 
 <style lang="scss">

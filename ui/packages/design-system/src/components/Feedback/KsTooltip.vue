@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTooltip, provideGlobalConfig} from "element-plus"
     import {computed} from "vue"
+    import {ElTooltip, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useTheme} from "../../composables/useTheme"
 
@@ -32,24 +32,27 @@
         effect?: "light" | "dark"
         enterable?: boolean
         rawContent?: boolean
-        disabled?: boolean,
+        disabled?: boolean
         autoClose?: boolean | number
     }>(), {
+        content: undefined,
+        trigger: undefined,
+        placement: undefined,
         effect: undefined,
         enterable: undefined,
         autoClose: undefined,
     })
+
+    defineSlots<{
+        default?(): unknown
+        content?(): unknown
+    }>()
 
     const {isDark} = useTheme()
 
     const effectValue = computed(() => props.effect ?? (isDark.value ? "light" : "dark"))
 
     const filteredProps = useFilteredProps(props, ["effect"])
-
-    defineSlots<{
-        default?(): unknown
-        content?(): unknown
-    }>()
 </script>
 
 <style lang="scss">

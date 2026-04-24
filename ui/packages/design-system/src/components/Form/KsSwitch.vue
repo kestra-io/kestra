@@ -1,7 +1,7 @@
 <template>
     <ElSwitch
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     />
 </template>
@@ -14,25 +14,28 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<boolean | string | number>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: boolean | string | number
         disabled?: boolean
         activeText?: string
         inactiveText?: string
-         
         activeActionIcon?: any
-         
         inactiveActionIcon?: any
         size?: "large" | "default" | "small"
         activeValue?: boolean | string | number
         inactiveValue?: boolean | string | number
     }>(), {
+        activeText: undefined,
+        inactiveText: undefined,
+        activeActionIcon: undefined,
+        inactiveActionIcon: undefined,
+        size: undefined,
         activeValue: undefined,
         inactiveValue: undefined,
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: boolean | string | number]
         change: [value: boolean | string | number]
     }>()
 

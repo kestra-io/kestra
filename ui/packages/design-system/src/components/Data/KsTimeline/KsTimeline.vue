@@ -1,7 +1,5 @@
 <template>
-    <ElTimeline
-        v-bind="({...$attrs} as any)"
-    >
+    <ElTimeline v-bind="$attrs">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

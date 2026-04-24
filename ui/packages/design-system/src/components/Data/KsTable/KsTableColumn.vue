@@ -32,7 +32,15 @@
         fixed?: boolean | "left" | "right"
         reserveSelection?: boolean
     }>(), {
+        type: undefined,
+        prop: undefined,
+        label: undefined,
+        width: undefined,
+        minWidth: undefined,
         sortable: undefined,
+        sortOrders: undefined,
+        columnKey: undefined,
+        className: undefined,
         fixed: undefined,
         reserveSelection: undefined,
     })

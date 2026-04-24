@@ -23,19 +23,18 @@
         timestamp?: string
         color?: string
         type?: string
-         
         icon?: any
         size?: "normal" | "large"
         hideTimestamp?: boolean
         placement?: "top" | "bottom"
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     defineSlots<{
         default?(): unknown
         dot?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

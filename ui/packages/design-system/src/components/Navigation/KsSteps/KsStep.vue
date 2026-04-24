@@ -28,7 +28,6 @@
     const props = defineProps<{
         title?: string
         description?: string
-         
         icon?: any
         status?: string
     }>()

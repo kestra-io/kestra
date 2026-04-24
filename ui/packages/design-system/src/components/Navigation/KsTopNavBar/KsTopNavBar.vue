@@ -84,7 +84,6 @@
         longDescription?: string
         breadcrumb?: {
             label: string
-             
             link?: any
             disabled?: boolean
         }[]

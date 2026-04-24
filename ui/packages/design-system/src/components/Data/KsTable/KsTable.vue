@@ -27,7 +27,6 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-
         data?: any[]
         tableLayout?: "fixed" | "auto"
         size?: "large" | "default" | "small"
@@ -40,8 +39,17 @@
         cellClassName?: string | ((data: any) => string)
         rowClassName?: string | ((data: any) => string)
     }>(), {
+        data: undefined,
+        tableLayout: undefined,
+        size: undefined,
+        rowKey: undefined,
+        emptyText: undefined,
+        defaultSort: undefined,
         showHeader: undefined,
+        maxHeight: undefined,
         fit: undefined,
+        cellClassName: undefined,
+        rowClassName: undefined,
     })
 
     const emit = defineEmits<{
@@ -59,6 +67,8 @@
 
     const tableRef = ref<InstanceType<typeof ElTable>>()
 
+    const filteredProps = useFilteredProps(props)
+
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
         toggleRowSelection: (row: any, selected?: boolean) => tableRef.value?.toggleRowSelection(row, selected),
@@ -69,8 +79,6 @@
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),
     })
-
-    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

@@ -29,7 +29,7 @@
     const filteredProps = useFilteredProps(props)
 
     defineExpose({
-        scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)(...args),
+        scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)?.(...args),
         setScrollTop: (top: number) => scrollbarRef.value?.setScrollTop(top),
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),
         update: () => scrollbarRef.value?.update(),

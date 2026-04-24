@@ -22,11 +22,11 @@
         tag?: string
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

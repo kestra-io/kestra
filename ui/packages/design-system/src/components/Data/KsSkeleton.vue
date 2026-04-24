@@ -25,7 +25,10 @@
         throttle?: number
     }>(), {
         animated: undefined,
+        count: undefined,
         loading: undefined,
+        rows: undefined,
+        throttle: undefined,
     })
 
     defineSlots<{

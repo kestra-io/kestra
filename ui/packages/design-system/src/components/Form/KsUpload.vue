@@ -29,19 +29,18 @@
         limit?: number
         action?: string
         showFileList?: boolean
-         
         fileList?: any[]
     }>(), {
+        accept: undefined,
         autoUpload: undefined,
+        limit: undefined,
+        action: undefined,
         showFileList: undefined,
+        fileList: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
         change: [file: any, fileList: any[]]
-         
         exceed: [files: any[], fileList: any[]]
     }>()
 
@@ -49,6 +48,8 @@
         default?(): unknown
         tip?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

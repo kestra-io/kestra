@@ -21,6 +21,9 @@
         resizable?: boolean
         collapsible?: boolean
     }>(), {
+        size: undefined,
+        min: undefined,
+        max: undefined,
         resizable: undefined,
     })
 

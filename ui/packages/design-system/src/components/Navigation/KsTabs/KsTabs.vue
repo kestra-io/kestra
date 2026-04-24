@@ -1,9 +1,9 @@
 <template>
     <ElTabs
+        v-model="model"
         :type="type"
         :class="{'kel-tabs--box': props.type === 'box'}"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event as string)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -12,32 +12,29 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElTabs, provideGlobalConfig} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import {computed} from "vue";
 
     provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string>()
+
     const props = defineProps<{
-        modelValue?: string
         type?: "" | "card" | "border-card" | "box"
-    }>()
-
-    const filteredProps = useFilteredProps(props, ["type"])
-
-    const emit = defineEmits<{
-        "update:modelValue": [name: string]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
 
-    const type = computed(() => {
-        return props.type == "box" ? "" : props.type;
-    })
+    const type = computed(() =>
+        (props.type === "box" ? "" : props.type)
+    )
+
+    const filteredProps = useFilteredProps(props, ["type"])
 </script>
 
 <style lang="scss">

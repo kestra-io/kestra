@@ -6,9 +6,10 @@ import java.util.List;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.runners.pebble.PebbleContext;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
@@ -28,8 +29,9 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
 
     public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService,
         PosthogService posthogService, NamespaceContextTool namespaceContextTool,
-        String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, PebbleContext pebbleContext) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration, pebbleContext);
+        String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, ExpressionContextService expressionContextService,
+        PluginDefaultService pluginDefaultService) {
+        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration, expressionContextService, pluginDefaultService);
     }
 
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";

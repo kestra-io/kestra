@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
-
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -32,6 +31,90 @@ public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
     public static final String ENVS = "envs";
+
+    /**
+     * Explicit, sorted list of all dot-separated expression paths structurally available
+     * at runtime in a Kestra flow execution (e.g. {@code "flow.id"}, {@code "execution.startDate"},
+     * {@code "taskrun.value"}).
+     * <p>
+     * Dynamic keys whose children depend on the specific flow/execution ({@code inputs},
+     * {@code outputs}, {@code tasks}, {@code labels}, {@code vars}, {@code files}, {@code envs},
+     * {@code globals}) are included as top-level entries only — their children vary per run.
+     * <p>
+     * When {@link DefaultBuilder#build} changes (new field added, new context key introduced),
+     * this list must be updated to match. The test {@code RunVariablesContextPathsTest}
+     * catches drift by asserting that a full stub-built context exposes no paths absent from here.
+     */
+    public static final List<String> EXECUTION_CONTEXT_PATHS = List.of(
+        // Top-level dynamic keys — children are flow/execution-specific, not listed individually
+        "envs",
+        "files",
+        "globals",
+        "inputs",
+        "labels",
+        "outputs",
+        "tasks",
+        "vars",
+        // Execution
+        "execution",
+        "execution.id",
+        "execution.originalId",
+        "execution.outputs",
+        "execution.startDate",
+        "execution.state",
+        // Flow
+        "flow",
+        "flow.id",
+        "flow.namespace",
+        "flow.revision",
+        "flow.tenantId",
+        // ForEach/EachParallel/EachSequential iteration context (item.*)
+        "item",
+        "item.index",
+        "item.key",
+        "item.parent",
+        "item.parent.index",
+        "item.parent.key",
+        "item.parent.value",
+        "item.parents",
+        "item.value",
+        // Kestra configuration
+        "kestra",
+        "kestra.environment",
+        "kestra.url",
+        // Nearest flowable parent (first entry of parents list)
+        "parent",
+        "parent.task",
+        "parent.task.id",
+        "parent.taskrun",
+        "parent.taskrun.value",
+        // All flowable ancestors
+        "parents",
+        // Current task
+        "task",
+        "task.id",
+        "task.type",
+        // Current task run
+        "taskrun",
+        "taskrun.attemptsCount",
+        "taskrun.id",
+        "taskrun.iteration",
+        "taskrun.parentId",
+        "taskrun.startDate",
+        "taskrun.value",
+        // Trigger — top-level object; dynamic output fields are enumerated per trigger type
+        "trigger"
+    );
+
+    /**
+     * Returns the sorted list of all dot-separated expression paths structurally available
+     * at runtime. See {@link #EXECUTION_CONTEXT_PATHS} for details.
+     */
+    public static List<String> allContextPaths() {
+        return EXECUTION_CONTEXT_PATHS;
+    }
+
+
 
     /**
      * Creates an immutable map representation of the given {@link Task}.

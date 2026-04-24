@@ -1,16 +1,22 @@
 package io.kestra.core.runners;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LoopRun;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.DependsOn;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
@@ -245,5 +251,141 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
+    }
+
+    @Test
+    void allContextPathsShouldContainExpectedStructuralPaths() {
+        List<String> paths = RunVariables.allContextPaths();
+
+        assertThat(paths).isNotEmpty();
+
+        // Core structural paths that every Kestra user depends on
+        assertThat(paths).contains(
+            "flow.id",
+            "flow.namespace",
+            "execution.id",
+            "execution.startDate",
+            "execution.state",
+            "taskrun.id",
+            "taskrun.value",
+            "item.index",
+            "task.id",
+            "kestra.environment",
+            "kestra.url"
+        );
+
+        // Dynamic top-level keys — present once, no nested children in the registry
+        assertThat(paths).contains("inputs", "outputs", "labels");
+        assertThat(paths).noneMatch(p -> p.startsWith("inputs."));
+        assertThat(paths).noneMatch(p -> p.startsWith("outputs."));
+        assertThat(paths).noneMatch(p -> p.startsWith("labels."));
+    }
+
+    /**
+     * Drift-detection test: every structural path produced by {@link RunVariables.DefaultBuilder#build}
+     * must be declared in {@link RunVariables#EXECUTION_CONTEXT_PATHS}.
+     * <p>
+     * If {@code DefaultBuilder.build()} adds a new top-level key or nested structural field
+     * that is not in {@code EXECUTION_CONTEXT_PATHS}, this test will fail — forcing the
+     * developer to update the explicit list.
+     * <p>
+     * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
+     * as present but their children are not walked, since their structure varies per flow/execution.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void contextPathsShouldMatchExplicitRegistry() {
+        String parentRunId = IdUtils.create();
+        String childRunId = IdUtils.create();
+
+        // TaskRun stubs with all optional fields populated (parentId, value, iteration)
+        TaskRun parentRun = TaskRun.builder()
+            .id(parentRunId).taskId("parent-task").executionId("exec-id")
+            .namespace("ns").flowId("flow").value("each-value").state(new State()).build();
+        TaskRun childRun = TaskRun.builder()
+            .id(childRunId).taskId("child-task").executionId("exec-id")
+            .namespace("ns").flowId("flow")
+            .parentTaskRunId(parentRunId).value("item-value").iteration(2)
+            .state(new State()).build();
+
+        // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
+        Execution parentExecution = Execution.builder()
+            .id("parent-exec-id").namespace("ns").flowId("flow").state(new State()).build();
+        LoopRun loopRun = new LoopRun(
+            parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
+            List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))
+        );
+
+        Execution execution = Execution.builder()
+            .id("exec-id").namespace("ns").flowId("flow").state(new State())
+            .taskRunList(List.of(parentRun, childRun))
+            .labels(List.of(new Label("env", "prod")))
+            .loopRun(loopRun)
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(GenericFlow.builder().id("flow").namespace("ns").revision(1).tenantId("tenant").build())
+            .withTask(new Task() {
+                @Override public String getId() { return "task-id"; }
+                @Override public String getType() { return "task-type"; }
+            })
+            .withTaskRun(childRun)
+            .withExecution(execution)
+            .withTrigger(new AbstractTrigger() {
+                @Override public String getId() { return "trigger-id"; }
+                @Override public String getType() { return "trigger-type"; }
+            })
+            .withEnvs(Map.of("MY_ENV", "value"))
+            .withGlobals(Map.of("myGlobal", "value"))
+            .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost"))
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Dynamic top-level keys whose children vary per flow/execution — not walked
+        Set<String> dynamicTopLevel = Set.of("envs", "files", "globals", "inputs", "labels",
+            "outputs", "tasks", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
+
+        List<String> foundPaths = new ArrayList<>();
+        collectStructuralPaths(variables, "", dynamicTopLevel, foundPaths);
+
+        // Forward direction: every structural path produced must be declared in EXECUTION_CONTEXT_PATHS
+        for (String path : foundPaths) {
+            assertThat(RunVariables.EXECUTION_CONTEXT_PATHS)
+                .as("Path '%s' produced by DefaultBuilder.build() is not in EXECUTION_CONTEXT_PATHS — update the list", path)
+                .contains(path);
+        }
+
+        // Reverse direction: every static entry in EXECUTION_CONTEXT_PATHS must be producible.
+        // Dynamic sub-key prefixes (envs.*, globals.*, labels.*) are excluded since they vary per flow/execution.
+        Set<String> dynamicSubPrefixes = Set.of("envs.", "globals.", "labels.");
+        for (String registeredPath : RunVariables.EXECUTION_CONTEXT_PATHS) {
+            boolean isDynamicSub = dynamicSubPrefixes.stream().anyMatch(registeredPath::startsWith);
+            if (!isDynamicSub) {
+                assertThat(foundPaths)
+                    .as("Path '%s' in EXECUTION_CONTEXT_PATHS is never produced by DefaultBuilder.build() — remove it or update the test setup", registeredPath)
+                    .contains(registeredPath);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectStructuralPaths(Map<String, ?> map, String prefix, Set<String> stopAt, List<String> paths) {
+        for (Map.Entry<String, ?> entry : map.entrySet()) {
+            String key = entry.getKey();
+            // Skip the secret consumer lambda
+            if (RunVariables.SECRET_CONSUMER_VARIABLE_NAME.equals(key) && prefix.isEmpty()) {
+                continue;
+            }
+            if (stopAt.contains(key) && prefix.isEmpty()) {
+                // Dynamic key: record the top-level key but don't walk flow-specific children
+                paths.add(key);
+                continue;
+            }
+            String fullPath = prefix.isEmpty() ? key : prefix + "." + key;
+            paths.add(fullPath);
+            if (entry.getValue() instanceof Map<?, ?> nested) {
+                collectStructuralPaths((Map<String, ?>) nested, fullPath, stopAt, paths);
+            }
+            // Lists (e.g. parents) — record the path but don't recurse into list elements
+        }
     }
 }

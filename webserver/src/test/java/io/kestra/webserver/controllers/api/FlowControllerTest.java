@@ -66,7 +66,6 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.nullValue;
@@ -1536,18 +1535,18 @@ class FlowControllerTest {
             Argument.mapOf(String.class, List.class)
         );
 
-        // Then
+        // Then — JSON keys are camelCase ExpressionCategory.key() values
         assertThat(result).isNotNull();
         assertThat(result).containsKeys(
-            "Task Outputs", "Execution Context", "Inputs", "Variables",
-            "Filters", "Other"
+            "taskOutputs", "executionContext", "inputs", "variables",
+            "filters", "functions"
         );
-        assertThat(result.get("Inputs")).contains("inputs.myInput");
-        assertThat(result.get("Variables")).contains("vars.myVar");
-        assertThat(result.get("Execution Context")).contains("flow.id", "execution.id");
-        assertThat(result.get("Task Outputs")).anyMatch(e -> e.toString().startsWith("outputs.t1."));
-        assertThat(result.get("Filters")).isNotEmpty();
-        assertThat(result.get("Other")).isNotEmpty();
+        assertThat(result.get("inputs")).contains("inputs.myInput");
+        assertThat(result.get("variables")).contains("vars.myVar");
+        assertThat(result.get("executionContext")).contains("flow.id", "execution.id");
+        assertThat(result.get("taskOutputs")).anyMatch(e -> e.toString().startsWith("outputs.t1."));
+        assertThat(result.get("filters")).isNotEmpty();
+        assertThat(result.get("functions")).isNotEmpty();
     }
 
     @SuppressWarnings("unchecked")
@@ -1575,7 +1574,7 @@ class FlowControllerTest {
         );
 
         // Then — only t1 outputs should be present, not t2
-        List<?> outputs = result.get("Task Outputs");
+        List<?> outputs = result.get("taskOutputs");
         assertThat(outputs).anyMatch(e -> e.toString().startsWith("outputs.t1."));
         assertThat(outputs).noneMatch(e -> e.toString().startsWith("outputs.t2."));
     }
@@ -1585,14 +1584,15 @@ class FlowControllerTest {
         // Given — invalid YAML that cannot be parsed as a flow
         String invalidYaml = "this is not valid flow yaml: [[[";
 
-        // When / Then — should return a client error
-        assertThatThrownBy(() ->
+        // When / Then — should return 400 Bad Request
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(
                 HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
                     .contentType("application/x-yaml"),
                 Argument.mapOf(String.class, List.class)
             )
-        ).isInstanceOf(HttpClientResponseException.class);
+        );
+        assertEquals(BAD_REQUEST, exception.getStatus());
     }
 
     @Test

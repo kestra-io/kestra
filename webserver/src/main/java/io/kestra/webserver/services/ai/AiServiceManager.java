@@ -7,10 +7,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.kestra.core.runners.pebble.PebbleContext;
-import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.api.ApiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
@@ -33,7 +33,8 @@ public class AiServiceManager {
     private String defaultProviderId;
     private boolean hasConfiguredProvider = false;
     protected final NamespaceContextTool namespaceContextTool;
-    protected final PebbleContext pebbleContext;
+    protected final ExpressionContextService expressionContextService;
+    protected final PluginDefaultService pluginDefaultService;
 
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
@@ -47,10 +48,12 @@ public class AiServiceManager {
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
         NamespaceContextTool namespaceContextTool,
-        PebbleExpressionService pebbleExpressionService) {
+        ExpressionContextService expressionContextService,
+        PluginDefaultService pluginDefaultService) {
         this.providersConfiguration = providersConfiguration;
         this.namespaceContextTool = namespaceContextTool;
-        this.pebbleContext = PebbleContext.of(pebbleExpressionService.filters(), pebbleExpressionService.functions());
+        this.expressionContextService = expressionContextService;
+        this.pluginDefaultService = pluginDefaultService;
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -84,7 +87,8 @@ public class AiServiceManager {
                     instanceService,
                     posthogService,
                     listeners,
-                    pebbleContext
+                    expressionContextService,
+                    pluginDefaultService
                 );
                 if (aiService == null) {
                     log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
@@ -114,7 +118,8 @@ public class AiServiceManager {
         InstanceService instanceService,
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
-        PebbleContext pebbleContext) {
+        ExpressionContextService expressionContextService,
+        PluginDefaultService pluginDefaultService) {
         String type = provider.type();
         Map<String, Object> configMap = provider.configuration();
         if (configMap == null) {
@@ -135,7 +140,7 @@ public class AiServiceManager {
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             return new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig, pebbleContext
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
             );
         } catch (Exception e) {
             log.error("Failed to create AI service for provider {}: {}", provider.id(), e.getMessage());

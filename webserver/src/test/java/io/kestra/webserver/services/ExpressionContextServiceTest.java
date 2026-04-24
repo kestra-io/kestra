@@ -1,7 +1,6 @@
 package io.kestra.webserver.services;
 
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -11,7 +10,11 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.runners.pebble.PebbleFunction;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.libs.copilot.services.ai.PebbleExpressionsFormatter;
 
 import jakarta.inject.Inject;
 
@@ -34,7 +37,6 @@ class ExpressionContextServiceTest {
         Helpers.loadExternalPluginsFromClasspath();
     }
 
-    @SuppressWarnings("SneakyThrows")
     @lombok.SneakyThrows
     private Flow parseFlow(String yaml) {
         return pluginDefaultService.parseFlowWithAllDefaults(null, yaml, false);
@@ -42,7 +44,6 @@ class ExpressionContextServiceTest {
 
     @Test
     void shouldReturnInputExpressions() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -58,18 +59,14 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Inputs");
-        List<String> inputs = result.get("Inputs");
+        List<String> inputs = result.categories().get(ExpressionCategory.INPUTS);
         assertThat(inputs).contains("inputs.myString", "inputs.myInt");
     }
 
     @Test
     void shouldReturnVariableExpressions() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -83,18 +80,15 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Variables");
-        List<String> variables = result.get("Variables");
+        List<String> variables = result.categories().get(ExpressionCategory.VARIABLES);
         assertThat(variables).contains("vars.myVar", "vars.otherVar");
     }
 
     @Test
     void shouldReturnTaskOutputExpressions() {
-        // Given — Return task produces an output with a "value" field
+        // Return task produces an output with a "value" field
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -108,18 +102,15 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Task Outputs");
-        List<String> outputs = result.get("Task Outputs");
+        List<String> outputs = result.categories().get(ExpressionCategory.TASK_OUTPUTS);
         assertThat(outputs).anyMatch(e -> e.startsWith("outputs.t1."));
     }
 
     @Test
     void shouldFilterOutputsByTaskId() {
-        // Given — t2 should not see t2's own outputs, only t1's
+        // t2 should not see t2's own outputs, only t1's
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -133,18 +124,43 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, "t2");
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, "t2");
 
-        // Then
-        List<String> outputs = result.get("Task Outputs");
+        List<String> outputs = result.categories().get(ExpressionCategory.TASK_OUTPUTS);
         assertThat(outputs).anyMatch(e -> e.startsWith("outputs.t1."));
         assertThat(outputs).noneMatch(e -> e.startsWith("outputs.t2."));
     }
 
     @Test
+    void shouldUseBracketNotationForHyphenatedTaskIds() {
+        // Tasks whose IDs contain hyphens must use outputs['task-id'].prop in Pebble,
+        // because the hyphen is parsed as subtraction in dot notation.
+        String yaml = """
+            id: test-flow
+            namespace: io.kestra.test
+            tasks:
+              - id: http-call
+                type: io.kestra.plugin.core.debug.Return
+                format: hello
+              - id: normal_task
+                type: io.kestra.plugin.core.debug.Return
+                format: world
+            """;
+        Flow flow = parseFlow(yaml);
+
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
+
+        List<String> outputs = result.categories().get(ExpressionCategory.TASK_OUTPUTS);
+        // Hyphenated ID → bracket notation
+        assertThat(outputs).anyMatch(e -> e.startsWith("outputs['http-call']."));
+        assertThat(outputs).noneMatch(e -> e.startsWith("outputs.http-call."));
+        // Plain ID → dot notation (unchanged)
+        assertThat(outputs).anyMatch(e -> e.startsWith("outputs.normal_task."));
+    }
+
+    @Test
     void shouldReturnTriggerOutputsWithoutTriggerIdInPath() {
-        // Given — Schedule trigger produces outputs like trigger.date, trigger.next
+        // Schedule trigger produces outputs like trigger.date, trigger.next
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -159,18 +175,17 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then — trigger outputs should use "trigger.*" prefix, NOT "trigger.mySchedule.*"
-        List<String> outputs = result.get("Task Outputs");
+        // Trigger outputs should use "trigger.*" prefix, NOT "trigger.mySchedule.*"
+        List<String> outputs = result.categories().get(ExpressionCategory.TASK_OUTPUTS);
         assertThat(outputs).noneMatch(e -> e.contains("trigger.mySchedule."));
-        assertThat(outputs).anyMatch(e -> e.startsWith("trigger."));
+        // Schedule trigger must expose its well-known date fields
+        assertThat(outputs).contains("trigger.date", "trigger.next", "trigger.previous");
     }
 
     @Test
     void shouldReturnExecutionContextPaths() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -181,12 +196,9 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Execution Context");
-        List<String> ctx = result.get("Execution Context");
+        List<String> ctx = result.categories().get(ExpressionCategory.EXECUTION_CONTEXT);
         assertThat(ctx).contains(
             "flow.id",
             "flow.namespace",
@@ -198,13 +210,14 @@ class ExpressionContextServiceTest {
             "taskrun.id",
             "taskrun.startDate",
             "taskrun.value",
-            "taskrun.iteration"
+            "taskrun.iteration",
+            "kestra.environment",
+            "kestra.url"
         );
     }
 
     @Test
     void shouldReturnLabelExpressions() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -218,17 +231,14 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        List<String> ctx = result.get("Execution Context");
+        List<String> ctx = result.categories().get(ExpressionCategory.EXECUTION_CONTEXT);
         assertThat(ctx).contains("labels.env", "labels.team");
     }
 
     @Test
     void shouldReturnAllPebbleFilters() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -239,24 +249,20 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Filters");
-        List<String> filters = result.get("Filters");
+        List<String> filters = result.categories().get(ExpressionCategory.FILTERS);
         assertThat(filters).isNotEmpty();
-        // All filters should start with "| "
-        assertThat(filters).allMatch(f -> f.startsWith("| "));
+        // Filters are plain names — no "| " prefix; the category display name already notes pipe syntax
+        assertThat(filters).noneMatch(f -> f.startsWith("| "));
         // Every filter from PebbleExpressionService should be present
         for (String filter : pebbleExpressionService.filters()) {
-            assertThat(filters).contains("| " + filter);
+            assertThat(filters).contains(filter);
         }
     }
 
     @Test
     void shouldReturnAllPebbleFunctions() {
-        // Given
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -267,22 +273,17 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        assertThat(result).containsKey("Other");
-        List<String> other = result.get("Other");
-        // Every function from PebbleExpressionService should be present
+        List<String> functions = result.categories().get(ExpressionCategory.FUNCTIONS);
+        // Every function should be present as PebbleFunction.toString() signature, e.g. "now()" or "secret(key='MY_SECRET')"
         for (PebbleFunction fn : pebbleExpressionService.functions()) {
-            String formatted = ExpressionContextService.formatFunction(fn);
-            assertThat(other).contains(formatted);
+            assertThat(functions).contains(fn.toString());
         }
     }
 
     @Test
-    void shouldReturnKestraConfigurationPaths() {
-        // Given
+    void shouldReturnEmptyInputsForFlowWithoutInputs() {
         String yaml = """
             id: test-flow
             namespace: io.kestra.test
@@ -293,38 +294,69 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then
-        List<String> other = result.get("Other");
-        assertThat(other).contains("kestra.environment", "kestra.url");
+        assertThat(result.categories().get(ExpressionCategory.INPUTS)).isEmpty();
+        assertThat(result.categories().get(ExpressionCategory.VARIABLES)).isEmpty();
     }
 
     @Test
-    void shouldReturnEmptyInputsForFlowWithoutInputs() {
-        // Given
+    void buildGlobalExpressionContextShouldContainOnlyFiltersAndFunctions() {
+        ExpressionContext result = expressionContextService.buildGlobalExpressionContext();
+
+        assertThat(result.categories()).containsOnlyKeys(
+            ExpressionCategory.FILTERS,
+            ExpressionCategory.FUNCTIONS
+        );
+        assertThat(result.categories().get(ExpressionCategory.FILTERS)).isNotEmpty();
+        assertThat(result.categories().get(ExpressionCategory.FUNCTIONS)).isNotEmpty();
+
+        // Verify no flow-scoped category entries
+        List<String> allEntries = result.categories().values().stream()
+            .flatMap(List::stream)
+            .toList();
+        assertThat(allEntries).noneMatch(e -> e.startsWith("flow."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("execution."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("task."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("taskrun."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("trigger."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("outputs."));
+        assertThat(allEntries).noneMatch(e -> e.startsWith("inputs."));
+    }
+
+    @Test
+    void formatForPromptShouldSkipEmptyCategoriesAndRenderNonEmpty() {
+        // Build a context where INPUTS is empty (no inputs in flow), FILTERS is non-empty
         String yaml = """
-            id: test-flow
+            id: format-test
             namespace: io.kestra.test
             tasks:
               - id: t1
                 type: io.kestra.plugin.core.log.Log
                 message: hello
             """;
-        Flow flow = parseFlow(yaml);
+        ExpressionContext context = expressionContextService.buildExpressionContext(parseFlow(yaml), null);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        String result = PebbleExpressionsFormatter.format(context.toDisplayNameMap());
 
-        // Then
-        assertThat(result.get("Inputs")).isEmpty();
-        assertThat(result.get("Variables")).isEmpty();
+        // The formatted string must not be empty (filters + functions present)
+        assertThat(result).isNotBlank();
+
+        // Empty categories (INPUTS, VARIABLES for this flow) must produce no line in the output
+        String inputsCategoryName = ExpressionCategory.INPUTS.displayName();
+        String variablesCategoryName = ExpressionCategory.VARIABLES.displayName();
+        assertThat(result).doesNotContain(inputsCategoryName + ":");
+        assertThat(result).doesNotContain(variablesCategoryName + ":");
+
+        // Non-empty categories (FILTERS, FUNCTIONS) must be present
+        String filtersCategoryName = ExpressionCategory.FILTERS.displayName();
+        String functionsCategoryName = ExpressionCategory.FUNCTIONS.displayName();
+        assertThat(result).contains(filtersCategoryName + ":");
+        assertThat(result).contains(functionsCategoryName + ":");
     }
 
     @Test
     void shouldReturnAllCategoriesForMinimalFlow() {
-        // Given — minimal flow with just one task
         String yaml = """
             id: minimal
             namespace: io.kestra.test
@@ -335,72 +367,23 @@ class ExpressionContextServiceTest {
             """;
         Flow flow = parseFlow(yaml);
 
-        // When
-        Map<String, List<String>> result = expressionContextService.buildExpressionContext(flow, null);
+        ExpressionContext result = expressionContextService.buildExpressionContext(flow, null);
 
-        // Then — all categories should be present even if some are empty
-        assertThat(result).containsKeys(
-            "Task Outputs", "Execution Context", "Inputs", "Variables",
-            "Secrets", "KV Pairs", "Namespace Files", "Filters", "Other"
+        // All 9 categories should be present (even if some are empty)
+        assertThat(result.categories()).containsKeys(
+            ExpressionCategory.TASK_OUTPUTS,
+            ExpressionCategory.EXECUTION_CONTEXT,
+            ExpressionCategory.INPUTS,
+            ExpressionCategory.VARIABLES,
+            ExpressionCategory.SECRETS,
+            ExpressionCategory.KV_PAIRS,
+            ExpressionCategory.NAMESPACE_FILES,
+            ExpressionCategory.FILTERS,
+            ExpressionCategory.FUNCTIONS
         );
-        // Execution context and filters should never be empty
-        assertThat(result.get("Execution Context")).isNotEmpty();
-        assertThat(result.get("Filters")).isNotEmpty();
-        assertThat(result.get("Other")).isNotEmpty();
-    }
-
-    @Test
-    void shouldFormatFunctionWithNoArgs() {
-        // Given
-        PebbleFunction fn = new PebbleFunction("now", List.of());
-
-        // When
-        String formatted = ExpressionContextService.formatFunction(fn);
-
-        // Then
-        assertThat(formatted).isEqualTo("now()");
-    }
-
-    @Test
-    void shouldFormatFunctionWithArgsAndDefaults() {
-        // Given
-        PebbleFunction fn = new PebbleFunction("secret", List.of(
-            new PebbleFunction.Argument("key", "'MY_SECRET'")
-        ));
-
-        // When
-        String formatted = ExpressionContextService.formatFunction(fn);
-
-        // Then
-        assertThat(formatted).isEqualTo("secret('MY_SECRET')");
-    }
-
-    @Test
-    void shouldFormatFunctionWithArgsWithoutDefaults() {
-        // Given
-        PebbleFunction fn = new PebbleFunction("render", List.of(
-            new PebbleFunction.Argument("expression", null)
-        ));
-
-        // When
-        String formatted = ExpressionContextService.formatFunction(fn);
-
-        // Then
-        assertThat(formatted).isEqualTo("render(expression)");
-    }
-
-    @Test
-    void shouldFormatFunctionWithMixedArgs() {
-        // Given
-        PebbleFunction fn = new PebbleFunction("jq", List.of(
-            new PebbleFunction.Argument("value", null),
-            new PebbleFunction.Argument("expression", "'.data'")
-        ));
-
-        // When
-        String formatted = ExpressionContextService.formatFunction(fn);
-
-        // Then
-        assertThat(formatted).isEqualTo("jq(value, '.data')");
+        // Execution context, filters, and functions should never be empty
+        assertThat(result.categories().get(ExpressionCategory.EXECUTION_CONTEXT)).isNotEmpty();
+        assertThat(result.categories().get(ExpressionCategory.FILTERS)).isNotEmpty();
+        assertThat(result.categories().get(ExpressionCategory.FUNCTIONS)).isNotEmpty();
     }
 }

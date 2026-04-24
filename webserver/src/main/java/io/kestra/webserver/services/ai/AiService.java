@@ -10,7 +10,6 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.runners.pebble.PebbleContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
@@ -20,14 +19,20 @@ import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.posthog.PosthogService;
+
+import io.micronaut.core.annotation.Nullable;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AiService<T extends AiConfiguration> implements AiServiceInterface {
     private final PosthogService postHogService;
     @Getter
@@ -38,7 +43,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
     private final NamespaceContextTool namespaceContextTool;
-    private final PebbleContext pebbleContext;
+    private final ExpressionContextService expressionContextService;
+    private final PluginDefaultService pluginDefaultService;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -100,7 +106,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final String displayName,
         final List<ChatModelListener> listeners,
         final T aiConfiguration,
-        final PebbleContext pebbleContext) {
+        final ExpressionContextService expressionContextService,
+        final PluginDefaultService pluginDefaultService) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -110,7 +117,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
         this.namespaceContextTool = namespaceContextTool;
-        this.pebbleContext = pebbleContext;
+        this.expressionContextService = expressionContextService;
+        this.pluginDefaultService = pluginDefaultService;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
         this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);
@@ -126,6 +134,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
+        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+
         String generatedFlow = flowAiCopilot.generateFlow(
             this.pluginFinder(flowGenerationPrompt.getConversationId()),
             this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
@@ -133,8 +143,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             allPluginsMetadata(),
             flowGenerationPrompt,
             tenantId,
-            pebbleContext.filtersString(),
-            pebbleContext.functionsString()
+            pebbleExpressions
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
@@ -154,9 +163,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
             (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
             allPluginsMetadata(),
-            dashboardGenerationPrompt,
-            pebbleContext.filtersString(),
-            pebbleContext.functionsString()
+            dashboardGenerationPrompt
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
@@ -166,8 +173,33 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return displayName;
     }
 
-    public PebbleContext pebbleContext() {
-        return pebbleContext;
+    public ExpressionContextService expressionContextService() {
+        return expressionContextService;
+    }
+
+    private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
+        if (flowYaml != null && !flowYaml.isBlank()) {
+            try {
+                Flow flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, flowYaml, false);
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());
+            }
+        }
+        if (namespace != null && !namespace.isBlank()) {
+            try {
+                Flow flow = Flow.builder()
+                    .id("__ai_context__")
+                    .namespace(namespace)
+                    .tenantId(tenantId)
+                    .tasks(List.of())
+                    .build();
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not build namespace pebble expression context, falling back to global: {}", e.getMessage());
+            }
+        }
+        return PebbleExpressionsFormatter.format(expressionContextService.buildGlobalExpressionContext().toDisplayNameMap());
     }
 
     public PluginFinder pluginFinderForConversation(String conversationId) {

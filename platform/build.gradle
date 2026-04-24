@@ -166,6 +166,6 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.2.4-SNAPSHOT"
+        api "io.kestra.libs:copilot:0.3.0"
     }
 }

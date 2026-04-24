@@ -15,8 +15,8 @@ import jakarta.inject.Inject;
 /**
  * Eagerly-initialized service that discovers all registered Pebble filters and functions.
  * <p>
- * The resolved lists are exposed as instance methods. They are immutable and never change
- * after construction — the bean is created once at startup by {@code @Context}.
+ * The resolved lists are exposed as instance methods. They are assigned once during
+ * construction and not defensively copied — treat them as read-only.
  */
 @Context
 public class PebbleExpressionService {

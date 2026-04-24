@@ -4,6 +4,11 @@ import dts from "vite-plugin-dts"
 import {defineConfig} from "vite"
 
 export default defineConfig({
-  plugins: [vue(), dts({tsconfigPath: "./tsconfig.json", exclude: ["tests/**"]})],
-  
+  plugins: [
+    vue(),
+    dts({
+        tsconfigPath: "./tsconfig.json", 
+        exclude: ["tests/**"]
+    })
+  ],
 })

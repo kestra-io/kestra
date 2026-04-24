@@ -14,22 +14,15 @@
         />
     </template>
 
-    <el-dropdown v-else trigger="click" popperClass="nested-dropdown">
+    <el-dropdown v-else trigger="click">
         <el-button :icon="DotsVertical" />
         <template #dropdown>
             <el-dropdown-menu>
                 <Dashboards
                     v-if="showDashboards"
-                    placement="left-start"
-                    :teleported="false"
+                    asItem
                     @dashboard="onSelectDashboard"
-                    v-slot="{selected}"
-                >
-                    <li class="el-dropdown-menu__item" role="menuitem">
-                        <i class="el-icon"><ChartLineVariant /></i>
-                        {{ selected?.title ?? $t("dashboards.default") }}
-                    </li>
-                </Dashboards>
+                />
 
                 <el-dropdown-item
                     v-for="a in simpleActions"
@@ -61,7 +54,6 @@
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";

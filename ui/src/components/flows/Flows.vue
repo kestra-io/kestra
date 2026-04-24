@@ -2,31 +2,33 @@
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul class="header-actions-list">
-                <el-dropdown trigger="click">
-                    <el-button :icon="DotsVertical" />
+                <li>
+                    <el-dropdown trigger="click">
+                        <el-button :icon="DotsVertical" />
                     
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                                {{ $t('export_csv') }}
-                            </el-dropdown-item>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                                    {{ $t('export_csv') }}
+                                </el-dropdown-item>
 
-                            <el-dropdown-item :icon="Upload" @click="file?.click()">
-                                {{ $t("import") }}
+                                <el-dropdown-item :icon="Upload" @click="file?.click()">
+                                    {{ $t("import") }}
 
-                                <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
-                            </el-dropdown-item>
+                                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
+                                </el-dropdown-item>
                             
                             
-                            <el-dropdown-item class="p-0">
-                                <router-link :to="{name: 'flows/search'}" class="dropdown-router-link">
-                                    <TextBoxSearch />
-                                    {{ $t("source search") }}
-                                </router-link>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+                                <el-dropdown-item class="p-0">
+                                    <router-link :to="{name: 'flows/search'}" class="dropdown-router-link">
+                                        <TextBoxSearch />
+                                        {{ $t("source search") }}
+                                    </router-link>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </li>
                 <li>
                     <router-link
                         :to="{

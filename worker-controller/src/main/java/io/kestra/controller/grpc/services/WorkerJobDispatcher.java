@@ -329,30 +329,35 @@ public class WorkerJobDispatcher {
     /**
      * Unregisters a worker when the stream disconnects.
      * If this was the last worker for the group, disposes the subscription immediately.
+     * <p>
+     * This method is scoped to a specific stream context: it only removes the registration
+     * if the given {@code context} is still the one currently registered for the worker id.
+     * This prevents a late-firing {@code onError}/{@code onCancel} callback for a stale
+     * stream (e.g., after an HTTP/2 GOAWAY reconnect) from wiping out a fresh registration
+     * the same worker has already established on a new stream.
      *
-     * @param workerId the worker's unique identifier
+     * @param context the worker stream context whose stream has closed
      */
-    public void unregisterWorker(String workerId) {
-        Objects.requireNonNull(workerId, "workerId must not be null");
+    public void unregisterWorker(WorkerStreamContext<WorkerJobResponse> context) {
+        Objects.requireNonNull(context, "context must not be null");
 
-        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
-        if (context == null) {
-            log.warn("Worker [{}] not found", workerId);
-            return;
-        }
-
+        String workerId = context.getWorkerId();
         String workerGroup = context.getWorkerGroup();
+
         GroupState state = groupStates.get(workerGroup);
         if (state == null) {
-            activeStreams.remove(workerId);
+            // No group state — either already disposed, or this context was never the registered one.
+            // Only evict activeStreams if THIS context is still mapped (atomic compare-and-remove).
+            activeStreams.remove(workerId, context);
             return;
         }
 
         state.lock.lock();
         try {
-            // Remove worker from indexes
-            context = activeStreams.remove(workerId);
-            if (context == null) {
+            // Atomic compare-and-remove: only evict if THIS context is still the registered one.
+            // A superseded stale stream must not remove a newer registration for the same workerId.
+            if (!activeStreams.remove(workerId, context)) {
+                log.debug("Ignoring stale unregister for worker [{}]: stream already superseded or unknown", workerId);
                 return;
             }
 

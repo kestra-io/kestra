@@ -1,8 +1,8 @@
 <template>
     <ElRadioGroup
+        v-model="model"
         :class="props.size ? `kel-radio-group--${props.size}` : undefined"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -19,24 +19,22 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | number | boolean>()
+
     const props = defineProps<{
-        modelValue?: string | number | boolean
         disabled?: boolean
         size?: "large" | "default" | "small"
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
-        "update:modelValue": [value: any]
-         
         change: [value: any]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

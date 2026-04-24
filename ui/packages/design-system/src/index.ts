@@ -7,9 +7,6 @@ import KsGraph from "./components/Charts/KsGraph.vue"
 import KsLine from "./components/Charts/KsLine.vue"
 import KsBar from "./components/Charts/KsBar.vue"
 import KsPie from "./components/Charts/KsPie.vue"
-import {KsMessage} from "./components/Feedback/KsMessage"
-import {KsMessageBox} from "./components/Feedback/KsMessageBox"
-import {KsNotification} from "./components/Feedback/KsNotification"
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
@@ -76,7 +73,6 @@ import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
 import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
-export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
@@ -89,49 +85,64 @@ import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+
 import {vKsLoading} from "./components/Feedback/KsLoading"
 
-// ─── i18n ───────────────────────────────────────────────────────────────────
-export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
+export {KsMessage} from "./components/Feedback/KsMessage"
+export {KsMessageBox} from "./components/Feedback/KsMessageBox"
+export {KsNotification} from "./components/Feedback/KsNotification"
 
-// ─── utils ─────────────────────────────────────────────────────────────
+export {cssVar} from "./utils/css"
+export * as dateUtils from "./utils/date"
+export * as stringUtils from "./utils/string"
+export * as durationUtils from "./utils/duration"
+export * as flowYamlUtils from "./utils/flowYamlUtils"
+export type {YamlElement} from "./utils/flowYamlUtils"
+export {State, LOG_LEVELS, STATES} from "./utils/state"
+export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {setMomentInstance, setDateFormatter} from "./date/index"
-export {cssVar} from "./utils/css.ts"
-export {State} from "./utils/state.ts"
-export * as flowYamlUtils from "./utils/flowYamlUtils.ts"
-export * as durationUtils from "./utils/duration.ts"
-export * as stringUtils from "./utils/string.ts"
-export * as dateUtils from "./utils/date.ts"
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
-export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
-export {LOG_LEVELS, STATES} from "./utils/state.ts"
-export type {FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties, FilterKeyConfig} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
-export type {FilterValue} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
+export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
+export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
-export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
-export {readRouteLevelFilter, hasUnsupportedRouteLevelComparator, readAppliedLevelFilter, normalizeRouteLevelFilter} from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
-export {decodeSearchParams, encodeFiltersToQuery, getUniqueFilters, isValidFilter, keyOfComparator, getComparator} from "./components/Data/KsDataTable/filter/utils/helpers"
-export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants.ts"
-export type {YamlElement} from "./utils/flowYamlUtils.ts"
-
-// ─── Named exports (tree-shakeable) ──────────────────────────────────────────
+export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
+export {EXECUTION_STATUSES, type ExecutionStatus, type ExecutionStatusModel} from "./components/Data/KsExecutionStatus/types"
 export {
+    decodeSearchParams,
+    encodeFiltersToQuery,
+    getUniqueFilters,
+    isValidFilter,
+    keyOfComparator,
+    getComparator,
+} from "./components/Data/KsDataTable/filter/utils/helpers"
+export {
+    readRouteLevelFilter,
+    hasUnsupportedRouteLevelComparator,
+    readAppliedLevelFilter,
+    normalizeRouteLevelFilter,
+} from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export type {
+    FilterConfiguration,
+    AppliedFilter,
+    SavedFilter,
+    TableOptions,
+    TableProperties,
+    FilterKeyConfig,
+    FilterValue,
+} from "./components/Data/KsDataTable/filter/utils/filterTypes"
+
+const components = {
     KsAlert,
     KsEchart,
     KsGraph,
     KsLine,
     KsBar,
     KsPie,
-    KsMessage,
-    KsMessageBox,
-    KsNotification,
     KsAutocomplete,
     KsAvatar,
     KsBadge,
@@ -174,7 +185,6 @@ export {
     KsInputNumber,
     KsPassword,
     KsLink,
-    vKsLoading,
     KsMarkdown,
     KsMenu,
     KsMenuItem,
@@ -213,190 +223,110 @@ export {
     KsUpload,
 }
 
-// ─── Vue plugin (auto-registers all components) ──────────────────────────────
+export {
+    KsAlert,
+    KsEchart,
+    KsGraph,
+    KsLine,
+    KsBar,
+    KsPie,
+    KsAutocomplete,
+    KsAvatar,
+    KsBadge,
+    KsBreadcrumb,
+    KsBreadcrumbItem,
+    KsButton,
+    KsButtonGroup,
+    KsCard,
+    KsDateAgo,
+    KsDataTable,
+    KsCascaderPanel,
+    KsCheckbox,
+    KsCheckboxButton,
+    KsCheckboxGroup,
+    KsCheckTag,
+    KsCol,
+    KsCollapse,
+    KsCollapseItem,
+    KsColorPicker,
+    KsContainer,
+    KsHeader,
+    KsMain,
+    KsDatePicker,
+    KsDialog,
+    KsDivider,
+    KsDrawer,
+    KsDurationPicker,
+    KsDropdown,
+    KsDropdownItem,
+    KsDropdownMenu,
+    KsEmpty,
+    KsExecutionStatus,
+    KsFilter,
+    KsForm,
+    KsFormItem,
+    KsId,
+    KsIcon,
+    KsIconButton,
+    KsInput,
+    KsInputNumber,
+    KsPassword,
+    KsLink,
+    KsMarkdown,
+    KsMenu,
+    KsMenuItem,
+    KsOption,
+    KsOptionGroup,
+    KsPagination,
+    KsPopover,
+    KsProgress,
+    KsRadio,
+    KsRadioButton,
+    KsRadioGroup,
+    KsRow,
+    KsScrollbar,
+    KsSegmented,
+    KsSelect,
+    KsSkeleton,
+    KsSplitter,
+    KsSplitterPanel,
+    KsStep,
+    KsSteps,
+    KsSwitch,
+    KsTabPane,
+    KsTabs,
+    KsRouterTab,
+    KsTable,
+    KsTableColumn,
+    KsTag,
+    KsTaskIcon,
+    KsText,
+    KsTimeline,
+    KsTimelineItem,
+    KsTimePicker,
+    KsTooltip,
+    KsTopNavBar,
+    KsTree,
+    KsUpload,
+}
+
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
             app.use(ElementPlus, {namespace: "kel"})
         }
-
-        app.component("KsAlert", KsAlert)
-        app.component("KsEchart", KsEchart)
-        app.component("KsGraph", KsGraph)
-        app.component("KsLine", KsLine)
-        app.component("KsBar", KsBar)
-        app.component("KsPie", KsPie)
-        app.component("KsAutocomplete", KsAutocomplete)
-        app.component("KsAvatar", KsAvatar)
-        app.component("KsBadge", KsBadge)
-        app.component("KsBreadcrumb", KsBreadcrumb)
-        app.component("KsBreadcrumbItem", KsBreadcrumbItem)
-        app.component("KsButton", KsButton)
-        app.component("KsButtonGroup", KsButtonGroup)
-        app.component("KsCard", KsCard)
-        app.component("KsDateAgo", KsDateAgo)
-        app.component("KsDataTable", KsDataTable)
-        app.component("KsCascaderPanel", KsCascaderPanel)
-        app.component("KsCheckbox", KsCheckbox)
-        app.component("KsCheckboxButton", KsCheckboxButton)
-        app.component("KsCheckboxGroup", KsCheckboxGroup)
-        app.component("KsCheckTag", KsCheckTag)
-        app.component("KsCol", KsCol)
-        app.component("KsCollapse", KsCollapse)
-        app.component("KsCollapseItem", KsCollapseItem)
-        app.component("KsColorPicker", KsColorPicker)
-        app.component("KsContainer", KsContainer)
-        app.component("KsHeader", KsHeader)
-        app.component("KsMain", KsMain)
-        app.component("KsDatePicker", KsDatePicker)
-        app.component("KsDialog", KsDialog)
-        app.component("KsDivider", KsDivider)
-        app.component("KsDrawer", KsDrawer)
-        app.component("KsDurationPicker", KsDurationPicker)
-        app.component("KsDropdown", KsDropdown)
-        app.component("KsDropdownItem", KsDropdownItem)
-        app.component("KsDropdownMenu", KsDropdownMenu)
-        app.component("KsEmpty", KsEmpty)
-        app.component("KsExecutionStatus", KsExecutionStatus)
-        app.component("KsFilter", KsFilter)
-        app.component("KsForm", KsForm)
-        app.component("KsFormItem", KsFormItem)
-        app.component("KsId", KsId)
-        app.component("KsIcon", KsIcon)
-        app.component("KsIconButton", KsIconButton)
-        app.component("KsInput", KsInput)
-        app.component("KsInputNumber", KsInputNumber)
-        app.component("KsPassword", KsPassword)
-        app.component("KsLink", KsLink)
-        app.component("KsMarkdown", KsMarkdown)
-        app.component("KsMenu", KsMenu)
-        app.component("KsMenuItem", KsMenuItem)
-        app.component("KsOption", KsOption)
-        app.component("KsOptionGroup", KsOptionGroup)
-        app.component("KsPagination", KsPagination)
-        app.component("KsPopover", KsPopover)
-        app.component("KsProgress", KsProgress)
-        app.component("KsRadio", KsRadio)
-        app.component("KsRadioButton", KsRadioButton)
-        app.component("KsRadioGroup", KsRadioGroup)
-        app.component("KsRow", KsRow)
-        app.component("KsScrollbar", KsScrollbar)
-        app.component("KsSegmented", KsSegmented)
-        app.component("KsSelect", KsSelect)
-        app.component("KsSkeleton", KsSkeleton)
-        app.component("KsSplitter", KsSplitter)
-        app.component("KsSplitterPanel", KsSplitterPanel)
-        app.component("KsStep", KsStep)
-        app.component("KsSteps", KsSteps)
-        app.component("KsSwitch", KsSwitch)
-        app.component("KsTabPane", KsTabPane)
-        app.component("KsTabs", KsTabs)
-        app.component("KsRouterTab", KsRouterTab)
-        app.component("KsTable", KsTable)
-        app.component("KsTableColumn", KsTableColumn)
-        app.component("KsTag", KsTag)
-        app.component("KsTaskIcon", KsTaskIcon)
-        app.component("KsText", KsText)
-        app.component("KsTimeline", KsTimeline)
-        app.component("KsTimelineItem", KsTimelineItem)
-        app.component("KsTimePicker", KsTimePicker)
-        app.component("KsTooltip", KsTooltip)
-        app.component("KsTopNavBar", KsTopNavBar)
-        app.component("KsTree", KsTree)
-        app.component("KsUpload", KsUpload)
-
+        for (const [name, component] of Object.entries(components)) {
+            app.component(name, component)
+        }
         app.directive("ks-loading", vKsLoading)
     },
 }
 
 export default KestraDesignSystem
 
-// ─── Global component type augmentation (Volar / IntelliJ IDE support) ───────
+type KestraGlobalComponents = typeof components
+
 declare module "vue" {
-    export interface GlobalComponents {
-        KsAlert: typeof KsAlert
-        KsEchart: typeof KsEchart
-        KsGraph: typeof KsGraph
-        KsLine: typeof KsLine
-        KsBar: typeof KsBar
-        KsPie: typeof KsPie
-        KsAutocomplete: typeof KsAutocomplete
-        KsAvatar: typeof KsAvatar
-        KsBadge: typeof KsBadge
-        KsBreadcrumb: typeof KsBreadcrumb
-        KsBreadcrumbItem: typeof KsBreadcrumbItem
-        KsButton: typeof KsButton
-        KsButtonGroup: typeof KsButtonGroup
-        KsCard: typeof KsCard
-        KsDateAgo: typeof KsDateAgo
-        KsDataTable: typeof KsDataTable
-        KsCascaderPanel: typeof KsCascaderPanel
-        KsCheckbox: typeof KsCheckbox
-        KsCheckboxButton: typeof KsCheckboxButton
-        KsCheckboxGroup: typeof KsCheckboxGroup
-        KsCheckTag: typeof KsCheckTag
-        KsCol: typeof KsCol
-        KsCollapse: typeof KsCollapse
-        KsCollapseItem: typeof KsCollapseItem
-        KsColorPicker: typeof KsColorPicker
-        KsContainer: typeof KsContainer
-        KsHeader: typeof KsHeader
-        KsMain: typeof KsMain
-        KsDatePicker: typeof KsDatePicker
-        KsDialog: typeof KsDialog
-        KsDivider: typeof KsDivider
-        KsDrawer: typeof KsDrawer
-        KsDurationPicker: typeof KsDurationPicker
-        KsDropdown: typeof KsDropdown
-        KsDropdownItem: typeof KsDropdownItem
-        KsDropdownMenu: typeof KsDropdownMenu
-        KsEmpty: typeof KsEmpty
-        KsExecutionStatus: typeof KsExecutionStatus
-        KsFilter: typeof KsFilter
-        KsForm: typeof KsForm
-        KsFormItem: typeof KsFormItem
-        KsId: typeof KsId
-        KsIcon: typeof KsIcon
-        KsIconButton: typeof KsIconButton
-        KsInput: typeof KsInput
-        KsInputNumber: typeof KsInputNumber
-        KsPassword: typeof KsPassword
-        KsLink: typeof KsLink
-        KsMarkdown: typeof KsMarkdown
-        KsMenu: typeof KsMenu
-        KsMenuItem: typeof KsMenuItem
-        KsOption: typeof KsOption
-        KsOptionGroup: typeof KsOptionGroup
-        KsPagination: typeof KsPagination
-        KsPopover: typeof KsPopover
-        KsProgress: typeof KsProgress
-        KsRadio: typeof KsRadio
-        KsRadioButton: typeof KsRadioButton
-        KsRadioGroup: typeof KsRadioGroup
-        KsRow: typeof KsRow
-        KsScrollbar: typeof KsScrollbar
-        KsSegmented: typeof KsSegmented
-        KsSelect: typeof KsSelect
-        KsSkeleton: typeof KsSkeleton
-        KsSplitter: typeof KsSplitter
-        KsSplitterPanel: typeof KsSplitterPanel
-        KsStep: typeof KsStep
-        KsSteps: typeof KsSteps
-        KsSwitch: typeof KsSwitch
-        KsTabPane: typeof KsTabPane
-        KsTabs: typeof KsTabs
-        KsRouterTab: typeof KsRouterTab
-        KsTable: typeof KsTable
-        KsTableColumn: typeof KsTableColumn
-        KsTag: typeof KsTag
-        KsTaskIcon: typeof KsTaskIcon
-        KsText: typeof KsText
-        KsTimeline: typeof KsTimeline
-        KsTimelineItem: typeof KsTimelineItem
-        KsTimePicker: typeof KsTimePicker
-        KsTooltip: typeof KsTooltip
-        KsTopNavBar: typeof KsTopNavBar
-        KsTree: typeof KsTree
-        KsUpload: typeof KsUpload
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface GlobalComponents extends KestraGlobalComponents {}
 }

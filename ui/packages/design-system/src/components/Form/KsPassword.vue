@@ -1,9 +1,9 @@
 <template>
     <div class="ks-password w-100">
         <KsInput
+            v-model="model"
             :class="hidden || disabled ? 'ks-password--masked' : ''"
             v-bind="({...filteredProps(), ...$attrs} as any)"
-            @update:model-value="emit('update:modelValue', $event)"
             @change="emit('change', $event)"
             autosize
             type="textarea"
@@ -18,7 +18,7 @@
                 <slot />
             </template>
         </KsInput>
-        <KsButton class="hide" link v-if="!disabled && modelValue" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
+        <KsButton class="hide" link v-if="!disabled && model" :icon="hidden ? EyeOffOutline : EyeOutline" @click="toggle" />
     </div>
 </template>
 
@@ -30,28 +30,14 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | number>()
+
     const props = defineProps<{
-        modelValue?: string | number
-        type?: string
         placeholder?: string
         disabled?: boolean
-        showPassword?: boolean
-         
-        suffixIcon?: any
-        clearable?: boolean
-        size?: "large" | "default" | "small"
-        name?: string
-        id?: string
-        required?: boolean
-        rows?: number
     }>()
 
-    const filteredProps = useFilteredProps(props, ["type"])
-
-    const hidden = ref(true)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: string | number]
         change: [value: string | number]
     }>()
 
@@ -61,15 +47,19 @@
         default?(): unknown
     }>()
 
+    const hidden = ref(true)
+
+    const filteredProps = useFilteredProps(props)
+
     watch(() => props.disabled, newVal => {
         if (newVal) {
             hidden.value = true
         }
     })
-    
+
     const toggle = () => {
-        hidden.value = !hidden.value;
-        emit("change", props.modelValue ?? "");
+        hidden.value = !hidden.value
+        emit("change", model.value ?? "")
     }
 </script>
 

@@ -21,13 +21,7 @@
         mode?: "horizontal" | "vertical"
         defaultActive?: string
         collapse?: boolean
-        backgroundColor?: string
-        textColor?: string
-        activeTextColor?: string
-        router?: boolean
     }>()
-
-    const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
         select: [index: string, indexPath: string[]]
@@ -36,6 +30,8 @@
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

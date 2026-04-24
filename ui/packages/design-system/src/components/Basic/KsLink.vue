@@ -29,8 +29,6 @@
         icon?: any
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
         click: [evt: MouseEvent]
     }>()
@@ -39,6 +37,8 @@
         default?(): unknown
         icon?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

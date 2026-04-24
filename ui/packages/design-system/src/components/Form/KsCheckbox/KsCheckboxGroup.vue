@@ -23,6 +23,7 @@
     const model = defineModel<any[]>()
 
     const props = defineProps<{
+        disabled?: boolean
         size?: "large" | "default" | "small"
     }>()
 

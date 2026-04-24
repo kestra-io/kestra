@@ -37,6 +37,7 @@
         text?: boolean
         link?: boolean
         bg?: boolean
+        autofocus?: boolean
         round?: boolean
         circle?: boolean
         color?: string

@@ -11,6 +11,7 @@ const meta: Meta<typeof KsForm> = {
     tags: ["autodocs"],
     argTypes: {
         labelPosition: {control: "select", options: ["top", "left", "right"]},
+        disabled: {control: "boolean"},
         size: {control: "select", options: ["small", "default", "large"]},
     },
     parameters: {

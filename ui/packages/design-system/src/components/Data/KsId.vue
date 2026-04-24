@@ -20,13 +20,17 @@
         value?: string
         shrink?: boolean
         size?: number
-    }>(), {shrink: true})
-
-    const uid = useId()
+    }>(), {
+        value: undefined,
+        shrink: true,
+        size: undefined,
+    })
 
     const emit = defineEmits<{
         click: []
     }>()
+
+    const uid = useId()
 
     const size = computed(() => props.size ?? 8)
 

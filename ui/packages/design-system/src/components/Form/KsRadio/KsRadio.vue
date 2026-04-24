@@ -1,7 +1,7 @@
 <template>
     <ElRadio
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -18,25 +18,23 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | number | boolean>()
+
     const props = defineProps<{
-        modelValue?: string | number | boolean
         value?: string | number | boolean
         label?: string | number | boolean
         disabled?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
-        "update:modelValue": [value: any]
-         
         change: [value: any]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

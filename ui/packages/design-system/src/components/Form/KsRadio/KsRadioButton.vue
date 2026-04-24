@@ -23,16 +23,15 @@
         disabled?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
         change: [value: any]
     }>()
 
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

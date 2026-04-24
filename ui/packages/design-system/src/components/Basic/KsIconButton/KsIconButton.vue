@@ -57,6 +57,10 @@
         replace: false,
     })
 
+    defineSlots<{
+        default?(): unknown
+    }>()
+
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
@@ -65,10 +69,6 @@
 
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
     const nativeType = computed(() => (props.to ? undefined : "button" as const))
-
-    defineSlots<{
-        default?(): unknown
-    }>()
 </script>
 
 <style scoped lang="scss">

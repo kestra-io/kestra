@@ -118,6 +118,10 @@ export default {
                 "label": "Type",
                 "description": "Filter by kill switch type"
             },
+            "parentId": {
+                "label": "Parent ID",
+                "description": "Filter by parent ID"
+            },
             "flowId": {
                 "label": "Flow ID",
                 "description": "Filter by flow ID"
@@ -384,6 +388,10 @@ export default {
                 "test_description": "Ausführungen ausgelöst durch Unit Tests"
             },
             "filters_added": "{selected} von {total} Filtern hinzugefügt",
+            "parentId": {
+                "description": "Nach Parent-ID filtern",
+                "label": "Parent-ID"
+            },
             "flowId": {
                 "description": "Nach flow-ID filtern",
                 "label": "Flow-ID"
@@ -706,6 +714,10 @@ export default {
                 "test_description": "Ejecuciones activadas por Unit Tests"
             },
             "filters_added": "{selected} de {total} filtros añadidos",
+            "parentId": {
+                "description": "Filtrar por parent ID",
+                "label": "ID de Parent"
+            },
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID de Flow"
@@ -1028,6 +1040,10 @@ export default {
                 "test_description": "Exécutions déclenchées par les tests unitaires"
             },
             "filters_added": "{selected} sur {total} filtres ajoutés",
+            "parentId": {
+                "description": "Filtrer par parent ID",
+                "label": "ID de parent"
+            },
             "flowId": {
                 "description": "Filtrer par flow ID",
                 "label": "ID de flow"
@@ -1350,6 +1366,10 @@ export default {
                 "test_description": "यूनिट टेस्ट द्वारा ट्रिगर की गई Executions"
             },
             "filters_added": "{total} में से {selected} फ़िल्टर जोड़े गए",
+            "parentId": {
+                "description": "parent ID द्वारा फ़िल्टर करें",
+                "label": "Parent ID"
+            },
             "flowId": {
                 "description": "flow ID द्वारा फ़िल्टर करें",
                 "label": "Flow ID"
@@ -1672,6 +1692,10 @@ export default {
                 "test_description": "Esecuzioni attivate dai Unit Test"
             },
             "filters_added": "{selected} di {total} filtri aggiunti",
+            "parentId": {
+                "description": "Filtra per parent ID",
+                "label": "ID del parent"
+            },
             "flowId": {
                 "description": "Filtra per flow ID",
                 "label": "ID del flow"
@@ -1994,6 +2018,10 @@ export default {
                 "test_description": "ユニットテストによってトリガーされた実行"
             },
             "filters_added": "{total} 個のフィルターのうち {selected} 個が追加されました",
+            "parentId": {
+                "description": "parent IDでフィルター",
+                "label": "Parent ID"
+            },
             "flowId": {
                 "description": "flow IDでフィルター",
                 "label": "Flow ID"
@@ -2316,6 +2344,10 @@ export default {
                 "test_description": "단위 테스트에 의해 트리거된 실행"
             },
             "filters_added": "{total}개의 필터 중 {selected}개 추가됨",
+            "parentId": {
+                "description": "parent ID로 필터링",
+                "label": "Parent ID"
+            },
             "flowId": {
                 "description": "flow ID로 필터링",
                 "label": "Flow ID"
@@ -2638,6 +2670,10 @@ export default {
                 "test_description": "Wykonania wyzwolone przez testy jednostkowe"
             },
             "filters_added": "{selected} z {total} filtrów dodanych",
+            "parentId": {
+                "description": "Filtruj według parent ID",
+                "label": "Identyfikator parent"
+            },
             "flowId": {
                 "description": "Filtruj według flow ID",
                 "label": "Identyfikator flow"
@@ -2960,6 +2996,10 @@ export default {
                 "test_description": "Execuções triggeradas por Unit Tests"
             },
             "filters_added": "{selected} de {total} filtros adicionados",
+            "parentId": {
+                "description": "Filtrar por parent ID",
+                "label": "ID do Parent"
+            },
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID do Flow"
@@ -3282,6 +3322,10 @@ export default {
                 "test_description": "Execuções acionadas por Unit Tests"
             },
             "filters_added": "{selected} de {total} filtros adicionados",
+            "parentId": {
+                "description": "Filtrar por parent ID",
+                "label": "ID do Parent"
+            },
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID do Flow"
@@ -3604,6 +3648,10 @@ export default {
                 "test_description": "Запуски, инициированные Unit Tests"
             },
             "filters_added": "{selected} из {total} фильтров добавлено",
+            "parentId": {
+                "description": "Фильтр по parent ID",
+                "label": "Идентификатор parent"
+            },
             "flowId": {
                 "description": "Фильтр по flow ID",
                 "label": "Идентификатор flow"
@@ -3926,6 +3974,10 @@ export default {
                 "test_description": "单元测试触发的执行"
             },
             "filters_added": "已添加 {total} 个过滤器中的 {selected} 个",
+            "parentId": {
+                "description": "按 parent ID 筛选",
+                "label": "Parent ID"
+            },
             "flowId": {
                 "description": "按 flow ID 筛选",
                 "label": "Flow ID"

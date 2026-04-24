@@ -39,11 +39,14 @@
         content?: string
     }>()
 
-    const filteredProps = useFilteredProps(props, ["visible"])
-
     const emit = defineEmits<{
         "update:visible": [value: boolean]
         hide: []
+    }>()
+
+    defineSlots<{
+        default?(): unknown
+        reference?(): unknown
     }>()
 
     const internalVisible = ref(false)
@@ -57,10 +60,7 @@
         emit("update:visible", v)
     }
 
-    defineSlots<{
-        default?(): unknown
-        reference?(): unknown
-    }>()
+    const filteredProps = useFilteredProps(props, ["visible"])
 </script>
 
 <style lang="scss">

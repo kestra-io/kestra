@@ -26,10 +26,7 @@
         route?: string | object
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-         
         click: [item: any]
     }>()
 
@@ -37,6 +34,8 @@
         default?(): unknown
         title?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

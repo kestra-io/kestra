@@ -1,8 +1,8 @@
 <template>
     <ElSelect
+        v-model="model"
         :persistent="false"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -35,9 +35,9 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = withDefaults(defineProps<{
+    const model = defineModel<any>()
 
-        modelValue?: any
+    const props = withDefaults(defineProps<{
         placeholder?: string
         disabled?: boolean
         size?: "small" | "default" | "large"
@@ -57,15 +57,18 @@
         showArrow?: boolean
         suffixIcon?: Component | string
     }>(), {
+        placeholder: undefined,
+        size: undefined,
         clearable: undefined,
+        remoteMethod: undefined,
+        valueKey: undefined,
+        placement: undefined,
+        popperOffset: undefined,
+        popperClass: undefined,
+        suffixIcon: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-
-        "update:modelValue": [value: any]
-
         change: [value: any]
     }>()
 
@@ -74,10 +77,11 @@
         prefix?(): unknown
         header?(): unknown
         footer?(): unknown
-
         label?(props: { value: any; label: string }): any
         tag?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

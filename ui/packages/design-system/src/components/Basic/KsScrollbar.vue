@@ -18,15 +18,7 @@
     const props = defineProps<{
         maxHeight?: string | number
         height?: string | number
-        always?: boolean
-        wrapClass?: string | string[]
-        wrapStyle?: string | object
-        viewClass?: string | string[]
-        viewStyle?: string | object
-        noresize?: boolean
     }>()
-
-    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
@@ -34,8 +26,9 @@
 
     const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
 
+    const filteredProps = useFilteredProps(props)
+
     defineExpose({
-         
         scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)(...args),
         setScrollTop: (top: number) => scrollbarRef.value?.setScrollTop(top),
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),

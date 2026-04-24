@@ -1,7 +1,7 @@
 <template>
     <ElInputNumber
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event, undefined)"
     />
 </template>
@@ -14,8 +14,9 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<number>()
+
     const props = withDefaults(defineProps<{
-        modelValue?: number
         min?: number
         max?: number
         step?: number
@@ -27,11 +28,17 @@
         controls?: boolean
         controlsPosition?: "" | "right"
     }>(), {
+        min: undefined,
+        max: undefined,
+        step: undefined,
+        precision: undefined,
+        size: undefined,
+        placeholder: undefined,
         controls: undefined,
+        controlsPosition: undefined,
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: number | undefined]
         change: [currentValue: number | undefined, oldValue: number | undefined]
     }>()
 
@@ -51,9 +58,7 @@
         }
 
         .kel-input-number__increase:hover, .kel-input-number__decrease:hover {
-            html.dark & {
                 color: var(--ks-content-secondary);
-            }
         }
     }
 </style>

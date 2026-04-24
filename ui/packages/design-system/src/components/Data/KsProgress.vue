@@ -22,14 +22,18 @@
         striped?: boolean
         stripedFlow?: boolean
     }>(), {
+        left: undefined,
+        percentage: undefined,
+        type: undefined,
+        strokeWidth: undefined,
+        color: undefined,
         showText: undefined,
+        status: undefined,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const left = computed(() => `${props.left ?? 0}%`)
 
-    const left = computed(() => {
-        return `${props.left ?? 0}%`;
-    });
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

@@ -1,5 +1,5 @@
 <template>
-    <ElSplitter v-bind="($attrs as any)">
+    <ElSplitter v-bind="$attrs">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

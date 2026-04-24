@@ -20,13 +20,22 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         label?: string
         prop?: string | string[]
         rules?: any | any[]
         required?: boolean
+        labelWidth?: string | number
         error?: string
-    }>()
+        showMessage?: boolean
+    }>(), {
+        label: undefined,
+        prop: undefined,
+        rules: undefined,
+        labelWidth: undefined,
+        error: undefined,
+        showMessage: undefined,
+    })
 
     const filteredProps = useFilteredProps(props)
 

@@ -36,12 +36,10 @@
 
     const props = defineProps<{
         size?: number | string
-        color?: string,
-        tooltip?: string;
-        placement?: string;
+        color?: string
+        tooltip?: string
+        placement?: string
     }>()
-
-    const filteredProps = useFilteredProps(props)
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
@@ -50,4 +48,6 @@
     defineSlots<{
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>

@@ -30,6 +30,7 @@
             components?: Record<string, Component>;
         }>(),
         {
+            content: undefined,
             html: true,
             xssProtection: true,
             components: () => ({}),
@@ -48,8 +49,6 @@
             .use(remarkDirective)
             .parse(props.content) as Root
     })
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     function slugify(text: string): string {
         return text
@@ -127,8 +126,6 @@
         });
     }
 
-    // ─── Custom component helpers ─────────────────────────────────────────────
-
     function parseHtmlAttributes(attrsStr: string): Record<string, unknown> {
         const attrs: Record<string, unknown> = {};
         const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
@@ -157,8 +154,6 @@
             : undefined;
         return h(component as any, attrs, slots);
     }
-
-    // ─── AST → VNode renderer ────────────────────────────────────────────────
 
     function renderNode(node: any): VNode | string | null {
         switch (node.type as string) {
@@ -363,15 +358,11 @@
         }
     }
 
-    // ─── Reactive functional component ───────────────────────────────────────
-
     // Depends on both `ast` and `codeHighlights` — re-evaluates when either changes.
     const markdownContent = computed<FunctionalComponent>(() => {
         const children = renderNodes(ast.value.children as any[])
         return () => children
     })
-
-    // ─── Shiki syntax highlighting ────────────────────────────────────────────
 
     async function highlightAllCodeBlocks(root: Root) {
         const blocks: {lang: string; value: string}[] = []
@@ -401,7 +392,7 @@
                 try {
                     await hl.loadLanguage(lang as any)
                 } catch {
-                    lang = "" // language not supported — render as plain text
+                    lang = ""
                 }
             }
 
@@ -422,8 +413,6 @@
 
     // Trigger highlighting whenever the parsed AST changes (also runs on first mount)
     watch(ast, (newAst) => { void highlightAllCodeBlocks(newAst) }, {immediate: true})
-
-    // ─── Mermaid ─────────────────────────────────────────────────────────────
 
     async function initMermaid() {
         const container = containerRef.value
@@ -468,7 +457,6 @@
         }
     }
 
-    // ─── Markdown body ────────────────────────────────────────────────────────
     .ks-markdown {
         color: var(--ks-content-default);
 
@@ -510,7 +498,6 @@
             border-radius: var(--kel-border-radius-base);
         }
 
-        // ── Code block ──────────────────────────────────────────────────────
         .ks-markdown__code-block {
             margin: 1rem 0;
             border: 1px solid var(--ks-border-primary);

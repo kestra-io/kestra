@@ -1,8 +1,8 @@
 <template>
     <ElSegmented
+        v-model="model"
         :class="props.disabled ? 'is-disabled' : undefined"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     />
 </template>
@@ -15,20 +15,20 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | number | boolean>()
+
     const props = defineProps<{
-        modelValue?: string | number | boolean
         options?: Array<string | number | {label: string; value: string | number | boolean; disabled?: boolean}>
         size?: "large" | "default" | "small"
         disabled?: boolean
         block?: boolean
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: string | number | boolean]
         change: [value: string | number | boolean]
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

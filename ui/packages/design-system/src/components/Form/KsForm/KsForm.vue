@@ -18,6 +18,7 @@
     const props = defineProps<{
         model?: object
         rules?: object
+        disabled?: boolean
         size?: "large" | "default" | "small"
         labelPosition?: "left" | "right" | "top"
         labelWidth?: string | number

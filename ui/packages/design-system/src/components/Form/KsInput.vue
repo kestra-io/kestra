@@ -1,7 +1,7 @@
 <template>
     <ElInput
+        v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:model-value="emit('update:modelValue', $event)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.prepend" #prepend>
@@ -24,13 +24,13 @@
 
     defineOptions({inheritAttrs: false})
 
+    const model = defineModel<string | number>()
+
     const props = defineProps<{
-        modelValue?: string | number
         type?: string
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-         
         suffixIcon?: any
         clearable?: boolean
         size?: "large" | "default" | "small"
@@ -40,10 +40,7 @@
         rows?: number
     }>()
 
-    const filteredProps = useFilteredProps(props)
-
     const emit = defineEmits<{
-        "update:modelValue": [value: string | number]
         change: [value: string | number]
     }>()
 
@@ -52,6 +49,8 @@
         suffix?(): unknown
         default?(): unknown
     }>()
+
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

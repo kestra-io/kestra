@@ -114,7 +114,6 @@
     const routeInfo = computed(() => ({title: t("namespaces")}));
     useRouteContext(routeInfo);
 
-
     const authStore = useAuthStore();
     const canCreate = computed(() => {
         return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
@@ -212,7 +211,7 @@
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     &.system {
-        border-color: var(--ks-border-info);
+        border-color: var(--ks-border-active);
 
         & span.system {
             line-height: 1.5rem;

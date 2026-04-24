@@ -7,9 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElContainer, provideGlobalConfig} from "element-plus"
-
-    provideGlobalConfig({namespace: "kel"})
+    import {ElContainer} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 

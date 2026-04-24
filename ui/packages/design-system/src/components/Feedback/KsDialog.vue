@@ -17,10 +17,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDialog, provideGlobalConfig} from "element-plus"
+    import {ElDialog} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

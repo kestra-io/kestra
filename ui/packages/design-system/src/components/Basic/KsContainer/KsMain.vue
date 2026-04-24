@@ -7,9 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMain, provideGlobalConfig} from "element-plus"
-
-    provideGlobalConfig({namespace: "kel"})
+    import {ElMain} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 

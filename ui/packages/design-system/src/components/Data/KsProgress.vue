@@ -3,11 +3,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElProgress, provideGlobalConfig} from "element-plus"
+    import {ElProgress} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {computed} from "vue";
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

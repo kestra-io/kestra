@@ -310,6 +310,13 @@ export {
     KsUpload,
 }
 
+/**
+ * Kestra Design System plugin.
+ *
+ * Required: `app.use(KestraDesignSystem)` before rendering any `Ks*` component.
+ * This is the single source of the `kel` CSS namespace — skipping it leaves
+ * Element Plus output unstyled.
+ */
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {

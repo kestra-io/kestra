@@ -13,10 +13,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElLink, provideGlobalConfig} from "element-plus"
+    import {ElLink} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

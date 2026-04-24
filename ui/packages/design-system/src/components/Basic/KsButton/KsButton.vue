@@ -18,11 +18,9 @@
 <script setup lang="ts">
     import type {Component} from "vue"
 
-    import {ElButton, provideGlobalConfig} from "element-plus"
+    import {ElButton} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

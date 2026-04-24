@@ -13,10 +13,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem, provideGlobalConfig} from "element-plus"
+    import {ElFormItem} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

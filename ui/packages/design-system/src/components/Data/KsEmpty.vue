@@ -16,12 +16,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElEmpty, provideGlobalConfig} from "element-plus"
+    import {ElEmpty} from "element-plus"
     import {useI18n} from "vue-i18n"
     import {useFilteredProps} from "../../utils/filteredProps"
     import noDataImage from "../../assets/images/no-data.png"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

@@ -10,11 +10,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckboxButton, provideGlobalConfig} from "element-plus"
+    import {ElCheckboxButton} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

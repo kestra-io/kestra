@@ -7,11 +7,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElButtonGroup, provideGlobalConfig} from "element-plus"
+    import {ElButtonGroup} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

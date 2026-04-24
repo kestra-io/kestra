@@ -16,11 +16,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTag, provideGlobalConfig} from "element-plus"
+    import {ElTag} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import type {Component} from "vue";
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

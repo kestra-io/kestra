@@ -12,10 +12,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTabPane, provideGlobalConfig} from "element-plus"
+    import {ElTabPane} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

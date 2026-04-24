@@ -18,10 +18,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElStep, provideGlobalConfig} from "element-plus"
+    import {ElStep} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

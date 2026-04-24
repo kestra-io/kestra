@@ -18,11 +18,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPopover, provideGlobalConfig} from "element-plus"
+    import {ElPopover} from "element-plus"
     import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

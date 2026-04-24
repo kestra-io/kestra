@@ -29,11 +29,9 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {ElDrawer, provideGlobalConfig} from "element-plus"
+    import {ElDrawer} from "element-plus"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

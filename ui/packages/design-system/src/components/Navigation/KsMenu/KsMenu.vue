@@ -10,10 +10,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenu, provideGlobalConfig} from "element-plus"
+    import {ElMenu} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

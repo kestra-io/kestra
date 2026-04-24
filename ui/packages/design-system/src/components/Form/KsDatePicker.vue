@@ -7,10 +7,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDatePicker, provideGlobalConfig} from "element-plus"
+    import {ElDatePicker} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

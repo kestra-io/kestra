@@ -11,11 +11,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckTag, provideGlobalConfig} from "element-plus"
+    import {ElCheckTag} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

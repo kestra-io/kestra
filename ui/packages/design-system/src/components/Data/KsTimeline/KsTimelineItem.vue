@@ -12,10 +12,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTimelineItem, provideGlobalConfig} from "element-plus"
+    import {ElTimelineItem} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

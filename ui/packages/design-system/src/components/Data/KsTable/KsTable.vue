@@ -19,10 +19,8 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {ElTable, provideGlobalConfig} from "element-plus"
+    import {ElTable} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

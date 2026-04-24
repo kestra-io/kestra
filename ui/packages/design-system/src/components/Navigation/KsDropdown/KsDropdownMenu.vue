@@ -7,9 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdownMenu, provideGlobalConfig} from "element-plus"
-
-    provideGlobalConfig({namespace: "kel"})
+    import {ElDropdownMenu} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 

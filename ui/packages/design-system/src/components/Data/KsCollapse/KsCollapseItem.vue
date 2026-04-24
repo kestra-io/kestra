@@ -12,11 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapseItem, provideGlobalConfig} from "element-plus"
+    import {ElCollapseItem} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

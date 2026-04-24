@@ -17,11 +17,9 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {ElTooltip, provideGlobalConfig} from "element-plus"
+    import {ElTooltip} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
     import {useTheme} from "../../composables/useTheme"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

@@ -28,10 +28,8 @@
 
 <script setup lang="ts">
     import type {Component} from "vue"
-    import {ElSelect, provideGlobalConfig} from "element-plus"
+    import {ElSelect} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

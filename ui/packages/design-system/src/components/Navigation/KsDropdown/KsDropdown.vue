@@ -13,9 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdown, provideGlobalConfig} from "element-plus"
-
-    provideGlobalConfig({namespace: "kel"})
+    import {ElDropdown} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 

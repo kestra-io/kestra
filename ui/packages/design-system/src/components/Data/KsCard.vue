@@ -13,11 +13,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCard, provideGlobalConfig} from "element-plus"
+    import {ElCard} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
-
-    provideGlobalConfig({namespace: "kel"})
 
     defineOptions({inheritAttrs: false})
 

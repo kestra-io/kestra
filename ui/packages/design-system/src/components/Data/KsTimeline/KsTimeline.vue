@@ -7,9 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTimeline, provideGlobalConfig} from "element-plus"
-
-    provideGlobalConfig({namespace: "kel"})
+    import {ElTimeline} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 

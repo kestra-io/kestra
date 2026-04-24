@@ -2097,6 +2097,14 @@
     "save_and_execute": "Save & Execute",
     "welcome_copilot": {
         "button_cta": "Create flow from scratch",
+        "create_manually": {
+            "title": "Create manually",
+            "description": "Build from scratch using the editor"
+        },
+        "docs": {
+            "title": "Read the docs",
+            "description": "Learn more in the official documentation"
+        },
         "title": "Turn your idea into a workflow",
         "need_help": "Need Help?",
         "placeholder_prompt": "Send me a daily greeting message at 9am.",

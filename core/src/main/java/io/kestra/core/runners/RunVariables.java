@@ -101,9 +101,7 @@ public final class RunVariables {
         "taskrun.iteration",
         "taskrun.parentId",
         "taskrun.startDate",
-        "taskrun.value",
-        // Trigger — top-level object; dynamic output fields are enumerated per trigger type
-        "trigger"
+        "taskrun.value"
     );
 
     /**

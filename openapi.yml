@@ -3770,6 +3770,41 @@ paths:
                 type: array
                 items:
                   type: string
+  /api/v1/{tenant}/flows/expressions:
+    post:
+      tags:
+      - Flows
+      summary: Get available Pebble expressions for a flow
+      description: Returns a categorized map of expression strings available for autocompletion
+        in the No-Code editor.
+      operationId: expressions
+      parameters:
+      - name: taskId
+        in: query
+        description: Optional task ID to scope outputs to prior tasks
+        explode: false
+        schema:
+          type: string
+          nullable: true
+      - name: tenant
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: The flow source code
+        content:
+          application/x-yaml:
+            schema:
+              type: string
+        required: true
+      responses:
+        "200":
+          description: Categorized expressions map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpressionContext"
   /api/v1/{tenant}/flows/graph:
     post:
       tags:
@@ -5780,68 +5815,6 @@ paths:
             application/json:
               schema:
                 type: boolean
-  /api/v1/{tenant}/namespaces/{namespace}/secrets:
-    get:
-      tags:
-      - Namespaces
-      summary: Get secrets for a namespace
-      operationId: listNamespaceSecrets
-      parameters:
-      - name: namespace
-        in: path
-        description: The namespace id
-        required: true
-        schema:
-          type: string
-      - name: page
-        in: query
-        description: The current page
-        required: true
-        explode: false
-        schema:
-          type: integer
-          format: int32
-          default: 1
-      - name: size
-        in: query
-        description: The current page size
-        required: true
-        explode: false
-        schema:
-          type: integer
-          format: int32
-          default: 10
-      - name: sort
-        in: query
-        description: The sort of current page
-        explode: false
-        schema:
-          type: array
-          nullable: true
-          items:
-            type: string
-      - name: filters
-        in: query
-        description: Filters
-        required: true
-        explode: false
-        schema:
-          type: array
-          items:
-            $ref: "#/components/schemas/QueryFilter"
-      - name: tenant
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: listNamespaceSecrets 200 response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiSecretListResponse_ApiSecretMeta_"
-      deprecated: true
   /api/v1/{tenant}/outputs/{executionId}:
     get:
       tags:
@@ -7840,6 +7813,32 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DailyExecutionStatistics"
+    ExpressionContext:
+      type: object
+      properties:
+        categories:
+          type: object
+          properties:
+            TASK_OUTPUTS:
+              type: array
+            EXECUTION_CONTEXT:
+              type: array
+            INPUTS:
+              type: array
+            VARIABLES:
+              type: array
+            SECRETS:
+              type: array
+            KV_PAIRS:
+              type: array
+            NAMESPACE_FILES:
+              type: array
+            FILTERS:
+              type: array
+            FUNCTIONS:
+              type: array
+            APP_CONTEXT:
+              type: array
     FileAttributes:
       type: object
       properties:

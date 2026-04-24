@@ -43,9 +43,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final VersionProvider versionProvider;
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
-    private final NamespaceContextTool namespaceContextTool;
     private final ExpressionContextService expressionContextService;
     private final PluginDefaultService pluginDefaultService;
+    private final NamespaceContextTool namespaceContextTool;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -76,14 +76,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     protected FlowYamlBuilder flowYamlBuilder(String conversationId) {
-        return AiServices.builder(FlowYamlBuilder.class)
-            .chatModel(
-                this.chatModel(
-                    this.listeners("FlowYamlBuilder", conversationId)
-                )
-            )
-            .tools(namespaceContextTool)
-            .build();
+        var builder = AiServices.builder(FlowYamlBuilder.class)
+            .chatModel(this.chatModel(this.listeners("FlowYamlBuilder", conversationId)));
+        return (namespaceContextTool != null ? builder.tools(namespaceContextTool) : builder).build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
@@ -102,7 +97,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final VersionProvider versionProvider,
         final InstanceService instanceService,
         final PosthogService postHogService,
-        final NamespaceContextTool namespaceContextTool,
+        @Nullable final NamespaceContextTool namespaceContextTool,
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
@@ -117,9 +112,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.displayName = displayName;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
-        this.namespaceContextTool = namespaceContextTool;
         this.expressionContextService = expressionContextService;
         this.pluginDefaultService = pluginDefaultService;
+        this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
         this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);

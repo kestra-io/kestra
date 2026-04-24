@@ -310,7 +310,9 @@ class RunVariablesTest {
 
         // LoopRun with key set and two parents (last has a non-null key → item.parent.key appears)
         Execution parentExecution = Execution.builder()
-            .id("parent-exec-id").namespace("ns").flowId("flow").state(new State()).build();
+            .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
+            .outputs(Map.of())
+            .build();
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
             List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))
@@ -321,6 +323,8 @@ class RunVariablesTest {
             .taskRunList(List.of(parentRun, childRun))
             .labels(List.of(new Label("env", "prod")))
             .loopRun(loopRun)
+            .variables(new java.util.HashMap<>(Map.of(RunVariables.FIXTURE_FILES_KEY, Map.of())))
+            .outputs(Map.of())
             .build();
 
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
@@ -331,12 +335,9 @@ class RunVariablesTest {
             })
             .withTaskRun(childRun)
             .withExecution(execution)
-            .withTrigger(new AbstractTrigger() {
-                @Override public String getId() { return "trigger-id"; }
-                @Override public String getType() { return "trigger-type"; }
-            })
             .withEnvs(Map.of("MY_ENV", "value"))
             .withGlobals(Map.of("myGlobal", "value"))
+            .withInputs(Map.of("myInput", "value"))
             .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost"))
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 

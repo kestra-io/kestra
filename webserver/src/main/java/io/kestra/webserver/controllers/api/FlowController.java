@@ -842,9 +842,16 @@ public class FlowController {
     @ApiResponse(responseCode = "200", description = "Categorized expressions map")
     public ExpressionContext expressions(
         @RequestBody(description = "The flow source code") @Body String source,
-        @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws FlowProcessingException {
-        FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
-        return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
+        @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
+        try {
+            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
+            return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     /**

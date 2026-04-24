@@ -13,6 +13,8 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
+
+import io.micronaut.core.annotation.Nullable;
 import io.kestra.webserver.utils.HttpClientUtils;
 
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
@@ -28,7 +30,7 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
     public static final String TYPE = "gemini";
 
     public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService,
-        PosthogService posthogService, NamespaceContextTool namespaceContextTool,
+        PosthogService posthogService, @Nullable NamespaceContextTool namespaceContextTool,
         String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, ExpressionContextService expressionContextService,
         PluginDefaultService pluginDefaultService) {
         super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration, expressionContextService, pluginDefaultService);

@@ -1584,7 +1584,7 @@ class FlowControllerTest {
         // Given — invalid YAML that cannot be parsed as a flow
         String invalidYaml = "this is not valid flow yaml: [[[";
 
-        // When / Then — should return 400 Bad Request
+        // When / Then — YAML parse errors are wrapped as ConstraintViolationException → 422
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(
                 HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
@@ -1592,7 +1592,7 @@ class FlowControllerTest {
                 Argument.mapOf(String.class, List.class)
             )
         );
-        assertEquals(BAD_REQUEST, exception.getStatus());
+        assertEquals(UNPROCESSABLE_ENTITY, exception.getStatus());
     }
 
     @Test

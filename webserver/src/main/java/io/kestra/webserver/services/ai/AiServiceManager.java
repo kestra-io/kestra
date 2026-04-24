@@ -18,6 +18,7 @@ import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.value.PropertyResolver;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
@@ -32,9 +33,9 @@ public class AiServiceManager {
     private final AiProvidersConfiguration providersConfiguration;
     private String defaultProviderId;
     private boolean hasConfiguredProvider = false;
-    protected final NamespaceContextTool namespaceContextTool;
     protected final ExpressionContextService expressionContextService;
     protected final PluginDefaultService pluginDefaultService;
+    protected final NamespaceContextTool namespaceContextTool;
 
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
@@ -47,13 +48,13 @@ public class AiServiceManager {
         InstanceService instanceService,
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
-        NamespaceContextTool namespaceContextTool,
+        @Nullable NamespaceContextTool namespaceContextTool,
         ExpressionContextService expressionContextService,
         PluginDefaultService pluginDefaultService) {
         this.providersConfiguration = providersConfiguration;
-        this.namespaceContextTool = namespaceContextTool;
         this.expressionContextService = expressionContextService;
         this.pluginDefaultService = pluginDefaultService;
+        this.namespaceContextTool = namespaceContextTool;
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -140,7 +141,7 @@ public class AiServiceManager {
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             return new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
             );
         } catch (Exception e) {
             log.error("Failed to create AI service for provider {}: {}", provider.id(), e.getMessage());

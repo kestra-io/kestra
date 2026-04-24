@@ -1,9 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Window;
@@ -11,9 +9,6 @@ import io.kestra.core.utils.*;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -32,16 +27,12 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.FlowTriggerValidation;
-import io.kestra.core.validations.PreconditionFilterValidation;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -49,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.PAUSED;
 import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @SuperBuilder
 @ToString
@@ -59,7 +49,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Schema(
     title = "Trigger a Flow based on other Flows’ executions.",
     description = """
-        Fires when upstream Flow executions meet `preconditions` (required) and optional trigger `conditions` (no Pebble templating). Lets you chain Flows owned by different teams.
+        Fires when upstream Flow executions meet `dependsOn` (required) and optional trigger `when` condition. Lets you chain Flows owned by different teams.
 
         Upstream execution outputs are exposed under `trigger.outputs`; you can also pass `inputs` to the downstream Flow."""
 )
@@ -116,12 +106,10 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     type: io.kestra.plugin.core.trigger.Flow
                     inputs:
                       date: "{{ trigger.outputs.date }}"
-                    preconditions:
-                      id: flows
-                      flows:
-                        - namespace: company.team
-                          flowId: extract
-                          states: [SUCCESS]"""
+                    dependsOn:
+                      - namespace: company.team
+                        flowId: extract
+                        states: [SUCCESS]"""
         ),
         @Example(
             full = true,
@@ -149,15 +137,12 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 triggers:
                   - id: flow_trigger
                     type: io.kestra.plugin.core.trigger.Flow
-                    preconditions:
-                      id: bronze_layer
-                      timeWindow:
-                        type: DAILY_TIME_DEADLINE
-                        deadline: "09:00:00"
-                      flows:
-                        - namespace: company.team
-                          flowId: bronze_layer
-                          states: [SUCCESS]"""
+                    window:
+                      deadline: "09:00:00"
+                    dependsOn:
+                      - namespace: company.team
+                        flowId: bronze_layer
+                        states: [SUCCESS]"""
         ),
         @Example(
             full = true,
@@ -182,14 +167,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     states:
                       - FAILED
                       - WARNING
-                    preconditions:
-                      id: company_namespace
-                      where:
-                        - id: company
-                          filters:
-                            - field: NAMESPACE
-                              type: STARTS_WITH
-                              value: company"""
+                    where: "{{execution.namespace | startsWith 'company'}}\""""
         ),
         @Example(
             full = true,
@@ -285,14 +263,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     )
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
-
-    @Valid
-    @Schema(
-        title = "Preconditions on upstream flow executions",
-        description = "Express preconditions to be met, on a time window, for the flow trigger to be evaluated."
-    )
-    @PluginProperty
-    private Preconditions preconditions;
 
     @Valid
     @Schema(
@@ -536,308 +506,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 ListUtils.emptyOnNull(dependency.states).stream().sorted().map(Enum::name).collect(Collectors.joining(",")),
                 MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
             );
-        }
-    }
-
-    @Builder
-    @Getter
-    public static class Preconditions implements MultipleCondition {
-        @NotNull
-        @NotBlank
-        @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9_-]*")
-        @Schema(title = "A unique id for the preconditions")
-        @PluginProperty
-        private String id;
-
-        @Schema(
-            title = "Define the time window for evaluating preconditions.",
-            description = """
-                You can set the `type` of `timeWindow` to one of the following values:
-                1. `DURATION_WINDOW`: this is the default `type`. It uses a start time (`windowAdvance`) and end time (`window`) that advance to the next interval whenever the evaluation time reaches the end time, based on the defined duration `window`. For example, with a 1-day window (the default option: `window: PT1D`), the preconditions are evaluated during a 24-hour period starting at midnight (i.e., at "00:00:00+00:00") each day. If you set `windowAdvance: PT6H`, the window will start at 6 AM each day. If you set `windowAdvance: PT6H` and also override the `window` property to `PT6H`, the window will start at 6 AM and last for 6 hours. In this configuration, the preconditions will be evaluated during the following intervals: 06:00 to 12:00, 12:00 to 18:00, 18:00 to 00:00, and 00:00 to 06:00.
-                2. `SLIDING_WINDOW`: this option evaluates preconditions over a fixed time `window` but always goes backward from the current time. For example, a sliding window of 1 hour (`window: PT1H`) evaluates executions within the past hour (from one hour ago up to now). It uses a default window of 1 day.
-                3. `DAILY_TIME_DEADLINE`: this option declares that preconditions should be met "before a specific time in a day." Using the string property `deadline`, you can configure a daily cutoff for evaluating preconditions. For example, `deadline: "09:00:00"` specifies that preconditions must be met from midnight until 9 AM UTC time each day; otherwise, the flow will not be triggered.
-                4. `DAILY_TIME_WINDOW`: this option declares that preconditions should be met "within a specific time range in a day". For example, a window from `startTime: "06:00:00"` to `endTime: "09:00:00"` evaluates executions within that interval each day. This option is particularly useful for defining freshness conditions declaratively when building data pipelines that span multiple teams and namespaces. Normally, a failure in any task in your flow will block the entire pipeline, but with this decoupled flow trigger alternative, you can proceed as soon as the data is successfully refreshed within the specified time window."""
-        )
-        @PluginProperty
-        @Builder.Default
-        @Valid
-        protected TimeWindow timeWindow = TimeWindow.builder().build();
-
-        @Schema(
-            title = "Whether to reset the evaluation results of preconditions after a first successful evaluation within the given time window",
-            description = """
-                By default, after a successful evaluation of the set of preconditions, the evaluation result is reset. This means the same set of conditions needs to be successfully evaluated again within the same time window to trigger a new execution.
-                In this setup, to create multiple executions, the same set of conditions must be evaluated to `true` multiple times within the defined window.
-                You can disable this by setting this property to `false`, so that within the same window, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
-        )
-        @PluginProperty
-        @Builder.Default
-        private Boolean resetOnSuccess = Boolean.TRUE;
-
-        @Schema(title = "A list of preconditions to meet, in the form of upstream flows")
-        @PluginProperty
-        private List<UpstreamFlow> flows;
-
-        @Valid
-        @PluginProperty
-        @Schema(title = "A list of preconditions to meet, in the form of execution filters")
-        private List<ExecutionFilter> where;
-
-        @JsonIgnore
-        @Override
-        public Map<String, Condition> getConditions() {
-            AtomicInteger conditionId = new AtomicInteger();
-            Map<String, Condition> flowsCondition = ListUtils.emptyOnNull(flows).stream()
-                .map(
-                    upstreamFlow -> Map.entry(
-                        "condition_" + conditionId.incrementAndGet(),
-                        new UpstreamFlowCondition(upstreamFlow)
-                    )
-                )
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            Map<String, Condition> whereConditions = ListUtils.emptyOnNull(where).stream()
-                .map(
-                    filter -> Map.entry(
-                        "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
-                        new FilterCondition(filter)
-                    )
-                )
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            Map<String, Condition> conditions = HashMap.newHashMap(flowsCondition.size() + whereConditions.size());
-            conditions.putAll(flowsCondition);
-            conditions.putAll(whereConditions);
-            return conditions;
-        }
-
-        @JsonIgnore
-        public Map<String, Condition> getUpstreamFlowsConditions() {
-            AtomicInteger conditionId = new AtomicInteger();
-            return ListUtils.emptyOnNull(flows).stream()
-                .map(
-                    upstreamFlow -> Map.entry(
-                        "condition_" + conditionId.incrementAndGet(),
-                        new UpstreamFlowCondition(upstreamFlow)
-                    )
-                )
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
-        @JsonIgnore
-        public Map<String, Condition> getWhereConditions() {
-            AtomicInteger conditionId = new AtomicInteger();
-            return ListUtils.emptyOnNull(where).stream()
-                .map(
-                    filter -> Map.entry(
-                        "condition_" + conditionId.incrementAndGet() + "_" + filter.getId(),
-                        new FilterCondition(filter)
-                    )
-                )
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
-        @Override
-        public Logger logger() {
-            return log;
-        }
-
-        @Override
-        @JsonIgnore
-        public Mode getMode() {
-            return Mode.ALL;
-        }
-
-        @Override
-        @JsonIgnore
-        public Integer getMinSatisfied() {
-            return null;
-        }
-    }
-
-    @Builder
-    @Getter
-    public static class UpstreamFlow {
-        @NotNull
-        @Schema(title = "The namespace of the flow")
-        @PluginProperty
-        private String namespace;
-
-        @Schema(title = "The flow ID")
-        @PluginProperty
-        private String flowId;
-
-        @Schema(title = "The execution states")
-        @PluginProperty
-        private List<State.Type> states;
-
-        @Schema(title = "A key/value map of labels")
-        @PluginProperty
-        private Map<String, Object> labels;
-    }
-
-    @Hidden
-    public static class UpstreamFlowCondition extends Condition {
-        private final UpstreamFlow upstreamFlow;
-
-        private UpstreamFlowCondition(UpstreamFlow upstreamFlow) {
-            this.upstreamFlow = Objects.requireNonNull(upstreamFlow);
-        }
-
-        @Override
-        public boolean test(ConditionContext conditionContext) throws InternalException {
-            if (upstreamFlow.namespace != null && !conditionContext.getExecution().getNamespace().equals(upstreamFlow.namespace)) {
-                return false;
-            }
-
-            if (upstreamFlow.flowId != null && !conditionContext.getExecution().getFlowId().equals(upstreamFlow.flowId)) {
-                return false;
-            }
-
-            // we need to only evaluate on namespace and flow for simulated executions
-            if (ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(SIMULATED_EXECUTION)) {
-                return true;
-            }
-
-            if (upstreamFlow.states != null && !upstreamFlow.states.contains(conditionContext.getExecution().getState().getCurrent())) {
-                return false;
-            }
-
-            if (upstreamFlow.labels != null) {
-                boolean notMatched = upstreamFlow.labels.entrySet().stream()
-                    .map(entry -> new Label(entry.getKey(), String.valueOf(entry.getValue())))
-                    .anyMatch(label -> !conditionContext.getExecution().getLabels().contains(label));
-                return !notMatched;
-            }
-
-            return true;
-        }
-    }
-
-    @Builder
-    @Getter
-    public static class ExecutionFilter {
-        @NotNull
-        @NotEmpty
-        @PluginProperty
-        @Schema(title = "A unique identifier for the filter")
-        private String id;
-
-        @Builder.Default
-        @PluginProperty
-        @Schema(title = "The operand to apply between all filters of the precondition")
-        private Operand operand = Operand.AND;
-
-        @NotNull
-        @NotEmpty
-        @Valid
-        @PluginProperty
-        @Schema(title = "The list of filters")
-        private List<Filter> filters;
-    }
-
-    public enum Operand {
-        AND,
-        OR
-    }
-
-    @Builder
-    @Getter
-    @PreconditionFilterValidation
-    public static class Filter {
-        @NotNull
-        @PluginProperty
-        @Schema(
-            title = "The field which will be filtered"
-        )
-        private Field field;
-
-        @NotNull
-        @PluginProperty
-        @Schema(
-            title = "The type of filter",
-            description = "Can be set to one of the following: `EQUAL_TO`, `NOT_EQUAL_TO`, `IS_NULL`, `IS_NOT_NULL`, `IS_TRUE`, `IS_FALSE`, `STARTS_WITH`, `ENDS_WITH`, `REGEX`, `CONTAINS`. Depending on the `type`, you will need to also set the `value` or `values` property."
-        )
-        private Type type;
-
-        @PluginProperty
-        @Schema(
-            title = "The single value to filter the `field` on",
-            description = "Must be set according to its `type`."
-        )
-        private String value;
-
-        @PluginProperty
-        @Schema(
-            title = "The list of values to filter the `field` on",
-            description = "Must be set for the following types: IN, NOT_IN."
-        )
-        private List<String> values;
-    }
-
-    public enum Field {
-        FLOW_ID,
-        NAMESPACE,
-        STATE,
-        EXPRESSION,
-    }
-
-    public enum Type {
-        EQUAL_TO,
-        NOT_EQUAL_TO,
-        IN,
-        NOT_IN,
-        IS_TRUE,
-        IS_FALSE,
-        IS_NULL,
-        IS_NOT_NULL,
-        STARTS_WITH,
-        ENDS_WITH,
-        REGEX,
-        CONTAINS,
-    }
-
-    @Hidden
-    public static class FilterCondition extends io.kestra.core.models.conditions.Condition {
-        private final ExecutionFilter filter;
-
-        private FilterCondition(ExecutionFilter filter) {
-            this.filter = Objects.requireNonNull(filter);
-        }
-
-        @Override
-        public boolean test(ConditionContext conditionContext) throws InternalException {
-            // we need to only evaluate on namespace and flow for simulated executions
-            boolean simulated = ListUtils.emptyOnNull(conditionContext.getExecution().getLabels()).contains(SIMULATED_EXECUTION);
-            Stream<Filter> toEvaluate = simulated ? filter.filters.stream().filter(filter -> filter.field == Field.NAMESPACE || filter.field == Field.FLOW_ID) : filter.filters.stream();
-
-            return switch (filter.operand) {
-                case AND -> toEvaluate.allMatch(throwPredicate(filter -> evaluate(conditionContext, filter)));
-                case OR -> toEvaluate.anyMatch(throwPredicate(filter -> evaluate(conditionContext, filter)));
-                case null -> toEvaluate.allMatch(throwPredicate(filter -> evaluate(conditionContext, filter)));
-            };
-        }
-
-        private boolean evaluate(ConditionContext conditionContext, Filter filter) throws IllegalVariableEvaluationException {
-            String fieldValue = switch (filter.field) {
-                case FLOW_ID -> conditionContext.getExecution().getFlowId();
-                case NAMESPACE -> conditionContext.getExecution().getNamespace();
-                case STATE -> conditionContext.getExecution().getState().getCurrent().toString();
-                case EXPRESSION -> conditionContext.getRunContext().render(filter.value);
-            };
-
-            return switch (filter.type) {
-                case EQUAL_TO -> filter.value.equals(fieldValue);
-                case NOT_EQUAL_TO -> !filter.value.equals(fieldValue);
-                case IN -> filter.values.contains(fieldValue);
-                case NOT_IN -> !filter.values.contains(fieldValue);
-                case IS_TRUE -> TruthUtils.isTruthy(fieldValue);
-                case IS_FALSE -> !TruthUtils.isTruthy(fieldValue);
-                case IS_NULL -> fieldValue == null;
-                case IS_NOT_NULL -> fieldValue != null;
-                case STARTS_WITH -> fieldValue != null && fieldValue.startsWith(filter.value);
-                case ENDS_WITH -> fieldValue != null && fieldValue.endsWith(filter.value);
-                case REGEX -> fieldValue != null && fieldValue.matches(filter.value);
-                case CONTAINS -> fieldValue != null && fieldValue.contains(filter.value);
-            };
         }
     }
 

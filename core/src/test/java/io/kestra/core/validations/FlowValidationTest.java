@@ -230,15 +230,6 @@ class FlowValidationTest {
     }
 
     @Test
-    void duplicatePreconditionsIdShouldFailValidation() {
-        Flow flow = this.parse("flows/invalids/duplicate-preconditions.yaml");
-        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-
-        assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getMessage()).contains("Duplicate preconditions with id [flows]");
-    }
-
-    @Test
     void eeAllowsDefiningAssets() {
         Flow flow = Flow.builder()
             .id(TestsUtils.randomString())

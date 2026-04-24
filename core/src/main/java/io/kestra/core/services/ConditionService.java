@@ -77,8 +77,8 @@ public class ConditionService {
         return this.valid(flow, trigger.getConditions(), conditionContext);
     }
 
-    public boolean isValid(MultipleCondition preconditions, Flow flow, Execution execution, Optional<MultipleConditionWindow> triggerExecutionWindow) {
-        if (preconditions == null || preconditions.getConditions() == null) {
+    public boolean isValid(MultipleCondition dependsOn, Flow flow, Execution execution, Optional<MultipleConditionWindow> triggerExecutionWindow) {
+        if (dependsOn == null || dependsOn.getConditions() == null) {
             // important to do it here avoid creating a costly conditionContext if not needed
             return true;
         }
@@ -90,9 +90,9 @@ public class ConditionService {
         );
 
         try {
-            return preconditions.test(conditionContext, triggerExecutionWindow);
+            return dependsOn.test(conditionContext, triggerExecutionWindow);
         } catch (Exception e) {
-            logException(flow, preconditions, conditionContext.getRunContext(), e);
+            logException(flow, dependsOn, conditionContext.getRunContext(), e);
 
             return false;
         }

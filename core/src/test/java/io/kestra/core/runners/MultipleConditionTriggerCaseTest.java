@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import io.kestra.core.models.executions.Execution;
@@ -37,77 +36,6 @@ public class MultipleConditionTriggerCaseTest {
     @Inject
     protected ApplicationContext applicationContext;
 
-    public void flowTriggerPreconditions() throws TimeoutException, QueueException {
-        // flowA
-        Execution execution = runnerUtils.runOne(
-            MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
-            "flow-trigger-preconditions-flow-a"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // flowB: we trigger it two times, as flow-trigger-flow-preconditions-flow-listen is configured with resetOnSuccess: false it should be triggered two times
-        execution = runnerUtils.runOne(
-            MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
-            "flow-trigger-preconditions-flow-a"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        execution = runnerUtils.runOne(
-            MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
-            "flow-trigger-preconditions-flow-b"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // trigger is done
-        Execution triggerExecution = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, "io.kestra.tests.trigger.preconditions", "flow-trigger-preconditions-flow-listen"
-        );
-
-        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
-        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
-    }
-
-    public void flowTriggerPreconditionsMergeOutputs(String tenantId) throws QueueException, TimeoutException {
-        // we do the same as in flowTriggerPreconditions() but we trigger flows in the opposite order to be sure that outputs are merged
-
-        // flowB
-        Execution execution = runnerUtils.runOne(
-            tenantId, "io.kestra.tests.trigger.preconditions",
-            "flow-trigger-preconditions-flow-b"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // flowA
-        execution = runnerUtils.runOne(
-            tenantId, "io.kestra.tests.trigger.preconditions",
-            "flow-trigger-preconditions-flow-a"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // trigger is done
-        Execution triggerExecution = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            tenantId, "io.kestra.tests.trigger.preconditions", "flow-trigger-preconditions-flow-listen"
-        );
-
-        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
-        var outputs = (Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs");
-        assertThat(outputs).containsKey("io.kestra.tests.trigger.preconditions");
-        outputs = (Map<String, Object>) outputs.get("io.kestra.tests.trigger.preconditions");
-        assertThat(outputs).containsKey("flow-trigger-preconditions-flow-b");
-        outputs = (Map<String, Object>) outputs.get("flow-trigger-preconditions-flow-b");
-        assertThat(outputs).containsEntry("some", "value");
-    }
-
     public void flowTriggerOnPaused() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT, "io.kestra.tests.trigger.paused",
@@ -126,31 +54,6 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-    public void flowTriggerMultiplePreconditions() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(
-            MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions",
-            "flow-trigger-multiple-preconditions-flow-a"
-        );
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // trigger is done
-        Execution triggerExecution = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen"
-        );
-        executionRepository.delete(triggerExecution);
-        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // we assert that we didn't have any other flow triggered
-        assertThrows(
-            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
-                e -> e.getState().getCurrent().equals(Type.SUCCESS),
-                MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen", Duration.ofSeconds(3)
-            )
-        );
-    }
 
     public void flowTriggerMultipleConditions() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(

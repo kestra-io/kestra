@@ -57,14 +57,14 @@ public class FlowTriggerService {
 
     /**
      * This method computes executions to trigger from flow triggers from a given execution.
-     * It only computes those depending on standard (non-preconditions / non-dependsOn) conditions, so it must be used
-     * in conjunction with {@link #computeExecutionsFromFlowTriggerPreconditionsAndDependsOn(Execution, Flow, MultipleConditionStateStore)}.
+     * It only computes those depending on standard (non-dependsOn) conditions, so it must be used
+     * in conjunction with {@link #computeExecutionsFromFlowTriggerDependsOn(Execution, Flow, MultipleConditionStateStore)}.
      */
     public List<Execution> computeExecutionsFromFlowTriggerConditions(Execution execution, Flow flow) {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
             .stream()
-            // we must filter on no preconditions and no dependsOn to avoid evaluating two times triggers that have standard conditions and multiple conditions
-            .filter(it -> it.getTrigger().getPreconditions() == null && ListUtils.isEmpty(it.getTrigger().getDependsOn()))
+            // we must filter on no dependsOn to avoid evaluating two times triggers that have standard conditions and multiple conditions
+            .filter(it -> ListUtils.isEmpty(it.getTrigger().getDependsOn()))
             .toList();
 
         // short-circuit empty triggers to evaluate
@@ -89,14 +89,14 @@ public class FlowTriggerService {
 
     /**
      * This method computes executions to trigger from flow triggers from a given execution.
-     * It only computes those depending on preconditions or dependsOn, so it must be used
+     * It only computes those depending on dependsOn, so it must be used
      * in conjunction with {@link #computeExecutionsFromFlowTriggerConditions(Execution, Flow)}.
      */
-    public List<Execution> computeExecutionsFromFlowTriggerPreconditionsAndDependsOn(Execution execution, Flow flow, MultipleConditionStateStore multipleConditionStorage) {
+    public List<Execution> computeExecutionsFromFlowTriggerDependsOn(Execution execution, Flow flow, MultipleConditionStateStore multipleConditionStorage) {
         List<FlowWithFlowTrigger> flowWithFlowTriggers = computeFlowTriggers(execution, flow)
             .stream()
-            // we must filter on preconditions or dependsOn to avoid evaluating two times triggers that only have standard conditions
-            .filter(flowWithFlowTrigger -> flowWithFlowTrigger.getTrigger().getPreconditions() != null || !ListUtils.isEmpty(flowWithFlowTrigger.getTrigger().getDependsOn()))
+            // we must filter on dependsOn to avoid evaluating two times triggers that only have standard conditions
+            .filter(flowWithFlowTrigger -> !ListUtils.isEmpty(flowWithFlowTrigger.getTrigger().getDependsOn()))
             .toList();
 
         // short-circuit empty triggers to evaluate
@@ -105,7 +105,7 @@ public class FlowTriggerService {
         }
 
         List<Execution> executions = flowWithFlowTriggers.stream()
-            .flatMap(flowWithFlowTrigger -> flowTriggerMultipleConditions(flowWithFlowTrigger)
+            .flatMap(flowWithFlowTrigger -> Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
                 .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                     flowWithFlowTrigger.getFlow(),
                     flowWithFlowTrigger.getTrigger(),
@@ -153,8 +153,6 @@ public class FlowTriggerService {
         if (
             // evaluate conditions
             conditionService.isValid(flowWithMultipleCondition.getTrigger(), flowWithMultipleCondition.getFlow(), execution) &&
-                // evaluate preconditions against the updated accumulated window
-                conditionService.isValid(flowWithMultipleCondition.getTrigger().getPreconditions(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow)) &&
                 // evaluate dependsOn against the updated accumulated window
                 conditionService.isValid(flowWithMultipleCondition.getTrigger().dependsOnAsMultipleCondition(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow))
         ) {
@@ -208,14 +206,6 @@ public class FlowTriggerService {
                     runContext
                 )
             ).toList();
-    }
-
-    private Stream<MultipleCondition> flowTriggerMultipleConditions(FlowWithFlowTrigger flowWithFlowTrigger) {
-        return Stream.concat(
-            Optional.ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream(),
-            Optional.ofNullable(flowWithFlowTrigger.getTrigger().dependsOnAsMultipleCondition()).stream()
-        );
-
     }
 
     @AllArgsConstructor

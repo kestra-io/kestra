@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Crear flow desde cero",
+      "create_manually": {
+        "description": "Construir desde cero usando el editor",
+        "title": "Crear manualmente"
+      },
+      "docs": {
+        "description": "Aprende más en la documentación oficial",
+        "title": "Lee la documentación"
+      },
       "execute_hint": {
         "description": "Haz clic para guardar tu flujo de trabajo y ejecutarlo inmediatamente.",
         "title": "Guardar y ejecutar tu flow"

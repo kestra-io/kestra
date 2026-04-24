@@ -26,7 +26,6 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "override/*": ["./src/override/*"],
-      "kestra-api/*": ["./src/generated/kestra-api/*"]
     }
   },
   "include": [

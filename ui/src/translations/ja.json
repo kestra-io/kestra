@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "フローをゼロから作成",
+      "create_manually": {
+        "description": "エディタを使用してゼロから構築する",
+        "title": "手動で作成"
+      },
+      "docs": {
+        "description": "公式ドキュメントで詳細を学ぶ",
+        "title": "ドキュメントを読む"
+      },
       "execute_hint": {
         "description": "クリックしてワークフローを保存し、すぐに実行します。",
         "title": "フローを保存して実行"

@@ -45,7 +45,6 @@ export default defineConfig({
     resolve: {
         alias: [
             {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-            {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
             {find: "#imports", replacement: MDC_STUB},
             {find: "#build/mdc-image-component.mjs", replacement: MDC_STUB},
             {find: "#mdc-imports", replacement: MDC_STUB},

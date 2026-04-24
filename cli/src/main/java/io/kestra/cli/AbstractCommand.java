@@ -14,11 +14,11 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.webserver.services.FlowAutoLoaderService;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -64,7 +64,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private Optional<EmbeddedServer> embeddedServer;
 
     @Inject
-    private BeanProvider<FlowAutoLoaderService> flowAutoLoaderService;
+    private BeanProvider<FlowAutoLoader> flowAutoLoaderService;
 
     @Inject
     protected Provider<PluginRegistry> pluginRegistryProvider;
@@ -189,7 +189,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 }
 
                 if (isFlowAutoLoadEnabled()) {
-                    flowAutoLoaderService.ifPresent(FlowAutoLoaderService::load);
+                    flowAutoLoaderService.ifPresent(FlowAutoLoader::load);
                 }
             });
     }

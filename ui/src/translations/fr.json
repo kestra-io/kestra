@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Créer un flow à partir de zéro",
+      "create_manually": {
+        "description": "Construire à partir de zéro en utilisant l'éditeur",
+        "title": "Créer manuellement"
+      },
+      "docs": {
+        "description": "En savoir plus dans la documentation officielle",
+        "title": "Lire la documentation"
+      },
       "execute_hint": {
         "description": "Cliquez pour enregistrer votre workflow et l'exécuter immédiatement.",
         "title": "Enregistrer et exécuter votre flow"

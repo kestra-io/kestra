@@ -71,24 +71,31 @@
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
-                :itemSize="44"
+                :minItemSize="50"
                 keyField="uid"
                 class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
             >
-                <template #default="{item}">
-                    <LogLine
+                <template #default="{item, active}">
+                    <DynamicScrollerItem
+                        :item="item"
+                        :active="active"
+                        :sizeDependencies="[item.message]"
                         :data-index="item.index"
-                        @click="logCursor = item.index.toString()"
-                        class="line"
-                        :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
-                        :cursor="item.index.toString() === logCursor"
-                        :excludeMetas="['namespace', 'flowId', 'executionId']"
-                        :level="effectiveLevel"
-                        :filter="filter"
-                        :log="item"
-                    />
+                        :key="item.uid"
+                    >
+                        <LogLine
+                            @click="logCursor = item.index.toString()"
+                            class="line"
+                            :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
+                            :cursor="item.index.toString() === logCursor"
+                            :excludeMetas="['namespace', 'flowId', 'executionId']"
+                            :level="effectiveLevel"
+                            :filter="filter"
+                            :log="item"
+                        />
+                    </DynamicScrollerItem>
                 </template>
             </DynamicScroller>
         </KsCard>
@@ -107,7 +114,7 @@
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
     import {KsIconButton} from "@kestra-io/design-system";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
-    import {RecycleScroller} from "vue-virtual-scroller";
+    import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
     import {State} from "@kestra-io/design-system"
@@ -142,7 +149,8 @@
             ContentCopy,
             Collapse,
             Restart,
-            RecycleScroller,
+            DynamicScroller,
+            DynamicScrollerItem,
             Refresh,
             KSFilter
         },

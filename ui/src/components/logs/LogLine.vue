@@ -30,26 +30,23 @@
                     </span>
                 </span>
             </div>
-            <pre
-                ref="lineContent"
+            <div
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="message"
+                v-html="renderedHtml"
             />
         </div>
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, nextTick} from "vue";
+    import {computed} from "vue";
     import Convert from "ansi-to-html";
     import {useStorage} from "@vueuse/core";
     import xss from "xss";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import linkify, {processLinkTags} from "./linkify";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import {LevelKey} from "../../utils/logs";
     import {Log} from "../../stores/logs";
-    import {useRouter} from "vue-router";
     import * as Filters from "../../utils/filters";
 
     // Props
@@ -64,8 +61,6 @@
 
     // State
     const logsFontSize = useStorage<number>("logsFontSize", 12);
-    const lineContent = ref<HTMLElement>();
-
     const convert = new Convert();
 
     // Computed
@@ -133,28 +128,21 @@
         return `var(--ks-log-content-${logLevel}) !important`;
     });
 
-    const message = computed(() => {
-        let logMessage = !props.log.message
-            ? ""
-            : convert.toHtml(
-                xss(props.log.message, {
-                    allowList: {span: ["style"]},
-                })
-            );
-        logMessage = logMessage.replaceAll(
+    const renderedHtml = computed(() => {
+        const raw = props.log.message ?? "";
+        const html = convert.toHtml(
+            xss(raw, {
+                allowList: {span: ["style"]},
+            })
+        );
+
+        return html.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
             "$1<a href='$2' target='_blank'>$2</a>$3"
         );
-        logMessage = processLinkTags(logMessage);
-        return logMessage;
     });
 
-    const router = useRouter();
-    watch(message, () => {
-        nextTick(() => {
-            linkify(lineContent.value, router);
-        });
-    }, {immediate: true});
+
 </script>
 <style scoped lang="scss">
 div.line {

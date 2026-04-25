@@ -133,6 +133,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -200,6 +201,9 @@ public class ExecutionController {
 
     @Inject
     protected DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+
+    @Inject
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
@@ -569,7 +573,7 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
+        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
         return webhook(find, key, path, request);
     }
 
@@ -699,8 +703,45 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate,
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
+        final String tenantId = tenantService.resolveTenant();
         List<Label> parsedLabels = parseLabels(labels);
+        final Flow flow;
+        try {
+            flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
+        } catch (NoSuchElementException e) {
+            // No non-draft revision was found. If the flow exists but only has draft revisions,
+            // we accept the request and emit a FAILED execution explaining why instead of a bare
+            // 404, so the user sees the failure in the UI executions list.
+            if (revision.isEmpty()) {
+                Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
+                if (latestAny.isPresent() && latestAny.get().isDraft()) {
+                    Flow draftFlow = latestAny.get();
+                    return Mono.just(emitFailedExecution(
+                        draftFlow,
+                        parsedLabels,
+                        scheduleDate,
+                        kind,
+                        "Flow execution failed: flow only has draft revisions. Save it as a published revision before executing it without a revision."
+                    ));
+                }
+            }
+            throw e;
+        }
+
+        // Drafts can be saved with constraint violations. When the user explicitly executes one
+        // (by passing the revision) the request is accepted but the execution is created already
+        // FAILED, with the validation error logged through the run context so it is persisted
+        // and visible in the UI's execution log.
+        Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
+        if (violations.isPresent()) {
+            return Mono.just(emitFailedExecution(
+                flow,
+                parsedLabels,
+                scheduleDate,
+                kind,
+                "Flow execution failed: flow definition is invalid. " + violations.get().getMessage()
+            ));
+        }
 
 
         var executionId = IdUtils.create();
@@ -785,6 +826,41 @@ public class ExecutionController {
 //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
 
             });
+    }
+
+    /**
+     * Build a FAILED execution from the given flow, persist a single error log line through the
+     * run context appender (so the message lands in the UI's execution log) and emit it to the
+     * execution queue. Used when the request is accepted but the flow cannot be executed - e.g.,
+     * the flow only has draft revisions, or its definition has constraint violations.
+     */
+    private ExecutionResponse emitFailedExecution(
+        Flow flow,
+        List<Label> parsedLabels,
+        Optional<ZonedDateTime> scheduleDate,
+        Optional<ExecutionKind> kind,
+        String errorMessage
+    ) {
+        Execution failedExecution = Execution.newExecution(flow, null, parsedLabels, scheduleDate)
+            .toBuilder()
+            .kind(kind.orElse(null))
+            .build()
+            .withState(State.Type.FAILED);
+        runContextFactory.of(flow, failedExecution).logger().error(errorMessage);
+        try {
+            executionQueue.emit(failedExecution);
+            eventPublisher.publishEvent(CrudEvent.create(failedExecution));
+        } catch (QueueException e) {
+            throw new RuntimeException(e);
+        }
+        ExecutionId executionId = new ExecutionId(
+            failedExecution.getTenantId(),
+            failedExecution.getNamespace(),
+            failedExecution.getFlowId(),
+            failedExecution.getId(),
+            failedExecution.getFlowRevision()
+        );
+        return ExecutionResponse.fromExecution(failedExecution, executionUrl(executionId));
     }
 
     private URI executionUrl(ExecutionId executionId) {
@@ -1812,9 +1888,14 @@ public class ExecutionController {
             );
         }
 
-        return submitBatchAction(executions, (execution, opId) ->
-        {
-            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+        return submitBatchAction(executions, (execution, opId) -> {
+            // When latestRevision is true the replay starts as a new execution against the
+            // latest non-draft revision; otherwise it stays bound to the execution's original
+            // revision (which may itself be a draft - the user explicitly ran it).
+            Flow flow = (latestRevision
+                ? flowRepository.findByIdForExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())
+                : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
+            ).orElseThrow();
             try {
                 innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
             } catch (QueueException e) {

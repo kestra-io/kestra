@@ -43,11 +43,17 @@ export const storageKeys = {
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
+    SAVE_DEFAULT_ACTION: "saveDefaultAction",
 } as const
 
 export const executeFlowBehaviours = {
     SAME_TAB: "same tab",
     NEW_TAB: "new tab",
+} as const
+
+export const saveDefaultActions = {
+    SAVE: "save",
+    SAVE_AS_DRAFT: "save_as_draft",
 } as const
 
 export const stateDisplayValues = {

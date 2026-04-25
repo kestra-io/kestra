@@ -24,6 +24,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
@@ -73,6 +74,9 @@ class TriggerSchedulerTest {
     @Inject
     TriggerWorkerJobPublisher triggerWorkerJobPublisher;
 
+    @Inject
+    ModelValidator modelValidator;
+
     private Clock initialSchedulerClock;
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
@@ -104,13 +108,34 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldFailExecutionWhenFlowIsInvalid() {
+        // A flow that the scheduler picks up should be valid - validation runs at save time. As
+        // a defense in depth (drafts can be saved invalid, and external imports may bypass the
+        // save path), the scheduler validates the flow before sending the execution. If the flow
+        // has constraint violations (here: tasks: [] violates @NotEmpty), the execution is
+        // emitted in FAILED state with the error logged through the run context, instead of
+        // letting the executor run an under-defined flow that would only fail later on a task.
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toBuilder()
+            .tasks(List.of())
+            .build();
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent())
+            .isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     void shouldSucceedScheduleScheduleTriggerGivenValidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
         TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
         scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS); // vNode are 0-based
         // endregion [GIVEN]
-
         // WHEN
         SchedulerClock.offset(Duration.ofMinutes(15));
         scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
@@ -738,7 +763,8 @@ class TriggerSchedulerTest {
             new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
             workerJobPublisher,
             triggerExecutionPublisher,
-            new SchedulerConfiguration(1, Duration.ZERO, 100)
+            new SchedulerConfiguration(1, Duration.ZERO, 100),
+            modelValidator
         );
     }
 

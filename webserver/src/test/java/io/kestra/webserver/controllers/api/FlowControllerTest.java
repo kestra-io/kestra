@@ -654,6 +654,74 @@ class FlowControllerTest {
     }
 
     @Test
+    void updateFlowAsDraftWithUnrecognizedProperty() {
+        // Regression: updating a draft with an unknown task property should return 200, not 422.
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        String draftSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                unknownProp: someValue
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId + "?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft()).isTrue();
+        assertThat(result.getSource()).contains("unknownProp");
+    }
+
+    @Test
+    void updateFlowAsDraftWithInvalidYaml() {
+        // Regression: updating a draft with unparseable YAML should return 200, not 422.
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        // Syntactically broken YAML (unclosed bracket)
+        String brokenSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: [unclosed
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId + "?draft=true", brokenSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft()).isTrue();
+        assertThat(result.getSource()).contains("unclosed");
+    }
+
+    @Test
     void listDistinctNamespaces() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)

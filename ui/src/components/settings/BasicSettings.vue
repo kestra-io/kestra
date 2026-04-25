@@ -55,6 +55,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.save_default_action')"
+            >
+                <KsSelect fit :modelValue="settings.saveDefaultAction" @update:model-value="onSaveDefaultAction">
+                    <KsOption :label="$t('save')" :value="saveDefaultActions.SAVE" />
+                    <KsOption :label="$t('save_as_draft')" :value="saveDefaultActions.SAVE_AS_DRAFT" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.flow_default_tab')"
                 :description="$t('settings.blocks.configuration.descriptions.flow_default_tab')"
             >
@@ -247,13 +256,12 @@
     import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import moment from "moment-timezone"
-
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
-    import {logDisplayTypes, storageKeys, executeFlowBehaviours} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys, executeFlowBehaviours, saveDefaultActions} from "../../utils/constants"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
@@ -284,6 +292,7 @@
         logDisplay: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
         [storageKeys.EDITOR_VIEW_TYPE]: [`${CONFIG}.fields.editor_type`, `${CONFIG}.descriptions.editor_type`],
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
+        [storageKeys.SAVE_DEFAULT_ACTION]: [`${CONFIG}.fields.save_default_action`],
         executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
         flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
         triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
@@ -317,6 +326,7 @@
         logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
+        saveDefaultAction: localStorage.getItem(storageKeys.SAVE_DEFAULT_ACTION) || saveDefaultActions.SAVE,
         executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
         flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
         triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
@@ -524,6 +534,11 @@
     function onExecuteFlowBehaviour(value: string) {
         settings.executeFlowBehaviour = value
         persist(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value)
+    }
+
+    function onSaveDefaultAction(value: string) {
+        settings.saveDefaultAction = value
+        persist(storageKeys.SAVE_DEFAULT_ACTION, value)
     }
 
     function onExecuteDefaultTab(value: string) {

@@ -38,6 +38,7 @@ import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -82,6 +83,7 @@ public class TriggerScheduler {
     private final TriggerExecutionPublisher triggerExecutionSender;
     private final PluginDefaultService pluginDefaultService;
     private final DefaultSchedulableTriggerFetcher schedulableTriggerFetcher;
+    private final ModelValidator modelValidator;
 
     // Stores
     private final TriggerStateStore triggerStateStore;
@@ -104,7 +106,8 @@ public class TriggerScheduler {
         DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
         TriggerWorkerJobPublisher triggerWorkerJobPublisher,
         TriggerExecutionPublisher triggerExecutionPublisher,
-        SchedulerConfiguration schedulerConfiguration) {
+        SchedulerConfiguration schedulerConfiguration,
+        ModelValidator modelValidator) {
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
@@ -116,6 +119,7 @@ public class TriggerScheduler {
         this.triggerExecutionSender = triggerExecutionPublisher;
         this.schedulerConfiguration = schedulerConfiguration;
         this.schedulableTriggerFetcher = schedulableTriggerFetcher;
+        this.modelValidator = modelValidator;
 
         // Metrics
         metricScheduleLoopCounter = metricRegistry
@@ -350,11 +354,17 @@ public class TriggerScheduler {
 
         // May send a new execution - if Schedulable trigger or on error
         final String tenantId = triggerState.getTenantId();
+        final FlowInterface flowToExecute = triggerEvaluationContext.flow();
         evaluationResult.ifPresent(res ->
         {
             var execution = res.toExecution(triggerContext)
                 .withScheduleDate(scheduleTime.toInstant())
                 .withTenantId(tenantId);
+            // Defense in depth: if the flow has constraint violations (it should not after save
+            // validation, but flows imported from external sources or older invariants can slip
+            // through), emit the execution as FAILED with a clear log line instead of letting the
+            // executor blow up later on an invalid task.
+            execution = failExecutionIfFlowInvalid(flowToExecute, execution);
             triggerExecutionSender.send(execution);
         });
     }
@@ -477,5 +487,26 @@ public class TriggerScheduler {
             e.getMessage(),
             e
         );
+    }
+
+    /**
+     * Validates the flow that the scheduler is about to execute. If the flow has constraint
+     * violations the execution is flipped to {@link State.Type#FAILED} and the violation message
+     * is logged through the run context appender so it shows up in the UI's execution log,
+     * instead of letting the executor pick up an invalid flow and fail later on a task.
+     */
+    private Execution failExecutionIfFlowInvalid(FlowInterface flow, Execution execution) {
+        if (execution.getState().isFailed()) {
+            return execution;
+        }
+        Optional<jakarta.validation.ConstraintViolationException> violations = modelValidator.isValid(flow);
+        if (violations.isEmpty()) {
+            return execution;
+        }
+        Execution failed = execution.withState(State.Type.FAILED);
+        runContextFactory.of(flow, failed).logger().error(
+            "Flow execution failed: flow definition is invalid. {}", violations.get().getMessage()
+        );
+        return failed;
     }
 }

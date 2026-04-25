@@ -329,12 +329,9 @@
         clearTimeout(timeout.value)
         if(!editorRefElement.value?.getEditor()) return
 
-        const creating = flowStore.isCreating
-
-        // Use saveAll() for consistency with the Save button behavior
-        const result = creating
-            ? await flowStore.save()
-            : await flowStore.saveAll()
+        // Ctrl+S follows the user's default save action preference, consistent with every
+        // other keyboard save entry point.
+        const result = await flowStore.saveWithDefaultAction()
 
         if (result === "redirect_to_update") {
             await router.push({

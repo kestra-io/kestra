@@ -169,6 +169,142 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void webhookOnDraftFlowReturnsNotFound() {
+        // A flow whose only revision is a draft is treated as if it does not exist for any
+        // execution start that does not pin an explicit revision (webhook entry, schedules, ...).
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-draft/webhook-draft-key"),
+                Execution.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Flow not found");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
+    void executingInvalidDraftReturnsAFailedExecution() {
+        // A draft can be saved with constraint violations (here: empty `tasks` violates @NotEmpty).
+        // Executing it explicitly is accepted (no 4xx) but the execution comes back already FAILED
+        // so the user sees the error in the UI's execution log instead of a confusing crash later.
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/invalid-draft-flow?revision=1",
+                null
+            ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void executingDraftOnlyFlowWithoutRevisionReturnsAFailedExecution() {
+        // A flow whose only revisions are drafts can't resolve to a published version, so when the
+        // user starts an execution without specifying a revision the request is accepted but a
+        // FAILED execution is emitted, with the explanation visible in the UI's execution log -
+        // instead of returning a bare 404 that surfaces no diagnostic.
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/webhook-draft",
+                null
+            ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-dynamic-key.yaml" })
+    void webhookDynamicKey() {
+        Execution execution = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+            ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-secret-key.yaml" })
+    @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
+    void webhookDynamicKeyFromASecret() {
+        Execution execution = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
+            ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-with-condition.yaml" })
+    void webhookWithCondition() {
+        record Hello(String hello) {
+        }
+
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    new Hello("world")
+                ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest
+                    .POST(
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                        new Hello("webhook")
+                    ),
+                Execution.class
+            )
+        );
+        assertThat(e.getResponse().getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getResponse().body()).isNull();
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-inputs.yaml" })
+    void webhookWithInputs() {
+        record Hello(String hello) {
+        }
+
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-inputs/webhookKey",
+                    new Hello("world")
+                ),
+            Execution.class
+        );
+
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+    }
+
+    @Test
     void nullLabels() {
         MultipartBody requestBody = createExecutionInputsFlowBody();
 
@@ -360,6 +496,24 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void scheduleDate() {
+        // given
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
+        String scheduleDate = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(now), StandardCharsets.UTF_8);
+
+        // when
+        MutableHttpRequest<?> createRequest = HttpRequest
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + scheduleDate, null)
+            .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        Execution execution = client.toBlocking().retrieve(createRequest, Execution.class);
+
+        // then
+        assertThat(execution.getScheduleDate()).isEqualTo(now.toInstant());
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
     @LoadFlows(value = {"flows/valids/inputs.yaml"})
     void shouldValidateInputsForCreateExecutionGivenSimpleInputs() {
         // given

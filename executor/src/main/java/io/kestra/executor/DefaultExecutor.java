@@ -152,8 +152,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private Timer flowTriggerProcessingTimer;
     private Timer slaMonitorLoopTimer;
     private Timer executionDelayLoopTimer;
-    @Inject
-    private FlowInputOutput flowInputOutput;
 
     @Inject
     public DefaultExecutor(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {

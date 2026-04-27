@@ -11,10 +11,8 @@
         v-else
         :type="type ?? 'default'"
         :icon="icon"
-        :tag="to ? 'router-link' : 'button'"
-        :to="to"
         v-bind="$attrs"
-        @click="emit('click')"
+        @click="onClick"
     >
         <slot>{{ label }}</slot>
     </el-button>

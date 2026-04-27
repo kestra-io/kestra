@@ -235,14 +235,15 @@
     defineExpose({
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
         exportAsImage: (type: "jpeg" | "png" = "png", filename?: string): void => {
-            const chart = (vChartRef.value?.chart as ECharts) ?? null
-            if (!chart) return
-            const canvas = (chart.getZr().painter as any).getCanvases?.()?.[0] ?? (chart.getZr() as any).canvas
-            if (!canvas) return
+            if (!vChartRef.value) return
+            const dataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})
+            if (!dataUrl) return
             const link = document.createElement("a")
-            link.href = canvas.toDataURL(`image/${type}`)
-            link.download = `${filename || "chart"}.${type}`
+            link.href = dataUrl
+            link.download = filename || `chart.${type}`
+            document.body.appendChild(link)
             link.click()
+            document.body.removeChild(link)
         },
     })
 </script>

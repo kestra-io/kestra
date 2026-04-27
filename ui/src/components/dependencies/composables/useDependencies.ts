@@ -28,6 +28,7 @@ const NODE_BG = {
     default:  "--ks-dependencies-node-background-default",
     faded:    "--ks-dependencies-node-background-faded",
     selected: "--ks-dependencies-node-background-selected",
+    hovered:  "--ks-dependencies-node-background-hovered",
     assets:   "--ks-dependencies-node-background-assets",
 } as const;
 
@@ -35,6 +36,7 @@ const NODE_BORDER = {
     default:  "--ks-dependencies-node-border-default",
     faded:    "--ks-dependencies-node-border-faded",
     selected: "--ks-dependencies-node-border-selected",
+    hovered:  "--ks-dependencies-node-border-hovered",
     assets:   "--ks-dependencies-node-border-assets",
 } as const;
 
@@ -42,6 +44,7 @@ const EDGE_COLOR = {
     default:  "--ks-dependencies-edge-default",
     faded:    "--ks-dependencies-edge-faded",
     selected: "--ks-dependencies-edge-selected",
+    hovered:  "--ks-dependencies-edge-hovered",
 } as const;
 
 // ─── KsGraph instance contract ────────────────────────────────────────────────
@@ -145,57 +148,65 @@ export function useDependencies(
 
     // ─── Derived graph topology ───────────────────────────────────────────────
 
-    /** Set of node IDs connected to the selected node (includes the selected node itself). */
-    const selectedNeighborIDs: ComputedRef<Set<string>> = computed(() => {
-        if (!selectedNodeID.value) return new Set();
-        const neighbors = new Set<string>([selectedNodeID.value]);
+    function neighborIDs(anchorID: string | undefined): Set<string> {
+        if (!anchorID) return new Set();
+        const neighbors = new Set<string>([anchorID]);
         elements.value.data.forEach((el) => {
             if (el.data.type !== EDGE) return;
             const edge = el.data as Edge;
-            if (edge.source === selectedNodeID.value || edge.target === selectedNodeID.value) {
+            if (edge.source === anchorID || edge.target === anchorID) {
                 neighbors.add(edge.source);
                 neighbors.add(edge.target);
             }
         });
         return neighbors;
-    });
+    }
 
-    /** Set of edge IDs connected to the selected node. */
-    const selectedEdgeIDs: ComputedRef<Set<string>> = computed(() => {
-        if (!selectedNodeID.value) return new Set();
+    function connectedEdgeIDs(anchorID: string | undefined): Set<string> {
+        if (!anchorID) return new Set();
         const ids = new Set<string>();
         elements.value.data.forEach((el) => {
             if (el.data.type !== EDGE) return;
             const edge = el.data as Edge;
-            if (edge.source === selectedNodeID.value || edge.target === selectedNodeID.value) {
-                ids.add(edge.id);
-            }
+            if (edge.source === anchorID || edge.target === anchorID) ids.add(edge.id);
         });
         return ids;
-    });
+    }
+
+    /** Set of node IDs connected to the selected node (includes the selected node itself). */
+    const selectedNeighborIDs: ComputedRef<Set<string>> = computed(() => neighborIDs(selectedNodeID.value));
+
+    /** Set of edge IDs connected to the selected node. */
+    const selectedEdgeIDs: ComputedRef<Set<string>> = computed(() => connectedEdgeIDs(selectedNodeID.value));
 
     // ─── ECharts data (reactive, rebuilt on state changes) ───────────────────
+    //
+    // Hover highlighting is handled entirely by ECharts' built-in
+    // emphasis.focus = "adjacency" (set in KsGraph series config).
+    // Each node/edge carries emphasis.itemStyle (hover colour) and
+    // blur.itemStyle (= same as base itemStyle) so that selection colours
+    // are preserved when another node is hovered.
 
     const graphNodes: ComputedRef<KsGraphNode[]> = computed(() => {
         void miscStore.theme; // recompute cssVar calls when theme switches
-        const edgeCounts = buildEdgeCounts(elements.value.data);
+        const edgeCounts   = buildEdgeCounts(elements.value.data);
         const hasSelection = selectedNodeID.value !== undefined;
-        const hasFilter = shownNodeIDs.value !== null;
+        const hasFilter    = shownNodeIDs.value !== null;
 
         return elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
             .map(({data: node}) => {
-                const isSelected  = node.id === selectedNodeID.value;
-                const isNeighbor  = hasSelection && selectedNeighborIDs.value.has(node.id);
-                const isFaded     = hasSelection && !isSelected && !isNeighbor;
-                const isDimmed    = hasFilter && !shownNodeIDs.value!.has(node.id);
-                const isAsset     = node.metadata.subtype === ASSET;
+                const isSelected = node.id === selectedNodeID.value;
+                const isNeighbor = hasSelection && selectedNeighborIDs.value.has(node.id) && !isSelected;
+                const isFaded    = hasSelection && !isSelected && !isNeighbor;
+                const isDimmed   = hasFilter && !shownNodeIDs.value!.has(node.id);
+                const isAsset    = node.metadata.subtype === ASSET;
 
                 // For EXECUTION subtype, use the execution state color when available.
-                const execState   = subtype === EXECUTION
+                const execState  = subtype === EXECUTION
                     ? (node.metadata as {state?: string}).state
                     : undefined;
-                const execColor   = execState ? State.getStateColor(execState) : undefined;
+                const execColor  = execState ? State.getStateColor(execState) : undefined;
 
                 let bgColor: string;
                 let borderColor: string;
@@ -205,13 +216,13 @@ export function useDependencies(
                     bgColor     = cssVar(NODE_BG.faded);
                     borderColor = cssVar(NODE_BORDER.faded);
                     opacity     = 0.25;
+                } else if (isSelected || isNeighbor) {
+                    bgColor     = execColor ?? cssVar(NODE_BG.selected);
+                    borderColor = execColor ?? cssVar(NODE_BORDER.selected);
                 } else if (isFaded) {
                     bgColor     = cssVar(NODE_BG.faded);
                     borderColor = cssVar(NODE_BORDER.faded);
                     opacity     = 0.75;
-                } else if (isSelected || isNeighbor) {
-                    bgColor     = execColor ?? cssVar(NODE_BG.selected);
-                    borderColor = execColor ?? cssVar(NODE_BORDER.selected);
                 } else if (isAsset) {
                     bgColor     = execColor ?? cssVar(NODE_BG.assets);
                     borderColor = execColor ?? cssVar(NODE_BORDER.assets);
@@ -220,21 +231,34 @@ export function useDependencies(
                     borderColor = execColor ?? cssVar(NODE_BORDER.default);
                 }
 
+                const baseItemStyle = {color: bgColor, borderColor, borderWidth: 2, opacity};
+                const labelColor    = cssVar("--ks-content-primary", isDimmed ? 0.35 : isFaded ? 0.75 : undefined);
+
                 return {
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
-                    itemStyle: {
-                        color:       bgColor,
-                        borderColor,
-                        borderWidth: 2,
-                        opacity,
+                    itemStyle:  baseItemStyle,
+                    // Hover colour – applied by ECharts emphasis.focus:"adjacency"
+                    emphasis: {
+                        itemStyle: {
+                            color:       cssVar(NODE_BG.hovered),
+                            borderColor: cssVar(NODE_BORDER.hovered),
+                            borderWidth: 2,
+                            opacity:     1,
+                        },
+                        label: {color: cssVar("--ks-content-primary")},
+                    },
+                    // Blur = same as base so selection colours survive when another node is hovered
+                    blur: {
+                        itemStyle: baseItemStyle,
+                        label:     {color: labelColor},
                     },
                     label: {
                         show:            true,
                         formatter:       node.flow,
                         position:        "bottom",
-                        color:           cssVar("--ks-content-primary", isDimmed ? 0.35 : isFaded ? 0.75 : undefined),
+                        color:           labelColor,
                         fontSize:        10,
                         textBorderWidth: 0,
                     },
@@ -273,24 +297,28 @@ export function useDependencies(
                 if (isEdgeDimmed) {
                     color   = cssVar(EDGE_COLOR.faded);
                     opacity = 0.1;
+                } else if (isSelected) {
+                    color   = execColor ?? cssVar(EDGE_COLOR.selected);
                 } else if (isFaded) {
                     color   = cssVar(EDGE_COLOR.faded);
                     opacity = 0.35;
-                } else if (isSelected) {
-                    color   = execColor ?? cssVar(EDGE_COLOR.selected);
                 } else {
                     color   = cssVar(EDGE_COLOR.default);
                 }
 
+                const baseLineStyle = {
+                    color,
+                    opacity,
+                    type:  isSelected ? "dashed" : "solid",
+                    width: isSelected ? 2 : 1,
+                };
+
                 return {
                     source:    edge.source,
                     target:    edge.target,
-                    lineStyle: {
-                        color,
-                        opacity,
-                        type:  isSelected ? "dashed" : "solid",
-                        width: isSelected ? 2 : 1,
-                    },
+                    lineStyle: baseLineStyle,
+                    emphasis:  {lineStyle: {color: cssVar(EDGE_COLOR.hovered), opacity: 1, type: "solid", width: 2}},
+                    blur:      {lineStyle: baseLineStyle},
                 };
             });
     });
@@ -454,7 +482,7 @@ export function useDependencies(
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 const ts       = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-                const filename = `dependencies-${nodeID}-${ts}.${type}`;
+                const filename = `dependencies-${nodeID ? `${nodeID}-` : ""}${ts}.${type}`;
                 graphRef.value?.exportAsImage(type, filename);
             },
         },

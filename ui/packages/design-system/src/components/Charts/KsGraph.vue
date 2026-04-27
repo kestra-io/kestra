@@ -88,6 +88,9 @@
                     links: props.edges ?? [],
                     roam: props.roam,
                     edgeSymbol: ["none", "arrow"],
+                    emphasis: {
+                        focus: "adjacency",
+                    },
                     force: {
                         repulsion: 400,
                         gravity: 0.05,

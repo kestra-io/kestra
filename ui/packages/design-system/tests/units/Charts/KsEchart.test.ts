@@ -7,10 +7,13 @@ import {ChartFeature} from "../../../src/components/Charts/ksChartUtils"
 // VChart relies on canvas APIs absent in jsdom. Replace it with a no-op stub
 // that exposes the same interface KsEchart depends on.
 
+const mockGetDataURL = vi.fn().mockReturnValue("data:image/png;base64,abc123")
+
 const mockEchartsInstance = {
     resize: vi.fn(),
     getOption: vi.fn(() => ({xAxis: [{data: ["Jan", "Feb", "Mar"]}]})),
     convertFromPixel: vi.fn(() => [1, 0]),
+    getDataURL: mockGetDataURL,
 }
 
 vi.mock("vue-echarts", () => ({
@@ -19,7 +22,11 @@ vi.mock("vue-echarts", () => ({
         props: ["theme", "option", "initOptions", "autoresize"],
         emits: ["mouseover", "mouseout"],
         setup() {
-            return {chart: mockEchartsInstance}
+            return {
+                chart: mockEchartsInstance,
+                // Real vue-echarts proxies ECharts methods directly on the component instance.
+                getDataURL: (...args: unknown[]) => mockGetDataURL(...args),
+            }
         },
         template: "<div class=\"v-chart-stub\" />",
     },
@@ -261,6 +268,61 @@ describe("KsEchart", () => {
     test("exposes getEchartsInstance method", () => {
         const wrapper = mountChart()
         expect(typeof wrapper.vm.getEchartsInstance).toBe("function")
+    })
+
+    test("getEchartsInstance returns the chart instance (not null)", () => {
+        // vue-echarts auto-unwraps the shallowRef on the public instance, so
+        // vChartRef.value.chart IS the ECharts instance — not the ref wrapper.
+        // Accessing .value on it returns undefined, not the instance.
+        // This test guards against re-introducing the .value indirection bug.
+        const wrapper = mountChart()
+        const instance = wrapper.vm.getEchartsInstance()
+        expect(instance).toBe(mockEchartsInstance)
+    })
+
+    // ── exportAsImage ──────────────────────────────────────────────────────────
+
+    test("exportAsImage triggers a download with the correct filename and data URL", () => {
+        const wrapper = mountChart()
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+
+        const captured: {href: string; download: string}[] = []
+        const origAppend = document.body.appendChild.bind(document.body)
+        vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+            if (node instanceof HTMLAnchorElement) {
+                captured.push({href: node.href, download: node.download})
+            }
+            return origAppend(node)
+        })
+
+        wrapper.vm.exportAsImage("png", "test-graph.png")
+
+        expect(captured).toHaveLength(1)
+        expect(captured[0].href).toBe("data:image/png;base64,abc123")
+        expect(captured[0].download).toBe("test-graph.png")
+        expect(clickSpy).toHaveBeenCalledTimes(1)
+
+        clickSpy.mockRestore()
+        vi.mocked(document.body.appendChild).mockRestore()
+    })
+
+    test("exportAsImage uses default filename when none is provided", () => {
+        const wrapper = mountChart()
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+
+        const captured: {download: string}[] = []
+        const origAppend = document.body.appendChild.bind(document.body)
+        vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+            if (node instanceof HTMLAnchorElement) captured.push({download: node.download})
+            return origAppend(node)
+        })
+
+        wrapper.vm.exportAsImage("jpeg")
+
+        expect(captured[0].download).toBe("chart.jpeg")
+
+        clickSpy.mockRestore()
+        vi.mocked(document.body.appendChild).mockRestore()
     })
 
     // ── renderer prop ──────────────────────────────────────────────────────────

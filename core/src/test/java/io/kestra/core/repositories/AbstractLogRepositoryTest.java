@@ -422,4 +422,49 @@ public abstract class AbstractLogRepositoryTest {
         var result = logRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
         assertThat(result).isEqualTo(4);
     }
+
+    @Test
+    void shouldExposeIdAndDeleteByIds() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenant, Level.INFO).build());
+        logRepository.save(logEntry(tenant, Level.WARN).build());
+        logRepository.save(logEntry(tenant, Level.ERROR).build());
+
+        ArrayListTotal<LogEntry> all = logRepository.find(Pageable.UNPAGED, tenant, null);
+        assertThat(all).hasSize(3);
+        assertThat(all).allSatisfy(entry -> assertThat(entry.getId()).isNotBlank());
+
+        List<String> idsToDelete = List.of(all.get(0).getId(), all.get(1).getId());
+        int deleted = logRepository.deleteByIds(tenant, idsToDelete);
+        assertThat(deleted).isEqualTo(2);
+
+        ArrayListTotal<LogEntry> remaining = logRepository.find(Pageable.UNPAGED, tenant, null);
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining.getFirst().getId()).isEqualTo(all.get(2).getId());
+    }
+
+    @Test
+    void shouldNotDeleteByIdsAcrossTenants() {
+        String tenantA = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenantB = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenantA, Level.INFO).build());
+        logRepository.save(logEntry(tenantB, Level.INFO).build());
+
+        List<String> tenantAIds = logRepository.find(Pageable.UNPAGED, tenantA, null)
+            .stream().map(LogEntry::getId).toList();
+
+        int deleted = logRepository.deleteByIds(tenantB, tenantAIds);
+        assertThat(deleted).isZero();
+        assertThat(logRepository.find(Pageable.UNPAGED, tenantA, null)).hasSize(1);
+    }
+
+    @Test
+    void shouldNoOpDeleteByIdsWithEmptyList() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenant, Level.INFO).build());
+
+        assertThat(logRepository.deleteByIds(tenant, List.of())).isZero();
+        assertThat(logRepository.deleteByIds(tenant, null)).isZero();
+        assertThat(logRepository.find(Pageable.UNPAGED, tenant, null)).hasSize(1);
+    }
 }

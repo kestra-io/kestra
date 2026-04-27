@@ -14,6 +14,7 @@ import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
 import KsBreadcrumbItem from "./components/Navigation/KsBreadcrumb/KsBreadcrumbItem.vue"
+import KsBulkSelect from "./components/Data/KsDataTable/KsBulkSelect.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
@@ -153,6 +154,7 @@ const components = {
     KsBadge,
     KsBreadcrumb,
     KsBreadcrumbItem,
+    KsBulkSelect,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -240,6 +242,7 @@ export {
     KsBadge,
     KsBreadcrumb,
     KsBreadcrumbItem,
+    KsBulkSelect,
     KsButton,
     KsButtonGroup,
     KsCard,

@@ -30,6 +30,9 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
+
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudRepository<LogEntry> implements LogRepositoryInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
@@ -74,8 +77,28 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
     @Override
     public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
-        return findPage(pageable, tenantId, condition);
+        Condition condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+        return findPageWithId(pageable, tenantId, condition);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private ArrayListTotal<LogEntry> findPageWithId(Pageable pageable, String tenantId, Condition condition) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            SelectConditionStep<Record> select = (SelectConditionStep) context
+                .select(KEY_FIELD, VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(condition);
+
+            return this.jdbcRepository.fetchPage(context, select, pageable, this::mapWithId);
+        });
+    }
+
+    private LogEntry mapWithId(Record record) {
+        LogEntry entry = this.jdbcRepository.deserialize(record.get(VALUE_FIELD, String.class));
+        return entry.toBuilder().id(record.get(KEY_FIELD)).build();
     }
 
     @Override
@@ -298,6 +321,21 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
             return delete.execute();
         });
+    }
+
+    @Override
+    public int deleteByIds(String tenantId, List<String> ids) {
+        if (ListUtils.isEmpty(ids)) {
+            return 0;
+        }
+
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration)
+                .delete(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId))
+                .and(KEY_FIELD.in(ids))
+                .execute()
+        );
     }
 
     private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {

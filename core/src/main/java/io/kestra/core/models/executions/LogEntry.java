@@ -28,6 +28,10 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
+    @Nullable
+    String id;
+
+    @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
 

@@ -28,16 +28,44 @@
 
                 <template #table>
                     <div v-ks-loading="isLoading">
+                        <div
+                            v-if="(selection.length > 0 || queryBulkAction) && logsStore.logs && logsStore.logs.length > 0"
+                            class="logs-bulk-actions"
+                        >
+                            <KsBulkSelect
+                                :selectAll="queryBulkAction"
+                                :selectionCount="selection.length"
+                                :total="logsStore.total"
+                                @toggle-all="toggleAllSelection"
+                                @unselect="toggleAllUnselected"
+                            >
+                                <KsButton :icon="Delete" @click="confirmDeleteLogs">
+                                    {{ $t("delete") }}
+                                </KsButton>
+                            </KsBulkSelect>
+                        </div>
+
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
-                            <LogLine
+                            <div
                                 v-for="(log, i) in logsStore.logs"
-                                :key="`${log.taskRunId}-${i}`"
-                                level="TRACE"
-                                filter=""
-                                :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
-                                :log="log"
-                                :class="{'log-0': i === 0}"
-                            />
+                                :key="log.id ?? `${log.taskRunId}-${i}`"
+                                class="log-row"
+                                :class="{'log-0': i === 0, 'log-row--selected': log.id && selection.includes(log.id)}"
+                            >
+                                <el-checkbox
+                                    v-if="log.id"
+                                    class="log-row__checkbox"
+                                    :modelValue="selection.includes(log.id)"
+                                    @change="(value: string | number | boolean) => toggleRow(log.id!, Boolean(value))"
+                                />
+                                <LogLine
+                                    class="log-row__content"
+                                    level="TRACE"
+                                    filter=""
+                                    :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                    :log="log"
+                                />
+                            </div>
                         </div>
 
                         <div v-else-if="!isLoading">
@@ -56,6 +84,8 @@
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import moment from "moment";
+    import {ElMessageBox} from "element-plus";
+    import Delete from "vue-material-design-icons/Delete.vue";
     import {useLogFilter} from "../filter/configurations";
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
@@ -64,6 +94,7 @@
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
+    import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {
         decodeSearchParams,
@@ -107,10 +138,66 @@
     const route = useRoute();
     const router = useRouter();
     const {t} = useI18n();
+    const toast = useToast();
     const logsStore = useLogsStore();
     const logFilter = useLogFilter();
     const dataTable = useTemplateRef("dataTable");
     const ready = ref(false);
+
+    const selection = ref<string[]>([]);
+    const queryBulkAction = ref(false);
+
+    const toggleRow = (id: string, checked: boolean) => {
+        if (checked) {
+            if (!selection.value.includes(id)) {
+                selection.value.push(id);
+            }
+        } else {
+            selection.value = selection.value.filter(s => s !== id);
+            queryBulkAction.value = false;
+        }
+    };
+
+    const toggleAllSelection = () => {
+        queryBulkAction.value = true;
+        const visibleIds = (logsStore.logs ?? [])
+            .map(l => l.id)
+            .filter((id): id is string => Boolean(id));
+        selection.value = Array.from(new Set([...selection.value, ...visibleIds]));
+    };
+
+    const toggleAllUnselected = () => {
+        selection.value = [];
+        queryBulkAction.value = false;
+    };
+
+    const confirmDeleteLogs = () => {
+        const count = queryBulkAction.value ? logsStore.total : selection.value.length;
+        if (count === 0) {
+            return;
+        }
+
+        ElMessageBox.confirm(
+            t("bulk delete logs", {count}),
+            t("confirmation"),
+            {
+                confirmButtonText: t("delete"),
+                cancelButtonText: t("cancel"),
+                type: "warning",
+                dangerouslyUseHTMLString: true,
+            }
+        ).then(() => {
+            const promise = queryBulkAction.value
+                ? logsStore.queryDeleteLogs(loadQuery({minLevel: props.filters ? null : effectiveLogLevel.value}))
+                : logsStore.bulkDeleteLogs(selection.value);
+
+            return promise.then(() => {
+                toast.deleted(t("logs"));
+                toggleAllUnselected();
+                refresh();
+            });
+        }).catch(() => {});
+    };
 
     const routeInfo = computed(() => ({
         title: t("logs"),
@@ -278,6 +365,10 @@
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh();
     });
+
+    watch(() => logsStore.logs, () => {
+        toggleAllUnselected();
+    });
 </script>
 <style scoped lang="scss">
 
@@ -313,6 +404,30 @@
             > * + * {
                 border-top: 1px solid var(--ks-border-primary);
             }
+
+            .log-row {
+                display: flex;
+                align-items: flex-start;
+                gap: $spacer * 0.5;
+
+                &--selected {
+                    background-color: var(--ks-background-active);
+                }
+
+                &__checkbox {
+                    flex: 0 0 auto;
+                    padding-top: $spacer * 0.5;
+                }
+
+                &__content {
+                    flex: 1 1 auto;
+                    min-width: 0;
+                }
+            }
+        }
+
+        .logs-bulk-actions {
+            margin-bottom: $spacer * 0.75;
         }
     }
 </style>

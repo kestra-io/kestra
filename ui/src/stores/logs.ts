@@ -5,6 +5,7 @@ import {useAxios} from "../utils/axios";
 import {LevelKey} from "../utils/logs";
 
 export interface Log{
+    id?: string;
     level: LevelKey;
     namespace: string;
     flowId: string;
@@ -40,11 +41,21 @@ export const useLogsStore = defineStore("logs", () => {
         return axios.delete(URL).then(() => (logs.value = undefined))
     }
 
+    function bulkDeleteLogs(ids: string[]) {
+        return axios.delete(`${apiUrl()}/logs/by-ids`, {data: ids})
+    }
+
+    function queryDeleteLogs(filters: Record<string, any>) {
+        return axios.delete(`${apiUrl()}/logs/by-query`, {params: filters})
+    }
+
     return {
         logs,
         total,
         level,
         findLogs,
         deleteLogs,
+        bulkDeleteLogs,
+        queryDeleteLogs,
     }
 })

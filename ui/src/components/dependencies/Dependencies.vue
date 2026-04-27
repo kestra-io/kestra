@@ -107,7 +107,7 @@
 
     const graphRef = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
-    const TESTING = true; // When true, bypasses API data fetching and uses mock/test data.
+    const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
     use([TitleComponent]);
 

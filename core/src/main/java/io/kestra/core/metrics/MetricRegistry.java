@@ -177,6 +177,8 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
     public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT = "queue.message.lag.count";
     public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_COUNT = "queue.subscribers.count";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_COUNT_DESCRIPTION = "Queue subscribers count";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";

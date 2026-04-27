@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
         int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
         this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "queue-async-" + queueName());
         this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
+        metricRegistry.gauge(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT_DESCRIPTION, (Supplier<Integer>) subscribers::size, MetricRegistry.TAG_QUEUE_NAME, queueName());
 
         if (LOG.isDebugEnabled()) {
             this.listeners.add(message -> LOG.debug("[{}] emitted message with key: {}", cls.getSimpleName(), message.key()));

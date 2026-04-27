@@ -388,8 +388,7 @@ class PluginDefaultServiceTest {
             """;
 
         // When
-        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(MAIN_TENANT, source, false);
 
         // Then - taskDefaults should behave identically to pluginDefaults
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(1));
@@ -416,8 +415,7 @@ class PluginDefaultServiceTest {
             """;
 
         // When
-        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(MAIN_TENANT, source, false);
 
         // Then - forced default overrides the task-level value
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(123));
@@ -447,8 +445,7 @@ class PluginDefaultServiceTest {
             """;
 
         // When
-        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
-        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(MAIN_TENANT, source, false);
 
         // Then - pluginDefaults takes precedence
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(42));

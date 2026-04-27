@@ -702,16 +702,6 @@
 </script>
 
 <style scoped lang="scss">
-.dropdown-router-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 5px 16px;
-    color: inherit;
-    text-decoration: none;
-}
-
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }

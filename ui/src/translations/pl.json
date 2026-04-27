@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Utwórz flow od podstaw",
+      "create_manually": {
+        "description": "Zbuduj od podstaw za pomocą edytora",
+        "title": "Utwórz ręcznie"
+      },
+      "docs": {
+        "description": "Dowiedz się więcej w oficjalnej dokumentacji",
+        "title": "Przeczytaj dokumentację"
+      },
       "execute_hint": {
         "description": "Kliknij, aby zapisać swój workflow i uruchomić go natychmiast.",
         "title": "Zapisz i wykonaj swój flow"

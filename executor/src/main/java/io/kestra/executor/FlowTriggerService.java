@@ -133,6 +133,8 @@ public class FlowTriggerService {
             return null;
         }
 
+        RunContext runContext = runContextFactory.of(flowWithMultipleCondition.getFlow(), execution);
+
         // evaluate multiple conditions and accumulate with previously stored results
         Map<String, Boolean> results = flowWithMultipleCondition.getMultipleCondition()
             .getConditions()
@@ -141,7 +143,7 @@ public class FlowTriggerService {
             .map(
                 e -> new AbstractMap.SimpleEntry<>(
                     e.getKey(),
-                    conditionService.isValid(e.getValue(), flowWithMultipleCondition.getFlow(), execution)
+                    conditionService.isValid(e.getValue(), flowWithMultipleCondition.getFlow(), execution, runContext)
                 )
             )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -152,13 +154,13 @@ public class FlowTriggerService {
 
         if (
             // evaluate conditions
-            conditionService.isValid(flowWithMultipleCondition.getTrigger(), flowWithMultipleCondition.getFlow(), execution) &&
+            conditionService.isValid(flowWithMultipleCondition.getTrigger(), flowWithMultipleCondition.getFlow(), runContext) &&
                 // evaluate dependsOn against the updated accumulated window
-                conditionService.isValid(flowWithMultipleCondition.getTrigger().dependsOnAsMultipleCondition(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow))
+                conditionService.isValid(flowWithMultipleCondition.getTrigger().dependsOnAsMultipleCondition(), flowWithMultipleCondition.getFlow(), execution, Optional.of(updatedWindow), runContext)
         ) {
             Optional<Execution> maybeExecution = flowWithMultipleCondition.getTrigger().evaluate(
                 Optional.of(updatedWindow),
-                runContextFactory.of(flowWithMultipleCondition.getFlow(), execution),
+                runContext,
                 flowWithMultipleCondition.getFlow(),
                 execution
             );
@@ -202,7 +204,6 @@ public class FlowTriggerService {
                 flowWithFlowTrigger -> conditionService.isValid(
                     flowWithFlowTrigger.getTrigger(),
                     flowWithFlowTrigger.getFlow(),
-                    execution,
                     runContext
                 )
             ).toList();

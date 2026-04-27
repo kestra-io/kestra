@@ -454,7 +454,7 @@ export function useDependencies(
             },
             exportAsImage: (type: "jpeg" | "png", nodeID?: string) => {
                 const ts       = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-                const filename = `dependencies-${nodeID}-${ts}.${type}`;
+                const filename = `dependencies-${nodeID ? `${nodeID}-` : ""}${ts}.${type}`;
                 graphRef.value?.exportAsImage(type, filename);
             },
         },

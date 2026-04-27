@@ -1,48 +1,38 @@
 <template>
-    <template v-if="secondaryActionCount < 2">
+    <NavBarActions>
         <Dashboards
             v-if="showDashboards"
             @dashboard="onSelectDashboard"
         />
-        <Action
-            v-for="a in simpleActions"
-            :key="a.label"
-            type="default"
-            :icon="a.icon"
-            :label="a.label"
-            @click="a.handler"
+        <NavBarAction
+            v-if="deleted"
+            :icon="BackupRestore"
+            :label="t('restore')"
+            @click="restoreFlow"
         />
-    </template>
+        <NavBarAction
+            v-if="canEdit && !deleted && tab !== 'edit'"
+            :icon="Pencil"
+            :label="t('edit flow')"
+            @click="editFlow"
+        />
+        <NavBarAction
+            v-if="tab === 'logs' && hasLogs"
+            :icon="TrashCan"
+            :label="t('delete logs')"
+            @click="deleteLogs"
+        />
 
-    <el-dropdown v-else trigger="click">
-        <el-button :icon="DotsVertical" />
-        <template #dropdown>
-            <el-dropdown-menu>
-                <Dashboards
-                    v-if="showDashboards"
-                    asItem
-                    @dashboard="onSelectDashboard"
-                />
-
-                <el-dropdown-item
-                    v-for="a in simpleActions"
-                    :key="a.label"
-                    :icon="a.icon"
-                    @click="a.handler"
-                >
-                    {{ a.label }}
-                </el-dropdown-item>
-            </el-dropdown-menu>
+        <template #primary>
+            <TriggerFlow
+                v-if="flow && !deleted && tab !== 'apps' && canExecute"
+                type="primary"
+                :flowId="flow?.id"
+                :namespace="flow?.namespace"
+                :flowSource="flow?.source"
+            />
         </template>
-    </el-dropdown>
-
-    <TriggerFlow
-        v-if="flow && !deleted && tab !== 'apps' && canExecute"
-        type="primary"
-        :flowId="flow?.id"
-        :namespace="flow?.namespace"
-        :flowSource="flow?.source"
-    />
+    </NavBarActions>
 </template>
 
 <script setup lang="ts">
@@ -53,8 +43,9 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import Action from "../../../components/namespaces/components/buttons/Action.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import NavBarActions from "../../../components/layout/NavBarActions.vue";
+    import NavBarAction from "../../../components/layout/NavBarAction.vue";
     // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
@@ -64,14 +55,17 @@
     import {useAuthStore} from "override/stores/auth";
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
     import {useDashboardStore} from "../../../stores/dashboard.ts";
-    import type {Component} from "vue";
+    import {useLogsStore} from "../../../stores/logs";
+    import {useToast} from "../../../utils/toast";
 
     const {t} = useI18n({useScope: "global"});
 
     const unsavedChangesStore = useUnsavedChangesStore();
     const flowStore = useFlowStore();
+    const logsStore = useLogsStore();
     const router = useRouter();
     const route = useRoute();
+    const toast = useToast();
 
     const flow = computed(() => flowStore.flow);
     const deleted = computed(() => flow.value?.deleted || false);
@@ -112,6 +106,23 @@
         });
     };
 
+    const hasLogs = computed(() =>
+        logsStore.logs !== undefined && logsStore.logs.length > 0
+    );
+
+    const deleteLogs = () => {
+        toast.confirm(
+            t("delete_all_logs"),
+            async () => {
+                if (!flow.value) return;
+                return logsStore.deleteLogs({
+                    namespace: flow.value.namespace,
+                    flowId: flow.value.id,
+                });
+            },
+        );
+    };
+
     const restoreFlow = () => {
         flowStore.createFlow({
             flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
@@ -120,13 +131,4 @@
             router.go(0);
         });
     };
-
-    const simpleActions = computed(() => [
-        deleted.value && {icon: BackupRestore, label: t("restore"), handler: restoreFlow},
-        canEdit.value && !deleted.value && tab.value !== "edit" && {icon: Pencil, label: t("edit flow"), handler: editFlow},
-    ].filter(Boolean) as {icon: Component; label: string; handler: () => void}[]);
-
-    const secondaryActionCount = computed(() =>
-        Number(showDashboards.value) + simpleActions.value.length
-    );
 </script>

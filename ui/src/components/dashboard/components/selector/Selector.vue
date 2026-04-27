@@ -50,12 +50,13 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, watch} from "vue";
+    import {onBeforeMount, ref, computed, inject, watch} from "vue";
 
     import {useRoute, useRouter} from "vue-router";
     import Content from "./Content.vue";
+    import {asItemKey} from "../../../layout/navBarActionsContext";
 
-    const {asItem = false} = defineProps<{asItem?: boolean}>();
+    const asItem = inject(asItemKey, false);
 
     const route = useRoute();
     const router = useRouter();

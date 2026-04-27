@@ -213,10 +213,7 @@
         if(!id || !execution.value?.id) {
             return [];
         }
-        const {data, status} = await axios.post(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
-            executionId: execution.value.id,
-            taskRunId: id,
-        }, {
+        const {data, status} = await axios.get(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
             validateStatus: (status) => status === 200 || status === 404,
         })
         if(status === 200) {
@@ -421,7 +418,7 @@
         () => executionsStore.execution?.id,
         async (id) => {
             if(id) {
-                const {data, status} = await axios.post(`${apiUrl()}/outputs/${id}`);
+                const {data, status} = await axios.get(`${apiUrl()}/outputs/${id}`);
                 if(status === 200 && data) {
                     tasksWithOutputs.value = [];
                     for(const task of data){

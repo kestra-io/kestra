@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -695,6 +696,7 @@ public class JdbcExecutor implements ExecutorInterface {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
                                                 Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
+                                                    .filter(Predicate.not(WorkerGroup::isDefault))
                                                     .orElse(null);
                                                 workerJobQueue.emit(workerGroupKey, workerTask);
                                             }

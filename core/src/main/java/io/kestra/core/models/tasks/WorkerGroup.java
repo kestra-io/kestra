@@ -20,4 +20,15 @@ public class WorkerGroup {
         WAIT,
         CANCEL,
     }
+
+    /**
+     * A worker-group key refers to the default (unnamed) worker group when it is
+     * {@code null} or blank.
+     *
+     * @param key the worker-group key to test
+     * @return {@code true} when the key refers to the default worker group
+     */
+    public static boolean isDefault(String key) {
+        return key == null || key.isBlank();
+    }
 }

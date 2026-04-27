@@ -1009,7 +1009,9 @@ public abstract class AbstractScheduler implements Scheduler {
                 String tenantId = flowWithTrigger.getFlow().getTenantId();
                 RunContext runContext = flowWithTrigger.conditionContext.getRunContext();
                 String workerGroupKey = runContext.render(workerGroup.get().getKey());
-                if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
+                if (WorkerGroup.isDefault(workerGroupKey)) {
+                    this.workerJobQueue.emit(workerTrigger);
+                } else if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
                         this.workerJobQueue.emit(workerGroupKey, workerTrigger);
@@ -1026,7 +1028,6 @@ public abstract class AbstractScheduler implements Scheduler {
                                 this.workerJobQueue.emit(workerGroupKey, workerTrigger);
                             }
                         }
-                        ;
                     }
                 } else {
                     runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);

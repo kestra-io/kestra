@@ -59,7 +59,7 @@ export interface LogsDownloadResult {
 }
 
 /** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
-export type Log = LogEntry & {index?: number}
+export type Log = LogEntry & {index?: number; id?: string}
 
 function setupLogsStore() {
     const logs = ref<Log[]>()
@@ -236,6 +236,14 @@ function setupLogsStore() {
         return counts
     }
 
+    function bulkDeleteLogs(ids: string[]) {
+        return LogsAPI.deleteLogsByIds({body: ids})
+    }
+
+    function queryDeleteLogs(filters: Record<string, any>) {
+        return LogsAPI.deleteLogsByQuery({filters: routeQueryToQueryFilters(filters)})
+    }
+
     return {
         logs,
         total,
@@ -248,6 +256,8 @@ function setupLogsStore() {
         loadNextPage,
         loadPreviousPage,
         deleteLogs,
+        bulkDeleteLogs,
+        queryDeleteLogs,
         downloadLogs,
         levelCounts,
     }

@@ -4,12 +4,24 @@
             <h6>
                 {{ $t("filter.saved filters") }}
             </h6>
-            <el-button
-                link
-                :icon="Close"
-                @click="$emit('close')"
-                size="small"
-            />
+
+            <div class="header-actions">
+                <SaveFilters
+                    :disabled
+                    :appliedFilters
+                    :editingFilter
+                    :savedFilters
+                    @save="(name, description) => emit('save', name, description)"
+                    @edit="(id, name, description) => emit('update', id, name, description)"
+                    @close-edit="emit('close-edit')"
+                />
+                <el-button
+                    link
+                    :icon="Close"
+                    @click="$emit('close')"
+                    size="small"
+                />
+            </div>
         </div>
 
         <div class="saved-filters-list">
@@ -59,13 +71,17 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import {ElMessageBox} from "element-plus";
-    import {SavedFilter} from "../utils/filterTypes";
+    import {AppliedFilter, SavedFilter} from "../utils/filterTypes";
     import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
+    import SaveFilters from "./SaveFilters.vue";
 
     const {t} = useI18n({useScope: "global"});
 
     defineProps<{
         savedFilters: SavedFilter[];
+        disabled: boolean;
+        appliedFilters: AppliedFilter[];
+        editingFilter?: SavedFilter;
     }>();
 
     const emit = defineEmits<{
@@ -73,6 +89,9 @@
         load: [savedFilter: SavedFilter];
         edit: [savedFilter: SavedFilter];
         delete: [savedFilter: SavedFilter];
+        save: [name: string, description: string];
+        update: [id: string, name: string, description: string];
+        "close-edit": [];
     }>();
 
     const deleteFilter = (savedFilter: SavedFilter) => {
@@ -97,7 +116,7 @@
     .panel-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         padding: 0.75rem 0.75rem 0.5rem 0.75rem;
         border-bottom: 1px solid var(--ks-border-primary);
         flex-shrink: 0;
@@ -107,16 +126,22 @@
         h6 {
             font-size: 0.875rem;
             font-weight: 700;
-            margin-bottom: 0.25rem;
         }
 
-        :deep(.el-button) {
-            color: var(--ks-content-tertiary);
-            font-size: 1rem;
-            cursor: pointer;
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
 
-            &:hover {
-                color: var(--ks-content-link);
+            :deep(.el-button) {
+                color: var(--ks-content-tertiary);
+                font-size: 1rem;
+                cursor: pointer;
+                margin: 0;
+
+                &:hover:not(.is-disabled) {
+                    color: var(--ks-content-link);
+                }
             }
         }
     }

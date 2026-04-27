@@ -13,19 +13,6 @@
             {{ $t("filter.refresh") }}
         </el-button>
 
-        <SaveFilters
-            v-if="!filter.searchInputFullWidth.value && filter.buttons.value?.savedFilters?.shown !== false"
-            :disabled="
-                (!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value
-            "
-            :appliedFilters="filter.appliedFilters.value"
-            :editingFilter="filter.editingFilter.value"
-            :savedFilters="filter.savedFilters.value"
-            @save="handleSave"
-            @edit="handleEdit"
-            @close-edit="filter.closeEditFilter"
-        />
-
         <el-popover
             v-if="filter.buttons.value?.savedFilters?.shown !== false"
             v-model:visible="isSavedFiltersVisible"
@@ -40,25 +27,25 @@
             <template #reference>
                 <el-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
                     <el-tooltip :content="$t('filter.saved tooltip')" placement="top" effect="light">
-                        <span class="saved-content">
-                            {{ $t("filter.saved") }}
-                            <el-tag type="primary" effect="light" class="saved-count">
-                                {{ filter.savedFilters.value.length }}
-                            </el-tag>
-                            <el-icon class="el-icon--right">
-                                <ChevronDown />
-                            </el-icon>
-                        </span>
+                        <el-icon class="el-icon--right">
+                            <ChevronDown />
+                        </el-icon>
                     </el-tooltip>
                 </el-button>
             </template>
 
             <SavedFilters
                 :savedFilters="filter.savedFilters.value"
+                :disabled="(!filter.hasAppliedFilters.value && !filter.searchQuery.value) || filter.readOnly.value"
+                :appliedFilters="filter.appliedFilters.value"
+                :editingFilter="filter.editingFilter.value"
                 @load="handleLoad"
                 @edit="filter.editSavedFilter"
                 @delete="filter.deleteSavedFilter"
                 @close="isSavedFiltersVisible = false"
+                @save="handleSave"
+                @update="handleEdit"
+                @close-edit="filter.closeEditFilter"
             />
         </el-popover>
 
@@ -86,7 +73,6 @@
     import {ChevronDown, BookmarkCheckOutline, Refresh} from "../utils/icons";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
 
-    import SaveFilters from "../segments/SaveFilters.vue";
     import SavedFilters from "../segments/SavedFilters.vue";
     import VerticalSliders from "../../../assets/icons/VerticalSliders.vue";
 
@@ -127,28 +113,9 @@
     }
 
     .saved-btn {
-        box-shadow: none;
         margin: 0;
         font-size: 0.875rem;
         box-shadow: var(--ks-box-shadow);
-
-        .saved-content {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .saved-count {
-            margin-left: 0.375rem;
-            background-color: var(--ks-tag-background);
-            &:hover {
-                background-color: var(--ks-tag-background-hover);
-            }
-            color: var(--ks-content-secondary);
-            border-radius: 0.35rem;
-            font-size: 0.625rem;
-            padding: 0.5rem 0.5625rem;
-        }
     }
 
     .options-btn {

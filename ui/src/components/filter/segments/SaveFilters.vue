@@ -1,11 +1,12 @@
 <template>
     <el-tooltip :content="$t('filter.save filter tooltip')" placement="top" effect="light">
         <el-button
-            type="default"
-            :disabled="disabled"
-            @click="showSaveDialog = true"
+            link
+            size="small"
+            :disabled
             :icon="ContentSaveOutline"
-            class="no-bg-border"
+            class="save-action-btn"
+            @click="showSaveDialog = true"
         />
     </el-tooltip>
 
@@ -13,7 +14,8 @@
         v-model="showSaveDialog"
         :title="isEditMode ? $t('filter.edit filter') : $t('filter.save filter')"
         class="custom-dialog"
-        width="25%"
+        width="min(500px, 90vw)"
+        appendToBody
         @close="closeSaveDialog"
     >
         <div class="save-form">
@@ -194,22 +196,9 @@
     }
 }
 
-.no-bg-border {
-    margin: 0 !important;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 1rem;
-    color: var(--ks-content-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
-}
-
-.el-button.is-disabled {
-    color: var(--ks-content-tertiary) !important;
+.save-action-btn.is-disabled{
+    opacity: 0.4;
     cursor: not-allowed !important;
-}
-
-.el-button-group .el-button--primary:last-child {
-    border: none;
 }
 
 :deep(.el-input__inner::placeholder),

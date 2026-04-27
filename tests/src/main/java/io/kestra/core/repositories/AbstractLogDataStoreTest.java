@@ -784,6 +784,65 @@ public abstract class AbstractLogDataStoreTest {
         assertRemaining(tenant, "delfilter-exec", 1);
     }
 
+    @Test
+    void deleteByIds_removesOnlyGivenIds() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delids-exec").tenantId(tenant).build(),
+                log(Level.WARN, "delids-exec").tenantId(tenant).build(),
+                log(Level.ERROR, "delids-exec").tenantId(tenant).build()
+            )
+        );
+        awaitVisible(tenant, "delids-exec");
+
+        List<LogEntry> all = logDataStore.find(Pageable.UNPAGED, tenant, null).getContent();
+        assertThat(all).hasSize(3);
+        assertThat(all).allSatisfy(entry -> assertThat(entry.getId()).isNotBlank());
+
+        List<String> idsToDelete = List.of(all.get(0).getId(), all.get(1).getId());
+        int deleted = logDataStore.deleteByIds(tenant, idsToDelete);
+
+        if (logDataStore.canPurge()) {
+            assertThat(deleted).isEqualTo(2);
+            List<LogEntry> remaining = logDataStore.find(Pageable.UNPAGED, tenant, null).getContent();
+            assertThat(remaining).hasSize(1);
+            assertThat(remaining.getFirst().getId()).isEqualTo(all.get(2).getId());
+        } else {
+            assertThat(deleted).isZero();
+            assertThat(logDataStore.find(Pageable.UNPAGED, tenant, null).getContent()).hasSize(3);
+        }
+    }
+
+    @Test
+    void deleteByIds_doesNotCrossTenants() {
+        String tenantA = randomTenant();
+        String tenantB = randomTenant();
+        logDataStore.save(log(Level.INFO, "delids-a").tenantId(tenantA).build());
+        logDataStore.save(log(Level.INFO, "delids-b").tenantId(tenantB).build());
+        awaitVisible(tenantA, "delids-a");
+        awaitVisible(tenantB, "delids-b");
+
+        List<String> tenantAIds = logDataStore.find(Pageable.UNPAGED, tenantA, null).getContent()
+            .stream().map(LogEntry::getId).toList();
+
+        int deleted = logDataStore.deleteByIds(tenantB, tenantAIds);
+
+        assertThat(deleted).isZero();
+        assertThat(logDataStore.find(Pageable.UNPAGED, tenantA, null).getContent()).hasSize(1);
+    }
+
+    @Test
+    void deleteByIds_noOpOnEmptyOrNullIds() {
+        String tenant = randomTenant();
+        logDataStore.save(log(Level.INFO, "delids-empty").tenantId(tenant).build());
+        awaitVisible(tenant, "delids-empty");
+
+        assertThat(logDataStore.deleteByIds(tenant, List.of())).isZero();
+        assertThat(logDataStore.deleteByIds(tenant, null)).isZero();
+        assertThat(logDataStore.find(Pageable.UNPAGED, tenant, null).getContent()).hasSize(1);
+    }
+
     private void assertRemaining(String tenant, String executionId, int savedCount) {
         if (logDataStore.canPurge()) {
             assertThat(logDataStore.findByExecutionId(tenant, executionId, null)).isEmpty();

@@ -17,6 +17,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
@@ -39,6 +40,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -208,5 +210,29 @@ public class LogController {
         @Parameter(description = "The flow identifier") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/by-ids")
+    @Operation(tags = { "Logs" }, summary = "Delete a list of logs by their ids")
+    public HttpResponse<BulkResponse> deleteLogsByIds(
+        @RequestBody(description = "The ids of the logs to delete") @Body List<String> ids) {
+        int count = logRepository.deleteByIds(tenantService.resolveTenant(), ids);
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/by-query")
+    @Operation(tags = { "Logs" }, summary = "Delete logs matching the given filters")
+    public HttpResponse<?> deleteLogsByQuery(
+        @Parameter(
+            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
+            in = ParameterIn.QUERY
+        ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        logRepository.deleteByFilters(
+            tenantService.resolveTenant(),
+            QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
+        );
+        return HttpResponse.ok();
     }
 }

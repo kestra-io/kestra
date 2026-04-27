@@ -826,6 +826,7 @@
     "restore": "Restore",
     "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
+    "bulk delete logs": "Are you sure you want to delete <code>{count}</code> log(s)?",
     "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",

@@ -8,8 +8,10 @@ import io.kestra.queue.*;
 import io.kestra.queue.jdbc.*;
 
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Requires;
 
 @Factory
+@Requires(classes = AbstractDispatchQueueTest.class)
 public class JdbcTestQueueFactory {
 
     @QueueBean

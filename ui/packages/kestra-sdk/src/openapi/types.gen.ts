@@ -8964,6 +8964,86 @@ export type ListAllKeysResponses = {
 
 export type ListAllKeysResponse = ListAllKeysResponses[keyof ListAllKeysResponses];
 
+export type DeleteLogsByIdsData = {
+    /**
+     * The ids of the logs to delete
+     */
+    body: Array<string>;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/logs/by-ids';
+};
+
+export type DeleteLogsByIdsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsByIdsError = DeleteLogsByIdsErrors[keyof DeleteLogsByIdsErrors];
+
+export type DeleteLogsByIdsResponses = {
+    /**
+     * deleteLogsByIds 200 response
+     */
+    200: BulkResponse;
+};
+
+export type DeleteLogsByIdsResponse = DeleteLogsByIdsResponses[keyof DeleteLogsByIdsResponses];
+
+export type DeleteLogsByQueryData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: {
+        /**
+         * Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`
+         */
+        filters?: Array<QueryFilter> | null;
+    };
+    url: '/api/v1/{tenant}/logs/by-query';
+};
+
+export type DeleteLogsByQueryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type DeleteLogsByQueryError = DeleteLogsByQueryErrors[keyof DeleteLogsByQueryErrors];
+
+export type DeleteLogsByQueryResponses = {
+    /**
+     * deleteLogsByQuery 200 response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type DeleteLogsByQueryResponse = DeleteLogsByQueryResponses[keyof DeleteLogsByQueryResponses];
+
 export type SearchLogsData = {
     body?: never;
     path: {

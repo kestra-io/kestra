@@ -30,6 +30,10 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
+    @Nullable
+    String id;
+
+    @Hidden
     @TenantId
     String tenantId;
 

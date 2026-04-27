@@ -148,7 +148,6 @@ public class PluginController {
                 plugin -> Stream.of(
                     plugin.getTasks().stream(),
                     plugin.getTriggers().stream(),
-                    plugin.getConditions().stream(),
                     plugin.getTaskRunners().stream(),
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),

@@ -157,9 +157,8 @@ public class FlowTopologyTest {
                 triggers:
                   - id: listen
                     type: io.kestra.plugin.core.trigger.Flow
-                    conditions:
-                      - type: io.kestra.plugin.core.condition.ExecutionStatus
-                        in:
+                    dependsOn:
+                      - states:
                           - FAILED
                 """
         );
@@ -173,9 +172,8 @@ public class FlowTopologyTest {
             triggers:
               - id: listen
                 type: io.kestra.plugin.core.trigger.Flow
-                conditions:
-                  - type: io.kestra.plugin.core.condition.ExecutionStatus
-                    in:
+                dependsOn:
+                  - states:
                       - FAILED
             """);
 

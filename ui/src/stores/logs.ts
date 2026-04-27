@@ -59,6 +59,7 @@ export interface LogsDownloadResult {
 }
 
 export interface Log{
+    id?: string;
     level: LevelKey;
     namespace: string;
     flowId: string;
@@ -253,6 +254,14 @@ export const useLogsStore = defineStore("logs", () => {
         return counts
     }
 
+    function bulkDeleteLogs(ids: string[]) {
+        return LogsAPI.deleteLogsByIds({body: ids})
+    }
+
+    function queryDeleteLogs(filters: Record<string, any>) {
+        return LogsAPI.deleteLogsByQuery({filters: routeQueryToQueryFilters(filters)})
+    }
+
     return {
         logs,
         total,
@@ -265,6 +274,8 @@ export const useLogsStore = defineStore("logs", () => {
         loadNextPage,
         loadPreviousPage,
         deleteLogs,
+        bulkDeleteLogs,
+        queryDeleteLogs,
         downloadLogs,
         levelCounts,
     }

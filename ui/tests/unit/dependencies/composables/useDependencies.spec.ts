@@ -9,6 +9,64 @@ import {AxiosResponse} from "axios";
 import {useFlowStore} from "../../../../src/stores/flow";
 import {RouteParams} from "vue-router";
 
+// ─── CSS var sentinels ────────────────────────────────────────────────────────
+// Set recognisable values so we can assert which colour path each node took,
+// since getComputedStyle always returns "" for custom properties in jsdom.
+const CSS_VARS: Record<string, string> = {
+    "--ks-dependencies-node-background-default":  "default-bg",
+    "--ks-dependencies-node-border-default":      "default-border",
+    "--ks-dependencies-node-background-hovered":  "hovered-bg",
+    "--ks-dependencies-node-border-hovered":      "hovered-border",
+    "--ks-dependencies-node-background-selected": "selected-bg",
+    "--ks-dependencies-node-border-selected":     "selected-border",
+    "--ks-dependencies-node-background-faded":    "faded-bg",
+    "--ks-dependencies-node-border-faded":        "faded-border",
+    "--ks-dependencies-node-background-assets":   "assets-bg",
+    "--ks-dependencies-node-border-assets":       "assets-border",
+    "--ks-dependencies-edge-default":             "default-edge",
+    "--ks-dependencies-edge-hovered":             "hovered-edge",
+    "--ks-dependencies-edge-selected":            "selected-edge",
+    "--ks-dependencies-edge-faded":               "faded-edge",
+};
+
+function setCSSVars() {
+    Object.entries(CSS_VARS).forEach(([k, v]) =>
+        document.documentElement.style.setProperty(k, v),
+    );
+}
+
+// ─── Controlled graph fixture ─────────────────────────────────────────────────
+// A --e1--> B --e2--> C    D (isolated, no edges)
+// A is the pre-selected initial node.
+function makeControlledElements() {
+    return [
+        {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "D", type: "NODE", flow: "flow-d", namespace: "ns", metadata: {subtype: "FLOW"}}},
+        {data: {id: "e1", type: "EDGE", source: "A", target: "B"}},
+        {data: {id: "e2", type: "EDGE", source: "B", target: "C"}},
+    ];
+}
+
+function mountControlled(initialNodeID = "A") {
+    const graphRef = makeGraphRef();
+    const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data:  makeControlledElements(),
+        count: 4,
+    });
+    const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+            const composable = useDependencies(
+                graphRef, FLOW, initialNodeID, {}, false, fetchAssetDependencies,
+            );
+            return {composable};
+        },
+    });
+    return {wrapper, graphRef, ...(wrapper.vm.composable as ReturnType<typeof useDependencies>)};
+}
+
 vi.mock("vue-router", () => ({
   useRouter: () => ({push: vi.fn(), replace: vi.fn(), currentRoute: {value: {path: "/"}}, beforeEach: vi.fn(), afterEach: vi.fn()}),
   useRoute: () => ({params: {}, query: {}, path: "/"}),
@@ -143,6 +201,59 @@ describe("useDependencies composable", () => {
       wrapper.unmount();
 
       expect(close).toHaveBeenCalled();
+    });
+  });
+
+  // ── node hover ────────────────────────────────────────────────────────────────
+  // Hover is handled entirely by ECharts' built-in emphasis.focus="adjacency".
+  // We verify that every node carries:
+  //   • emphasis.itemStyle  → hover colour (applied by ECharts on mouseover)
+  //   • blur.itemStyle      → same as base itemStyle (so selection colours survive)
+  describe("node hover", () => {
+    beforeEach(() => setCSSVars());
+
+    it("every node carries emphasis.itemStyle with the hover colour", async () => {
+      const {graphNodes} = mountControlled("A");
+      await nextTick();
+
+      graphNodes.value.forEach(n => {
+        expect((n.emphasis as any)?.itemStyle?.color).toBe("hovered-bg");
+        expect((n.emphasis as any)?.itemStyle?.borderColor).toBe("hovered-border");
+      });
+    });
+
+    it("every edge carries emphasis.lineStyle with the hover edge colour", async () => {
+      const {graphEdges} = mountControlled("A");
+      await nextTick();
+
+      graphEdges.value.forEach(e => {
+        expect((e.emphasis as any)?.lineStyle?.color).toBe("hovered-edge");
+      });
+    });
+
+    it("blur.itemStyle matches base itemStyle so selection colours survive hover", async () => {
+      const {graphNodes, selectNode} = mountControlled("A");
+      await nextTick();
+
+      // Select node A — it gets selected-bg.
+      selectNode("A");
+      await nextTick();
+
+      const nodeA = graphNodes.value.find(n => n.id === "A")!;
+      expect(nodeA.itemStyle?.color).toBe("selected-bg");
+      // blur must mirror base so ECharts doesn't override the selection colour
+      // when another node is hovered.
+      expect((nodeA.blur as any)?.itemStyle?.color).toBe("selected-bg");
+    });
+
+    it("unselected nodes have blur.itemStyle matching their default base colour", async () => {
+      const {graphNodes} = mountControlled("nonexistent");
+      await nextTick();
+
+      graphNodes.value.forEach(n => {
+        expect((n.blur as any)?.itemStyle?.color).toBe(n.itemStyle?.color);
+        expect((n.blur as any)?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1);
+      });
     });
   });
 

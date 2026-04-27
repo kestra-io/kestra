@@ -6,6 +6,8 @@ import KsGraph from "../../../src/components/Charts/KsGraph.vue"
 vi.mock("echarts/core", () => ({use: vi.fn()}))
 vi.mock("echarts/charts", () => ({GraphChart: {}}))
 
+// ─── Static mock (getEchartsInstance returns null) ─────────────────────────────
+// Used for option-building tests that don't exercise event handling.
 vi.mock("../../../src/components/Charts/KsEchart.vue", () => ({
     default: {
         name: "KsEchart",
@@ -168,3 +170,4 @@ describe("KsGraph — options deep merge", () => {
         expect(series.type).toBe("graph")
     })
 })
+

@@ -270,6 +270,16 @@ describe("KsEchart", () => {
         expect(typeof wrapper.vm.getEchartsInstance).toBe("function")
     })
 
+    test("getEchartsInstance returns the chart instance (not null)", () => {
+        // vue-echarts auto-unwraps the shallowRef on the public instance, so
+        // vChartRef.value.chart IS the ECharts instance — not the ref wrapper.
+        // Accessing .value on it returns undefined, not the instance.
+        // This test guards against re-introducing the .value indirection bug.
+        const wrapper = mountChart()
+        const instance = wrapper.vm.getEchartsInstance()
+        expect(instance).toBe(mockEchartsInstance)
+    })
+
     // ── exportAsImage ──────────────────────────────────────────────────────────
 
     test("exportAsImage triggers a download with the correct filename and data URL", () => {

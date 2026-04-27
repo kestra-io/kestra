@@ -233,7 +233,7 @@
     }
 
     defineExpose({
-        getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as {value?: ECharts})?.value ?? null,
+        getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
         exportAsImage: (type: "jpeg" | "png" = "png", filename?: string): void => {
             if (!vChartRef.value) return
             const dataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})

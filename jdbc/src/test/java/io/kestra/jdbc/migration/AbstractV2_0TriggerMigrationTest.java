@@ -8,6 +8,7 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import jakarta.inject.Inject;
 import org.jooq.Field;
+import org.jooq.JSONB;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -267,7 +268,7 @@ public abstract class AbstractV2_0TriggerMigrationTest {
             DSL.using(configuration)
                 .insertInto(DSL.table("triggers"))
                 .set(KEY_FIELD, (Object) key)
-                .set(VALUE_FIELD, (Object) json)
+                .set(VALUE_FIELD, (Object) JSONB.valueOf(json))
                 .execute()
         );
     }

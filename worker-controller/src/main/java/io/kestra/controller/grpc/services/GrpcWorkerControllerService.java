@@ -86,7 +86,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             WorkerStreamContext<WorkerJobResponse> ctx = contextRef.get();
             if (ctx != null) {
                 log.info("Worker [{}] stream cancelled", ctx.getWorkerId());
-                workerJobDispatcher.unregisterWorker(ctx.getWorkerId());
+                workerJobDispatcher.unregisterWorker(ctx);
             } else {
                 log.info("Worker stream cancelled before initialization");
             }
@@ -148,7 +148,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 WorkerStreamContext<WorkerJobResponse> context = contextRef.get();
                 if (context != null) {
                     log.warn("Worker [{}] stream error: {}", context.getWorkerId(), t.getMessage());
-                    workerJobDispatcher.unregisterWorker(context.getWorkerId());
+                    workerJobDispatcher.unregisterWorker(context);
                 } else {
                     log.warn("Worker stream error before initialization: {}", t.getMessage());
                 }
@@ -159,7 +159,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 WorkerStreamContext<WorkerJobResponse> context = contextRef.get();
                 if (context != null) {
                     log.info("Worker [{}] stream completed normally", context.getWorkerId());
-                    workerJobDispatcher.unregisterWorker(context.getWorkerId());
+                    workerJobDispatcher.unregisterWorker(context);
                 }
                 responseObserver.onCompleted();
             }

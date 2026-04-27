@@ -51,6 +51,7 @@ import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
 import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
+import KsBulkSelect from "./components/Data/KsDataTable/KsBulkSelect.vue"
 import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 export type {KsButtonType} from "./components/Basic/KsButton/KsButton.vue"
@@ -307,6 +308,7 @@ const components: Record<string, Component> = {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsBulkSelect,
     KsDrillRow,
     KsButton,
     KsButtonGroup,
@@ -420,6 +422,7 @@ export {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsBulkSelect,
     KsDrillRow,
     KsButton,
     KsButtonGroup,

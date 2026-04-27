@@ -9,11 +9,13 @@ import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +76,37 @@ public abstract class AbstractJdbcRepository<T> {
         Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
         fields.put(VALUE_FIELD, MAPPER.writeValueAsString(entity));
         return fields;
+    }
+
+    /**
+     * Fetches an entity using {@code fetcher}, or inserts a default one (via {@code defaultEntity}) if absent, then re-fetches.
+     * The {@code fetcher} should use {@code FOR UPDATE} so the returned entity is locked within the caller's transaction.
+     */
+    public T getOrInsert(DSLContext dslContext, Supplier<Optional<T>> fetcher, Supplier<T> defaultEntity) {
+        // Note: ideally, we should emit an INSERT IGNORE or ON CONFLICT DO NOTHING but H2 didn't support it.
+        // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
+        // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
+        // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
+        return fetcher.get().orElseGet(() -> {
+            try {
+                T entity = defaultEntity.get();
+                Map<Field<Object>, Object> fields = this.persistFields(entity);
+                var insert = dslContext
+                    .insertInto(this.getTable())
+                    .set(KEY_FIELD, this.key(entity))
+                    .set(fields);
+                if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES) || dslContext.configuration().dialect().supports(SQLDialect.MYSQL)) {
+                    insert.onDuplicateKeyIgnore().execute();
+                } else {
+                    insert.execute();
+                }
+            } catch (DataAccessException e) {
+                // we ignore any constraint violation
+            }
+            // refetch to have a lock on it
+            // at this point we are sure the record is inserted so it should never throw
+            return fetcher.get().orElseThrow();
+        });
     }
 
     public int count(Condition condition) {

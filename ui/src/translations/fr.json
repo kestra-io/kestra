@@ -240,7 +240,8 @@
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
       },
-      "preview": "Aperçu du Dashboard"
+      "preview": "Aperçu du Dashboard",
+      "switch": "Changer de tableau de bord"
     },
     "data": "Données",
     "dataFilters": "Filtres de données",

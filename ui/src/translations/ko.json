@@ -240,7 +240,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
-      "preview": "미리보기 대시보드"
+      "preview": "미리보기 대시보드",
+      "switch": "대시보드 전환"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",

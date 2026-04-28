@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.core.repositories.TenantMigrationInterface;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;

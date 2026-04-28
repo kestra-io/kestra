@@ -1,5 +1,5 @@
 <template>
-    <NavBarActions>
+    <NavBarActions :loading="tab === 'logs' && logsStore.logs === undefined">
         <Dashboards
             v-if="showDashboards"
             @dashboard="onSelectDashboard"

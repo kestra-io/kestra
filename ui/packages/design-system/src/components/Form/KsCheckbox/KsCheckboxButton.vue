@@ -18,7 +18,6 @@
 
     const props = defineProps<{
         value?: boolean | string | number
-        label?: string | boolean | number
         disabled?: boolean
         checked?: boolean
     }>()

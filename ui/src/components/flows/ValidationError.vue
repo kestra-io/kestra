@@ -2,7 +2,7 @@
     <span ref="rootContainer">
         <!-- Valid -->
         <KsButton v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
-            <CheckBoldIcon class="text-success" />
+            <CheckBoldIcon class="success" />
         </KsButton>
 
         <!-- Errors -->
@@ -16,7 +16,7 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <AlertCircle class="align-middle text-danger" />
+                        <AlertCircle class="align-middle error" />
                         <span class="align-middle">
                             {{ $t("error detected") }}
                         </span>
@@ -25,7 +25,7 @@
                 </KsContainer>
             </template>
             <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
-                <AlertCircle class="text-danger" />
+                <AlertCircle class="error" />
             </KsButton>
         </KsTooltip>
 
@@ -40,7 +40,7 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <Alert class="align-middle text-warning" />
+                        <Alert class="align-middle warning" />
                         <span class="align-middle">
                             {{ $t("warning detected") }}
                         </span>
@@ -57,7 +57,7 @@
                 </KsContainer>
             </template>
             <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
-                <Alert class="text-warning" />
+                <Alert class="warning" />
             </KsButton>
         </KsTooltip>
 
@@ -72,7 +72,7 @@
             <template #content>
                 <KsContainer class="validation-tooltip">
                     <KsHeader>
-                        <Alert class="align-middle text-info" />
+                        <Alert class="align-middle info" />
                         <span class="align-middle">
                             {{ $t("informative notice") }}
                         </span>
@@ -81,8 +81,8 @@
                 </KsContainer>
             </template>
             <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <Alert class="text-info" />
-                <span class="text-info label">{{ $t("informative notice") }}</span>
+                <Alert class="info" />
+                <span class="info label">{{ $t("informative notice") }}</span>
             </KsButton>
         </KsTooltip>
     </span>
@@ -146,6 +146,14 @@
         &.success {
             cursor: default;
             border-color: var(--ks-border-success);
+
+            &.is-disabled,
+            &.is-disabled:hover,
+            &.is-disabled:focus {
+                opacity: 1;
+                background-color: transparent;
+                border-color: var(--ks-border-success);
+            }
         }
 
         &:not(.success) span:not(.material-design-icon) {
@@ -205,5 +213,21 @@
     .square {
         width: 32px;
         height: 32px;
+    }
+
+    .success {
+        color: var(--ks-content-success);
+    }
+
+    .warning {
+        color: var(--ks-content-warning);
+    }
+
+    .error {
+        color: var(--ks-content-error);
+    }
+
+    .info {
+        color: var(--ks-content-info);
     }
 </style>

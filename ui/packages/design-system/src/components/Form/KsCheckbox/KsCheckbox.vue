@@ -21,13 +21,11 @@
 
     const props = withDefaults(defineProps<{
         value?: boolean | string | number
-        label?: string | boolean | number | object
         disabled?: boolean
         checked?: boolean
         indeterminate?: boolean
     }>(), {
         value: undefined,
-        label: undefined,
     })
 
     const emit = defineEmits<{

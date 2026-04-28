@@ -4,6 +4,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.utils.MapUtils;
 
+import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Singleton
+@Requires(property = "kestra.queue.type")
 public class AsyncEventStreamingService {
     private final Map<String, Map<String, FluxSink<AsyncOperationProcessedEvent>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();

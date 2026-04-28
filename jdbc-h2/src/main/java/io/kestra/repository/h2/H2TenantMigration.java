@@ -50,4 +50,14 @@ public class H2TenantMigration extends AbstractJdbcTenantMigration {
             """.formatted(table.getName());
         return context.execute(query, "tutorial");
     }
+
+    @Override
+    protected String selectExecutionsQuery() {
+        return "SELECT \"key\", \"value\" FROM \"executions\" LIMIT ? OFFSET ?";
+    }
+
+    @Override
+    protected String updateExecutionQuery() {
+        return "UPDATE \"executions\" SET \"value\" = ? WHERE \"key\" = ?";
+    }
 }

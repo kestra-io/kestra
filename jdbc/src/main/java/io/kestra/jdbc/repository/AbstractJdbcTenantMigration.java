@@ -3,10 +3,18 @@ package io.kestra.jdbc.repository;
 import java.util.List;
 import java.util.Locale;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.Result;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -15,6 +23,8 @@ import io.kestra.core.repositories.TenantMigrationInterface;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @Slf4j
 public abstract class AbstractJdbcTenantMigration implements TenantMigrationInterface {
@@ -104,6 +114,19 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
             }
         }
 
+        // Update taskRunList tenantId inside executions
+        if (!dryRun) {
+            int taskRunUpdates = updateExecutionTaskRunsTenantId();
+            log.info("✅ Updated taskRunList tenantId in {} execution(s).", taskRunUpdates);
+        } else {
+            int taskRunCount = countExecutionsWithMissingTaskRunTenantId();
+            if (taskRunCount > 0) {
+                log.info("🔸 executions: {} execution(s) with taskRunList entries missing tenantId.", taskRunCount);
+            } else {
+                log.info("✅ executions: No taskRunList tenantId updates needed.");
+            }
+        }
+
         if (dryRun) {
             log.info("🧪 Dry-run complete. {} row(s) would be updated.", totalAffected);
         } else {
@@ -118,6 +141,101 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
     protected abstract int updateTenantIdField(Table<?> table, DSLContext context);
 
     protected abstract int updateTenantIdFieldAndKey(Table<?> table, DSLContext context);
+
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final int BATCH_SIZE = 500;
+
+    protected abstract String selectExecutionsQuery();
+
+    protected abstract String updateExecutionQuery();
+
+    protected int updateExecutionTaskRunsTenantId() {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            int totalUpdated = 0;
+            int offset = 0;
+
+            while (true) {
+                Result<Record> records = context.fetch(selectExecutionsQuery(), BATCH_SIZE, offset);
+
+                if (records.isEmpty()) {
+                    break;
+                }
+
+                for (Record record : records) {
+                    String key = record.get("key", String.class);
+                    String value = record.get("value", String.class);
+                    try {
+                        JsonNode root = MAPPER.readTree(value);
+                        JsonNode taskRunList = root.get("taskRunList");
+                        if (taskRunList == null || !taskRunList.isArray() || taskRunList.isEmpty()) {
+                            continue;
+                        }
+
+                        boolean modified = false;
+                        String tenantId = root.has("tenantId") && !root.get("tenantId").isNull()
+                            ? root.get("tenantId").asText() : MAIN_TENANT;
+                        for (JsonNode taskRun : taskRunList) {
+                            if (taskRun.isObject() && (taskRun.get("tenantId") == null || taskRun.get("tenantId").isNull())) {
+                                ((ObjectNode) taskRun).put("tenantId", tenantId);
+                                modified = true;
+                            }
+                        }
+
+                        if (modified) {
+                            String updatedValue = MAPPER.writeValueAsString(root);
+                            context.execute(updateExecutionQuery(), updatedValue, key);
+                            totalUpdated++;
+                        }
+                    } catch (JsonProcessingException e) {
+                        log.warn("Failed to parse execution JSON for key={}, skipping taskRunList update", key, e);
+                    }
+                }
+
+                offset += BATCH_SIZE;
+            }
+
+            return totalUpdated;
+        });
+    }
+
+    protected int countExecutionsWithMissingTaskRunTenantId() {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            int count = 0;
+            int offset = 0;
+
+            while (true) {
+                Result<Record> records = context.fetch(selectExecutionsQuery(), BATCH_SIZE, offset);
+
+                if (records.isEmpty()) {
+                    break;
+                }
+
+                for (Record record : records) {
+                    String value = record.get("value", String.class);
+                    try {
+                        JsonNode root = MAPPER.readTree(value);
+                        JsonNode taskRunList = root.get("taskRunList");
+                        if (taskRunList != null && taskRunList.isArray()) {
+                            for (JsonNode taskRun : taskRunList) {
+                                if (taskRun.isObject() && (taskRun.get("tenantId") == null || taskRun.get("tenantId").isNull())) {
+                                    count++;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (JsonProcessingException e) {
+                        log.warn("Failed to parse execution JSON, skipping", e);
+                    }
+                }
+
+                offset += BATCH_SIZE;
+            }
+
+            return count;
+        });
+    }
 
     protected int deleteTutorialFlows(Table<?> table, DSLContext context) {
         String query = "DELETE FROM %s WHERE namespace = ?".formatted(table.getName());

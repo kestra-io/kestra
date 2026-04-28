@@ -790,13 +790,13 @@ class WorkerJobDispatcherTest {
     void shouldRegisterGlobalGaugesOnConstruction() {
         // Then - global gauges should have been registered during setUp()
         verify(mockMetricRegistry).gauge(
-            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_ALL),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_ALL_DESCRIPTION),
             any(java.util.function.Supplier.class)
         );
         verify(mockMetricRegistry).gauge(
-            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL),
+            eq(MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL_DESCRIPTION),
             any(java.util.function.Supplier.class)
         );
     }
@@ -811,20 +811,20 @@ class WorkerJobDispatcherTest {
 
         // Then
         verify(mockMetricRegistry).gauge(
-            eq(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_DESCRIPTION),
             any(java.util.function.Supplier.class),
             any(String[].class)
         );
         verify(mockMetricRegistry).gauge(
-            eq(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE),
+            eq(MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_DESCRIPTION),
             any(java.util.function.Supplier.class),
             any(String[].class)
         );
         verify(mockMetricRegistry).gauge(
-            eq(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT_DESCRIPTION),
             any(java.util.function.Supplier.class),
             any(String[].class)
         );
@@ -840,8 +840,8 @@ class WorkerJobDispatcherTest {
 
         // Then
         verify(mockMetricRegistry).counter(
-            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL_DESCRIPTION),
             any(String[].class)
         );
     }
@@ -857,8 +857,8 @@ class WorkerJobDispatcherTest {
 
         // Then
         verify(mockMetricRegistry).counter(
-            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL),
+            eq(MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL_DESCRIPTION),
             any(String[].class)
         );
     }
@@ -878,8 +878,8 @@ class WorkerJobDispatcherTest {
 
         // Then
         verify(mockMetricRegistry).counter(
-            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL_DESCRIPTION),
             any(String[].class)
         );
     }
@@ -899,8 +899,8 @@ class WorkerJobDispatcherTest {
 
         // Then
         verify(mockMetricRegistry).counter(
-            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT),
-            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT_DESCRIPTION),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_TOTAL),
+            eq(MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_TOTAL_DESCRIPTION),
             any(String[].class)
         );
     }
@@ -915,9 +915,9 @@ class WorkerJobDispatcherTest {
         dispatcher.unregisterWorker(context);
 
         // Then - find should be called to locate gauges for removal
-        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT);
-        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT);
-        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT);
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE);
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE);
+        verify(mockMetricRegistry, atLeastOnce()).find(MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT);
     }
 
     @Test

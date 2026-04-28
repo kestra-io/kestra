@@ -79,7 +79,7 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     }
 
     protected String queueName(@Nullable String routingKey) {
-        if (routingKey == null) {
+        if (routingKey == null || routingKey.isEmpty()) {
             return this.queueName();
         }
 

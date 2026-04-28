@@ -175,8 +175,10 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             try {
                 workerTaskResultQueue.emit(workerTaskResult);
 
-                // remove the worker job running as the task has been done by the worker and the result send to the queue
-                workerJobRunningStateStore.deleteByKey(workerTaskResult.getTaskRun().getId());
+                // only remove the worker job running once the task has reached a terminal state
+                if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+                    workerJobRunningStateStore.deleteByKey(workerTaskResult.getTaskRun().getId());
+                }
             } catch (QueueException e) {
                 // If there is a QueueException it can either be caused by the message limit or another queue issue.
                 // We fail the task and try to resend it.
@@ -195,8 +197,10 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 try {
                     this.workerTaskResultQueue.emit(failed);
 
-                    // remove the worker job running as the task has been done by the worker and the result send to the queue
-                    workerJobRunningStateStore.deleteByKey(failed.getTaskRun().getId());
+                    // only remove the worker job running once the task has reached a terminal state
+                    if (failed.getTaskRun().getState().isTerminated()) {
+                        workerJobRunningStateStore.deleteByKey(failed.getTaskRun().getId());
+                    }
                 } catch (QueueException ex) {
                     log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTaskRun().getTaskId(), failed.getTaskRun().getId(), e);
                 }

@@ -19,7 +19,7 @@
                                 <KsCheckboxButton
                                     v-for="tag in Object.values(tags || {})"
                                     :key="tag.id"
-                                    :label="tag.id"
+                                    :value="tag.id"
                                     class="hoverable"
                                 >
                                     {{ tag.name }}

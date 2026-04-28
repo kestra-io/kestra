@@ -124,38 +124,38 @@
 </script>
 
 <style scoped lang="scss">
-section.container.mt-4:has(> section.empty) {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.editor-splitter {
-    height: 100%;
-
-    :deep(.kel-splitter-panel) {
-        display: flex;
-        flex-direction: column;
+    section.container.mt-4:has(> section.empty) {
+        margin: 0 !important;
+        padding: 0 !important;
     }
-}
 
-.sidebar {
-    height: 100%;
-    width: 100%;
-}
+    .editor-splitter {
+        height: 100%;
 
-.tab-label-wrapper {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.inline-badge {
-    :deep(.kel-badge__content) {
-        transform: translateY(-1px);
-        position: static;
-        border: none;
-        margin-top: 0;
-        vertical-align: middle;
+        :deep(.kel-splitter-panel) {
+            display: flex;
+            flex-direction: column;
+        }
     }
-}
+
+    .sidebar {
+        height: 100%;
+        width: 100%;
+    }
+
+    .tab-label-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .inline-badge {
+        :deep(.kel-badge__content) {
+            transform: translateY(-1px);
+            position: static;
+            border: none;
+            margin-top: 0;
+            vertical-align: middle;
+        }
+    }
 </style>

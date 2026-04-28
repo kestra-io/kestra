@@ -48,7 +48,6 @@
                 </div>
                 <KsCheckbox
                     :modelValue="modelValue.includes(option.value)"
-                    label=""
                     @update-model-value="(checked: boolean) => handleOptionChange(option.value, checked)"
                 />
             </div>

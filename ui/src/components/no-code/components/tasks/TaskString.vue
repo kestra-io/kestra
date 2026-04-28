@@ -3,8 +3,8 @@
         <KsCheckboxButton
             v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
-            :label="$t('no_code.toggle_pebble')"
             :title="$t('no_code.toggle_pebble')"
+            :aria-label="$t('no_code.toggle_pebble')"
             class="ks-pebble"
         >
             <IconCodeBracesBox />

@@ -28,12 +28,14 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     protected final QueueService queueService;
     protected final ExecutorService asyncPoolExecutor;
     protected final Counter emitCounter;
+    protected final MetricRegistry metricRegistry;
     private final List<Consumer<T>> listeners = new CopyOnWriteArrayList<>();
     private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
 
     AbstractQueue(Class<T> cls, QueueService queueService, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry) {
         this.cls = cls;
         this.queueService = queueService;
+        this.metricRegistry = metricRegistry;
         int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
         this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "queue-async-" + queueName());
         this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
@@ -91,21 +93,31 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
     }
 
     /**
-     * Tracks a subscriber so it can be closed when the queue is closed.
-     * Subclasses should call this method when creating subscribers.
+     * Wraps a subscriber in a {@link MonitoredQueueSubscriber} for pause/resume metric tracking
+     * and registers it so it can be closed when the queue is closed. The returned wrapper also
+     * calls {@link #untrackSubscriber(QueueSubscriber)} on close so {@code queue.subscribers.count}
+     * reflects only currently-live subscribers.
      *
-     * @param subscriber the subscriber to track
-     * @return the subscriber, for fluent chaining
+     * @param subscriber the underlying subscriber to track
+     * @return the monitoring wrapper, for fluent chaining
      */
-    protected <S extends QueueSubscriber<T>> S trackSubscriber(S subscriber) {
-        subscribers.add(subscriber);
-        return subscriber;
+    protected QueueSubscriber<T> trackSubscriber(QueueSubscriber<T> subscriber) {
+        MonitoredQueueSubscriber<T> wrapper = new MonitoredQueueSubscriber<>(subscriber, this, metricRegistry);
+        subscribers.add(wrapper);
+        return wrapper;
+    }
+
+    /**
+     * Removes a subscriber from the tracking list. Called by {@link MonitoredQueueSubscriber#close()}.
+     */
+    void untrackSubscriber(QueueSubscriber<?> subscriber) {
+        subscribers.remove(subscriber);
     }
 
     @Override
     public void close() {
         for (QueueSubscriber<?> subscriber : subscribers) {
-            if (subscriber instanceof AbstractSubscriber<?> abs && abs.isActive()) {
+            if (subscriber.isActive()) {
                 LOG.warn("{} closing subscriber that was not closed by its caller", queueName());
                 try {
                     subscriber.close();

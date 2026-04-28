@@ -43,6 +43,9 @@
     import TopNavBar from "../../layout/TopNavBar.vue";
     import Dashboards from "./selector/Selector.vue";
 
+    import NavBarActions from "../../layout/NavBarActions.vue";
+    import NavBarAction from "../../layout/NavBarAction.vue";
+
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 

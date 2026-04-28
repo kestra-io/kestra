@@ -179,10 +179,10 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
     public static final String METRIC_QUEUE_SUBSCRIBERS_COUNT = "queue.subscribers.count";
     public static final String METRIC_QUEUE_SUBSCRIBERS_COUNT_DESCRIPTION = "Queue subscribers count";
-    public static final String METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT = "queue.subscriber.pause.count";
-    public static final String METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT_DESCRIPTION = "The total number of queue subscriber pause operations";
-    public static final String METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT = "queue.subscriber.resume.count";
-    public static final String METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT_DESCRIPTION = "The total number of queue subscriber resume operations";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT = "queue.subscribers.pause.count";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT_DESCRIPTION = "The total number of queue subscribers pause operations";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT = "queue.subscribers.resume.count";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT_DESCRIPTION = "The total number of queue subscribers resume operations";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";

@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
-import io.kestra.core.queues.*;
-
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -289,8 +287,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         // Given
         String queueName = ((GenericQueueInterface<?>) dispatchQueue).queueName();
         Tags tags = Tags.of(MetricRegistry.TAG_QUEUE_NAME, queueName);
-        double pauseBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT, tags);
-        double resumeBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT, tags);
+        double pauseBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT, tags);
+        double resumeBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT, tags);
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
@@ -304,8 +302,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         subscriber.close();
 
         // Then
-        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT, tags) - pauseBefore).isEqualTo(2.0);
-        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT, tags) - resumeBefore).isEqualTo(2.0);
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT, tags) - pauseBefore).isEqualTo(2.0);
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT, tags) - resumeBefore).isEqualTo(2.0);
     }
 
     @Test

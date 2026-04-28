@@ -50,11 +50,11 @@ class MonitoredQueueSubscriberTest {
     }
 
     private double pauseCount() {
-        return meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT).counter().count();
+        return meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT).counter().count();
     }
 
     private double resumeCount() {
-        return meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT).counter().count();
+        return meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT).counter().count();
     }
 
     @Test
@@ -89,10 +89,10 @@ class MonitoredQueueSubscriberTest {
         monitored.resume();
 
         // Then
-        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_PAUSE_COUNT)
+        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT)
             .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
             .counter().count()).isEqualTo(1.0);
-        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBER_RESUME_COUNT)
+        assertThat(meterRegistry.get(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT)
             .tag(MetricRegistry.TAG_QUEUE_NAME, QUEUE_NAME)
             .counter().count()).isEqualTo(1.0);
     }

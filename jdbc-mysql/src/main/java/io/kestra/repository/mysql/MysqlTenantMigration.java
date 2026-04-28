@@ -39,4 +39,14 @@ public class MysqlTenantMigration extends AbstractJdbcTenantMigration {
 
         return context.execute(query, MAIN_TENANT, MAIN_TENANT);
     }
+
+    @Override
+    protected String selectExecutionsQuery() {
+        return "SELECT `key`, `value` FROM `executions` WHERE JSON_LENGTH(`value`, '$.taskRunList') > 0 LIMIT ? OFFSET ?";
+    }
+
+    @Override
+    protected String updateExecutionQuery() {
+        return "UPDATE `executions` SET `value` = ? WHERE `key` = ?";
+    }
 }

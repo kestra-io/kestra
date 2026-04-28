@@ -109,7 +109,8 @@
         ([property, path]) => {
             if (property) {
                 clearAll();
-                expression.value = `{{ ${property}${path ? `.${path}` : ""} }}`;
+                const expressionProperty = property === "outputs" ? "execution.outputs" : property;
+                expression.value = `{{ ${expressionProperty}${path ? `.${path}` : ""} }}`;
             }
         },
         {immediate: true},

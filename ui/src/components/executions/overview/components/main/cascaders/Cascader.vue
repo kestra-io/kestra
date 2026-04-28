@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, nextTick, computed, ref} from "vue";
+    import {onMounted, computed, ref} from "vue";
 
     import VarValue from "../../../../VarValue.vue";
 
@@ -146,16 +146,9 @@
     };
 
     const cascaderID = `cascader-${props.title.toLowerCase().replace(/\s+/g, "-")}`;
-    onMounted(async () => {
+    onMounted(() => {
         if (props.elements) formatted.value = format(props.elements);
 
-        await nextTick(() => {
-            // Open first node by default on page mount
-            const selector = `#${cascaderID} .kel-cascader-node`;
-            const nodes = document.querySelectorAll(selector);
-
-            if (nodes.length > 0) (nodes[0] as HTMLElement).click();
-        });
     });
 </script>
 

@@ -25,13 +25,13 @@ final class MonitoredQueueSubscriber<T extends Event> implements QueueSubscriber
         this.delegate = delegate;
         this.queue = queue;
         this.pauseCounter = metricRegistry.counter(
-            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT,
-            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT_DESCRIPTION,
+            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL,
+            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL_DESCRIPTION,
             MetricRegistry.TAG_QUEUE_NAME, queue.queueName()
         );
         this.resumeCounter = metricRegistry.counter(
-            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT,
-            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT_DESCRIPTION,
+            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL,
+            MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL_DESCRIPTION,
             MetricRegistry.TAG_QUEUE_NAME, queue.queueName()
         );
     }

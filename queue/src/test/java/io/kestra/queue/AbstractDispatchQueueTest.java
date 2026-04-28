@@ -287,8 +287,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         // Given
         String queueName = ((GenericQueueInterface<?>) dispatchQueue).queueName();
         Tags tags = Tags.of(MetricRegistry.TAG_QUEUE_NAME, queueName);
-        double pauseBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT, tags);
-        double resumeBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT, tags);
+        double pauseBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL, tags);
+        double resumeBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL, tags);
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
@@ -302,8 +302,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         subscriber.close();
 
         // Then
-        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSE_COUNT, tags) - pauseBefore).isEqualTo(2.0);
-        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUME_COUNT, tags) - resumeBefore).isEqualTo(2.0);
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL, tags) - pauseBefore).isEqualTo(2.0);
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL, tags) - resumeBefore).isEqualTo(2.0);
     }
 
     @Test
@@ -311,24 +311,24 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         // Given
         String queueName = ((GenericQueueInterface<?>) dispatchQueue).queueName();
         Tags tags = Tags.of(MetricRegistry.TAG_QUEUE_NAME, queueName);
-        double baseline = gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, tags);
+        double baseline = gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags);
 
         // When - subscribe two
         QueueSubscriber<TestDispatch> sub1 = dispatchQueue.subscriber().subscribe(e -> {});
         QueueSubscriber<TestDispatch> sub2 = dispatchQueue.subscriber().subscribe(e -> {});
 
         // Then
-        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, tags) - baseline).isEqualTo(2.0);
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(2.0);
 
         // When - close one
         sub1.close();
         // Then
-        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, tags) - baseline).isEqualTo(1.0);
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(1.0);
 
         // When - close the other
         sub2.close();
         // Then
-        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, tags) - baseline).isEqualTo(0.0);
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(0.0);
     }
 
     private double counterValue(String name, Tags tags) {

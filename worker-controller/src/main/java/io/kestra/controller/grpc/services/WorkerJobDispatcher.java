@@ -181,13 +181,13 @@ public class WorkerJobDispatcher {
 
             // Register global gauges
             this.metricRegistry.gauge(
-                MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_ALL,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_ALL_DESCRIPTION,
                 (Supplier<Integer>) activeStreams::size
             );
             this.metricRegistry.gauge(
-                MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL,
+                MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL_DESCRIPTION,
                 (Supplier<Integer>) () -> activeStreams.values().stream()
                     .mapToInt(WorkerStreamContext::getAvailablePermits)
                     .sum()
@@ -322,8 +322,8 @@ public class WorkerJobDispatcher {
 
             log.info("Registered worker {} for group '{}'", context.getWorkerId(), WorkerGroup.forLog(workerGroup));
             metricRegistry.counter(
-                MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL_DESCRIPTION,
                 metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
             ).increment();
 
@@ -358,8 +358,8 @@ public class WorkerJobDispatcher {
             // Register per-group gauges
             String[] groupTags = metricRegistry.workerGroupTags(workerGroupOrNull);
             metricRegistry.gauge(
-                MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_DESCRIPTION,
                 (Supplier<Integer>) () -> {
                     Set<String> ids = workerIdsByGroup.get(workerGroup);
                     return ids == null ? 0 : ids.size();
@@ -367,14 +367,14 @@ public class WorkerJobDispatcher {
                 groupTags
             );
             metricRegistry.gauge(
-                MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE,
+                MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE_DESCRIPTION,
                 (Supplier<Integer>) () -> getTotalPermitsForGroup(workerGroup),
                 groupTags
             );
             metricRegistry.gauge(
-                MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT,
+                MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT_DESCRIPTION,
                 (Supplier<Integer>) () -> getWorkersInGroup(workerGroup).mapToInt(WorkerStreamContext::getInFlightCount).sum(),
                 groupTags
             );
@@ -430,8 +430,8 @@ public class WorkerJobDispatcher {
 
             log.info("Unregistered worker {} from group '{}', had {} in-flight jobs", workerId, WorkerGroup.forLog(workerGroup), context.getInFlightCount());
             metricRegistry.counter(
-                MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL,
+                MetricRegistry.METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL_DESCRIPTION,
                 metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
             ).increment();
 
@@ -537,8 +537,8 @@ public class WorkerJobDispatcher {
             ) {
                 log.info("Skipping dispatch of task '{}' for killed execution '{}'", job.uid(), executionId);
                 metricRegistry.counter(
-                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_COUNT,
-                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_COUNT_DESCRIPTION,
+                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL,
+                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION,
                     metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
                 ).increment();
                 try {
@@ -574,8 +574,8 @@ public class WorkerJobDispatcher {
                 pauseSubscription(state, workerGroup);
                 log.debug("No workers with permits for group '{}', re-queuing job {}", WorkerGroup.forLog(workerGroup), job.uid());
                 metricRegistry.counter(
-                    MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT,
-                    MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_COUNT_DESCRIPTION,
+                    MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_TOTAL,
+                    MetricRegistry.METRIC_CONTROLLER_JOB_REQUEUED_TOTAL_DESCRIPTION,
                     metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
                 ).increment();
                 requeue(event);
@@ -678,8 +678,8 @@ public class WorkerJobDispatcher {
             context.sendResponse(response);
             log.debug("Dispatched job {} to worker {}", jobId, context.getWorkerId());
             metricRegistry.counter(
-                MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL,
+                MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL_DESCRIPTION,
                 metricRegistry.workerGroupTags(context.getWorkerGroup().isEmpty() ? null : context.getWorkerGroup())
             ).increment();
 
@@ -709,8 +709,8 @@ public class WorkerJobDispatcher {
     private void handleDispatchFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
         WorkerJobEvent originalEvent) {
         metricRegistry.counter(
-            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_COUNT_DESCRIPTION,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
             metricRegistry.workerGroupTags(context.getWorkerGroup().isEmpty() ? null : context.getWorkerGroup())
         ).increment();
 
@@ -744,8 +744,8 @@ public class WorkerJobDispatcher {
             state.subscriber.pause();
             log.info("Paused subscription for group '{}'", WorkerGroup.forLog(workerGroup));
             metricRegistry.counter(
-                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_TOTAL,
+                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_TOTAL_DESCRIPTION,
                 metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
             ).increment();
         }
@@ -756,8 +756,8 @@ public class WorkerJobDispatcher {
             state.subscriber.resume();
             log.info("Resumed subscription for group '{}'", WorkerGroup.forLog(workerGroup));
             metricRegistry.counter(
-                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_COUNT,
-                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_COUNT_DESCRIPTION,
+                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL,
+                MetricRegistry.METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL_DESCRIPTION,
                 metricRegistry.workerGroupTags(workerGroup.isEmpty() ? null : workerGroup)
             ).increment();
         }
@@ -774,9 +774,9 @@ public class WorkerJobDispatcher {
     private void removeGroupGauges(String workerGroup) {
         String workerGroupTag = workerGroup.isEmpty() ? "__default__" : workerGroup;
         for (String metricName : List.of(
-            MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT)) {
+            MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
+            MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE,
+            MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT)) {
             metricRegistry.find(metricName)
                 .tag(MetricRegistry.TAG_WORKER_GROUP, workerGroupTag)
                 .gauges()

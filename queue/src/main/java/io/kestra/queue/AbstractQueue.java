@@ -38,8 +38,8 @@ abstract class AbstractQueue<T extends Event> implements GenericQueueInterface<T
         this.metricRegistry = metricRegistry;
         int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
         this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "queue-async-" + queueName());
-        this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_EMIT_COUNT, MetricRegistry.METRIC_QUEUE_EMIT_COUNT_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
-        metricRegistry.gauge(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT, MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_COUNT_DESCRIPTION, (Supplier<Integer>) subscribers::size, MetricRegistry.TAG_QUEUE_NAME, queueName());
+        this.emitCounter = metricRegistry.counter(MetricRegistry.METRIC_QUEUE_MESSAGE_EMITTED_TOTAL, MetricRegistry.METRIC_QUEUE_MESSAGE_EMITTED_TOTAL_DESCRIPTION, MetricRegistry.TAG_QUEUE_NAME, queueName());
+        metricRegistry.gauge(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE_DESCRIPTION, (Supplier<Integer>) subscribers::size, MetricRegistry.TAG_QUEUE_NAME, queueName());
 
         if (LOG.isDebugEnabled()) {
             this.listeners.add(message -> LOG.debug("[{}] emitted message with key: {}", cls.getSimpleName(), message.key()));

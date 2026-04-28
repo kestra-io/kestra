@@ -148,46 +148,75 @@ public class WorkerJobDispatcher {
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
 
-        // Subscribe to execution killed events
-        this.killQueueSubscriber = executionKilledQueue.subscriber();
-        this.killQueueSubscriber.subscribe(either ->
-        {
-            if (either.isRight()) {
-                log.error("Deserialization error for ExecutionKilled: {}", either.getRight().getMessage());
-                return;
-            }
-            ExecutionKilled killed = either.getLeft();
-            if (killed.getState() == ExecutionKilled.State.EXECUTED) {
-                onExecutionKilled(killed);
-            }
-        });
-
-        // Subscribe to cluster events to forward them to gRPC workers
-        if (clusterEventQueue != null) {
-            this.clusterEventSubscriber = clusterEventQueue.subscriber();
-            this.clusterEventSubscriber.subscribe(either ->
+        // Construct broadcast subscribers and gauges with cleanup on partial failure.
+        // @PreDestroy is not invoked when bean construction fails, so any subscriber that has
+        // already been attached to a broadcast queue must be closed locally on the failure path.
+        try {
+            // Subscribe to execution killed events
+            this.killQueueSubscriber = executionKilledQueue.subscriber();
+            this.killQueueSubscriber.subscribe(either ->
             {
                 if (either.isRight()) {
-                    log.error("Deserialization error for ClusterEvent: {}", either.getRight().getMessage());
+                    log.error("Deserialization error for ExecutionKilled: {}", either.getRight().getMessage());
                     return;
                 }
-                onClusterEvent(either.getLeft());
+                ExecutionKilled killed = either.getLeft();
+                if (killed.getState() == ExecutionKilled.State.EXECUTED) {
+                    onExecutionKilled(killed);
+                }
             });
-        }
 
-        // Register global gauges
-        this.metricRegistry.gauge(
-            MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION,
-            (Supplier<Integer>) activeStreams::size
-        );
-        this.metricRegistry.gauge(
-            MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
-            (Supplier<Integer>) () -> activeStreams.values().stream()
-                .mapToInt(WorkerStreamContext::getAvailablePermits)
-                .sum()
-        );
+            // Subscribe to cluster events to forward them to gRPC workers
+            if (clusterEventQueue != null) {
+                this.clusterEventSubscriber = clusterEventQueue.subscriber();
+                this.clusterEventSubscriber.subscribe(either ->
+                {
+                    if (either.isRight()) {
+                        log.error("Deserialization error for ClusterEvent: {}", either.getRight().getMessage());
+                        return;
+                    }
+                    onClusterEvent(either.getLeft());
+                });
+            }
+
+            // Register global gauges
+            this.metricRegistry.gauge(
+                MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT,
+                MetricRegistry.METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION,
+                (Supplier<Integer>) activeStreams::size
+            );
+            this.metricRegistry.gauge(
+                MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT,
+                MetricRegistry.METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
+                (Supplier<Integer>) () -> activeStreams.values().stream()
+                    .mapToInt(WorkerStreamContext::getAvailablePermits)
+                    .sum()
+            );
+        } catch (Throwable t) {
+            closeBroadcastSubscribersQuietly();
+            throw t;
+        }
+    }
+
+    /**
+     * Closes the broadcast subscribers (kill queue, cluster event queue) ignoring any errors.
+     * Used both on construction failure and during {@link #close()}.
+     */
+    private void closeBroadcastSubscribersQuietly() {
+        if (killQueueSubscriber != null) {
+            try {
+                killQueueSubscriber.close();
+            } catch (Exception e) {
+                log.warn("Error closing kill queue subscription: {}", e.getMessage());
+            }
+        }
+        if (clusterEventSubscriber != null) {
+            try {
+                clusterEventSubscriber.close();
+            } catch (Exception e) {
+                log.warn("Error closing cluster event queue subscription: {}", e.getMessage());
+            }
+        }
     }
 
     /**
@@ -256,11 +285,36 @@ public class WorkerJobDispatcher {
     public void registerWorker(WorkerStreamContext<WorkerJobResponse> context) {
         checkNotClosed();
 
-        String workerGroup = context.getWorkerGroup();
-        GroupState state = getOrCreateGroupState(workerGroup);
+        if (!tryRegister(context, context.getWorkerGroup())) {
+            // The GroupState we observed was disposed by a concurrent unregisterWorker(last)
+            // while we waited for its lock. Retry with a fresh GroupState.
+            registerWorker(context);
+        }
+    }
 
+    /**
+     * Attempts to register a worker against the current {@link GroupState} for its group.
+     * Returns {@code false} if the state was disposed concurrently and the caller must retry.
+     * Throws {@link IllegalStateException} if the dispatcher is closed.
+     */
+    private boolean tryRegister(WorkerStreamContext<WorkerJobResponse> context, String workerGroup) {
+        GroupState state = getOrCreateGroupState(workerGroup);
         state.lock.lock();
         try {
+            if (closed.get()) {
+                // close() may have finished iterating groupStates before we created this state.
+                // Take responsibility for closing the subscriber to avoid a leak.
+                if (groupStates.remove(workerGroup, state)) {
+                    closeSubscriberQuietly(state.subscriber(), workerGroup);
+                    removeGroupGauges(workerGroup);
+                }
+                throw new IllegalStateException("WorkerJobDispatcher is closed");
+            }
+            if (groupStates.get(workerGroup) != state) {
+                // Concurrent unregisterWorker(last) disposed this state while we waited for the lock.
+                return false;
+            }
+
             // Add worker to indexes
             activeStreams.put(context.getWorkerId(), context);
             workerIdsByGroup.computeIfAbsent(workerGroup, k -> ConcurrentHashMap.newKeySet())
@@ -277,6 +331,7 @@ public class WorkerJobDispatcher {
             if (context.getAvailablePermits() > 0) {
                 resumeSubscription(state, workerGroup);
             }
+            return true;
         } finally {
             state.lock.unlock();
         }
@@ -295,35 +350,42 @@ public class WorkerJobDispatcher {
     private GroupState createGroupState(String workerGroup) {
         String workerGroupOrNull = workerGroup.isEmpty() ? null : workerGroup;
         QueueSubscriber<WorkerJobEvent> subscriber = workerJobEventQueue.subscriber(workerGroupOrNull);
-        subscriber.pause(); // Start paused until workers connect with permits
-        subscriber.subscribe(either -> handleIncomingJob(workerGroup, either));
-        log.info("Created queue subscription for worker group '{}' (initially paused)", WorkerGroup.forLog(workerGroup));
+        try {
+            subscriber.pause(); // Start paused until workers connect with permits
+            subscriber.subscribe(either -> handleIncomingJob(workerGroup, either));
+            log.info("Created queue subscription for worker group '{}' (initially paused)", WorkerGroup.forLog(workerGroup));
 
-        // Register per-group gauges
-        String[] groupTags = metricRegistry.workerGroupTags(workerGroupOrNull);
-        metricRegistry.gauge(
-            MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION,
-            (Supplier<Integer>) () -> {
-                Set<String> ids = workerIdsByGroup.get(workerGroup);
-                return ids == null ? 0 : ids.size();
-            },
-            groupTags
-        );
-        metricRegistry.gauge(
-            MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
-            (Supplier<Integer>) () -> getTotalPermitsForGroup(workerGroup),
-            groupTags
-        );
-        metricRegistry.gauge(
-            MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT,
-            MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION,
-            (Supplier<Integer>) () -> getWorkersInGroup(workerGroup).mapToInt(WorkerStreamContext::getInFlightCount).sum(),
-            groupTags
-        );
+            // Register per-group gauges
+            String[] groupTags = metricRegistry.workerGroupTags(workerGroupOrNull);
+            metricRegistry.gauge(
+                MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT,
+                MetricRegistry.METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION,
+                (Supplier<Integer>) () -> {
+                    Set<String> ids = workerIdsByGroup.get(workerGroup);
+                    return ids == null ? 0 : ids.size();
+                },
+                groupTags
+            );
+            metricRegistry.gauge(
+                MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT,
+                MetricRegistry.METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION,
+                (Supplier<Integer>) () -> getTotalPermitsForGroup(workerGroup),
+                groupTags
+            );
+            metricRegistry.gauge(
+                MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT,
+                MetricRegistry.METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION,
+                (Supplier<Integer>) () -> getWorkersInGroup(workerGroup).mapToInt(WorkerStreamContext::getInFlightCount).sum(),
+                groupTags
+            );
 
-        return new GroupState(subscriber);
+            return new GroupState(subscriber);
+        } catch (Throwable t) {
+            // The subscriber has been allocated but is not yet owned by a GroupState in groupStates.
+            // Close it here; nothing else will.
+            closeSubscriberQuietly(subscriber, workerGroup);
+            throw t;
+        }
     }
 
     /**
@@ -377,12 +439,16 @@ public class WorkerJobDispatcher {
             int remainingWorkers = groupWorkers == null ? 0 : groupWorkers.size();
 
             if (remainingWorkers == 0) {
-                // No more workers - dispose immediately
-                groupStates.remove(workerGroup);
-                workerIdsByGroup.remove(workerGroup);
+                // No more workers - dispose immediately.
+                // ORDER MATTERS: keep this state in groupStates until after the subscriber and
+                // gauges are torn down. While the entry remains, a concurrent registerWorker
+                // for this group will block on state.lock instead of creating a parallel
+                // GroupState — which would race with our cleanup of workerIdsByGroup/gauges.
                 log.info("Disposing subscription for group '{}': no workers remaining", WorkerGroup.forLog(workerGroup));
+                workerIdsByGroup.remove(workerGroup);
                 closeSubscriberQuietly(state.subscriber(), workerGroup);
                 removeGroupGauges(workerGroup);
+                groupStates.remove(workerGroup, state);
             } else if (!hasAnyPermitsInGroup(workerGroup)) {
                 // Workers exist but no permits - pause
                 pauseSubscription(state, workerGroup);
@@ -732,23 +798,8 @@ public class WorkerJobDispatcher {
 
         log.info("Closing WorkerJobDispatcher with {} active workers", activeStreams.size());
 
-        // Close kill queue subscription
-        if (killQueueSubscriber != null) {
-            try {
-                killQueueSubscriber.close();
-            } catch (Exception e) {
-                log.warn("Error closing kill queue subscription: {}", e.getMessage());
-            }
-        }
-
-        // Close cluster event queue subscription
-        if (clusterEventSubscriber != null) {
-            try {
-                clusterEventSubscriber.close();
-            } catch (Exception e) {
-                log.warn("Error closing cluster event queue subscription: {}", e.getMessage());
-            }
-        }
+        // Close broadcast subscriptions (kill queue, cluster event queue)
+        closeBroadcastSubscribersQuietly();
 
         // Close all queue subscriptions
         groupStates.forEach((group, state) ->

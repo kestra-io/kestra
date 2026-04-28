@@ -62,9 +62,6 @@ public class ExecutorService {
     private WorkerGroupMetaStore workerGroupMetaStore;
 
     @Inject
-    private WorkerJobRunningStateStore workerJobRunningStateStore;
-
-    @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -1285,7 +1282,6 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
-            workerJobRunningStateStore.deleteByKey(taskRun.getId());
             metricRegistry
                 .counter(
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,

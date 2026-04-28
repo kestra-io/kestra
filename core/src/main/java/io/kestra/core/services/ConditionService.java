@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -12,7 +13,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.ListUtils;
@@ -36,8 +37,7 @@ public class ConditionService {
         ConditionContext conditionContext = this.conditionContext(
             runContextFactory.of(flow, execution),
             flow,
-            execution,
-            null
+            execution
         );
 
         return this.valid(flow, Collections.singletonList(condition), conditionContext);
@@ -53,12 +53,12 @@ public class ConditionService {
             .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 
-    public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, @Nullable MultipleConditionStateStore multipleConditionStorage) {
+    public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution) {
         RunContext runContext = runContextFactory.of(flow, execution);
-        return this.isValid(trigger, flow, execution, runContext, multipleConditionStorage);
+        return this.isValid(trigger, flow, execution, runContext);
     }
 
-    public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, RunContext runContext, @Nullable MultipleConditionStateStore multipleConditionStorage) {
+    public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, RunContext runContext) {
         if (isNotValid(flow, runContext, trigger.getWhen())) {
             return false;
         }
@@ -71,14 +71,13 @@ public class ConditionService {
         ConditionContext conditionContext = this.conditionContext(
             runContext,
             flow,
-            execution,
-            multipleConditionStorage
+            execution
         );
 
         return this.valid(flow, trigger.getConditions(), conditionContext);
     }
 
-    public boolean isValid(MultipleCondition preconditions, Flow flow, Execution execution, @Nullable MultipleConditionStateStore multipleConditionStorage) {
+    public boolean isValid(MultipleCondition preconditions, Flow flow, Execution execution, Optional<MultipleConditionWindow> triggerExecutionWindow) {
         if (preconditions == null || preconditions.getConditions() == null) {
             // important to do it here avoid creating a costly conditionContext if not needed
             return true;
@@ -87,12 +86,11 @@ public class ConditionService {
         ConditionContext conditionContext = this.conditionContext(
             runContextFactory.of(flow, execution),
             flow,
-            execution,
-            multipleConditionStorage
+            execution
         );
 
         try {
-            return preconditions.test(conditionContext);
+            return preconditions.test(conditionContext, triggerExecutionWindow);
         } catch (Exception e) {
             logException(flow, preconditions, conditionContext.getRunContext(), e);
 
@@ -100,17 +98,12 @@ public class ConditionService {
         }
     }
 
-    public ConditionContext conditionContext(RunContext runContext, FlowInterface flow, @Nullable Execution execution, @Nullable MultipleConditionStateStore multipleConditionStorage) {
+    public ConditionContext conditionContext(RunContext runContext, FlowInterface flow, @Nullable Execution execution) {
         return ConditionContext.builder()
             .flow(flow)
             .execution(execution)
             .runContext(runContext)
-            .multipleConditionStorage(multipleConditionStorage)
             .build();
-    }
-
-    public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution) {
-        return this.conditionContext(runContext, flow, execution, null);
     }
 
     private boolean valid(FlowInterface flow, List<Condition> list, ConditionContext conditionContext) {

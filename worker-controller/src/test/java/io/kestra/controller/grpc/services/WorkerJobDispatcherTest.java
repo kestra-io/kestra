@@ -43,6 +43,7 @@ import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.search.Search;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -666,6 +667,24 @@ class WorkerJobDispatcherTest {
             // When/Then - should not throw
             dispatcher.close();
             dispatcher.close();
+        }
+
+        @Test
+        void shouldRejectRegisterAfterCloseAndNotLeakSubscriber() {
+            // Given - dispatcher is closed
+            dispatcher.close();
+            int subscribersBefore = createdSubscribers.size();
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+
+            // When/Then - registerWorker must reject
+            assertThatThrownBy(() -> dispatcher.registerWorker(context))
+                .isInstanceOf(IllegalStateException.class);
+
+            // Then - if the registration created a subscriber it must have been closed
+            // (no subscriber may be left open after close()).
+            assertThat(createdSubscribers).allMatch(s -> s.closed.get());
+            // Defensive: at most one subscriber may have been created during the doomed call.
+            assertThat(createdSubscribers).hasSizeLessThanOrEqualTo(subscribersBefore + 1);
         }
     }
 

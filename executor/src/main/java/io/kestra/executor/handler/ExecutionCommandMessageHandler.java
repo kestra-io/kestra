@@ -5,6 +5,8 @@ import java.util.Optional;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
@@ -12,7 +14,6 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
@@ -28,22 +29,27 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionStateStore executionStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
+    private final AsyncOperationService asyncOperationService;
 
     @Inject
     public ExecutionCommandMessageHandler(ExecutionService executionService,
         ExecutionStateStore executionStateStore,
         FlowMetaStoreInterface flowMetaStore,
-        TaskOutputService taskOutputService) {
+        TaskOutputService taskOutputService,
+        AsyncOperationService asyncOperationService) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
+        this.asyncOperationService = asyncOperationService;
     }
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionCommand message) {
         return executionStateStore.lock(message.executionId(), execution ->
         {
+            AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
+            String error = null;
             try {
                 var flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);
@@ -73,14 +79,13 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
                 return newExecution != null ? executorContext.withExecution(migrateTaskOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
-            } catch (FlowNotFoundException e) {
-                // FIXME we ignore commands for flows that are not found: is it the right thing to do?
-                //  we may instead fail the execution
-                log.error("Unable to find flow for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
-                return null;
             } catch (Exception e) {
-                // FIXME: the execution service throws an unexpected error: should we really fail fast?
-                throw new RuntimeException(e);
+                log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
+                outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
+                error = e.getMessage();
+                return null;
+            } finally {
+                asyncOperationService.emitProcessedIfAsync(message, message.tenantId(), message.executionId(), outcome, error);
             }
         });
     }

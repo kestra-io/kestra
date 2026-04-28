@@ -11,6 +11,7 @@
                 :expandedSubflows="expandedSubflows"
                 @expand-subflow="onExpandSubflow"
                 @on-edit="(event) => emit('on-edit', event, true)"
+                :animated="false"
             />
             <el-alert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}

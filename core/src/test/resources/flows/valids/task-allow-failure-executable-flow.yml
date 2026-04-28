@@ -6,9 +6,7 @@ tasks:
     type: io.kestra.plugin.core.flow.Subflow
     allowFailure: true
     namespace: io.kestra.tests
-    flowId: for-each-item-subflow-failed
-    inputs:
-      items: "You will fail"
+    flowId: failing-subflow
     transmitFailed: true
     wait: true
   - id: log

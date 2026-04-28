@@ -6,7 +6,7 @@ import java.time.ZoneOffset;
 import org.jooq.Condition;
 
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
-import io.kestra.jdbc.runner.AbstractJdbcMultipleStateStore;
+import io.kestra.jdbc.runner.AbstractJdbcMultipleConditionStateStore;
 import io.kestra.repository.mysql.MysqlRepository;
 import io.kestra.repository.mysql.MysqlRepositoryEnabled;
 
@@ -15,8 +15,8 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @MysqlRepositoryEnabled
-public class MysqlMultipleStateStore extends AbstractJdbcMultipleStateStore {
-    public MysqlMultipleStateStore(@Named("multipleconditions") MysqlRepository<MultipleConditionWindow> repository) {
+public class MysqlMultipleConditionStateStore extends AbstractJdbcMultipleConditionStateStore {
+    public MysqlMultipleConditionStateStore(@Named("multipleconditions") MysqlRepository<MultipleConditionWindow> repository) {
         super(repository);
     }
 

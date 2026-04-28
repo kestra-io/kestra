@@ -63,6 +63,44 @@ jobs:
     with:
       java-version: 25
 
+  generate-configuration-schema:
+    name: Generate Configuration Schema
+    needs: [build-artifacts]
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v5
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Generate schema
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        with:
+          kestra-version: ${{ github.ref_name }}
+          executable-path: build/executable/kestra
+          output-path: oss.json
+
+      - name: GCP - Auth
+        uses: 'google-github-actions/auth@v3'
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Upload schema to GCS
+        uses: 'google-github-actions/upload-cloud-storage@v2'
+        with:
+          path: oss.json
+          destination: kestra-api-storage_prd/configuration-schema/${{ github.ref_name }}/
+
+      - name: Slack - Schema generation failure
+        if: failure()
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
   publish-github:
     name: Github Release
     needs: [build-artifacts, backend-tests, frontend-tests]

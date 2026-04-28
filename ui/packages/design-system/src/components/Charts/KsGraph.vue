@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue"
+    import {computed, ref, watchEffect} from "vue"
 
     import {use} from "echarts/core"
     import type {ECharts} from "echarts/core"
@@ -120,7 +120,7 @@
 
     const getChart = (): ECharts | null => ksEchartRef.value?.getEchartsInstance() ?? null
 
-    onMounted(() => {
+    watchEffect(() => {
         const chart = getChart()
         if (!chart) return
 
@@ -165,6 +165,7 @@
         fit() {
             const chart = getChart()
             if (!chart) return
+            chart.resize()
             chart.setOption({series: [{zoom: 1, center: ["50%", "50%"]}]})
         },
 

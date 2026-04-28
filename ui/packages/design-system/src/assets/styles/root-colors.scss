@@ -5,7 +5,7 @@
 // Always prefer semantic tokens (e.g. --ks-background-*, --ks-content-*,
 // --ks-border-*, --ks-button-*) which carry intent and adapt across themes.
 //
-// ⚠️ DEPRECATION NOTICE: This file will be removed after verifying no usage exists.
+// ⚠️ DEPRECATION NOTICE: This file should be removed after verifying no usage exists.
 // Only semantic tokens should be consumed in components. If any color token is missing
 // from the semantic token system, add it to Figma.json rather than using primitives directly.
 

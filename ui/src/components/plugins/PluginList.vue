@@ -335,11 +335,11 @@
         border: none;
         cursor: pointer;
         padding: 0.5rem;
+        display: inline-flex;
+        align-items: center;
 
         :deep(svg) {
             font-size: var(--kel-font-size-large);
-            position: absolute;
-            bottom: -0.10em;
         }
     }
 
@@ -358,18 +358,27 @@
 
     .kel-breadcrumb {
         :deep(.kel-breadcrumb__separator) {
-            font-size: 1.375rem;
+            font-size: inherit;
+            margin: 0 0.25rem;
         }
 
         :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
             text-transform: none !important;
+            color: var(--ks-content-secondary) !important;
+            font-weight: 500 !important;
         }
 
-        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner) {
-            font-weight: 700 !important;
+        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner a) {
+            color: var(--ks-content-secondary) !important;
+            font-weight: 500 !important;
+        }
+
+        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner),
+        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner a) {
+            color: var(--ks-content-primary) !important;
+            font-weight: 600 !important;
         }
     }
-
 
 }
 
@@ -421,10 +430,6 @@
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
-
-    &.no-padding {
-        padding-top: 0;
-    }
 }
 
 :deep(.markdown h3){

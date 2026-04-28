@@ -219,11 +219,11 @@ export class State {
     }
 
     static color() {
-        return mapValues(STATES, (state) => cssVar(`--ks-${state.colorClass}`));
+        return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`));
     }
 
     static getStateColor(state:string) {
-        return cssVar(`--ks-${STATES[state].colorClass}`);
+        return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`);
     }
 
     static icon() {

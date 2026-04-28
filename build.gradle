@@ -367,6 +367,19 @@ subprojects {subProj ->
             dependsOn(tasks.named('flakyTest'))
         }
 
+        // ── Develocity Test Distribution ──────────────────────────────────────
+        // All test tasks distribute to remote agents (5 max, 0 local fallback).
+        // Start an agent first: ./run-td-agent-local.sh
+        // NOTE: Mockito/AspectJ javaagents are passed via jvmArgumentProviders
+        // below. Those JARs must be available on each remote agent.
+        tasks.named('test', Test) { t ->
+            t.develocity.testDistribution {
+                enabled = true
+                maxLocalExecutors  = 0
+                maxRemoteExecutors = 5
+            }
+        }
+
         testlogger {
             theme = 'mocha-parallel'
             showExceptions = true

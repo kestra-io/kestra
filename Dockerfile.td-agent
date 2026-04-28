@@ -1,0 +1,30 @@
+# Develocity test-distribution agent on JDK 25.
+# Satisfies an os=linux,jdk=25 pool requirement.
+# The agent JAR is downloaded from the Gradle download mirror at build time.
+
+FROM eclipse-temurin:25-jdk-noble
+
+ARG AGENT_VERSION=3.7.0
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root
+
+RUN curl -fSL \
+    -o develocity-test-distribution-agent.jar \
+    "https://docs.gradle.com/downloads/develocity-test-distribution-agent/develocity-test-distribution-agent-${AGENT_VERSION}.jar"
+
+# DinD networking: containers started via the mounted Docker socket have their ports
+# mapped on the host, not on localhost inside this container. Override the host so
+# Testcontainers connects via host.docker.internal instead of localhost.
+ENV TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+# Ryuk can't route back to the agent container in a DinD setup; the JVM shutdown
+# hook handles cleanup instead.
+ENV TESTCONTAINERS_RYUK_DISABLED=true
+
+COPY td-agent-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

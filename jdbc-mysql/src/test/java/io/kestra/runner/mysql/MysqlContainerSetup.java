@@ -44,23 +44,14 @@ public class MysqlContainerSetup implements LauncherSessionListener {
 
     @Override
     public void launcherSessionOpened(LauncherSession session) {
-        try {
-            if (!MYSQL.isRunning()) {
-                MYSQL.start();
-            }
-            // System properties win over application-test.yml in Micronaut's priority chain.
-            System.setProperty("datasources.mysql.url",      MYSQL.getJdbcUrl());
-            System.setProperty("datasources.mysql.username", MYSQL.getUsername());
-            System.setProperty("datasources.mysql.password", MYSQL.getPassword());
-            log.info("[MysqlContainerSetup] Container started → {}", MYSQL.getJdbcUrl());
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                "Failed to start MySQL container. " +
-                "Docker Desktop: Settings → General → enable 'Allow the default Docker socket to be used'. " +
-                "Colima / OrbStack: ensure DOCKER_HOST is exported in your shell. " +
-                "Current DOCKER_HOST: " + System.getenv("DOCKER_HOST"), e
-            );
+        if (!MYSQL.isRunning()) {
+            MYSQL.start();
         }
+        // System properties win over application-test.yml in Micronaut's priority chain.
+        System.setProperty("datasources.mysql.url",      MYSQL.getJdbcUrl());
+        System.setProperty("datasources.mysql.username", MYSQL.getUsername());
+        System.setProperty("datasources.mysql.password", MYSQL.getPassword());
+        log.info("[MysqlContainerSetup] Container started → {}", MYSQL.getJdbcUrl());
     }
 
     @Override

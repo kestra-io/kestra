@@ -19,23 +19,14 @@ public class PostgresContainerSetup implements LauncherSessionListener {
 
     @Override
     public void launcherSessionOpened(LauncherSession session) {
-        try {
-            if (!POSTGRES.isRunning()) {
-                POSTGRES.start();
-            }
-            // System properties win over application-test.yml in Micronaut's priority chain.
-            System.setProperty("datasources.postgres.url",      POSTGRES.getJdbcUrl());
-            System.setProperty("datasources.postgres.username", POSTGRES.getUsername());
-            System.setProperty("datasources.postgres.password", POSTGRES.getPassword());
-            log.info("[PostgresContainerSetup] Container started → {}", POSTGRES.getJdbcUrl());
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                "Failed to start PostgreSQL container. " +
-                "Docker Desktop: Settings → General → enable 'Allow the default Docker socket to be used'. " +
-                "Colima / OrbStack: ensure DOCKER_HOST is exported in your shell. " +
-                "Current DOCKER_HOST: " + System.getenv("DOCKER_HOST"), e
-            );
+        if (!POSTGRES.isRunning()) {
+            POSTGRES.start();
         }
+        // System properties win over application-test.yml in Micronaut's priority chain.
+        System.setProperty("datasources.postgres.url",      POSTGRES.getJdbcUrl());
+        System.setProperty("datasources.postgres.username", POSTGRES.getUsername());
+        System.setProperty("datasources.postgres.password", POSTGRES.getPassword());
+        log.info("[PostgresContainerSetup] Container started → {}", POSTGRES.getJdbcUrl());
     }
 
     @Override

@@ -27,9 +27,15 @@
             <template #reference>
                 <el-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
                     <el-tooltip :content="$t('filter.saved tooltip')" placement="top" effect="light">
-                        <el-icon class="el-icon--right">
-                            <ChevronDown />
-                        </el-icon>
+                        <span class="saved-content">
+                            <span class="saved-label">{{ $t("filter.saved") }}</span>
+                            <el-tag type="primary" effect="light" class="saved-count">
+                                {{ filter.savedFilters.value.length }}
+                            </el-tag>
+                            <el-icon class="el-icon--right">
+                                <ChevronDown />
+                            </el-icon>
+                        </span>
                     </el-tooltip>
                 </el-button>
             </template>
@@ -116,6 +122,31 @@
         margin: 0;
         font-size: 0.875rem;
         box-shadow: var(--ks-box-shadow);
+
+        .saved-content {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .saved-count {
+            margin-left: 0.375rem;
+            background-color: var(--ks-tag-background);
+            &:hover {
+                background-color: var(--ks-tag-background-hover);
+            }
+            color: var(--ks-content-secondary);
+            border-radius: 0.35rem;
+            font-size: 0.625rem;
+            padding: 0.5rem 0.5625rem;
+        }
+
+        @media (max-width: 768px) {
+            .saved-label,
+            .saved-count {
+                display: none;
+            }
+        }
     }
 
     .options-btn {

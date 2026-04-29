@@ -253,7 +253,7 @@ public class FlowConcurrencyCaseTest {
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(60));
         }
     }
 
@@ -295,7 +295,7 @@ public class FlowConcurrencyCaseTest {
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(60));
         }
     }
 

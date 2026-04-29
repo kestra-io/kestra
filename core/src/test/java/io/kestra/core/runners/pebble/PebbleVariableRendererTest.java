@@ -72,7 +72,7 @@ class PebbleVariableRendererTest {
         assertThat((String) render.get("map"), startsWith("{"));
         assertThat((String) render.get("map"), endsWith("}"));
         assertThat((String) render.get("escape"), containsString("[\"string\",1,1.123] // {"));
-        assertThat((String) render.get("empty"), is(""));
+        assertThat(render.get("empty"), nullValue());
         assertThat((String) render.get("concat"), is("applepearbanana"));
     }
 

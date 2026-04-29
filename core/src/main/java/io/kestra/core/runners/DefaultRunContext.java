@@ -10,7 +10,6 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -43,7 +42,6 @@ import lombok.With;
 import java.util.*;
 
 import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * Default and mutable implementation of {@link RunContext}.
@@ -320,14 +318,18 @@ public class DefaultRunContext extends RunContext {
         }
 
         Map<String, Object> allVariables = mergeWithNullableValues(this.variables, decryptVariables(variables));
-        return inline
-            .entrySet()
-            .stream()
-            .map(throwFunction(entry -> new AbstractMap.SimpleEntry<>(
-                this.render(entry.getKey(), allVariables),
-                this.render(entry.getValue(), allVariables)
-            )))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, String> rendered = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : inline.entrySet()) {
+            String renderedKey = this.render(entry.getKey(), allVariables);
+            if (renderedKey == null) {
+                throw new IllegalVariableEvaluationException("Unable to render map: key rendered to null");
+            }
+            String renderedValue = this.render(entry.getValue(), allVariables);
+            if (renderedValue != null) {
+                rendered.put(renderedKey, renderedValue);
+            }
+        }
+        return rendered;
     }
 
     @Override

@@ -11,17 +11,18 @@
                         <slot name="title" />
                     </template>
                 </Breadcrumb>
-                <el-tooltip v-if="description" :content="description">
+                <KsTooltip v-if="description" :content="description">
                     <Information class="ms-2 icon" />
-                </el-tooltip>
+                </KsTooltip>
                 <Badge v-if="beta" label="Beta" />
-                <el-button
+                <KsIconButton
                     class="icon"
                     :class="{'active': bookmarked}"
-                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                    circle
+                    :ariaLabel="t('bookmark')"
                     @click="onStarClick"
-                />
+                >
+                    <component :is="bookmarked ? StarIcon : StarOutlineIcon" />
+                </KsIconButton>
             </div>
             <div v-if="longDescription || $slots.description" class="description">
                 <slot name="description">

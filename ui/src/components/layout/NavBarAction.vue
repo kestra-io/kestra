@@ -1,13 +1,13 @@
 <template>
-    <el-dropdown-item
+    <KsDropdownItem
         v-if="asItem"
         :icon="icon"
         v-bind="$attrs"
         @click="onClick"
     >
         <slot>{{ label }}</slot>
-    </el-dropdown-item>
-    <el-button
+    </KsDropdownItem>
+    <KsButton
         v-else
         :type="type ?? 'default'"
         :icon="icon"
@@ -15,7 +15,7 @@
         @click="onClick"
     >
         <slot>{{ label }}</slot>
-    </el-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">
@@ -27,7 +27,7 @@
 
     const props = defineProps<{
         icon?: Component;
-        type?: string;
+        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | "";
         label?: string;
         to?: RouteLocationRaw;
     }>();

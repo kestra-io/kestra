@@ -140,12 +140,12 @@ tasks:
   type: io.kestra.plugin.core.debug.Return
   format: "{{inputs.secret}}"
 - id: array
-  type: io.kestra.plugin.core.flow.ForEach
+  type: io.kestra.plugin.core.flow.Loop
   values: "{{inputs.array}}"
   tasks:
     - id: log
       type: io.kestra.plugin.core.debug.Return
-      format: "{{taskrun.value}}"
+      format: "{{item.value}}"
 
 - id: json1
   type: io.kestra.plugin.core.debug.Return

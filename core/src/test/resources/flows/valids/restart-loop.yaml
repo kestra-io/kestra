@@ -1,4 +1,4 @@
-id: restart-each
+id: restart-loop
 namespace: io.kestra.tests
 
 inputs:
@@ -7,7 +7,7 @@ inputs:
 
 tasks:
   - id: 1_each
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     concurrencyLimit: 0
     values: '["value 1", "value 2", "value 3"]'
     tasks:
@@ -18,7 +18,7 @@ tasks:
             type: io.kestra.plugin.core.log.Log
             message: "{{ (inputs.failed ?? 'NONE') == 'FIRST' ? ko : '0'}}"
           - id: 2-1-2_t2
-            type: io.kestra.plugin.core.flow.ForEach
+            type: io.kestra.plugin.core.flow.Loop
             concurrencyLimit: 0
             values: '["value a", "value b", "value c"]'
             tasks:

@@ -72,13 +72,6 @@ public class PauseTest {
         suite.runDurationFromInput(runnerUtils);
     }
 
-    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
-    @Test
-    @LoadFlows("flows/valids/foreach-concurrent-pause.yaml")
-    void parallelDelay() throws Exception {
-        suite.runParallelDelay(runnerUtils);
-    }
-
     @Test
     @LoadFlows({ "flows/valids/pause-timeout.yaml" })
     void timeout() throws Exception {

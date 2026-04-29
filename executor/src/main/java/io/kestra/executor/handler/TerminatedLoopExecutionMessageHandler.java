@@ -89,7 +89,7 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                             var valuesAndOffset = FlowableUtils.readLoopValuesFromUri(runContext, valuesUri, nextOffset, 1);
                             String value = valuesAndOffset.getLeft().getFirst();
                             computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedIteration, valuesAndOffset.getRight());
-                            var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, null, value);
+                            var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
                             executionQueue.emit(loopExecution);
                         } else {
                             // Non-URI mode: resolve all values in memory and pick by index
@@ -97,11 +97,11 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                             var either = FlowableUtils.resolveValues(runContext, loop.getValues());
                             if (either.isLeft()) {
                                 String value = either.getLeft().get(nextIndex);
-                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, null, value);
+                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
                                 executionQueue.emit(loopExecution);
                             } else {
                                 Pair<String, String> value = either.getRight().get(nextIndex);
-                                var loopExecution = executor.getExecution().loopExecution(IdUtils.create(), parentTaskRun, nextIndex, value.getKey(), value.getValue());
+                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, value.getKey(), value.getValue());
                                 executionQueue.emit(loopExecution);
                             }
                         }

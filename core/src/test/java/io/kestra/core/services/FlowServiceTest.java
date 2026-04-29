@@ -243,7 +243,7 @@ class FlowServiceTest {
 
             tasks:
               - id: for
-                type: io.kestra.plugin.core.flow.ForEach
+                type: io.kestra.plugin.core.flow.Loop
                 values: [1, 2, 3]
                 workerGroup:
                   key: toto

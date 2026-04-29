@@ -141,6 +141,14 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
 
+    // chartNodes/chartEdges are set once after the initial render and never changed.
+    // All subsequent style updates (selection, filter, theme) are applied imperatively
+    // via applyStylesToChart(), which uses layout:"none" + stored positions so that
+    // ECharts never re-runs the force simulation.
+    const chartNodes = ref<KsGraphNode[] | null>(null);
+    const chartEdges = ref<KsGraphEdge[] | null>(null);
+    const storedPositions = ref(new Map<string, {x: number; y: number}>());
+
     /** IDs of nodes that belong to the current table-filter result (null = no filter). */
     const shownNodeIDs = ref<Set<string> | null>(null);
 
@@ -249,10 +257,11 @@ export function useDependencies(
                         },
                         label: {color: cssVar("--ks-content-primary")},
                     },
-                    // Blur = same as base so selection colours survive when another node is hovered
+                    // Blur = same as base so selection colours survive when another node is hovered.
+                    // Label uses full opacity so text doesn't dim when a neighbour is hovered.
                     blur: {
                         itemStyle: baseItemStyle,
-                        label:     {color: labelColor},
+                        label:     {color: cssVar("--ks-content-primary")},
                     },
                     label: {
                         show:            true,
@@ -336,6 +345,55 @@ export function useDependencies(
         selectedNodeID.value = id;
     };
 
+    // ─── Imperative style updates (post-freeze) ───────────────────────────────
+
+    /**
+     * Reads post-simulation node positions from ECharts' internal data store
+     * and caches them in storedPositions so subsequent style-only updates can
+     * use layout:"none" and avoid re-running the force simulation.
+     */
+    const capturePositions = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+        try {
+            const data = chart.getModel?.()?.getSeriesByIndex?.(0)?.getData?.();
+            if (!data) return;
+            const positions = new Map<string, {x: number; y: number}>();
+            for (let i = 0; i < data.count(); i++) {
+                const id     = data.getId(i);
+                const layout = data.getItemLayout(i) as {x?: number; y?: number} | undefined;
+                if (id != null && layout?.x !== undefined && layout?.y !== undefined) {
+                    positions.set(String(id), {x: layout.x, y: layout.y});
+                }
+            }
+            if (positions.size > 0) storedPositions.value = positions;
+        } catch {
+            // Internal ECharts API unavailable — style updates will skip layout:none.
+        }
+    };
+
+    /**
+     * Applies the latest graphNodes/graphEdges styles directly to the ECharts
+     * instance, bypassing the frozen reactive props. Uses layout:"none" with
+     * stored positions so the force simulation never re-runs.
+     */
+    const applyStylesToChart = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+        const positions    = storedPositions.value;
+        const nodesWithPos = graphNodes.value.map((n) => {
+            const pos = positions.get(n.id);
+            return pos ? {...n, x: pos.x, y: pos.y} : n;
+        });
+        const layout = positions.size > 0 ? "none" : "force";
+        chart.setOption({series: [{data: nodesWithPos, links: graphEdges.value, layout}]}, false);
+    };
+
+    watch([graphNodes, graphEdges], () => {
+        if (chartNodes.value === null) return;
+        applyStylesToChart();
+    });
+
     // ─── Data loading ─────────────────────────────────────────────────────────
 
     onMounted(async () => {
@@ -346,6 +404,11 @@ export function useDependencies(
             if (subtype !== NAMESPACE) selectNode(elements.value.data.find(
                 (el): el is {data: Node} => el.data.type === NODE,
             )?.data.id ?? initialNodeID);
+            await nextTick();
+            chartNodes.value = graphNodes.value;
+            chartEdges.value = graphEdges.value;
+            await nextTick();
+            capturePositions();
         } else {
             try {
                 if (fetchAssetDependencies) {
@@ -382,6 +445,11 @@ export function useDependencies(
                 await nextTick();
                 selectNode(initialNodeID);
             }
+            await nextTick();
+            chartNodes.value = graphNodes.value;
+            chartEdges.value = graphEdges.value;
+            await nextTick();
+            capturePositions();
         }
 
         if (subtype === EXECUTION) nextTick(() => openSSE());
@@ -457,16 +525,18 @@ export function useDependencies(
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
-        /** KsGraphNode[] for the KsGraph :nodes prop. */
-        graphNodes,
-        /** KsGraphEdge[] for the KsGraph :edges prop. */
-        graphEdges,
+        /** Frozen snapshot for KsGraph :nodes — set once after initial render. */
+        chartNodes,
+        /** Frozen snapshot for KsGraph :edges — set once after initial render. */
+        chartEdges,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
         /** Called from the KsGraph @node-click event. */
-        handleNodeClick: (node: KsGraphNode) => selectNode(node.id as string),
+        handleNodeClick: (node: KsGraphNode) => {
+            selectNode(node.id as string);
+        },
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),

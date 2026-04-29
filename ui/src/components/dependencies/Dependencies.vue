@@ -6,9 +6,10 @@
             <KsGraph
                 ref="graphRef"
                 class="graph-canvas"
-                :nodes="graphNodes"
-                :edges="graphEdges"
+                :nodes="chartNodes"
+                :edges="chartEdges"
                 :loading="isRendering"
+                :options="{series: [{emphasis: {focus: 'none'}}]}"
                 @node-click="handleNodeClick"
             />
 
@@ -113,8 +114,8 @@
 
     const {
         getElements,
-        graphNodes,
-        graphEdges,
+        chartNodes,
+        chartEdges,
         isLoading,
         isRendering,
         selectedNodeID,
@@ -128,7 +129,7 @@
 .dependencies {
     display: flex;
     width: 100%;
-    height: calc(100vh - 135px);
+    height: calc(100vh - 145px);
 
     & div#graph {
         position: relative; // for absolute positioning of controls
@@ -163,6 +164,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        overflow-y: auto;
     }
 }
 </style>

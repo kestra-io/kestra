@@ -37,6 +37,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Size(min = 1, max = 150)
     String namespace;
 
+    @NotNull
     @Min(value = 1)
     Integer revision;
 
@@ -60,6 +61,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @NotNull
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;

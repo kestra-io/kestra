@@ -81,7 +81,7 @@ dependencies {
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         api "org.apache.kafka:kafka-server-common:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.45.1'
+        api 'software.amazon.awssdk.crt:aws-crt:0.45.2'
 
         // Other libs
         api("org.projectlombok:lombok:1.18.46")

@@ -16,23 +16,24 @@
                             <div
                                 v-if="data.heading"
                                 @click="expandedValue = data.path"
-                                class="pe-none d-flex fs-5"
+                                class="cascader-heading"
                             >
-                                <component :is="data.component" class="me-2" />
+                                <component :is="data.component" />
                                 <span>{{ data.label }}</span>
                             </div>
 
                             <div
                                 v-else
                                 @click="expandedValue = data.path"
-                                class="w-100 d-flex justify-content-between"
+                                class="cascader-item"
                             >
-                                <div class="pe-1 d-flex task">
+                                <div class="task">
                                     <KsTaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
+                                        class="output-task-icon"
                                     />
                                     <span :class="{'ms-3': data.icon}" class="task-label">
                                         <span>{{ data.label }}&nbsp;</span>
@@ -59,9 +60,9 @@
                 <div class="right-panel wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
-                        class="w-100 overflow-auto p-3 content-container"
+                        class="content-container"
                     >
-                        <div class="d-flex justify-content-between pe-none fs-5 values">
+                        <div class="values">
                             <code class="d-block">
                                 {{ selectedNode()?.label ?? "Value" }}
                             </code>
@@ -162,6 +163,7 @@
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
+    
     import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
@@ -561,14 +563,31 @@
     }
 }
 
-.cascader{
+.cascader {
     flex-grow: 1;
+}
+
+.cascader-heading {
+    pointer-events: none;
+    display: flex;
+    gap: .5rem;
+    font-size: var(--kel-font-size-medium);
+}
+
+.cascader-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
 
 :deep(.kel-scrollbar.kel-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
 .values {
     pointer-events: none;
     margin: 0.75rem 0 1.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--kel-font-size-medium);
+    pointer-events: none;
 }
 
 :deep(.kel-cascader-menu__list) {
@@ -653,6 +672,8 @@
         }
 
         .task {
+            display: flex;
+            padding-right: .25rem;
             width: 100%;
             max-width: 100%;
 
@@ -671,7 +692,7 @@
             }
         }
 
-        .task .wrapper {
+        .task .output-task-icon {
             align-self: center;
             height: var(--kel-font-size-small);
             width: var(--kel-font-size-small);
@@ -692,6 +713,8 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
+    width: 100%;
+    padding: 1rem;
 }
 
 :deep(.kel-collapse) {

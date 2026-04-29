@@ -93,6 +93,7 @@ class MiscControllerTest {
         assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getIsConcurrencyViewEnabled()).isTrue();
+        assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
     }
 
     @Test

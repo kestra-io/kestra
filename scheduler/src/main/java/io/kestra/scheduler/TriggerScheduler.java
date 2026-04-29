@@ -213,7 +213,10 @@ public class TriggerScheduler {
                                 }
                             }
                             case NONE -> {
-                                ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate();
+                                // Skip missed slots by starting from now (null triggerContext causes
+                                // NextEvaluationDate.get to seed date=now), which also lets Schedule
+                                // apply trigger conditions (e.g. DayWeek) to the next computed tick.
+                                ZonedDateTime nextEvaluationDate = NextEvaluationDate.get(clock, trigger, null, conditionContext);
                                 if (!Objects.equals(currentTriggerState.getNextEvaluationDate(), nextEvaluationDate.toInstant())) {
                                     currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
                                     triggerStateStore.save(currentTriggerState);
@@ -395,8 +398,11 @@ public class TriggerScheduler {
     private Optional<TriggerState> updateNextEvaluationDateAndGetOnSuccess(Clock clock, TriggerState currentTriggerState, TriggerEvaluationContext lastTriggerEvaluationContext) {
         Logger logger = lastTriggerEvaluationContext.conditionContext().getRunContext().logger();
         try {
+            // Use currentTriggerState.context() — the caller has already set evaluatedAt=nextEvaluationDate on it.
+            // lastTriggerEvaluationContext.triggerState() is frozen at fetch time and can still carry a null
+            // evaluatedAt (first evaluation after creation), which would make Schedule skip the conditions branch.
             ZonedDateTime nextEvaluationDate = NextEvaluationDate
-                .get(clock, lastTriggerEvaluationContext.trigger(), lastTriggerEvaluationContext.triggerState().context(), lastTriggerEvaluationContext.conditionContext());
+                .get(clock, lastTriggerEvaluationContext.trigger(), currentTriggerState.context(), lastTriggerEvaluationContext.conditionContext());
             return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
         } catch (Exception e) {
             if (e instanceof InvalidTriggerConfigurationException) {

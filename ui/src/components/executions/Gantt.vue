@@ -106,7 +106,6 @@
                                             :level="effectiveSelectedLogLevel"
                                             @follow="emit('follow', $event)"
                                             :targetFlow="executionsStore.flow"
-                                            :showLogs="taskTypeByTaskRunId[item.id] !== 'io.kestra.plugin.core.flow.ForEachItem' && taskTypeByTaskRunId[item.id] !== 'io.kestra.core.tasks.flows.ForEachItem'"
                                             class="mh-100 mx-3"
                                         />
                                     </div>

@@ -9,10 +9,9 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
-import io.kestra.core.utils.Rethrow;
 // FIXME check if we keep it or not, maybe refactor the whole multiple flow handling and simplify it.
 //  At least, if we keep it, we should make it sealed so it's not implemented wildly.
-public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionContext, InternalException> {
+public interface MultipleCondition {
     String getId();
 
     TimeWindow getTimeWindow();
@@ -28,17 +27,11 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
     Integer getMinSatisfied();
 
     /**
-     * This conditions will only validate previously calculated value on
-     * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) and {@link MultipleConditionStateStore#save(List)} by the executor.
+     * This set of conditions will only validate previously calculated value on
+     * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) by the executor.
      * The real validation is done here.
      */
-    @Override
-    default boolean test(ConditionContext conditionContext) throws InternalException {
-        MultipleConditionStateStore multipleConditionStorage = conditionContext.getMultipleConditionStorage();
-        Objects.requireNonNull(multipleConditionStorage);
-
-        Optional<MultipleConditionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());
-
+    default boolean test(ConditionContext conditionContext, Optional<MultipleConditionWindow> triggerExecutionWindow) throws InternalException {
         Map<String, Boolean> results = getConditions()
             .keySet()
             .stream()
@@ -84,6 +77,20 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
         }
 
         return result;
+    }
+
+    /**
+     * Determines whether a multiple condition is satisfied based on its mode and the current window results.
+     * Used to decide whether to purge the condition window after a successful evaluation.
+     */
+    default boolean isConditionSatisfied(MultipleConditionWindow window) {
+        // MultipleConditionWindow.with() only stores true entries, so size() == number of satisfied conditions
+        int satisfiedCount = Optional.ofNullable(window.getResults()).map(Map::size).orElse(0);
+        return switch (getMode()) {
+            case ALL -> getConditions().size() == satisfiedCount;
+            case ANY -> satisfiedCount > 0;
+            case AT_LEAST -> satisfiedCount >= getMinSatisfied();
+        };
     }
 
     enum Mode {

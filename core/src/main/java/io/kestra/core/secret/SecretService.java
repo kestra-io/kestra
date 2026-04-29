@@ -83,4 +83,8 @@ public class SecretService<META> {
     public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {
         return Map.of(namespace, decodedSecrets.keySet());
     }
+
+    public Map<String, Set<String>> ownAndInheritedSecrets(String tenantId, String namespace) throws IOException {
+        return inheritedSecrets(tenantId, namespace);
+    }
 }

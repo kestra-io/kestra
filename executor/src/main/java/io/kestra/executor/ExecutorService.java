@@ -53,9 +53,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 public class ExecutorService {
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private RunContextFactory runContextFactory;
 
     @Inject
@@ -65,8 +62,6 @@ public class ExecutorService {
     private WorkerGroupMetaStore workerGroupMetaStore;
 
     @Inject
-    private WorkerJobRunningStateStore workerJobRunningStateStore;
-
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -95,15 +90,6 @@ public class ExecutorService {
 
     @Inject
     private TaskOutputService taskOutputService;
-
-    private FlowMetaStoreInterface flowExecutorInterface() {
-        // bean is injected late, so we need to wait
-        if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
-        }
-
-        return this.flowExecutorInterface;
-    }
 
     public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
         // if concurrency was removed, it can be null as we always get the latest flow definition
@@ -290,9 +276,11 @@ public class ExecutorService {
                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
                         .map(ArrayList::new)
                         .orElseGet(ArrayList::new);
-                    State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
-                    TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                    attempts.set(attempts.size() - 1, updated);
+                    if (!attempts.isEmpty()) { // can occur on migration from pre-1.2
+                        State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                        TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                        attempts.set(attempts.size() - 1, updated);
+                    }
 
                     return Optional.of(
                         new WorkerTaskResult(
@@ -937,6 +925,10 @@ public class ExecutorService {
                     // Check if the worker group exist
                     String tenantId = executor.getFlow().getTenantId();
                     String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                    if (WorkerGroup.isDefault(workerGroupKey)) {
+                        // Explicit default worker group - dispatch without existence check
+                        return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                    }
                     if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                         // Check whether at-least one worker is available
                         if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
@@ -1132,7 +1124,7 @@ public class ExecutorService {
                         executableTaskRun
                     );
                     List<SubflowExecution<?>> subflowExecutions = executableTask
-                        .createSubflowExecutions(runContext, flowExecutorInterface(), executor.getFlow(), executor.getExecution(), executableTaskRun);
+                        .createSubflowExecutions(runContext, flowExecutorInterface, executor.getFlow(), executor.getExecution(), executableTaskRun);
                     if (subflowExecutions.isEmpty()) {
                         // if no executions we move the task to SUCCESS immediately
                         executor.withExecution(
@@ -1290,7 +1282,6 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
-            workerJobRunningStateStore.deleteByKey(taskRun.getId());
             metricRegistry
                 .counter(
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,

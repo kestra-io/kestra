@@ -65,7 +65,7 @@ public class Weekend extends Condition implements ScheduleCondition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date).as(String.class, conditionContext.getVariables()).orElseThrow();
+        String render = conditionContext.getRunContext().render(date).skipCache().as(String.class, conditionContext.getVariables()).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
 
         return currentDate.getDayOfWeek().equals(DayOfWeek.SATURDAY) ||

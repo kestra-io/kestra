@@ -37,7 +37,7 @@ class SanityCheckTest {
     @Test
     @ExecuteFlow("sanity-checks/kv.yaml")
     void qaKv(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getTaskRunList()).hasSize(7);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

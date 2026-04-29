@@ -231,11 +231,9 @@ public class FlowTopologyTest {
                 type: io.kestra.plugin.core.trigger.Flow
                 states:
                   - SUCCESS
-                preconditions:
-                  id: flows
-                  flows:
-                   - namespace: io.kestra.unittest
-                     flowId: parent
+                dependsOn:
+                  - namespace: io.kestra.unittest
+                    flowId: parent
             """);
         var unrelatedFlow = flowService.importFlow(tenantId, """
             id: unrelated_flow

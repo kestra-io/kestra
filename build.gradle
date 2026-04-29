@@ -25,7 +25,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.53.0"
+    id "com.github.ben-manes.versions" version "0.54.0"
 
     // front
     id 'com.github.node-gradle.node' version '7.1.0'
@@ -239,8 +239,6 @@ subprojects {subProj ->
             //assertj
             testImplementation 'org.assertj:assertj-core'
 
-            testImplementation "com.tngtech.archunit:archunit-junit5"
-
             // awaitility
             testImplementation 'org.awaitility:awaitility'
 
@@ -251,7 +249,9 @@ subprojects {subProj ->
         }
 
         def commonTestConfig = { Test t ->
-            t.ignoreFailures = true
+            t.timeout = java.time.Duration.ofMinutes(
+                (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+            )
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
@@ -340,6 +340,9 @@ subprojects {subProj ->
                 includeTags 'flaky'
             }
 
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
             reports {
                 junitXml.required = true
                 junitXml.outputPerTestCase = true
@@ -348,6 +351,9 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
+            t.ignoreFailures = true
+            t.filter { failOnNoMatchingTests = false }
+            t.outputs.doNotCacheIf("Flaky tests are non-deterministic") { true }
             t.mustRunAfter(tasks.named('test'))
         }
 

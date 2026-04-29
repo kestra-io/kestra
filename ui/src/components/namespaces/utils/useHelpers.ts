@@ -66,7 +66,7 @@ export function useHelpers() {
         title: parts.value.at(-1) || t("namespaces"),
         breadcrumb: [
             {label: t("namespaces"), link: {name: "namespaces/list"}},
-            ...parts.value.map((_: string, index: number): Breadcrumb => ({
+            ...parts.value.slice(0, -1).map((_: string, index: number): Breadcrumb => ({
                 label: parts.value[index],
                 link: {
                     name: "namespaces/update",
@@ -75,7 +75,6 @@ export function useHelpers() {
                         tab: "overview",
                     },
                 },
-                disabled: index === parts.value.length - 1,
             })),
         ],
     }));

@@ -661,7 +661,7 @@ class FlowControllerTest {
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
         );
 
-        assertThat(namespaces.size()).isEqualTo(21);
+        assertThat(namespaces.size()).isEqualTo(18);
     }
 
     @Test
@@ -1504,6 +1504,95 @@ class FlowControllerTest {
         assertThat(revisions.get(0).getRevision()).isEqualTo(1);
         assertThat(revisions.get(1).getRevision()).isEqualTo(2);
         assertThat(revisions.get(2).getRevision()).isEqualTo(4);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void expressions() {
+        // Given
+        String flowYaml = """
+            id: test-expressions
+            namespace: io.kestra.tests
+            inputs:
+              - id: myInput
+                type: STRING
+            variables:
+              myVar: hello
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.debug.Return
+                format: first
+              - id: t2
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ outputs.t1.value }}"
+            """;
+
+        // When
+        @SuppressWarnings("unchecked")
+        Map<String, List<String>> result = (Map<String, List<String>>) (Map<?, ?>) client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/expressions", flowYaml)
+                .contentType("application/x-yaml"),
+            Argument.mapOf(String.class, List.class)
+        );
+
+        // Then — JSON keys are camelCase ExpressionCategory.key() values
+        assertThat(result).isNotNull();
+        assertThat(result).containsKeys(
+            "taskOutputs", "executionContext", "inputs", "variables",
+            "filters", "functions"
+        );
+        assertThat(result.get("inputs")).contains("inputs.myInput");
+        assertThat(result.get("variables")).contains("vars.myVar");
+        assertThat(result.get("executionContext")).contains("flow.id", "execution.id");
+        assertThat(result.get("taskOutputs")).anyMatch(e -> e.toString().startsWith("outputs.t1."));
+        assertThat(result.get("filters")).isNotEmpty();
+        assertThat(result.get("functions")).isNotEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void expressionsWithTaskIdFilter() {
+        // Given
+        String flowYaml = """
+            id: test-expressions-filter
+            namespace: io.kestra.tests
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.core.debug.Return
+                format: first
+              - id: t2
+                type: io.kestra.plugin.core.debug.Return
+                format: second
+            """;
+
+        // When
+        @SuppressWarnings("unchecked")
+        Map<String, List<String>> result = (Map<String, List<String>>) (Map<?, ?>) client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/expressions?taskId=t2", flowYaml)
+                .contentType("application/x-yaml"),
+            Argument.mapOf(String.class, List.class)
+        );
+
+        // Then — only t1 outputs should be present, not t2
+        List<?> outputs = result.get("taskOutputs");
+        assertThat(outputs).anyMatch(e -> e.toString().startsWith("outputs.t1."));
+        assertThat(outputs).noneMatch(e -> e.toString().startsWith("outputs.t2."));
+    }
+
+    @Test
+    void expressionsWithInvalidYaml() {
+        // Given — invalid YAML that cannot be parsed as a flow
+        String invalidYaml = "this is not valid flow yaml: [[[";
+
+        // When / Then — YAML parse errors are wrapped as ConstraintViolationException → 422
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(
+                HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
+                    .contentType("application/x-yaml"),
+                Argument.mapOf(String.class, List.class)
+            )
+        );
+        assertEquals(UNPROCESSABLE_ENTITY, exception.getStatus());
     }
 
     @Test

@@ -1,7 +1,6 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent, AxiosInstance} from "axios"
 import NProgress from "nprogress"
 import {Router} from "vue-router"
-import {client} from "kestra-api/client.gen"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -281,11 +280,7 @@ const createAxios = (
         }
     })
 
-    client.setConfig({
-        axios: instance
-    })
-
-    return {client, instance};
+    return {instance};
 };
 
 let clientInstance: ReturnType<typeof createAxios> | null = null;

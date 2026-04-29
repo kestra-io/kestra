@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "从头创建flow",
+      "create_manually": {
+        "description": "使用编辑器从头开始构建",
+        "title": "手动创建"
+      },
+      "docs": {
+        "description": "在官方文档中了解更多信息",
+        "title": "阅读文档"
+      },
       "execute_hint": {
         "description": "单击以保存您的工作流并立即运行。",
         "title": "保存并执行您的flow"

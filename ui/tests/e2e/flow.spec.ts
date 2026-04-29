@@ -23,10 +23,11 @@ test.describe("Flow Page", () => {
 
         await page.goto("/ui");
 
-        await test.step("login in", async () => {
+        await test.step("login", async () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username);
             await page.getByRole("textbox", {name: "Password"}).fill(shared.password);
             await page.getByRole("button", {name: "Login"}).click();
+            await page.waitForURL("**/ui/**");
         });
     });
 
@@ -66,7 +67,7 @@ test.describe("Flow Page", () => {
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await page.locator("#side-menu .sidebar-toggle").click();
-            await page.waitForURL("**/flows");
+            await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible();
             await page.getByRole("button", {name: "Create", exact: true}).click();
             await page.waitForURL("**/flows/new");
             await page.getByTestId("monaco-editor").getByText("Hello World").isVisible();
@@ -91,7 +92,7 @@ test.describe("Flow Page", () => {
 
             await expect(page.getByRole("dialog").getByText("INPUT_A", {exact: true})).toBeVisible();
             await page.getByRole("dialog").getByTestId("monaco-editor").getByRole("textbox").fill(inputValue);
-            await page.waitForTimeout(2100);
+            await expect(page.getByRole("dialog").getByRole("button", {name: "Execute"})).toBeEnabled();
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
             await page.getByText("log_hello_task").click();

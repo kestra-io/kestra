@@ -25,7 +25,6 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
@@ -55,6 +54,9 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @EqualsAndHashCode
 public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID, DispatchEvent {
+    // !!! WARNING !!!
+    // When you add anything in this class, make sure to also update ApiExecution and ApiLightExecution in the webserver module
+    // !!!!!!!!!!!!!!!
 
     @With
     @Hidden

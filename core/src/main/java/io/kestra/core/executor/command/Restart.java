@@ -13,7 +13,8 @@ public record Restart(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    @Nullable Integer revision) implements ExecutionCommand {
+    @Nullable Integer revision,
+    @Nullable String operationId) implements ExecutionCommand {
     public static Restart from(Execution execution, Integer revision) {
         return new Restart(
             execution.getTenantId(),
@@ -22,7 +23,12 @@ public record Restart(String tenantId,
             execution.getId(),
             Instant.now(),
             EventId.create(),
-            revision
+            revision,
+            null
         );
+    }
+
+    public Restart withOperationId(String operationId) {
+        return new Restart(tenantId, namespace, flowId, executionId, timestamp, eventId, revision, operationId);
     }
 }

@@ -11,6 +11,7 @@ import io.kestra.webserver.services.posthog.PosthogService;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
@@ -39,11 +40,17 @@ public class PosthogChatModelListener implements ChatModelListener {
         properties.put("$ai_http_status", 200);
         properties.put("$ai_response_id", response.metadata().id());
 
+        AiMessage aiMessage = response.aiMessage();
+        // Intermediate tool-call responses are captured in the inputs of the final generation — skip them.
+        if (aiMessage.hasToolExecutionRequests()) {
+            return;
+        }
+
         properties.put("$ai_input", inputs(request));
         properties.put(
             "$ai_output_choices", Map.of(
                 "content", Map.of(
-                    "text", response.aiMessage().text(),
+                    "text", Optional.ofNullable(aiMessage.text()).orElse(""),
                     "type", "text"
                 ),
                 "role", "assistant"
@@ -78,12 +85,18 @@ public class PosthogChatModelListener implements ChatModelListener {
     }
 
     private void send(Map<Object, Object> attributes, Map<String, Object> properties) {
-        properties.put("$ai_parent_id", attributes.get(MetadataAppenderChatModelListener.PARENT_ID).toString());
+        Object parentId = attributes.get(MetadataAppenderChatModelListener.PARENT_ID);
+        if (parentId == null) {
+            log.warn("No parent ID found in attributes, skipping PostHog event");
+            return;
+        }
+        properties.put("$ai_parent_id", parentId.toString());
         properties.put("$ai_span_name", attributes.get(MetadataAppenderChatModelListener.SPAN_NAME));
         properties.put("$ai_span_id", IdUtils.create());
 
+        Object rawUid = attributes.get(MetadataAppenderChatModelListener.USER_UID);
         posthogService.capture(
-            attributes.get(MetadataAppenderChatModelListener.USER_UID).toString(),
+            rawUid != null ? rawUid.toString() : "api-call",
             "$ai_generation",
             properties
         );
@@ -96,10 +109,13 @@ public class PosthogChatModelListener implements ChatModelListener {
         if (attributes.containsKey(MetadataAppenderChatModelListener.PROVIDER)) {
             properties.put("$ai_provider", attributes.get(MetadataAppenderChatModelListener.PROVIDER));
         }
-        properties.put("$ai_base_url", "https://generativelanguage.googleapis.com");
+        if (attributes.containsKey(MetadataAppenderChatModelListener.BASE_URL)) {
+            properties.put("$ai_base_url", attributes.get(MetadataAppenderChatModelListener.BASE_URL));
+        }
 
-        if (attributes.containsKey(MetadataAppenderChatModelListener.IP)) {
-            properties.put("$ip", attributes.get(MetadataAppenderChatModelListener.IP));
+        Object ip = attributes.get(MetadataAppenderChatModelListener.IP);
+        if (ip instanceof String ipStr && !ipStr.isBlank()) {
+            properties.put("$ip", ipStr);
         }
 
         Map<String, Object> parameters = Maps.newHashMap();
@@ -142,11 +158,16 @@ public class PosthogChatModelListener implements ChatModelListener {
             .stream()
             .map(chatMessage ->
             {
-                if (chatMessage instanceof AiMessage aiMessage) {
-                    return Map.of(
-                        "role", "assistant",
-                        "content", aiMessage.text()
-                    );
+                if (chatMessage instanceof AiMessage msg) {
+                    String content = msg.hasToolExecutionRequests()
+                        ? msg.toolExecutionRequests().stream()
+                            .map(req -> req.name() + "(" + req.arguments() + ")")
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("")
+                        : Optional.ofNullable(msg.text()).orElse("");
+                    return Map.of("role", "assistant", "content", content);
+                } else if (chatMessage instanceof ToolExecutionResultMessage msg) {
+                    return Map.of("role", "tool", "content", Optional.ofNullable(msg.text()).orElse(""));
                 } else if (chatMessage instanceof UserMessage userMessage) {
                     return Map.of(
                         "role", "user",

@@ -2083,6 +2083,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Flow von Grund auf neu erstellen",
+      "create_manually": {
+        "description": "Von Grund auf mit dem Editor erstellen",
+        "title": "Manuell erstellen"
+      },
+      "docs": {
+        "description": "Erfahren Sie mehr in der offiziellen Dokumentation",
+        "title": "Dokumentation lesen"
+      },
       "execute_hint": {
         "description": "Klicken Sie, um Ihren Workflow zu speichern und sofort auszuführen.",
         "title": "Speichern & Ausführen Ihres flow"

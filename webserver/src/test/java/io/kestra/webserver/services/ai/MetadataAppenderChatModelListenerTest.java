@@ -1,46 +1,73 @@
 package io.kestra.webserver.services.ai;
 
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
-import dev.langchain4j.model.chat.request.ChatRequest;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MetadataAppenderChatModelListenerTest {
 
     @Test
-    void shouldPopulateAttributesWithUserUid() {
+    void shouldNotThrowWhenIpIsNull() {
         // Given
         AiService.ConversationMetadata metadata = new AiService.ConversationMetadata(
-            "conv-1", "192.168.1.1", "parent-span-1", "browser-uid-123"
+            "conv-id", null, "parent-id", "user-uid"
         );
         MetadataAppenderChatModelListener listener = new MetadataAppenderChatModelListener(
-            "instance-uid-456", "google", "FlowGeneration", () -> metadata
+            "instance-uid", "openai", "FlowYamlBuilder", null, () -> metadata
         );
+        Map<Object, Object> attributes = new ConcurrentHashMap<>();
+        ChatModelRequestContext requestContext = mock(ChatModelRequestContext.class);
+        when(requestContext.attributes()).thenReturn(attributes);
 
-        ChatRequest request = ChatRequest.builder()
-            .messages(List.of(UserMessage.from("test")))
-            .modelName("gemini-2.0-flash")
-            .build();
-        ChatModelRequestContext requestContext = new ChatModelRequestContext(request, null, new HashMap<>());
+        // When/Then
+        assertThatCode(() -> listener.onRequest(requestContext)).doesNotThrowAnyException();
+        assertThat(attributes.get(MetadataAppenderChatModelListener.IP)).isEqualTo("");
+    }
+
+    @Test
+    void shouldNotThrowWhenConversationMetadataIsNull() {
+        // Given - metadata not yet stored (race or missing beforeGeneration call)
+        MetadataAppenderChatModelListener listener = new MetadataAppenderChatModelListener(
+            "instance-uid", "openai", "FlowYamlBuilder", null, () -> null
+        );
+        Map<Object, Object> attributes = new ConcurrentHashMap<>();
+        ChatModelRequestContext requestContext = mock(ChatModelRequestContext.class);
+        when(requestContext.attributes()).thenReturn(attributes);
+
+        // When/Then
+        assertThatCode(() -> listener.onRequest(requestContext)).doesNotThrowAnyException();
+        assertThat(attributes).isEmpty();
+    }
+
+    @Test
+    void shouldPopulateAttributesWithNonNullIp() {
+        // Given
+        AiService.ConversationMetadata metadata = new AiService.ConversationMetadata(
+            "conv-id", "127.0.0.1", "parent-id", "user-uid"
+        );
+        MetadataAppenderChatModelListener listener = new MetadataAppenderChatModelListener(
+            "instance-uid", "openai", "FlowYamlBuilder", "http://base.url", () -> metadata
+        );
+        Map<Object, Object> attributes = new ConcurrentHashMap<>();
+        ChatModelRequestContext requestContext = mock(ChatModelRequestContext.class);
+        when(requestContext.attributes()).thenReturn(attributes);
 
         // When
         listener.onRequest(requestContext);
 
         // Then
-        assertThat(requestContext.attributes())
-            .containsEntry(MetadataAppenderChatModelListener.USER_UID, "browser-uid-123")
-            .containsEntry(MetadataAppenderChatModelListener.INSTANCE_UID, "instance-uid-456")
-            .containsEntry(MetadataAppenderChatModelListener.CONVERSATION_ID, "conv-1")
-            .containsEntry(MetadataAppenderChatModelListener.IP, "192.168.1.1")
-            .containsEntry(MetadataAppenderChatModelListener.PARENT_ID, "parent-span-1")
-            .containsEntry(MetadataAppenderChatModelListener.SPAN_NAME, "FlowGeneration")
-            .containsEntry(MetadataAppenderChatModelListener.PROVIDER, "google");
+        assertThat(attributes)
+            .containsEntry(MetadataAppenderChatModelListener.PARENT_ID, "parent-id")
+            .containsEntry(MetadataAppenderChatModelListener.IP, "127.0.0.1")
+            .containsEntry(MetadataAppenderChatModelListener.PROVIDER, "openai")
+            .containsEntry(MetadataAppenderChatModelListener.BASE_URL, "http://base.url");
     }
 }

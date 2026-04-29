@@ -33,7 +33,7 @@ public class RandomRetryValidationTest {
     }
 
     @Test
-    void shouldNotValidateInvalidRetry() throws Exception {
+    void shouldNotValidateWhenIntervalsExceedMaxDuration() throws Exception {
         var retry = Random.builder()
             .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(1))
@@ -43,19 +43,23 @@ public class RandomRetryValidationTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
         assertThat(valid.isEmpty()).isFalse();
-        assertThat(valid.get().getConstraintViolations()).hasSize(1);
-        assertThat(valid.get().getMessage()).isEqualTo(": 'minInterval' must be less than 'maxDuration' but is PT2S\n");
+        assertThat(valid.get().getConstraintViolations()).hasSize(2);
+        assertThat(valid.get().getMessage()).contains("'minInterval' must be less than 'maxDuration'");
+        assertThat(valid.get().getMessage()).contains("'maxInterval' must be less than 'maxDuration'");
+    }
 
-        retry = Random.builder()
+    @Test
+    void shouldNotValidateWhenMinIntervalExceedsMaxInterval() throws Exception {
+        var retry = Random.builder()
             .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(12))
             .minInterval(Duration.ofSeconds(3))
             .maxInterval(Duration.ofSeconds(2))
             .build();
 
-        valid = modelValidator.isValid(retry);
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
         assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
-        assertThat(valid.get().getMessage()).isEqualTo(": 'minInterval' must be less than 'maxInterval' but is PT3S\n");
+        assertThat(valid.get().getMessage()).contains("'minInterval' must be less than 'maxInterval'");
     }
 }

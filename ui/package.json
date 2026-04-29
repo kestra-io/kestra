@@ -24,7 +24,7 @@
     },
     "dependencies": {
         "@js-joda/core": "^6.0.1",
-        "@kestra-io/kestra-sdk": "^2.0.0-dev.3fc51071.e95cab31",
+        "@kestra-io/kestra-sdk": "^2.0.0-dev.3fc51071.73de1401",
         "@kestra-io/ui-libs": "^0.0.302",
         "@module-federation/enhanced": "^2.3.1",
         "@module-federation/vite": "^1.14.1",

@@ -102,7 +102,7 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
 
     // axios
-    configureAxios({}, {
+    const axiosInstance = configureAxios({}, {
         authStore,
         coreStore,
         oss: true,
@@ -110,12 +110,13 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
         beforeLogout,
         onAuthTimeout: beforeLogout,
         isImpersonating: () => window.sessionStorage.getItem("impersonate"),
-    }).then(instance => {
-        piniaStore.use(({store: piniaStoreLocal}) => {
-            piniaStoreLocal.$http = instance;
-        });
     }) 
 
+    piniaStore.use(({store: piniaStoreLocal}) => {
+        piniaStoreLocal.$http = axiosInstance;
+    });
+
+    
     // mount
     router.isReady().then(() => app.mount("#app"))
 });

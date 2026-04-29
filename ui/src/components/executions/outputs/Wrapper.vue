@@ -2,14 +2,14 @@
     <div class="outputs">
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <KsSplitterPanel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-auto left">
+                <div class="left-panel">
                     <KsCascaderPanel
                         v-if="tasksWithOutputs"
                         ref="cascader"
                         v-model="selected"
                         :props="cascaderProps"
                         :border="false"
-                        class="flex-grow-1 cascader"
+                        class="cascader"
                         @expand-change="() => scrollRight()"
                     >
                         <template #default="{data}">
@@ -56,7 +56,7 @@
                 </div>
             </KsSplitterPanel>
             <KsSplitterPanel>
-                <div class="right wrapper">
+                <div class="right-panel wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
                         class="w-100 overflow-auto p-3 content-container"
@@ -561,6 +561,10 @@
     }
 }
 
+.cascader{
+    flex-grow: 1;
+}
+
 :deep(.kel-scrollbar.kel-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
 .values {
     pointer-events: none;
@@ -590,21 +594,20 @@
     margin-bottom: 0px !important;
 }
 
-.wrapper {
-    background: var(--ks-background-card);
-    position: relative;
-    z-index: 1;
-}
-
 /* Left column container: take full splitter-panel height and scroll internally */
-.outputs .left {
+.outputs .left-panel {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
-.right.wrapper {
+.outputs .right-panel{
+    background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     min-height: 0;

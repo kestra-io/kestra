@@ -6,9 +6,11 @@ import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.kestra.core.validations.ExponentialRetryValidation;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import dev.failsafe.RetryPolicyBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-@ExponentialRetryValidation
+@Schema(title = "Exponential retry", description = "Retry with exponentially increasing delays between attempts.")
 public class Exponential extends AbstractRetry {
     @NotNull
     @JsonInclude
@@ -58,5 +60,19 @@ public class Exponential extends AbstractRetry {
         }
 
         return next;
+    }
+
+    @AssertTrue(message = "'interval' must be less than 'maxDuration'")
+    @JsonIgnore
+    boolean isIntervalLessThanMaxDuration() {
+        if (getMaxDuration() == null || interval == null) return true;
+        return getMaxDuration().compareTo(interval) > 0;
+    }
+
+    @AssertTrue(message = "'interval' must be less than 'maxInterval'")
+    @JsonIgnore
+    boolean isIntervalLessThanMaxInterval() {
+        if (interval == null || maxInterval == null) return true;
+        return interval.compareTo(maxInterval) < 0;
     }
 }

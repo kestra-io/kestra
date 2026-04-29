@@ -292,7 +292,17 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
                 )
             )
-            .with(new Swagger2Module())
+            .with(new Swagger2Module() {
+                @Override
+                protected List<ResolvedType> resolveTargetTypeOverrides(MemberScope<?, ?> member) {
+                    Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
+                    if (schema != null && schema.implementation() == Object.class
+                        && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class) {
+                        return null;
+                    }
+                    return super.resolveTargetTypeOverrides(member);
+                }
+            })
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)

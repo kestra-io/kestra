@@ -7,6 +7,7 @@ import org.apache.hc.core5.http.message.BasicHeader;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 
@@ -29,6 +30,7 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
     protected AuthType type = AuthType.BEARER;
 
     @Schema(title = "The token for bearer token authentication.")
+    @PluginProperty(secret = true)
     private Property<String> token;
 
     @Override

@@ -153,8 +153,25 @@ public class CommandsWrapper implements TaskCommands {
         }
 
         TaskRunner<T> realTaskRunner = this.getTaskRunner();
+        // Inject non-glob outputFiles into the Pebble render context as a name→path map before any rendering.
+        // This makes {{ outputFiles["name"] }} resolvable in scripts, consistent with JDBC tasks.
+        // Glob patterns are skipped here — they cannot resolve to a single path; post-run collection still handles them.
+        Map<String, Object> runnerVars = realTaskRunner.additionalVars(runContext, this);
+        if (this.outputFiles != null && !this.outputFiles.isEmpty()) {
+            String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            Map<String, String> outputFilesMap = new LinkedHashMap<>();
+            for (String name : this.outputFiles) {
+                if (!name.contains("*") && !name.contains("?") && !name.contains("[")) {
+                    outputFilesMap.put(name, workingDir + "/" + name);
+                }
+            }
+            if (!outputFilesMap.isEmpty()) {
+                runnerVars.put("outputFiles", outputFilesMap);
+            }
+        }
+
         if (this.inputFiles != null) {
-            FilesService.inputFiles(runContext, realTaskRunner.additionalVars(runContext, this), this.inputFiles);
+            FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
         }
 
         RunContext taskRunnerRunContext = runContext.cloneForPlugin(realTaskRunner);

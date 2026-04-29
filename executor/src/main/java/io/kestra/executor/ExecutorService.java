@@ -882,6 +882,10 @@ public class ExecutorService {
                     // Check if the worker group exist
                     String tenantId = executor.getFlow().getTenantId();
                     String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                    if (WorkerGroup.isDefault(workerGroupKey)) {
+                        // Explicit default worker group - dispatch without existence check
+                        return workerTask;
+                    }
                     if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                         // Check whether at-least one worker is available
                         if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {

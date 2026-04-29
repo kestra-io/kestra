@@ -59,7 +59,7 @@
         primary: (
             bg: var(--ks-button-background-primary),
             border: var(--ks-button-background-primary),
-            text: white,
+            text: var(--ks-white),
         ),
         success: (
             bg: var(--ks-background-success),

@@ -279,7 +279,7 @@
                         border-radius: 2px;
 
                         &::after {
-                            border-color: #ffffff;
+                            border-color: var(--ks-white);
                             width: 6px;
                             height: 9px;
                             left: 4px;
@@ -316,7 +316,7 @@
                     border-radius: 2px;
 
                     &::after {
-                        border-color: #ffffff;
+                        border-color: var(--ks-white);
                         width: 6px;
                         height: 9px;
                         left: 4px;

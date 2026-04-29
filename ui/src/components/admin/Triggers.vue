@@ -832,7 +832,7 @@
 
         &.is-checked {
             .is-text {
-                color: #ffffff;
+                color: var(--ks-white);
             }
         }
     }

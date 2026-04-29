@@ -61,7 +61,7 @@ h2.big-title {
     border-radius: 0.5rem;
     text-decoration: none;
     background: linear-gradient(180deg, #3a4051 0%, #272a36 100%);
-    color: white;
+    color: var(--ks-white);
     border: 1px solid #21242E;
     border-image-source: linear-gradient(180deg, #2B313E 0%, #131725 100%);
     transition: all 0.3s;

@@ -1010,12 +1010,12 @@
     width: 42px !important;
     height: 42px !important;
     border-radius: 999px !important;
-    color: white !important;
+    color: var(--ks-white) !important;
     margin-left: calc(1rem / 2) !important;
 
     &:hover,
     &:focus-visible {
-        color: white !important;
+        color: var(--ks-white) !important;
     }
 
     &:disabled {

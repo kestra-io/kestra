@@ -455,7 +455,7 @@
                 background-color: var(--ks-button-background-primary);
 
                 &::after {
-                    background-color: white;
+                    background-color: var(--ks-white);
                 }
             }
         }

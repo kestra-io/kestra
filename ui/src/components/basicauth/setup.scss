@@ -259,7 +259,7 @@ $survey-group-spacing: 0.75rem;
       &::after {
         content: "";
         position: absolute;
-        border: 2px solid white;
+        border: 2px solid var(--ks-white);
         border-top: 0;
         border-left: 0;
         width: 4px;

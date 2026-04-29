@@ -1,7 +1,7 @@
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
-import configureAxios from "../src/utils/axios";
+import {configureAxios} from "@kestra-io/kestra-sdk";
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
@@ -35,7 +35,7 @@ const preview = {
 
 setup(async (app) => {
   const {piniaStore} = await initApp(app, [], {}, en);
-  configureAxios(() => {}, null, undefined, true)
+  configureAxios({},  {oss:true})
   piniaStore.use(({store}) => {
     store.$http = {
         get: () => Promise.resolve({data: []}),

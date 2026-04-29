@@ -2,7 +2,7 @@ import Table from "../../../../../src/components/dashboard/sections/Table.vue";
 import type {Chart} from "../../../../../src/components/dashboard/types.ts";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "../../../../../src/utils/axios.ts";
+import {useAxios} from "../../../../../src/utils/axios";
 import {expect, within} from "storybook/test";
 
 const meta: Meta<typeof Table> = {

@@ -2,6 +2,7 @@
     <ElCascaderPanel
         v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        ref="cascaderPanelRef"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default="scope">
@@ -11,9 +12,12 @@
 </template>
 
 <script setup lang="ts">
+    import {useTemplateRef} from "vue"
     import {ElCascaderPanel} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
+
+    const cascader = useTemplateRef("cascaderPanelRef")
 
     defineOptions({inheritAttrs: false})
 
@@ -30,6 +34,10 @@
     defineSlots<{
         default?: (scope: {data: any; node: any}) => unknown
     }>()
+
+    defineExpose({
+        cascader,
+    })
 
     const filteredProps = useFilteredProps(props)
 </script>

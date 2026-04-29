@@ -157,13 +157,13 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {CascaderOption, CascaderProps, ElCascaderPanel} from "element-plus";
+    import {CascaderOption, CascaderProps}from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
-    
+
     import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
@@ -207,7 +207,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.getCheckedNodes(false)?.[0]?.label as string | undefined);
+            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined);
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     });
@@ -294,7 +294,7 @@
             });
     };
 
-    const cascader = ref<InstanceType<typeof ElCascaderPanel> | null>(null);
+    const cascader = ref<InstanceType<typeof KsCascaderPanel> | null>(null);
     const scrollRight = () =>
         setTimeout(
             () =>
@@ -356,7 +356,7 @@
     });
 
     const selectedNode = () => {
-        const node = cascader.value?.getCheckedNodes(false);
+        const node = cascader.value?.cascader?.getCheckedNodes(false);
 
         if (!node?.length) return {label: undefined, value: undefined};
 

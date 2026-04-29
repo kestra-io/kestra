@@ -23,7 +23,6 @@ import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
@@ -283,10 +282,7 @@ public class TriggerScheduler {
         triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
 
         try {
-            List<Condition> conditions = trigger.getConditions() != null ? trigger.getConditions() : List.of();
-
-            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen())) ||
-                !conditionService.areValid(conditions, context.conditionContext())) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionContext().getVariables()))) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }

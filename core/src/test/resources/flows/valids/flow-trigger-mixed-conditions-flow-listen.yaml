@@ -5,9 +5,8 @@ triggers:
   - id: on_completion
     type: io.kestra.plugin.core.trigger.Flow
     states: [ SUCCESS ]
-    conditions:
-      - type: io.kestra.plugin.core.condition.ExecutionFlow
-        namespace: io.kestra.tests.trigger.mixed.conditions
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.mixed.conditions
         flowId: flow-trigger-mixed-conditions-flow-a
   - id: on_failure
     type: io.kestra.plugin.core.trigger.Flow

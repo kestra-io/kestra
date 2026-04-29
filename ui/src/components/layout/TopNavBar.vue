@@ -29,16 +29,8 @@
                 </slot>
             </div>
         </div>
-        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center">
-            <div class="d-none d-lg-flex align-items-center">
-                <GlobalSearch class="trigger-flow-guided-step" />
-            </div>
-            <div v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button @click="deleteLogs()">
-                    <TrashCan class="me-2" />
-                    <span>{{ $t("delete logs") }}</span>
-                </el-button>
-            </div>
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+            <GlobalSearch class="trigger-flow-guided-step" />
             <slot name="additional-right" />
         </div>
     </nav>
@@ -49,15 +41,11 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
     import Information from "vue-material-design-icons/Information.vue";
     import Badge from "../global/Badge.vue";
-    import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
     import Breadcrumb from "./Breadcrumb.vue";
@@ -72,8 +60,6 @@
     }>();
 
     const route = useRoute();
-    const logsStore = useLogsStore();
-    const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
     const bookmarksStore = useBookmarksStore();
 
@@ -81,10 +67,6 @@
         {label: t("home"), link: {name: "home"}},
         ...(props.breadcrumb ?? []),
     ]);
-
-    const shouldDisplayDeleteButton = computed(() => {
-        return route.name === "flows/update" && route.params?.tab === "logs";
-    });
 
     const bookmarked = computed(() => {
         return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
@@ -102,26 +84,7 @@
         return "";
     });
 
-    const toast = useToast();
     const {t} = useI18n();
-
-    const deleteLogs = () => {
-        if(!flowStore.flow){
-            throw new Error("No flow selected");
-        }
-        toast.confirm(
-            t("delete_all_logs"),
-            async () => {
-                if(!flowStore.flow){
-                    return;
-                }
-                return logsStore.deleteLogs({
-                    namespace: flowStore.flow?.namespace,
-                    flowId: flowStore.flow?.id
-                })
-            },
-        );
-    };
 
     const onStarClick = () => {
         if (bookmarked.value) {

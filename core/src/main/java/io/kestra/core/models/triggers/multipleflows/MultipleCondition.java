@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
 // FIXME check if we keep it or not, maybe refactor the whole multiple flow handling and simplify it.

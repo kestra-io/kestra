@@ -4,36 +4,28 @@
         :description="props.dashboard?.description"
     >
         <template v-if="isAllowedDashboard || isAllowedFlow" #additional-right>
-            <ul>
-                <li
+            <NavBarActions>
+                <Dashboards
                     v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"
-                >
-                    <Dashboards
-                        @dashboard="(value: any) => props.load?.(value)"
-                        class="me-1"
-                    />
-                </li>
-                <li
+                    @dashboard="(value: any) => props.load?.(value)"
+                />
+                <NavBarAction
                     v-if="props.dashboard?.id && props.dashboard?.id !== 'default' && isAllowedDashboard"
-                >
-                    <router-link
-                        :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
-                    >
-                        <el-button :icon="Pencil">
-                            {{ $t("dashboards.edition.label") }}
-                        </el-button>
-                    </router-link>
-                </li>
-                <li
-                    v-if="isAllowedFlow"
-                >
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t("create_flow") }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
+                    :icon="Pencil"
+                    :label="$t('dashboards.edition.label')"
+                    :to="{name: 'dashboards/update', params: {dashboard: props.dashboard.id}}"
+                />
+
+                <template #primary>
+                    <NavBarAction
+                        v-if="isAllowedFlow"
+                        type="primary"
+                        :icon="Plus"
+                        :label="$t('create_flow')"
+                        :to="{name: 'flows/create'}"
+                    />
+                </template>
+            </NavBarActions>
         </template>
     </TopNavBar>
 </template>
@@ -50,6 +42,9 @@
 
     import TopNavBar from "../../layout/TopNavBar.vue";
     import Dashboards from "./selector/Selector.vue";
+
+    import NavBarActions from "../../layout/NavBarActions.vue";
+    import NavBarAction from "../../layout/NavBarAction.vue";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";

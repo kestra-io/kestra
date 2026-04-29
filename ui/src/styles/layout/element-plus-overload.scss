@@ -819,6 +819,10 @@ form.ks-horizontal {
         border-radius: 0.5rem;
     }
 
+    .el-dropdown .el-dropdown-menu__item {
+        --el-dropdown-menuItem-hover-color: var(--ks-content-primary);
+    }
+
     // no longer require focus to get hover effect on dropdowns
     .el-dropdown-menu__item {
         &:first-child {
@@ -838,7 +842,8 @@ form.ks-horizontal {
             }
         }
 
-        &:not(.is-disabled):hover {
+        &:not(.is-disabled):hover,
+        &:not(.is-disabled):focus {
             background-color: var(--ks-dropdown-background-hover);
         }
     }

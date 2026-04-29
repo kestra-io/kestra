@@ -482,7 +482,7 @@
             flex: 1;
             flex-wrap: wrap;
 
-            :deep(.wrapper) {
+            :deep(.ks-task-icon) {
                 height: 1.5rem;
                 width: 1.5rem;
             }

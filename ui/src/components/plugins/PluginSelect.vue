@@ -137,7 +137,7 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(div.wrapper) {
+    :deep(div.ks-task-icon) {
         display: inline-block;
         width: var(--kel-font-size-large);
         height: var(--kel-font-size-large);
@@ -145,7 +145,7 @@
     }
 
     :deep(.kel-input__prefix-inner) {
-        .wrapper {
+        .ks-task-icon {
             top: 0;
             margin-right: 0;
         }
@@ -166,7 +166,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.wrapper) {
+        :deep(.ks-task-icon) {
             width: 2rem;
             height: 2rem;
         }

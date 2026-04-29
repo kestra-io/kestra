@@ -107,16 +107,16 @@
         from {
             transform: translateZ(0) scale(1);
             box-shadow:
-                0 0 0 0 color-mix(in srgb, var(--kel-color-primary) 42%, transparent),
-                0 0 14px 4px color-mix(in srgb, var(--kel-color-primary) 28%, transparent);
+                0 0 0 0 color-mix(in srgb, var(--ks-button-background-primary) 42%, transparent),
+                0 0 14px 4px color-mix(in srgb, var(--ks-button-background-primary) 28%, transparent);
         }
 
         to {
             transform: translateZ(0) scale(1.04);
             box-shadow:
-                0 0 0 8px color-mix(in srgb, var(--kel-color-primary) 12%, transparent),
-                0 0 22px 8px color-mix(in srgb, var(--kel-color-primary) 34%, transparent),
-                0 0 36px 14px color-mix(in srgb, var(--kel-color-primary) 20%, transparent);
+                0 0 0 8px color-mix(in srgb, var(--ks-button-background-primary) 12%, transparent),
+                0 0 22px 8px color-mix(in srgb, var(--ks-button-background-primary) 34%, transparent),
+                0 0 36px 14px color-mix(in srgb, var(--ks-button-background-primary) 20%, transparent);
         }
     }
 
@@ -128,16 +128,16 @@
         from {
             transform: translateZ(0) scale(1);
             box-shadow:
-                0 0 0 0 color-mix(in srgb, var(--kel-color-primary) 54%, transparent),
-                0 0 16px 5px color-mix(in srgb, var(--kel-color-primary) 34%, transparent);
+                0 0 0 0 color-mix(in srgb, var(--ks-button-background-primary) 54%, transparent),
+                0 0 16px 5px color-mix(in srgb, var(--ks-button-background-primary) 34%, transparent);
         }
 
         to {
             transform: translateZ(0) scale(1.035);
             box-shadow:
-                0 0 0 10px color-mix(in srgb, var(--kel-color-primary) 14%, transparent),
-                0 0 24px 9px color-mix(in srgb, var(--kel-color-primary) 40%, transparent),
-                0 0 42px 16px color-mix(in srgb, var(--kel-color-primary) 24%, transparent);
+                0 0 0 10px color-mix(in srgb, var(--ks-button-background-primary) 14%, transparent),
+                0 0 24px 9px color-mix(in srgb, var(--ks-button-background-primary) 40%, transparent),
+                0 0 42px 16px color-mix(in srgb, var(--ks-button-background-primary) 24%, transparent);
         }
     }
 </style>

@@ -26,7 +26,7 @@
             return miscStore.configs.environment.color;
         }
 
-        return cssVar("--kel-color-info");
+        return cssVar("--ks-content-info");
     })
 
 </script>

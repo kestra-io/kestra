@@ -84,7 +84,7 @@
                 justify-content: space-between;
                 font-size: var(--kel-alert-title-font-size);
                 line-height: 24px;
-                color: var(--kel-color-error);
+                color: var(--ks-content-error);
 
             }
         }

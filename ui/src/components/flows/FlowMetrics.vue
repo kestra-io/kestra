@@ -174,7 +174,7 @@
             {
                 name: `${t(aggregationLabel)} ${t("of")} ${metric}`,
                 data: aggregations.map((e) => e.value ?? 0),
-                itemStyle: {color: cssVar("--kel-color-success")},
+                itemStyle: {color: cssVar("--ks-content-success")},
             },
         ];
     }

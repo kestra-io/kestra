@@ -171,8 +171,8 @@
             }
 
             &.kel-tag--primary {
-                border-color: var(--kel-color-primary);
-                background-color: var(--kel-color-primary);
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
                 color: white;
             }
         }

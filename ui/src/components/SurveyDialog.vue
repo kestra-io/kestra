@@ -288,8 +288,8 @@
                     }
 
                     &.is-checked .kel-checkbox__inner {
-                        background-color: var(--kel-color-primary, #7c3aed);
-                        border-color: var(--kel-color-primary, #7c3aed);
+                        background-color: var(--ks-button-background-primary, #7c3aed);
+                        border-color: var(--ks-button-background-primary, #7c3aed);
                     }
                 }
 
@@ -325,8 +325,8 @@
                 }
 
                 &.is-checked .kel-checkbox__inner {
-                    background-color: var(--kel-color-primary, #7c3aed);
-                    border-color: var(--kel-color-primary, #7c3aed);
+                    background-color: var(--ks-button-background-primary, #7c3aed);
+                    border-color: var(--ks-button-background-primary, #7c3aed);
                 }
             }
 

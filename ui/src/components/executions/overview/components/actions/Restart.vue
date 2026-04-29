@@ -436,7 +436,7 @@
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--kel-color-primary);
+                background-color: var(--ks-button-background-primary);
             }
         }
     }
@@ -451,8 +451,8 @@
     &.is-checked {
         :deep(.kel-radio__input) {
             .kel-radio__inner {
-                border-color: var(--kel-color-primary);
-                background-color: var(--kel-color-primary);
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
 
                 &::after {
                     background-color: white;

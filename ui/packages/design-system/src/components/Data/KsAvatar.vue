@@ -42,7 +42,7 @@
         }
 
         html.dark & {
-            --kel-avatar-text-color: var(--kel-color-white);
+            --kel-avatar-text-color: white;
         }
     }
 </style>

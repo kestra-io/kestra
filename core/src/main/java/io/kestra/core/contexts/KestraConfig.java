@@ -1,6 +1,8 @@
 package io.kestra.core.contexts;
 
-import io.micronaut.context.annotation.Value;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
@@ -10,10 +12,10 @@ import jakarta.inject.Singleton;
 public class KestraConfig {
     public static final String DEFAULT_SYSTEM_FLOWS_NAMESPACE = "system";
 
-    @Value("${kestra.system-flows.namespace:" + DEFAULT_SYSTEM_FLOWS_NAMESPACE + "}")
-    private String systemFlowNamespace;
+    @Inject
+    private SystemFlowsConfiguration systemFlowsConfiguration;
 
     public String getSystemFlowNamespace() {
-        return systemFlowNamespace;
+        return systemFlowsConfiguration.namespace();
     }
 }

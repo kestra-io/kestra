@@ -9,7 +9,6 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
 import io.kestra.core.serializers.JacksonMapper;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -268,10 +267,14 @@ public class VariableRenderer {
             this.cacheEnabled = true;
             this.cacheSize = 1000;
             this.recursiveRendering = false;
+            this.redactedEnvVars = java.util.List.of(
+                "KESTRA_PLUGINS_PATH", "KESTRA_CONFIGURATION_PATH", "KESTRA_CONFIGURATION", "KESTRA_JAVA_OPTS"
+            );
         }
 
         Boolean cacheEnabled;
         Integer cacheSize;
         Boolean recursiveRendering;
+        java.util.List<String> redactedEnvVars;
     }
 }

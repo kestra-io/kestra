@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
@@ -14,18 +15,18 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class DataChartValidator implements ConstraintValidator<DataChartValidation, DataChart<?, ?>> {
-    @Value("${kestra.repository.type}")
-    private String repositoryType;
+    @Inject
+    private RepositoryConfiguration repositoryConfiguration;
 
     @Override
     public boolean isValid(
@@ -97,7 +98,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         if (
             dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
-                && !repositoryType.equals("elasticsearch")
+                && !("elasticsearch".equals(repositoryConfiguration.type()))
         ) {
             violations.add("LABELS column is only supported with an ElasticSearch database.");
         }

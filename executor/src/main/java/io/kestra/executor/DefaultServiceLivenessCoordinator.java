@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import org.slf4j.event.Level;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -16,6 +15,7 @@ import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -28,7 +28,6 @@ import io.kestra.core.utils.Logs;
 
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -92,8 +91,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final WorkerJobRunningStateStore workerJobRunningStateStore,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController,
-        @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
+        final VNodeController vNodeController) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.serviceLivenessUpdater = serviceLivenessUpdater;
@@ -104,7 +102,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.lockService = lockService;
         this.metricRegistry = metricRegistry;
-        this.purgeRetention = purgeRetention;
+        this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
+            ? serverConfig.service().purge().retention()
+            : null;
         this.vNodeController = vNodeController;
     }
 

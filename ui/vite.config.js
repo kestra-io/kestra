@@ -40,7 +40,7 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
                 {find: /^echarts(.*)$/, replacement: path.resolve(__dirname, "node_modules/echarts") + "$1"},
                 {find: /^vue-echarts$/, replacement: path.resolve(__dirname, "node_modules/vue-echarts")},
@@ -124,11 +124,13 @@ export default defineConfig(({mode}) => {
                 "humanize-duration",
                 "moment",
                 "moment-timezone",
-                "moment-range"
+                "moment-range",
+                "dagre"
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",
-                "@kestra-io/design-system"
+                "@kestra-io/design-system",
+                "@kestra-io/topology"
             ]
         },
     };

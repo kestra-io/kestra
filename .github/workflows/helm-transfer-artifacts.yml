@@ -34,7 +34,7 @@ jobs:
           workload_identity_provider: projects/230725787862/locations/global/workloadIdentityPools/github/providers/github
           service_account: helm-charts-publisher@kestra-host.iam.gserviceaccount.com
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: List artifacts
         run: |

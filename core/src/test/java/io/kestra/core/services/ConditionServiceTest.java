@@ -1,10 +1,7 @@
 
 package io.kestra.core.services;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
@@ -13,9 +10,8 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -122,25 +118,6 @@ class ConditionServiceTest {
         assertThat(conditionContext.getFlow()).isEqualTo(flow);
         assertThat(conditionContext.getExecution()).isEqualTo(execution);
         assertThat(conditionContext.getRunContext()).isEqualTo(runContext);
-        assertThat(conditionContext.getMultipleConditionStorage()).isNull();
-    }
-
-    @Test
-    void conditionContextWithMultipleConditionStorageParam() {
-        // Given
-        Flow flow = TestsUtils.mockFlow();
-        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
-        RunContext runContext = runContextFactory.of(flow, execution);
-        MultipleConditionStateStore stateStore = Mockito.mock(MultipleConditionStateStore.class);
-
-        // When
-        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, execution, stateStore);
-
-        // Then
-        assertThat(conditionContext.getFlow()).isEqualTo(flow);
-        assertThat(conditionContext.getExecution()).isEqualTo(execution);
-        assertThat(conditionContext.getRunContext()).isEqualTo(runContext);
-        assertThat(conditionContext.getMultipleConditionStorage()).isSameAs(stateStore);
     }
 
     // --- isValid(Condition, FlowInterface, Execution) ---
@@ -219,7 +196,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution);
 
         // Then
         assertThat(valid).isTrue();
@@ -238,7 +215,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution);
 
         // Then
         assertThat(valid).isFalse();
@@ -261,7 +238,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, (MultipleConditionStateStore) null);
+        boolean valid = conditionService.isValid(trigger, flow, execution);
 
         // Then
         assertThat(valid).isFalse();
@@ -291,7 +268,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution);
 
         // Then
         assertThat(valid).isTrue();
@@ -319,7 +296,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution);
 
         // Then
         assertThat(valid).isFalse();
@@ -345,7 +322,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, runContext, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution, runContext);
 
         // Then
         assertThat(valid).isFalse();
@@ -370,7 +347,7 @@ class ConditionServiceTest {
             .build();
 
         // When
-        boolean valid = conditionService.isValid(trigger, flow, execution, runContext, null);
+        boolean valid = conditionService.isValid(trigger, flow, execution, runContext);
 
         // Then
         assertThat(valid).isTrue();
@@ -463,7 +440,7 @@ class ConditionServiceTest {
             public Integer getMinSatisfied() { return null; }
 
             @Override
-            public boolean test(ConditionContext conditionContext) throws InternalException {
+            public boolean test(ConditionContext conditionContext, Optional<MultipleConditionWindow> multipleConditionWindow) throws InternalException {
                 throw new InternalException("simulated evaluation failure");
             }
         };

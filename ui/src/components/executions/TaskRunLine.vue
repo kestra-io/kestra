@@ -273,7 +273,7 @@
                 let indexedLogs = this?.logs
                     .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
                     .map((logLine, index) => ({...logLine, index}));
-            
+
                 // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
                 indexedLogs = Array.from(new Set(indexedLogs))
 
@@ -366,10 +366,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             shouldDisplayChevron(taskRun) {
-                return this.shouldDisplayProgressBar(taskRun) || this.shouldDisplayLogs(taskRun.id)
-            },
-            shouldDisplayProgressBar(taskRun) {
-                return this.taskType(taskRun) === "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable" || this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                return this.shouldDisplayLogs(taskRun.id)
             },
             shouldDisplayLogs(taskRunId) {
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]

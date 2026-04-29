@@ -24,20 +24,20 @@ public class IsFileEmptyFunction extends AbstractFileFunction {
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
-                try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
+                try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
                     byte[] buffer = new byte[1];
                     yield inputStream.read(buffer, 0, 1) <= 0;
                 }
             }
             case LocalPath.FILE_SCHEME -> {
-                try (InputStream inputStream = localPathFactory.createLocalPath().get(path)) {
+                try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
                     byte[] buffer = new byte[1];
                     yield inputStream.read(buffer, 0, 1) <= 0;
                 }
             }
             case Namespace.NAMESPACE_FILE_SCHEME -> {
-                FileAttributes fileAttributes = namespaceFactory
-                    .of(tenantId, namespace, storageInterface)
+                FileAttributes fileAttributes = namespaceFactory.get()
+                    .of(tenantId, namespace, storageInterface.get())
                     .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath())));
                 yield fileAttributes.getSize() <= 0;
             }

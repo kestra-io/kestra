@@ -35,7 +35,7 @@ import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
-import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -174,30 +174,34 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldGetSuccessWhenUnlockingTriggerGivenLocked() {
+    void shouldUnlockTriggerWhenLocked() {
         // GIVEN
         TriggerState trigger = createTriggerWith(IdUtils.create(), IdUtils.create(), TENANT_ID).locked(Clock.systemDefaultZone(), true);
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
-        HttpResponse<Object> exchange = client.toBlocking().exchange(
+        HttpResponse<ApiTriggerState> exchange = client.toBlocking().exchange(
             HttpRequest.POST(
                 (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
                     trigger.getNamespace(),
                     trigger.getFlowId(),
                     trigger.getTriggerId()
                 ), null
-            )
+            ),
+            ApiTriggerState.class
         );
 
         // THEN
-        assertThat(exchange.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(exchange.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(exchange.body()).isNotNull();
+        assertThat(exchange.body().triggerId()).isEqualTo(trigger.getTriggerId());
     }
 
     @Test
-    void shouldGetConflictWhenUnlockingTriggerGivenUnlocked() {
-        // GIVEN
-        TriggerState trigger = createTriggerWith(IdUtils.create(), IdUtils.create(), TENANT_ID).locked(Clock.systemDefaultZone(), false);
+    void shouldReturnConflictWhenUnlockingTriggerAlreadyUnlocked() {
+        // GIVEN: use newRandomTriggerState (no evaluatedAt) so the scheduler does not pick it up as eligible
+        // and delete it as an orphan before we query it.
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
@@ -222,7 +226,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldGetNotFoundWhenUnlockingTriggerGivenUnlocked() {
+    void shouldReturnNotFoundWhenUnlockingMissingTrigger() {
         // WHEN
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(
@@ -241,7 +245,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldGetNoContentWhenRestartingTriggerGivenExist() throws FlowProcessingException, QueueException {
+    void shouldRestartTriggerWhenExists() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
         flowService.create(GenericFlow.of(flow));
@@ -258,20 +262,23 @@ class TriggerControllerTest {
         jdbcTriggerRepository.create(trigger);
 
         // WHEN
-        HttpResponse<?> restarted = client.toBlocking().exchange(
+        HttpResponse<ApiTriggerState> restarted = client.toBlocking().exchange(
             HttpRequest.POST(
                 (TRIGGER_PATH
                     + "/%s/%s/%s/restart".formatted(flow.getNamespace(), flow.getId(), trigger.getTriggerId())),
                 null
-            )
+            ),
+            ApiTriggerState.class
         );
 
         // THEN
-        assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(restarted.body()).isNotNull();
+        assertThat(restarted.body().triggerId()).isEqualTo(trigger.getTriggerId());
     }
 
     @Test
-    void shouldGetNotFoundWhenRestartingTriggerGivenNotExist() {
+    void shouldReturnNotFoundWhenRestartingMissingTrigger() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/???/???/???/restart"), null))
         );
@@ -280,7 +287,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldBulkDeleteTriggersByIds() {
+    void shouldAcceptDeleteTriggersByIdsWhenExist() {
         // GIVEN
         TriggerState trigger1 = jdbcTriggerRepository.save(newRandomTriggerState());
         TriggerState trigger2 = jdbcTriggerRepository.save(newRandomTriggerState());
@@ -290,18 +297,20 @@ class TriggerControllerTest {
             .toList();
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.DELETE(
-                TRIGGER_PATH + "/delete/by-triggers", triggers
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(2);
     }
 
     @Test
-    void shouldDeleteTriggerById() throws FlowProcessingException, QueueException {
+    void shouldDeleteTriggerWhenExists() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow1 = generateFlowWithTrigger(IdUtils.create().toLowerCase());
         TriggerState state = createTriggerFromFlow(flow1, true);
@@ -318,10 +327,12 @@ class TriggerControllerTest {
 
         // THEN
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(state).isEmpty());
     }
 
     @Test
-    void shouldUnlockTriggerByIdsGivenLocked() {
+    void shouldAcceptUnlockByIdsWhenLocked() {
         // GIVEN
         TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
 
@@ -329,68 +340,74 @@ class TriggerControllerTest {
 
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers), BulkResponse.class);
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(1);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
     }
 
     @Test
-    void shouldNotUnlockTriggerByIdsGivenUnlocked() {
+    void shouldAcceptUnlockByIdsWithZeroItemsWhenUnlocked() {
         // GIVEN
         TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
         jdbcTriggerRepository.save(state);
 
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-triggers", triggers
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(0);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
     }
 
     @Test
-    void shouldUnlockTriggerByQueryGivenLocked() {
+    void shouldAcceptUnlockByQueryWhenLocked() {
         // GIVEN
         TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
 
         jdbcTriggerRepository.save(state);
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(1);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
     }
 
     @Test
-    void shouldNotUnlockTriggerByQueryGivenUnlocked() {
+    void shouldAcceptUnlockByQueryWithZeroItemsWhenUnlocked() {
         // GIVEN
         TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
 
         jdbcTriggerRepository.save(state);
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(0);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
     }
 
     @Test
-    void shouldSetDisabledByTriggerIdsGivenFalse() throws FlowProcessingException, QueueException {
+    void shouldAcceptSetDisabledByIdsWhenFalse() throws FlowProcessingException, QueueException {
         // GIVEN
         String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
@@ -415,14 +432,14 @@ class TriggerControllerTest {
             .toList();
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
         try {
             Await.until(() -> !jdbcTriggerRepository.findById(triggerDisabled).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
         } catch (TimeoutException e) {
@@ -431,7 +448,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldSetDisabledByTriggerIdsGivenTrue() throws FlowProcessingException, QueueException {
+    void shouldAcceptSetDisabledByIdsWhenTrue() throws FlowProcessingException, QueueException {
         // GIVEN
         String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
@@ -455,14 +472,14 @@ class TriggerControllerTest {
             ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
 
         try {
             Await.until(() -> jdbcTriggerRepository.findById(triggerToDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(10));
@@ -472,7 +489,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldSetDisabledByQueryGivenTrue() throws FlowProcessingException, QueueException {
+    void shouldAcceptSetDisabledByQueryWhenTrue() throws FlowProcessingException, QueueException {
         // GIVEN
         String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
@@ -492,14 +509,14 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(toDisable);
 
         // WHEN
-        BulkResponse bulkResponse = client.toBlocking().retrieve(
-            HttpRequest.POST(
-                TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=true".formatted(namespace), null
-            ), BulkResponse.class
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=true".formatted(namespace), null),
+            ApiAsyncOperationResponse.class
         );
 
         // THEN
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
         try {
             Await.until(() -> jdbcTriggerRepository.findById(toDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
         } catch (TimeoutException e) {
@@ -508,13 +525,13 @@ class TriggerControllerTest {
     }
 
     @Test
-    void disableByTriggersBadRequest() {
+    void shouldReturnBadRequestWhenDisableByTriggersMissingBody() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST(
                     TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)
                 ),
-                BulkResponse.class
+                ApiAsyncOperationResponse.class
             )
         );
 

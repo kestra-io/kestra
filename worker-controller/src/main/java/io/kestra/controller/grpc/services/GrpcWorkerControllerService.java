@@ -86,7 +86,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             WorkerStreamContext<WorkerJobResponse> ctx = contextRef.get();
             if (ctx != null) {
                 log.info("Worker [{}] stream cancelled", ctx.getWorkerId());
-                workerJobDispatcher.unregisterWorker(ctx.getWorkerId());
+                workerJobDispatcher.unregisterWorker(ctx);
             } else {
                 log.info("Worker stream cancelled before initialization");
             }
@@ -148,7 +148,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 WorkerStreamContext<WorkerJobResponse> context = contextRef.get();
                 if (context != null) {
                     log.warn("Worker [{}] stream error: {}", context.getWorkerId(), t.getMessage());
-                    workerJobDispatcher.unregisterWorker(context.getWorkerId());
+                    workerJobDispatcher.unregisterWorker(context);
                 } else {
                     log.warn("Worker stream error before initialization: {}", t.getMessage());
                 }
@@ -159,7 +159,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 WorkerStreamContext<WorkerJobResponse> context = contextRef.get();
                 if (context != null) {
                     log.info("Worker [{}] stream completed normally", context.getWorkerId());
-                    workerJobDispatcher.unregisterWorker(context.getWorkerId());
+                    workerJobDispatcher.unregisterWorker(context);
                 }
                 responseObserver.onCompleted();
             }
@@ -174,6 +174,11 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
         {
             try {
                 workerTaskResultQueue.emit(workerTaskResult);
+
+                // only remove the worker job running once the task has reached a terminal state
+                if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+                    workerJobRunningStateStore.deleteByKey(workerTaskResult.getTaskRun().getId());
+                }
             } catch (QueueException e) {
                 // If there is a QueueException it can either be caused by the message limit or another queue issue.
                 // We fail the task and try to resend it.
@@ -191,6 +196,11 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
                 try {
                     this.workerTaskResultQueue.emit(failed);
+
+                    // only remove the worker job running once the task has reached a terminal state
+                    if (failed.getTaskRun().getState().isTerminated()) {
+                        workerJobRunningStateStore.deleteByKey(failed.getTaskRun().getId());
+                    }
                 } catch (QueueException ex) {
                     log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTaskRun().getTaskId(), failed.getTaskRun().getId(), e);
                 }

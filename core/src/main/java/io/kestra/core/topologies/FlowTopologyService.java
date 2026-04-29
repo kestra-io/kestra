@@ -24,7 +24,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.condition.*;
 
 import io.micronaut.core.annotation.Nullable;
@@ -200,13 +199,10 @@ public class FlowTopologyService {
             .flatMap(flow -> ListUtils.emptyOnNull(flow.getConditions()).stream())
             .allMatch(condition -> validateCondition(condition, parent, execution));
 
-        boolean preconditionMatch = flowTriggers.stream()
-            .anyMatch(flow -> flow.getPreconditions() == null || validatePreconditions(flow.getPreconditions(), parent, execution));
-
         boolean dependsOnMatch = flowTriggers.stream()
             .anyMatch(flow -> ListUtils.isEmpty(flow.getDependsOn()) || validateDependsOn(flow.getDependsOn(), parent, execution));
 
-        return conditionMatch && dependsOnMatch && preconditionMatch;
+        return conditionMatch && dependsOnMatch;
     }
 
     private boolean validateCondition(Condition condition, FlowInterface child, Execution execution) {
@@ -246,23 +242,6 @@ public class FlowTopologyService {
 
     private boolean isMandatoryMultipleCondition(Condition condition) {
         return condition.getClass().isAssignableFrom(Expression.class);
-    }
-
-    private boolean validatePreconditions(io.kestra.plugin.core.trigger.Flow.Preconditions preconditions, FlowInterface child, Execution execution) {
-        boolean upstreamFlowMatched = MapUtils.emptyOnNull(preconditions.getUpstreamFlowsConditions())
-            .values()
-            .stream()
-            .filter(c -> !isFilterCondition(c))
-            .anyMatch(c -> validateCondition(c, child, execution));
-
-        boolean whereMatched = MapUtils.emptyOnNull(preconditions.getWhereConditions())
-            .values()
-            .stream()
-            .filter(c -> !isFilterCondition(c))
-            .allMatch(c -> validateCondition(c, child, execution));
-
-        // to be a dependency, if upstream flow is set it must be either inside it so it's a AND between upstream flow and where
-        return upstreamFlowMatched && whereMatched;
     }
 
     private boolean validateDependsOn(List<io.kestra.plugin.core.trigger.Flow.Dependency> dependsOn, FlowInterface child, Execution execution) {

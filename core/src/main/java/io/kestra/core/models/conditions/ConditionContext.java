@@ -5,10 +5,8 @@ import java.util.Map;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContext;
 
-import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -29,7 +27,4 @@ public class ConditionContext {
     @With
     @Builder.Default
     private final Map<String, Object> variables = new HashMap<>();
-
-    @Nullable
-    private MultipleConditionStateStore multipleConditionStorage;
 }

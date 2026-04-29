@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.posthog.PosthogService;
@@ -42,6 +43,10 @@ class AiServiceManagerTest {
     PosthogService posthogService;
     @Mock
     NamespaceContextTool namespaceContextTool;
+    @Mock
+    ExpressionContextService expressionContextService;
+    @Mock
+    io.kestra.core.services.PluginDefaultService pluginDefaultService;
 
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers) {
         when(providersConfiguration.providers()).thenReturn(providers);
@@ -56,7 +61,9 @@ class AiServiceManagerTest {
             instanceService,
             posthogService,
             List.of(),
-            namespaceContextTool
+            namespaceContextTool,
+            expressionContextService,
+            pluginDefaultService
         );
     }
 

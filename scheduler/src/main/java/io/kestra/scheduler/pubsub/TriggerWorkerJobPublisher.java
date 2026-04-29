@@ -68,6 +68,11 @@ public class TriggerWorkerJobPublisher {
                 String tenantId = triggerState.getTenantId();
                 RunContext runContext = conditionContext.getRunContext();
                 String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                if (WorkerGroup.isDefault(workerGroupKey)) {
+                    // Explicit default worker group - dispatch without existence check
+                    this.workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
+                    return;
+                }
                 if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {

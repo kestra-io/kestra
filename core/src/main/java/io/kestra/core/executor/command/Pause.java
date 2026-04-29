@@ -5,12 +5,15 @@ import java.time.Instant;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
+import jakarta.annotation.Nullable;
+
 public record Pause(String tenantId,
     String namespace,
     String flowId,
     String executionId,
     Instant timestamp,
-    EventId eventId) implements ExecutionCommand {
+    EventId eventId,
+    @Nullable String operationId) implements ExecutionCommand {
     public static Pause from(Execution execution) {
         return new Pause(
             execution.getTenantId(),
@@ -18,7 +21,12 @@ public record Pause(String tenantId,
             execution.getFlowId(),
             execution.getId(),
             Instant.now(),
-            EventId.create()
+            EventId.create(),
+            null
         );
+    }
+
+    public Pause withOperationId(String operationId) {
+        return new Pause(tenantId, namespace, flowId, executionId, timestamp, eventId, operationId);
     }
 }

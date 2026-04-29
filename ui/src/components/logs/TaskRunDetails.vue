@@ -24,12 +24,6 @@
                         <div id="buttons" />
                     </template>
                 </TaskRunLine>
-                <ForEachStatus
-                    v-if="shouldDisplayProgressBar(currentTaskRun)"
-                    :executionId="currentTaskRun.executionId"
-                    :subflowsStatus="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.iterations"
-                    :max="forEachItemExecutableByRootTaskId[currentTaskRun.taskId].outputs.numberOfBatches"
-                />
                 <div
                     v-if="shouldDisplayLogs(currentTaskRun)"
                     class="log-lines"
@@ -116,7 +110,6 @@
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
-    import ForEachStatus from "../executions/ForEachStatus.vue";
     import TaskRunLine from "../executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
     import FilePreview from "../executions/FilePreview.vue";
@@ -131,7 +124,6 @@
         components: {
             FilePreview,
             TaskRunLine,
-            ForEachStatus,
             LogLine,
         },
         emits: [
@@ -187,11 +179,7 @@
             showProgressBar: {
                 type: Boolean,
                 default: true,
-            },
-            showLogs: {
-                type: Boolean,
-                default: true,
-            },
+            }
         },
         data() {
             return {
@@ -410,24 +398,6 @@
                     ]),
                 );
             },
-            forEachItemExecutableByRootTaskId() {
-                return Object.fromEntries(
-                    Object.entries(this.taskTypeAndTaskRunByTaskId)
-                        .filter(
-                            ([, taskTypeAndTaskRun]) =>
-                                taskTypeAndTaskRun[0] ===
-                                "io.kestra.plugin.core.flow.ForEachItem" ||
-                                taskTypeAndTaskRun[0] ===
-                                "io.kestra.core.tasks.flows.ForEachItem",
-                        )
-                        .map(([taskId]) => [
-                            taskId,
-                            this.taskTypeAndTaskRunByTaskId?.[
-                                taskId + "_items"
-                            ]?.[1],
-                        ]),
-                );
-            },
             currentTaskRunsLogIndicesByLevel() {
                 return this.currentTaskRuns.reduce(
                     (currentTaskRunsLogIndicesByLevel, taskRun, taskRunIndex) => {
@@ -550,19 +520,6 @@
                     }
                 });
             },
-            shouldDisplayProgressBar(taskRun) {
-                return (
-                    this.showProgressBar &&
-                    (this.taskType(taskRun) ===
-                        "io.kestra.plugin.core.flow.ForEachItem" ||
-                        this.taskType(taskRun) ===
-                        "io.kestra.core.tasks.flows.ForEachItem") &&
-                    this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs
-                        ?.iterations !== undefined &&
-                    this.forEachItemExecutableByRootTaskId[taskRun.taskId]?.outputs
-                        ?.numberOfBatches !== undefined
-                );
-            },
             shouldDisplayLogs(taskRun) {
                 return (
                     (this.taskRunId ||
@@ -579,8 +536,7 @@
                                         taskRun.id
                                     ],
                                 )
-                            ])) &&
-                    this.showLogs
+                            ]))
                 );
             },
             closeTargetExecutionSSE() {
@@ -722,10 +678,6 @@
                 return !(this.taskRunId && this.taskRunId !== currentTaskRun.id);
             },
             loadLogs(executionId) {
-                if (!this.showLogs) {
-                    return;
-                }
-
                 this.executionsStore
                     .loadLogs({
                         executionId,

@@ -240,7 +240,8 @@
         "plural": "대시보드",
         "singular": "대시보드"
       },
-      "preview": "미리보기 대시보드"
+      "preview": "미리보기 대시보드",
+      "switch": "대시보드 전환"
     },
     "data": "데이터",
     "dataFilters": "데이터 필터",
@@ -1753,6 +1754,14 @@
     },
     "welcome_copilot": {
       "button_cta": "새 flow 생성",
+      "create_manually": {
+        "description": "편집기를 사용하여 처음부터 빌드하기",
+        "title": "수동으로 생성"
+      },
+      "docs": {
+        "description": "공식 문서에서 자세히 알아보기",
+        "title": "문서 읽기"
+      },
       "execute_hint": {
         "description": "클릭하여 워크플로우를 저장하고 즉시 실행하세요.",
         "title": "저장 및 flow 실행"

@@ -1579,6 +1579,7 @@
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
+      "switch": "Switch Dashboard",
       "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
       "creation": {
@@ -1767,28 +1768,59 @@
     "export_as": "Export as .{format}",
     "save_and_execute": "Save & Execute",
     "welcome_copilot": {
-      "button_cta": "Create flow from scratch",
-      "title": "Turn your idea into a workflow",
-      "need_help": "Need Help?",
-      "placeholder_prompt": "Send me a daily greeting message at 9am.",
-      "show_more": "Show more prompts",
-      "show_less": "Show fewer prompts",
-      "remaining_quota": "You have {count} AI generations left",
-      "execute_hint": {
-        "title": "Save & Execute your flow",
-        "description": "Click to save your workflow and run it immediately."
-      },
-      "success_popup": {
-        "title": "Congratulations!",
-        "description": "You've successfully executed your first flow! You're on your way to becoming a Kestra pro.",
-        "tutorial": "Deep Dive Tutorial",
-        "explore": "Explore More"
-      },
-      "success_page": {
-        "title": "You're all set!",
-        "description": "You've learned the basics of Kestra. Here are some resources to help you continue your journey.",
-        "restart": "Restart Tutorial",
-        "items": {
+        "button_cta": "Create flow from scratch",
+        "create_manually": {
+            "title": "Create manually",
+            "description": "Build from scratch using the editor"
+        },
+        "docs": {
+            "title": "Read the docs",
+            "description": "Learn more in the official documentation"
+        },
+        "title": "Turn your idea into a workflow",
+        "need_help": "Need Help?",
+        "placeholder_prompt": "Send me a daily greeting message at 9am.",
+        "show_more": "Show more prompts",
+        "show_less": "Show fewer prompts",
+        "remaining_quota": "You have {count} AI generations left",
+        "execute_hint": {
+          "title": "Save & Execute your flow",
+          "description": "Click to save your workflow and run it immediately."
+        },
+        "success_popup": {
+          "title": "Congratulations!",
+          "description": "You've successfully executed your first flow! You're on your way to becoming a Kestra pro.",
+          "tutorial": "Deep Dive Tutorial",
+          "explore": "Explore More"
+        },
+        "success_page": {
+          "title": "You're all set!",
+          "description": "You've learned the basics of Kestra. Here are some resources to help you continue your journey.",
+          "restart": "Restart Tutorial",
+          "items": {
+            "tutorial": {
+              "title": "Start a Tutorial",
+              "description": "Interactive walkthrough of all Kestra features"
+            },
+            "blueprints": {
+              "title": "Blueprints",
+              "description": "Pre-built workflow templates for common use cases"
+            },
+            "slack": {
+              "title": "Slack Community",
+              "description": "Connect with other users and get help from the community"
+            },
+            "videos": {
+              "title": "Videos Tutorials",
+              "description": "Step-by-step video guides for advanced features"
+            },
+            "demo": {
+              "title": "Get a Demo",
+              "description": "Explore Kestra Enterprise Edition with a personalized demo"
+            }
+          }
+        },
+        "help": {
           "tutorial": {
             "title": "Start a Tutorial",
             "description": "Interactive walkthrough of all Kestra features"

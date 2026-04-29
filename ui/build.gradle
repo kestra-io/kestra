@@ -17,8 +17,6 @@ tasks.register('assembleFrontend', NpmTask) {
     inputs.file('index.html')
     inputs.file('package.json')
     inputs.file('vite.config.js')
-    inputs.file('openapi-ts.config.ts')
-    // inputs.file('../openapi.yml')
 
     args = ['run', 'build']
     outputs.dir('../webserver/src/main/resources/ui')

@@ -1,43 +1,39 @@
 <template>
-    <KsTopNavBar
-        :title="title"
-        :description="description"
-        :longDescription="longDescription"
-        :breadcrumb="breadcrumb"
-        :beta="beta"
-        :isBookmarked="bookmarked"
-        @star-click="onStarClick"
-    >
-        <template v-if="layoutStore.sideMenuCollapsed" #sidebar-toggle>
-            <SidebarToggleButton @toggle="layoutStore.setSideMenuCollapsed(false)" />
-        </template>
-        <template v-if="$slots.title" #title>
-            <slot name="title" />
-        </template>
-        <template v-if="$slots.description" #description>
-            <slot name="description" />
-        </template>
-        <template #search>
+    <nav class="d-flex align-items-center w-100 top-bar">
+        <SidebarToggleButton
+            v-if="layoutStore.sideMenuCollapsed"
+            @toggle="layoutStore.setSideMenuCollapsed(false)"
+        />
+        <div class="title-section">
+            <div class="d-flex align-items-center gap-2">
+                <Breadcrumb :items="breadcrumbItems" :title="title">
+                    <template v-if="$slots.title" #title>
+                        <slot name="title" />
+                    </template>
+                </Breadcrumb>
+                <el-tooltip v-if="description" :content="description">
+                    <Information class="ms-2 icon" />
+                </el-tooltip>
+                <Badge v-if="beta" label="Beta" />
+                <el-button
+                    class="icon"
+                    :class="{'active': bookmarked}"
+                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
+                    circle
+                    @click="onStarClick"
+                />
+            </div>
+            <div v-if="longDescription || $slots.description" class="description">
+                <slot name="description">
+                    {{ longDescription }}
+                </slot>
+            </div>
+        </div>
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <GlobalSearch class="trigger-flow-guided-step" />
-        </template>
-        <template v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" #pre-action>
-            <KsButton @click="deleteLogs()">
-                <TrashCan class="me-2" />
-                <span>{{ $t("delete logs") }}</span>
-            </KsButton>
-        </template>
-        <template v-if="$slots['more-actions']" #more-actions>
-            <slot name="more-actions" />
-        </template>
-        <template v-if="$slots['actions']" #actions>
-            <slot name="actions" />
-        </template>
-        <template #badge v-if="beta">
-            <KsButton type="primary" size="small" class="beta-badge" round>
-                Beta
-            </KsButton>
-        </template>
-    </KsTopNavBar>
+            <slot name="additional-right" />
+        </div>
+    </nav>
 </template>
 
 <script setup lang="ts">
@@ -45,11 +41,11 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import {useLogsStore} from "../../stores/logs";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+    import Information from "vue-material-design-icons/Information.vue";
+    import Badge from "../global/Badge.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
     import type {BreadcrumbItem} from "./breadcrumbTypes";
@@ -63,14 +59,13 @@
     }>();
 
     const route = useRoute();
-    const logsStore = useLogsStore();
-    const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
     const bookmarksStore = useBookmarksStore();
 
-    const shouldDisplayDeleteButton = computed(() => {
-        return route.name === "flows/update" && route.params?.tab === "logs";
-    });
+    const breadcrumbItems = computed(() => [
+        {label: t("home"), link: {name: "home"}},
+        ...(props.breadcrumb ?? []),
+    ]);
 
     const bookmarked = computed(() => {
         return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
@@ -88,26 +83,7 @@
         return "";
     });
 
-    const toast = useToast();
     const {t} = useI18n();
-
-    const deleteLogs = () => {
-        if(!flowStore.flow){
-            throw new Error("No flow selected");
-        }
-        toast.confirm(
-            t("delete_all_logs"),
-            async () => {
-                if(!flowStore.flow){
-                    return;
-                }
-                return logsStore.deleteLogs({
-                    namespace: flowStore.flow?.namespace,
-                    flowId: flowStore.flow?.id
-                })
-            },
-        );
-    };
 
     const onStarClick = () => {
         if (bookmarked.value) {

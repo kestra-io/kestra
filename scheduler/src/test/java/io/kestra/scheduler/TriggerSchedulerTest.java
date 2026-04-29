@@ -38,7 +38,6 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -282,16 +281,7 @@ class TriggerSchedulerTest {
             builder -> builder
                 // execute the workflow only if that day is the first Monday of the month.
                 .cron("0 0 * * *")
-                .conditions(
-                    List.of(
-                        DayWeekInMonth.builder()
-                            .type(DayWeekInMonth.class.getName())
-                            .date(Property.ofExpression("{{ trigger.date }}"))
-                            .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                            .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                            .build()
-                    )
-                )
+                .when("{{isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST')}}")
                 .build()
         );
         // Start scheduler at some arbitrary date (e.g., 2025-11-01, which is a Saturday)

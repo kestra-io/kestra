@@ -175,7 +175,8 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         }
     }
 
-    protected boolean isActive() {
+    @Override
+    public boolean isActive() {
         return this.active.get();
     }
 

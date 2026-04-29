@@ -68,9 +68,6 @@ public abstract class AbstractRunnerTest {
     private IgnoreExecutionCaseTest ignoreExecutionCaseTest;
 
     @Inject
-    protected ForEachItemCaseTest forEachItemCaseTest;
-
-    @Inject
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
@@ -274,42 +271,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows(
-        { "flows/valids/flow-trigger-preconditions-flow-listen.yaml",
-            "flows/valids/flow-trigger-preconditions-flow-a.yaml",
-            "flows/valids/flow-trigger-preconditions-flow-b.yaml" }
-    )
-    void flowTriggerPreconditions() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerPreconditions();
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/flow-trigger-preconditions-flow-listen.yaml",
-            "flows/valids/flow-trigger-preconditions-flow-a.yaml",
-            "flows/valids/flow-trigger-preconditions-flow-b.yaml" },
-        tenantId = TENANT_1
-    )
-    void flowTriggerPreconditionsMergeOutputs() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs(TENANT_1);
-    }
-
-    @Test
     @LoadFlows({ "flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml" })
     void flowTriggerOnPaused() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerOnPaused();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/flow-trigger-for-each-item-parent.yaml", "flows/valids/flow-trigger-for-each-item-child.yaml", "flows/valids/flow-trigger-for-each-item-grandchild.yaml" })
-    void forEachItemWithFlowTrigger() throws Exception {
-        multipleConditionTriggerCaseTest.forEachItemWithFlowTrigger();
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/flow-trigger-multiple-preconditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-preconditions-flow-listen.yaml" })
-    void flowTriggerMultiplePreconditions() throws Exception {
-        multipleConditionTriggerCaseTest.flowTriggerMultiplePreconditions();
     }
 
     @Test
@@ -494,68 +458,6 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/minimal.yaml", "flows/valids/minimal2.yaml" })
     void shouldIgnoreExecutionByNamespace() throws Exception {
         ignoreExecutionCaseTest.shouldIgnoreExecutionByNamespace();
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-subflow.yaml",
-            "flows/valids/for-each-item.yaml" },
-        tenantId = "foreachitem"
-    )
-    protected void forEachItem() throws Exception {
-        forEachItemCaseTest.forEachItem("foreachitem");
-    }
-
-    @Test
-    @LoadFlows(value = { "flows/valids/for-each-item.yaml" }, tenantId = TENANT_1)
-    protected void forEachItemEmptyItems() throws Exception {
-        forEachItemCaseTest.forEachItemEmptyItems(TENANT_1);
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-subflow-failed.yaml",
-            "flows/valids/for-each-item-failed.yaml" },
-        tenantId = "foreachitemfailed"
-    )
-    protected void forEachItemFailed() throws Exception {
-        forEachItemCaseTest.forEachItemFailed("foreachitemfailed");
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-outputs-subflow.yaml",
-            "flows/valids/for-each-item-outputs.yaml" },
-        tenantId = "foreachitemsubflowoutputs"
-    )
-    protected void forEachItemSubflowOutputs() throws Exception {
-        forEachItemCaseTest.forEachItemWithSubflowOutputs("foreachitemsubflowoutputs");
-    }
-
-    @Test // flaky on CI but always pass locally even with 100 iterations
-    @LoadFlows(value = { "flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml" }, tenantId = TENANT_1)
-    void restartForEachItem() throws Exception {
-        forEachItemCaseTest.restartForEachItem(TENANT_1);
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-subflow.yaml",
-            "flows/valids/for-each-item-in-if.yaml" },
-        tenantId = TENANT_1
-    )
-    protected void forEachItemInIf() throws Exception {
-        forEachItemCaseTest.forEachItemInIf(TENANT_1);
-    }
-
-    @Test
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-subflow-after-execution.yaml",
-            "flows/valids/for-each-item-after-execution.yaml" },
-        tenantId = "foreachitemwithafterexecution"
-    )
-    protected void forEachItemWithAfterExecution() throws Exception {
-        forEachItemCaseTest.forEachItemWithAfterExecution("foreachitemwithafterexecution");
     }
 
     @Test
@@ -883,13 +785,4 @@ public abstract class AbstractRunnerTest {
         assertThat((String) outputs.get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6,9}Z");
     }
 
-    @RetryingTest(5)
-    @LoadFlows(
-        value = { "flows/valids/for-each-item-subflow-sleep.yaml",
-            "flows/valids/for-each-item-no-wait.yaml" },
-        tenantId = "foreachitemnowait"
-    )
-    protected void forEachItemNoWait() throws Exception {
-        forEachItemCaseTest.forEachItemNoWait("foreachitemnowait");
-    }
 }

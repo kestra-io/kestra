@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Plugin;
@@ -29,7 +27,6 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 
@@ -134,7 +131,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void injectFlowAndGlobals() throws FlowProcessingException, JsonProcessingException {
+    public void injectFlowAndGlobals() throws FlowProcessingException {
         String source = String.format(
             """
                 id: default-test
@@ -143,8 +140,6 @@ class PluginDefaultServiceTest {
                 triggers:
                 - id: trigger
                   type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
-                  conditions:
-                  - type: io.kestra.plugin.core.condition.ExpressionCondition
 
                 tasks:
                 - id: test
@@ -162,14 +157,9 @@ class PluginDefaultServiceTest {
                   forced: false
                   values:
                     set: 123
-                - type: "%s"
-                  forced: false
-                  values:
-                    expression: "{{ test }}"
                 """,
             DefaultTester.class.getName(),
-            DefaultTriggerTester.class.getName(),
-            Expression.class.getName()
+            DefaultTriggerTester.class.getName()
         );
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
         FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
@@ -184,7 +174,6 @@ class PluginDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().get("key"), is("test"));
         assertThat(((DefaultTriggerTester) injected.getTriggers().getFirst()).getSet(), is(123));
-        assertThat(((Expression) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression().toString(), is("{{ test }}"));
     }
 
     @Test
@@ -234,8 +223,6 @@ class PluginDefaultServiceTest {
             triggers:
             - id: trigger
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
-              conditions:
-              - type: io.kestra.plugin.core.condition.ExpressionCondition
 
             tasks:
             - id: test

@@ -21,10 +21,10 @@ public class FileExistsFunction extends AbstractFileFunction {
     @Override
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
-            case StorageContext.KESTRA_SCHEME -> storageInterface.exists(tenantId, namespace, path);
-            case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().exists(path);
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get().exists(tenantId, namespace, path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.get().createLocalPath().exists(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
-                Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+                Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
                 yield namespaceStorage.exists(NamespaceFile.normalize(Path.of(path.getPath())));
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));

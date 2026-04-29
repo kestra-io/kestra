@@ -1,6 +1,7 @@
 package io.kestra.queue.jdbc;
 
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -123,6 +124,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FollowExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
+    public BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue(JdbcDependencies dependencies) {
+        return new JdbcBroadcastQueue<>(
+            AsyncOperationProcessedEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
@@ -288,7 +289,8 @@ class DefaultSchedulerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            Mockito.mock(BroadcastQueueInterface.class)
+            Mockito.mock(BroadcastQueueInterface.class),
+            Mockito.mock(AsyncOperationService.class)
         );
     }
 

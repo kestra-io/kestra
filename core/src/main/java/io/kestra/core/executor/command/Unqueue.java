@@ -14,7 +14,8 @@ public record Unqueue(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    @Nullable State.Type state) implements ExecutionCommand {
+    @Nullable State.Type state,
+    @jakarta.annotation.Nullable String operationId) implements ExecutionCommand {
     public static Unqueue from(Execution execution, @Nullable State.Type state) {
         return new Unqueue(
             execution.getTenantId(),
@@ -23,7 +24,12 @@ public record Unqueue(String tenantId,
             execution.getId(),
             Instant.now(),
             EventId.create(),
-            state
+            state,
+            null
         );
+    }
+
+    public Unqueue withOperationId(String operationId) {
+        return new Unqueue(tenantId, namespace, flowId, executionId, timestamp, eventId, state, operationId);
     }
 }

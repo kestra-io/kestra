@@ -8,11 +8,8 @@
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
-        remote
-        remoteShowSuffix
-        :remoteMethod="onSearch"
         :placeholder="placeholder ?? $t('namespaces')"
-        :suffixIcon="readOnly ? Lock : undefined"
+        :suffixIcon="suffixIcon"
     >
         <template #tag>
             <KsTag
@@ -42,7 +39,7 @@
     import Lock from "vue-material-design-icons/Lock.vue";
     import {defaultNamespace} from "../../../composables/useNamespaces";
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
@@ -53,6 +50,8 @@
         clearable: true,
         placeholder: undefined
     });
+
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined);
 
     defineOptions({
         inheritAttrs: false
@@ -73,14 +72,9 @@
             })
     })
 
-    const onSearch = (search: string) => {
-        namespacesStore.loadAutocomplete({
-            q: search,
-            ids: modelValue.value as string[] ?? [],
-        })
-    }
-
     onMounted(() => {
+        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []});
+
         if (modelValue.value === undefined || modelValue.value.length === 0) {
             const defaultNamespaceVal = defaultNamespace();
             if (Array.isArray(modelValue.value)) {

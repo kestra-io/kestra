@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import {useAxios} from "../utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 interface TriggerSearchOptions {
     sort?: string;

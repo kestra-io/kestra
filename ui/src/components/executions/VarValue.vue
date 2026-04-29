@@ -57,7 +57,7 @@
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../utils/axios";
+    import {useAxios} from "@kestra-io/kestra-sdk"
     import Utils from "../../utils/utils";
 
     interface Execution {

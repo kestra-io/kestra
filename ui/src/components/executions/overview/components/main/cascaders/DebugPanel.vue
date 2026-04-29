@@ -61,7 +61,7 @@
 
     import Utils from "../../../../../../utils/utils";
     import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../../../../../utils/axios";
+    import {useAxios} from "@kestra-io/kestra-sdk"
 
     const flowStore = useFlowStore();
 

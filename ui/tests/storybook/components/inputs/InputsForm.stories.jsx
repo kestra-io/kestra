@@ -2,7 +2,7 @@ import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {useAxios} from "../../../../src/utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "inputs/InputsForm",

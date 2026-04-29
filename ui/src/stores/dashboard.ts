@@ -18,7 +18,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import Utils from "../utils/utils";
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts";
-import {useAxios} from "../utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 import {removeRefPrefix, usePluginsStore} from "./plugins";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import _throttle from "lodash/throttle";

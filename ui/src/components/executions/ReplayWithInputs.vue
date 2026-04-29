@@ -22,7 +22,7 @@
     // @ts-expect-error no types yet
     import FlowRun from "../../components/flows/FlowRun.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import {useAxios} from "../../utils/axios";
+    import {useAxios} from "@kestra-io/kestra-sdk"
 
     const {t} = useI18n();
     const toast = useToast();

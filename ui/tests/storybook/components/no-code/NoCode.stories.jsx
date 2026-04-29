@@ -2,7 +2,7 @@ import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {vueRouter} from "storybook-vue3-router";
 import {useFlowStore} from "../../../../src/stores/flow";
-import {useAxios} from "../../../../src/utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 
 export default {

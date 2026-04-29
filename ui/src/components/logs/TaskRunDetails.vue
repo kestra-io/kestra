@@ -228,7 +228,7 @@
     import Utils from "../../utils/utils";
     import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
-    import {useAxios} from "../../utils/axios";
+    import {useAxios} from "@kestra-io/kestra-sdk"
 
     export default {
         name: "TaskRunDetails",

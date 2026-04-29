@@ -2,7 +2,7 @@ import {ref} from "vue";
 import {useRouter} from "vue-router";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
-import {useAxios} from "../utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`;

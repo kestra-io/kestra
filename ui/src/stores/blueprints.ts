@@ -1,7 +1,7 @@
 import {ref} from "vue";
 import {defineStore} from "pinia";
 
-import {useAxios} from "../utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route";
 
 import {useMiscStore} from "override/stores/misc";

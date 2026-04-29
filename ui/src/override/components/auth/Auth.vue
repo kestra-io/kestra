@@ -58,7 +58,7 @@
     import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
 
     import * as BasicAuth from "../../../utils/basicAuth";
-    import {useAxios} from "../../../utils/axios";
+    import {useAxios} from "@kestra-io/kestra-sdk"
     const axios = useAxios();
 
     const route = useRoute();

@@ -6,7 +6,7 @@ import semver from "semver";
 import {useApiStore} from "./api";
 import InitialFlowSchema from "./flow-schema.json"
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type JSONSchema} from "@kestra-io/ui-libs";
-import {useAxios} from "../utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 export interface PluginComponent {
     icon?: string;

@@ -1,6 +1,6 @@
 import Triggers from "../../../../src/components/admin/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "../../../../src/utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "Components/Admin/Triggers",

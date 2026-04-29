@@ -4,7 +4,7 @@ import {useMiscStore} from "override/stores/misc";
 import {useAuthStore} from "override/stores/auth";
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
-import {useAxios} from "../../../../src/utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 function getDecorators(data) {
     return [

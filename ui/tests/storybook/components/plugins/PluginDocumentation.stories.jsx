@@ -1,5 +1,5 @@
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
-import {useAxios} from "../../../../src/utils/axios";
+import {useAxios} from "@kestra-io/kestra-sdk"
 
 export default {
     title: "Components/Plugins/PluginDocumentation",

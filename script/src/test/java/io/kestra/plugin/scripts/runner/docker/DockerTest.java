@@ -231,7 +231,6 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
-    @FlakyTest
     void interruptAfterResume() throws Exception {
         var taskRunId = IdUtils.create();
 

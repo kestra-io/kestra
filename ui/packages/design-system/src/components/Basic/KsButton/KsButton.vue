@@ -58,6 +58,7 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/button';
+    @use '../../../assets/styles/color-palette' as palette;
 
     .kel-button {
         &:not(.kel-button--primary):not(.kel-button--success):not(.kel-button--warning):not(.kel-button--danger):not(.kel-button--error):not(.kel-button--info):not(.kel-button--playground), &--default {
@@ -81,14 +82,14 @@
         }
 
         &.kel-button--playground {
-            #{--kel-button-disabled-text-color}: var(--ks-blue-50);
+            #{--kel-button-disabled-text-color}: #{palette.$base-blue-50};
             #{--kel-button-text-color}: var(--ks-button-content-primary);
             #{--kel-button-hover-text-color}: var(--ks-button-content-primary);
             #{--kel-button-bg-color}: var(--ks-playground-bg-color);
-            #{--kel-button-hover-bg-color}: var(--ks-blue-400);
-            #{--kel-button-active-bg-color}: var(--ks-blue-600);
-            #{--kel-button-active-border-color}: var(--ks-blue-700);
-            #{--kel-button-outline-color}: var(--ks-blue-700);
+            #{--kel-button-hover-bg-color}: #{palette.$base-blue-400};
+            #{--kel-button-active-bg-color}: #{palette.$base-blue-600};
+            #{--kel-button-active-border-color}: #{palette.$base-blue-700};
+            #{--kel-button-outline-color}: #{palette.$base-blue-700};
         }
 
         &.kel-button--success {

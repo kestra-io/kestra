@@ -2,6 +2,7 @@
 @use "bootstrap.scss";
 @use "element-plus.scss";
 @use "vue-material-design-icons/styles.css";
+@use "color-palette" as palette;
 
 // css variables
 @use "fonts.scss";
@@ -44,7 +45,7 @@
 // nprogress
 #nprogress {
     .bar {
-        background: var(--ks-purple-500);
+        background: palette.$base-purple-500;
         z-index: 9999;
     }
 
@@ -54,12 +55,12 @@
     }
 
     .peg {
-        box-shadow: 0 0 10px var(--ks-purple-500), 0 0 5px var(--ks-purple-500);
+        box-shadow: 0 0 10px palette.$base-purple-500, 0 0 5px palette.$base-purple-500;
     }
 
     .spinner-icon {
-        border-top-color: var(--ks-purple-500);
-        border-left-color: var(--ks-purple-500);
+        border-top-color: palette.$base-purple-500;
+        border-left-color: palette.$base-purple-500;
     }
 }
 
@@ -100,7 +101,7 @@ pre {
 }
 
 blockquote {
-    border-left: 5px solid var(--ks-gray-400);
+    border-left: 5px solid var(--ks-border-primary);
     margin-top: 2rem;
     padding: .25rem  0 .25rem 1rem;
     color: var(--ks-content-primary);

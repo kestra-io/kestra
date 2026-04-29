@@ -79,7 +79,7 @@
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
     import type {FormInstance} from "element-plus"
-    import axios from "axios"
+    import {useAxios} from "@kestra-io/kestra-sdk"
     import MailChecker from "mailchecker"
 
     import Account from "vue-material-design-icons/Account.vue"
@@ -159,6 +159,8 @@
         !MailChecker.isValid(credentials.value.username) ||
         isLoading.value
     )
+
+    const axios = useAxios();
 
     const validateCredentials = async (auth: string) => {
         try {

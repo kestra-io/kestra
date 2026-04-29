@@ -74,6 +74,10 @@ export default defineConfig({
                     singleton: true, 
                     eager: true,
                     requiredVersion: "^3"
+                },
+                "@kestra-io/kestra-sdk": {
+                    singleton: true,
+                    eager: true,
                 }
             }
         }),

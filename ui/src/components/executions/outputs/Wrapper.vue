@@ -170,7 +170,7 @@
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
-    import {useAxios} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk"
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
 
@@ -256,7 +256,7 @@
         },
     }
 
-    const axios = useAxios();
+    const axios = useClient();
     const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask.value;
 

@@ -6,7 +6,7 @@ import {useCoreStore} from "./core";
 import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
 import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils";
 
 interface LogsState {
@@ -95,7 +95,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     });
 
     const coreStore = useCoreStore();
-    const axios = useAxios();
+    const axios = useClient();
 
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {

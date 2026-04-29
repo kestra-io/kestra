@@ -1,6 +1,6 @@
 import {ref, shallowReactive, markRaw} from "vue";
 import {apiUrlWithoutTenants} from "override/utils/route";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
 
 function addCSSLinkIfNotAlreadyPresent(href: string) {
@@ -17,7 +17,7 @@ export function useFederatedModule(slotName: string) {
     const RemoteComponents = shallowReactive<Record<string, any>>({});
     const taskAdditionalInfoRemote = ref<Record<string, any>>({});
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const manifestReady = ref(false);
 

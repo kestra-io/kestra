@@ -1,5 +1,5 @@
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 export default {
     title: "Components/Plugins/PluginDocumentation",
@@ -11,7 +11,7 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const axios = useAxios()
+        const axios = useClient()
         axios.get = () =>{
                 return  Promise.resolve({data: []})
             }

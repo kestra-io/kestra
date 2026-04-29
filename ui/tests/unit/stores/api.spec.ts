@@ -40,7 +40,7 @@ vi.mock("../../../src/utils/uid", () => ({
 }));
 
 vi.mock("../../../src/utils/axios", () => ({
-    useAxios: () => ({
+    useClient: () => ({
         get: vi.fn(),
         post: vi.fn(),
     }),

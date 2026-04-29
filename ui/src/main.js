@@ -10,8 +10,8 @@ import * as BasicAuth from "./utils/basicAuth";
 import {useCoreStore} from "./stores/core";
 import {useLayoutStore} from "./stores/layout";
 import {useUnsavedChangesStore} from "./stores/unsavedChanges";
-import {useMiscStore} from "override/stores/misc";
 import {useAuthStore} from "override/stores/auth";
+import {useMiscStore} from "override/stores/misc";
 
 
 const app = createApp(App)

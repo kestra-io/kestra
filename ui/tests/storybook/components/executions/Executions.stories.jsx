@@ -4,7 +4,7 @@ import {useMiscStore} from "override/stores/misc";
 import {useAuthStore} from "override/stores/auth";
 import fixture from "./Executions.fixture.json"
 import fixtureS from "./Executions-s.fixture.json"
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 function getDecorators(data) {
     return [
@@ -25,7 +25,7 @@ function getDecorators(data) {
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"]
                     }
-                    const axios = useAxios()
+                    const axios = useClient()
                     axios.get = function(a) {
                         if (a.endsWith("executions/search")) {
                             return Promise.resolve({

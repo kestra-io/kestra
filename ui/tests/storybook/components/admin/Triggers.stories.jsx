@@ -1,6 +1,6 @@
 import Triggers from "../../../../src/components/admin/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -89,7 +89,7 @@ const triggersData = [
 
 const Template = (args) => ({
     setup() {
-        const store = useAxios()
+        const store = useClient()
         store.get = async function (uri) {
             if (uri.includes("/triggers/search")) {
                 return {

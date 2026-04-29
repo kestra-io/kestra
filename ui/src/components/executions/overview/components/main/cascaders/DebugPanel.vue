@@ -61,7 +61,7 @@
 
     import Utils from "../../../../../../utils/utils";
     import {apiUrl} from "override/utils/route";
-    import {useAxios} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk"
 
     const flowStore = useFlowStore();
 
@@ -91,7 +91,7 @@
         {immediate: true},
     );
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);

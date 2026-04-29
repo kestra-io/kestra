@@ -6,7 +6,7 @@ import semver from "semver";
 import {useApiStore} from "./api";
 import InitialFlowSchema from "./flow-schema.json"
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type JSONSchema} from "@kestra-io/ui-libs";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 export interface PluginComponent {
     icon?: string;
@@ -49,7 +49,7 @@ function usePluginsIcons() {
     const apiIcons = ref<Record<string, string>>({});
     const pluginsIcons = ref<Record<string, string>>({});
     const _iconsPromise = ref<Promise<Record<string, string>>>();
-    const axios = useAxios();
+    const axios = useClient();
 
     const icons = computed(() => {
         return {
@@ -107,7 +107,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const schemaType = ref<Record<string, any>>();
     const forceIncludeProperties = ref<string[]>();
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const flowSchema = computed(() => {
         return schemaType.value?.flow ?? InitialFlowSchema;

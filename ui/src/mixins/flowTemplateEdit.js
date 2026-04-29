@@ -12,7 +12,7 @@ import {mapStores} from "pinia";
 import {usePluginsStore} from "../stores/plugins";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 export default {
     mixins: [RouteContext],
@@ -92,7 +92,7 @@ export default {
         },
     },
     setup(){
-        const $http = useAxios();
+        const $http = useClient();
         return {
             $http
         }

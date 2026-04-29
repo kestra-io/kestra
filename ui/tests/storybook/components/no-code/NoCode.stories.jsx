@@ -2,7 +2,7 @@ import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {vueRouter} from "storybook-vue3-router";
 import {useFlowStore} from "../../../../src/stores/flow";
-import {useAxios} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk"
 
 
 export default {
@@ -43,7 +43,7 @@ const PLUGINS_RESPONSE = [{
 const Template = (args) => ({
     setup() {
         const flowStore = useFlowStore()
-        const axios = useAxios()
+        const axios = useClient()
 
         flowStore.flowYaml = args.flow
         const props = {

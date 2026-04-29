@@ -4,7 +4,7 @@ import {PebbleAutoCompletion, resetExpressionCache, functionToSnippet} from "../
 const axiosGet = vi.fn();
 
 vi.mock("../../../src/utils/axios", () => ({
-    useAxios: () => ({
+    useClient: () => ({
         get: axiosGet,
     }),
 }));

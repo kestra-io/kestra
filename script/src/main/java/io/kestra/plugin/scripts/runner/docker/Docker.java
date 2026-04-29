@@ -517,26 +517,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Attaching to logs of container {}", containerId);
                 }
-                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
-                    List<String> labelsList = labels.entrySet()
-                        .stream()
-                        .map(entry -> String.join("=", entry.getKey(), entry.getValue()))
-                        .toList();
-                    var volumes = dockerClient.listVolumesCmd()
-                        .withFilter("label", labelsList).exec();
-                    if (volumes.getVolumes() == null || volumes.getVolumes().isEmpty()) {
-                        logger.error("No volume found for resumed container {}", containerId);
-                        throw new TaskException(1, defaultLogConsumer);
-                    } else {
-                        var volume = volumes.getVolumes().get(0);
-                        filesVolumeName = volume.getName();
-                        logger.debug("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
-                    }
-                }
-
+                // Volume lookup is deferred into the inner try block below so that the cleanup
+                // finally always runs even if the thread is interrupted during the lookup.
             }
 
             final String runContainerId = containerId;
+            // True when we attached to an existing container rather than creating a new one.
+            // Used below to defer the volume lookup into the protected try block.
+            final boolean isResumedContainer = runContainerId != null && filesVolumeName == null
+                && needVolume && FileHandlingStrategy.VOLUME.equals(strategy);
 
             if (!Boolean.TRUE.equals(runContext.render(wait).as(Boolean.class).orElseThrow())) {
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult> builder()
@@ -549,6 +538,25 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             AtomicBoolean ended = new AtomicBoolean(false);
 
             try {
+                // Resolve the volume for resumed containers here so that cleanup (kill + delete)
+                // in the finally block is guaranteed to run even when interrupted during the lookup.
+                if (isResumedContainer) {
+                    List<String> labelsList = labels.entrySet()
+                        .stream()
+                        .map(entry -> String.join("=", entry.getKey(), entry.getValue()))
+                        .toList();
+                    var volumes = dockerClient.listVolumesCmd()
+                        .withFilter("label", labelsList).exec();
+                    if (volumes.getVolumes() == null || volumes.getVolumes().isEmpty()) {
+                        logger.error("No volume found for resumed container {}", runContainerId);
+                        throw new TaskException(1, defaultLogConsumer);
+                    } else {
+                        var volume = volumes.getVolumes().get(0);
+                        filesVolumeName = volume.getName();
+                        logger.debug("Volume found with name {} for resumed container {}", filesVolumeName, runContainerId);
+                    }
+                }
+
                 dockerClient.logContainerCmd(runContainerId)
                     .withFollowStream(true)
                     .withStdErr(true)

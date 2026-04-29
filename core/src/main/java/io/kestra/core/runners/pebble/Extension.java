@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.kestra.core.runners.pebble.expression.InExpression;
-import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
-import io.kestra.core.runners.pebble.expression.UndefinedCoalescingExpression;
+import io.kestra.core.runners.pebble.expression.*;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
 import io.kestra.core.runners.pebble.tests.JsonTest;
@@ -79,6 +77,10 @@ public class Extension extends AbstractExtension {
         operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
         operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
         operators.add(new BinaryOperatorImpl("isIn", 120, InExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">", 120, GreaterThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">=", 120, GreaterThanEqualsExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<", 120, LessThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<=", 120, LessThanEqualsExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }
@@ -181,8 +183,6 @@ public class Extension extends AbstractExtension {
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
         functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
-        functions.put(IsDateBeforeFunction.NAME, new IsDateBeforeFunction());
-        functions.put(IsDateAfterFunction.NAME, new IsDateAfterFunction());
         return functions;
     }
 

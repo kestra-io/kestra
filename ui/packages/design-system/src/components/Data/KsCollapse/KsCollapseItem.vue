@@ -5,8 +5,11 @@
         <template v-if="$slots.default" #default>
             <slot />
         </template>
-        <template v-if="$slots.title" #title>
-            <slot name="title" />
+        <template v-if="$slots.title" #title="p">
+            <slot name="title" v-bind="p" />
+        </template>
+        <template v-if="$slots.icon" #icon="p">
+            <slot name="icon" v-bind="p" />
         </template>
     </ElCollapseItem>
 </template>
@@ -29,7 +32,8 @@
 
     defineSlots<{
         default?(): unknown
-        title?(): unknown
+        title?(props: { isActive?: boolean }): unknown
+        icon?(props: { isActive?: boolean }): unknown
     }>()
 </script>
 

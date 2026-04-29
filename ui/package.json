@@ -108,7 +108,7 @@
         "cross-env": "^10.1.0",
         "eslint": "^9.39.4",
         "eslint-plugin-storybook": "^10.3.3",
-        "eslint-plugin-vue": "^9.33.0",
+        "eslint-plugin-vue": "^10.9.0",
         "globals": "^17.5.0",
         "husky": "^9.1.7",
         "jsdom": "^29.0.1",

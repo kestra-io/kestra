@@ -108,6 +108,10 @@ export default defineConfig(({mode}) => {
             }
         },
         optimizeDeps: {
+            entries: [
+                "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}"
+            ],
             include: [
                 "lodash",
                 "element-plus",

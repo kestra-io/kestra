@@ -1,5 +1,7 @@
 import type {App} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
+import type {I18n} from "vue-i18n"
+import {registerDesignSystemI18n} from "./i18n"
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
@@ -87,6 +89,7 @@ import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 
 import {vKsLoading} from "./components/Feedback/KsLoading"
+export {vKsLoading} from "./components/Feedback/KsLoading"
 
 export {KsMessage} from "./components/Feedback/KsMessage"
 export {KsMessageBox} from "./components/Feedback/KsMessageBox"
@@ -119,6 +122,8 @@ export {
     isValidFilter,
     keyOfComparator,
     getComparator,
+    clearFilterQueryParams,
+    isSearchPath,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {
     readRouteLevelFilter,
@@ -310,13 +315,6 @@ export {
     KsUpload,
 }
 
-/**
- * Kestra Design System plugin.
- *
- * Required: `app.use(KestraDesignSystem)` before rendering any `Ks*` component.
- * This is the single source of the `kel` CSS namespace — skipping it leaves
- * Element Plus output unstyled.
- */
 const KestraDesignSystem = {
     install(app: App) {
         if (!(app as any)[INSTALLED_KEY]) {
@@ -326,6 +324,10 @@ const KestraDesignSystem = {
             app.component(name, component)
         }
         app.directive("ks-loading", vKsLoading)
+
+        const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
+        const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
+        if (i18n) registerDesignSystemI18n(i18n)
     },
 }
 

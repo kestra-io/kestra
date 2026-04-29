@@ -1,7 +1,13 @@
 import {describe, test, expect, vi, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
-import {nextTick} from "vue"
+import {nextTick, ref} from "vue"
 import KsPie from "../../../src/components/Charts/KsPie.vue"
+
+// jsdom has no layout — force non-zero dimensions so KsEchart's canRender
+// latch flips and <VChart> mounts.
+vi.mock("@vueuse/core", () => ({
+    useElementSize: () => ({width: ref(800), height: ref(400)}),
+}))
 
 vi.mock("vue-echarts", () => ({
     default: {

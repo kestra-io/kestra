@@ -1,13 +1,9 @@
+import process from "node:process";
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
-import {dirname} from "path";
-import {fileURLToPath} from "url";
-
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
@@ -40,9 +36,9 @@ export default defineConfig([
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {
             parser: tseslint.parser,
-            project: ["./tsconfig.json", "./packages/design-system/tsconfig.json"],
-            tsconfigRootDir: __dirname,
-            extraFileExtensions: [".vue", ".tsx", ".jsx"],
+            project: ["./tsconfig.json"],
+            tsconfigRootDir: process.cwd(),
+            extraFileExtensions: [".vue"],
         }},
         rules: {
             "vue/block-lang": ["warn",
@@ -135,5 +131,5 @@ export default defineConfig([
         rules: {
             "no-console": ["off"]
         }
-    }
+    },
 ]);

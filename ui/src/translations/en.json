@@ -340,8 +340,8 @@
     "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {
-      "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+        "dialog_title": "Concurrency Limits",
+        "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
     },
     "documentation": {
       "documentation": "Documentation",
@@ -584,12 +584,9 @@
     "sum": "Sum",
     "min": "Min",
     "max": "Max",
-    "bar": "Bar",
-    "line": "Line",
     "metric": "Metric",
     "aggregation": "Aggregation",
-    "chart type": "Chart type",
-    "metric choice": "No metrics available for this flow",
+    "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
     "see_all_states": "See all states",
     "save draft": {
@@ -745,10 +742,10 @@
         }
       },
       "revisions": {
-        "history": "Revision history",
-        "restore": {
-          "success": "File revision restored successfully"
-        }
+          "history": "Revision history",
+          "restore": {
+              "success": "File revision restored successfully"
+          }
       },
       "path": {
         "copy": "Copy path",
@@ -1443,7 +1440,7 @@
     "instance": "Instance",
     "something_went_wrong": {
       "loading_execution": "Something went wrong while loading the execution",
-      "connection_lost": {
+     "connection_lost": {
         "title": "Connection interrupted",
         "message": "We couldn't reach your Kestra instance. Make sure it's running, then refresh the page."
       }
@@ -1485,7 +1482,7 @@
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
       },
-      "kill_switches": {
+       "kill_switches": {
         "title": "You have no Kill Switches yet!",
         "content": "The Kill Switch feature provides a UI based mechanism to stop problematic executions. It replaces the CLI-only <code>--skip-executions</code> and <code>--skip-flows</code> commands with a comprehensive administration interface."
       },
@@ -1682,8 +1679,8 @@
           "test": "Generating Test YAML for you..."
         },
         "enable_instructions": {
-          "header": "<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
-          "footer": "Note: At this time, only Gemini is supported as the AI provider for Open Source Edition. For Enterprise Edition, please refer to the AI Copilot documentation for other model provider configuration.\n\nRestart your Kestra instance after saving the configuration."
+            "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
+            "footer": "Note: At this time, only Gemini is supported as the AI provider for Open Source Edition. For Enterprise Edition, please refer to the AI Copilot documentation for other model provider configuration.\n\nRestart your Kestra instance after saving the configuration."
         }
       },
       "dashboard": {
@@ -1823,82 +1820,59 @@
         "help": {
           "tutorial": {
             "title": "Start a Tutorial",
-            "description": "Interactive walkthrough of all Kestra features"
+            "description": "Learn how to create and run your first flow with guidet steps."
           },
           "blueprints": {
             "title": "Blueprints",
-            "description": "Pre-built workflow templates for common use cases"
+            "description": "Explore ready-to-use examples and templates for common workflow patterns."
           },
           "slack": {
             "title": "Slack Community",
-            "description": "Connect with other users and get help from the community"
+            "description": "Join us to share ideas and best practices, and get help with technical questions."
+          }
+        },
+        "flows": {
+          "jsonApiToDuckdb": {
+            "label": "JSON API to DuckDB",
+            "prompt": "Create a flow that downloads a JSON file from a public API, transforms it with a Python script, and processes it with a DuckDB Queries task."
           },
-          "videos": {
-            "title": "Videos Tutorials",
-            "description": "Step-by-step video guides for advanced features"
+          "installNginxViaAnsible": {
+            "label": "Install Nginx via Ansible",
+            "prompt": "Create a Kestra flow that installs Nginx on a target machine with Ansible and verifies the installed version."
           },
-          "demo": {
-            "title": "Get a Demo",
-            "description": "Explore Kestra Enterprise Edition with a personalized demo"
+          "buildDbtPipeline": {
+            "label": "Build a dbt pipeline",
+            "prompt": "Create a Kestra flow that clones a dbt project repository and runs dbt build with a DuckDB profile."
+          },
+          "etlWorkflow": {
+            "label": "ETL Workflow",
+            "prompt": "Create an ETL flow that downloads JSON data, processes it with Python, and queries the transformed result with DuckDB."
+          },
+          "microservicesApis": {
+            "label": "Microservices & APIs",
+            "prompt": "Create a flow that checks a website API response and sends a Slack alert when the status code is not successful."
+          },
+          "buildDockerImageAndRunIt": {
+            "label": "Build a Docker image and run it",
+            "prompt": "Create a Kestra flow that builds a Docker image from an inline Dockerfile and runs the resulting container."
+          },
+          "manualApproval": {
+            "label": "Manual approval",
+            "prompt": "Create a flow with an initial processing step, a manual approval pause, and a final deployment step after approval."
+          },
+          "convertCsvToExcel": {
+            "label": "Convert a CSV to Excel",
+            "prompt": "Create a flow that downloads a CSV file, converts it to Ion, and exports the result as an Excel file."
+          },
+          "scheduledPdfReports": {
+            "label": "Scheduled PDF reports",
+            "prompt": "Create a scheduled flow that downloads a PDF report and sends a Slack notification when the report is ready."
+          },
+          "weeklySalesKpisToSlack": {
+            "label": "Weekly Sales KPIs to Slack",
+            "prompt": "Create a weekly scheduled flow that calculates sales KPIs with DuckDB and posts the summary to Slack."
           }
         }
-      },
-      "help": {
-        "tutorial": {
-          "title": "Start a Tutorial",
-          "description": "Learn how to create and run your first flow with guidet steps."
-        },
-        "blueprints": {
-          "title": "Blueprints",
-          "description": "Explore ready-to-use examples and templates for common workflow patterns."
-        },
-        "slack": {
-          "title": "Slack Community",
-          "description": "Join us to share ideas and best practices, and get help with technical questions."
-        }
-      },
-      "flows": {
-        "jsonApiToDuckdb": {
-          "label": "JSON API to DuckDB",
-          "prompt": "Create a flow that downloads a JSON file from a public API, transforms it with a Python script, and processes it with a DuckDB Queries task."
-        },
-        "installNginxViaAnsible": {
-          "label": "Install Nginx via Ansible",
-          "prompt": "Create a Kestra flow that installs Nginx on a target machine with Ansible and verifies the installed version."
-        },
-        "buildDbtPipeline": {
-          "label": "Build a dbt pipeline",
-          "prompt": "Create a Kestra flow that clones a dbt project repository and runs dbt build with a DuckDB profile."
-        },
-        "etlWorkflow": {
-          "label": "ETL Workflow",
-          "prompt": "Create an ETL flow that downloads JSON data, processes it with Python, and queries the transformed result with DuckDB."
-        },
-        "microservicesApis": {
-          "label": "Microservices & APIs",
-          "prompt": "Create a flow that checks a website API response and sends a Slack alert when the status code is not successful."
-        },
-        "buildDockerImageAndRunIt": {
-          "label": "Build a Docker image and run it",
-          "prompt": "Create a Kestra flow that builds a Docker image from an inline Dockerfile and runs the resulting container."
-        },
-        "manualApproval": {
-          "label": "Manual approval",
-          "prompt": "Create a flow with an initial processing step, a manual approval pause, and a final deployment step after approval."
-        },
-        "convertCsvToExcel": {
-          "label": "Convert a CSV to Excel",
-          "prompt": "Create a flow that downloads a CSV file, converts it to Ion, and exports the result as an Excel file."
-        },
-        "scheduledPdfReports": {
-          "label": "Scheduled PDF reports",
-          "prompt": "Create a scheduled flow that downloads a PDF report and sends a Slack notification when the report is ready."
-        },
-        "weeklySalesKpisToSlack": {
-          "label": "Weekly Sales KPIs to Slack",
-          "prompt": "Create a weekly scheduled flow that calculates sales KPIs with DuckDB and posts the summary to Slack."
-        }
       }
-    }
   }
 }

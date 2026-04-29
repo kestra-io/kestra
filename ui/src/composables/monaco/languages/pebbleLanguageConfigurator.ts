@@ -67,6 +67,7 @@ export function registerPebbleAutocompletion(
 
             const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length;
             return {
+                incomplete: true,
                 suggestions: (await (autoCompletion.rootFieldAutoCompletion()))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
@@ -99,6 +100,7 @@ export function registerFunctionParametersAutoCompletion(
                 ?? 0;
             const startOfWordColumn = position.column - wordStartOffset;
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.functionAutoCompletion(
                         parsed,
                         functionMatcher.matches[1],
@@ -146,6 +148,7 @@ export function registerNestedValueAutoCompletion(
 
             const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1], model.getOffsetAt(position)))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
@@ -183,6 +186,7 @@ export function registerFilterAutoCompletion(
             const endColumn = position.column;
 
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.filterAutoCompletion())
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,

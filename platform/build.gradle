@@ -117,7 +117,7 @@ dependencies {
         api group: 'com.networknt', name: 'json-schema-validator', version: '3.0.2'
         api 'com.h2database:h2:2.4.240'
         api 'com.mysql:mysql-connector-j:9.7.0'
-        api 'org.postgresql:postgresql:42.7.10'
+        api 'org.postgresql:postgresql:42.7.11'
         api 'com.github.docker-java:docker-java:3.7.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.7.1'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")

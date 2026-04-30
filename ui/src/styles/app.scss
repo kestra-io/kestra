@@ -6,6 +6,7 @@
 @use "layout/element-plus-overload";
 
 @use "components/sidebar-menu";
+@use "components/markdown";
 
 html, body, #app, #app-container {
     height: 100%;

@@ -1,5 +1,5 @@
 import {ComputedRef} from "vue";
-import type {JSONSchema} from "@kestra-io/ui-libs";
+import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils";
 import {YamlElement} from "@kestra-io/design-system";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import {QUOTE, YamlAutoCompletion, functionToSnippet} from "../../services/autoCompletionProvider";

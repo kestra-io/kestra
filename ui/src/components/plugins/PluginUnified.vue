@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue";
-    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "../../utils/pluginUtils";
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import RowLink from "../misc/RowLink.vue";
     import {usePluginsStore} from "../../stores/plugins";

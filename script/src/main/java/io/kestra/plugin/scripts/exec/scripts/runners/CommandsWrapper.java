@@ -282,7 +282,21 @@ public class CommandsWrapper implements TaskCommands {
             return null;
         }
 
-        return runContext.render(command).as(String.class, taskRunner.additionalVars(runContext, this))
+        Map<String, Object> additionalVars = taskRunner.additionalVars(runContext, this);
+        if (this.outputFiles != null && !this.outputFiles.isEmpty()) {
+            String workingDir = String.valueOf(additionalVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            Map<String, String> outputFilesMap = new LinkedHashMap<>();
+            for (String name : this.outputFiles) {
+                if (!name.contains("*") && !name.contains("?") && !name.contains("[")) {
+                    outputFilesMap.put(name, workingDir + "/" + name);
+                }
+            }
+            if (!outputFilesMap.isEmpty()) {
+                additionalVars.put("outputFiles", outputFilesMap);
+            }
+        }
+
+        return runContext.render(command).as(String.class, additionalVars)
             .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, taskRunner instanceof RemoteRunnerInterface)))
             .orElse(null);
     }

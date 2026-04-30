@@ -102,6 +102,44 @@ class VariableRendererTest {
         assertThat(result_value3.keySet()).containsExactly("bar-1", "bar-2", "bar-3");
     }
 
+    @Test
+    void shouldRenderStringAsEmptyForNull() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ null }}", Map.of())).isEmpty();
+        assertThat(variableRenderer.render("{{ true ? null : 'work' }}", Map.of())).isEmpty();
+    }
+
+    @Test
+    void shouldRenderStringAsString() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ false ? null : 'work' }}", Map.of())).isEqualTo("work");
+        assertThat(variableRenderer.render("{{ 42 }}", Map.of())).isEqualTo("42");
+        assertThat(variableRenderer.render("{{ true }}", Map.of())).isEqualTo("true");
+    }
+
+    @Test
+    void shouldRenderStringAsEmptyForNullRecursively() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ null }}", Map.of(), true)).isEmpty();
+        assertThat(variableRenderer.render("prefix {{ null }}", Map.of(), true)).isEqualTo("prefix ");
+    }
+
+    @Test
+    void shouldRenderStringWithExplicitEmptyOutput() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ '' }}", Map.of())).isEqualTo("");
+        assertThat(variableRenderer.render("prefix {{ null }}", Map.of())).isEqualTo("prefix ");
+    }
+
+    @Test
+    void shouldRenderMapWithNullValues() throws IllegalVariableEvaluationException {
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("key1", "{{ null }}");
+        input.put("key2", "{{ 'hello' }}");
+        input.put("key3", "static");
+        Map<String, Object> result = variableRenderer.render(input, Map.of());
+        assertThat(result.get("key1")).isNull();
+        assertThat(result.get("key2")).isEqualTo("hello");
+        assertThat(result.get("key3")).isEqualTo("static");
+        assertThat(result).containsKey("key1");
+    }
+
     public static class TestVariableRenderer extends VariableRenderer {
 
         public TestVariableRenderer(ApplicationContext applicationContext,

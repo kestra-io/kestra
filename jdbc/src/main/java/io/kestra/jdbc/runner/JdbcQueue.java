@@ -32,6 +32,7 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -130,7 +131,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Map<Field<Object>, Object> fields = HashMap.newHashMap(4);
         fields.put(TYPE_FIELD, queueType());
         fields.put(KEY_FIELD, key != null ? key : IdUtils.create());
-        fields.put(VALUE_FIELD, JSONB.valueOf(new String(bytes)));
+        fields.put(VALUE_FIELD, JdbcJsonbUtils.valueOf(new String(bytes)));
 
         if (consumerGroup != null) {
             fields.put(CONSUMER_GROUP_FIELD, consumerGroup);

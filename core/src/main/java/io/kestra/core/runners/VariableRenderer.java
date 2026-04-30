@@ -63,7 +63,11 @@ public class VariableRenderer {
     }
 
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
-        return (String) this.render(inline, variables, recursive, true);
+        if (inline == null) {
+            return null;
+        }
+        String result = (String) this.render(inline, variables, recursive, true);
+        return result != null ? result : "";
     }
 
     public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
@@ -187,7 +191,7 @@ public class VariableRenderer {
         }
 
         Object result = this.renderOnce(inline, variables, stringify);
-        if (result.equals(inline)) {
+        if (result == null || Objects.equals(result, inline)) {
             return result;
         }
 
@@ -203,7 +207,7 @@ public class VariableRenderer {
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
+            Object value = renderObject(r.getValue(), variables, recursive).orElse(null);
 
             map.putIfAbsent(
                 key,
@@ -227,7 +231,7 @@ public class VariableRenderer {
         } else if (object instanceof Set set) {
             return Optional.of(this.render(set, variables, recursive));
         } else if (object instanceof String string) {
-            return Optional.of(this.render(string, variables, recursive));
+            return Optional.ofNullable(this.render(string, variables, recursive, true));
         }
 
         // Return the given object if it cannot be rendered.
@@ -242,7 +246,7 @@ public class VariableRenderer {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            result.add(this.renderObject(inline, variables, recursive).orElse(inline));
+            result.add(this.renderObject(inline, variables, recursive).orElse(null));
         }
 
         return result;

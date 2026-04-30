@@ -1,0 +1,360 @@
+{{ $global := .Values }}
+{{ $common := .Values.common }}
+{{ $kestra := merge .Values.deployments .Values.workerGroups }}
+
+{{- range $name, $content := $kestra }}
+{{- if $content.enabled }}
+
+---
+{{- $type := "worker" }}
+{{- $list := list "standalone" "webserver" "executor" "indexer" "scheduler" }}
+{{- range $i, $val := $list }}
+{{- if eq $val $name }}
+{{- $type = $name }}
+{{- end }}
+{{- end }}
+{{- $dind := false }}
+{{- if and ($global.dind.enabled) (eq $type "worker") }}
+{{- $dind = true }}
+{{- end }}
+{{- if and ($global.dind.enabled) (eq $type "standalone") ($global.deployments.standalone.dind.enabled) }}
+{{- $dind = true }}
+{{- end }}
+{{- $kind := default $common.kind $content.kind }}
+apiVersion: apps/v1
+kind: {{ $kind }}
+metadata:
+  {{- if and (eq $type "worker") (ne $name "worker") }}
+  name: "{{ include "kestra.fullname" $ }}-workergroup-{{ $name }}"
+  {{- else }}
+  name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
+  {{- end }}
+  labels:
+    {{- include "kestra.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $type }}
+    {{- with $common.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with $content.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    kestra.io/component: {{ $type }}
+    {{- with $common.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with $content.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ default $common.replicas $content.replicas }}
+  revisionHistoryLimit: {{ default $common.revisionHistoryLimit $content.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "kestra.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $type }}
+  {{- if eq $kind "Deployment" }}
+  {{- with (default $common.strategy $content.strategy) }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if eq $kind "StatefulSet" }}
+  {{- with (default $common.updateStrategy $content.updateStrategy) }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "kestra.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $type }}
+        {{- with $common.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- $configmapReloaderEnabled := $common.configmapReloader.enabled -}}
+        {{- if hasKey $content "configmapReloader" -}}
+          {{- if hasKey $content.configmapReloader "enabled" -}}
+            {{- $configmapReloaderEnabled = $content.configmapReloader.enabled -}}
+          {{- end -}}
+        {{- end -}}
+        {{- if $configmapReloaderEnabled }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- end }}
+        {{- with $common.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if and (eq $type "worker") (ne $name "worker") }}
+      serviceAccountName: {{ default (include "kestra.serviceAccountName" $) $content.serviceAccountName }}
+      {{- else }}
+      serviceAccountName: {{ include "kestra.serviceAccountName" $ }}
+      {{- end }}
+      {{- with (default $common.priorityClassName $content.priorityClassName) }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- if $global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml $global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ default $common.terminationGracePeriodSeconds $content.terminationGracePeriodSeconds }}
+      {{- with (default $common.podSecurityContext $content.podSecurityContext) }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if (or $common.topologySpreadConstraints $content.topologySpreadConstraints) }}
+      topologySpreadConstraints:
+        {{- with $common.topologySpreadConstraints }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.topologySpreadConstraints }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if (or $common.nodeSelector $content.nodeSelector) }}
+      nodeSelector:
+        {{- with $common.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if (or $common.affinity $content.affinity) }}
+      affinity:
+        {{- with $common.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.affinity }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if (or $common.tolerations $content.tolerations) }}
+      tolerations:
+        {{- with $common.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if (or $common.initContainers $content.initContainers) }}
+      initContainers:
+        {{- with $common.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- $cname := printf "kestra-%s" $type }}
+      {{- if and (eq $type "worker") (ne $name "worker") }}
+      {{- $cname = printf "kestra-workergroup-%s" $name }}
+      {{- end }}
+      containers:
+        - name: "{{ $cname }}"
+          image: "{{ $global.image.repository }}:{{ default $.Chart.AppVersion $global.image.tag }}"
+          imagePullPolicy: {{ $global.image.pullPolicy }}
+          {{- with (default $common.securityContext $content.securityContext) }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - "sh"
+            - "-c"
+            - | 
+                exec /app/kestra server {{ $type }} \
+                {{- if and (eq $type "worker") (ne $name "worker") }}
+                --worker-group={{ $name }} \
+                {{- end }}
+                {{- if $content.workerThreads }}
+                {{- if eq $type "standalone" }}
+                --worker-thread={{ $content.workerThreads }} \
+                {{- else }}
+                --thread={{ $content.workerThreads }} \
+                {{- end }}
+                {{- end }}
+                {{- with $content.extraArgs }}
+                {{- range $key, $value := $content.extraArgs }}
+                {{- $value }} \
+                {{- end }}
+                {{- end }}
+          {{- with (default $common.resources $content.resources) }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: MICRONAUT_CONFIG_FILES
+              value: {{ include "kestra.micronautConfigFiles" $ | quote }}
+            - name: _JAVA_OPTIONS
+              value: {{ include "kestra.jvmOpts" (dict "common" $common "content" $content) | replace "\n" " " | trim | quote }}
+            {{- with $common.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with $content.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if (or $common.extraEnvFrom $content.extraEnvFrom) }}
+          envFrom:
+            {{- with $common.extraEnvFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with $content.extraEnvFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with (default $common.startupProbe $content.startupProbe) }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with (default $common.livenessProbe $content.livenessProbe) }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with (default $common.readinessProbe $content.readinessProbe) }}
+          readinessProbe:
+            {{- toYaml .| nindent 12 }}
+          {{- end }}
+          ports:
+            {{- range $n, $p := $global.service.ports }}
+            - name: {{ $n }}
+              containerPort: {{ $p.containerPort }}
+              protocol: {{ $p.protocol | default "TCP" }}
+            {{- end }}
+          volumeMounts:
+            - name: {{ template "kestra.fullname" $ }}-config
+              mountPath: /app/confs/_default.yml
+              subPath: _default.yml
+            {{- range $global.configurations.configmaps }}
+            {{- $vname := printf "%s-%s" .name .key | replace "." "-" | kebabcase }}
+            - name: {{ $vname }}
+              mountPath: /app/confs/{{ .key }}
+              subPath: {{ .key }}
+            {{- end }}
+            {{- range $global.configurations.secrets }}
+            {{- $vname := printf "%s-%s" .name .key | replace "." "-" | kebabcase }}
+            - name: {{ $vname }}
+              mountPath: /app/secrets/{{ .key }}
+              subPath: {{ .key }}
+            {{- end }}
+            {{- with $common.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with $content.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if $dind }}
+            - name: docker-dind-socket
+              mountPath: /dind
+            - name: docker-tmp
+              mountPath: {{ $global.dind.tmpPath }}
+            {{- end }}
+        {{- if $dind }}
+        {{- $dindMode := $global.dind.mode | default "rootless" }}
+        {{- $dindConfig := index $global.dind.base $dindMode }}
+        - name: {{ $.Chart.Name }}-{{ $type }}-docker-dind
+          image: "{{ $dindConfig.image.repository }}:{{ $dindConfig.image.tag }}"
+          imagePullPolicy: {{ $dindConfig.image.pullPolicy }}
+          args:
+            {{- toYaml $dindConfig.args | nindent 12 }}
+          env:
+            - name: DOCKER_HOST
+              value: unix://{{ $global.dind.socketPath }}/docker.sock
+            {{- if $global.dind.extraEnv }}
+            {{ toYaml $global.dind.extraEnv | trim | nindent 12 }}
+            {{- end }}
+          securityContext:
+            {{- if $dindConfig.securityContext }}
+            {{- toYaml $dindConfig.securityContext | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            {{- if $global.dind.extraVolumeMounts }}
+            {{ toYaml $global.dind.extraVolumeMounts | trim | nindent 12 }}
+            {{- end }}
+            - name: docker-dind-socket
+              mountPath: {{ $global.dind.socketPath }}
+            - name: docker-tmp
+              mountPath: {{ $global.dind.tmpPath }}
+          resources:
+            {{- toYaml $global.dind.resources | nindent 12 }}
+        {{- end }}
+        {{- range $common.extraContainers }}
+        - {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- range $content.extraContainers }}
+        - {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+        - name: {{ template "kestra.fullname" $ }}-config
+          configMap:
+            name: {{ template "kestra.fullname" $ }}-config
+            items:
+              - key: _default.yml
+                path: _default.yml
+        {{- range $global.configurations.configmaps }}
+        {{- $vname := printf "%s-%s" .name .key | replace "." "-" | kebabcase }}
+        - name: {{ $vname }}
+          configMap:
+            name: {{ .name }}
+            items:
+              - key: {{ .key }}
+                path: {{ .key }}
+        {{- end }}
+        {{- range $global.configurations.secrets }}
+        {{- $vname := printf "%s-%s" .name .key | replace "." "-" | kebabcase }}
+        - name: {{ $vname }}
+          secret:
+            secretName: {{ .name }}
+            defaultMode: 0444
+            items:
+              - key: {{ .key }}
+                path: {{ .key }}
+        {{- end }}
+        {{- if $dind }}
+        - name: docker-dind-socket
+          emptyDir: {}
+        - name: docker-tmp
+          emptyDir: {}
+        {{- end }}
+        {{- with $common.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with $content.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+{{- $hpa := default $common.autoscaler $content.autoscaler }}
+{{- if $hpa.enabled }}
+---
+{{- if semverCompare ">=1.23-0" $.Capabilities.KubeVersion.GitVersion -}}
+apiVersion: autoscaling/v2
+{{- else -}}
+apiVersion: autoscaling/v2beta2
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: {{ $kind }}
+    name: "{{ include "kestra.fullname" $ }}-{{ $name }}"
+  minReplicas: {{ $hpa.minReplicas | default 1 }}
+  maxReplicas: {{ $hpa.maxReplicas | default 1 }}
+  {{- if $hpa.extra }}{{ toYaml $hpa.extra | trim | nindent 2 }}{{ end }}
+  {{- if $hpa.metrics }}
+  metrics:
+  {{- toYaml $hpa.metrics | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+{{- end }}
+{{- end }}

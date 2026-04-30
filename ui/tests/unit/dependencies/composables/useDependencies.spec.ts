@@ -224,6 +224,7 @@ describe("useDependencies composable", () => {
 
       const {wrapper} = mountComponentWithUseDependencies(EXECUTION);
       await nextTick();
+      await nextTick();
 
       wrapper.unmount();
 

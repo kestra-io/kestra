@@ -3,9 +3,11 @@ package io.kestra.webserver.filter;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Requires;
@@ -38,7 +40,7 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
     public static final String MCP_AUTH_HANDLED = "io.kestra.mcp.auth.handled";
 
     private final McpServerRepositoryInterface mcpServerRepository;
-    private final BroadcastQueueInterface<McpServer> mcpQueue;
+    private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final BasicAuthService basicAuthService;
     private final TenantService tenantService;
 
@@ -46,17 +48,17 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
         .maximumSize(500)
         .expireAfterAccess(5, TimeUnit.MINUTES)
         .build();
-    private QueueSubscriber<McpServer> mcpSubscriber;
+    private QueueSubscriber<ClusterEvent> clusterEventSubscriber;
 
     @Inject
     public McpServerAuthenticationFilter(
         McpServerRepositoryInterface mcpServerRepository,
-        BroadcastQueueInterface<McpServer> mcpQueue,
+        BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         BasicAuthService basicAuthService,
         TenantService tenantService
     ) {
         this.mcpServerRepository = mcpServerRepository;
-        this.mcpQueue = mcpQueue;
+        this.clusterEventQueue = clusterEventQueue;
         this.basicAuthService = basicAuthService;
         this.tenantService = tenantService;
     }
@@ -68,25 +70,23 @@ public class McpServerAuthenticationFilter implements HttpServerFilter {
 
     @PostConstruct
     public void start() {
-        mcpSubscriber = mcpQueue.subscriber().subscribe(either -> {
+        clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
-                log.warn("Failed to deserialize MCP server event in auth filter: {}", either.getRight().getMessage());
+                log.warn("Failed to deserialize cluster event in MCP auth filter: {}", either.getRight().getMessage());
                 return;
             }
-            McpServer mcpServer = either.getLeft();
-            McpCacheKey key = new McpCacheKey(mcpServer.tenantId(), mcpServer.id());
-            if (mcpServer.deleted()) {
-                mcpConfigCache.invalidate(key);
-            } else {
-                mcpConfigCache.put(key, mcpServer);
+            ClusterEvent event = either.getLeft();
+            if (event.eventType() == ClusterEvent.EventType.MCP_SERVER_CHANGED) {
+                McpServerClusterEventPayload payload = McpServerClusterEventPayload.fromJson(event.message());
+                mcpConfigCache.invalidate(new McpCacheKey(payload.tenantId(), payload.serverId()));
             }
         });
     }
 
     @PreDestroy
     public void stop() {
-        if (mcpSubscriber != null) {
-            mcpSubscriber.close();
+        if (clusterEventSubscriber != null) {
+            clusterEventSubscriber.close();
         }
     }
 

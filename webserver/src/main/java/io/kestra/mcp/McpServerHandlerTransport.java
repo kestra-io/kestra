@@ -85,19 +85,19 @@ public class McpServerHandlerTransport {
         return removeStale.then(upsertCurrent);
     }
 
-    public Mono<Void> evictAndNotify(McpServer mcpServer) {
-        HandlerKey key = new HandlerKey(mcpServer.tenantId(), mcpServer.id());
+    public Mono<Void> evictAndNotify(String tenantId, String serverId) {
+        HandlerKey key = new HandlerKey(tenantId, serverId);
         KestraFluxStreamableServerTransportProvider transport = handlers.remove(key);
         McpAsyncServer asyncServer = servers.remove(key);
 
-        log.debug("Initiating graceful shutdown tenantId: {}, serverId: {} as the server is deleted or disabled", mcpServer.tenantId(), mcpServer.id());
+        log.debug("Initiating graceful shutdown tenantId: {}, serverId: {} as the server is deleted or disabled", tenantId, serverId);
         Mono<Void> transportClosed = Optional.ofNullable(transport).map(KestraFluxStreamableServerTransportProvider::closeGracefully).orElseGet(() -> {
-            log.debug("No transport providers found for tenantId: {}, serverId: {}", mcpServer.tenantId(), mcpServer.id());
+            log.debug("No transport providers found for tenantId: {}, serverId: {}", tenantId, serverId);
             return Mono.empty();
         });
 
         return transportClosed.then(Optional.ofNullable(asyncServer).map(McpAsyncServer::closeGracefully).orElseGet(() -> {
-            log.debug("No server found for tenantId: {}, serverId: {}", mcpServer.tenantId(), mcpServer.id());
+            log.debug("No server found for tenantId: {}, serverId: {}", tenantId, serverId);
             return Mono.empty();
         }));
     }

@@ -2,14 +2,16 @@ package io.kestra.mcp;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.GenericTrigger;
+import io.kestra.core.mcp.models.McpServerClusterEventPayload;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +39,9 @@ class McpServerChangeNotifierTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
 
     private String serverId;
 
@@ -135,7 +141,7 @@ class McpServerChangeNotifierTest {
         awaitToolCount(serverId, 1);
 
         // When — server deleted event arrives
-        notifier.handleMcpChange(buildMcpServer(serverId, false, true));
+        notifier.handleMcpServerChanged(buildMcpServerChangedEvent(serverId, false, true));
 
         // Then — server is evicted; listToolsForServer returns empty (key removed from servers map)
         Awaitility.await()
@@ -155,7 +161,7 @@ class McpServerChangeNotifierTest {
         awaitToolCount(serverId, 1);
 
         // When — server disabled event arrives
-        notifier.handleMcpChange(buildMcpServer(serverId, true, false));
+        notifier.handleMcpServerChanged(buildMcpServerChangedEvent(serverId, true, false));
 
         // Then — server is evicted
         Awaitility.await()
@@ -166,7 +172,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenActiveServer_whenServerIsUpdatedAndStillEnabled_thenNoEviction() throws DeserializationException {
+    void givenActiveServer_whenServerIsUpdatedAndStillEnabled_thenNoEviction() throws Exception {
         // Given — server is initialised with one tool
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)
@@ -174,11 +180,16 @@ class McpServerChangeNotifierTest {
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
         awaitToolCount(serverId, 1);
 
-        // When — an update arrives for a server that is still enabled and not deleted
-        notifier.handleMcpChange(buildMcpServer(serverId, false, false));
+        // When — an update event arrives for a server that is still enabled and not deleted
+        clusterEventQueue.emit(new ClusterEvent(ClusterEvent.EventType.MCP_SERVER_CHANGED, LocalDateTime.now(), new McpServerClusterEventPayload(null, serverId, false, false).toJson()));
 
-        // Then — server is not evicted; tool count is unchanged
-        awaitToolCount(serverId, 1);
+        // Then — server is not evicted; tool count is unchanged after the subscriber has had time to process
+        Awaitility.await()
+            .pollDelay(Duration.ofMillis(500))
+            .atMost(Duration.ofSeconds(5))
+            .untilAsserted(() ->
+                assertThat(mcpServerHandlerTransport.listToolsForServer(null, serverId).collectList().block()).hasSize(1)
+            );
     }
 
     /**
@@ -270,7 +281,7 @@ class McpServerChangeNotifierTest {
         return buildFlowWithSameId(previous, triggers).toBuilder().disabled(true).build();
     }
 
-    private static McpServer buildMcpServer(String id, boolean disabled, boolean deleted) {
-        return new McpServer(null, id, null, null, null, null, disabled, false, deleted, null, null);
+    private static ClusterEvent buildMcpServerChangedEvent(String serverId, boolean disabled, boolean deleted) {
+        return new ClusterEvent(ClusterEvent.EventType.MCP_SERVER_CHANGED, LocalDateTime.now(), new McpServerClusterEventPayload(null, serverId, deleted, disabled).toJson());
     }
 }

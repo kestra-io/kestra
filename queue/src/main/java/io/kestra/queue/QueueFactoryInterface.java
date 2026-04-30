@@ -1,7 +1,6 @@
 package io.kestra.queue;
 
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowInterface;
@@ -17,6 +16,7 @@ import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.server.ClusterEvent;
 
 public interface QueueFactoryInterface<D> {
     DispatchQueueInterface<Execution> executionQueue(D dependencies);
@@ -55,7 +55,7 @@ public interface QueueFactoryInterface<D> {
 
     BroadcastQueueInterface<McpSessionEvent> mcpSessionQueue(D dependencies);
 
-    BroadcastQueueInterface<McpServer> mcpQueue(D dependencies);
+    BroadcastQueueInterface<ClusterEvent> clusterEventQueue(D dependencies);
 
     DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(D dependencies);
 }

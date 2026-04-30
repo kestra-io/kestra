@@ -14,11 +14,7 @@
             </el-icon>
         </div>
 
-        <NoData v-else-if="servers.length === 0">
-            <template #default>
-                {{ t("mcp.no_servers") }}
-            </template>
-        </NoData>
+        <KsEmpty v-else-if="servers.length === 0" :description="t('mcp.no_servers')" />
 
         <div v-else class="mcp-grid">
             <div
@@ -294,7 +290,6 @@
     import type {FormInstance} from "element-plus";
     import {useMiscStore} from "override/stores/misc";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import NoData from "../layout/NoData.vue";
     import Modal from "../Modal.vue";
     import LockOutline from "vue-material-design-icons/LockOutline.vue";
     import useRouteContext from "../../composables/useRouteContext";

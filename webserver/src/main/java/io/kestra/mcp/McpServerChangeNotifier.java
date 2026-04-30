@@ -1,11 +1,12 @@
 package io.kestra.mcp;
 
-import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import com.google.common.annotations.VisibleForTesting;
@@ -16,7 +17,6 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,22 +32,22 @@ import static io.kestra.plugin.core.trigger.McpToolTrigger.DEFAULT_SERVER_ID;
 public class McpServerChangeNotifier {
     private final Provider<McpServerHandlerTransport> mcpServerHandlerTransport;
     private final BroadcastQueueInterface<FlowInterface> flowQueue;
-    private final BroadcastQueueInterface<McpServer> mcpQueue;
+    private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final FlowRepositoryInterface flowRepository;
 
     private QueueSubscriber<FlowInterface> flowSubscriber;
-    private QueueSubscriber<McpServer> mcpSubscriber;
+    private QueueSubscriber<ClusterEvent> clusterEventSubscriber;
 
     @Inject
     public McpServerChangeNotifier(
         Provider<McpServerHandlerTransport> mcpServerHandlerTransport,
         BroadcastQueueInterface<FlowInterface> flowQueue,
-        BroadcastQueueInterface<McpServer> mcpQueue,
+        BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         FlowRepositoryInterface flowRepository
     ) {
         this.mcpServerHandlerTransport = mcpServerHandlerTransport;
         this.flowQueue = flowQueue;
-        this.mcpQueue = mcpQueue;
+        this.clusterEventQueue = clusterEventQueue;
         this.flowRepository = flowRepository;
     }
 
@@ -61,12 +61,15 @@ public class McpServerChangeNotifier {
             handleFlowChange(either.getLeft());
         });
 
-        this.mcpSubscriber = mcpQueue.subscriber().subscribe(either -> {
+        this.clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
-                log.warn("Failed to deserialize MCP server event for MCP change notification: {}", either.getRight().getMessage());
+                log.warn("Failed to deserialize cluster event for MCP change notification: {}", either.getRight().getMessage());
                 return;
             }
-            handleMcpChange(either.getLeft());
+            ClusterEvent event = either.getLeft();
+            if (event.eventType() == ClusterEvent.EventType.MCP_SERVER_CHANGED) {
+                handleMcpServerChanged(event);
+            }
         });
     }
 
@@ -75,8 +78,8 @@ public class McpServerChangeNotifier {
         if (flowSubscriber != null) {
             flowSubscriber.close();
         }
-        if (mcpSubscriber != null) {
-            mcpSubscriber.close();
+        if (clusterEventSubscriber != null) {
+            clusterEventSubscriber.close();
         }
     }
 
@@ -121,16 +124,18 @@ public class McpServerChangeNotifier {
     }
 
     @VisibleForTesting
-    public void handleMcpChange(McpServer mcpServer) {
-        log.debug("MCP server {} changed; evicting cached instance and notifying sessions", mcpServer.id());
+    public void handleMcpServerChanged(ClusterEvent event) {
+        McpServerClusterEventPayload payload = McpServerClusterEventPayload.fromJson(event.message());
 
-        if (!mcpServer.deleted() && !mcpServer.disabled()) {
-            log.debug("No action needed for server tenantId: {}, serverId: {} as it is not deleted or disabled", mcpServer.tenantId(), mcpServer.id());
+        if (!payload.isDeletedOrDisabled()) {
+            log.debug("No action needed for server tenantId: {}, serverId: {} as it is not deleted or disabled", payload.tenantId(), payload.serverId());
             return;
         }
 
-        mcpServerHandlerTransport.get().evictAndNotify(mcpServer)
-            .doOnError(e -> log.error("Failed to evict MCP server {}: {}", mcpServer.id(), e.getMessage()))
+        log.debug("MCP server tenantId: {}, serverId: {} deleted or disabled; evicting cached instance and notifying sessions", payload.tenantId(), payload.serverId());
+
+        mcpServerHandlerTransport.get().evictAndNotify(payload.tenantId(), payload.serverId())
+            .doOnError(e -> log.error("Failed to evict MCP server {}: {}", payload.serverId(), e.getMessage()))
             .onErrorComplete()
             .subscribe();
     }

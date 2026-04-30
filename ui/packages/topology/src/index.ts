@@ -6,4 +6,3 @@ export {EVENTS, NODE_SIZES} from "./utils/constants";
 export type {CustomActionConfig, ShowDetailsConfig} from "./utils/constants";
 export {State} from "./utils/state";
 export type {FlowGraph} from "./utils/vueFlowUtils";
-export * as VueFlowUtils from "./utils/vueFlowUtils";

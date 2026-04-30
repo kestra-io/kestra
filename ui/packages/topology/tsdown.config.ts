@@ -9,7 +9,4 @@ export default defineConfig({
     exports: "ci-only",
     fromVite: true,
     dts: {vue: true},
-    deps: {
-        onlyBundle: false,
-    },
 })

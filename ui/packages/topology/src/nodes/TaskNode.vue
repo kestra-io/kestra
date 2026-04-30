@@ -47,7 +47,7 @@
                     </KsTooltip>
                 </button>
                 <div
-                    v-else
+                    v-else-if="state"
                     class="playground-button"
                     :style="{
                         color: `var(--ks-content-${state?.toLowerCase()})`,

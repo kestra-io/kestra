@@ -234,7 +234,6 @@
             EVENTS.OPEN_LINK,
             EVENTS.SHOW_LOGS,
             EVENTS.SHOW_DESCRIPTION,
-            EVENTS.RUN_TASK,
             "on-add-flowable-error",
             EVENTS.ADD_TASK,
             "toggle-orientation",

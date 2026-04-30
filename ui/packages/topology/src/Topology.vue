@@ -31,6 +31,7 @@
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
                 :customActions="customActions"
+                :showDetails="showDetails"
                 @edit="emit(EVENTS.EDIT, $event)"
                 @delete="emit(EVENTS.DELETE, $event)"
                 @run-task="emit(EVENTS.RUN_TASK, $event)"
@@ -40,6 +41,7 @@
                 @show-description="emit(EVENTS.SHOW_DESCRIPTION, $event)"
                 @show-condition="emit(EVENTS.SHOW_CONDITION, $event)"
                 @show-custom-action="emit(EVENTS.SHOW_CUSTOM_ACTION, $event)"
+                @show-details="emit(EVENTS.SHOW_DETAILS, $event)"
                 @mouseover="onMouseOver($event)"
                 @mouseleave="onMouseLeave()"
                 @add-error="emit('on-add-flowable-error', $event)"
@@ -89,7 +91,13 @@
             />
         </template>
 
-        <Controls v-if="controlsShown" :showInteractive="false">
+        <Controls v-if="controlsShown" :showInteractive="false" :showFitView="false">
+            <ControlButton @click="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
+                <Information />
+            </ControlButton>
+            <ControlButton @click="fitView()">
+                <svg viewBox="0 0 32 32" style="width:12px;height:12px"><path d="M3.692 4.63c0-.53.4-.938.939-.938h5.215V0H4.708C2.13 0 0 2.054 0 4.63v5.216h3.692V4.631zM27.354 0h-5.2v3.692h5.17c.53 0 .984.4.984.939v5.215H32V4.631A4.624 4.624 0 0 0 27.354 0zm.954 24.83c0 .532-.4.94-.939.94h-5.215v3.768h5.215c2.577 0 4.631-2.13 4.631-4.707v-5.139h-3.692v5.139zm-23.677.94a.919.919 0 0 1-.939-.94v-5.138H0v5.139c0 2.577 2.13 4.707 4.708 4.707h5.138V25.77H4.631z" fill="currentColor" /></svg>
+            </ControlButton>
             <ControlButton @click="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
                 <component :is="isHorizontal ? SplitCellsHorizontal : SplitCellsVertical" />
             </ControlButton>
@@ -123,14 +131,15 @@
     import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue";
     import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import Information from "vue-material-design-icons/Information.vue";
     import {cssVar as cssVariable} from "./utils/css";
     import {CLUSTER_PREFIX} from "./utils/constants";
     import * as flowYamlUtils from "./utils/flowYamlUtils";
-    import {type CustomActionConfig, EVENTS} from "./utils/constants"
+    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
     import Utils from "./utils/utils"
     import * as VueFlowUtils from "./utils/vueFlowUtils";
     import {useScreenshot} from "./composables/useScreenshot";
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY} from "./injectionKeys";
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys";
     import BasicNode from "./nodes/BasicNode.vue";
 
     const props = withDefaults(defineProps<{
@@ -153,6 +162,8 @@
         playgroundReadyToStart?: boolean;
         getNodeDimensions?: (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => { width: number, height: number };
         customActions?: Record<string, CustomActionConfig>;
+        showDetails?: Record<string, ShowDetailsConfig>;
+        animated?: boolean;
     }>(), {
         isHorizontal: true,
         isReadOnly: true,
@@ -169,10 +180,13 @@
         playgroundReadyToStart: false,
         subflowsExecutions: () => ({}),
         getNodeDimensions: undefined,
-        customActions: () => ({})
+        customActions: () => ({}),
+        showDetails: () => ({}),
+        animated: true,
     });
 
     const dragging = ref(false);
+    const showExtraDetails = ref(false);
     const lastPosition = ref<XYPosition | null>()
     const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id);
     const edgeReplacer = ref({});
@@ -181,8 +195,35 @@
     const clusterToNode = ref([])
     const {capture} = useScreenshot();
 
+    const effectiveGetNodeDimensions = computed(() => {
+        return (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => {
+            const baseHeight = getNodeHeight(node);
+            const dimensions = props.getNodeDimensions
+                ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
+                : {width: getNodeWidth(node), height: baseHeight};
+
+            if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
+                return {...dimensions, height: baseHeight};
+            }
+
+            if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
+                const taskType = node?.task?.type as string | undefined;
+                const hasDetailsAction = Boolean(
+                    (taskType && props.customActions?.[taskType]) ||
+                        (taskType && props.showDetails?.[taskType])
+                );
+                if (hasDetailsAction) {
+                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)};
+                }
+            }
+
+            return dimensions;
+        };
+    });
+
     provide(EXECUTION_INJECTION_KEY, computed(() => props.execution));
     provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions));
+    provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails);
 
 
     const emit = defineEmits(
@@ -202,7 +243,8 @@
             "message",
             "expand-subflow",
             EVENTS.SHOW_CONDITION,
-            EVENTS.SHOW_CUSTOM_ACTION
+            EVENTS.SHOW_CUSTOM_ACTION,
+            EVENTS.SHOW_DETAILS,
         ]
     )
 
@@ -215,6 +257,10 @@
     })
 
     watch(() => props.isHorizontal, () => {
+        generateGraph();
+    })
+
+    watch(showExtraDetails, () => {
         generateGraph();
     })
 
@@ -246,7 +292,8 @@
                 props.isReadOnly,
                 props.isAllowedEdit,
                 props.enableSubflowInteraction,
-                props.getNodeDimensions
+                effectiveGetNodeDimensions.value,
+                props.animated,
             );
 
             if (elements) {

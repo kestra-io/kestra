@@ -49,6 +49,26 @@
     --ks-border-radius-lg: 0.5rem;
     --ks-border-radius-sm: 0.15rem;
     --ks-border-radius-pill: 50rem;
+
+    --ks-chart-cancelled: #{$base-red-200};
+    --ks-chart-created:   #{$base-blue-500};
+    --ks-chart-debug:     #{$base-blue-200};
+    --ks-chart-error:     #{$base-red-300};
+    --ks-chart-failed:    #{$base-red-300};
+    --ks-chart-info:      #{$base-blue-300};
+    --ks-chart-killed:    #{$base-yellow-200};
+    --ks-chart-killing:   #{$base-yellow-300};
+    --ks-chart-paused:    #{$base-gray-200};
+    --ks-chart-queued:    #{$base-yellow-100};
+    --ks-chart-restarted: #{$base-blue-50};
+    --ks-chart-retried:   #{$base-blue-100};
+    --ks-chart-retrying:  #{$base-blue-200};
+    --ks-chart-running:   #{$base-blue-300};
+    --ks-chart-skipped:   #{$base-gray-200};
+    --ks-chart-success:   #{$base-green-400};
+    --ks-chart-trace:     #{$base-gray-200};
+    --ks-chart-warn:      #{$base-orange-200};
+    --ks-chart-warning:   #{$base-orange-100};
 }
 
 html.dark {
@@ -64,6 +84,26 @@ html.dark {
     --ks-background-success: #{rgba($base-green-900, 0.2)};
     --ks-content-running:    #{$base-blue-100};
     --ks-content-success:    #{$base-green-100};
+
+    --ks-chart-cancelled: #{$base-red-200};
+    --ks-chart-created:   #{$base-blue-400};
+    --ks-chart-debug:     #{$base-blue-400};
+    --ks-chart-error:     #{$base-red-300};
+    --ks-chart-failed:    #{$base-red-300};
+    --ks-chart-info:      #{$base-blue-500};
+    --ks-chart-killed:    #{$base-yellow-600};
+    --ks-chart-killing:   #{$base-yellow-200};
+    --ks-chart-paused:    #{$base-gray-300};
+    --ks-chart-queued:    #{$base-gray-200};
+    --ks-chart-restarted: #{$base-blue-50};
+    --ks-chart-retried:   #{$base-blue-100};
+    --ks-chart-retrying:  #{$base-blue-200};
+    --ks-chart-running:   #{$base-blue-300};
+    --ks-chart-skipped:   #{$base-gray-300};
+    --ks-chart-success:   #{$base-green-300};
+    --ks-chart-trace:     #{$base-gray-300};
+    --ks-chart-warn:      #{$base-orange-200};
+    --ks-chart-warning:   #{$base-orange-200};
 }
 
 $node-colors: (

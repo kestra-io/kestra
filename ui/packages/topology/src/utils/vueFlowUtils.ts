@@ -369,6 +369,7 @@ export function generateGraph(
         width: getNodeWidth(node),
         height: getNodeHeight(node),
     }),
+    animated: boolean = true,
 ): Elements | undefined {
     const elements: Elements = [];
     const clustersWithoutRootNode = [CLUSTER_PREFIX + TRIGGERS_NODE_UID];
@@ -591,7 +592,7 @@ export function generateGraph(
                     unused: (edge as any).unused,
                 },
                 style: {zIndex: 10},
-                animated: true,
+                animated: animated,
             });
         }
     }

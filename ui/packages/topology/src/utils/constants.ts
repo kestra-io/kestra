@@ -22,9 +22,16 @@ export const EVENTS = {
     SHOW_CONDITION: "showCondition",
     RUN_TASK: "runTask",
     SHOW_CUSTOM_ACTION: "showCustomAction",
+    SHOW_DETAILS: "showDetails",
 } as const;
 
 export interface CustomActionConfig {
+    label: string;
+    taskProp: string;
+    lang: string;
+}
+
+export interface ShowDetailsConfig {
     label: string;
     taskProp: string;
     lang: string;
@@ -41,4 +48,5 @@ export const NODE_SIZES = {
     COLLAPSED_CLUSTER_HEIGHT: 44,
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
+    TASK_EXPANDED_FALLBACK_HEIGHT: 140,
 } as const;

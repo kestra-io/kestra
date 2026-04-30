@@ -14,11 +14,25 @@
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
         <template #details>
-            <slot name="details" />
+            <Transition name="details-slide">
+                <div v-if="globalShowExtraDetails" class="details-wrapper">
+                    <slot name="details" />
+                    <div v-if="actionConfig && data.node.task" class="view-details-action">
+                        <button
+                            type="button"
+                            class="view-details-button"
+                            aria-label="Show details"
+                            @click="onShowDetails()"
+                        >
+                            Show details
+                        </button>
+                    </div>
+                </div>
+            </Transition>
         </template>
         <template #content>
             <ExecutionInformations
-                v-if="taskExecution"
+                v-if="taskExecution && globalShowExtraDetails"
                 :execution="taskExecution"
                 :task="data.node.task"
                 :color="color"
@@ -72,15 +86,15 @@
                 </KsTooltip>
             </span>
             <button
-                v-if="customAction && data.node.task"
+                v-if="actionConfig?.eventName === EVENTS.SHOW_CUSTOM_ACTION && data.node.task"
                 type="button"
                 class="circle-button"
                 :style="{backgroundColor: nodeColor(color)}"
-                :aria-label="customAction.label"
-                @click="emit(EVENTS.SHOW_CUSTOM_ACTION, {task: data.node.task, customAction: customAction})"
+                :aria-label="actionConfig.config.label"
+                @click="onShowDetails()"
             >
-                <KsTooltip :content="customAction.label">
-                    <Eye class="button-icon" :alt="customAction.label" />
+                <KsTooltip :content="actionConfig.config.label">
+                    <Eye class="button-icon" :alt="actionConfig.config.label" />
                 </KsTooltip>
             </button>
             <span
@@ -124,13 +138,14 @@
     import {State} from "../utils/state";
     import {SECTIONS} from "../utils/constants";
     import KsTooltip from "../components/Tooltip.vue";
-    import {type CustomActionConfig, EVENTS} from "../utils/constants";
+    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants";
     import ExecutionInformations from "../misc/ExecutionInformations.vue";
     import Utils from "../utils/utils";
     import BasicNode from "./BasicNode.vue";
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
+        SHOW_EXTRA_DETAILS_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -205,6 +220,7 @@
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
         customActions?: Record<string, CustomActionConfig>;
+        showDetails?: Record<string, ShowDetailsConfig>;
     }>(), {
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -212,6 +228,7 @@
         icons: undefined,
         iconComponent: undefined,
         customActions: () => ({}),
+        showDetails: () => ({}),
     });
 
     defineOptions({
@@ -233,10 +250,12 @@
         (event: typeof EVENTS.SHOW_DESCRIPTION, data: any) :void;
         (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
         (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
+        (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
     }>();
 
     const execution = inject(EXECUTION_INJECTION_KEY);
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY);
+    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY);
 
     const color = computed(() => props.data.color ?? "primary");
 
@@ -329,11 +348,24 @@
         return props.data;
     });
 
-    const customAction = computed(() => {
+    const actionConfig = computed(() => {
         const taskType = props.data.node.task?.type as string | undefined;
-        if (!taskType || !props.customActions) return undefined;
-        return props.customActions[taskType];
+        if (!taskType) return undefined;
+        const customAction = props.customActions?.[taskType];
+        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const;
+        const showDetail = props.showDetails?.[taskType];
+        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const;
+        return undefined;
     });
+
+    function onShowDetails() {
+        if (!actionConfig.value || !props.data.node.task) return;
+        if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
+            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig});
+        } else {
+            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig});
+        }
+    }
 
     const iconAlt = computed(() => {
         if (state.value === State.RUNNING) {
@@ -377,5 +409,60 @@ button.playground-button,
 .dark button.playground-button {
     color: _color-palette.$base-white;
     background-color: _color-palette.$base-blue-400;
+}
+
+.view-details-action {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+    padding: 0 8px 8px;
+}
+
+.view-details-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    box-sizing: border-box;
+    appearance: none;
+    margin: 0;
+    padding: 4px 10px;
+    border: 1px solid var(--ks-border-primary);
+    border-radius: 999px;
+    background-color: var(--ks-background-card);
+    color: var(--ks-content-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-transform: none;
+    box-shadow: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        border-color: var(--ks-border-active);
+        background-color: var(--ks-button-background-secondary-hover);
+        color: var(--ks-content-primary);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--ks-border-active);
+        outline-offset: 2px;
+    }
+}
+
+.details-slide-enter-active,
+.details-slide-leave-active {
+    transition: max-height 0.25s ease, opacity 0.25s ease;
+    overflow: hidden;
+    max-height: 200px;
+}
+
+.details-slide-enter-from,
+.details-slide-leave-to {
+    max-height: 0;
+    opacity: 0;
 }
 </style>

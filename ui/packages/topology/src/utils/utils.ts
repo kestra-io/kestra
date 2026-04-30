@@ -1,7 +1,5 @@
-import {getCurrentInstance} from "vue";
 import humanizeDuration, {type Options as HumanizeDurationOptions} from "humanize-duration";
-import moment from "moment";
-import momentTz from "moment-timezone";
+import moment from "moment-timezone";
 
 const humanizeDurationLanguages = {
     en: {
@@ -32,16 +30,14 @@ export const TIMEZONE_STORAGE_KEY = "timezone";
 export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 export const dateFilter = (dateString: string, format?: string) => {
-    const currentLocale = getCurrentInstance()?.appContext.config.globalProperties.$moment().locale();
-    const momentInstance = getCurrentInstance()?.appContext.config.globalProperties.$moment(dateString).locale(currentLocale);
     let f;
     if (format === "iso") {
         f = "YYYY-MM-DD HH:mm:ss.SSS";
     } else {
         f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "llll";
     }
-    return momentInstance
-        .tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? momentTz.tz.guess())
+    return moment(dateString)
+        .tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
         .format(f);
 };
 

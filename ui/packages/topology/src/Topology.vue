@@ -1,14 +1,14 @@
 <template>
     <VueFlow
         :id="id"
-        :defaultMarkerColor="cssVariable('--bs-cyan')"
+        :defaultMarkerColor="cssVariable('--ks-topology-edge-color')"
         fitViewOnInit
         :nodesDraggable="false"
         :nodesConnectable="false"
         :elevateNodesOnSelect="false"
         :elevateEdgesOnSelect="false"
     >
-        <Background :patternColor="darkTheme ? cssVariable('--bs-grey-500') : cssVariable('--bs-grey-300')" />
+        <Background :patternColor="cssVariable('--ks-topology-dot-color')" />
 
         <template #node-cluster="clusterProps">
             <ClusterNode
@@ -19,7 +19,7 @@
 
         <template #node-dot="dotProps">
             <DotNode
-                v-bind="dotProps"
+                v-bind="dotProps as any"
             />
         </template>
 
@@ -61,7 +61,7 @@
 
         <template #node-trigger="triggerProps">
             <TriggerNode
-                v-bind="triggerProps"
+                v-bind="triggerProps as any"
                 :icons="icons"
                 :iconComponent="iconComponent"
                 :isReadOnly="isReadOnly"
@@ -74,7 +74,7 @@
 
         <template #node-collapsedcluster="CollapsedProps">
             <CollapsedClusterNode
-                v-bind="CollapsedProps"
+                v-bind="CollapsedProps as any"
                 @expand="expand($event)"
             />
         </template>
@@ -114,21 +114,14 @@
     import type {XYPosition} from "@vue-flow/core";
     import {ControlButton, Controls} from "@vue-flow/controls";
     import {Background} from "@vue-flow/background";
-    // @ts-expect-error no types for internals necessary
     import ClusterNode from "./nodes/ClusterNode.vue";
-    // @ts-expect-error no types for internals necessary
     import DotNode from "./nodes/DotNode.vue";
     import EdgeNode from "./nodes/EdgeNode.vue";
     import TaskNode from "./nodes/TaskNode.vue";
-    // @ts-expect-error no types for internals necessary
     import TriggerNode from "./nodes/TriggerNode.vue"
-    // @ts-expect-error no types for internals necessary
     import CollapsedClusterNode from "./nodes/CollapsedClusterNode.vue";
-    // @ts-expect-error no types for internals necessary
     import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue";
-    // @ts-expect-error no types for internals necessary
     import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue";
-    // @ts-expect-error no types for internals necessary
     import Download from "vue-material-design-icons/Download.vue";
     import {cssVar as cssVariable} from "./utils/css";
     import {CLUSTER_PREFIX} from "./utils/constants";
@@ -264,12 +257,25 @@
         })
     }
 
+    const HOVERED_NODE_CLASS = "topology-node-hovered";
+    const DROP_TARGET_CLASS = "topology-node-drop-target";
+
+    function setNodeInteractionClass(node: any, cls: string, add: boolean) {
+        const classes = (node.class || "").split(" ").filter(Boolean);
+        if (add) {
+            if (!classes.includes(cls)) classes.push(cls);
+        } else {
+            const idx = classes.indexOf(cls);
+            if (idx > -1) classes.splice(idx, 1);
+        }
+        node.class = classes.join(" ");
+    }
+
     const onMouseOver = (node: any) => {
         if (!dragging.value) {
             VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
                 if (n?.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-gray-900")}
-                    n.class = "rounded-3"
+                    setNodeInteractionClass(n, HOVERED_NODE_CLASS, true);
                 }
             });
         }
@@ -282,8 +288,9 @@
     const resetNodesStyle = () => {
         getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
             .forEach(n => {
-                n.style = {...n.style, opacity: "1", outline: "none"}
-                n.class = ""
+                n.style = {...n.style, opacity: "1"};
+                setNodeInteractionClass(n, HOVERED_NODE_CLASS, false);
+                setNodeInteractionClass(n, DROP_TARGET_CLASS, false);
             })
     }
 
@@ -352,12 +359,10 @@
         if (e.intersections && !checkIntersections(e.intersections, e.node) && e.intersections.filter((n: any) => n.type === "task").length === 1) {
             e.intersections.forEach((n: any) => {
                 if (n.type === "task") {
-                    n.style = {...n.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
-                    n.class = "rounded-3"
+                    setNodeInteractionClass(n, DROP_TARGET_CLASS, true);
                 }
             })
-            e.node.style = {...e.node.style, outline: "0.5px solid " + cssVariable("--bs-primary")}
-            e.node.class = "rounded-3"
+            setNodeInteractionClass(e.node, DROP_TARGET_CLASS, true);
         }
     })
 
@@ -431,7 +436,6 @@
         generateGraph();
     }
 
-    const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
     const controlsShown = ref(true);
     const isDropdownOpen = ref(false);
@@ -449,114 +453,6 @@
     }
 </script>
 
-<style>
-@import "@vue-flow/core/dist/style.css";
-@import "@vue-flow/core/dist/theme-default.css";
-@import "@vue-flow/controls/dist/style.css";
-</style>
-
-<style lang="scss">
-@use "./assets/styles/color-palette" as palette;
-
-button.circle-button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  appearance: none;
-}
-
-.circle-button {
-    border-radius: 1rem;
-    width: 1rem;
-    height: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 0.25rem;
-    z-index: 2000;
-    cursor: pointer;
-}
-
-$node-colors: (
-    "success": palette.$base-green-400,
-    "primary": palette.$base-purple-500,
-    "danger": palette.$base-red-500,
-    "blue": palette.$base-blue-500,
-    "default": palette.$base-gray-600
-);
-
-.button-icon {
-    font-size: 0.66rem;
-}
-
-.vue-flow__controls {
-    border: 1px solid var(--ks-border-primary);
-    border-radius: var(--bs-border-radius);
-}
-
-.vue-flow__controls-button {
-    color: var(--bs-black);
-    border-bottom-color: var(--bs-border-color);
-
-    svg {
-        fill: var(--bs-black);
-    }
-
-    html.dark & {
-        background: var(--ks-background-card);
-        color: var(--bs-white);
-
-        svg {
-            fill: var(--bs-white);
-        }
-    }
-}
-
-:root {
-    #{--ks-topology-edge-color}: #9A8EB4;
-}
-
-.vue-flow__container {
-    .top-button-div {
-        position: absolute;
-        top: -0.5rem;
-        right: -0.5rem;
-        justify-content: center;
-        padding-right: 3px;
-        display: flex
-    }
-
-    .vue-flow__node-cluster {
-        pointer-events: none !important;
-    }
-
-    .vue-flow__handle {
-        opacity: 0 !important;
-    }
-
-    .vue-flow__edge-path {
-        stroke: var(--ks-topology-edge-color);
-        fill: none;
-    }
-
-    @each $color, $value in $node-colors {
-        .ks-topology-#{$color}-border {
-            background-color: rgba($value, 0.05);
-            border: 1px solid $value;
-        }
-    }
-}
-
-.is-exporting {
-    .vue-flow__controls,
-    .vue-flow__controls-button,
-    .vue-flow__handle,
-    .top-button-div,
-    .circle-button {
-        display: none !important;
-    }
-}
-</style>
 <style scoped lang="scss">
     .material-design-icon.download-icon {
         max-width: 12px;

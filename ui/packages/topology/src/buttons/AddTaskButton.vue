@@ -1,5 +1,5 @@
 <template>
-    <div class="add-task-div rounded d-flex justify-content-center align-items-center">
+    <div class="add-task-div">
         <Plus v-if="addTask" alt="add task icon" />
     </div>
 </template>
@@ -18,6 +18,10 @@
 @use "../assets/styles/variables" as v;
 
 .add-task-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--ks-border-radius);
     margin: 0.2rem;
     width: 25px;
     height: 25px;

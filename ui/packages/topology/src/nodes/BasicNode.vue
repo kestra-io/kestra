@@ -1,39 +1,39 @@
 <template>
     <div
-        class="node-wrapper rounded-3"
+        class="node-wrapper"
         :style="{borderColor: state ? `var(--ks-border-${state.toLowerCase()})` : undefined}"
         :class="{...classes, 'running-border-animation': state === 'RUNNING'}"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
     >
         <div class="main-content">
-            <div class="icon rounded">
-                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" class="rounded bg-white" theme="light" :icons="icons" />
+            <div class="icon">
+                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" class="bg-white" theme="light" :icons="icons" />
             </div>
             <div class="node-content">
-                <div class="d-flex node-title">
-                    <div class="text-truncate task-title" :title="hoverTooltip">
+                <div class="node-title">
+                    <div class="task-title" :title="hoverTooltip">
                         <KsTooltip :content="hoverTooltip">
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
-                    <span class="d-flex" v-if="description">
-                        <KsTooltip :content="$t('show description')" class="d-flex align-items-center">
+                    <span class="description-wrapper" v-if="description">
+                        <KsTooltip :content="$t('show description')" class="description-tooltip">
                             <InformationOutline
                                 @click="$emit(EVENTS.SHOW_DESCRIPTION, {id: trimmedId, description: description})"
-                                class="description-button ms-2"
+                                class="description-button"
                             />
                         </KsTooltip>
                     </span>
                 </div>
                 <slot name="content" />
             </div>
-            <div class="text-white top-button-div">
+            <div class="top-button-div">
                 <slot name="badge-button-before" />
                 <span
                     v-if="data.link"
                     class="circle-button"
-                    :class="[`bg-${data.color}`]"
+                    :style="{backgroundColor: nodeColor(data.color)}"
                     @click="$emit(EVENTS.OPEN_LINK, {link: data.link})"
                 >
                     <KsTooltip :content="$t('open')">
@@ -43,7 +43,7 @@
                 <span
                     v-if="expandable"
                     class="circle-button"
-                    :class="[`bg-${data.color}`]"
+                    :style="{backgroundColor: nodeColor(data.color)}"
                     @click="$emit(EVENTS.EXPAND)"
                 >
                     <KsTooltip :content="$t('expand')">
@@ -66,6 +66,7 @@
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import Utils from "../utils/utils";
+    import {nodeColor} from "../utils/css";
 
     const emit = defineEmits([
         EVENTS.EXPAND,
@@ -151,6 +152,7 @@
 <style lang="scss" scoped>
     .node-wrapper {
         background-color: var(--ks-background-card);
+        border-radius: var(--ks-border-radius-lg);
         margin: 0;
         z-index: 150000;
         box-shadow: 0 12px 12px 0 rgba(130, 103, 158, 0.10);
@@ -176,6 +178,7 @@
         }
 
         .icon {
+            border-radius: var(--ks-border-radius);
             margin: 0.2rem;
             width: 25px;
             height: 25px;
@@ -192,11 +195,22 @@
         margin-left: 0.7rem;
 
         > .node-title {
+            display: flex;
             width: 125px;
         }
     }
 
+    .description-wrapper {
+        display: flex;
+    }
+
+    .description-tooltip {
+        display: flex;
+        align-items: center;
+    }
+
     .description-button {
+        margin-left: 0.5rem;
         color: var(--ks-content-secondary);
         cursor: pointer;
     }
@@ -211,6 +225,9 @@
     }
 
     .task-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         font-size: 0.75rem;
         font-weight: 700;
         color: var(--ks-content-primary);

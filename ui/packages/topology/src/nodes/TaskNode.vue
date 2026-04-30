@@ -54,7 +54,7 @@
             <span
                 v-if="data.node.task && data.node.task.runIf"
                 class="circle-button"
-                :class="[`bg-warning`]"
+                :style="{backgroundColor: nodeColor('warning')}"
                 @click="emit(EVENTS.SHOW_CONDITION, {id: taskId, task: data.node.task, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('show task condition')">
@@ -64,7 +64,7 @@
             <span
                 v-if="taskExecution"
                 class="circle-button"
-                :class="[`bg-${color}`]"
+                :style="{backgroundColor: nodeColor(color)}"
                 @click="emit(EVENTS.SHOW_LOGS, {id: taskId, execution: taskExecution, taskRuns})"
             >
                 <KsTooltip :content="$t('show task logs')">
@@ -75,7 +75,7 @@
                 v-if="customAction && data.node.task"
                 type="button"
                 class="circle-button"
-                :class="[`bg-${color}`]"
+                :style="{backgroundColor: nodeColor(color)}"
                 :aria-label="customAction.label"
                 @click="emit(EVENTS.SHOW_CUSTOM_ACTION, {task: data.node.task, customAction: customAction})"
             >
@@ -86,7 +86,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
                 class="circle-button"
-                :class="[`bg-${color}`]"
+                :style="{backgroundColor: nodeColor(color)}"
                 @click="emit(EVENTS.ADD_ERROR, {task: data.node.task})"
             >
                 <KsTooltip :content="$t('add error handler')">
@@ -96,7 +96,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly"
                 class="circle-button"
-                :class="[`bg-${color}`]"
+                :style="{backgroundColor: nodeColor(color)}"
                 @click="emit(EVENTS.EDIT, {task: data.node.task, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('edit')">
@@ -106,7 +106,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly"
                 class="circle-button"
-                :class="[`bg-${color}`]"
+                :style="{backgroundColor: nodeColor(color)}"
                 @click="emit(EVENTS.DELETE, {id: taskId, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('delete')">
@@ -145,6 +145,7 @@
     import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue";
     import RotatingDots from "../assets/icons/RotatingDots.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
+    import {nodeColor} from "../utils/css";
 
     interface TaskType {
         id: string;
@@ -275,7 +276,7 @@
 
         const allStates = taskRuns.value.map((t: TaskRun) => t.state.current);
 
-        const SORT_STATUS = [
+        const SORT_STATUS: string[] = [
             State.FAILED,
             State.KILLED,
             State.WARNING,

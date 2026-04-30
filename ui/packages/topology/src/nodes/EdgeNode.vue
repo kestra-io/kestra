@@ -29,7 +29,8 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, PropType} from "vue";
+    import {computed} from "vue";
+    import type {PropType} from "vue";
     import {useI18n} from "vue-i18n";
     import {EdgeLabelRenderer, getSmoothStepPath} from "@vue-flow/core";
     import AddTaskButton from "../buttons/AddTaskButton.vue";

@@ -108,24 +108,3 @@
     });
 </script>
 
-<style lang="scss">
-@use "../assets/styles/variables" as global-var;
-.ks-duration-tt {
-    text-align: left;
-    white-space: nowrap;
-    max-width: none;
-
-    .ks-duration-tt-square {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        margin-right: 5px;
-    }
-
-    @each $value in global-var.$statusList {
-        .ks-duration-tt-square-#{$value} {
-            background-color: var(--ks-chart-#{$value});
-        }
-    }
-}
-</style>

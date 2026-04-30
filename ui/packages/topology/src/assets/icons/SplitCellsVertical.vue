@@ -11,11 +11,9 @@
     </svg>
 </template>
 
-<script>
-    export default {
-        name: "SplitCellsVerticalIcon",
-        emits: ["click"],
-    }
+<script setup lang="ts">
+    defineOptions({name: "SplitCellsVerticalIcon"});
+    defineEmits(["click"]);
 </script>
 
 <style scoped>

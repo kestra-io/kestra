@@ -3,50 +3,55 @@
     "version": "0.1.0",
     "type": "module",
     "exports": {
-        ".": "./src/index.ts",
-        "./vue-flow-utils": "./src/vue-flow-utils.ts"
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./vue-flow-utils": {
+            "types": "./dist/vue-flow-utils.d.ts",
+            "import": "./dist/vue-flow-utils.js"
+        },
+        "./style.css": "./dist/style.css"
     },
-    "main": "./src/index.ts",
-    "module": "./src/index.ts",
-    "types": "./src/index.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "files": ["dist"],
     "scripts": {
         "build": "tsdown",
-        "dev": "tsdown --watch"
+        "dev": "tsdown --watch",
+        "typecheck": "vue-tsc --noEmit"
     },
-    "dependencies": {
+    "peerDependencies": {
         "@vue-flow/background": "^1.3.2",
         "@vue-flow/controls": "^1.1.2",
         "@vue-flow/core": "^1.48.2",
-        "dagre": "^0.8.5",
-        "html-to-image": "^1.11.13",
-        "humanize-duration": "^3.33.2",
-        "js-yaml": "^4",
-        "lodash": "^4",
+        "element-plus": ">=2",
         "moment": "^2.30.1",
         "moment-timezone": "^0.5.48",
-        "yaml": "^2"
-    },
-    "peerDependencies": {
-        "element-plus": ">=2",
         "vue": "^3.5.0",
         "vue-i18n": "^11.0.0",
         "vue-material-design-icons": "^5.3.1"
     },
     "devDependencies": {
-        "@tsdown/css": "^0.21.7",
         "@types/dagre": "^0.7.52",
+        "@types/humanize-duration": "^3.27.4",
+        "@types/js-yaml": "^4.0.9",
         "@types/lodash": "^4",
         "@types/node": "^25.5.0",
         "@vitejs/plugin-vue": "^6.0.5",
+        "dagre": "^0.8.5",
+        "html-to-image": "^1.11.13",
+        "humanize-duration": "^3.33.2",
+        "js-yaml": "^4",
+        "lodash": "^4",
         "sass-embedded": "^1.98.0",
         "tsdown": "^0.21.7",
         "typescript": "^6.0.3",
         "vite": "^8.0.10",
-        "vite-plugin-dts": "^4.5.4",
         "vue": "^3.5.0",
         "vue-i18n": "^11.0.0",
         "vue-material-design-icons": "^5.3.1",
-        "vue-tsc": "^3.2.6"
+        "vue-tsc": "^3.2.6",
+        "yaml": "^2"
     }
 }

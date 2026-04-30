@@ -1,5 +1,5 @@
 <template>
-    <div class="btn-group content rounded-1 content-children text-truncate">
+    <div class="content content-children">
         <span v-if="taskRuns.length > 0" class="taskRunCount">{{ taskRuns.length }} task runs</span>
         <span v-if="taskRuns.length > 0"> | </span>
         <span v-if="histories"><Duration :histories="histories" /></span>
@@ -69,6 +69,12 @@
 
 <style lang="scss" scoped>
 .content {
+    display: inline-flex;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: var(--ks-border-radius-sm);
     color: var(--ks-content-secondary);
     width: calc(100% - 0.9rem);
 }

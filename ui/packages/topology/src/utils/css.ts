@@ -1,3 +1,7 @@
+export function nodeColor(color: string): string {
+    return `var(--ks-node-${color})`;
+}
+
 export function cssVar(name: string, opacity?: number): string {
     if (typeof window === "undefined") {
         return "";

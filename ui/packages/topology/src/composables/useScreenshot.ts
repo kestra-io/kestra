@@ -1,4 +1,5 @@
-import {ref, Ref} from "vue";
+import {ref} from "vue";
+import type {Ref} from "vue";
 import {toJpeg as ElToJpg, toPng as ElToPng} from "html-to-image";
 import type {Options as HTMLToImageOptions} from "html-to-image/es/types";
 

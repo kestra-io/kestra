@@ -1,79 +1,54 @@
 <template>
     <div :class="classes">
         <span
-            class="badge rounded-pill text-truncate text-color position-reliative"
-            :class="[`bg-${data.color}`]"
+            class="cluster-badge text-color"
+            :style="{backgroundColor: nodeColor(data.color)}"
         >{{ clusterName }}</span>
-        <div class="top-button-div text-white d-flex">
+        <div class="top-button-div">
             <span
                 v-if="data.collapsable"
                 class="circle-button"
-                :class="[`bg-${data.color}`]"
+                :style="{backgroundColor: nodeColor(data.color)}"
                 @click="collapse()"
             >
                 <KsTooltip :content="$t('collapse')">
                     <ArrowCollapse class="button-icon" alt="Collapse task" />
+
+
                 </KsTooltip>
             </span>
         </div>
     </div>
 </template>
-<script setup>
-    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
-    import {EVENTS} from "../utils/constants";
-    import {Position} from "@vue-flow/core";
-    import Utils from "../utils/utils";
-
-    const props = defineProps({
-        "data": {
-            type: Object,
-            default: undefined
-        },
-        "sourcePosition": {
-            type: Position,
-            default: undefined
-        },
-        "targetPosition": {
-            type: Position,
-            default: undefined
-        },
-        "id": {
-            type: String,
-            default: undefined
-        }
-    });
-    const emit = defineEmits([EVENTS.COLLAPSE])
-
-    const collapse = () => {
-        emit(EVENTS.COLLAPSE, props.id)
-    };
-</script>
-<script>
+<script setup lang="ts">
+    import {computed} from "vue";
+    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue";
     import KsTooltip from "../components/Tooltip.vue";
+    import {EVENTS} from "../utils/constants";
+    import Utils from "../utils/utils";
+    import {nodeColor} from "../utils/css";
 
-    export default {
-        inheritAttrs: false,
-        components: {KsTooltip},
-        data() {
-            return {
-                tooltips: [],
-            }
-        },
-        computed: {
-            classes() {
-                return {"unused-path": this.data.unused}
-            },
-            clusterName() {
-                const taskNode = this.data.taskNode;
-                if (taskNode?.type?.endsWith("SubflowGraphTask")) {
-                    const subflowIdContainer = taskNode.task.subflowId ?? taskNode.task
-                    return subflowIdContainer.namespace + " " + subflowIdContainer.flowId;
-                }
+    defineOptions({inheritAttrs: false});
 
-                return Utils.afterLastDot(this.id);
-            }
+    const props = defineProps<{
+        id?: string;
+        data: any;
+    }>();
+
+    const emit = defineEmits([EVENTS.COLLAPSE]);
+
+    const collapse = () => emit(EVENTS.COLLAPSE, props.id);
+
+    const classes = computed(() => ({"unused-path": props.data.unused}));
+
+    const clusterName = computed(() => {
+        const taskNode = props.data.taskNode;
+        if (taskNode?.type?.endsWith("SubflowGraphTask")) {
+            const subflowIdContainer = taskNode.task.subflowId ?? taskNode.task;
+            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId;
         }
-    }
+        return Utils.afterLastDot(props.id ?? "");
+    });
 </script>
 <style scoped lang="scss">
     .circle-button {
@@ -90,28 +65,27 @@
         font-size: 0.75rem;
     }
 
-    .badge {
-        top: -3px;
+    .cluster-badge {
         position: relative;
+        top: -3px;
         left: -3px;
         display: inline-block;
         max-width: 100%;
+        border-radius: var(--ks-border-radius-pill);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .text-color {
-        color: var(--bs-white);
+        color: white;
         font-size: 0.5rem;
         font-weight: 700;
         padding: 0.25rem 0.5rem;
     }
 
     .top-button-div {
-        position: absolute;
-        top: -0.5rem;
-        right: -0.5rem;
-        justify-content: center;
-        padding-right: 3px;
-        display: flex
+        align-items: center;
     }
 
 </style>

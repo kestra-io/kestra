@@ -8,45 +8,25 @@
     </div>
 </template>
 
-<script setup>
-    import Utils from "../utils/utils";
-</script>
-
-<script>
-    import {Handle} from "@vue-flow/core";
+<script setup lang="ts">
+    import {computed} from "vue";
+    import {Handle, Position} from "@vue-flow/core";
     import CircleIcon from "vue-material-design-icons/Circle.vue";
+    import Utils from "../utils/utils";
 
-    export default {
-        name: "Dot",
-        components: {Handle, CircleIcon},
-        inheritAttrs: false,
-        props: {
-            data: {
-                type: Object,
-                required: true,
-            },
-            sourcePosition: {
-                type: String,
-                required: true,
-            },
-            targetPosition: {
-                type: String,
-                required: true,
-            },
-            label: {
-                type: String,
-                default: undefined,
-            },
-        },
-        computed: {
-            classes() {
-                return {
-                    "unused-path": this.data.unused,
-                    [Utils.afterLastDot(this.data.node.type)]: true,
-                };
-            },
-        },
-    }
+    defineOptions({name: "Dot", inheritAttrs: false});
+
+    const {data, sourcePosition, targetPosition} = defineProps<{
+        data: any;
+        sourcePosition: Position;
+        targetPosition: Position;
+        label?: string;
+    }>();
+
+    const classes = computed(() => ({
+        "unused-path": data.unused,
+        [Utils.afterLastDot(data.node.type) as string]: true,
+    }));
 </script>
 
 <style scoped>

@@ -467,6 +467,8 @@ export function generateGraph(
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
                             : dagreNode.height + "px",
+                    borderRadius: "var(--ks-border-radius)",
+                    padding: "0.5rem",
                 },
                 data: {
                     collapsable: true,
@@ -476,7 +478,7 @@ export function generateGraph(
                         ? nodeByUid[cluster.cluster.taskNode.uid].unused
                         : false,
                 },
-                class: `ks-topology-${clusterColor}-border rounded p-2`,
+                class: `ks-topology-${clusterColor}-border`,
             } as any);
         }
     }
@@ -514,6 +516,7 @@ export function generateGraph(
                 style: {
                     width: nodeDimensions.width + "px",
                     height: nodeDimensions.height + "px",
+                    ...(node.type === "collapsedcluster" ? {borderRadius: "var(--ks-border-radius)"} : {}),
                 },
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
@@ -530,11 +533,10 @@ export function generateGraph(
                     color,
                     expandable: isExpandableTask(node, clusterByNodeUid, edgeReplacer, enableSubflowInteraction),
                     isReadOnly: isReadOnlyTask,
-                    iconComponent: isCollapsedCluster(node) ? "lightning-bolt" : null,
                     executionId: node.executionId,
                     unused: node.unused,
                 },
-                class: node.type === "collapsedcluster" ? `ks-topology-${color}-border rounded` : "",
+                class: node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
             });
         }
     }

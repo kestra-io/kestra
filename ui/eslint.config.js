@@ -70,6 +70,7 @@ export default defineConfig([
                 },
             ],
             "vue/multi-word-component-names": ["off"],
+            "vue/one-component-per-file": "off",
             "vue/no-deprecated-router-link-tag-prop": "off",
             "vue/object-curly-spacing": ["error", "never"],
             "vue/block-order": [

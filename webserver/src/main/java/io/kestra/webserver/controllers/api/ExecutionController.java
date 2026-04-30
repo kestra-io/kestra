@@ -1193,8 +1193,8 @@ public class ExecutionController {
     }
 
     public record StateRequest(
-        String taskRunId,
-        State.Type state) {
+        @NotNull String taskRunId,
+        @NotNull State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1949,7 +1949,7 @@ public class ExecutionController {
         });
     }
 
-    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2338,11 +2338,11 @@ public class ExecutionController {
     }
 
     public record LastExecutionResponse(
-        @Parameter(description = "The execution's ID") String id,
-        @Parameter(description = "The flow's ID") String flowId,
-        @Parameter(description = "The namespace") String namespace,
-        @Parameter(description = "The start date") Instant startDate,
-        @Parameter(description = "The status") State.Type status) {
+        @NotNull @Parameter(description = "The execution's ID") String id,
+        @NotNull @Parameter(description = "The flow's ID") String flowId,
+        @NotNull @Parameter(description = "The namespace") String namespace,
+        @NotNull @Parameter(description = "The start date") Instant startDate,
+        @NotNull @Parameter(description = "The status") State.Type status) {
 
         public static LastExecutionResponse ofExecution(Execution execution) {
             return new LastExecutionResponse(
@@ -2356,27 +2356,27 @@ public class ExecutionController {
     }
 
     public record ApiValidateExecutionInputsResponse(
-        @Parameter(description = "The flow's ID") String id,
-        @Parameter(description = "The namespace") String namespace,
-        @Parameter(description = "The flow's inputs") List<ApiInputAndValue> inputs,
-        List<ApiCheckFailure> checks) {
+        @NotNull @Parameter(description = "The flow's ID") String id,
+        @NotNull @Parameter(description = "The namespace") String namespace,
+        @NotNull @Parameter(description = "The flow's inputs") List<ApiInputAndValue> inputs,
+        @NotNull List<ApiCheckFailure> checks) {
 
         public record ApiInputAndValue(
-            @Parameter(description = "The input") Input<?> input,
+            @NotNull @Parameter(description = "The input") Input<?> input,
             @Parameter(description = "The value") Object value,
             @Parameter(description = "Specifies whether the input is enabled") boolean enabled,
             @Parameter(description = "Specifies whether the input value is the default") boolean isDefault,
-            @Parameter(description = "The validation errors") List<ApiInputError> errors) {
+            @NotNull @Parameter(description = "The validation errors") List<ApiInputError> errors) {
         }
 
         public record ApiInputError(
-            @Parameter(description = "The error message") String message) {
+            @NotNull @Parameter(description = "The error message") String message) {
         }
 
         public record ApiCheckFailure(
-            @Parameter(description = "The message") String message,
-            @Parameter(description = "The message style") Check.Style style,
-            @Parameter(description = "The behavior") Check.Behavior behavior) {
+            @NotNull @Parameter(description = "The message") String message,
+            @NotNull @Parameter(description = "The message style") Check.Style style,
+            @NotNull @Parameter(description = "The behavior") Check.Behavior behavior) {
         }
 
         public static ApiValidateExecutionInputsResponse of(

@@ -9,7 +9,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.plugin.core.condition.DayWeek;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
@@ -95,12 +94,7 @@ public interface Fixtures {
             .type(Schedule.class.getName())
             .cron("*/1 * * * *")
             .timezone(timeZone)
-            .conditions(List.of(
-                DayWeek.builder()
-                    .type(DayWeek.class.getName())
-                    .dayOfWeek(Property.ofValue(dayOfWeek))
-                    .build()
-            ))
+            .when("{{dayOfWeek(trigger.date) == '" + dayOfWeek.toString() + "'}}")
             .build();
         return flowWithTrigger(schedule);
     }

@@ -29,7 +29,6 @@ public class Plugin {
     private List<String> aliases;
     private List<PluginElementMetadata> tasks;
     private List<PluginElementMetadata> triggers;
-    private List<PluginElementMetadata> conditions;
     private List<PluginElementMetadata> controllers;
     private List<PluginElementMetadata> storages;
     private List<PluginElementMetadata> secrets;
@@ -92,7 +91,6 @@ public class Plugin {
         Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
         plugin.tasks = filterAndGetTypeWithMetadata(registeredPlugin.getTasks(), packagePredicate);
         plugin.triggers = filterAndGetTypeWithMetadata(registeredPlugin.getTriggers(), packagePredicate);
-        plugin.conditions = filterAndGetTypeWithMetadata(registeredPlugin.getConditions(), packagePredicate);
         plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate);
         plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate);
         plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate);

@@ -14,7 +14,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.triggers.multipleflows.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -173,7 +173,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
             full = true,
             title = """
                 4) Create a `System Flow` to send a Sentry issue on any failure or warning state \
-                within the `company.payroll` namespace. This example uses the Sentry Execution task and a Flow trigger with `conditions`.""",
+                within the `company.payroll` namespace. This example uses the Sentry Execution task and a Flow trigger with `dependsOn`.""",
             code = """
                 id: sentry_execution_example
                 namespace: company.team
@@ -189,12 +189,10 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                 triggers:
                 - id: failed_prod_workflows
                   type: io.kestra.plugin.core.trigger.Flow
-                  conditions:
-                  - type: io.kestra.plugin.core.condition.ExecutionStatus
-                    in:
+                  dependsOn:
+                  - states
                       - FAILED
                       - WARNING
-                  - type: io.kestra.plugin.core.condition.ExecutionNamespace
                     namespace: company.payroll
                     prefix: false"""
         ),
@@ -256,7 +254,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         title = "List of execution states that will be evaluated by the trigger",
         description = """
             By default, only executions in a terminal state or in the PAUSED state will be evaluated.
-            Any `ExecutionStatus`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
+            Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::alert{type="info"}
             The trigger will be evaluated for each state change of matching executions. If a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. In this case, a Flow trigger listening to a `PAUSED` state will be evaluated twice.
             ::"""
@@ -292,7 +290,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     private MultipleCondition.Mode mode = MultipleCondition.Mode.ALL;
 
     @Schema(
-        title = "Minimum number of satisfied conditions for AT_LEAST mode",
+        title = "Minimum number of satisfied dependsOn conditions for AT_LEAST mode",
         description = "When mode is set to AT_LEAST, this specifies the minimum number of conditions that must be satisfied within the window."
     )
     @PluginProperty
@@ -365,7 +363,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder
     @Getter
     public static class Dependency {
-        @NotNull
         @Schema(title = "The namespace of the flow")
         @PluginProperty
         private String namespace;
@@ -399,7 +396,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     }
 
     @Hidden
-    public static class DependencyCondition extends Condition {
+    static class DependencyCondition implements Condition {
         private final Dependency dependency;
 
         DependencyCondition(Dependency dependency) {

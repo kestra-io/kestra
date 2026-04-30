@@ -1,39 +1,22 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
-            <ul class="header-actions-list">
-                <li>
-                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ $t('export_csv') }}
-                    </el-button>
-                </li>
-                <li>
-                    <el-button :icon="Upload" @click="file?.click()">
-                        {{ $t("import") }}
-                    </el-button>
+            <NavBarActions>
+                <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream()" />
+                <NavBarAction :icon="Upload" :label="$t('import')" @click="file?.click()" />
+                <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
+
+                <template #primary>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
-                </li>
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
-                            {{ $t("source search") }}
-                        </el-button>
-                    </router-link>
-                </li>
-                <li>
-                    <router-link
-                        :to="{
-                            name: 'flows/create',
-                            query: {namespace: $route.query.namespace},
-                        }"
+                    <NavBarAction
                         v-if="canCreate"
-                    >
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t("create") }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
+                        type="primary"
+                        :icon="Plus"
+                        :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}"
+                        :label="$t('create')"
+                    />
+                </template>
+            </NavBarActions>
         </template>
     </TopNavBar>
     <section :class="{container: topbar}" v-if="ready">
@@ -297,6 +280,9 @@
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
+
+    import NavBarActions from "../layout/NavBarActions.vue";
+    import NavBarAction from "../layout/NavBarAction.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import Play from "vue-material-design-icons/Play.vue";
@@ -749,11 +735,6 @@
     padding: 0;
     margin: 0;
     gap: 0.5rem;
-
-    @media (max-width: 570px) {
-        flex-direction: column;
-        align-items: flex-end;
-    }
 }
 
 .flow-actions-cell {

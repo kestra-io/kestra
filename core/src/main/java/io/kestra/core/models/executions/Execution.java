@@ -58,6 +58,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     // When you add anything in this class, make sure to also update ApiExecution and ApiLightExecution in the webserver module
     // !!!!!!!!!!!!!!!
 
+    @NotNull
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
@@ -102,6 +103,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
 
     String parentId;
 
+    @NotNull
     String originalId;
 
     @With
@@ -111,6 +113,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @Builder.Default
     boolean deleted = false;
 
+    @NotNull
     @With
     ExecutionMetadata metadata;
 

@@ -180,8 +180,7 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat(
                 (Map<String, Object>) jsonSchema.get("properties"), allOf(
-                    Matchers.aMapWithSize(5),
-                    hasKey("conditions"),
+                    Matchers.aMapWithSize(4),
                     hasKey("stopAfter"),
                     hasKey("type"),
                     hasKey("allowConcurrent"),
@@ -359,7 +358,7 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(25));
+        assertThat(definitions.size(), is(10));
     }
 
     @SuppressWarnings("unchecked")

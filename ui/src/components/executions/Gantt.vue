@@ -638,6 +638,7 @@
             padding: 0;
 
             .vue-recycle-scroller {
+                height: calc(100vh - 223px);
                 max-height: calc(100vh - 223px);
 
                 &::-webkit-scrollbar {

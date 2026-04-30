@@ -187,7 +187,7 @@ class ServiceTest {
 
 ## UI Design System
 
-The full UI design-system rules, component catalogue, token reference, and frontend best practices live in [ui/AGENTS.md](ui/AGENTS.md). That file is auto-loaded by AI coding agents whenever work happens under `ui/`, and should be consulted (and kept up to date) for any frontend change.
+The full UI design-system rules, component catalogue, token reference, and frontend best practices live in [ui/AGENTS.md](ui/AGENTS.md). That file is auto-loaded by AI coding agents whenever work happens under `ui/` in OSS or `ui-ee/` in Enterprise edition, and should be consulted (and kept up to date) for any frontend change.
 
 @ui/AGENTS.md
 

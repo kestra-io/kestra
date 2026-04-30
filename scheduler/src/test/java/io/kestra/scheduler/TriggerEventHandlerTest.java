@@ -12,8 +12,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -36,6 +39,7 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
@@ -69,6 +73,7 @@ class TriggerEventHandlerTest {
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
     private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
+    private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +82,7 @@ class TriggerEventHandlerTest {
         triggerId = Fixtures.triggerId();
         triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
         executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
+        asyncOperationProcessedEventQueue = Mockito.mock(BroadcastQueueInterface.class);
     }
 
     @AfterEach
@@ -91,7 +97,8 @@ class TriggerEventHandlerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            executionKilledQueue
+            executionKilledQueue,
+            new AsyncOperationService(asyncOperationProcessedEventQueue)
         );
     }
 
@@ -646,5 +653,73 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
         assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldEmitSucceededProcessedEventWhenCommandCarriesOperationId() throws QueueException {
+        // GIVEN: a stored trigger state and a SetDisableTrigger carrying an operationId
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of());
+        String operationId = IdUtils.create();
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: a SUCCEEDED processed event is emitted on the async operation queue.
+        ArgumentCaptor<AsyncOperationProcessedEvent> captor = ArgumentCaptor.forClass(AsyncOperationProcessedEvent.class);
+        Mockito.verify(asyncOperationProcessedEventQueue).emit(captor.capture());
+        AsyncOperationProcessedEvent emitted = captor.getValue();
+        assertThat(emitted.operationId()).isEqualTo(operationId);
+        assertThat(emitted.tenantId()).isEqualTo(triggerId.getTenantId());
+        assertThat(emitted.itemId()).isEqualTo(event.uid());
+        assertThat(emitted.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.SUCCEEDED);
+        assertThat(emitted.error()).isNull();
+    }
+
+    @Test
+    void shouldNotEmitProcessedEventWhenCommandHasNoOperationId() throws QueueException {
+        // GIVEN: a stored trigger state and a SetDisableTrigger WITHOUT operationId
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of());
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the async operation queue is never touched.
+        Mockito.verify(asyncOperationProcessedEventQueue, Mockito.never()).emit(Mockito.any(AsyncOperationProcessedEvent.class));
+    }
+
+    @Test
+    void shouldEmitFailedProcessedEventWhenHandlerThrows() throws QueueException {
+        // GIVEN: a TriggerStateStore that throws on findById to force a RuntimeException inside doHandle
+        TriggerStateStore failingStore = Mockito.mock(TriggerStateStore.class);
+        Mockito.when(failingStore.findById(Mockito.any())).thenThrow(new RuntimeException("boom"));
+        handler = new TriggerEventHandler(
+            failingStore,
+            new InMemoryFlowMetaStore(TEST_VNODE_COUNT, List.of()),
+            triggerExecutionPublisher,
+            runContextFactory,
+            conditionService,
+            executionKilledQueue,
+            new AsyncOperationService(asyncOperationProcessedEventQueue)
+        );
+        String operationId = IdUtils.create();
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);
+
+        // WHEN / THEN
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
+
+        // AND: a FAILED processed event is emitted with the error message.
+        ArgumentCaptor<AsyncOperationProcessedEvent> captor = ArgumentCaptor.forClass(AsyncOperationProcessedEvent.class);
+        Mockito.verify(asyncOperationProcessedEventQueue).emit(captor.capture());
+        AsyncOperationProcessedEvent emitted = captor.getValue();
+        assertThat(emitted.operationId()).isEqualTo(operationId);
+        assertThat(emitted.itemId()).isEqualTo(event.uid());
+        assertThat(emitted.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
+        assertThat(emitted.error()).isEqualTo("boom");
     }
 }

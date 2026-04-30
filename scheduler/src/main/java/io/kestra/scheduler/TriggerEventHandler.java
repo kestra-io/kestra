@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.events.EventId;
+import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -66,6 +69,7 @@ public class TriggerEventHandler {
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
+    private final AsyncOperationService asyncOperationService;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -73,13 +77,15 @@ public class TriggerEventHandler {
         TriggerExecutionPublisher triggerExecutionPublisher,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
+        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
+        AsyncOperationService asyncOperationService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.executionKilledQueue = executionKilledQueue;
+        this.asyncOperationService = asyncOperationService;
     }
 
     /**
@@ -91,6 +97,20 @@ public class TriggerEventHandler {
      */
     public void handle(Clock clock, Integer vNode, TriggerEvent event) {
         LOG.debug("Received event {} for {} at {}", event.type(), event.id(), event.timestamp());
+        AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
+        String error = null;
+        try {
+            doHandle(clock, vNode, event);
+        } catch (RuntimeException e) {
+            outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
+            error = e.getMessage();
+            throw e;
+        } finally {
+            emitProcessedIfAsync(event, outcome, error);
+        }
+    }
+
+    private void doHandle(Clock clock, Integer vNode, TriggerEvent event) {
         switch (event) {
             // Events
             case TriggerCreated evt -> onTriggerCreated(clock, evt, vNode);
@@ -107,6 +127,14 @@ public class TriggerEventHandler {
             case DeleteBackfillTrigger evt -> onDeleteBackfillTrigger(clock, evt);
             case ResetTrigger evt -> onResetTrigger(clock, evt);
             default -> throw new IllegalStateException("Unexpected value: " + event);
+        }
+    }
+
+    private void emitProcessedIfAsync(TriggerEvent message,
+                                      AsyncOperationProcessedEvent.Outcome outcome,
+                                      String error) {
+        if (message instanceof AsyncOperation op) {
+            asyncOperationService.emitProcessedIfAsync(op, message.id().getTenantId(), message.uid(), outcome, error);
         }
     }
 

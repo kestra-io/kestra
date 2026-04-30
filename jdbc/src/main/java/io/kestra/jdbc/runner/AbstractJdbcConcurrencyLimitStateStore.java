@@ -8,7 +8,6 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
-import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.models.executions.Execution;
@@ -46,37 +45,16 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
             {
                 var dslContext = DSL.using(configuration);
 
-                // Note: ideally, we should emit an INSERT IGNORE or ON CONFLICT DO NOTHING but H2 didn't support it.
-                // So to avoid the case where no concurrency limit exist and two executors starts a flow concurrently, we select/insert and if the insert fail select again
-                // Anyway this would only occur once in a flow lifecycle so even if it's not elegant it should work
-                // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in postgres so we're sure it works their also.
-                var selected = fetchOne(dslContext, flow).orElseGet(() ->
-                {
-                    try {
-                        var zeroConcurrencyLimit = ConcurrencyLimit.builder()
-                            .tenantId(flow.getTenantId())
-                            .namespace(flow.getNamespace())
-                            .flowId(flow.getId())
-                            .running(0)
-                            .build();
-
-                        Map<Field<Object>, Object> finalFields = this.jdbcRepository.persistFields(zeroConcurrencyLimit);
-                        var insert = dslContext
-                            .insertInto(this.jdbcRepository.getTable())
-                            .set(KEY_FIELD, this.jdbcRepository.key(zeroConcurrencyLimit))
-                            .set(finalFields);
-                        if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES)) {
-                            insert.onDuplicateKeyIgnore().execute();
-                        } else {
-                            insert.execute();
-                        }
-                    } catch (DataAccessException e) {
-                        // we ignore any constraint violation
-                    }
-                    // refetch to have a lock on it
-                    // at this point we are sure the record is inserted so it should never throw
-                    return fetchOne(dslContext, flow).orElseThrow();
-                });
+                var selected = this.jdbcRepository.getOrInsert(
+                    dslContext,
+                    () -> fetchOne(dslContext, flow),
+                    () -> ConcurrencyLimit.builder()
+                        .tenantId(flow.getTenantId())
+                        .namespace(flow.getNamespace())
+                        .flowId(flow.getId())
+                        .running(0)
+                        .build()
+                );
 
                 var txContext = new JdbcTransactionContext(dslContext);
                 var pair = consumer.apply(txContext, selected);

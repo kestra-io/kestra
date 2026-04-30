@@ -1,7 +1,14 @@
 import {describe, test, expect, vi, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
+import {ref} from "vue"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
 import {ChartFeature} from "../../../src/components/Charts/ksChartUtils"
+
+// jsdom has no layout — force non-zero dimensions so KsEchart's canRender
+// latch flips and <VChart> mounts.
+vi.mock("@vueuse/core", () => ({
+    useElementSize: () => ({width: ref(800), height: ref(400)}),
+}))
 
 // ─── Mock vue-echarts ─────────────────────────────────────────────────────────
 // VChart relies on canvas APIs absent in jsdom. Replace it with a no-op stub

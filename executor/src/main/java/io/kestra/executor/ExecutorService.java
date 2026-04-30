@@ -62,9 +62,6 @@ public class ExecutorService {
     private WorkerGroupMetaStore workerGroupMetaStore;
 
     @Inject
-    private WorkerJobRunningStateStore workerJobRunningStateStore;
-
-    @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -928,6 +925,10 @@ public class ExecutorService {
                     // Check if the worker group exist
                     String tenantId = executor.getFlow().getTenantId();
                     String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                    if (WorkerGroup.isDefault(workerGroupKey)) {
+                        // Explicit default worker group - dispatch without existence check
+                        return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                    }
                     if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                         // Check whether at-least one worker is available
                         if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
@@ -1281,7 +1282,6 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
-            workerJobRunningStateStore.deleteByKey(taskRun.getId());
             metricRegistry
                 .counter(
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,

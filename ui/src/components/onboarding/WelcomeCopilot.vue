@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="title">
-        <template v-if="$slots.cta" #additional-right>
+        <template v-if="$slots.cta" #actions>
             <slot name="cta" />
         </template>
     </TopNavBar>

@@ -368,10 +368,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             shouldDisplayChevron(taskRun) {
-                return this.shouldDisplayProgressBar(taskRun) || this.shouldDisplayLogs(taskRun.id)
-            },
-            shouldDisplayProgressBar(taskRun) {
-                return this.taskType(taskRun) === "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable" || this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                return this.shouldDisplayLogs(taskRun.id)
             },
             shouldDisplayLogs(taskRunId) {
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]

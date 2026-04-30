@@ -40,7 +40,7 @@ export class ExecutionsPage extends BasePage {
     }
 
     async expectTotalExecutionsCountToBe(expectedCount: number) {
-        return expect(this.page.getByText(/Total:/).first()).toHaveText(`Total: ${expectedCount}`);
+        return expect(this.page.locator(".kel-pagination__total").first()).toHaveText(`Total ${expectedCount}`);
     }
 
     async getCountOfDisplayedExecutions() {
@@ -51,11 +51,15 @@ export class ExecutionsPage extends BasePage {
     }
 
     async getTotalExecutionsCount() {
-        const content = await this.page.getByText(/Total:/).first().textContent();
+        const content = await this.page.locator(".kel-pagination__total").first().textContent();
         if (!content) {
             throw new Error("Totals not found");
         }
-        return Number.parseInt(content.split(":")[1].trim());
+        const match = content.match(/(\d+)/);
+        if (!match) {
+            throw new Error(`Cannot parse total from "${content}"`);
+        }
+        return Number.parseInt(match[1]);
     }
 
     async selectExecutionRowByNumber(rowNumber: number = 1) {
@@ -75,42 +79,42 @@ export class ExecutionsPage extends BasePage {
     }
 
     async clickOnSetLabels() {
-        await this.page.locator(".bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
+        await this.page.locator(".ks-bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
         await this.page.getByRole("menuitem", {name: "Set labels"}).click();
     }
 
     async clickOnResume() {
-        await this.page.locator(".bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
+        await this.page.locator(".ks-bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click();
         await this.page.getByRole("menuitem", {name: "Resume"}).click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.getByRole("button", {name: "OK", exact: true}).click();
     }
 
     async clickOnRestart() {
         await this.page.getByRole("button", {name: "Restart"}).click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.getByRole("button", {name: "OK", exact: true}).click();
     }
 
     async clickOnReplay() {
         await this.page.getByRole("button", {name: "Replay"}).click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.getByRole("button", {name: "OK", exact: true}).click();
     }
 
     async setLabelOnSelectedExecutions() {
         await this.page.getByRole("textbox", {name: "Key"}).fill("foo");
         await this.page.getByRole("textbox", {name: "Value"}).fill("baz");
-        await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.getByRole("button", {name: "OK", exact: true}).click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        await this.page.getByRole("button", {name: "OK", exact: true}).click();
         await this.page.reload();
         await this.page.waitForLoadState("networkidle");
     }
 
     async setPaginationTo(size: Pagination) {
         // The Element-Plus dropdown is not a `select` - click on text
-        await this.page.locator(".pagination .kel-select").click();
+        await this.page.locator(".kel-pagination .kel-select").click();
 
         // Wait for the select dropdown to show
         const dropdowns = this.page.locator(".kel-select-dropdown");
@@ -120,7 +124,7 @@ export class ExecutionsPage extends BasePage {
         await visibleDropdown.waitFor({state: "visible", timeout: 500});
 
         // Find and click the matching option
-        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`});
+        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size}/page`});
         await option.waitFor({state: "visible", timeout: 500});
         await option.click();
     }

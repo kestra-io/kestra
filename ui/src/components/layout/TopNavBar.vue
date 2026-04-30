@@ -1,43 +1,40 @@
 <template>
-    <KsTopNavBar
-        :title="title"
-        :description="description"
-        :longDescription="longDescription"
-        :breadcrumb="breadcrumb"
-        :beta="beta"
-        :isBookmarked="bookmarked"
-        @star-click="onStarClick"
-    >
-        <template v-if="layoutStore.sideMenuCollapsed" #sidebar-toggle>
-            <SidebarToggleButton @toggle="layoutStore.setSideMenuCollapsed(false)" />
-        </template>
-        <template v-if="$slots.title" #title>
-            <slot name="title" />
-        </template>
-        <template v-if="$slots.description" #description>
-            <slot name="description" />
-        </template>
-        <template #search>
+    <nav class="d-flex align-items-center w-100 top-bar">
+        <SidebarToggleButton
+            v-if="layoutStore.sideMenuCollapsed"
+            @toggle="layoutStore.setSideMenuCollapsed(false)"
+        />
+        <div class="title-section">
+            <div class="d-flex align-items-center gap-2">
+                <Breadcrumb :items="breadcrumbItems" :title="title">
+                    <template v-if="$slots.title" #title>
+                        <slot name="title" />
+                    </template>
+                </Breadcrumb>
+                <KsTooltip v-if="description" :content="description">
+                    <Information class="ms-2 icon" />
+                </KsTooltip>
+                <Badge v-if="beta" label="Beta" />
+                <KsIconButton
+                    class="icon"
+                    :class="{'active': bookmarked}"
+                    :ariaLabel="t('bookmark')"
+                    @click="onStarClick"
+                >
+                    <component :is="bookmarked ? StarIcon : StarOutlineIcon" />
+                </KsIconButton>
+            </div>
+            <div v-if="longDescription || $slots.description" class="description">
+                <slot name="description">
+                    {{ longDescription }}
+                </slot>
+            </div>
+        </div>
+        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <GlobalSearch class="trigger-flow-guided-step" />
-        </template>
-        <template v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" #pre-action>
-            <KsButton @click="deleteLogs()">
-                <TrashCan class="me-2" />
-                <span>{{ $t("delete logs") }}</span>
-            </KsButton>
-        </template>
-        <template v-if="$slots['more-actions']" #more-actions>
-            <slot name="more-actions" />
-        </template>
-        <template v-if="$slots['actions']" #actions>
             <slot name="actions" />
-        </template>
-        <template #badge v-if="beta">
-            <KsButton type="primary" size="small" class="beta-badge" round>
-                Beta
-            </KsButton>
-        </template>
-    </KsTopNavBar>
+        </div>
+    </nav>
 </template>
 
 <script setup lang="ts">
@@ -45,13 +42,14 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import {useLogsStore} from "../../stores/logs";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+    import Information from "vue-material-design-icons/Information.vue";
+    import Badge from "../global/Badge.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
+    import Breadcrumb from "./Breadcrumb.vue";
     import type {BreadcrumbItem} from "./breadcrumbTypes";
 
     const props = defineProps<{
@@ -63,14 +61,13 @@
     }>();
 
     const route = useRoute();
-    const logsStore = useLogsStore();
-    const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
     const bookmarksStore = useBookmarksStore();
 
-    const shouldDisplayDeleteButton = computed(() => {
-        return route.name === "flows/update" && route.params?.tab === "logs";
-    });
+    const breadcrumbItems = computed(() => [
+        {label: t("home"), link: {name: "home"}},
+        ...(props.breadcrumb ?? []),
+    ]);
 
     const bookmarked = computed(() => {
         return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
@@ -88,26 +85,7 @@
         return "";
     });
 
-    const toast = useToast();
     const {t} = useI18n();
-
-    const deleteLogs = () => {
-        if(!flowStore.flow){
-            throw new Error("No flow selected");
-        }
-        toast.confirm(
-            t("delete_all_logs"),
-            async () => {
-                if(!flowStore.flow){
-                    return;
-                }
-                return logsStore.deleteLogs({
-                    namespace: flowStore.flow?.namespace,
-                    flowId: flowStore.flow?.id
-                })
-            },
-        );
-    };
 
     const onStarClick = () => {
         if (bookmarked.value) {
@@ -124,6 +102,65 @@
 </script>
 
 <style lang="scss" scoped>
+    nav {
+        top: 0;
+        position: sticky;
+        z-index: 1000;
+        padding: 1rem 2rem;
+        gap: 1rem;
+        border-bottom: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-card);
+
+        .title-section {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .description {
+            font-size: var(--font-size-sm);
+            margin-top: 0.25rem;
+            color: var(--ks-content-secondary);
+        }
+
+        .icon {
+            border: none;
+            color: var(--ks-content-tertiary);
+
+            &:deep(svg) {
+                fill: currentColor;
+                stroke: currentColor;
+            }
+
+            &.active {
+                color: var(--ks-content-link-hover);
+            }
+        }
+
+        .side {
+            :slotted(ul), :deep(ul) {
+                display: flex;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                gap: 0.5rem;
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 992px) {
+            padding: 0.75rem 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            padding: 0.75rem;
+        }
+
+        @media (max-width: 664px) {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
     .beta-badge {
         border-radius: calc(var(--kel-border-radius-round) * 2);
     }

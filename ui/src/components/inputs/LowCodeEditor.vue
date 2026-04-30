@@ -17,6 +17,7 @@
             :subflowsExecutions="executionsStore.subflowsExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
+            :animated="animated"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -136,6 +137,7 @@
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
             expandedSubflows?: string[];
+            animated?: boolean;
         }>(),
         {
             flowId: undefined,
@@ -147,6 +149,7 @@
             horizontalDefault: undefined,
             toggleOrientationButton: true,
             expandedSubflows: () => [],
+            animated: true,
         })
 
     const emit = defineEmits([

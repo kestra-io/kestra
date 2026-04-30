@@ -157,9 +157,8 @@ public class FlowTopologyTest {
                 triggers:
                   - id: listen
                     type: io.kestra.plugin.core.trigger.Flow
-                    conditions:
-                      - type: io.kestra.plugin.core.condition.ExecutionStatus
-                        in:
+                    dependsOn:
+                      - states:
                           - FAILED
                 """
         );
@@ -173,9 +172,8 @@ public class FlowTopologyTest {
             triggers:
               - id: listen
                 type: io.kestra.plugin.core.trigger.Flow
-                conditions:
-                  - type: io.kestra.plugin.core.condition.ExecutionStatus
-                    in:
+                dependsOn:
+                  - states:
                       - FAILED
             """);
 
@@ -231,11 +229,9 @@ public class FlowTopologyTest {
                 type: io.kestra.plugin.core.trigger.Flow
                 states:
                   - SUCCESS
-                preconditions:
-                  id: flows
-                  flows:
-                   - namespace: io.kestra.unittest
-                     flowId: parent
+                dependsOn:
+                  - namespace: io.kestra.unittest
+                    flowId: parent
             """);
         var unrelatedFlow = flowService.importFlow(tenantId, """
             id: unrelated_flow

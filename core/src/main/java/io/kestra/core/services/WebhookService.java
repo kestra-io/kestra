@@ -118,7 +118,7 @@ public class WebhookService {
 
         // Check conditions
         var runContext = runContext(flow, execution);
-        if (!conditionService.isValid(trigger, flow, execution, runContext, null)) {
+        if (!conditionService.isValid(trigger, flow, runContext)) {
             return Optional.empty(); // Conditions not met
         }
 

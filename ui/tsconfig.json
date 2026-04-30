@@ -25,10 +25,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "preserveSymlinks": true,
-    "baseUrl": "./",
     "paths": {
       "override/*": ["./src/override/*"],
-      "kestra-api/*": ["./src/generated/kestra-api/*"],
       "vue": ["./node_modules/vue/dist/vue.d.ts"],
       "@vue/runtime-core": ["./node_modules/@vue/runtime-core/dist/runtime-core.d.ts"],
       "@vue/runtime-dom": ["./node_modules/@vue/runtime-dom/dist/runtime-dom.d.ts"],

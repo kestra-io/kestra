@@ -143,9 +143,9 @@
         return $moment().seconds(0).minutes(0).hours(0).toDate();
     });
 
-    function onInputDuration(value: Date | "" | null) {
+    function onInputDuration(value: string | Date | null | undefined) {
         const emitted =
-            value === "" || value === null
+            !(value instanceof Date)
                 ? undefined
                 : $moment
                     .duration({

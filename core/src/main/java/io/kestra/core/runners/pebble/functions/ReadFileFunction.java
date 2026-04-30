@@ -46,12 +46,12 @@ public class ReadFileFunction extends AbstractFileFunction {
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
-                try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
+                try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
                     yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
             case LocalPath.FILE_SCHEME -> {
-                try (InputStream inputStream = localPathFactory.createLocalPath().get(path)) {
+                try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
                     yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
@@ -65,7 +65,7 @@ public class ReadFileFunction extends AbstractFileFunction {
     }
 
     private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
 
         if (args.containsKey(VERSION)) {
             return namespaceStorage.getFileContent(

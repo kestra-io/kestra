@@ -69,7 +69,6 @@ export default defineConfig(({mode}) => {
                 {find: /^shiki$/, replacement: path.resolve(__dirname, "node_modules/shiki/dist/index.mjs")},
                 {find: /^vue-material-design-icons\/(.*)$/, replacement: path.resolve(__dirname, "node_modules/vue-material-design-icons") + "/$1"},
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
                 {find: "@storybook/addon-actions", replacement: "storybook/actions"},
 
                 // to be removed when all mdc import are removed
@@ -109,6 +108,10 @@ export default defineConfig(({mode}) => {
             }
         },
         optimizeDeps: {
+            entries: [
+                "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}"
+            ],
             include: [
                 "lodash",
                 "element-plus",

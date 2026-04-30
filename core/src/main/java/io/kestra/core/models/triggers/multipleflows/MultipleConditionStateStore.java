@@ -7,7 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.runners.TransactionContext;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.models.flows.FlowId;
@@ -20,7 +24,9 @@ public interface MultipleConditionStateStore {
 
     List<MultipleConditionWindow> expired(String tenantId);
 
-    default MultipleConditionWindow getOrCreate(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
+    Execution process(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs, BiFunction<TransactionContext, MultipleConditionWindow, Execution> consumer);
+
+    default MultipleConditionWindow create(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
@@ -62,23 +68,22 @@ public interface MultipleConditionStateStore {
             );
         };
 
-        return this.get(flow, multipleCondition.getId())
-            .filter(m -> m.isValid(ZonedDateTime.now()))
-            .orElseGet(
-                () -> MultipleConditionWindow.builder()
-                    .namespace(flow.getNamespace())
-                    .flowId(flow.getId())
-                    .tenantId(flow.getTenantId())
-                    .conditionId(multipleCondition.getId())
-                    .start(startAndEnd.getLeft())
-                    .end(startAndEnd.getRight())
-                    .results(new HashMap<>())
-                    .outputs(outputs)
-                    .build()
-            );
+        return MultipleConditionWindow.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .conditionId(multipleCondition.getId())
+            .start(startAndEnd.getLeft())
+            .end(startAndEnd.getRight())
+            .results(new HashMap<>())
+            .outputs(outputs)
+            .build();
     }
 
-    void save(List<MultipleConditionWindow> multipleConditionWindows);
+    void save(TransactionContext txContext, MultipleConditionWindow multipleConditionWindow);
+
+    @VisibleForTesting
+    void save(MultipleConditionWindow multipleConditionWindow);
 
     void delete(MultipleConditionWindow multipleConditionWindow);
 }

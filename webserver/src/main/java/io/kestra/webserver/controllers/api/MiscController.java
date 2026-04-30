@@ -108,10 +108,10 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
-    protected EditionProvider editionProvider;
+    private PebbleExpressionService pebbleExpressionService;
 
     @Inject
-    PebbleExpressionService pebbleExpressionService;
+    protected EditionProvider editionProvider;
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)

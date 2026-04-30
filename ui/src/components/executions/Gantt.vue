@@ -35,6 +35,8 @@
                 </template>
                 <template #default>
                     <DynamicScroller
+                        ref="ganttScroller"
+                        :style="{height: 'calc(100vh - 223px)', maxHeight: 'calc(100vh - 223px)'}"
                         :items="filteredSeries"
                         :minItemSize="40"
                         keyField="id"
@@ -130,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onUnmounted} from "vue";
+    import {ref, computed, watch, onMounted, onUnmounted, nextTick} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -240,6 +242,7 @@
     ];
 
     // Reactive state
+    const ganttScroller = ref<InstanceType<typeof DynamicScroller> | null>(null);
     const series = ref<SeriesItem[]>([]);
     const dates = ref<string[]>([]);
     const selectedTaskRuns = ref<string[]>([]);
@@ -590,6 +593,16 @@
     }
 
     // Lifecycle
+    onMounted(() => {
+        // v3 reads clientHeight on mount; in headless CI the layout may not be
+        // committed yet when the scroller's own onMounted fires. Re-running
+        // updateVisibleItems after nextTick (post-layout) ensures items render.
+        nextTick(() => {
+            console.warn("[E2E debug] gantt clientHeight=", (ganttScroller.value as any)?.$el?.clientHeight, "series=", filteredSeries.value.length);
+            ganttScroller.value?.updateVisibleItems?.();
+        });
+    });
+
     onUnmounted(() => {
         clearInterval(regularPaintingInterval.value);
     });

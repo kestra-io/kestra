@@ -14,5 +14,5 @@
 
     const emit = defineEmits<{(e: "update:modelValue", value: boolean): void}>()
 
-    const onInput = (value: string | number | boolean) => emit("update:modelValue", Boolean(value))
+    const onInput = (value: string | number | boolean | undefined) => emit("update:modelValue", Boolean(value))
 </script>

@@ -242,7 +242,7 @@
     ];
 
     // Reactive state
-    const ganttScroller = ref<InstanceType<typeof DynamicScroller> | null>(null);
+    const ganttScroller = ref<{updateVisibleItems?: () => void; $el?: HTMLElement} | null>(null);
     const series = ref<SeriesItem[]>([]);
     const dates = ref<string[]>([]);
     const selectedTaskRuns = ref<string[]>([]);
@@ -598,7 +598,7 @@
         // committed yet when the scroller's own onMounted fires. Re-running
         // updateVisibleItems after nextTick (post-layout) ensures items render.
         nextTick(() => {
-            console.warn("[E2E debug] gantt clientHeight=", (ganttScroller.value as any)?.$el?.clientHeight, "series=", filteredSeries.value.length);
+            console.warn("[E2E debug] gantt clientHeight=", ganttScroller.value?.$el?.clientHeight, "series=", filteredSeries.value.length);
             ganttScroller.value?.updateVisibleItems?.();
         });
     });

@@ -141,6 +141,14 @@ export function useDependencies(
 
     const selectedNodeID: Ref<Node["id"] | undefined> = ref(undefined);
 
+    // chartNodes/chartEdges are set once after the initial render and never changed.
+    // All subsequent style updates (selection, filter, theme) are applied imperatively
+    // via applyStylesToChart(), which uses layout:"none" + stored positions so that
+    // ECharts never re-runs the force simulation.
+    const chartNodes = ref<KsGraphNode[] | null>(null);
+    const chartEdges = ref<KsGraphEdge[] | null>(null);
+    const storedPositions = ref(new Map<string, {x: number; y: number}>());
+
     /** IDs of nodes that belong to the current table-filter result (null = no filter). */
     const shownNodeIDs = ref<Set<string> | null>(null);
 
@@ -249,10 +257,11 @@ export function useDependencies(
                         },
                         label: {color: cssVar("--ks-content-primary")},
                     },
-                    // Blur = same as base so selection colours survive when another node is hovered
+                    // Blur = same as base so selection colours survive when another node is hovered.
+                    // Label uses full opacity so text doesn't dim when a neighbour is hovered.
                     blur: {
                         itemStyle: baseItemStyle,
-                        label:     {color: labelColor},
+                        label:     {color: cssVar("--ks-content-primary")},
                     },
                     label: {
                         show:            true,
@@ -325,6 +334,27 @@ export function useDependencies(
 
     // ─── Selection ────────────────────────────────────────────────────────────
 
+    const focusNode = (id: Node["id"]): void => {
+        if (!id) return;
+        const pos = storedPositions.value.get(id);
+        if (!pos) return;
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+
+        // Clear any stuck hover emphasis (mouseout may not fire when clicking a table row).
+        chart.dispatchAction({type: "downplay", seriesIndex: 0});
+        // For ECharts graph series, `center` is in data coordinates.
+        // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
+        chart.setOption({series: [{zoom: 1.8, center: [pos.x, pos.y]}]}, false);
+    };
+
+    // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
+    // Only fires after initial capture (storedPositions populated), so the initial
+    // auto-selection on mount is handled by captureAndFocusWhenReady instead.
+    watch(selectedNodeID, (id) => {
+        if (id && storedPositions.value.size > 0) focusNode(id);
+    }, {flush: "post"});
+
     /**
      * Selects a node by ID, updating the visual selection state reactively.
      */
@@ -336,7 +366,86 @@ export function useDependencies(
         selectedNodeID.value = id;
     };
 
+    // ─── Imperative style updates (post-freeze) ───────────────────────────────
+
+    /**
+     * Reads post-simulation node positions from ECharts' internal data store
+     * and caches them in storedPositions so subsequent style-only updates can
+     * use layout:"none" and avoid re-running the force simulation.
+     */
+    const capturePositions = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+        try {
+            const data = chart.getModel?.()?.getSeriesByIndex?.(0)?.getData?.();
+            if (!data) return;
+            const positions = new Map<string, {x: number; y: number}>();
+            for (let i = 0; i < data.count(); i++) {
+                // Use getName() — ECharts graph nodes are identified by `name`, which we set to node.id (UUID).
+                // getId() returns an ECharts-internal synthetic ID that won't match our UUID keys.
+                const name   = data.getName(i);
+                // ECharts graph series returns layout as [x, y] array, not {x, y} object.
+                const layout = data.getItemLayout(i) as [number, number] | {x: number; y: number} | undefined;
+                const x = Array.isArray(layout) ? layout[0] : layout?.x;
+                const y = Array.isArray(layout) ? layout[1] : layout?.y;
+                if (name != null && x !== undefined && y !== undefined) {
+                    positions.set(String(name), {x, y});
+                }
+            }
+            if (positions.size > 0) storedPositions.value = positions;
+        } catch {
+            // Internal ECharts API unavailable — style updates will skip layout:none.
+        }
+    };
+
+    /**
+     * Applies the latest graphNodes/graphEdges styles directly to the ECharts
+     * instance, bypassing the frozen reactive props. Uses layout:"none" with
+     * stored positions so the force simulation never re-runs.
+     */
+    const applyStylesToChart = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+        const positions    = storedPositions.value;
+        const nodesWithPos = graphNodes.value.map((n) => {
+            const pos = positions.get(n.id);
+            return pos ? {...n, x: pos.x, y: pos.y} : n;
+        });
+        const layout = positions.size > 0 ? "none" : "force";
+        chart.setOption({series: [{data: nodesWithPos, links: graphEdges.value, layout}]}, false);
+    };
+
+    watch([graphNodes, graphEdges], () => {
+        if (chartNodes.value === null) return;
+        applyStylesToChart();
+    });
+
     // ─── Data loading ─────────────────────────────────────────────────────────
+
+    /**
+     * Polls until KsEchart's deferred `canRender` flag has triggered and ECharts
+     * has initialised, then registers a one-shot `finished` handler so positions
+     * are captured only after the force simulation has fully settled.
+     */
+    const captureAndFocusWhenReady = (): void => {
+        const poll = () => {
+            const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+            if (!chart) { requestAnimationFrame(poll); return; }
+            // ECharts 'finished' fires once all animations (incl. force layout) complete.
+            const onFinished = () => {
+                chart.off("finished", onFinished);
+                capturePositions();
+                // Defer focusNode — calling setOption inside a 'finished' handler
+                // causes ECharts "setOption during main process" error.
+                if (selectedNodeID.value) {
+                    const id = selectedNodeID.value;
+                    requestAnimationFrame(() => focusNode(id));
+                }
+            };
+            chart.on("finished", onFinished);
+        };
+        requestAnimationFrame(poll);
+    };
 
     onMounted(async () => {
         if (isTesting) {
@@ -346,6 +455,10 @@ export function useDependencies(
             if (subtype !== NAMESPACE) selectNode(elements.value.data.find(
                 (el): el is {data: Node} => el.data.type === NODE,
             )?.data.id ?? initialNodeID);
+            await nextTick();
+            chartNodes.value = graphNodes.value;
+            chartEdges.value = graphEdges.value;
+            captureAndFocusWhenReady();
         } else {
             try {
                 if (fetchAssetDependencies) {
@@ -382,6 +495,10 @@ export function useDependencies(
                 await nextTick();
                 selectNode(initialNodeID);
             }
+            await nextTick();
+            chartNodes.value = graphNodes.value;
+            chartEdges.value = graphEdges.value;
+            captureAndFocusWhenReady();
         }
 
         if (subtype === EXECUTION) nextTick(() => openSSE());
@@ -454,28 +571,49 @@ export function useDependencies(
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
+    const fitGraph = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const positions = storedPositions.value;
+        if (!chart || positions.size === 0) { graphRef.value?.fit(); return; }
+        const xs = [...positions.values()].map(p => p.x);
+        const ys = [...positions.values()].map(p => p.y);
+        const padding = 20;
+        const W = chart.getWidth()  as number;
+        const H = chart.getHeight() as number;
+        const zoom = Math.min(
+            1,
+            (W - padding * 2) / (Math.max(...xs) - Math.min(...xs) || 1),
+            (H - padding * 2) / (Math.max(...ys) - Math.min(...ys) || 1),
+        );
+        const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+        chart.setOption({series: [{zoom, center: [cx, cy]}]}, false);
+    };
+
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
-        /** KsGraphNode[] for the KsGraph :nodes prop. */
-        graphNodes,
-        /** KsGraphEdge[] for the KsGraph :edges prop. */
-        graphEdges,
+        /** Frozen snapshot for KsGraph :nodes — set once after initial render. */
+        chartNodes,
+        /** Frozen snapshot for KsGraph :edges — set once after initial render. */
+        chartEdges,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
         /** Called from the KsGraph @node-click event. */
-        handleNodeClick: (node: KsGraphNode) => selectNode(node.id as string),
+        handleNodeClick: (node: KsGraphNode) => {
+            selectNode(node.id as string);
+        },
         handlers: {
             zoomIn:        () => graphRef.value?.zoomIn(),
             zoomOut:       () => graphRef.value?.zoomOut(),
             clearSelection: () => {
                 selectedNodeID.value = undefined;
                 shownNodeIDs.value   = null;
-                graphRef.value?.fit();
+                fitGraph();
             },
-            fit:           () => graphRef.value?.fit(),
+            fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length;
                 shownNodeIDs.value  = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs);

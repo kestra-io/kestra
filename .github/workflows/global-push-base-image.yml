@@ -1,8 +1,8 @@
 name: Build and Push Base Image
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
+#  schedule: FIXME enable once it's prod ready, disabled for now to try with dry run manually
+#    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       uv-version:
@@ -43,10 +43,10 @@ jobs:
           context: .
           file: Dockerfile.base
           push: ${{ inputs.dry-run != true }}
-          tags: kestra/kestra-base:develop
+          tags: kestra/kestra-base:develop-no-plugins
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=kestra/kestra-base:develop
+          cache-from: type=registry,ref=kestra/kestra-base:develop-no-plugins
           cache-to: type=inline
 
       - name: Slack - Notification

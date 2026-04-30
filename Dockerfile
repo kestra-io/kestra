@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="kestra/kestra-base:develop"
+ARG BASE_IMAGE="kestra/kestra-base:develop-no-plugins"
 FROM ${BASE_IMAGE}
 
 ARG KESTRA_PLUGINS=""

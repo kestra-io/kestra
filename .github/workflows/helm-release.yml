@@ -84,11 +84,12 @@ jobs:
         env:
           VERSION: ${{ steps.config.outputs.version }}
         run: |
-          # Place freshly packaged kestra tgz as bundled dep so helm package
-          # does not need network access to resolve the kestra dependency.
+          helm repo add groundhog2k https://groundhog2k.github.io/helm-charts/
+          helm repo update groundhog2k
           mkdir -p charts/kestra-starter/charts/
           cp release/kestra-${VERSION}.tgz charts/kestra-starter/charts/
-          # Remove stale Chart.lock — version bump makes it invalid
+          POSTGRES_VER=$(awk '/- name: postgres/{found=1} found && /version:/{gsub(/"/, ""); print $2; exit}' charts/kestra-starter/Chart.yaml)
+          helm pull groundhog2k/postgres --version "${POSTGRES_VER}" -d charts/kestra-starter/charts/
           rm -f charts/kestra-starter/Chart.lock
 
       - name: Lint kestra-starter chart

@@ -338,7 +338,7 @@ export function useDependencies(
         if (!id) return;
         const pos = storedPositions.value.get(id);
         if (!pos) return;
-        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null;
         if (!chart) return;
 
         // Clear any stuck hover emphasis (mouseout may not fire when clicking a table row).
@@ -374,7 +374,7 @@ export function useDependencies(
      * use layout:"none" and avoid re-running the force simulation.
      */
     const capturePositions = (): void => {
-        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null;
         if (!chart) return;
         try {
             const data = chart.getModel?.()?.getSeriesByIndex?.(0)?.getData?.();
@@ -404,7 +404,7 @@ export function useDependencies(
      * stored positions so the force simulation never re-runs.
      */
     const applyStylesToChart = (): void => {
-        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null;
         if (!chart) return;
         const positions    = storedPositions.value;
         const nodesWithPos = graphNodes.value.map((n) => {
@@ -428,9 +428,15 @@ export function useDependencies(
      * are captured only after the force simulation has fully settled.
      */
     const captureAndFocusWhenReady = (): void => {
+        let attempts = 0;
+        const MAX_ATTEMPTS = 120; // ~2s at 60fps — bail in environments where ECharts never initialises (e.g. Storybook stubs).
         const poll = () => {
-            const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
-            if (!chart) { requestAnimationFrame(poll); return; }
+            const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null;
+            if (!chart) {
+                if (++attempts >= MAX_ATTEMPTS) return;
+                requestAnimationFrame(poll);
+                return;
+            }
             // ECharts 'finished' fires once all animations (incl. force layout) complete.
             const onFinished = () => {
                 chart.off("finished", onFinished);
@@ -572,7 +578,7 @@ export function useDependencies(
     // ─── Public API ───────────────────────────────────────────────────────────
 
     const fitGraph = (): void => {
-        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const chart = graphRef.value?.getEchartsInstance?.() as Record<string, any> | null;
         const positions = storedPositions.value;
         if (!chart || positions.size === 0) { graphRef.value?.fit(); return; }
         const xs = [...positions.values()].map(p => p.x);

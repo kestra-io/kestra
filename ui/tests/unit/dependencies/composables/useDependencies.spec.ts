@@ -97,12 +97,13 @@ function makeChartMock(nodePositions: Record<string, {x: number; y: number}>, W 
         getItemLayout: vi.fn((i: number) => layouts[i]),
     };
     return {
-        setOption:  vi.fn(),
-        getWidth:   vi.fn(() => W),
-        getHeight:  vi.fn(() => H),
+        setOption:      vi.fn(),
+        dispatchAction: vi.fn(),
+        getWidth:       vi.fn(() => W),
+        getHeight:      vi.fn(() => H),
         // Immediately invoke "finished" so capturePositions runs synchronously in tests
-        on:         vi.fn((event: string, handler: () => void) => { if (event === "finished") handler(); }),
-        off:        vi.fn(),
+        on:             vi.fn((event: string, handler: () => void) => { if (event === "finished") handler(); }),
+        off:            vi.fn(),
         getModel:   vi.fn(() => ({
             getSeriesByIndex: vi.fn(() => ({
                 getData:          vi.fn(() => dataMock),

@@ -571,6 +571,25 @@ export function useDependencies(
 
     // ─── Public API ───────────────────────────────────────────────────────────
 
+    const fitGraph = (): void => {
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        const positions = storedPositions.value;
+        if (!chart || positions.size === 0) { graphRef.value?.fit(); return; }
+        const xs = [...positions.values()].map(p => p.x);
+        const ys = [...positions.values()].map(p => p.y);
+        const padding = 20;
+        const W = chart.getWidth()  as number;
+        const H = chart.getHeight() as number;
+        const zoom = Math.min(
+            1,
+            (W - padding * 2) / (Math.max(...xs) - Math.min(...xs) || 1),
+            (H - padding * 2) / (Math.max(...ys) - Math.min(...ys) || 1),
+        );
+        const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+        chart.setOption({series: [{zoom, center: [cx, cy]}]}, false);
+    };
+
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
@@ -592,9 +611,9 @@ export function useDependencies(
             clearSelection: () => {
                 selectedNodeID.value = undefined;
                 shownNodeIDs.value   = null;
-                graphRef.value?.fit();
+                fitGraph();
             },
-            fit:           () => graphRef.value?.fit(),
+            fit: fitGraph,
             highlightShown: (nodeIDs: string[]) => {
                 const allNodeCount = elements.value.data.filter((el) => el.data.type === NODE).length;
                 shownNodeIDs.value  = nodeIDs.length >= allNodeCount ? null : new Set(nodeIDs);

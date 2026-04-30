@@ -86,6 +86,32 @@ function makeGraphRef() {
   });
 }
 
+// ECharts instance mock that exposes known node positions via getData().
+function makeChartMock(nodePositions: Record<string, {x: number; y: number}>, W = 600, H = 400) {
+    const ids = Object.keys(nodePositions);
+    const layouts = Object.values(nodePositions);
+    const dataMock = {
+        count:         vi.fn(() => ids.length),
+        getId:         vi.fn((i: number) => ids[i]),
+        getName:       vi.fn((i: number) => ids[i]),
+        getItemLayout: vi.fn((i: number) => layouts[i]),
+    };
+    return {
+        setOption:  vi.fn(),
+        getWidth:   vi.fn(() => W),
+        getHeight:  vi.fn(() => H),
+        // Immediately invoke "finished" so capturePositions runs synchronously in tests
+        on:         vi.fn((event: string, handler: () => void) => { if (event === "finished") handler(); }),
+        off:        vi.fn(),
+        getModel:   vi.fn(() => ({
+            getSeriesByIndex: vi.fn(() => ({
+                getData:          vi.fn(() => dataMock),
+                coordinateSystem: null,
+            })),
+        })),
+    };
+}
+
 const mountComponentWithUseDependencies = (
     subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW,
     initialNodeID: string = "test-id",
@@ -254,6 +280,102 @@ describe("useDependencies composable", () => {
         expect((n.blur as any)?.itemStyle?.color).toBe(n.itemStyle?.color);
         expect((n.blur as any)?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1);
       });
+    });
+  });
+
+  describe("focusNode", () => {
+    // Known layout:
+    //   A(100,200)  B(300,400)  C(200,100)
+    //   canvas W=600 H=400
+    //
+    // ECharts graph `center` is in data coordinates.
+    // focusNode sets center=[pos.x, pos.y] to place the node at canvas centre.
+    const NODE_POSITIONS = {A: {x: 100, y: 200}, B: {x: 300, y: 400}, C: {x: 200, y: 100}};
+    const CANVAS_W = 600;
+    const CANVAS_H = 400;
+
+    async function mountWithChart() {
+        const chartMock = makeChartMock(NODE_POSITIONS, CANVAS_W, CANVAS_H);
+        const graphRef = ref({
+            fit:                vi.fn(),
+            zoomIn:             vi.fn(),
+            zoomOut:            vi.fn(),
+            exportAsImage:      vi.fn(),
+            getEchartsInstance: vi.fn(() => chartMock),
+            $el:                document.createElement("div"),
+        });
+        const fetchAssetDependencies = vi.fn().mockResolvedValue({
+            data: [
+                {data: {id: "A", type: "NODE", flow: "fa", namespace: "ns", metadata: {subtype: "FLOW"}}},
+                {data: {id: "B", type: "NODE", flow: "fb", namespace: "ns", metadata: {subtype: "FLOW"}}},
+                {data: {id: "C", type: "NODE", flow: "fc", namespace: "ns", metadata: {subtype: "FLOW"}}},
+            ],
+            count: 3,
+        });
+        const wrapper = mount({
+            template: "<div></div>",
+            setup() {
+                // Use initialNodeID="X" (nonexistent) so no node is pre-selected,
+                // leaving selectedNodeID undefined and letting tests control selection.
+                const composable = useDependencies(graphRef as any, FLOW, "X", {}, false, fetchAssetDependencies);
+                return {composable};
+            },
+        });
+        // Flush microtasks (promise resolution + Vue reactivity) then
+        // allow jsdom's setTimeout-based requestAnimationFrame to fire.
+        await nextTick();
+        await nextTick();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await nextTick();
+        chartMock.setOption.mockClear();
+        const {selectNode} = wrapper.vm.composable as ReturnType<typeof useDependencies>;
+        return {selectNode, chartMock};
+    }
+
+    it("calls setOption with zoom=1.8 and correct center when node A is selected", async () => {
+        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
+        const {selectNode, chartMock} = await mountWithChart();
+
+        selectNode("A");
+        await nextTick();
+        await nextTick();
+
+        expect(chartMock.setOption).toHaveBeenCalledWith(
+            expect.objectContaining({
+                series: [expect.objectContaining({zoom: 1.8, center: [100, 200]})],
+            }),
+            false,
+        );
+    });
+
+    it("centers on the correct node when selection changes to B", async () => {
+        // center = [pos.x, pos.y] — ECharts graph center is in data coordinates
+        const {selectNode, chartMock} = await mountWithChart();
+
+        selectNode("B");
+        await nextTick();
+        await nextTick();
+
+        expect(chartMock.setOption).toHaveBeenCalledWith(
+            expect.objectContaining({
+                series: [expect.objectContaining({zoom: 1.8, center: [300, 400]})],
+            }),
+            false,
+        );
+    });
+
+    it("does not call setOption for centering when node has no stored position", async () => {
+        const {selectNode, chartMock} = await mountWithChart();
+
+        selectNode("nonexistent");
+        await nextTick();
+        await nextTick();
+
+        const focusCalls = chartMock.setOption.mock.calls.filter(
+            (args: any[]) => args[0]?.series?.[0]?.zoom !== undefined,
+        );
+        expect(focusCalls).toHaveLength(0);
     });
   });
 

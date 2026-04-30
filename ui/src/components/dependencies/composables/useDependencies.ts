@@ -334,6 +334,27 @@ export function useDependencies(
 
     // ─── Selection ────────────────────────────────────────────────────────────
 
+    const focusNode = (id: Node["id"]): void => {
+        if (!id) return;
+        const pos = storedPositions.value.get(id);
+        if (!pos) return;
+        const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+        if (!chart) return;
+
+        // Clear any stuck hover emphasis (mouseout may not fire when clicking a table row).
+        chart.dispatchAction({type: "downplay", seriesIndex: 0});
+        // For ECharts graph series, `center` is in data coordinates.
+        // Setting center=[pos.x, pos.y] places the selected node at canvas centre.
+        chart.setOption({series: [{zoom: 1.8, center: [pos.x, pos.y]}]}, false);
+    };
+
+    // Trigger focus after all reactive updates (applyStylesToChart) have flushed.
+    // Only fires after initial capture (storedPositions populated), so the initial
+    // auto-selection on mount is handled by captureAndFocusWhenReady instead.
+    watch(selectedNodeID, (id) => {
+        if (id && storedPositions.value.size > 0) focusNode(id);
+    }, {flush: "post"});
+
     /**
      * Selects a node by ID, updating the visual selection state reactively.
      */
@@ -360,10 +381,15 @@ export function useDependencies(
             if (!data) return;
             const positions = new Map<string, {x: number; y: number}>();
             for (let i = 0; i < data.count(); i++) {
-                const id     = data.getId(i);
-                const layout = data.getItemLayout(i) as {x?: number; y?: number} | undefined;
-                if (id != null && layout?.x !== undefined && layout?.y !== undefined) {
-                    positions.set(String(id), {x: layout.x, y: layout.y});
+                // Use getName() — ECharts graph nodes are identified by `name`, which we set to node.id (UUID).
+                // getId() returns an ECharts-internal synthetic ID that won't match our UUID keys.
+                const name   = data.getName(i);
+                // ECharts graph series returns layout as [x, y] array, not {x, y} object.
+                const layout = data.getItemLayout(i) as [number, number] | {x: number; y: number} | undefined;
+                const x = Array.isArray(layout) ? layout[0] : layout?.x;
+                const y = Array.isArray(layout) ? layout[1] : layout?.y;
+                if (name != null && x !== undefined && y !== undefined) {
+                    positions.set(String(name), {x, y});
                 }
             }
             if (positions.size > 0) storedPositions.value = positions;
@@ -396,6 +422,31 @@ export function useDependencies(
 
     // ─── Data loading ─────────────────────────────────────────────────────────
 
+    /**
+     * Polls until KsEchart's deferred `canRender` flag has triggered and ECharts
+     * has initialised, then registers a one-shot `finished` handler so positions
+     * are captured only after the force simulation has fully settled.
+     */
+    const captureAndFocusWhenReady = (): void => {
+        const poll = () => {
+            const chart = graphRef.value?.getEchartsInstance() as Record<string, any> | null;
+            if (!chart) { requestAnimationFrame(poll); return; }
+            // ECharts 'finished' fires once all animations (incl. force layout) complete.
+            const onFinished = () => {
+                chart.off("finished", onFinished);
+                capturePositions();
+                // Defer focusNode — calling setOption inside a 'finished' handler
+                // causes ECharts "setOption during main process" error.
+                if (selectedNodeID.value) {
+                    const id = selectedNodeID.value;
+                    requestAnimationFrame(() => focusNode(id));
+                }
+            };
+            chart.on("finished", onFinished);
+        };
+        requestAnimationFrame(poll);
+    };
+
     onMounted(async () => {
         if (isTesting) {
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
@@ -407,8 +458,7 @@ export function useDependencies(
             await nextTick();
             chartNodes.value = graphNodes.value;
             chartEdges.value = graphEdges.value;
-            await nextTick();
-            capturePositions();
+            captureAndFocusWhenReady();
         } else {
             try {
                 if (fetchAssetDependencies) {
@@ -448,8 +498,7 @@ export function useDependencies(
             await nextTick();
             chartNodes.value = graphNodes.value;
             chartEdges.value = graphEdges.value;
-            await nextTick();
-            capturePositions();
+            captureAndFocusWhenReady();
         }
 
         if (subtype === EXECUTION) nextTick(() => openSSE());

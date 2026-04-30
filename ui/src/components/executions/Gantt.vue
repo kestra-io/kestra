@@ -35,8 +35,6 @@
                 </template>
                 <template #default>
                     <DynamicScroller
-                        ref="ganttScroller"
-                        :style="{height: 'calc(100vh - 223px)', maxHeight: 'calc(100vh - 223px)'}"
                         :items="filteredSeries"
                         :minItemSize="40"
                         keyField="id"
@@ -132,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onUnmounted, nextTick} from "vue";
+    import {ref, computed, watch, onUnmounted} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -242,7 +240,6 @@
     ];
 
     // Reactive state
-    const ganttScroller = ref<{updateVisibleItems?: () => void; $el?: HTMLElement} | null>(null);
     const series = ref<SeriesItem[]>([]);
     const dates = ref<string[]>([]);
     const selectedTaskRuns = ref<string[]>([]);
@@ -592,17 +589,7 @@
         showOnboardingSuccessPopup.value = true;
     }
 
-    // v-else-if="execution && executionsStore.flow" means ganttScroller is null
-    // when Gantt first mounts. Watch for when DynamicScroller actually renders
-    // and force a layout pass so items aren't stuck at 0 in headless CI.
-    watch(ganttScroller, (newVal) => {
-        if (newVal) {
-            nextTick(() => {
-                newVal.updateVisibleItems?.();
-            });
-        }
-    });
-
+    // Lifecycle
     onUnmounted(() => {
         clearInterval(regularPaintingInterval.value);
     });
@@ -651,7 +638,6 @@
             padding: 0;
 
             .vue-recycle-scroller {
-                height: calc(100vh - 223px);
                 max-height: calc(100vh - 223px);
 
                 &::-webkit-scrollbar {

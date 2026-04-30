@@ -143,6 +143,6 @@ updates:
       - dependency-name: "axios"
         versions: ["*"]
 
-      # Pin vue-virtual-scroller patch updates — 3.0.2 broke Gantt DynamicScroller rendering (CI run 25118331295)
+      # Reverted to 2.0.1 — v3.x DynamicScroller renders 0 items in headless CI (clientHeight=0 at mount time)
       - dependency-name: "vue-virtual-scroller"
-        update-types: ["version-update:semver-patch"]
+        versions: [">=3.0.0"]

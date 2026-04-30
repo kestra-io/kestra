@@ -593,6 +593,10 @@ export function useDependencies(
     return {
         /** Returns the raw Element[] used by the Table component. */
         getElements: () => elements.value.data,
+        /** Live computed nodes — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */
+        graphNodes,
+        /** Live computed edges — reflects selection/filter/theme changes; used by applyStylesToChart and tests. */
+        graphEdges,
         /** Frozen snapshot for KsGraph :nodes — set once after initial render. */
         chartNodes,
         /** Frozen snapshot for KsGraph :edges — set once after initial render. */

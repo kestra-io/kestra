@@ -1,0 +1,57 @@
+name: Build and Push Base Image
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      uv-version:
+        description: 'uv version to install'
+        type: string
+        required: false
+        default: '0.6.17'
+      dry-run:
+        description: 'Build only, do not push'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-base-image
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    name: Build and Push kestra-base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: ${{ inputs.dry-run != true }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.base
+          push: ${{ inputs.dry-run != true }}
+          tags: kestra/kestra-base:develop
+          build-args: |
+            UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
+          cache-from: type=registry,ref=kestra/kestra-base:develop
+          cache-to: type=inline
+
+      - name: Slack - Notification
+        if: ${{ failure() }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'

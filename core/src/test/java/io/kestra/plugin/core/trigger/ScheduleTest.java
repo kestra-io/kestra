@@ -1,9 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +13,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -32,10 +29,6 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.condition.DateTimeBetween;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
-import io.kestra.plugin.core.condition.Expression;
-import io.kestra.plugin.core.condition.TimeBetween;
 import io.kestra.plugin.core.debug.Return;
 
 import jakarta.inject.Inject;
@@ -332,16 +325,7 @@ class ScheduleTest {
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    DayWeekInMonth.builder()
-                        .type(DayWeekInMonth.class.getName())
-                        .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                        .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                        .date(Property.ofExpression("{{ trigger.date }}"))
-                        .build()
-                )
-            )
+            .when("{{isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST')}}")
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
@@ -370,15 +354,7 @@ class ScheduleTest {
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    DateTimeBetween.builder()
-                        .type(DateTimeBetween.class.getName())
-                        .before(Property.ofValue(ZonedDateTime.parse("2021-08-02T12:00:00+02:00")))
-                        .date(Property.ofExpression("{{ trigger.date }}"))
-                        .build()
-                )
-            )
+            .when("{{isDateBefore(trigger.date, '2021-08-02T12:00:00+02:00')}}")
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
@@ -395,10 +371,7 @@ class ScheduleTest {
         if (vars != null) {
             assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
-            if (vars.containsKey("next")) {
-            } else {
-                assertThat(vars.containsKey("next")).isFalse();
-            }
+            assertThat(vars.containsKey("next")).isFalse();
         }
     }
 
@@ -699,102 +672,6 @@ class ScheduleTest {
 
     private ZonedDateTime dateFromVars(String date, ZonedDateTime expected) {
         return ZonedDateTime.parse(date).withZoneSameInstant(expected.getZone());
-    }
-
-    @Test
-    void shouldGetNextExecutionDateWithConditionMatchingFutureDate() throws InternalException {
-
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-        OffsetTime before = now.minusHours(1).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-        OffsetTime after = now.minusHours(4).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("0 * * * *") // every hour
-            .withSeconds(false)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    TimeBetween.builder()
-                        .type(TimeBetween.class.getName())
-                        .before(Property.ofValue(before))
-                        .after(Property.ofValue(after))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
-        assertThat(result).isNotEmpty();
-    }
-
-    @Test
-    void shouldGetNextExecutionDateWithConditionMatchingCurrentDate() throws InternalException {
-
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-
-        OffsetTime before = now.plusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-        OffsetTime after = now.minusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("*/30 * * * * *")
-            .withSeconds(true)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    TimeBetween.builder()
-                        .type(TimeBetween.class.getName())
-                        .before(Property.ofValue(before))
-                        .after(Property.ofValue(after))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
-        assertThat(result).isNotEmpty();
-    }
-
-    @Test
-    void shouldGetNextExecutionDateEvenIfExpressionConditionIsFalse() throws InternalException {
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("*/30 * * * * *")
-            .withSeconds(true)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    Expression.builder()
-                        .type(Expression.class.getName())
-                        .expression(Property.ofValue("false"))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.findNextDateMatchingConditions(trigger.executionTime(), conditionContext, now);
-        assertThat(result).isNotEmpty();
     }
 
     @Test

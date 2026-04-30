@@ -7,25 +7,27 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.utils.ListUtils;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-public record ApiExecution(String tenantId,
-                           String id,
-                           String namespace,
-                           String flowId,
-                           Integer flowRevision,
+public record ApiExecution(@NotNull String tenantId,
+                           @NotNull String id,
+                           @NotNull String namespace,
+                           @NotNull String flowId,
+                           @NotNull Integer flowRevision,
                            List<ApiTaskRun> taskRunList,
                            Map<String, Object> inputs,
                            Map<String, Object> outputs,
                            List<Label> labels,
                            Map<String, Object> variables,
-                           State state,
+                           @NotNull State state,
                            String parentId,
-                           String originalId,
+                           @NotNull String originalId,
                            ExecutionTrigger trigger,
-                           ExecutionMetadata metadata,
+                           @NotNull ExecutionMetadata metadata,
                            Instant scheduleDate,
                            String traceParent,
                            List<TaskFixture> fixtures,

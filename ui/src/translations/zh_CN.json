@@ -240,7 +240,8 @@
         "plural": "仪表板",
         "singular": "仪表板"
       },
-      "preview": "预览仪表板"
+      "preview": "预览仪表板",
+      "switch": "切换仪表板"
     },
     "data": "数据",
     "dataFilters": "数据过滤器",

@@ -28,6 +28,7 @@ public class State {
     @JsonInclude
     Type current;
 
+    @NotNull
     @Valid
     List<History> histories;
 

@@ -52,6 +52,19 @@ jobs:
         client-payload: >-
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_repo":"${{ github.repository }}"}
 
+      # Always trigger EE OpenAPI check on non-fork PRs (regardless of EE same-name branch)
+    - name: Trigger EE OpenAPI spec check
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false }}
+      with:
+        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-pr-openapi-check"
+        client-payload: >-
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}
     name: File changes detection
@@ -94,42 +107,6 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25
-
-  check-openapi-spec-up-to-date:
-    name: Check Openapi generated spec is up to date
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        name: Checkout - Current ref
-        with:
-          fetch-depth: 0
-
-      # Setup build
-      - uses: kestra-io/actions/composite/setup-build@main
-        name: Setup - Build
-        id: build
-        with:
-          java-enabled: true
-          java-version: 25
-
-      - name: Generate the openapi spec
-        run: ./gradlew generateOpenapiSpec
-        shell: bash
-
-      - name: Check Openapi spec up to date
-        run: |
-          if [ -n "$(git diff --name-only -- openapi.yml)" ]; then
-            git diff -- openapi.yml
-            echo ""
-            echo ""
-            echo "❌❌❌ generated openapi.yml is not up to date"
-            echo ""
-            echo "We do now ship openapi.yml spec with our code. It is mandatory to commit the updated spec generated with ./gradlew generateOpenapiSpec"
-            exit 1
-          fi
-        shell: bash
 
   e2e-tests:
     name: E2E - Tests

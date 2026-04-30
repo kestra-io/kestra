@@ -4,21 +4,23 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-public record ApiLightExecution(String tenantId,
-                                String id,
-                                String namespace,
-                                String flowId,
-                                Integer flowRevision,
+public record ApiLightExecution(@NotNull String tenantId,
+                                @NotNull String id,
+                                @NotNull String namespace,
+                                @NotNull String flowId,
+                                @NotNull Integer flowRevision,
                                 Map<String, Object> inputs,
                                 Map<String, Object> outputs,
                                 List<Label> labels,
-                                State state,
+                                @NotNull State state,
                                 String parentId,
-                                String originalId,
+                                @NotNull String originalId,
                                 ExecutionTrigger trigger,
                                 Instant scheduleDate,
                                 ExecutionKind kind,

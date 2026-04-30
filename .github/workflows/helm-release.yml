@@ -12,9 +12,13 @@ on:
         required: true
         type: boolean
         default: true
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_call:
+    inputs:
+      dry_run:
+        description: 'Dry run — package charts but do not upload to GCS'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,20 +34,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Resolve version and dry-run flag
         id: config
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            TAG="${GITHUB_REF_NAME}"
-            VERSION="${TAG#v}"
-            DRY_RUN="false"
-          else
+          if [[ -n "${{ inputs.version }}" ]]; then
             VERSION="${{ inputs.version }}"
             TAG="v${VERSION}"
-            DRY_RUN="${{ inputs.dry_run }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
           fi
+          DRY_RUN="${{ inputs.dry_run }}"
           echo "tag=${TAG}"        >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "dry_run=${DRY_RUN}" >> $GITHUB_OUTPUT

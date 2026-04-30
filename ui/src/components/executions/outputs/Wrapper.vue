@@ -2,37 +2,38 @@
     <div class="outputs">
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <KsSplitterPanel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-auto left">
+                <div class="left-panel">
                     <KsCascaderPanel
                         v-if="tasksWithOutputs"
                         ref="cascader"
                         v-model="selected"
                         :props="cascaderProps"
                         :border="false"
-                        class="flex-grow-1 cascader"
+                        class="cascader"
                         @expand-change="() => scrollRight()"
                     >
                         <template #default="{data}">
                             <div
                                 v-if="data.heading"
                                 @click="expandedValue = data.path"
-                                class="pe-none d-flex fs-5"
+                                class="cascader-heading"
                             >
-                                <component :is="data.component" class="me-2" />
+                                <component :is="data.component" />
                                 <span>{{ data.label }}</span>
                             </div>
 
                             <div
                                 v-else
                                 @click="expandedValue = data.path"
-                                class="w-100 d-flex justify-content-between"
+                                class="cascader-item"
                             >
-                                <div class="pe-1 d-flex task">
+                                <div class="task">
                                     <KsTaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
+                                        class="output-task-icon"
                                     />
                                     <span :class="{'ms-3': data.icon}" class="task-label">
                                         <span>{{ data.label }}&nbsp;</span>
@@ -56,12 +57,12 @@
                 </div>
             </KsSplitterPanel>
             <KsSplitterPanel>
-                <div class="right wrapper">
+                <div class="right-panel wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
-                        class="w-100 overflow-auto p-3 content-container"
+                        class="content-container"
                     >
-                        <div class="d-flex justify-content-between pe-none fs-5 values">
+                        <div class="values">
                             <code class="d-block">
                                 {{ selectedNode()?.label ?? "Value" }}
                             </code>
@@ -156,12 +157,13 @@
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {CascaderOption, CascaderProps, ElCascaderPanel} from "element-plus";
+    import {CascaderOption, CascaderProps}from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
+
     import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
@@ -205,7 +207,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.getCheckedNodes(false)?.[0]?.label as string | undefined);
+            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined);
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     });
@@ -292,7 +294,7 @@
             });
     };
 
-    const cascader = ref<InstanceType<typeof ElCascaderPanel> | null>(null);
+    const cascader = ref<InstanceType<typeof KsCascaderPanel> | null>(null);
     const scrollRight = () =>
         setTimeout(
             () =>
@@ -354,7 +356,7 @@
     });
 
     const selectedNode = () => {
-        const node = cascader.value?.getCheckedNodes(false);
+        const node = cascader.value?.cascader?.getCheckedNodes(false);
 
         if (!node?.length) return {label: undefined, value: undefined};
 
@@ -561,10 +563,31 @@
     }
 }
 
+.cascader {
+    flex-grow: 1;
+}
+
+.cascader-heading {
+    pointer-events: none;
+    display: flex;
+    gap: .5rem;
+    font-size: var(--kel-font-size-medium);
+}
+
+.cascader-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
 :deep(.kel-scrollbar.kel-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
 .values {
     pointer-events: none;
     margin: 0.75rem 0 1.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--kel-font-size-medium);
+    pointer-events: none;
 }
 
 :deep(.kel-cascader-menu__list) {
@@ -590,21 +613,20 @@
     margin-bottom: 0px !important;
 }
 
-.wrapper {
-    background: var(--ks-background-card);
-    position: relative;
-    z-index: 1;
-}
-
 /* Left column container: take full splitter-panel height and scroll internally */
-.outputs .left {
+.outputs .left-panel {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
-.right.wrapper {
+.outputs .right-panel{
+    background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -650,6 +672,8 @@
         }
 
         .task {
+            display: flex;
+            padding-right: .25rem;
             width: 100%;
             max-width: 100%;
 
@@ -668,7 +692,7 @@
             }
         }
 
-        .task .wrapper {
+        .task .output-task-icon {
             align-self: center;
             height: var(--kel-font-size-small);
             width: var(--kel-font-size-small);
@@ -689,6 +713,8 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
+    width: 100%;
+    padding: 1rem;
 }
 
 :deep(.kel-collapse) {

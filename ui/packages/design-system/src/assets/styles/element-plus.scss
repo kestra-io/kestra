@@ -150,6 +150,9 @@ html.dark {
     #{--kel-button-active-text-color}: var(--ks-content-primary);
     #{--kel-popper-bg-color-light}: var(--ks-dropdown-background);
     #{--kel-border-color-hover}: var(--ks-border-primary);
+
+    #{--kel-color-danger}: var(--ks-content-alert);
+    #{--kel-color-error}: var(--ks-content-alert);
 }
 
 // popper

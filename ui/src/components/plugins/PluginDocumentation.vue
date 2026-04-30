@@ -51,7 +51,7 @@
 <script setup lang="ts">
 
     import {computed} from "vue";
-    import {SchemaToHtml} from "@kestra-io/ui-libs";
+    import SchemaToHtml from "./schema/SchemaToHtml.vue";
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {useMiscStore} from "override/stores/misc";
@@ -99,5 +99,33 @@
 </script>
 
 <style scoped lang="scss">
-    @import "../../styles/components/plugin-doc";
+    .plugin-icon {
+        width: 25px;
+        height: 25px;
+        min-width: 25px;
+        min-height: 25px;
+    }
+
+    .plugin-title {
+        min-width: 50px;
+        font-size: var(--kel-font-size-large);
+    }
+
+    .release-notes-btn {
+        background-color: var(--ks-background-info);
+        color: var(--ks-content-info);
+        border: 1px solid var(--ks-border-info);
+        white-space: nowrap;
+
+        :deep(.material-design-icon) {
+            position: absolute;
+            bottom: 0;
+        }
+
+        @media (max-width: 576px) {
+            padding: 6px 12px;
+            font-size: var(--kel-font-size-small);
+            min-width: auto;
+        }
+    }
 </style>

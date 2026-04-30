@@ -1,16 +1,16 @@
 <template>
     <ContextInfoContent :title="routeInfo.title" ref="contextInfoRef">
         <template v-if="isOnline" #back-button>
-            <button
+            <KsButton
                 class="back-button"
-                type="button"
+                nativeType="button"
                 @click="goBack"
                 :disabled="!canGoBack"
                 :class="{disabled: !canGoBack}"
                 :aria-label="$t('common.back')"
             >
                 <span class="back-icon" aria-hidden="true">‹</span>
-            </button>
+            </KsButton>
         </template>
         <template #header>
             <router-link
@@ -32,7 +32,7 @@
                 <DocsMenu />
                 <DocsLayout>
                     <template #content>
-                        <KsMarkdown :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
+                        <KsMarkdown class="markdown" :content="markdownContent" :xssProtection="false" :components="markdownComponents" />
                     </template>
                 </DocsLayout>
             </template>
@@ -60,7 +60,7 @@
     import {useScrollMemory} from "../../composables/useScrollMemory"
     const {isOnline} = useNetwork()
 
-    import {KsMarkdown} from "@kestra-io/design-system";
+    import {KsButton, KsMarkdown} from "@kestra-io/design-system";
     import PluginCount from "./PluginCount.vue";
     import WhatsNew from "../content/WhatsNew.vue";
     import SupportLinks from "../content/SupportLinks.vue";

@@ -187,13 +187,7 @@ public class ExecutionController {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private io.kestra.core.server.ServerConfig serverConfig;
-
-    @Inject
     private TenantService tenantService;
-
-    @Inject
-    private io.kestra.core.contexts.configuration.KestraConfiguration kestraConfiguration;
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
@@ -208,10 +202,26 @@ public class ExecutionController {
     private SecureVariableRendererFactory secureVariableRendererFactory;
 
     @Inject
-    private io.kestra.core.runners.configuration.LocalFilesConfiguration localFilesConfiguration;
+    private ObjectMapper objectMapper;
+
+    private Integer initialPreviewRows;
+    private Integer maxPreviewRows;
+    private String kestraUrl;
+    private boolean enableLocalFilePreview;
+    private Duration asyncWaitTimeout;
 
     @Inject
-    private ObjectMapper objectMapper;
+    void initConfig(
+        io.kestra.core.server.ServerConfig serverConfig,
+        io.kestra.core.contexts.configuration.KestraConfiguration kestraConfiguration,
+        io.kestra.core.runners.configuration.LocalFilesConfiguration localFilesConfiguration,
+        io.kestra.webserver.configuration.AsyncOperationsConfiguration asyncOperationsConfiguration) {
+        this.initialPreviewRows = serverConfig.preview() != null ? serverConfig.preview().initialRows() : 100;
+        this.maxPreviewRows = serverConfig.preview() != null ? serverConfig.preview().maxRows() : 5000;
+        this.kestraUrl = kestraConfiguration.url();
+        this.enableLocalFilePreview = localFilesConfiguration.enablePreview();
+        this.asyncWaitTimeout = asyncOperationsConfiguration.waitTimeout();
+    }
 
     @Inject
     private WebhookService webhookService;
@@ -735,7 +745,7 @@ public class ExecutionController {
     }
 
     private URI executionUrl(Execution execution) {
-        String baseUrl = java.util.Optional.ofNullable(kestraConfiguration.url()).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
+        String baseUrl = java.util.Optional.ofNullable(kestraUrl).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
         return URI.create(
             baseUrl + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId() : "")
                 + "/executions/"
@@ -814,7 +824,7 @@ public class ExecutionController {
 
     protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
         if (LocalPath.FILE_SCHEME.equals(path.getScheme())) {
-            if (!localFilesConfiguration.enablePreview()) {
+            if (!enableLocalFilePreview) {
                 throw new SecurityException("Local file preview is disabled");
             }
             return null;
@@ -1126,7 +1136,7 @@ public class ExecutionController {
                         throw new RuntimeException(e);
                     }
                 },
-                asyncOperationsConfiguration.waitTimeout()
+                asyncWaitTimeout
             );
         } catch (TimeoutException e) {
             throw new HttpStatusException(HttpStatus.GATEWAY_TIMEOUT, "Operation timed out waiting for state transition");
@@ -1860,7 +1870,7 @@ public class ExecutionController {
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? serverConfig.preview().initialRows() : (maxRows > serverConfig.preview().maxRows() ? serverConfig.preview().maxRows() : maxRows)
+                maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
             );
 
             return HttpResponse.ok(fileRender);

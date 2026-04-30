@@ -81,7 +81,7 @@ public record ServerConfig(
 
         @ConfigurationProperties("purge")
         public record Purge(
-            Duration retention) {
+            @Nullable Duration retention) {
         }
     }
 }

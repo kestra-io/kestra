@@ -32,8 +32,19 @@ public class StaticFilter implements HttpServerFilter {
     @Value("${micronaut.server.context-path}")
     protected String basePath;
 
+    @Nullable
+    protected String googleAnalytics;
+    @Nullable
+    protected String htmlTitle;
+    @Nullable
+    protected String htmlHead;
+
     @jakarta.inject.Inject
-    protected WebserverConfiguration webserverConfiguration;
+    void initConfig(WebserverConfiguration webserverConfiguration) {
+        this.googleAnalytics = webserverConfiguration.googleAnalytics();
+        this.htmlTitle = webserverConfiguration.htmlTitle();
+        this.htmlHead = webserverConfiguration.htmlHead();
+    }
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
@@ -87,15 +98,15 @@ public class StaticFilter implements HttpServerFilter {
 
         line = line.replace("./", (basePath != null ? basePath : "") + "/ui/");
 
-        if (webserverConfiguration.googleAnalytics() != null) {
-            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + webserverConfiguration.googleAnalytics() + "';");
+        if (googleAnalytics != null) {
+            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");
         }
 
-        if (webserverConfiguration.htmlTitle() != null) {
-            line = line.replaceFirst("<title>(.*)</title>", "<title>" + webserverConfiguration.htmlTitle() + "</title>");
+        if (htmlTitle != null) {
+            line = line.replaceFirst("<title>(.*)</title>", "<title>" + this.htmlTitle + "</title>");
         }
 
-        line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
+        line = line.replace("<meta name=\"html-head\" content=\"replace\">", this.htmlHead == null ? "" : this.htmlHead);
 
         return line;
     }

@@ -374,6 +374,7 @@
     }
 
     .log-lines {
+        min-height: 1px;
         max-height: calc(100vh - 335px);
         transition: max-height 0.2s ease-out;
         margin-top: .5rem;

@@ -979,6 +979,7 @@
 
     .log-lines {
         transition: max-height 0.2s ease-out;
+        min-height: 1px;
         max-height: 300px;
 
         &.single-line {

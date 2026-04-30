@@ -2,7 +2,9 @@ import path from "path";
 import {createLogger, defineConfig, loadEnv} from "vite";
 import vue from "@vitejs/plugin-vue";
 
-// silence some scss warnings about sourceMaps in the wrong directory
+// silence some scss warnings about sourceMaps of 
+// element-plus/theme-chalk/src in the wrong directory 
+// and will not be published in prod builds
 const logger = createLogger();
 const loggerWarnOnce = logger.warnOnce.bind(logger);
 logger.warnOnce = (msg, options) => {
@@ -38,6 +40,9 @@ export default defineConfig(({mode}) => {
             }
         },
         server: {
+            watch: {
+                ignored: ["!**/node_modules/@kestra-io/design-system/src/**"]
+            },
             proxy: {
                 "^/api": {
                     target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",

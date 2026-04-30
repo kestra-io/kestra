@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onUnmounted, nextTick} from "vue";
+    import {ref, computed, watch, onUnmounted, nextTick} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -592,15 +592,15 @@
         showOnboardingSuccessPopup.value = true;
     }
 
-    // Lifecycle
-    onMounted(() => {
-        // v3 reads clientHeight on mount; in headless CI the layout may not be
-        // committed yet when the scroller's own onMounted fires. Re-running
-        // updateVisibleItems after nextTick (post-layout) ensures items render.
-        nextTick(() => {
-            console.warn("[E2E debug] gantt clientHeight=", ganttScroller.value?.$el?.clientHeight, "series=", filteredSeries.value.length);
-            ganttScroller.value?.updateVisibleItems?.();
-        });
+    // v-else-if="execution && executionsStore.flow" means ganttScroller is null
+    // when Gantt first mounts. Watch for when DynamicScroller actually renders
+    // and force a layout pass so items aren't stuck at 0 in headless CI.
+    watch(ganttScroller, (newVal) => {
+        if (newVal) {
+            nextTick(() => {
+                newVal.updateVisibleItems?.();
+            });
+        }
     });
 
     onUnmounted(() => {

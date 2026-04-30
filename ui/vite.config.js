@@ -1,6 +1,14 @@
 import path from "path";
-import {defineConfig, loadEnv} from "vite";
+import {createLogger, defineConfig, loadEnv} from "vite";
 import vue from "@vitejs/plugin-vue";
+
+// silence some scss warnings about sourceMaps in the wrong directory
+const logger = createLogger();
+const loggerWarnOnce = logger.warnOnce.bind(logger);
+logger.warnOnce = (msg, options) => {
+    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return;
+    loggerWarnOnce(msg, options);
+};
 
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
@@ -70,6 +78,7 @@ export default defineConfig(({mode}) => {
             }),
         ],
         assetsInclude: ["**/*.md"],
+        customLogger: logger,
         css: {
             devSourcemap: true,
             preprocessorOptions: {

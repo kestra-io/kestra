@@ -27,6 +27,7 @@ import lombok.*;
 @Getter
 @Builder(toBuilder = true)
 public class TaskRun implements TenantInterface {
+    @NotNull
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;

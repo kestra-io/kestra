@@ -308,29 +308,33 @@ public class WorkerJobFetcher extends WorkerLoop {
             }
         }
 
-        List<String> acks = new ArrayList<>();
-        for (WorkerJobPayload payload : response.getJobsList()) {
-            try {
-                String jobId = payload.getJobId();
-                WorkerJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), WorkerJob.class);
-
-                log.debug("Received job: {}", jobId);
-
-                // Put job in local queue (blocking if full - provides local backpressure)
-                workerJobQueue.put(job);
-
-                // Collect ACK for this job (receipt acknowledgment)
-                acks.add(jobId);
-
-            } catch (Exception e) {
-                log.error("Error processing job payload: {}", e.getMessage(), e);
-            }
-        }
-
-        // Send ACKs and request more permits based on remaining capacity
-        // Only send if there were jobs (event-only responses don't need permit updates)
-        if (!acks.isEmpty()) {
-            sendPermitsAndAcks(observer, calculatePermits(), acks);
+        // If this response contains jobs, offload the potentially-blocking queue put to a
+        // virtual thread. Blocking the gRPC onNext() callback would prevent subsequent
+        // messages (including kill events) from being delivered because gRPC serializes
+        // stream message delivery: message N+1 is not dispatched until onNext(N) returns.
+        if (!response.getJobsList().isEmpty()) {
+            List<WorkerJobPayload> jobs = response.getJobsList();
+            Thread.ofVirtual().name("worker-job-receiver").start(() ->
+            {
+                List<String> acks = new ArrayList<>();
+                for (WorkerJobPayload payload : jobs) {
+                    try {
+                        String jobId = payload.getJobId();
+                        WorkerJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), WorkerJob.class);
+                        log.debug("Received job: {}", jobId);
+                        // Blocking put — backpressure is now isolated to this virtual thread.
+                        workerJobQueue.put(job);
+                        acks.add(jobId);
+                    } catch (Exception e) {
+                        log.error("Error processing job payload: {}", e.getMessage(), e);
+                    }
+                }
+                // Send ACKs with current capacity after all puts have completed.
+                ClientCallStreamObserver<WorkerJobRequest> obs = requestObserverRef.get();
+                if (!acks.isEmpty() && obs != null) {
+                    sendPermitsAndAcks(obs, calculatePermits(), acks);
+                }
+            });
         }
     }
 

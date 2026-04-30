@@ -63,6 +63,11 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     public State.Type call() {
         this.currentThread = Thread.currentThread();
         this.currentThread.setContextClassLoader(classLoader);
+        // If kill() was called before call() started (currentThread was null then),
+        // the interrupt was never sent. Apply it now so the task sees it immediately.
+        if (killed) {
+            this.currentThread.interrupt();
+        }
 
         try {
             return doCall();

@@ -91,6 +91,9 @@ jobs:
           # Remove stale Chart.lock — version bump makes it invalid
           rm -f charts/kestra-starter/Chart.lock
 
+      - name: Lint kestra-starter chart
+        run: helm lint charts/kestra-starter
+
       - name: Package kestra-starter chart
         run: helm package charts/kestra-starter -d release/
 

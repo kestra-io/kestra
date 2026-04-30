@@ -90,7 +90,7 @@ public class Flow extends AbstractFlow implements HasUID {
     List<AbstractTrigger> triggers;
 
     @Valid
-    List<PluginDefault> pluginDefaults;
+    List<FlowPluginDefault> pluginDefaults;
 
     @Valid
     Concurrency concurrency;
@@ -130,7 +130,7 @@ public class Flow extends AbstractFlow implements HasUID {
         return Stream.of(
             Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
             allTasks().map(Task::getType),
-            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
+            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(FlowPluginDefault::getType)
         ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }

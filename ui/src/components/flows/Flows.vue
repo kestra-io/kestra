@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <NavBarActions>
                 <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream()" />
                 <NavBarAction :icon="Upload" :label="$t('import')" @click="file?.click()" />

@@ -710,10 +710,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public Integer purge(Execution execution) {
-        int delete = this.jdbcRepository.delete(execution);
+    public boolean purge(Execution execution) {
+        boolean deleted = this.jdbcRepository.delete(execution) > 0;
         eventPublisher.publishEvent(CrudEvent.delete(execution));
-        return delete;
+        return deleted;
     }
 
     @Override

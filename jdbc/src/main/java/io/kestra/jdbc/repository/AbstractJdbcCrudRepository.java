@@ -145,28 +145,44 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     }
 
     /**
-     * Hard-delete an item from the database
-     * Use this for physical purge operations.
+     * Hard-delete an item from the database.
+     * Use this for physical purge operations on a single item.
      *
      * @param item the item to purge.
+     * @return {@code true} if the item was deleted, {@code false} if it was not found.
      */
-    public Integer purge(T item) {
-        return this.jdbcRepository.delete(item);
+    public boolean purge(T item) {
+        return this.jdbcRepository.delete(item) > 0;
     }
 
     /**
-     * Hard-delete all items matching the given condition within a transaction context.
-     * Use this for bulk purge operations.
+     * Hard-delete all items matching the given condition for the given tenant.
      *
-     * @param context   the DSL context (transaction-aware).
+     * @param tenantId  the tenant ID used to build the default filter.
      * @param condition the condition to match items for deletion.
      * @return the number of deleted rows.
      */
-    protected Integer purgeByCondition(DSLContext context, Condition condition) {
-        return context
-            .delete(this.jdbcRepository.getTable())
-            .where(condition)
-            .execute();
+    protected Integer purge(String tenantId, Condition condition) {
+        return purge(defaultFilter(tenantId), condition);
+    }
+
+    /**
+     * Hard-delete all items matching the given conditions.
+     *
+     * @param defaultFilter the base filter condition (e.g. tenant isolation).
+     * @param condition     the condition to match items for deletion.
+     * @return the number of deleted rows.
+     */
+    protected Integer purge(Condition defaultFilter, Condition condition) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+                DSL.using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(defaultFilter)
+                    .and(condition)
+                    .execute()
+            );
     }
 
     /**

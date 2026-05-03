@@ -19,8 +19,17 @@ public interface InputAndOutput {
 
     /**
      * Processes the outputs of a flow execution (parse them based on their types).
+     *
+     * @see #typedOutputs(List, Execution, Map)
      */
     Map<String, Object> typedOutputs(FlowInterface flow, Execution execution, Map<String, Object> rOutputs);
+
+    /**
+     * Processes the outputs (parse them based on their types).
+     *
+     * @see #typedOutputs(FlowInterface, Execution, Map)
+     */
+    Map<String, Object> typedOutputs(List<Output> outputs, Execution execution, Map<String, Object> rOutputs);
 
     /**
      * Render flow execution outputs.

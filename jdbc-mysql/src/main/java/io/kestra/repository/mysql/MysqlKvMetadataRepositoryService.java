@@ -17,6 +17,6 @@ public abstract class MysqlKvMetadataRepositoryService {
             conditions.add(jdbcRepository.fullTextCondition(List.of("name"), query));
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

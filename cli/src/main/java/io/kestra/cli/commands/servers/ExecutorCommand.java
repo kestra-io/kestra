@@ -13,12 +13,12 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.services.StartExecutorService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "executor",
@@ -29,13 +29,16 @@ public class ExecutorCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
+
+    @Inject
+    private Provider<Executor> executorService;
 
     @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -57,16 +60,8 @@ public class ExecutorCommand extends AbstractServerCommand {
     @CommandLine.Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreTenants = Collections.emptyList();
 
-    @CommandLine.Option(
-        names = { "--start-executors" }, split = ",", description = "List of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue; for debugging only"
-    )
-    private List<String> startExecutors = Collections.emptyList();
-
-    @CommandLine.Option(
-        names = { "--not-start-executors" }, split = ",",
-        description = "Lst of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue; for debugging only"
-    )
-    private List<String> notStartExecutors = Collections.emptyList();
+    @CommandLine.Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
@@ -77,29 +72,24 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
 
         super.call();
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        Executor executorService = applicationContext.getBean(Executor.class);
-        executorService.run();
+        executorService.get().run();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

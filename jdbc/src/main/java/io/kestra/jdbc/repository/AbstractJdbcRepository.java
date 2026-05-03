@@ -335,6 +335,22 @@ public abstract class AbstractJdbcRepository {
             return findMetadataCondition((Map<?, ?>) value, operation);
         }
 
+        if (field == QueryFilter.Field.TYPE) {
+            return typeCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.RESOURCES) {
+            return resourceTypesCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.ACTION) {
+            return actionCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.DETAILS) {
+            return detailsCondition(value, operation);
+        }
+
         return defaultHandlers(field, value, operation);
     }
 
@@ -463,6 +479,22 @@ public abstract class AbstractJdbcRepository {
         return defaultHandlers(QueryFilter.Field.NAME, value, operation);
     }
 
+    protected Condition typeCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.TYPE, value, operation);
+    }
+
+    protected Condition resourceTypesCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.RESOURCES, value, operation);
+    }
+
+    protected Condition actionCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.ACTION, value, operation);
+    }
+
+    protected Condition detailsCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.DETAILS, value, operation);
+    }
+
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
@@ -524,15 +556,34 @@ public abstract class AbstractJdbcRepository {
 
     private Condition applyScopeCondition(Object value, QueryFilter.Op operation) {
         List<FlowScope> flowScopes = Enums.fromList(value, FlowScope.class);
-        if (flowScopes.size() > 1) {
-            throw new InvalidQueryFiltersException("Only one scope can be use in the same time");
-        }
-        FlowScope scope = flowScopes.getFirst();
-
         String systemNamespace = this.kestraConfig.getSystemFlowNamespace();
+
         return switch (operation) {
-            case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
-            case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+            case EQUALS, NOT_EQUALS -> {
+                if (flowScopes.size() > 1) {
+                    throw new InvalidQueryFiltersException("Only one scope can be used at a time with " + operation);
+                }
+                FlowScope scope = flowScopes.getFirst();
+                yield switch (operation) {
+                    case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
+                    case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+                    default -> throw new InvalidQueryFiltersException("Unreachable");
+                };
+            }
+            case IN -> {
+                boolean includesUser = flowScopes.contains(FlowScope.USER);
+                boolean includesSystem = flowScopes.contains(FlowScope.SYSTEM);
+                if (includesUser && includesSystem) yield DSL.noCondition();
+                else if (includesUser) yield field("namespace").ne(systemNamespace);
+                else yield field("namespace").eq(systemNamespace);
+            }
+            case NOT_IN -> {
+                boolean excludesUser = flowScopes.contains(FlowScope.USER);
+                boolean excludesSystem = flowScopes.contains(FlowScope.SYSTEM);
+                if (excludesUser && excludesSystem) yield DSL.falseCondition();
+                else if (excludesUser) yield field("namespace").eq(systemNamespace);
+                else yield field("namespace").ne(systemNamespace);
+            }
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
     }

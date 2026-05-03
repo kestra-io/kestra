@@ -26,6 +26,7 @@ import io.kestra.core.utils.Enums;
     {
         @JsonSubTypes.Type(value = TriggerCreated.class, name = "TRIGGER_CREATED"),
         @JsonSubTypes.Type(value = TriggerUpdated.class, name = "TRIGGER_UPDATED"),
+        @JsonSubTypes.Type(value = TriggerFlowRevisionUpdated.class, name = "TRIGGER_FLOW_REVISION_UPDATED"),
         @JsonSubTypes.Type(value = TriggerDeleted.class, name = "TRIGGER_DELETED"),
         @JsonSubTypes.Type(value = TriggerEvaluated.class, name = "TRIGGER_EVALUATED"),
         @JsonSubTypes.Type(value = TriggerExecutionTerminated.class, name = "TRIGGER_EXECUTION_TERMINATED"),

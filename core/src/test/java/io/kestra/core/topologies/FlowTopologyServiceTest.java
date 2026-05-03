@@ -15,8 +15,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.condition.ExecutionFlow;
-import io.kestra.plugin.core.condition.ExecutionStatus;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Parallel;
 import io.kestra.plugin.core.flow.Subflow;
@@ -105,14 +103,12 @@ class FlowTopologyServiceTest {
                 List.of(
                     io.kestra.plugin.core.trigger.Flow.builder()
                         .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                        .conditions(
+                        .dependsOn(
                             List.of(
-                                ExecutionFlow.builder()
-                                    .namespace(Property.ofValue("io.kestra.ee"))
-                                    .flowId(Property.ofValue("parent"))
-                                    .build(),
-                                ExecutionStatus.builder()
-                                    .in(Property.ofValue(List.of(State.Type.SUCCESS)))
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder()
+                                    .namespace("io.kestra.ee")
+                                    .flowId("parent")
+                                    .states(List.of(State.Type.SUCCESS))
                                     .build()
                             )
                         )
@@ -125,7 +121,7 @@ class FlowTopologyServiceTest {
     }
 
     @Test
-    void preconditions() {
+    void dependsOn() {
         Flow parent = Flow.builder()
             .namespace("io.kestra.ee")
             .id("parent")
@@ -149,28 +145,11 @@ class FlowTopologyServiceTest {
                 List.of(
                     io.kestra.plugin.core.trigger.Flow.builder()
                         .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                        .preconditions(
-                            io.kestra.plugin.core.trigger.Flow.Preconditions.builder()
-                                .flows(
-                                    List.of(
-                                        io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder().namespace("io.kestra.ee").flowId("parent").build(),
-                                        io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder().namespace("io.kestra.others").flowId("invalid").build()
-                                    )
-                                )
-                                // add an always true condition to validate that it's an AND between 'flows' and 'where'
-                                .where(
-                                    List.of(
-                                        io.kestra.plugin.core.trigger.Flow.ExecutionFilter.builder()
-                                            .filters(
-                                                List.of(
-                                                    io.kestra.plugin.core.trigger.Flow.Filter.builder().field(io.kestra.plugin.core.trigger.Flow.Field.EXPRESSION)
-                                                        .type(io.kestra.plugin.core.trigger.Flow.Type.IS_NOT_NULL).value("something").build()
-                                                )
-                                            )
-                                            .build()
-                                    )
-                                )
-                                .build()
+                        .dependsOn(
+                            List.of(
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace("io.kestra.ee").flowId("parent").build(),
+                                io.kestra.plugin.core.trigger.Flow.Dependency.builder().namespace("io.kestra.others").flowId("other").build()
+                            )
                         )
                         .build()
                 )

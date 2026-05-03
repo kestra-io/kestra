@@ -16,14 +16,14 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.services.StartExecutorService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "standalone",
@@ -34,13 +34,16 @@ public class StandAloneCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
+
+    @Inject
+    private Provider<StandAloneRunner> standAloneRunnerProvider;
 
     @Inject
     @Nullable
@@ -69,20 +72,11 @@ public class StandAloneCommand extends AbstractServerCommand {
     @Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
 
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
+
     @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     boolean tutorialsDisabled = false;
-
-    @Option(
-        names = { "--start-executors" }, split = ",",
-        description = "a list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose."
-    )
-    private List<String> startExecutors = Collections.emptyList();
-
-    @Option(
-        names = { "--not-start-executors" }, split = ",",
-        description = "a list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose."
-    )
-    private List<String> notStartExecutors = Collections.emptyList();
 
     @Option(names = { "--no-indexer" }, description = "Flag to disable starting an embedded indexer.")
     boolean indexerDisabled = false;
@@ -104,25 +98,22 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-        this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.get().setIgnoredQueueRecords(ignoreQueueRecords);
 
         KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         if (tenantId != null) {
-            TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-            tenantIdSelectorService.createTenant(tenantId);
+            tenantIdSelectorService.get().createTenant(tenantId);
         }
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
@@ -130,7 +121,7 @@ public class StandAloneCommand extends AbstractServerCommand {
 
         super.call();
 
-        try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
+        try (StandAloneRunner standAloneRunner = standAloneRunnerProvider.get()) {
 
             if (this.workerThread == 0) {
                 standAloneRunner.setWorkerEnabled(false);
@@ -152,7 +143,7 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
-            Await.until(() -> !this.applicationContext.isRunning());
+            Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }
 
         return 0;

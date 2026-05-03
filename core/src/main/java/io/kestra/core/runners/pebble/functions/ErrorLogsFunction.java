@@ -13,19 +13,20 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ErrorLogsFunction implements Function {
+public class ErrorLogsFunction implements KestraFunction {
+    public static final String NAME = "errorLogs";
     @Inject
-    private ExecutionLogMetaStore executionLogMetaStore;
+    private Provider<ExecutionLogMetaStore> executionLogMetaStore;
 
     @Inject
-    private PebbleUtils pebbleUtils;
+    private Provider<PebbleUtils> pebbleUtils;
 
     @Override
     public List<String> getArgumentNames() {
@@ -33,9 +34,14 @@ public class ErrorLogsFunction implements Function {
     }
 
     @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of();
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!pebbleUtils.calledOnWorker()) {
+        if (!pebbleUtils.get().calledOnWorker()) {
             throw new PebbleException(null, "The 'errorLogs' function can only be used in the Worker as it access logs from the database.", lineNumber, self.getName());
         }
 
@@ -53,7 +59,7 @@ public class ErrorLogsFunction implements Function {
         );
 
         try {
-            return retry.run(logs -> ListUtils.isEmpty(logs), () -> executionLogMetaStore.errorLogs(flow.get("tenantId"), execution.get("id")));
+            return retry.run(logs -> ListUtils.isEmpty(logs), () -> executionLogMetaStore.get().errorLogs(flow.get("tenantId"), execution.get("id")));
         } catch (RetryUtils.RetryFailed e) {
             return Collections.emptyList();
         } catch (Throwable e) {

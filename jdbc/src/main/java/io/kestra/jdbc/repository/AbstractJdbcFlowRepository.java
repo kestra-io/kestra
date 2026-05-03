@@ -72,12 +72,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(
         io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
-        ApplicationContext applicationContext,
+        ModelValidator modelValidator,
+        ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
+        PluginDefaultService pluginDefaultService,
         JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
-        this.modelValidator = applicationContext.getBean(ModelValidator.class);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
+        this.modelValidator = modelValidator;
+        this.eventPublisher = eventPublisher;
+        this.pluginDefaultService = pluginDefaultService;
         this.jdbcRepository.setDeserializer(record ->
         {
             String source = record.get("value", String.class);
@@ -652,6 +654,28 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public ArrayListTotal<Flow> find(
+            Pageable pageable,
+            @Nullable String tenantId,
+            String namespace,
+            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
+        ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(
+                    context,
+                    getFindFlowSelect(tenantId, null, context, null)
+                        .and(findTriggerClassCondition(triggerClass))
+                        .and(NAMESPACE_FIELD.eq(namespace)),
+                    pageable
+                );
+            });
+    }
+
+    @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         return this.jdbcRepository
@@ -689,6 +713,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     abstract protected Condition findSourceCodeCondition(String query);
+
+    abstract protected Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -914,7 +940,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return findAsync(defaultFilter(tenantId), condition);
     }
 
-    protected Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
+    protected final Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()

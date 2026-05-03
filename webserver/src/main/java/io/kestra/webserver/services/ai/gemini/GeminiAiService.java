@@ -8,9 +8,13 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.ai.AiService;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
+
+import io.micronaut.core.annotation.Nullable;
 import io.kestra.webserver.utils.HttpClientUtils;
 
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
@@ -26,8 +30,17 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
     public static final String TYPE = "gemini";
 
     public GeminiAiService(PluginRegistry pluginRegistry, JsonSchemaGenerator jsonSchemaGenerator, VersionProvider versionProvider, InstanceService instanceService,
-        PosthogService posthogService, NamespaceContextTool namespaceContextTool, String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration) {
-        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration);
+        PosthogService posthogService, @Nullable NamespaceContextTool namespaceContextTool,
+        String displayName, List<ChatModelListener> listeners, GeminiConfiguration geminiConfiguration, ExpressionContextService expressionContextService,
+        PluginDefaultService pluginDefaultService) {
+        super(pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool, TYPE, displayName, listeners, geminiConfiguration, expressionContextService, pluginDefaultService);
+    }
+
+    private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
+
+    @Override
+    protected String baseUrl() {
+        return getAiConfiguration().baseUrl() != null ? getAiConfiguration().baseUrl() : DEFAULT_BASE_URL;
     }
 
     public ChatModel chatModel(List<ChatModelListener> listeners) {

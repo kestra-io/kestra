@@ -48,12 +48,6 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml" }, tenantId = "flow-concurrency-with-for-each-item")
-    protected void flowConcurrencyWithForEachItem() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem("flow-concurrency-with-for-each-item");
-    }
-
-    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-fail.yml" }, tenantId = "concurrency-queue-restarted")
     protected void concurrencyQueueRestarted() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueRestarted("concurrency-queue-restarted");

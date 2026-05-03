@@ -13,9 +13,15 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.Await;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.webserver.models.api.ApiExecution;
+import io.kestra.webserver.models.api.ApiLightExecution;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
@@ -23,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
@@ -32,6 +37,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -57,7 +63,6 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
@@ -65,10 +70,11 @@ import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.converters.QueryFilterFormat;
-import io.kestra.webserver.models.api.ApiAsyncEvent;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.AsyncOperationWaiter;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.utils.CSVUtils;
@@ -158,9 +164,6 @@ public class ExecutionController {
     protected ExecutionService executionService;
 
     @Inject
-    private ConditionService conditionService;
-
-    @Inject
     private ExecutionStreamingService streamingService;
 
     @Inject
@@ -217,10 +220,16 @@ public class ExecutionController {
     @Inject
     private WebhookService webhookService;
 
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Value("${kestra.async-operations.wait-timeout:PT30S}")
+    private Duration asyncWaitTimeout;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
-    public PagedResults<Execution> searchExecutions(
+    public PagedResults<ApiLightExecution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
@@ -232,63 +241,18 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        ) @QueryFilterFormat List<QueryFilter> filters
 
     ) {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            startDate,
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
+        var executions = executionRepository.find(
+            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            tenantService.resolveTenant(),
+            QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
         );
-
-        return PagedResults.of(
-            executionRepository.find(
-                PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
-                tenantService.resolveTenant(),
-                filters
-            )
-        );
-    }
-
-    @VisibleForTesting
-    ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
-        if (timeRange != null) {
-            if (absoluteDateTime != null) {
-                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
-            }
-            return now.minus(timeRange.abs());
-        }
-
-        return absoluteDateTime;
+        var apiExecution = executions.stream()
+            .map(execution -> ApiLightExecution.of(execution))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -317,6 +281,31 @@ public class ExecutionController {
                     .orElse(null);
             }))
             .orElse(null);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/eval", consumes = MediaType.TEXT_PLAIN)
+    @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this execution")
+    public EvalResult evalExpression(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "The Pebble expression that should be evaluated") @Body String expression) {
+        Execution execution = executionRepository
+            .findById(tenantService.resolveTenant(), executionId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
+
+        Flow flow = flowRepository
+            .findByExecution(execution);
+
+        try {
+            return EvalResult.builder()
+                .result(runContextRender(flow, execution, expression))
+                .build();
+        } catch (IllegalVariableEvaluationException e) {
+            return EvalResult.builder()
+                .error(e.getMessage())
+                .stackTrace(ExceptionUtils.getStackTrace(e))
+                .build();
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -350,6 +339,14 @@ public class ExecutionController {
         }
     }
 
+    private String runContextRender(Flow flow, Execution execution, String expression) throws IllegalVariableEvaluationException {
+        return runContextFactory.of(
+            flow,
+            execution,
+            false
+        ).render(expression);
+    }
+
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
         return runContextFactory.of(
             flow,
@@ -373,10 +370,11 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}")
     @Operation(tags = { "Executions" }, summary = "Get an execution")
-    public Execution getExecution(
+    public ApiExecution getExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
+            .map(ApiExecution::of)
             .orElse(null);
     }
 
@@ -454,46 +452,11 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs", required = false) @QueryValue(defaultValue = "true") Boolean deleteLogs,
         @Parameter(description = "Whether to delete execution metrics", required = false) @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return deleteExecutionsByIds(ids, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
@@ -501,15 +464,16 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get
     @Operation(tags = { "Executions" }, summary = "Search for executions for a flow")
-    public PagedResults<Execution> searchExecutionsByFlowId(
+    public PagedResults<ApiLightExecution> searchExecutionsByFlowId(
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size) {
-        return PagedResults.of(
-            executionRepository
-                .findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size))
-        );
+        var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
+        var apiExecution = executions.stream()
+            .map(execution -> ApiLightExecution.of(execution))
+            .toList();
+        return PagedResults.of(new ArrayListTotal<>(apiExecution, executions.getTotal()));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -642,22 +606,6 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/trigger/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = { "Executions" }, summary = "Trigger a new execution for a flow")
-    @ApiResponse(responseCode = "409", description = "if the flow is disabled")
-    @SingleResult
-    @Deprecated
-    public Publisher<ExecutionResponse> triggerExecution(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @Nullable @PathVariable String id,
-        @RequestBody(description = "The inputs") @Nullable @Body MultipartBody inputs,
-        @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
-        @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision) throws IOException {
-        return this.createExecution(namespace, id, inputs, labels, wait, revision, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -808,10 +756,10 @@ public class ExecutionController {
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs,
             List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
-            Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, URI url) {
+            Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
                 tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
-                traceParent, fixtures, kind, breakpoints
+                traceParent, fixtures, kind, breakpoints, loopRun
             );
 
             this.url = url;
@@ -840,6 +788,7 @@ public class ExecutionController {
                 execution.getFixtures(),
                 execution.getKind(),
                 execution.getBreakpoints(),
+                execution.getLoopRun(),
                 url
             );
         }
@@ -1000,32 +949,30 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/restart")
     @Operation(tags = { "Executions" }, summary = "Restart a new execution from an old one")
-    public ApiAsyncEvent restartExecution(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be restarted")
+    public Mono<HttpResponse<Execution>> restartExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-        this.controlRevision(execution.get(), revision);
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        this.controlRevision(execution, revision);
 
-        if (!(execution.get().getState().isFailed())) {
+        if (!(execution.getState().canBeRestarted())) {
             throw new IllegalStateException(
-                "Execution must be failed to be restarted, current state is '" +
-                    execution.get().getState().getCurrent() + "' !"
+                "Execution must be terminated or paused to be restarted, " +
+                    "current state is '" + execution.getState().getCurrent() + "' !"
             );
         }
 
-        var executionRestartCommand = Restart.from(execution.get(), revision);
-        executionCommandQueue.emit(executionRestartCommand);
-        return ApiAsyncEvent.from(executionRestartCommand.eventId());
+        return awaitBlockingAction(executionId, "Restart",
+            operationId -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/restart/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Restart a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Restarted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Restart a list of executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -1037,7 +984,8 @@ public class ExecutionController {
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(
                     ManualConstraintViolation.of(
-                        "execution not in state PAUSED or terminated, or is KILLED",
+                        "Execution '" + execution.get().getId() + "' must be terminated or paused to be restarted, " +
+                            "current state is '" + execution.get().getState().getCurrent() + "' !",
                         executionId,
                         String.class,
                         "execution",
@@ -1067,79 +1015,41 @@ public class ExecutionController {
                     .build()
             );
         }
-        for (Execution execution : executions) {
-            var executionRestartCommand = Restart.from(execution, null);
-            executionCommandQueue.emit(executionRestartCommand);
-        }
 
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/restart/by-query")
-    @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Restart executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> restartExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
         return restartExecutionsByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/replay")
     @Operation(tags = { "Executions" }, summary = "Create a new execution from an old one and start it from a specified task run id")
-    public ApiAsyncEvent replayExecution(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    public HttpResponse<Execution> replayExecution(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        this.controlRevision(execution.get(), revision);
+        this.controlRevision(execution, revision);
 
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.get().getNamespace(), execution.get().getFlowId(), Optional.ofNullable(revision));
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
 
-        return innerReplay(execution.get(), flow, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, flow, taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1154,7 +1064,9 @@ public class ExecutionController {
             }
         )
     )
-    public Mono<ApiAsyncEvent> replayExecutionWithinputs(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    public Mono<HttpResponse<Execution>> replayExecutionWithinputs(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
@@ -1181,11 +1093,52 @@ public class ExecutionController {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
-            .flatMap(newInputs -> Mono.fromCallable(() -> innerReplay(current.withInputs(newInputs), flow, taskRunId, revision, breakpoints)));
+            .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), flow, taskRunId, revision, breakpoints)));
 
     }
 
-    private ApiAsyncEvent innerReplay(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+    private HttpResponse<Execution> blockingReplay(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+        if (taskRunId != null) {
+            if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
+                throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
+            }
+        }
+
+        var replayedExecution = executionService.replay(execution, flow, taskRunId, revision, breakpoints, true);
+
+        AsyncOperationProcessedEvent processed;
+        try {
+            processed = asyncOperationWaiter.submitAndWait(
+                execution.getId(),
+                operationId -> {
+                    try {
+                        // emit the replayed execution (new run, no operationId tagging)
+                        executionQueue.emit(replayedExecution);
+
+                        // update parent exec with replayed label; tag with operationId for completion signal
+                        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+                        if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
+                            newLabels.add(new Label(Label.REPLAYED, "true"));
+                        }
+                        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+                    } catch (QueueException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                asyncWaitTimeout
+            );
+        } catch (TimeoutException e) {
+            throw new HttpStatusException(HttpStatus.GATEWAY_TIMEOUT, "Operation timed out waiting for state transition");
+        }
+
+        if (processed.outcome() == AsyncOperationProcessedEvent.Outcome.FAILED) {
+            throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
+        }
+
+        return HttpResponse.ok(replayedExecution);
+    }
+
+    private void innerReplayBatch(Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1195,15 +1148,12 @@ public class ExecutionController {
         var replayedExecution = executionService.replay(execution, flow, taskRunId, revision, breakpoints, true);
         executionQueue.emit(replayedExecution);
 
-        // update parent exec with replayed label
+        // update parent exec with replayed label; tag with operationId for completion tracking
         List<Label> newLabels = new ArrayList<>(execution.getLabels());
         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
-        var updateLabelsCommand = UpdateLabels.from(execution, newLabels);
-        executionCommandQueue.emit(updateLabelsCommand);
-
-        return ApiAsyncEvent.from(updateLabelsCommand.eventId());
+        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
     }
 
     private void controlRevision(Execution execution, Integer revision) {
@@ -1227,59 +1177,53 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/state")
     @Operation(tags = { "Executions" }, summary = "Change state for a taskrun in an execution")
-    public ApiAsyncEvent updateTaskRunState(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the task run state cannot be changed")
+    public Mono<HttpResponse<Execution>> updateTaskRunState(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "the taskRun id and state to apply") @Body StateRequest stateRequest) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        if (!execution.get().getState().canChangeStatus()) {
+        if (!execution.getState().canChangeStatus()) {
             throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
 
-        var executionCommand = ChangeTaskRunState.from(execution.get(), stateRequest.taskRunId(), stateRequest.state());
-        executionCommandQueue.emit(executionCommand);
-
-        return ApiAsyncEvent.from(executionCommand.eventId());
+        return awaitBlockingAction(executionId, "Change task run state",
+            operationId -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId)));
     }
 
     public record StateRequest(
-        String taskRunId,
-        State.Type state) {
+        @NotNull String taskRunId,
+        @NotNull State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/change-status")
     @Operation(tags = { "Executions" }, summary = "Change the state of an execution")
-    public ApiAsyncEvent updateExecutionStatus(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution state cannot be changed")
+    public Mono<HttpResponse<Execution>> updateExecutionStatus(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The new state of the execution") @NotNull @QueryValue State.Type status) throws QueueException {
         if (!status.isTerminated()) {
             throw new IllegalArgumentException("You can only change the state of an execution to a terminal state.");
         }
 
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        if (!execution.get().getState().canChangeStatus()) {
+        if (!execution.getState().canChangeStatus()) {
             throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
-        var executionCommand = UpdateStatus.from(execution.get(), status);
-        executionCommandQueue.emit(executionCommand);
-
-        return ApiAsyncEvent.from(executionCommand.eventId());
+        return awaitBlockingAction(executionId, "Change status",
+            operationId -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/change-status/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Change executions state by id")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Changed state with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Change executions state by id asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> updateExecutionsStatusByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
@@ -1327,61 +1271,22 @@ public class ExecutionController {
             );
         }
 
-        for (Execution execution : executions) {
-            var executionCommand = UpdateStatus.from(execution, newStatus);
-            executionCommandQueue.emit(executionCommand);
-        }
-
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/change-status/by-query")
-    @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Changed state with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Change executions state by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> updateExecutionsStatusByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return updateExecutionsStatusByIds(ids, newStatus);
     }
@@ -1389,17 +1294,17 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
-    @ApiResponse(responseCode = "202", description = "Execution kill was requested successfully")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
-    public HttpResponse<?> killExecution(
+    public Mono<HttpResponse<?>> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade)
         throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
-            return HttpResponse.notFound();
+            return Mono.just(HttpResponse.notFound());
         }
 
         var execution = maybeExecution.get();
@@ -1407,31 +1312,33 @@ public class ExecutionController {
         return killExecution(execution, isOnKillCascade);
     }
 
-    protected MutableHttpResponse<Object> killExecution(Execution execution, Boolean isOnKillCascade) throws QueueException {
+    protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new IllegalStateException("Execution is already finished, can't kill it");
+            throw new IllegalStateException("Cannot kill execution '%s'. Reason: Execution already terminated.".formatted(execution.getId()));
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
-        killQueue.emit(
-            ExecutionKilledExecution
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(execution.getId())
-                .isOnKillCascade(isOnKillCascade)
-                .tenantId(tenantService.resolveTenant())
-                .build()
-        );
 
-        return HttpResponse.accepted();
+        return awaitBlockingAction(execution.getId(), "Kill",
+            operationId -> killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution.getId())
+                    .isOnKillCascade(isOnKillCascade)
+                    .tenantId(tenantService.resolveTenant())
+                    .operationId(operationId)
+                    .build()
+            )
+        ).map(r -> (HttpResponse<?>) r);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/kill/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Kill a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Killed with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Kill a list of executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> killExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws QueueException {
         List<Execution> executions = new ArrayList<>();
@@ -1484,8 +1391,7 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(throwConsumer(execution ->
-        {
+        return submitBatchAction(executions, (execution, opId) -> {
             eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(
                 ExecutionKilledExecution
@@ -1494,10 +1400,10 @@ public class ExecutionController {
                     .executionId(execution.getId())
                     .isOnKillCascade(false) // Explicitly force cascade to false.
                     .tenantId(tenantService.resolveTenant())
+                    .operationId(opId)
                     .build()
             );
-        }));
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1529,7 +1435,7 @@ public class ExecutionController {
             }
         )
     )
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
     @SingleResult
     public Publisher<HttpResponse<?>> resumeExecution(
@@ -1544,16 +1450,9 @@ public class ExecutionController {
         io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
 
         return this.executionService.readInputs(execution, flow, inputs)
-            .handle((resumeInputs, sink) ->
-            {
-                var executionCommand = Resume.from(execution, resumed, resumeInputs);
-                try {
-                    executionCommandQueue.emit(executionCommand);
-                    sink.next(HttpResponse.noContent());
-                } catch (QueueException e) {
-                    sink.error(e);
-                }
-            });
+            .flatMap(resumeInputs -> awaitBlockingAction(execution.getId(), "Resume",
+                operationId -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId))))
+            .map(r -> (HttpResponse<?>) r);
     }
 
     protected io.kestra.plugin.core.flow.Pause.Resumed createResumed() {
@@ -1563,9 +1462,9 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume-from-breakpoint")
     @Operation(tags = { "Executions" }, summary = "Resume an execution from a breakpoint (in the 'BREAKPOINT' state).")
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "If the executions is not in the 'BREAKPOINT' state or has no breakpoint")
-    public ApiAsyncEvent resumeExecutionFromBreakpoint(
+    public Mono<HttpResponse<Execution>> resumeExecutionFromBreakpoint(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "\"Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
@@ -1576,17 +1475,15 @@ public class ExecutionController {
             throw new IllegalStateException("Execution has no breakpoint");
         }
 
-        var executionCommand = ResumeFromBreakpoint.from(execution, breakpoints);
-        executionCommandQueue.emit(executionCommand);
-
-        return ApiAsyncEvent.from(executionCommand.eventId());
+        return awaitBlockingAction(executionId, "Resume from breakpoint",
+            operationId -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Resumed with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> resumeExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -1639,58 +1536,20 @@ public class ExecutionController {
             );
         }
 
-        for (Execution execution : executions) {
-            var executionCommand = Resume.from(execution, createResumed());
-            executionCommandQueue.emit(executionCommand);
-        }
-
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-query")
-    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> resumeExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return resumeExecutionsByIds(ids);
     }
@@ -1698,25 +1557,24 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/pause")
     @Operation(tags = { "Executions" }, summary = "Pause a running execution.")
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is not running")
-    public ApiAsyncEvent pauseExecution(
+    public Mono<HttpResponse<Execution>> pauseExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         if (!execution.getState().isRunning()) {
             throw new IllegalArgumentException("The execution is not running");
         }
 
-        var executionPauseCommand = Pause.from(execution);
-        executionCommandQueue.emit(executionPauseCommand);
-        return ApiAsyncEvent.from(executionPauseCommand.eventId());
+        return awaitBlockingAction(executionId, "Pause",
+            operationId -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/pause/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Pause a list of running executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Paused with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Pause a list of running executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> pauseExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -1759,58 +1617,20 @@ public class ExecutionController {
             );
         }
 
-        for (Execution execution : executions) {
-            var executionPauseCommand = Pause.from(execution);
-            executionCommandQueue.emit(executionPauseCommand);
-        }
-
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/pause/by-query")
-    @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Pause executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> pauseExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return pauseExecutionsByIds(ids);
     }
@@ -1822,102 +1642,33 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return killExecutionsByIds(ids);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/replay/by-query")
-    @Operation(tags = { "Executions" }, summary = "Create new executions from old ones filter by query parameters. Keep the flow revision")
+    @Operation(tags = { "Executions" }, summary = "Create new executions from old ones filter by query parameters asynchronously. Keep the flow revision")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> replayExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return replayExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/replay/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Create new executions from old ones. Keep the flow revision")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Replayed with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Create new executions from old ones asynchronously. Keep the flow revision")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
@@ -1951,15 +1702,16 @@ public class ExecutionController {
             );
         }
 
-        for (Execution execution : executions) {
+        return submitBatchAction(executions, (execution, opId) -> {
             Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
-            if (latestRevision) {
-                innerReplay(execution, flow, null, flow.getRevision(), Optional.empty());
-            } else {
-                innerReplay(execution, flow, null, null, Optional.empty());
+            try {
+                innerReplayBatch(execution, flow, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
+            } catch (QueueException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-        }
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1985,11 +1737,13 @@ public class ExecutionController {
 
             // Check if execution exists
             try {
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500),
-                    Duration.ofSeconds(10)
-                );
+                Execution execution = Await.await()
+                    .atMost(Duration.ofSeconds(10))
+                    .pollInterval(Duration.ofMillis(500))
+                    .until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Objects::nonNull
+                    );
 
                 Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
@@ -2094,27 +1848,31 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/labels")
     @Operation(tags = { "Executions" }, summary = "Add or update labels of a terminated execution")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "404", description = "If the execution cannot be found")
     @ApiResponse(responseCode = "400", description = "If the execution is not terminated")
-    public HttpResponse<?> setLabelsOnTerminatedExecution(
+    @ApiResponse(responseCode = "409", description = "If labels cannot be applied")
+    public Mono<HttpResponse<?>> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels) throws QueueException {
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
-            return HttpResponse.notFound();
+            return Mono.just(HttpResponse.notFound());
         }
 
         Execution execution = maybeExecution.get();
         if (!execution.getState().getCurrent().isTerminated()) {
-            return HttpResponse.badRequest("The execution is not terminated");
+            return Mono.just(HttpResponse.badRequest("The execution is not terminated"));
         }
 
-        ApiAsyncEvent event = setLabelsOnTerminatedExecution(execution, labels);
+        List<Label> mergedLabels = mergeSystemLabels(execution, labels);
 
-        return HttpResponse.ok(event);
+        return awaitBlockingAction(executionId, "Set labels",
+            operationId -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId)))
+            .map(r -> (HttpResponse<?>) r);
     }
 
-    private ApiAsyncEvent setLabelsOnTerminatedExecution(Execution execution, List<Label> labels) throws QueueException {
+    private List<Label> mergeSystemLabels(Execution execution, List<Label> labels) {
         // check for system labels: none can be passed at runtime
         // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
 
@@ -2134,18 +1892,14 @@ public class ExecutionController {
                 }
             }
         );
-
-        var updateLabelsCommand = UpdateLabels.from(execution, newLabels);
-        executionCommandQueue.emit(updateLabelsCommand);
-
-        return ApiAsyncEvent.from(updateLabelsCommand.eventId());
+        return newLabels;
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/labels/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Set labels on a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Killed with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Set labels on a list of executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> setLabelsOnTerminatedExecutionsByIds(
         @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds) throws QueueException {
         List<Execution> executions = new ArrayList<>();
@@ -2188,66 +1942,28 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(
-            throwConsumer(
-                execution -> setLabelsOnTerminatedExecution(
-                    execution,
-                    Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()))
-                )
-            )
-        );
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions, (execution, opId) -> {
+            List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
+            List<Label> merged = mergeSystemLabels(execution, deduplicated);
+            executionCommandQueue.emit(UpdateLabels.from(execution, merged).withOperationId(opId));
+        });
     }
 
-    public record SetLabelsByIdsRequest(List<String> executionsId, List<Label> executionLabels) {
+    public record SetLabelsByIdsRequest(@NotNull List<String> executionsId, @NotNull List<Label> executionLabels) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/labels/by-query")
-    @Operation(tags = { "Executions" }, summary = "Set label on executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Set label on executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels) throws QueueException {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return setLabelsOnTerminatedExecutionsByIds(new SetLabelsByIdsRequest(ids, setLabels));
     }
@@ -2255,29 +1971,26 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/unqueue")
     @Operation(tags = { "Executions" }, summary = "Unqueue an execution")
-    public ApiAsyncEvent unqueueExecution(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be unqueued")
+    public Mono<HttpResponse<Execution>> unqueueExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The new state of the execution") @Nullable @QueryValue State.Type state) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        if (execution.get().getState().getCurrent() != State.Type.QUEUED) {
+        if (execution.getState().getCurrent() != State.Type.QUEUED) {
             throw new IllegalArgumentException("Only QUEUED execution can be unqueued");
         }
 
-        var unqueueCommand = Unqueue.from(execution.get(), state);
-        executionCommandQueue.emit(unqueueCommand);
-
-        return ApiAsyncEvent.from(unqueueCommand.eventId());
+        return awaitBlockingAction(executionId, "Unqueue",
+            operationId -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/unqueue/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Unqueue a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Unqueued with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Unqueue a list of executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> unqueueExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type state) throws Exception {
@@ -2320,60 +2033,23 @@ public class ExecutionController {
                     .build()
             );
         }
-        for (Execution execution : executions) {
-            var unqueueCommand = Unqueue.from(execution, state);
-            executionCommandQueue.emit(unqueueCommand);
-        }
 
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/unqueue/by-query")
-    @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Unqueue executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> unqueueExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
         ) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
-
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return unqueueExecutionsByIds(ids, newState);
     }
@@ -2381,28 +2057,25 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/force-run")
     @Operation(tags = { "Executions" }, summary = "Force run an execution")
-    public ApiAsyncEvent forceRunExecution(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be force-run")
+    public Mono<HttpResponse<Execution>> forceRunExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) throws Exception {
-        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
-        if (execution.get().getState().isTerminated()) {
+        if (execution.getState().isTerminated()) {
             throw new IllegalArgumentException("Only non terminated executions can be forced run.");
         }
 
-        var executionCommand = ForceRun.from(execution.get());
-        executionCommandQueue.emit(executionCommand);
-
-        return ApiAsyncEvent.from(executionCommand.eventId());
+        return awaitBlockingAction(executionId, "Force run",
+            operationId -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/force-run/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Force run a list of executions")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
-    @ApiResponse(responseCode = "422", description = "Force run with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
+    @Operation(tags = { "Executions" }, summary = "Force run a list of executions asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<?> forceRunByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -2454,58 +2127,21 @@ public class ExecutionController {
                     .build()
             );
         }
-        for (Execution execution : executions) {
-            var executionCommand = ForceRun.from(execution);
-            executionCommandQueue.emit(executionCommand);
-        }
 
-        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
+        return submitBatchAction(executions,
+            (execution, opId) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(opId)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/force-run/by-query")
-    @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters")
+    @Operation(tags = { "Executions" }, summary = "Force run executions filter by query parameters asynchronously")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public HttpResponse<?> forceRunExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(
-            description = "A time range filter relative to the current time", deprecated = true, examples = {
-                @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-                @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-            }
-        ) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter) throws Exception {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            flowId,
-            null,
-            null,
-            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-            endDate,
-            scope,
-            labels,
-            timeRange,
-            childFilter,
-            state,
-            null,
-            triggerExecutionId
-        );
-
-        var ids = getExecutionIds(filters);
+        ) @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
 
         return forceRunByIds(ids);
     }
@@ -2575,7 +2211,7 @@ public class ExecutionController {
     public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,
-        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) throws TimeoutException {
+        @Parameter(description = "If true, expand all dependencies recursively") @QueryValue(defaultValue = "false") boolean expandAll) {
         String subscriberId = UUID.randomUUID().toString();
 
         // NOTE: ideally, we should load the execution inside the Flux.
@@ -2583,11 +2219,13 @@ public class ExecutionController {
         //  This should not be an issue as long as it executes on an IO thread.
 
         // Check if execution exists
-        Execution current = Await.until(
-            () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-            Duration.ofMillis(500),
-            Duration.ofSeconds(10)
-        );
+        Execution current = Await.await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(500))
+            .until(
+                () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                Objects::nonNull
+            );
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 
@@ -2684,7 +2322,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportExecutions(
+    public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
@@ -2693,18 +2331,18 @@ public class ExecutionController {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
     }
 
     public record LastExecutionResponse(
-        @Parameter(description = "The execution's ID") String id,
-        @Parameter(description = "The flow's ID") String flowId,
-        @Parameter(description = "The namespace") String namespace,
-        @Parameter(description = "The start date") Instant startDate,
-        @Parameter(description = "The status") State.Type status) {
+        @NotNull @Parameter(description = "The execution's ID") String id,
+        @NotNull @Parameter(description = "The flow's ID") String flowId,
+        @NotNull @Parameter(description = "The namespace") String namespace,
+        @NotNull @Parameter(description = "The start date") Instant startDate,
+        @NotNull @Parameter(description = "The status") State.Type status) {
 
         public static LastExecutionResponse ofExecution(Execution execution) {
             return new LastExecutionResponse(
@@ -2718,27 +2356,27 @@ public class ExecutionController {
     }
 
     public record ApiValidateExecutionInputsResponse(
-        @Parameter(description = "The flow's ID") String id,
-        @Parameter(description = "The namespace") String namespace,
-        @Parameter(description = "The flow's inputs") List<ApiInputAndValue> inputs,
-        List<ApiCheckFailure> checks) {
+        @NotNull @Parameter(description = "The flow's ID") String id,
+        @NotNull @Parameter(description = "The namespace") String namespace,
+        @NotNull @Parameter(description = "The flow's inputs") List<ApiInputAndValue> inputs,
+        @NotNull List<ApiCheckFailure> checks) {
 
         public record ApiInputAndValue(
-            @Parameter(description = "The input") Input<?> input,
+            @NotNull @Parameter(description = "The input") Input<?> input,
             @Parameter(description = "The value") Object value,
             @Parameter(description = "Specifies whether the input is enabled") boolean enabled,
             @Parameter(description = "Specifies whether the input value is the default") boolean isDefault,
-            @Parameter(description = "The validation errors") List<ApiInputError> errors) {
+            @NotNull @Parameter(description = "The validation errors") List<ApiInputError> errors) {
         }
 
         public record ApiInputError(
-            @Parameter(description = "The error message") String message) {
+            @NotNull @Parameter(description = "The error message") String message) {
         }
 
         public record ApiCheckFailure(
-            @Parameter(description = "The message") String message,
-            @Parameter(description = "The message style") Check.Style style,
-            @Parameter(description = "The behavior") Check.Behavior behavior) {
+            @NotNull @Parameter(description = "The message") String message,
+            @NotNull @Parameter(description = "The message style") Check.Style style,
+            @NotNull @Parameter(description = "The behavior") Check.Behavior behavior) {
         }
 
         public static ApiValidateExecutionInputsResponse of(
@@ -2780,12 +2418,72 @@ public class ExecutionController {
 
     /**
      * For override purpose.
-     * 
+     *
      * @param execution
      * @return true if the user has the authorization, false else.
      */
     protected boolean validateExecutionACL(Execution execution) {
         return true;
+    }
+
+    /**
+     * Executes a single async operation on an execution.
+     */
+    private Mono<HttpResponse<Execution>> awaitBlockingAction(
+        String executionId,
+        String actionName,
+        ThrowingConsumer<String> emit
+    ) {
+        String tenantId = tenantService.resolveTenant();
+        return asyncOperationWaiter.submit(
+                executionId,
+                operationId -> {
+                    try {
+                        emit.accept(operationId);
+                    } catch (QueueException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                asyncWaitTimeout
+            )
+            .onErrorMap(TimeoutException.class, e -> new HttpStatusException(HttpStatus.GATEWAY_TIMEOUT,
+                "Operation timed out waiting for state transition"))
+            .map(processed -> {
+                if (processed.outcome() == AsyncOperationProcessedEvent.Outcome.FAILED) {
+                    throw new HttpStatusException(HttpStatus.CONFLICT,
+                        "Failed to execute action '%s' on execution %s (operation_id=%s). Cause: %s".formatted(actionName, executionId, processed.operationId(), processed.error()));
+                }
+                return executionRepository.findById(tenantId, executionId)
+                    .orElseThrow(() -> new NoSuchElementException(
+                        "Execution disappeared after " + actionName.toLowerCase() + ": " + executionId));
+            })
+            .map(HttpResponse::ok);
+    }
+
+    /**
+     * Submits a batch of async operations sharing a single operationId and returns
+     * an accepted response with the operationId and the total number of items.
+     */
+    private MutableHttpResponse<ApiAsyncOperationResponse> submitBatchAction(
+        List<Execution> executions,
+        ThrowingBiConsumer<Execution, String> emit
+    ) throws QueueException {
+        String operationId = IdUtils.create();
+        for (Execution execution : executions) {
+            emit.accept(execution, operationId);
+        }
+        return HttpResponse.accepted()
+            .body(new ApiAsyncOperationResponse(operationId, executions.size()));
+    }
+
+    @FunctionalInterface
+    private interface ThrowingConsumer<T> {
+        void accept(T value) throws QueueException;
+    }
+
+    @FunctionalInterface
+    private interface ThrowingBiConsumer<T, U> {
+        void accept(T first, U second) throws QueueException;
     }
 
 }

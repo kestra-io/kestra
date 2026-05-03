@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -38,7 +37,6 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -275,23 +273,13 @@ class TriggerSchedulerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldSucceedScheduleConditionalScheduleTriggerGivenValidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.defaultFlow(
             builder -> builder
                 // execute the workflow only if that day is the first Monday of the month.
                 .cron("0 0 * * *")
-                .conditions(
-                    List.of(
-                        DayWeekInMonth.builder()
-                            .type(DayWeekInMonth.class.getName())
-                            .date(Property.ofExpression("{{ trigger.date }}"))
-                            .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                            .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                            .build()
-                    )
-                )
+                .when("{{isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST')}}")
                 .build()
         );
         // Start scheduler at some arbitrary date (e.g., 2025-11-01, which is a Saturday)
@@ -314,6 +302,31 @@ class TriggerSchedulerTest {
 
         // THEN - first Monday of the month => should fire execution
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldStoreNextConditionMatchingDateOnFirstEvaluationWhenConditionFails() {
+        // GIVEN clock fixed on a Friday at 10:00, a */1 min cron + DayWeek=SUNDAY condition
+        ZonedDateTime friday = java.time.LocalDateTime.of(2024, 1, 5, 10, 0)
+            .atZone(ZoneId.systemDefault());
+        SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
+
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // WHEN the first cron tick fires (1 minute later)
+        SchedulerClock.offset(Duration.ofMinutes(1));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN the condition failed (Friday ≠ Sunday) and the persisted nextEvaluationDate is on a Sunday
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
+        assertThat(nextZoned.getDayOfWeek())
+            .as("nextEvaluationDate should fall on a SUNDAY, but was %s", nextZoned)
+            .isEqualTo(DayOfWeek.SUNDAY);
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 
     @Test
@@ -484,6 +497,62 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotScheduleScheduleTriggerGivenWhenFalse() {
+        // region [GIVEN]
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("false").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isLocked()).isFalse();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldScheduleScheduleTriggerGivenWhenTruthyExpression() {
+        // region [GIVEN]
+        // '{{ flow.id }}' renders to the flow ID, a non-empty string — truthy
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("{{ flow.id }}").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getFlowId()).isEqualTo(Fixtures.TEST_FLOW_ID);
+    }
+
+    @Test
+    void shouldSendFailedExecutionGivenWhenInvalidExpression() {
+        // region [GIVEN]
+        // A malformed Pebble expression throws during render, which causes the scheduler
+        // to catch the exception and send a FAILED execution (same path as any trigger evaluation error)
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.when("{{ invalid-pebble-expression() }}").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        // endregion [GIVEN]
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN - a FAILED execution is sent due to the render exception
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     void shouldNotScheduleScheduleTriggerWithDisabledTrue() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
@@ -510,6 +579,28 @@ class TriggerSchedulerTest {
         assertThat(state.getUpdatedAt()).isEqualTo(initialState.getUpdatedAt());
 
         // Check NO execution was created
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldDeleteOrphanTriggerStateOnScheduleGivenSoftDeletedFlow() {
+        // region [GIVEN]
+        FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
+
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(initialState);
+
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNull();
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 
@@ -601,7 +692,7 @@ class TriggerSchedulerTest {
         triggerStateStore.findById(Fixtures.triggerId()).ifPresent(state ->
         {
             TriggerState newState = state
-                .updateForExecutionState(SchedulerClock.getClock(), State.Type.SUCCESS)
+                .updateOnExecutionTerminated(SchedulerClock.getClock(), State.Type.SUCCESS)
                 .locked(SchedulerClock.getClock(), false);
             triggerStateStore.save(newState);
         });

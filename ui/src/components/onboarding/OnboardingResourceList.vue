@@ -66,7 +66,7 @@
         }
 
         &:hover {
-            background: var(--ks-button-background-secondary);
+            background: var(--ks-button-background-secondary-hover);
             text-decoration: none;
         }
     }

@@ -1,0 +1,18 @@
+id: loop-outputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    outputs:
+      - id: value
+        type: STRING
+        value: "{{outputs.createOutput.value}}"
+    tasks:
+      - id: createOutput
+        type: io.kestra.plugin.core.debug.Return
+        format: "some output"
+  - id: end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{outputs.loop.outputs}}"

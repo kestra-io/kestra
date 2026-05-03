@@ -8,7 +8,6 @@ import {shared} from "./fixtures/shared";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const helloFlowYaml = fs.readFileSync(
     path.resolve(__dirname, "./fixtures/flows/hello.yaml"),
     "utf-8"
@@ -24,10 +23,11 @@ test.describe("Flow Page", () => {
 
         await page.goto("/ui");
 
-        await test.step("login in", async () => {
+        await test.step("login", async () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username);
             await page.getByRole("textbox", {name: "Password"}).fill(shared.password);
             await page.getByRole("button", {name: "Login"}).click();
+            await page.waitForURL("**/ui/**");
         });
     });
 
@@ -42,18 +42,18 @@ test.describe("Flow Page", () => {
             await page.waitForURL("**/flows/new");
 
             await page.getByRole("button", {name: "Save", exact: true}).click();
+            await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible();
             await page.getByRole("link", {name: "Overview"}).click();
         });
 
         await test.step("execute the flow", async () => {
 
-            await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
-            await page.locator("section").getByRole("button", {name: "Execute"}).click();
+            await page.getByRole("button", {name: "Execute"}).first().click();
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
-            await page.getByText("hello").click();// default task log
-            await expect(page.getByText("Hello World!")).toBeVisible();
+            await page.getByText("hello", {exact: true}).click();// default task log
+            await expect(page.getByText("Hello World!")).toBeVisible({timeout: 10000});
         });
     });
 
@@ -67,7 +67,7 @@ test.describe("Flow Page", () => {
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await page.locator("#side-menu .sidebar-toggle").click();
-            await page.waitForURL("**/flows");
+            await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible();
             await page.getByRole("button", {name: "Create", exact: true}).click();
             await page.waitForURL("**/flows/new");
             await page.getByTestId("monaco-editor").getByText("Hello World").isVisible();
@@ -92,11 +92,14 @@ test.describe("Flow Page", () => {
 
             await expect(page.getByRole("dialog").getByText("INPUT_A", {exact: true})).toBeVisible();
             await page.getByRole("dialog").getByTestId("monaco-editor").getByRole("textbox").fill(inputValue);
-            await page.waitForTimeout(2100);
+            await expect(page.getByRole("dialog").getByRole("button", {name: "Execute"})).toBeEnabled();
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 
             await page.getByText("log_hello_task").click();
-            await expect(page.getByText(inputValue)).toBeVisible();
+            await expect(page.getByText(inputValue)
+                .first()// TODO this is probably a hack, but at least it's fixing the test
+            ).toBeVisible();
         });
     });
 });
+

@@ -17,6 +17,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.JdbcJsonbUtils;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
@@ -45,7 +46,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     @Override
     public Condition fullTextCondition(List<String> fields, String query) {
         if (query == null || query.equals("*")) {
-            return DSL.trueCondition();
+            return DSL.noCondition();
         }
 
         if (fields.size() > 1) {
@@ -60,7 +61,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     public Map<Field<Object>, Object> persistFields(T entity) {
         String json = MAPPER.writeValueAsString(entity);
         Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
-        fields.put(VALUE_FIELD, DSL.val(JSONB.valueOf(json)));
+        fields.put(VALUE_FIELD, DSL.val(JdbcJsonbUtils.valueOf(json)));
         return fields;
     }
 
@@ -102,7 +103,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
                         .sort(select, pageable)
                         .asTable("page")
                 )
-                .where(DSL.trueCondition()),
+                .where(DSL.noCondition()),
             pageable
         )
             .fetch();

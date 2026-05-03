@@ -1,5 +1,6 @@
 package io.kestra.scheduler;
 
+import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
@@ -85,5 +86,16 @@ public interface Fixtures {
             .timezone(timeZone);
 
         return flowWithTrigger(builder.apply(schedule));
+    }
+
+    static FlowWithSource flowWithEveryMinuteScheduleOnDayWeek(String timeZone, DayOfWeek dayOfWeek) {
+        Schedule schedule = Schedule.builder()
+            .id(TEST_TRIGGER_ID)
+            .type(Schedule.class.getName())
+            .cron("*/1 * * * *")
+            .timezone(timeZone)
+            .when("{{dayOfWeek(trigger.date) == '" + dayOfWeek.toString() + "'}}")
+            .build();
+        return flowWithTrigger(schedule);
     }
 }

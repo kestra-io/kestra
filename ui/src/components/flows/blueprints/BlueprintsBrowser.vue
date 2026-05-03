@@ -80,7 +80,7 @@
                                             />
                                         </el-tooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            <el-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
                                             </el-button>
                                         </slot>
@@ -138,15 +138,14 @@
     const route = useRoute();
     const router = useRouter();
 
+    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]";
+
     const initSelectedTags = (): string[] => {
-        if (!route.query.selectedTag) return [];
-        if (Array.isArray(route.query.selectedTag)) {
-            return route.query.selectedTag.filter((tag): tag is string => tag !== null);
-        }
-        return route.query.selectedTag ? [route.query.selectedTag] : [];
+        const raw = route.query[SELECTED_TAG_QUERY_KEY];
+        return ([raw].flat().filter(Boolean) as string[]).flatMap(t => t.split(","));
     };
 
-    const searchText = ref(route.query.q || "");
+    const searchText = ref(route.query["filters[q][EQUALS]"] ?? "");
     const selectedTags = ref<string[]>(initSelectedTags());
     const tags = ref<Record<string, any> | undefined>(undefined);
     const total = ref(0);
@@ -162,7 +161,6 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
-        router.push({query: {...route.query, q: query}});
     };
 
     const pluginsStore = usePluginsStore();
@@ -214,7 +212,7 @@
                 params: {
                     tenant: route.params.tenant,
                     kind: props.blueprintKind,
-                    tab: route.params.tab,
+                    tab: props.blueprintType,
                     blueprintId: blueprintId
                 }
             });
@@ -223,8 +221,8 @@
 
     async function loadTags(beforeLoadBlueprintType: string) {
         const query: Record<string, any> = {};
-        if (route.query.q || searchText.value) {
-            query.q = route.query.q || searchText.value;
+        if (route.query["filters[q][EQUALS]"] ?? searchText.value) {
+            query.q = route.query["filters[q][EQUALS]"] ?? searchText.value;
         }
         const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
@@ -240,7 +238,7 @@
         const query: Record<string, any> = {};
         if (route.query.page || internalPageNumber.value) query.page = parseInt((route.query.page || internalPageNumber.value) as string);
         if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
-        if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
+        if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value;
         if (props.system) {
             query.tags = "system";
         } else {
@@ -291,7 +289,7 @@
     };
 
     const syncFromRoute = () => {
-        searchText.value = route.query?.q || "";
+        searchText.value = route.query?.["filters[q][EQUALS]"] ?? "";
         selectedTags.value = initSelectedTags();
     };
 
@@ -307,7 +305,7 @@
     });
 
     watch(
-        () => [route.query.selectedTag, route.query.q],
+        () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
         () => {
             syncFromRoute();
             load(onDataLoaded);
@@ -320,12 +318,13 @@
 
     watch(selectedTags, (newTags) => {
         if (!props.embed) {
-            router.push({
-                query: {
-                    ...route.query,
-                    selectedTag: newTags.length > 0 ? newTags : undefined
-                }
-            });
+            const query = {...route.query};
+            if (newTags.length > 0) {
+                query[SELECTED_TAG_QUERY_KEY] = newTags.join(",");
+            } else {
+                delete query[SELECTED_TAG_QUERY_KEY];
+            }
+            router.push({query});
         } else {
             load(onDataLoaded);
         }

@@ -83,6 +83,84 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
     }
 
+    @Test
+    void givenFlowWithTrigger_whenFindingFlowWithGivenTriggerClass_thenFindFlowWithTriggerClass() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        UnitTest trigger = UnitTest.builder()
+            .id("trigger")
+            .type(UnitTest.class.getName())
+            .build();
+
+        FlowWithSource flowWithTrigger = builder(tenant, "flow-with-trigger", TEST_FLOW_ID)
+            .triggers(List.of(trigger))
+            .build();
+        FlowWithSource flowWithoutTrigger = builder(tenant, "flow-without-trigger", TEST_FLOW_ID)
+            .build();
+
+        flowWithTrigger = flowRepository.create(GenericFlow.of(flowWithTrigger));
+        flowWithoutTrigger = flowRepository.create(GenericFlow.of(flowWithoutTrigger));
+
+        try {
+            // When
+            ArrayListTotal<Flow> results = flowRepository.find(
+                Pageable.UNPAGED,
+                tenant,
+                TEST_NAMESPACE,
+                UnitTest.class
+            );
+
+            // Then
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("flow-with-trigger");
+        } finally {
+            deleteFlow(flowWithTrigger);
+            deleteFlow(flowWithoutTrigger);
+        }
+    }
+
+    @Test
+    void givenMultipleFlowWithTriggerIsDistinctNamespaceWithCommonPrefix_whenFindingFlowWithGivenTriggerClass_shouldFindFlowWithTriggerClassAndFullyMatchingNamespace() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String childNamespace = TEST_NAMESPACE + ".child";
+
+        UnitTest trigger = UnitTest.builder()
+            .id("trigger")
+            .type(UnitTest.class.getName())
+            .build();
+
+        FlowWithSource flowInBaseNamespace = builder(tenant, "flow-in-base-namespace", TEST_FLOW_ID)
+            .triggers(List.of(trigger))
+            .build();
+        FlowWithSource flowInChildNamespace = builder(tenant, "flow-in-child-namespace", TEST_FLOW_ID)
+            .namespace(childNamespace)
+            .triggers(List.of(trigger))
+            .build();
+
+        flowInBaseNamespace = flowRepository.create(GenericFlow.of(flowInBaseNamespace));
+        flowInChildNamespace = flowRepository.create(GenericFlow.of(flowInChildNamespace));
+
+        try {
+            // When
+            ArrayListTotal<Flow> results = flowRepository.find(
+                Pageable.UNPAGED,
+                tenant,
+                TEST_NAMESPACE,
+                UnitTest.class
+            );
+
+            // Then
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("flow-in-base-namespace");
+            assertThat(results.getFirst().getNamespace()).isEqualTo(TEST_NAMESPACE);
+        } finally {
+            deleteFlow(flowInBaseNamespace);
+            deleteFlow(flowInChildNamespace);
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter) {

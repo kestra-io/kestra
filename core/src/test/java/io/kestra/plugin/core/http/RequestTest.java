@@ -70,32 +70,33 @@ class RequestTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private ApplicationContext applicationContext;
+
+    private String serverUrl() {
+        return applicationContext.getBean(EmbeddedServer.class).start().getURL().toString();
+    }
+
     @Test
     void run() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
-            assertThat(output.getEncryptedBody()).isNull();
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+        assertThat(output.getEncryptedBody()).isNull();
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void head() throws Exception {
-        final String url = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
+        String url = serverUrl() + "/headonly";
 
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -109,7 +110,7 @@ class RequestTest {
         Request.Output output = task.run(runContext);
 
         assertThat(output.getUri()).isEqualTo(URI.create(url));
-        assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
@@ -135,171 +136,137 @@ class RequestTest {
 
     @Test
     void redirect() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/redirect"))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void params() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/params?foo=baz"))
-                .params(
-                    Property.ofValue(
-                        Map.of(
-                            "hello", "world",
-                            "foo", "bar",
-                            "bar", List.of("foo1", "foo2")
-                        )
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/params?foo=baz"))
+            .params(
+                Property.ofValue(
+                    Map.of(
+                        "hello", "world",
+                        "foo", "bar",
+                        "bar", List.of("foo1", "foo2")
                     )
                 )
-                .build();
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat((String) output.getBody()).contains("hello=world");
-            assertThat((String) output.getBody()).contains("foo=baz");
-            assertThat((String) output.getBody()).contains("foo=bar");
-            assertThat((String) output.getBody()).contains("bar=foo1");
-            assertThat((String) output.getBody()).contains("bar=foo2");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat((String) output.getBody()).contains("hello=world");
+        assertThat((String) output.getBody()).contains("foo=baz");
+        assertThat((String) output.getBody()).contains("foo=bar");
+        assertThat((String) output.getBody()).contains("bar=foo1");
+        assertThat((String) output.getBody()).contains("bar=foo2");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void noRedirect() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/redirect"))
+            .options(
+                HttpConfiguration.builder()
+                    .followRedirects(Property.ofValue(false))
+                    .build()
+            )
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/redirect"))
-                .options(
-                    HttpConfiguration.builder()
-                        .followRedirects(Property.ofValue(false))
-                        .build()
-                )
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getCode()).isEqualTo(301);
-        }
+        assertThat(output.getCode()).isEqualTo(301);
     }
 
     @Test
     void allowFailed() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello417"))
+            .options(
+                HttpConfiguration.builder()
+                    .allowFailed(Property.ofValue(true))
+                    .build()
+            )
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
-                .options(
-                    HttpConfiguration.builder()
-                        .allowFailed(Property.ofValue(true))
-                        .build()
-                )
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
-            assertThat(output.getCode()).isEqualTo(417);
-        }
+        assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+        assertThat(output.getCode()).isEqualTo(417);
     }
 
     @Test
     void failed() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello417"))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> task.run(runContext)
+        );
 
-            HttpClientResponseException exception = assertThrows(
-                HttpClientResponseException.class,
-                () -> task.run(runContext)
-            );
-
-            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
-        }
+        assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
     }
 
     @Test
     void failedPost() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/markdown"))
+            .method(Property.ofValue("POST"))
+            .body(Property.ofValue("# hello web!"))
+            .contentType(Property.ofValue("text/markdown"))
+            .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(null)).build())
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/markdown"))
-                .method(Property.ofValue("POST"))
-                .body(Property.ofValue("# hello web!"))
-                .contentType(Property.ofValue("text/markdown"))
-                .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(null)).build())
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> task.run(runContext)
+        );
 
-            HttpClientResponseException exception = assertThrows(
-                HttpClientResponseException.class,
-                () -> task.run(runContext)
-            );
-
-            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
-            assertThat(exception.getMessage()).contains("hello world");
-            byte[] content = ((io.kestra.core.http.HttpRequest.ByteArrayRequestBody) exception.getRequest().getBody()).getContent();
-            assertThat(new String(content)).contains("hello web");
-        }
+        assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
+        assertThat(exception.getMessage()).contains("hello world");
+        byte[] content = ((io.kestra.core.http.HttpRequest.ByteArrayRequestBody) exception.getRequest().getBody()).getContent();
+        assertThat(new String(content)).contains("hello web");
     }
 
     @Test
     void selfSigned() throws Exception {
+        // SSL tests need a dedicated context with the "testssl" config (self-signed cert + SSL port).
+        // Using ApplicationContext.run() with specific environments to avoid scanning all Kestra beans.
         try (
             ApplicationContext applicationContext = ApplicationContext.run(Environment.TEST, "testssl");
             EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
@@ -358,62 +325,50 @@ class RequestTest {
 
     @Test
     void json() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .uri(Property.ofValue(serverUrl() + "/post/json"))
+            .body(Property.ofValue(JacksonMapper.ofJson().writeValueAsString(ImmutableMap.of("hello", "world"))))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .method(Property.ofValue("POST"))
-                .uri(Property.ofValue(server.getURL().toString() + "/post/json"))
-                .body(Property.ofValue(JacksonMapper.ofJson().writeValueAsString(ImmutableMap.of("hello", "world"))))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"world\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"world\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void form() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .method(Property.ofValue("POST"))
-                .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
-                .uri(Property.ofValue(server.getURL().toString() + "/post/url-encoded"))
-                .headers(
-                    Property.ofValue(
-                        Map.of(
-                            "test", "{{ inputs.test }}"
-                        )
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+            .uri(Property.ofValue(serverUrl() + "/post/url-encoded"))
+            .headers(
+                Property.ofValue(
+                    Map.of(
+                        "test", "{{ inputs.test }}"
                     )
                 )
-                .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
-                .build();
+            )
+            .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(
-                this.runContextFactory, task, ImmutableMap.of(
-                    "test", "value"
-                )
-            );
+        RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, task, ImmutableMap.of(
+                "test", "value"
+            )
+        );
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("world > value");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("world > value");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
@@ -427,27 +382,21 @@ class RequestTest {
             new FileInputStream(file)
         );
 
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+            .uri(Property.ofValue(serverUrl() + "/post/multipart"))
+            .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", fileStorage.toString())))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .method(Property.ofValue("POST"))
-                .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
-                .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
-                .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", fileStorage.toString())))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
@@ -461,52 +410,40 @@ class RequestTest {
             new FileInputStream(file)
         );
 
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+            .uri(Property.ofValue(serverUrl() + "/post/multipart"))
+            .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", ImmutableMap.of("content", fileStorage.toString(), "name", "test.yml"))))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .method(Property.ofValue("POST"))
-                .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
-                .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
-                .formData(Property.ofValue(ImmutableMap.of("hello", "world", "file", ImmutableMap.of("content", fileStorage.toString(), "name", "test.yml"))))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void encrypted() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .encryptBody(Property.ofValue(true))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .encryptBody(Property.ofValue(true))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            // when encrypted, this must not be the plaintext value
-            assertThat(output.getBody()).isNull();
-            assertThat(output.getEncryptedBody()).isNotEqualTo("{ \"hello\": \"world\" }");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        // when encrypted, this must not be the plaintext value
+        assertThat(output.getBody()).isNull();
+        assertThat(output.getEncryptedBody()).isNotEqualTo("{ \"hello\": \"world\" }");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
@@ -529,35 +466,30 @@ class RequestTest {
                 );
             }
 
-            try (
-                ApplicationContext applicationContext = ApplicationContext.run();
-                EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-            ) {
-                Request task = Request.builder()
-                    .id(RequestTest.class.getSimpleName())
-                    .type(RequestTest.class.getName())
-                    .method(Property.ofValue("POST"))
-                    .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
-                    .uri(Property.ofValue(server.getURL().toString() + "/post/multipart"))
-                    .formData(
-                        Property.ofValue(
-                            ImmutableMap.of(
-                                "hello", "world",
-                                "file", ImmutableMap.of(
-                                    "content", bigStorage.toString(),
-                                    "name", "big.txt"
-                                )
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .method(Property.ofValue("POST"))
+                .contentType(Property.ofValue(MediaType.MULTIPART_FORM_DATA))
+                .uri(Property.ofValue(serverUrl() + "/post/multipart"))
+                .formData(
+                    Property.ofValue(
+                        ImmutableMap.of(
+                            "hello", "world",
+                            "file", ImmutableMap.of(
+                                "content", bigStorage.toString(),
+                                "name", "big.txt"
                             )
                         )
                     )
-                    .build();
+                )
+                .build();
 
-                RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-                assertThatThrownBy(() -> task.run(runContext))
-                    .isInstanceOf(HttpClientResponseException.class)
-                    .hasMessageContaining("response code '413'");
-            }
+            assertThatThrownBy(() -> task.run(runContext))
+                .isInstanceOf(HttpClientResponseException.class)
+                .hasMessageContaining("response code '413'");
         } finally {
             Files.deleteIfExists(tmp);
         }
@@ -603,230 +535,188 @@ class RequestTest {
 
     @Test
     void basicAuth() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(
-                    HttpConfiguration.builder()
-                        .auth(
-                            BasicAuthConfiguration.builder().username(Property.ofValue("John"))
-                                .password(Property.ofValue("p4ss")).build()
-                        )
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/auth/basic"))
+            .options(
+                HttpConfiguration.builder()
+                    .auth(
+                        BasicAuthConfiguration.builder().username(Property.ofValue("John"))
+                            .password(Property.ofValue("p4ss")).build()
+                    )
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @SuppressWarnings("deprecation")
     @Test
     void basicAuthOld() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/auth/basic"))
-                .options(
-                    HttpConfiguration.builder()
-                        .auth(
-                            BasicAuthConfiguration
-                                .builder()
-                                .username(Property.ofValue("John"))
-                                .password(Property.ofValue("p4ss"))
-                                .build()
-                        )
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/auth/basic"))
+            .options(
+                HttpConfiguration.builder()
+                    .auth(
+                        BasicAuthConfiguration
+                            .builder()
+                            .username(Property.ofValue("John"))
+                            .password(Property.ofValue("p4ss"))
+                            .build()
+                    )
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void bearerAuth() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            String id = IdUtils.create();
+        String id = IdUtils.create();
 
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/auth/bearer"))
-                .options(
-                    HttpConfiguration.builder()
-                        .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/auth/bearer"))
+            .options(
+                HttpConfiguration.builder()
+                    .auth(BearerAuthConfiguration.builder().token(Property.ofValue(id)).build())
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"" + id + "\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"" + id + "\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void allowedResponseCodesEnforcedForSuccessResponses() {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/hello"))
-                .options(
-                    HttpConfiguration.builder()
-                        .allowedResponseCodes(Property.ofValue(List.of(201)))
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .options(
+                HttpConfiguration.builder()
+                    .allowedResponseCodes(Property.ofValue(List.of(201)))
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            HttpClientResponseException exception = assertThrows(
-                HttpClientResponseException.class,
-                () -> task.run(runContext)
-            );
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> task.run(runContext)
+        );
 
-            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(200);
-        }
+        assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(200);
     }
 
     @Test
     void digestAuthMd5() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/auth/digest/md5"))
-                .options(
-                    HttpConfiguration.builder()
-                        .auth(
-                            DigestAuthConfiguration.builder()
-                                .username(Property.ofValue("John"))
-                                .password(Property.ofValue("p4ss"))
-                                .build()
-                        )
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/auth/digest/md5"))
+            .options(
+                HttpConfiguration.builder()
+                    .auth(
+                        DigestAuthConfiguration.builder()
+                            .username(Property.ofValue("John"))
+                            .password(Property.ofValue("p4ss"))
+                            .build()
+                    )
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void digestAuthSha256() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/auth/digest/sha256"))
-                .options(
-                    HttpConfiguration.builder()
-                        .auth(
-                            DigestAuthConfiguration.builder()
-                                .username(Property.ofValue("John"))
-                                .password(Property.ofValue("p4ss"))
-                                .build()
-                        )
-                        .build()
-                )
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/auth/digest/sha256"))
+            .options(
+                HttpConfiguration.builder()
+                    .auth(
+                        DigestAuthConfiguration.builder()
+                            .username(Property.ofValue("John"))
+                            .password(Property.ofValue("p4ss"))
+                            .build()
+                    )
+                    .build()
+            )
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
 
-            Request.Output output = task.run(runContext);
+        Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void specialContentType() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/content-type"))
+            .method(Property.ofValue("POST"))
+            .body(Property.ofValue("{}"))
+            .contentType(Property.ofValue("application/vnd.campaignsexport.v1+json"))
+            .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/content-type"))
-                .method(Property.ofValue("POST"))
-                .body(Property.ofValue("{}"))
-                .contentType(Property.ofValue("application/vnd.campaignsexport.v1+json"))
-                .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("application/vnd.campaignsexport.v1+json");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("application/vnd.campaignsexport.v1+json");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Test
     void spaceInURI() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/uri with space"))
+            .build();
 
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/uri with space"))
-                .build();
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        Request.Output output = task.run(runContext);
 
-            Request.Output output = task.run(runContext);
-
-            assertThat(output.getBody()).isEqualTo("Hello World");
-            assertThat(output.getCode()).isEqualTo(200);
-        }
+        assertThat(output.getBody()).isEqualTo("Hello World");
+        assertThat(output.getCode()).isEqualTo(200);
     }
 
     @Controller
@@ -853,6 +743,11 @@ class RequestTest {
 
         @Head("/hello")
         HttpResponse<String> head() {
+            return HttpResponse.ok();
+        }
+
+        @Head("/headonly")
+        HttpResponse<Void> headonly() {
             return HttpResponse.ok();
         }
 
@@ -1089,26 +984,21 @@ class RequestTest {
 
     @Test
     void largeBodyFailsFast() {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
-        ) {
-            Request task = Request.builder()
-                .id(RequestTest.class.getSimpleName())
-                .type(RequestTest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/large"))
-                .build();
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/large"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> task.run(runContext)
-            );
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> task.run(runContext)
+        );
 
-            assertThat(exception.getMessage())
-                .contains("Response body is too large to store in task outputs")
-                .contains("Download");
-        }
+        assertThat(exception.getMessage())
+            .contains("Response body is too large to store in task outputs")
+            .contains("Download");
     }
 }

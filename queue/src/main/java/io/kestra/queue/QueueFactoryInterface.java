@@ -1,10 +1,8 @@
 package io.kestra.queue;
 
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -43,6 +41,8 @@ public interface QueueFactoryInterface<D> {
 
     BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(D dependencies);
 
+    BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue(D dependencies);
+
     DispatchQueueInterface<LogEntry> logEntryQueue(D dependencies);
 
     BroadcastQueueInterface<FollowLogEvent> followLogEventQueue(D dependencies);
@@ -50,4 +50,6 @@ public interface QueueFactoryInterface<D> {
     KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue(D dependencies);
 
     DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue(D dependencies);
+
+    DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(D dependencies);
 }

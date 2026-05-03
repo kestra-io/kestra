@@ -1,5 +1,6 @@
 package io.kestra.controller;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
@@ -20,12 +21,14 @@ import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerCredentials;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
 
 /**
  * The Controller service that manages worker nodes.
@@ -89,8 +92,27 @@ public class DefaultController extends AbstractService implements Controller {
         setState(ServiceState.RUNNING);
     }
 
+    /**
+     * Returns the underlying gRPC server. Exposed for testing to retrieve the assigned port.
+     */
+    @VisibleForTesting
+    public Server getServer() {
+        return server;
+    }
+
+    /**
+     * Creates server credentials for the gRPC server.
+     * Returns plaintext (insecure) credentials by default. EE overrides this to add TLS support.
+     *
+     * @return the server credentials.
+     */
+    protected ServerCredentials createServerCredentials() {
+        return InsecureServerCredentials.create();
+    }
+
     protected ServerBuilder<?> buildServer(int port) {
-        ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
+        ServerCredentials credentials = createServerCredentials();
+        ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, credentials)
             .addService(healthStatusManager.getHealthService());
 
         if (grpcConfiguration.reflectionEnabled()) {

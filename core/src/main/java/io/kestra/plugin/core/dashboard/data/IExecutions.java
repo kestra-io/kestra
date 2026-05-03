@@ -57,6 +57,11 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
+            List<QueryFilter> scopeFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.SCOPE)).toList();
+            if (!scopeFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.SCOPE));
+                scopeFilters.forEach(f -> updatedWhere.add(f.toDashboardFilterBuilder(Fields.SCOPE, f.value())));
+            }
         }
 
         if (startDate != null || endDate != null) {
@@ -83,6 +88,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
         LABELS,
         START_DATE,
         END_DATE,
-        TRIGGER_EXECUTION_ID
+        TRIGGER_EXECUTION_ID,
+        SCOPE
     }
 }

@@ -232,11 +232,6 @@
                 @update:model-value="onChange(input)"
             />
             <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-            <template v-for="err in input.errors ?? []" :key="err.message">
-                <el-text type="warning">
-                    {{ err.message }}
-                </el-text>
-            </template>
         </el-form-item>
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
@@ -591,7 +586,7 @@
             return [{
                 required: true,
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
-                    const val = input.type === "MULTISELECT" 
+                    const val = input.type === "MULTISELECT"
                         ? multiSelectInputs[input.id] as unknown[] | undefined
                         : inputsValues[input.id] as unknown[] | string | undefined;
                     if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
@@ -622,7 +617,7 @@
 
     function addNewArrayItem(input: InputMetaData): void {
         if (!editableItems[input.id]) {
-            editableItems[input.id] = parseArrayValue(input.id).map(item => 
+            editableItems[input.id] = parseArrayValue(input.id).map(item =>
                 item?.toString() || ""
             );
         }

@@ -4,8 +4,6 @@ import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class Slugify {
     private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
@@ -22,8 +20,8 @@ public class Slugify {
             slug = slug.replace("--", "-");
         }
 
-        slug = StringUtils.removeStart(slug, "-");
-        slug = StringUtils.removeEnd(slug, "-");
+        slug = slug.startsWith("-") ? slug.substring(1) : slug;
+        slug = slug.endsWith("-") ? slug.substring(0, slug.length() - 1) : slug;
 
         return slug.toLowerCase(Locale.ENGLISH);
     }

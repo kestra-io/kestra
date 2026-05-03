@@ -176,7 +176,10 @@ export function registerFilterAutoCompletion(
             }
 
             const match = /\|\s*(\w*)$/.exec(textBeforeCursor);
-            const startOfWordColumn = match ? position.column - match[1].length : position.column;
+            if (!match) {
+                return NO_SUGGESTIONS;
+            }
+            const startOfWordColumn = position.column - match[1].length;
             const endColumn = position.column;
 
             return {

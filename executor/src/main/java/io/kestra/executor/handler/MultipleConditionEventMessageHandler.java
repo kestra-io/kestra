@@ -26,7 +26,7 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
 
     @Override
     public void handle(MultipleConditionEvent message) {
-        flowTriggerService.computeExecutionsFromFlowTriggerPreconditions(message.execution(), message.flow(), multipleConditionStateStore)
+        flowTriggerService.computeExecutionsFromFlowTriggerDependsOn(message.execution(), message.flow(), multipleConditionStateStore)
             .forEach(exec ->
             {
                 try {

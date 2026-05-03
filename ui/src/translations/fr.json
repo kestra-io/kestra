@@ -240,7 +240,8 @@
         "plural": "Tableaux de bord",
         "singular": "Tableau de bord"
       },
-      "preview": "Aperçu du Dashboard"
+      "preview": "Aperçu du Dashboard",
+      "switch": "Changer de tableau de bord"
     },
     "data": "Données",
     "dataFilters": "Filtres de données",
@@ -597,7 +598,7 @@
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
     },
-    "execution_failed": "Échec de l'exécution !\nLa dernière erreur était",
+    "execution_failed": "Échec de l'exécution !",
     "execution_guide": {
       "get_started": {
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",
@@ -771,6 +772,10 @@
       "no options found": "Aucune option trouvée",
       "operator": "Opérateur de filtre",
       "options": "Options de Données",
+      "parentId": {
+        "description": "Filtrer par ID d'exécution parent",
+        "label": "ID d'exécution parent"
+      },
       "periodic refresh": "Rafraîchissement périodique",
       "refresh": "Rafraîchir les données",
       "reset": "Tout effacer",
@@ -1132,6 +1137,7 @@
     "labels": "Labels",
     "last 48 hours": "dernières 48 heures",
     "last X days count": "{count} lors des {days} derniers jours",
+    "last evaluation date": "Date de la dernière évaluation",
     "last execution date": "Dernière exécution",
     "last execution state": "Dernier état",
     "last execution status": "Statut de la dernière exécution",
@@ -1339,13 +1345,9 @@
       },
       "sections": {
         "afterExecution": "Après l'Exécution",
-        "connection": "Propriétés de connexion",
         "deprecated": "Propriétés obsolètes",
         "errors": "Gestionnaires d'erreurs",
         "finally": "Enfin",
-        "general": "Propriétés générales",
-        "main": "Principales propriétés",
-        "optional": "Propriétés optionnelles",
         "pluginDefaults": "Paramètres par défaut du plugin",
         "tasks": "Tâches",
         "triggers": "Déclencheurs"
@@ -1618,8 +1620,16 @@
     "prev_execution": "Exécution précédente",
     "preview": {
       "auto-view": "Vue automatique",
+      "collapse": "Réduire",
+      "expand": "Développer",
       "force-editor": "Imposer la vue de l'éditeur",
       "label": "Aperçu",
+      "next": "Suivant",
+      "page_of": "Page {current} sur {total}",
+      "pagination_info": "Affichage des lignes {start}-{end} sur {total}.",
+      "previous": "Précédent",
+      "rows_truncated": "Affichage de {shown} sur {total} lignes. Téléchargez le fichier pour voir toutes les données.",
+      "showing_rows": "Affichage des lignes {start}-{end} sur {total}",
       "view": "Voir"
     },
     "product_tour": "Visite du produit",
@@ -1647,6 +1657,7 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
     "replay inputs": "Entrées",
+    "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
     "replay using": "Rejouer en utilisant",
@@ -1657,6 +1668,7 @@
     "restart": "Relancer",
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle exécution relancée.",
     "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
+    "restart execution title": "Redémarrer l'exécution",
     "restart latest revision": "Relancer avec la dernière révision",
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restart trigger": {
@@ -1909,6 +1921,7 @@
     "start datetime": "Date de départ",
     "started date": "Date de démarrage",
     "state": "État",
+    "state updated date": "Date de mise à jour de l'état",
     "state_history": "Historique des états",
     "stats": "Stats",
     "steps": "Étapes",
@@ -2071,6 +2084,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Créer un flow à partir de zéro",
+      "create_manually": {
+        "description": "Construire à partir de zéro en utilisant l'éditeur",
+        "title": "Créer manuellement"
+      },
+      "docs": {
+        "description": "En savoir plus dans la documentation officielle",
+        "title": "Lire la documentation"
+      },
       "execute_hint": {
         "description": "Cliquez pour enregistrer votre workflow et l'exécuter immédiatement.",
         "title": "Enregistrer et exécuter votre flow"

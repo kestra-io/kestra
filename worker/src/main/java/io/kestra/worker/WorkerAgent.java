@@ -42,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_FORCED;
 import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
+import io.kestra.core.utils.Await;
 
 @Slf4j
 @Singleton
@@ -287,7 +288,7 @@ public class WorkerAgent extends AbstractService implements Worker {
         );
 
         // Wait for jobs completion
-        Awaitility.await()
+        Await.await()
             .pollInterval(Duration.ofSeconds(1))
             .ignoreExceptions()
             .until(() ->

@@ -26,6 +26,17 @@ public class WorkerGroup {
      * @return formatted worker group
      */
     public static String forLog(String workerGroup) {
-        return workerGroup == null || workerGroup.isEmpty() ? "(default)" : workerGroup;
+        return isDefault(workerGroup) ? "(default)" : workerGroup;
+    }
+
+    /**
+     * A worker-group key refers to the default (unnamed) worker group when it is
+     * {@code null} or blank.
+     *
+     * @param key the worker-group key to test
+     * @return {@code true} when the key refers to the default worker group
+     */
+    public static boolean isDefault(String key) {
+        return key == null || key.isBlank();
     }
 }

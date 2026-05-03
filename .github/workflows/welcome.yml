@@ -17,7 +17,10 @@ jobs:
       pull-requests: write
     steps:
       - uses: plbstl/first-contribution@v4
+        env:
+          GH_PAT_READ_ORG: ${{ secrets.GITHUB_TOKEN }}
         with:
+          skip-internal-contributors: true
           pr-opened-msg: |
             ### Hey @{fc-author} :wave: 
 

@@ -13,7 +13,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -26,9 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlowTest {
     @Inject
     RunContextFactory runContextFactory;
-
-    @Inject
-    Optional<MultipleConditionStateStore> multipleConditionStorage;
 
     @Test
     void success() {
@@ -71,7 +67,8 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            multipleConditionStorage, runContextFactory.of(),
+            Optional.empty(),
+            runContextFactory.of(),
             flow,
             execution
         );
@@ -127,7 +124,8 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            multipleConditionStorage, runContextFactory.of(),
+            Optional.empty(),
+            runContextFactory.of(),
             flow,
             execution
         );
@@ -189,7 +187,7 @@ class FlowTest {
             )
             .build();
 
-        Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
+        Optional<Execution> evaluate = flowTrigger.evaluate(Optional.empty(), runContextFactory.of(), flow, execution);
 
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(5);

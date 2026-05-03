@@ -29,15 +29,15 @@ import io.micronaut.http.body.MessageBodyWriter;
 import io.micronaut.http.simple.SimpleHttpHeaders;
 import io.micronaut.http.uri.UriBuilder;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class HttpFunction<T> implements Function {
+public class HttpFunction<T> implements KestraFunction {
     public static final String NAME = "http";
 
     private final MessageBodyWriter<T> FALLBACK_CONTENT_WRITER = (type, mediaType, object, outgoingHeaders, outputStream) ->
@@ -55,10 +55,10 @@ public class HttpFunction<T> implements Function {
     };
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
 
     @Inject
-    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
+    private Provider<RunContextFactory> runContextFactoryProvider;
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
@@ -71,7 +71,7 @@ public class HttpFunction<T> implements Function {
             .collect(HashMap::new, (m, k) -> m.put(k, context.getVariable(k)), HashMap::putAll);
 
         // We need late injection otherwise there is a circular dependency issue between Extension and VariableRenderer from RunContextFactory
-        RunContextFactory runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        RunContextFactory runContextFactory = runContextFactoryProvider.get();
         RunContext runContext = runContextFactory.of(pebbleVariables);
 
         URI uri = args.get("uri") instanceof URI uriObject
@@ -148,5 +148,19 @@ public class HttpFunction<T> implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of("uri", "method", "query", "body", "contentType", "headers", "options", "accept");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put("uri", "'https://example.com'");
+        defaults.put("method", "'GET'");
+        defaults.put("query", null);
+        defaults.put("body", null);
+        defaults.put("contentType", null);
+        defaults.put("headers", null);
+        defaults.put("options", null);
+        defaults.put("accept", null);
+        return defaults;
     }
 }

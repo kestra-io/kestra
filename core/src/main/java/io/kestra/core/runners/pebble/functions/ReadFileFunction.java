@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -19,6 +20,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
+    public static final String NAME = "read";
     public static final String VERSION = "version";
 
     private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
@@ -32,15 +34,24 @@ public class ReadFileFunction extends AbstractFileFunction {
     }
 
     @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(PATH, "'a/namespace/file'");
+        defaults.put(NAMESPACE, "flow.namespace");
+        defaults.put(VERSION, null);
+        return defaults;
+    }
+
+    @Override
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
-                try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
+                try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
                     yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
             case LocalPath.FILE_SCHEME -> {
-                try (InputStream inputStream = localPathFactory.createLocalPath().get(path)) {
+                try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
                     yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
@@ -54,7 +65,7 @@ public class ReadFileFunction extends AbstractFileFunction {
     }
 
     private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
 
         if (args.containsKey(VERSION)) {
             return namespaceStorage.getFileContent(

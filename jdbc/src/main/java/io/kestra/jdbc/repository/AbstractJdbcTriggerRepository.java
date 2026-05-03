@@ -76,7 +76,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<TriggerState> findById(TriggerId trigger) {
-        return findOne(DSL.trueCondition(), KEY_FIELD.eq(trigger.uid()));
+        return findOne(DSL.noCondition(), KEY_FIELD.eq(trigger.uid()));
     }
 
     @Override
@@ -171,7 +171,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     protected Condition fullTextCondition(String query) {
-        return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
+        return query == null ? DSL.noCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
     }
 
     @Override
@@ -186,7 +186,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition defaultFilter() {
-        return DSL.trueCondition();
+        return DSL.noCondition();
     }
 
     @Override

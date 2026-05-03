@@ -240,7 +240,8 @@
         "plural": "Dashboardy",
         "singular": "Dashboard"
       },
-      "preview": "Podgląd Dashboardu"
+      "preview": "Podgląd Dashboardu",
+      "switch": "Przełącz Dashboard"
     },
     "data": "Dane",
     "dataFilters": "Filtry Danych",
@@ -597,7 +598,7 @@
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
     },
-    "execution_failed": "Wykonanie nie powiodło się!  \nOstatni błąd to",
+    "execution_failed": "Wykonanie nie powiodło się!",
     "execution_guide": {
       "get_started": {
         "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów.",
@@ -771,6 +772,10 @@
       "no options found": "Nie znaleziono opcji",
       "operator": "Operator filtrowania",
       "options": "Opcje Danych",
+      "parentId": {
+        "description": "Filtruj według ID wykonania nadrzędnego",
+        "label": "ID Wykonania Rodzica"
+      },
       "periodic refresh": "Okresowe odświeżanie",
       "refresh": "Odśwież dane",
       "reset": "Wyczyść wszystko",
@@ -1132,6 +1137,7 @@
     "labels": "Etykiety",
     "last 48 hours": "ostatnie 48 godzin",
     "last X days count": "{count} w ostatnich {days} dniach",
+    "last evaluation date": "Data ostatniej oceny",
     "last execution date": "Data ostatniego wykonania",
     "last execution state": "Ostatni stan",
     "last execution status": "Ostatni status wykonania",
@@ -1339,13 +1345,9 @@
       },
       "sections": {
         "afterExecution": "Po wykonaniu",
-        "connection": "Właściwości połączenia",
         "deprecated": "Właściwości przestarzałe",
         "errors": "Obsługa błędów",
         "finally": "Na koniec",
-        "general": "Właściwości ogólne",
-        "main": "Główne właściwości",
-        "optional": "Właściwości opcjonalne",
         "pluginDefaults": "Domyślne ustawienia Pluginów",
         "tasks": "Zadania",
         "triggers": "Triggery"
@@ -1618,8 +1620,16 @@
     "prev_execution": "Poprzednia wykonanie",
     "preview": {
       "auto-view": "Widok automatyczny",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń",
       "force-editor": "Wymuś widok edytora",
       "label": "Podgląd",
+      "next": "Dalej",
+      "page_of": "Strona {current} z {total}",
+      "pagination_info": "Wyświetlanie wierszy {start}-{end} z {total}.",
+      "previous": "Poprzedni",
+      "rows_truncated": "Wyświetlanie {shown} z {total} wierszy. Pobierz plik, aby zobaczyć wszystkie dane.",
+      "showing_rows": "Wyświetlanie wierszy {start}-{end} z {total}",
       "view": "Zobacz"
     },
     "product_tour": "Przewodnik po produkcie",
@@ -1647,6 +1657,7 @@
     "replay from beginning tooltip": "Utwórz podobne wykonanie zaczynając od początku",
     "replay from task tooltip": "Utwórz podobne wykonanie zaczynając od task <code>{taskId}</code>",
     "replay inputs": "Wejścia",
+    "replay inputs new required": "Ta wersja ma inputy. Zostaniesz poproszony o ich wypełnienie.",
     "replay latest revision": "Odtwórz używając najnowszej wersji",
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
     "replay using": "Odtwórz używając",
@@ -1657,6 +1668,7 @@
     "restart": "Uruchom ponownie",
     "restart change revision": "Możesz zmienić wersję, która będzie używana do nowego wykonania.",
     "restart confirm": "Czy na pewno chcesz ponownie uruchomić wykonanie <code>{id}</code>?",
+    "restart execution title": "Uruchom ponownie wykonanie",
     "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie wykonanie od task <code>{state}</code>",
     "restart trigger": {
@@ -1909,6 +1921,7 @@
     "start datetime": "Data i godzina rozpoczęcia",
     "started date": "Data rozpoczęcia",
     "state": "Stan",
+    "state updated date": "Data aktualizacji stanu",
     "state_history": "Historia stanu",
     "stats": "Statystyki",
     "steps": "Kroki",
@@ -2071,6 +2084,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Utwórz flow od podstaw",
+      "create_manually": {
+        "description": "Zbuduj od podstaw za pomocą edytora",
+        "title": "Utwórz ręcznie"
+      },
+      "docs": {
+        "description": "Dowiedz się więcej w oficjalnej dokumentacji",
+        "title": "Przeczytaj dokumentację"
+      },
       "execute_hint": {
         "description": "Kliknij, aby zapisać swój workflow i uruchomić go natychmiast.",
         "title": "Zapisz i wykonaj swój flow"

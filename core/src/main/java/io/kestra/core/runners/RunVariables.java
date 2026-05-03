@@ -3,12 +3,12 @@ package io.kestra.core.runners;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
-
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
@@ -31,6 +31,88 @@ public final class RunVariables {
     public static final String SECRET_CONSUMER_VARIABLE_NAME = "addSecretConsumer";
     public static final String FIXTURE_FILES_KEY = "io.kestra.datatype:test_fixtures_files";
     public static final String ENVS = "envs";
+
+    /**
+     * Explicit, sorted list of all dot-separated expression paths structurally available
+     * at runtime in a Kestra flow execution (e.g. {@code "flow.id"}, {@code "execution.startDate"},
+     * {@code "taskrun.value"}).
+     * <p>
+     * Dynamic keys whose children depend on the specific flow/execution ({@code inputs},
+     * {@code outputs}, {@code tasks}, {@code labels}, {@code vars}, {@code files}, {@code envs},
+     * {@code globals}) are included as top-level entries only — their children vary per run.
+     * <p>
+     * When {@link DefaultBuilder#build} changes (new field added, new context key introduced),
+     * this list must be updated to match. The test {@code RunVariablesContextPathsTest}
+     * catches drift by asserting that a full stub-built context exposes no paths absent from here.
+     */
+    public static final List<String> EXECUTION_CONTEXT_PATHS = List.of(
+        // Top-level dynamic keys — children are flow/execution-specific, not listed individually
+        "envs",
+        "files",
+        "globals",
+        "inputs",
+        "labels",
+        "outputs",
+        "tasks",
+        "vars",
+        // Execution
+        "execution",
+        "execution.id",
+        "execution.originalId",
+        "execution.outputs",
+        "execution.startDate",
+        "execution.state",
+        // Flow
+        "flow",
+        "flow.id",
+        "flow.namespace",
+        "flow.revision",
+        "flow.tenantId",
+        // ForEach/EachParallel/EachSequential iteration context (item.*)
+        "item",
+        "item.index",
+        "item.key",
+        "item.parent",
+        "item.parent.index",
+        "item.parent.key",
+        "item.parent.value",
+        "item.parents",
+        "item.value",
+        // Kestra configuration
+        "kestra",
+        "kestra.environment",
+        "kestra.url",
+        // Nearest flowable parent (first entry of parents list)
+        "parent",
+        "parent.task",
+        "parent.task.id",
+        "parent.taskrun",
+        "parent.taskrun.value",
+        // All flowable ancestors
+        "parents",
+        // Current task
+        "task",
+        "task.id",
+        "task.type",
+        // Current task run
+        "taskrun",
+        "taskrun.attemptsCount",
+        "taskrun.id",
+        "taskrun.iteration",
+        "taskrun.parentId",
+        "taskrun.startDate",
+        "taskrun.value"
+    );
+
+    /**
+     * Returns the sorted list of all dot-separated expression paths structurally available
+     * at runtime. See {@link #EXECUTION_CONTEXT_PATHS} for details.
+     */
+    public static List<String> allContextPaths() {
+        return EXECUTION_CONTEXT_PATHS;
+    }
+
+
 
     /**
      * Creates an immutable map representation of the given {@link Task}.
@@ -118,6 +200,77 @@ public final class RunVariables {
             "id", trigger.getId(),
             "type", trigger.getType()
         );
+    }
+
+    /**
+     * Creates an immutable map representation of the given {@link LoopRun}.
+     */
+    static Map<String, Object> of(LoopRun loopRun) {
+        Map<String, Object> loopRunMap = HashMap.newHashMap(3);
+        loopRunMap.put("index", loopRun.index());
+        if (loopRun.key() != null) {
+            loopRunMap.put("key", loopRun.key());
+        }
+        loopRunMap.put("value", loopRun.value());
+        if (loopRun.parents() != null) {
+            loopRunMap.put("parent", of(loopRun.parents().getLast()));
+            if (loopRun.parents().size() > 1) {
+                List<Map<String, Object>> parents = new ArrayList<>();
+                loopRun.parents().forEach(parent -> parents.add(of(parent)));
+                loopRunMap.put("parents", parents);
+            }
+        }
+        return loopRunMap;
+    }
+
+    private static Map<String, Object> of(LoopRun.Parent parent) {
+        Map<String, Object> parentMap = HashMap.newHashMap(3);
+        parentMap.put("index", parent.index());
+        if (parent.key() != null) {
+            parentMap.put("key", parent.key());
+        }
+        parentMap.put("value", parent.value());
+        return parentMap;
+    }
+
+    /**
+     * Returns an immutable map representation of the given {@link Execution}.
+     */
+    static Map<String, Object> of(Execution execution) {
+        ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.builder();
+
+        executionMap.put("id", execution.getId());
+
+        if (execution.getState() != null) { // can occur in tests
+            executionMap.put("state", execution.getState().getCurrent());
+        }
+
+        Optional.ofNullable(execution.getState()).map(State::getStartDate)
+            .ifPresent(startDate -> executionMap.put("startDate", startDate));
+
+        Optional.ofNullable(execution.getOriginalId())
+            .ifPresent(originalId -> executionMap.put("originalId", originalId));
+
+
+        if (execution.getOutputs() != null) {
+            executionMap.put("outputs", execution.getOutputs());
+        }
+
+        return executionMap.build();
+    }
+
+    /**
+     * Returns an immutable map representation of the given {@link KestraConfiguration}.
+     */
+    static Map<String, String> of(KestraConfiguration kestraConfiguration) {
+        Map<String, String> kestra = HashMap.newHashMap(2);
+        if (kestraConfiguration.environment() != null) {
+            kestra.put("environment", kestraConfiguration.environment());
+        }
+        if (kestraConfiguration.url() != null) {
+            kestra.put("url", kestraConfiguration.url());
+        }
+        return kestra;
     }
 
     /**
@@ -221,77 +374,43 @@ public final class RunVariables {
                 builder.put("trigger", RunVariables.of(trigger));
             }
 
-            // Parents
-            if (taskRun != null && execution != null) {
-                List<Map<String, Object>> parents = parents(execution, taskRun);
-                builder.put("parents", parents);
-                if (!parents.isEmpty()) {
-                    builder.put("parent", parents.getFirst());
-                }
-            }
-
             // Execution
             if (execution != null) {
-                ImmutableMap.Builder<String, Object> executionMap = ImmutableMap.builder();
+                // The real execution will be used to retrieve the execution context, including triggers and inputs as they are omitted by the Execution.loopExecution method for performance reasons
+                var realExecution = execution.getLoopRun() != null ? execution.getLoopRun().parent() : execution;
 
-                executionMap.put("id", execution.getId());
-
-                if (execution.getState() != null) { // can occur in tests
-                    executionMap.put("state", execution.getState().getCurrent());
-                }
-
-                Optional.ofNullable(execution.getState()).map(State::getStartDate)
-                    .ifPresent(startDate -> executionMap.put("startDate", startDate));
-
-                Optional.ofNullable(execution.getOriginalId())
-                    .ifPresent(originalId -> executionMap.put("originalId", originalId));
-
-                if (execution.getOutputs() != null) {
-                    executionMap.put("outputs", execution.getOutputs());
-                }
-
-                builder.put("execution", executionMap.build());
-
-                if (execution.getTaskRunList() != null) {
-                    if (!MapUtils.isEmpty(outputs)) {
-                        if (decryptVariables) {
-                            final Secret secret = new Secret(secretKey, logger);
-                            builder.put("outputs", secret.decrypt(outputs));
-                        } else {
-                            builder.put("outputs", outputs);
-                        }
-                    } else {
-                        builder.put("outputs", Collections.emptyMap());
+                // Parents
+                if (taskRun != null) {
+                    List<Map<String, Object>> parents = parents(execution, taskRun);
+                    builder.put("parents", parents);
+                    if (!parents.isEmpty()) {
+                        builder.put("parent", parents.getFirst());
                     }
+                }
 
-                    Map<String, Object> tasksMap = new HashMap<>();
+                builder.put("execution", RunVariables.of(realExecution));
 
-                    execution.getTaskRunList().forEach(taskRun ->
-                    {
-                        if (taskRun.getState() != null) {
-                            if (taskRun.getValue() == null) {
-                                tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
-                            } else {
-                                if (tasksMap.containsKey(taskRun.getTaskId())) {
-                                    @SuppressWarnings("unchecked")
-                                    Map<String, Object> taskRunMap = (Map<String, Object>) tasksMap.get(taskRun.getTaskId());
-                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
-                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
-                                } else {
-                                    Map<String, Object> taskRunMap = new HashMap<>();
-                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
-                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
-                                }
-                            }
-                        }
-                    });
+                if (!MapUtils.isEmpty(outputs)) {
+                    if (decryptVariables) {
+                        final Secret secret = new Secret(secretKey, logger);
+                        builder.put("outputs", secret.decrypt(outputs));
+                    } else {
+                        builder.put("outputs", outputs);
+                    }
+                } else {
+                    builder.put("outputs", Collections.emptyMap());
+                }
 
+                if (execution.getTaskRunList() != null || realExecution.getTaskRunList() != null) {
+                    var taskRunList = ListUtils.concat(execution.getTaskRunList(), realExecution.getTaskRunList());
+                    Map<String, Object> tasksMap = computeTasksMap(taskRunList);
                     builder.put("tasks", tasksMap);
                 }
+
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
-                if (execution.getInputs() != null) {
-                    inputs.putAll(execution.getInputs());
+                if (realExecution.getInputs() != null) {
+                    inputs.putAll(realExecution.getInputs());
                     if (decryptVariables && flow != null && flow.getInputs() != null) {
                         // if some inputs are of type secret, we decode them
                         final Secret secret = new Secret(secretKey, logger);
@@ -343,13 +462,13 @@ public final class RunVariables {
                     }
                 }
 
-                if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-                    Map<String, Object> outputs = execution.getTrigger().getVariables();
+                if (realExecution.getTrigger() != null && realExecution.getTrigger().getVariables() != null) {
+                    Map<String, Object> triggerVariables = realExecution.getTrigger().getVariables();
                     if (decryptVariables) {
                         final Secret secret = new Secret(secretKey, logger);
-                        outputs = secret.decrypt(outputs);
+                        triggerVariables = secret.decrypt(triggerVariables);
                     }
-                    builder.put("trigger", outputs);
+                    builder.put("trigger", triggerVariables);
                 }
 
                 if (execution.getLabels() != null) {
@@ -365,37 +484,34 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+
+                // item from Loop
+                if (execution.getLoopRun() != null) {
+                    builder.put("item", RunVariables.of(execution.getLoopRun()));
+                }
+
+                // variables
+                Optional.ofNullable(execution.getVariables())
+                    .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
+                    .map(HashMap::new)
+                    .ifPresent(variables ->
+                    {
+                        Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
+                        builder.put("vars", ImmutableMap.copyOf(variables));
+
+                        if (fixtureFiles != null) {
+                            builder.put("files", fixtureFiles);
+                        }
+                    });
             } else if (flow != null) {
                 // if the execution is null, we should add flow labels
                 // this is useful for triggers that don't have an execution
                 builder.put("labels", Label.toNestedMap(flow.getLabels()));
             }
 
-            // variables
-            Optional.ofNullable(execution)
-                .map(Execution::getVariables)
-                .or(() -> Optional.ofNullable(flow).map(FlowInterface::getVariables))
-                .map(HashMap::new)
-                .ifPresent(variables ->
-                {
-                    Object fixtureFiles = variables.remove(FIXTURE_FILES_KEY);
-                    builder.put("vars", ImmutableMap.copyOf(variables));
-
-                    if (fixtureFiles != null) {
-                        builder.put("files", fixtureFiles);
-                    }
-                });
-
             // Kestra configuration
             if (kestraConfiguration != null) {
-                Map<String, String> kestra = HashMap.newHashMap(2);
-                if (kestraConfiguration.environment() != null) {
-                    kestra.put("environment", kestraConfiguration.environment());
-                }
-                if (kestraConfiguration.url() != null) {
-                    kestra.put("url", kestraConfiguration.url());
-                }
-                builder.put("kestra", kestra);
+                builder.put("kestra", RunVariables.of(kestraConfiguration));
             }
 
             // adds any additional variables
@@ -429,43 +545,67 @@ public final class RunVariables {
                 }
             }
         }
-    }
 
-    private static List<Map<String, Object>> parents(Execution execution, TaskRun taskRun) {
-        List<TaskRun> parents = execution.findParents(taskRun);
-        Collections.reverse(parents);
+        private List<Map<String, Object>> parents(Execution execution, TaskRun taskRun) {
+            List<TaskRun> parents = execution.findParents(taskRun);
+            Collections.reverse(parents);
 
-        List<Map<String, Object>> result = new ArrayList<>(parents.size());
-        for (TaskRun parent : parents) {
-            Map<String, Object> current = HashMap.newHashMap(2);
+            List<Map<String, Object>> result = new ArrayList<>(parents.size());
+            for (TaskRun parent : parents) {
+                Map<String, Object> current = HashMap.newHashMap(2);
 
-            current.put("task", Map.of("id", parent.getTaskId()));
+                current.put("task", Map.of("id", parent.getTaskId()));
 
-            if (parent.getValue() != null) {
-                current.put("taskrun", Map.of("value", parent.getValue()));
+                if (parent.getValue() != null) {
+                    current.put("taskrun", Map.of("value", parent.getValue()));
+                }
+
+                result.add(current);
             }
 
-            result.add(current);
+            return result;
         }
 
-        return result;
+        private Map<String, Object> computeTasksMap(List<TaskRun> taskRunList) {
+            Map<String, Object> tasksMap = new HashMap<>();
+            taskRunList.forEach(taskRun ->
+            {
+                if (taskRun.getState() != null) {
+                    if (taskRun.getValue() == null) {
+                        tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
+                    } else {
+                        if (tasksMap.containsKey(taskRun.getTaskId())) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> taskRunMap = (Map<String, Object>) tasksMap.get(taskRun.getTaskId());
+                            taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                            tasksMap.put(taskRun.getTaskId(), taskRunMap);
+                        } else {
+                            Map<String, Object> taskRunMap = new HashMap<>();
+                            taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                            tasksMap.put(taskRun.getTaskId(), taskRunMap);
+                        }
+                    }
+                }
+            });
+            return tasksMap;
+        }
+
+        private record PropertyContextWithVariables(
+            PropertyContext delegate,
+            Map<String, Object> variables) implements PropertyContext {
+
+            @Override
+            public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+                return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+            }
+
+            @Override
+            public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+                return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+            }
+        }
     }
 
     private RunVariables() {
-    }
-
-    private record PropertyContextWithVariables(
-        PropertyContext delegate,
-        Map<String, Object> variables) implements PropertyContext {
-
-        @Override
-        public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
-        }
-
-        @Override
-        public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
-        }
     }
 }

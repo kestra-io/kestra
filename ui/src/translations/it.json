@@ -240,7 +240,8 @@
         "plural": "Dashboard",
         "singular": "Dashboard"
       },
-      "preview": "Anteprima Dashboard"
+      "preview": "Anteprima Dashboard",
+      "switch": "Dashboard Switch"
     },
     "data": "Dati",
     "dataFilters": "Filtri Dati",
@@ -597,7 +598,7 @@
       "metrics": "Elimina metriche",
       "storage": "Elimina file di storage interni"
     },
-    "execution_failed": "Esecuzione fallita!  \nL'ultimo errore è stato",
+    "execution_failed": "Esecuzione fallita!",
     "execution_guide": {
       "get_started": {
         "text": "Segui la Guida rapida per installare Kestra e iniziare a creare i tuoi primi workflow.",
@@ -771,6 +772,10 @@
       "no options found": "Nessuna opzione trovata",
       "operator": "Operatore di filtro",
       "options": "Opzioni Dati",
+      "parentId": {
+        "description": "Filtra per ID esecuzione padre",
+        "label": "ID Esecuzione Padre"
+      },
       "periodic refresh": "Aggiornamento periodico",
       "refresh": "Aggiorna dati",
       "reset": "Cancella tutto",
@@ -1132,6 +1137,7 @@
     "labels": "Etichette",
     "last 48 hours": "ultime 48 ore",
     "last X days count": "{count} negli ultimi {days} giorni",
+    "last evaluation date": "Data ultima valutazione",
     "last execution date": "Data ultima esecuzione",
     "last execution state": "Ultimo stato",
     "last execution status": "Ultimo stato di esecuzione",
@@ -1339,13 +1345,9 @@
       },
       "sections": {
         "afterExecution": "Dopo l'Esecuzione",
-        "connection": "Proprietà di connessione",
         "deprecated": "Proprietà deprecate",
         "errors": "Gestori degli Errori",
         "finally": "Infine",
-        "general": "Proprietà generali",
-        "main": "Proprietà principali",
-        "optional": "Proprietà opzionali",
         "pluginDefaults": "Predefiniti del Plugin",
         "tasks": "Attività",
         "triggers": "Trigger"
@@ -1618,8 +1620,16 @@
     "prev_execution": "Esecuzione precedente",
     "preview": {
       "auto-view": "Visualizzazione automatica",
+      "collapse": "Comprimi",
+      "expand": "Espandi",
       "force-editor": "Forza vista editor",
       "label": "Anteprima",
+      "next": "Avanti",
+      "page_of": "Pagina {current} di {total}",
+      "pagination_info": "Visualizzazione righe {start}-{end} di {total}.",
+      "previous": "Precedente",
+      "rows_truncated": "Visualizzazione di {shown} di {total} righe. Scarica il file per visualizzare tutti i dati.",
+      "showing_rows": "Visualizzazione righe {start}-{end} di {total}",
       "view": "Visualizza"
     },
     "product_tour": "Tour del prodotto",
@@ -1647,6 +1657,7 @@
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
     "replay from task tooltip": "Crea un'esecuzione simile a partire dal task <code>{taskId}</code>",
     "replay inputs": "Ingressi",
+    "replay inputs new required": "Questa revisione ha degli input. Ti verrà chiesto di compilarli.",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
     "replay using": "Riproduci utilizzando",
@@ -1657,6 +1668,7 @@
     "restart": "Riavvia",
     "restart change revision": "Puoi cambiare la revisione che verrà utilizzata per la nuova esecuzione.",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
+    "restart execution title": "Riavvia esecuzione",
     "restart latest revision": "Riavvia ultima revisione",
     "restart tooltip": "Riavvia l'esecuzione dal task <code>{state}</code>",
     "restart trigger": {
@@ -1909,6 +1921,7 @@
     "start datetime": "Data e ora di inizio",
     "started date": "Data di inizio",
     "state": "Stato",
+    "state updated date": "Data di aggiornamento dello stato",
     "state_history": "Cronologia degli stati",
     "stats": "Statistiche",
     "steps": "Passaggi",
@@ -2071,6 +2084,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Crea flow da zero",
+      "create_manually": {
+        "description": "Crea da zero utilizzando l'editor",
+        "title": "Crea manualmente"
+      },
+      "docs": {
+        "description": "Scopri di più nella documentazione ufficiale",
+        "title": "Leggi la documentazione"
+      },
       "execute_hint": {
         "description": "Fai clic per salvare il tuo workflow ed eseguirlo immediatamente.",
         "title": "Salva ed Esegui il tuo flow"

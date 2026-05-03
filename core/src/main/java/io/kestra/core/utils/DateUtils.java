@@ -29,14 +29,41 @@ public class DateUtils {
     }
 
     public static LocalDate parseLocalDate(String render) throws InternalException {
-        LocalDate currentDate;
         try {
-            currentDate = LocalDate.parse(render);
-        } catch (DateTimeException e) {
-            currentDate = DateUtils.parseZonedDateTime(render).toLocalDate();
+            return LocalDate.parse(render);
+        } catch (DateTimeException e1) {
+            try {
+                return ZonedDateTime.parse(render).toLocalDate();
+            } catch (DateTimeException e2) {
+                try {
+                    return LocalDateTime.parse(render).toLocalDate();
+                } catch (DateTimeException e3) {
+                    throw new InternalException(e3);
+                }
+            }
         }
+    }
 
-        return currentDate;
+    /**
+     * Parses an ISO 8601 date or datetime string to an {@link Instant}.
+     *
+     * <p>Parsing order: {@link ZonedDateTime} → {@link LocalDateTime} (treated as UTC) →
+     * {@link LocalDate} (treated as midnight UTC). Throws {@link InternalException} if none match.
+     */
+    public static Instant parseInstant(String render) throws InternalException {
+        try {
+            return ZonedDateTime.parse(render).toInstant();
+        } catch (DateTimeException e1) {
+            try {
+                return LocalDateTime.parse(render).toInstant(ZoneOffset.UTC);
+            } catch (DateTimeException e2) {
+                try {
+                    return LocalDate.parse(render).atStartOfDay(ZoneOffset.UTC).toInstant();
+                } catch (DateTimeException e3) {
+                    throw new InternalException(e3);
+                }
+            }
+        }
     }
 
     public static GroupType groupByType(Duration duration) {

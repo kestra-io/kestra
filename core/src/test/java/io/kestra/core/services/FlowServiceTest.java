@@ -30,6 +30,12 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
 
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
+import io.kestra.core.scheduler.events.TriggerUpdated;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -304,7 +310,7 @@ class FlowServiceTest {
     void shouldReturnCheckWhenConditionEvaluatesFalse() {
         // Given
         Check failingCheck = Check.builder()
-            .condition("{{ false }}")
+            .when("{{ false }}")
             .message("fail")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -325,7 +331,7 @@ class FlowServiceTest {
     void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
         // Given
         Check passingCheck = Check.builder()
-            .condition("{{ true }}")
+            .when("{{ true }}")
             .message("pass")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -345,7 +351,7 @@ class FlowServiceTest {
     void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
         // Given
         Check check = Check.builder()
-            .condition("{{ invalidFunction() }}")
+            .when("{{ invalidFunction() }}")
             .message("ignored")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -368,9 +374,9 @@ class FlowServiceTest {
     @Test
     void shouldHandleMultipleChecksWithMixedResults() {
         // Given
-        Check passCheck = Check.builder().condition("{{ true }}").message("pass").build();
-        Check failCheck = Check.builder().condition("{{ false }}").message("fail").build();
-        Check exceptionCheck = Check.builder().condition("{{ invalidFunction }}").message("exception").build();
+        Check passCheck = Check.builder().when("{{ true }}").message("pass").build();
+        Check failCheck = Check.builder().when("{{ false }}").message("fail").build();
+        Check exceptionCheck = Check.builder().when("{{ invalidFunction }}").message("exception").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
@@ -394,7 +400,7 @@ class FlowServiceTest {
     @Test
     void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
         // Given
-        Check passCheck = Check.builder().condition("{{ flow.id == 'test' }}").message("pass").build();
+        Check passCheck = Check.builder().when("{{ flow.id == 'test' }}").message("pass").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck));
@@ -562,6 +568,153 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldFindUnchangedTriggersGivenIdenticalTriggersInBothRevisions() {
+        // Given
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build();
+        Flow current = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(2)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("updated")).build()))
+            .triggers(List.of(trigger))
+            .build();
+        Flow previous = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(1)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
+            .triggers(List.of(trigger))
+            .build();
+
+        // When
+        List<AbstractTrigger> unchanged = FlowService.findUnchangedTrigger(current, previous);
+
+        // Then
+        assertThat(unchanged).hasSize(1);
+        assertThat(unchanged.getFirst().getId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenFindUnchangedTriggersGivenModifiedTrigger() {
+        // Given
+        Schedule currentTrigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("*/5 * * * *").build();
+        Schedule previousTrigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build();
+        Flow current = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(2)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(currentTrigger))
+            .build();
+        Flow previous = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(1)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(previousTrigger))
+            .build();
+
+        // When
+        List<AbstractTrigger> unchanged = FlowService.findUnchangedTrigger(current, previous);
+
+        // Then
+        assertThat(unchanged).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyWhenFindUnchangedTriggersGivenNewTrigger() {
+        // Given
+        Schedule trigger = Schedule.builder().id("new-schedule").type(Schedule.class.getName()).cron("0 0 * * *").build();
+        Flow current = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(2)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(trigger))
+            .build();
+        Flow previous = Flow.builder()
+            .id("test").namespace(TEST_NAMESPACE).revision(1)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+
+        // When
+        List<AbstractTrigger> unchanged = FlowService.findUnchangedTrigger(current, previous);
+
+        // Then
+        assertThat(unchanged).isEmpty();
+    }
+
+    @Test
+    void shouldEmitTriggerFlowRevisionUpdatedForUnchangedTriggersWhenFlowTasksChange() throws FlowProcessingException, QueueException {
+        // Given — a flow with a trigger
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
+            .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build()))
+            .build();
+        flowService.create(GenericFlow.of(flow));
+        reset(triggerEventQueue);
+
+        // When — update only the task (trigger is unchanged)
+        Flow updated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("updated")).build()))
+            .build();
+        flowService.update(GenericFlow.of(updated), GenericFlow.of(flow));
+
+        // Then — a TriggerFlowRevisionUpdated event is emitted for the unchanged trigger (to refresh cache)
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerFlowRevisionUpdated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenRecreatingFlowAfterSoftDelete() throws FlowProcessingException, QueueException {
+        // Given — a flow with a trigger, then soft-deleted
+        String flowId = IdUtils.create();
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build()))
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        flowService.delete(created);
+        reset(triggerEventQueue);
+
+        // When — re-create a flow with the same id (trigger definition unchanged)
+        Flow recreated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("revived")).build()))
+            .build();
+        flowService.create(GenericFlow.of(recreated));
+
+        // Then — a TriggerCreated event is emitted, since the scheduler's trigger state
+        // was dropped on the previous TriggerDeleted and must be rebuilt from scratch.
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
+    }
+
+    @Test
+    void shouldEmitTriggerCreatedWhenAddingNewTriggerToExistingFlow() throws FlowProcessingException, QueueException {
+        // Given — a flow with no triggers
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        flowService.create(GenericFlow.of(flow));
+        reset(triggerEventQueue);
+
+        // When — add a Schedule trigger
+        Flow updated = flow.toBuilder()
+            .triggers(List.of(Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build()))
+            .build();
+        flowService.update(GenericFlow.of(updated), GenericFlow.of(flow));
+
+        // Then — a TriggerCreated event is emitted (not TriggerUpdated)
+        var captor = org.mockito.ArgumentCaptor.forClass(TriggerEvent.class);
+        verify(triggerEventQueue).send(captor.capture());
+        assertThat(captor.getValue()).isInstanceOf(TriggerCreated.class);
+        assertThat(captor.getValue().id().getTriggerId()).isEqualTo("schedule");
     }
 
     @MockBean

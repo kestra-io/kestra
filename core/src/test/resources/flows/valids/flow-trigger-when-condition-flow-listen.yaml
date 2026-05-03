@@ -1,0 +1,13 @@
+id: flow-trigger-when-condition-flow-listen
+namespace: io.kestra.tests.trigger.when.condition
+
+triggers:
+  - id: on_completion
+    type: io.kestra.plugin.core.trigger.Flow
+    states: [ SUCCESS ]
+    when: '{{ labels contains "source" ? labels.source == "when-test" : false }}'
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

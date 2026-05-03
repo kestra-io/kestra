@@ -153,8 +153,25 @@ public class CommandsWrapper implements TaskCommands {
             NamespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
+        // Inject non-glob outputFiles into the Pebble render context as a name→path map before any rendering.
+        // This makes {{ outputFiles["name"] }} resolvable in scripts, consistent with JDBC tasks.
+        // Glob patterns are skipped here — they cannot resolve to a single path; post-run collection still handles them.
+        Map<String, Object> runnerVars = taskRunner.additionalVars(runContext, this);
+        if (this.outputFiles != null && !this.outputFiles.isEmpty()) {
+            String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            Map<String, String> outputFilesMap = new LinkedHashMap<>();
+            for (String name : this.outputFiles) {
+                if (!name.contains("*") && !name.contains("?") && !name.contains("[")) {
+                    outputFilesMap.put(name, workingDir + "/" + name);
+                }
+            }
+            if (!outputFilesMap.isEmpty()) {
+                runnerVars.put("outputFiles", outputFilesMap);
+            }
+        }
+
         if (this.inputFiles != null) {
-            FilesService.inputFiles(runContext, taskRunner.additionalVars(runContext, this), this.inputFiles);
+            FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
         }
 
         RunContext taskRunnerRunContext = runContext.cloneForPlugin(taskRunner);
@@ -163,10 +180,19 @@ public class CommandsWrapper implements TaskCommands {
         List<String> renderedBeforeCommands = this.renderCommands(runContext, beforeCommands);
         List<String> renderedInterpreter = this.renderCommands(runContext, interpreter);
 
+        List<String> effectiveBeforeCommands = this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands;
+        if (!renderedBeforeCommands.isEmpty()) {
+            List<String> marked = new ArrayList<>();
+            marked.add("echo '##kestra:log:debug##'");
+            marked.addAll(effectiveBeforeCommands);
+            marked.add("echo '##kestra:log:info##'");
+            effectiveBeforeCommands = marked;
+        }
+
         List<String> finalCommands = renderedBeforeCommands.isEmpty() && renderedInterpreter.isEmpty() ? renderedCommands
             : ScriptService.scriptCommands(
                 renderedInterpreter,
-                this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) : renderedBeforeCommands,
+                effectiveBeforeCommands,
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
@@ -239,7 +265,21 @@ public class CommandsWrapper implements TaskCommands {
             return null;
         }
 
-        return runContext.render(command).as(String.class, taskRunner.additionalVars(runContext, this))
+        Map<String, Object> additionalVars = taskRunner.additionalVars(runContext, this);
+        if (this.outputFiles != null && !this.outputFiles.isEmpty()) {
+            String workingDir = String.valueOf(additionalVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            Map<String, String> outputFilesMap = new LinkedHashMap<>();
+            for (String name : this.outputFiles) {
+                if (!name.contains("*") && !name.contains("?") && !name.contains("[")) {
+                    outputFilesMap.put(name, workingDir + "/" + name);
+                }
+            }
+            if (!outputFilesMap.isEmpty()) {
+                additionalVars.put("outputFiles", outputFilesMap);
+            }
+        }
+
+        return runContext.render(command).as(String.class, additionalVars)
             .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, taskRunner instanceof RemoteRunnerInterface)))
             .orElse(null);
     }

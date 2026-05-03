@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.RegexUtils;
 import io.kestra.core.storages.StorageSplitInterface;
 
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
@@ -148,7 +149,7 @@ public abstract class StorageService {
 
         String row;
         while ((row = bufferedReader.readLine()) != null) {
-            Matcher matcher = pattern.matcher(row);
+            Matcher matcher = RegexUtils.matcher(pattern, row);
 
             if (matcher.find() && matcher.groupCount() > 0) {
                 String routingKey = matcher.group(1);

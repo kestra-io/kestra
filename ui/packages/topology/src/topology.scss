@@ -1,5 +1,8 @@
 @use "assets/styles/color-palette" as *;
-@use "assets/styles/variables" as *;
+
+$node-default: #7081b9;
+
+$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
 
 :root {
     --ks-topology-edge-color: #9A8EB4;
@@ -24,6 +27,10 @@ $node-colors: (
     @each $name, $color in $node-colors {
         --ks-node-#{$name}: #{$color};
     }
+}
+
+html.dark {
+    --ks-node-default: #{$base-gray-400};
 }
 
 .bg-white { background-color: $base-white; }

@@ -15,8 +15,6 @@
 </script>
 
 <style scoped lang="scss">
-@use "../assets/styles/variables" as v;
-
 .add-task-div {
     display: flex;
     justify-content: center;
@@ -30,7 +28,7 @@
     cursor: pointer;
 
     &.text-danger {
-        border-color: v.$red;
+        border-color: var(--ks-border-error);
     }
 
     &:hover {

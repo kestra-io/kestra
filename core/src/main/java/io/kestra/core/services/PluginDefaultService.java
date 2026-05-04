@@ -32,6 +32,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.models.flows.PluginDefaultSpec;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.RunContextLoggerFactory;
@@ -112,17 +113,36 @@ public class PluginDefaultService {
 
     /**
      * Gets the flow-level defaults values.
+     * <p>
+     * The {@code forced} flag is intentionally ignored at flow level: only administrators can enforce
+     * plugin defaults (via namespace, tenant, or global configuration). Any {@code forced: true} entry
+     * in a flow's {@code pluginDefaults} section is silently treated as {@code forced: false}.
      *
      * @param flow the flow to extract default
-     * @return list of {@code PluginDefault} ordered by most important first
+     * @return list of {@code PluginDefault} ordered by most important first, all with forced=false
      */
     protected List<PluginDefault> getFlowDefaults(final Map<String, Object> flow) {
         Object defaults = flow.get(PLUGIN_DEFAULTS_FIELD);
-        if (defaults != null) {
-            return OBJECT_MAPPER.convertValue(defaults, PLUGIN_DEFAULTS_TYPE_REF);
-        } else {
+        if (defaults == null) {
             return List.of();
         }
+
+        List<PluginDefault> flowDefaults = OBJECT_MAPPER.convertValue(defaults, PLUGIN_DEFAULTS_TYPE_REF);
+
+        boolean hasForced = flowDefaults.stream().anyMatch(PluginDefault::isForced);
+        if (hasForced) {
+            log.warn(
+                "Flow '{}' in namespace '{}' uses 'forced: true' in pluginDefaults." +
+                " The 'forced' flag is not supported at flow level and will be ignored." +
+                " Remove it from the flow to suppress this warning.",
+                flow.get("id"),
+                flow.get("namespace")
+            );
+        }
+
+        return flowDefaults.stream()
+            .map(entry -> entry.toBuilder().forced(false).build())
+            .toList();
     }
 
     /**
@@ -444,7 +464,7 @@ public class PluginDefaultService {
      * If the plugin default type is unknown,
      * validation will be disabled as we cannot differentiate between a prefix or an unknown type.
      */
-    public List<String> validateDefault(PluginDefault pluginDefault) {
+    public List<String> validateDefault(PluginDefaultSpec pluginDefault) {
         Class<? extends Plugin> classByIdentifier = getClassByIdentifier(pluginDefault);
         if (classByIdentifier == null) {
             // this can either be a prefix or a non-existing plugin, in both cases we cannot validate in detail
@@ -469,7 +489,7 @@ public class PluginDefaultService {
             .toList();
     }
 
-    protected Class<? extends Plugin> getClassByIdentifier(PluginDefault pluginDefault) {
+    protected Class<? extends Plugin> getClassByIdentifier(PluginDefaultSpec pluginDefault) {
         return pluginRegistry.findClassByIdentifier(pluginDefault.getType());
     }
 

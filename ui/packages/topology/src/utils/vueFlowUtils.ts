@@ -472,7 +472,7 @@ export function generateGraph(
                     padding: "0.5rem",
                 },
                 data: {
-                    collapsable: true,
+                    collaspsible: true,
                     color: clusterColor,
                     taskNode: cluster.cluster.taskNode,
                     unused: cluster.cluster.taskNode

@@ -6,7 +6,7 @@
         >{{ clusterName }}</span>
         <div class="top-button-div">
             <span
-                v-if="data.collapsable"
+                v-if="data.collaspsible"
                 class="circle-button"
                 :style="{backgroundColor: `var(--ks-node-${data.color})`}"
                 @click="collapse()"

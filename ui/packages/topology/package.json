@@ -18,7 +18,7 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "files": ["dist"],
-    "sideEffects": ["**/*.css", "**/*.scss", "./dist/style.css"],
+    "sideEffects": ["**/*.css", "**/*.scss", "./dist/style.css", "./src/index.ts"],
     "publishConfig": {
         "access": "public"
     },

@@ -1,6 +1,3 @@
-import {beforeAll} from "vitest"
-import {setProjectAnnotations} from "@storybook/vue3-vite"
-import * as projectAnnotations from "./preview"
 import {vi} from "vitest";
 import {type AppContext} from "vue";
 
@@ -25,6 +22,3 @@ console.warn = (...args: unknown[]) => {
     _warn(...args)
 }
 
-const project = setProjectAnnotations([projectAnnotations])
-
-beforeAll(project.beforeAll)

@@ -229,14 +229,14 @@
     }
 
     .ks-pebble * {
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         vertical-align: top;
     }
 }
 
 .duration-unit{
     color: var(--ks-content-inactive);
-    font-size: var(--kel-font-size-small);
+    font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;
 }

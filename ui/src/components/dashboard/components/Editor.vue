@@ -262,7 +262,7 @@
 </script>
 <style scoped lang="scss">
 
-    $spacing: var(--kel-font-size-large);
+    $spacing: var(--ks-font-size-lg);
 
     .main-editor {
         padding: .5rem 0px;
@@ -281,7 +281,7 @@
         background-color: transparent;
 
         .kel-empty__description {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
     }
 

@@ -160,7 +160,7 @@
 
 <style lang="scss" scoped>
     .nested :deep(p) {
-        font-size: 0.875rem;
+        font-size: var(--ks-font-size-sm);
         line-height: 22px;
         font-weight: normal;
     }
@@ -214,7 +214,7 @@
         display: flex;
         align-items: center;
         font-weight: 700;
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-info);

@@ -158,7 +158,7 @@
 
         &:not(.success) span:not(.material-design-icon) {
             margin-left: .5rem;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
 
         &.warning {
@@ -189,11 +189,11 @@
             padding: 1rem;
             background-color: var(--ks-background-table-header);
             border-radius: 0.5rem 0.5rem 0 0;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             font-weight: 700;
 
             .material-design-icon {
-                font-size: var(--kel-font-size-extra-large);
+                font-size: var(--ks-font-size-xl);
                 margin-right: .5rem;
             }
         }

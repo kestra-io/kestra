@@ -781,7 +781,7 @@
     .editor-absolute-container {
         position: absolute;
         top: 8px;
-        right: var(--kel-font-size-large);
+        right: var(--ks-font-size-lg);
         z-index: 10;
         color: var(--ks-content-secondary);
         cursor: pointer;
@@ -840,7 +840,7 @@
 
             .monaco-hover-content {
                 h4 {
-                    font-size: var(--kel-font-size-base);
+                    font-size: var(--ks-font-size-base);
                     font-weight: bold;
                     line-height: var(--kbs-body-line-height);
                 }

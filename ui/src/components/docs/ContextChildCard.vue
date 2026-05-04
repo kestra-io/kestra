@@ -83,12 +83,12 @@
 <style scoped lang="scss">
 
     .card-title {
-        font-size: 1.375rem !important;
+        font-size: var(--ks-font-size-xl) !important;
         line-height: 1.375rem !important;
     }
 
     .card-text {
-        font-size: var(--kel-font-size-small) !important;
+        font-size: var(--ks-font-size-sm) !important;
         line-height: 1rem !important;
     }
 

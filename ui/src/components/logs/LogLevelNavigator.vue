@@ -51,7 +51,7 @@
 
     .icon-button {
         cursor: pointer;
-        font-size: var(--kel-font-size-medium);
+        font-size: var(--ks-font-size-md);
     }
 }
 </style>

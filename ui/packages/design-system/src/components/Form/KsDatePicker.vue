@@ -46,14 +46,10 @@
     @use 'element-plus/theme-chalk/src/date-picker';
     @use 'element-plus/theme-chalk/src/date-picker-panel';
 
-    .kel-date-editor {
+    .kel-date-editor.kel-input {
+        --kel-date-editor-width: 100%;
         --kel-input-border-color: var(--ks-border-primary);
-        --kel-input-bg-color: var(--ks-background-input);
-
-        .kel-input {
-            background-color: var(--ks-background-body);
-            width: 100%;
-        }
+        --kel-input-bg-color: var(--ks-background-panel);
 
         .kel-input__icon {
             margin-right: .25rem;

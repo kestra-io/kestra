@@ -762,17 +762,17 @@
 
 <style scoped lang="scss">
 .md-label {
-    height: var(--kel-font-size-large);
+    height: var(--ks-font-size-lg);
 }
 
 .hint {
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-content-secondary);
 }
 
 .text-description {
     width: 100%;
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-content-secondary);
 }
 
@@ -860,7 +860,7 @@
 
             :deep(.kel-input__inner) {
                 color: #eeae7e !important;
-                font-size: var(--kel-font-size-small) !important;
+                font-size: var(--ks-font-size-sm) !important;
 
                 html.light & {
                     color: #dd5f00 !important;
@@ -898,7 +898,7 @@
     .add-new {
         padding: 5px 8px;
         color: var(--ks-content-tertiary);
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         background: none;
 
         &:hover {

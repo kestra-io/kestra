@@ -139,7 +139,7 @@
 
 <style scoped lang="scss">
     ul > li > span:first-child {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 
     $scrollbar-width: 6px;
@@ -244,7 +244,7 @@
                         font-size: 0.8rem;
                         color: var(--ks-content-secondary);
                     } @else {
-                        font-size: 0.75rem;
+                        font-size: var(--ks-font-size-xs);
                         color: var(--ks-content-secondary);
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }

@@ -82,7 +82,10 @@
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
     import useRouteContext from "../../composables/useRouteContext";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import {useMiscStore} from "override/stores/misc";
+
+    useRestoreUrl();
     import DemoButtons from "../demo/DemoButtons.vue";
     import EnterpriseTag from "../EnterpriseTag.vue";
 
@@ -112,7 +115,7 @@
 
         .header-block {
             p {
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
             }
 
         }
@@ -166,7 +169,7 @@
             .header-block {
 
                 p {
-                    font-size: var(--kel-font-size-small);
+                    font-size: var(--ks-font-size-sm);
                 }
             }
 
@@ -179,11 +182,11 @@
             .header-block {
 
                 h5 {
-                    font-size: var(--kel-font-size-medium);
+                    font-size: var(--ks-font-size-md);
                 }
 
                 p {
-                    font-size: var(--kel-font-size-extra-small);
+                    font-size: var(--ks-font-size-xs);
                 }
             }
         }
@@ -198,7 +201,7 @@
 
         ul,
         li {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
     }
 

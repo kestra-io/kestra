@@ -82,7 +82,7 @@
 
         h5 {
             margin-bottom: 0;
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
         }
 
         img {
@@ -109,7 +109,7 @@
         }
 
         .small {
-            font-size:  var(--kel-font-size-small);
+            font-size:  var(--ks-font-size-sm);
             opacity: 0.7;
         }
 

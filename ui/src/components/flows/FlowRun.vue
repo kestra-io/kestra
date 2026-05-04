@@ -293,7 +293,7 @@
         .kel-collapse-item__header {
             background: transparent;
             border-bottom: 1px solid var(--ks-border-primary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
 
         .kel-collapse-item__content {

@@ -1,5 +1,5 @@
 import {nextTick, onMounted} from "vue";
-import {type LocationQuery, useRoute, useRouter} from "vue-router";
+import {type LocationQuery, type RouteLocationNormalizedLoaded, useRoute, useRouter} from "vue-router";
 
 interface DefaultFilterOptions {
     namespace?: string | null;
@@ -15,9 +15,21 @@ interface DefaultFilterOptions {
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]";
 const SCOPE_FILTER_PREFIX = "filters[scope]";
 const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]";
+const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
 
 const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix));
+
+function readSavedRestoreState(route: RouteLocationNormalizedLoaded): LocationQuery {
+    const {tenant, tab} = route.params;
+    const key = `${route.name?.toString().replace("/", "_")}${tab ? "_" + tab : ""}${tenant ? "_" + tenant : ""}_restore_url`;
+    try {
+        const raw = window.sessionStorage.getItem(key);
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+}
 
 export function defaultNamespace() {
     return localStorage.getItem("defaultNamespace");
@@ -45,14 +57,9 @@ export function applyDefaultFilters(
         change = true;
     }
 
-    const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
-
     if (includeTimeRange) {
         const hasExisting = Object.keys(query).some(key => TIME_FILTER_KEYS.test(key));
-        if (!hasExisting || defaultDuration) {
-            if (hasExisting) {
-                Object.keys(query).forEach(key => { if (TIME_FILTER_KEYS.test(key)) delete query[key]; });
-            }
+        if (!hasExisting) {
             const duration = defaultDuration ?? "PT24H";
             query[`${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = duration;
             change = true;
@@ -78,12 +85,14 @@ export function useDefaultFilter(
     const router = useRouter();
 
     onMounted(async () => {
-        // wait for router to be ready
         await nextTick()
-        // wait for the useRestoreUrl to apply its changes
         await nextTick()
-        // finally add default filter if necessary
-        const {query, change} = applyDefaultFilters(route.query, defaultOptions)
+        // Apply defaults against (saved ∪ current URL) so we only fill keys
+        // that neither the URL nor the pending restore covers — letting newly
+        // changed defaults (e.g. defaultNamespace from settings) take effect
+        // without clobbering keys the user already chose.
+        const merged = {...readSavedRestoreState(route), ...route.query};
+        const {query, change} = applyDefaultFilters(merged, defaultOptions)
         if(change) {
             router.replace({...route, query})
         }

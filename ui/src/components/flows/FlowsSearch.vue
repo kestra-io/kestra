@@ -57,8 +57,11 @@
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import useRouteContext from "../../composables/useRouteContext";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     import {useFlowStore} from "../../stores/flow";
+
+    const {loadInit} = useRestoreUrl();
 
     const {t} = useI18n();
     const route = useRoute();
@@ -96,6 +99,7 @@
     }
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
+        if (!loadInit.value) return;
         const {page: _p, size: _s, sort: _so, ...filters} = route.query;
         const params: {page: number; size: number; [key: string]: any} = {page, size, ...filters};
         await flowStore.searchFlows(params).finally(() => {

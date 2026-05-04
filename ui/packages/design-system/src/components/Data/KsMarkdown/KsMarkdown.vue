@@ -514,7 +514,7 @@
                 padding: 4px 8px;
                 background-color: var(--ks-background-tertiary);
                 gap: 8px;
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
                 color: var(--kel-text-color-placeholder);
 
@@ -553,7 +553,7 @@
 
                 code {
                     font-family: var(--kel-font-family-monospace), monospace;
-                    font-size: var(--kel-font-size-small);
+                    font-size: var(--ks-font-size-sm);
                     background: none;
                     padding: 0;
                     border: none;

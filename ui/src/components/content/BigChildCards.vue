@@ -50,7 +50,7 @@
 
 h2.big-title {
     padding: 0;
-    font-size: var(--kel-font-size-extra-large);
+    font-size: var(--ks-font-size-xl);
     border: none;
     margin-top: 3rem;
     margin-bottom: 1rem;
@@ -72,8 +72,8 @@ h2.big-title {
         font-weight: normal;
     }
     p.card-text{
-        font-size: var(--kel-font-size-small);
-        line-height: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-sm);
+        line-height: var(--ks-font-size-xl);
     }
     &:hover{
         background: linear-gradient(180deg, rgba(#3a4051, .9) 0%, rgba(#272a36,.9) 100%), #9ca4ce;

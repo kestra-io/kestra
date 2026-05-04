@@ -110,14 +110,14 @@
         h3 {
             margin: 0 0 0.25rem;
             color: var(--ks-content-primary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             font-weight: 600;
         }
 
         p {
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             line-height: 1.4;
         }
     }

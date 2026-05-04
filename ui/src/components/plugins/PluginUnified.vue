@@ -222,7 +222,7 @@
         margin-bottom: 1rem;
         color: var(--ks-content-primary);
         font-weight: 600;
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         line-height: 36px;
 
         .icon {

@@ -109,8 +109,8 @@
         }
 
         &.kel-button--large {
-            font-size: var(--kel-font-size-base);
-            line-height: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
+            line-height: var(--ks-font-size-base);
         }
 
         &.is-text {

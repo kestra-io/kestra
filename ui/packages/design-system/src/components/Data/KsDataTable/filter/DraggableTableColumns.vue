@@ -127,7 +127,7 @@
 
             small {
                 color: var(--ks-content-tertiary);
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 font-weight: 400;
             }
         }

@@ -106,7 +106,7 @@
     border-radius: 8px;
 
     small {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         color: var(--ks-content-tertiary);
         font-weight: 400;
     }
@@ -126,14 +126,14 @@
         .title {
             h6 {
                 margin: 0;
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
         :deep(.close-icon) {
             color: var(--ks-content-tertiary);
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             cursor: pointer;
             padding-right: 0;
 
@@ -177,7 +177,7 @@
             flex-direction: column;
 
             .label {
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
                 font-weight: 400;
                 line-height: 1.375rem;
 
@@ -209,7 +209,7 @@
     color: var(--ks-chart-success);
     user-select: none;
     pointer-events: auto;
-    font-size: var(--kel-font-size-large);
+    font-size: var(--ks-font-size-lg);
 
     &:hover {
         color: var(--ks-content-success);

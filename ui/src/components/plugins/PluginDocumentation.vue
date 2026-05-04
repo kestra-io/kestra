@@ -108,7 +108,7 @@
 
     .plugin-title {
         min-width: 50px;
-        font-size: var(--kel-font-size-large);
+        font-size: var(--ks-font-size-lg);
     }
 
     .release-notes-btn {
@@ -124,7 +124,7 @@
 
         @media (max-width: 576px) {
             padding: 6px 12px;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             min-width: auto;
         }
     }

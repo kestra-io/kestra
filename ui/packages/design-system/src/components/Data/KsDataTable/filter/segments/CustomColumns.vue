@@ -60,7 +60,7 @@
     border-radius: 0.5rem;
 
     small {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         color: var(--ks-content-tertiary);
     }
 
@@ -79,14 +79,14 @@
         .title {
             h6 {
                 margin: 0;
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
         :deep(.close-icon) {
             color: var(--ks-content-tertiary);
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             cursor: pointer;
             padding-right: 0;
 
@@ -119,7 +119,7 @@
 }
 
 :deep(.column-label) {
-    font-size: var(--kel-font-size-small);
+    font-size: var(--ks-font-size-sm);
     font-weight: 400;
     line-height: 1.375rem;
 }

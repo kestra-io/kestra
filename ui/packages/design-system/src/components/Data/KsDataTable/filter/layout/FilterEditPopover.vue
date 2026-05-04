@@ -121,7 +121,7 @@
         border-radius: 8px;
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         padding: 0;
-        min-height: var(--kel-font-size-large);
+        min-height: var(--ks-font-size-lg);
         position: relative;
     }
 }

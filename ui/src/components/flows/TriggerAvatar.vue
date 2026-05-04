@@ -128,7 +128,7 @@
     }
 
     :deep(div.wrapper) {
-        width: var(--kel-font-size-large);
-        height: var(--kel-font-size-large);
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
     }
 </style>

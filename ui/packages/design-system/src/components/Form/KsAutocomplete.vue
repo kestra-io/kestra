@@ -66,7 +66,7 @@
             gap: .5rem;
 
             > span:not(.material-design-icon) {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 line-height: 1.25rem;
             }
         }

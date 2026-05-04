@@ -973,7 +973,7 @@
         background-color: var(--ks-scrollbar-content);
         padding: 10px;
         margin-top: 5px;
-        margin-bottom: var(--kel-font-size-large);
+        margin-bottom: var(--ks-font-size-lg);
     }
 
     .log-lines {

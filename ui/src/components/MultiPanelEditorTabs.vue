@@ -86,7 +86,7 @@
             border: 1px solid transparent;
             border-radius: 6px;
             padding: 0.35rem 0.75rem;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             color: var(--ks-color-text-primary);
             display: inline-flex;

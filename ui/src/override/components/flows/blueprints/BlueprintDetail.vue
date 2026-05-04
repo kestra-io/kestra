@@ -13,7 +13,7 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <KsIcon size="medium" @click="goBack">
+                <KsIcon size="sm" @click="goBack">
                     <ChevronLeft />
                 </KsIcon>
             </button>
@@ -277,7 +277,7 @@
 
             .blueprint-title {
                 font-weight: 600;
-                font-size: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-lg);
                 line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -297,7 +297,7 @@
         h4 {
             margin-top: calc(1rem * 2);
             font-weight: 600;
-            font-size: var(--kel-font-size-medium);
+            font-size: var(--ks-font-size-md);
             line-height: 28px;
         }
 
@@ -333,7 +333,7 @@
                         position: static;
                         background: none;
                         border-top: 0;
-                        font-size: var(--kel-font-size-small);
+                        font-size: var(--ks-font-size-sm);
                     }
 
                 }
@@ -350,7 +350,7 @@
             padding: 15px 10px;
             color: var(--ks-content-primary);
             text-transform: capitalize;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             border: 1px solid var(--ks-border-primary);
         }
 

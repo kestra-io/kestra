@@ -141,7 +141,7 @@
         }
 
         h1 {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             line-height: 1.6;
             display: flex !important;
             align-items: center;
@@ -152,7 +152,7 @@
         }
 
         .description {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             margin-top: -0.5rem;
             color: var(--ks-content-secondary);
         }

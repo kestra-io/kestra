@@ -601,7 +601,7 @@
 
         :deep(.kel-card__header) {
             padding: 0;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
 
             > div {
                 > * {
@@ -626,7 +626,7 @@
                     font-weight: normal;
 
                     .timeline-start, .timeline-end {
-                        font-size: var(--kel-font-size-small);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
                 }
@@ -672,11 +672,11 @@
                     small {
                         margin-left: 5px;
                         font-family: var(--kel-font-family-monospace);
-                        font-size: var(--kel-font-size-extra-small);
+                        font-size: var(--ks-font-size-xs);
                     }
 
                     code {
-                        font-size: var(--kel-font-size-small);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
                 }
@@ -689,14 +689,14 @@
                     text-overflow: ellipsis;
 
                     code {
-                        font-size: var(--kel-font-size-small);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
 
                     small {
                         margin-left: 5px;
                         font-family: var(--kel-font-family-monospace);
-                        font-size: var(--kel-font-size-extra-small);
+                        font-size: var(--ks-font-size-xs);
                     }
                 }
 

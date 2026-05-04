@@ -57,12 +57,12 @@
 
     h2 {
         line-height: 30px;
-        font-size: var(--kel-font-size-large);
+        font-size: var(--ks-font-size-lg);
         font-weight: 600;
     }
 
     p {
         line-height: 22px;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
     }
 </style>

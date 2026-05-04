@@ -289,7 +289,7 @@
     }
 
     .metric-title {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         font-weight: 600;
         margin-bottom: 0.5rem;
         color: var(--ks-content-secondary);

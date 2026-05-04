@@ -173,7 +173,7 @@
         & :deep(.kel-button) {
             margin-bottom: 1rem;
             padding: 1rem;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             overflow: hidden;
 
             span:not(i span) {
@@ -193,7 +193,7 @@
     .stack-trace {
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         max-height: calc(1rem * 15);
         overflow: auto;
     }

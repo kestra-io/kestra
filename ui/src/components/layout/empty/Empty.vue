@@ -38,7 +38,7 @@
     }
 
     h2 {
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         color: var(--ks-content-primary);
         font-weight: 600;
     }
@@ -46,7 +46,7 @@
     p {
         width: 100%;
         max-width: 553px;
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-secondary);
         line-height: 1.5rem;
     }

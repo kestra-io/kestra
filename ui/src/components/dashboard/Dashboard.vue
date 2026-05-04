@@ -36,6 +36,9 @@
         useNamespaceDashboardFilter,
         useFlowDashboardFilter
     } from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    useRestoreUrl();
 
     const dashboardFilter = useDashboardFilter();
     const flowDashboardFilter = useFlowDashboardFilter();

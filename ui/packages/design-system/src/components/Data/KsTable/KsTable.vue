@@ -96,7 +96,7 @@
         border-radius: var(--kel-border-radius-round);
         background-color: var(--ks-background-body);
         border-bottom-width: 0;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {

@@ -24,7 +24,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         & :deep(.kel-tag) {
             margin-left: calc(1rem / 1.5);

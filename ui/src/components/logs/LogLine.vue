@@ -5,7 +5,7 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
+        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
             <MenuRight />
         </KsIcon>
         <div class="log-content d-inline-block">

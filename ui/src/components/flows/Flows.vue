@@ -258,6 +258,9 @@
     import * as FILTERS from "../../utils/filters";
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {useFlowFilter} from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
@@ -392,6 +395,7 @@
     const ready = ref(false);
 
     async function loadData({page, size, sort}: {page: number; size: number; sort?: string}) {
+        if (!loadInit.value) return;
         await flowStore
             .findFlows(
                 loadQuery({

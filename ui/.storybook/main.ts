@@ -17,12 +17,6 @@ const config: StorybookConfig = {
             viteJSXPlugin(),
         ];
 
-        if (config.resolve) {
-            config.resolve.alias = {
-                ...config.resolve?.alias
-            };
-        }
-
         return mergeConfig(config, {
             define: {"process.env": {}},
         });

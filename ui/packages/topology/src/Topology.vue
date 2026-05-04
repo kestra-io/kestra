@@ -132,7 +132,7 @@
     import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import Information from "vue-material-design-icons/Information.vue";
-    import {cssVar as cssVariable} from "./utils/css";
+    import {cssVar as cssVariable} from "@kestra-io/design-system";
     import {CLUSTER_PREFIX} from "./utils/constants";
     import * as flowYamlUtils from "./utils/flowYamlUtils";
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"

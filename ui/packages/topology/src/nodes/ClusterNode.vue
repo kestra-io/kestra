@@ -2,13 +2,13 @@
     <div :class="classes">
         <span
             class="cluster-badge text-color"
-            :style="{backgroundColor: nodeColor(data.color)}"
+            :style="{backgroundColor: `var(--ks-node-${data.color})`}"
         >{{ clusterName }}</span>
         <div class="top-button-div">
             <span
                 v-if="data.collapsable"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(data.color)}"
+                :style="{backgroundColor: `var(--ks-node-${data.color})`}"
                 @click="collapse()"
             >
                 <KsTooltip :content="$t('collapse')">
@@ -23,10 +23,9 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue";
-    import KsTooltip from "../components/Tooltip.vue";
+    import {KsTooltip} from "@kestra-io/design-system";
     import {EVENTS} from "../utils/constants";
     import Utils from "../utils/utils";
-    import {nodeColor} from "../utils/css";
 
     defineOptions({inheritAttrs: false});
 

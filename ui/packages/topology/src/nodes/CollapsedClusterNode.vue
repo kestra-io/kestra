@@ -2,7 +2,7 @@
     <Handle type="source" :position="sourcePosition" />
     <div class="collapsed-cluster-node">
         <span class="node-text">
-            <LightningBolt :style="{color: nodeColor(data.color)}" class="node-icon" />
+            <LightningBolt :style="{color: `var(--ks-node-${data.color})`}" class="node-icon" />
             {{ Utils.afterLastDot(id ?? "") }}
         </span>
         <div class="top-button-div">
@@ -10,7 +10,7 @@
             <span
                 v-if="expandable"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(data.color)}"
+                :style="{backgroundColor: `var(--ks-node-${data.color})`}"
                 @click="emit(EVENTS.EXPAND, {id})"
             >
                 <KsTooltip :content="$t('expand')">
@@ -28,10 +28,10 @@
     import {Handle, Position} from "@vue-flow/core";
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import KsTooltip from "../components/Tooltip.vue";
+    import {KsTooltip} from "@kestra-io/design-system";
     import {EVENTS} from "../utils/constants";
     import Utils from "../utils/utils";
-    import {nodeColor} from "../utils/css";
+
 
     defineOptions({inheritAttrs: false});
 

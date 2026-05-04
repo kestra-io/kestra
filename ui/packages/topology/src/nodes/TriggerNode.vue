@@ -13,7 +13,7 @@
             <span
                 v-if="!execution"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.EDIT, {task: data.node.triggerDeclaration, section: SECTIONS.TRIGGERS})"
             >
                 <KsTooltip :content="$t('edit')">
@@ -23,7 +23,7 @@
             <span
                 v-if="!execution"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.DELETE, {id: triggerId, section: SECTIONS.TRIGGERS})"
             >
                 <KsTooltip :content="$t('delete')">
@@ -41,10 +41,10 @@
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import BasicNode from "./BasicNode.vue";
-    import KsTooltip from "../components/Tooltip.vue";
-    import {EVENTS, SECTIONS} from "../utils/constants";
+    import {KsTooltip, SECTIONS} from "@kestra-io/design-system";
+    import {EVENTS} from "../utils/constants";
     import Utils from "../utils/utils";
-    import {nodeColor} from "../utils/css";
+
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys";
 
     defineOptions({name: "Task", inheritAttrs: false});

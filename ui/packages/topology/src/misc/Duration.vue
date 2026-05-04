@@ -19,9 +19,8 @@
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {type Moment} from "moment";
-    import {State} from "../utils/state";
+    import {State, KsTooltip} from "@kestra-io/design-system";
     import * as Utils from "../utils/utils";
-    import KsTooltip from "../components/Tooltip.vue";
 
     const props = defineProps<{
         histories: {

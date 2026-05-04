@@ -1,9 +1,3 @@
-export const SECTIONS = {
-    TASKS: "TASKS",
-    TRIGGERS: "TRIGGERS",
-    TASK_RUNNERS: "TASK_RUNNERS",
-} as const;
-
 export const CLUSTER_PREFIX = "cluster_";
 
 export const EVENTS = {

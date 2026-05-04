@@ -33,7 +33,7 @@
                 <span
                     v-if="data.link"
                     class="circle-button"
-                    :style="{backgroundColor: nodeColor(data.color)}"
+                    :style="{backgroundColor: `var(--ks-node-${data.color})`}"
                     @click="$emit(EVENTS.OPEN_LINK, {link: data.link})"
                 >
                     <KsTooltip :content="$t('open')">
@@ -43,7 +43,7 @@
                 <span
                     v-if="expandable"
                     class="circle-button"
-                    :style="{backgroundColor: nodeColor(data.color)}"
+                    :style="{backgroundColor: `var(--ks-node-${data.color})`}"
                     @click="$emit(EVENTS.EXPAND)"
                 >
                     <KsTooltip :content="$t('expand')">
@@ -60,13 +60,13 @@
 <script lang="ts" setup>
     import {computed} from "vue";
     import TaskIcon from "../components/TaskIcon.vue";
-    import KsTooltip from "../components/Tooltip.vue";
+    import {KsTooltip} from "@kestra-io/design-system";
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
     import {EVENTS} from "../utils/constants";
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import Utils from "../utils/utils";
-    import {nodeColor} from "../utils/css";
+
 
     const emit = defineEmits([
         EVENTS.EXPAND,

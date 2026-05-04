@@ -35,7 +35,7 @@
     import {EdgeLabelRenderer, getSmoothStepPath} from "@vue-flow/core";
     import AddTaskButton from "../buttons/AddTaskButton.vue";
     import {EVENTS} from "../utils/constants";
-    import KsTooltip from "../components/Tooltip.vue";
+    import {KsTooltip} from "@kestra-io/design-system";
 
     const props = defineProps({
         id: {type: String, default: undefined},

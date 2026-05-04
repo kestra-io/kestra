@@ -68,7 +68,7 @@
             <span
                 v-if="data.node.task && data.node.task.runIf"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor('warning')}"
+                :style="{backgroundColor: 'var(--ks-node-warning)'}"
                 @click="emit(EVENTS.SHOW_CONDITION, {id: taskId, task: data.node.task, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('show task condition')">
@@ -78,7 +78,7 @@
             <span
                 v-if="taskExecution"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.SHOW_LOGS, {id: taskId, execution: taskExecution, taskRuns})"
             >
                 <KsTooltip :content="$t('show task logs')">
@@ -89,7 +89,7 @@
                 v-if="actionConfig?.eventName === EVENTS.SHOW_CUSTOM_ACTION && data.node.task"
                 type="button"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 :aria-label="actionConfig.config.label"
                 @click="onShowDetails()"
             >
@@ -100,7 +100,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.ADD_ERROR, {task: data.node.task})"
             >
                 <KsTooltip :content="$t('add error handler')">
@@ -110,7 +110,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.EDIT, {task: data.node.task, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('edit')">
@@ -120,7 +120,7 @@
             <span
                 v-if="!taskExecution && !data.isReadOnly"
                 class="circle-button"
-                :style="{backgroundColor: nodeColor(color)}"
+                :style="{backgroundColor: `var(--ks-node-${color})`}"
                 @click="emit(EVENTS.DELETE, {id: taskId, section: SECTIONS.TASKS})"
             >
                 <KsTooltip :content="$t('delete')">
@@ -135,9 +135,7 @@
 <script setup lang="ts">
     import {computed, inject} from "vue";
     import {Handle, Position} from "@vue-flow/core";
-    import {State} from "../utils/state";
-    import {SECTIONS} from "../utils/constants";
-    import KsTooltip from "../components/Tooltip.vue";
+    import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system";
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants";
     import ExecutionInformations from "../misc/ExecutionInformations.vue";
     import Utils from "../utils/utils";
@@ -160,7 +158,7 @@
     import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue";
     import RotatingDots from "../assets/icons/RotatingDots.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import {nodeColor} from "../utils/css";
+
 
     interface TaskType {
         id: string;

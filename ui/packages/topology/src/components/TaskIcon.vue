@@ -13,8 +13,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import Tooltip from "./Tooltip.vue";
-    import {cssVar} from "../utils/css";
+    import {KsTooltip as Tooltip, cssVar} from "@kestra-io/design-system";
 
     defineOptions({name: "TaskIcon"})
 

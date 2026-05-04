@@ -1,7 +1,7 @@
 import {provide} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import FileExplorer, {FILES_OPEN_TAB_INJECTION_KEY, FILES_CLOSE_TAB_INJECTION_KEY} from "../../../../src/components/inputs/FileExplorer.vue";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "inputs/FileExplorer",
@@ -21,7 +21,7 @@ export default meta;
 export const Default = {
     render: () => ({
         setup() {
-            const axios = useClient()
+            const axios = {}
 
             provide(FILES_OPEN_TAB_INJECTION_KEY, () => {})
             provide(FILES_CLOSE_TAB_INJECTION_KEY, () => {})
@@ -34,6 +34,8 @@ export const Default = {
                         {fileName: "animals.txt", type: "File"},
                     ]
                 })}
+            
+            setMockClient(axios);
 
 
             return () => <div style="margin: 1rem;">

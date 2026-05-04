@@ -1,6 +1,6 @@
 import Triggers from "../../../../src/components/admin/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -89,7 +89,7 @@ const triggersData = [
 
 const Template = (args) => ({
     setup() {
-        const store = useClient()
+        const store = {}
         store.get = async function (uri) {
             if (uri.includes("/triggers/search")) {
                 return {
@@ -133,6 +133,8 @@ const Template = (args) => ({
             console.log("put request", uri)
             return {data: {}}
         }
+
+        setMockClient(store);
 
         return () =>
             <Triggers />

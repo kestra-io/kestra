@@ -72,9 +72,8 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
-    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
     import {KsTaskIcon} from "@kestra-io/design-system";
-    import {isPluginMatched} from "../../utils/pluginUtils";
+    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
@@ -339,7 +338,7 @@
         align-items: center;
 
         :deep(svg) {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
         }
     }
 
@@ -348,7 +347,7 @@
         margin-left: auto;
 
         :deep(.kel-input__inner) {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
 
             &::placeholder {
                 color: var(--ks-content-tertiary) !important;
@@ -409,14 +408,14 @@
 
             .name {
                 color: var(--ks-content-primary);
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
                 line-height: 1.5;
             }
         }
 
         .chevron-right-icon {
             color: var(--ks-content-tertiary);
-            font-size: var(--kel-font-size-extra-large);
+            font-size: var(--ks-font-size-xl);
         }
     }
 }

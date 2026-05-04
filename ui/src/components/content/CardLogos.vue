@@ -71,16 +71,16 @@
         }
 
         p.title {
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             font-weight: 600;
             line-height: 28px;
         }
 
         p.description {
             color: #B9B9BA;
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             font-weight: 400;
-            line-height: var(--kel-font-size-large);
+            line-height: var(--ks-font-size-lg);
             text-align: left;
         }
     }

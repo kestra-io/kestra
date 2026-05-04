@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, Ref, ref, watch} from "vue";
+    import {computed, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
     import useRouteContext from "../../../composables/useRouteContext";
@@ -89,14 +89,11 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
-    import useRestoreUrl from "../../../composables/useRestoreUrl";
-
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
 
     const namespacesFilter = useNamespacesFilter();
-    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     interface Node {
         id: string;
@@ -127,13 +124,9 @@
         ).all();
     };
 
-    onMounted(() => loadData());
     watch(
         () => route.query["filters[q][EQUALS]"],
-        () => {
-            loadData();
-            saveRestoreUrl();
-        },
+        () => loadData(),
         {immediate: true}
     );
 
@@ -215,7 +208,7 @@
 
         & span.system {
             line-height: 1.5rem;
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
             color: var(--ks-content-primary);
         }
     }

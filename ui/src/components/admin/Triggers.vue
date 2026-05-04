@@ -325,6 +325,9 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useTriggerFilter} from "../filter/configurations";
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -435,6 +438,7 @@
     const ready = ref(false);
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         const query = loadQuery({
             size,
             page,
@@ -832,7 +836,7 @@
 
         &.is-checked {
             .is-text {
-                color: #ffffff;
+                color: var(--ks-white);
             }
         }
     }
@@ -858,7 +862,7 @@
         .kel-collapse-item__header {
             background: transparent;
             border-bottom: 1px solid var(--ks-border-primary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
 
         .kel-collapse-item__content {

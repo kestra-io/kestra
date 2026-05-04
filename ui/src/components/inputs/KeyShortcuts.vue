@@ -2,7 +2,7 @@
     <KsDialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
-                <KsIcon :size="30">
+                <KsIcon size="xl">
                     <Keyboard />
                 </KsIcon>
                 <span class="fs-6">

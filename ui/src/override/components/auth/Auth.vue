@@ -86,7 +86,7 @@
 
     .menu-icon {
         color: var(--ks-content-tertiary);
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
     }
 }
 </style>
@@ -106,7 +106,7 @@
             height: fit-content;
             padding: 10px 16px 8px 16px;
             margin: 0;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             font-weight: 700;
         }
 

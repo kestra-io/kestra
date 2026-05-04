@@ -69,7 +69,7 @@
         background-color: var(--ks-button-background-secondary);
         color: var(--ks-content-primary);
         box-shadow: 0px 4px 4px 0px #00000040;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         border: none;
         border-radius: 3rem;

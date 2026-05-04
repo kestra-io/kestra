@@ -104,7 +104,7 @@
         h3 {
             margin: 0 0 0.75rem;
             color: var(--ks-content-primary);
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.1;
         }
@@ -112,7 +112,7 @@
         p {
             margin: 0 0 1.5rem;
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }
     }

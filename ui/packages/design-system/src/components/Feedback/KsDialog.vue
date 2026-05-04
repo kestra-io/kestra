@@ -79,7 +79,7 @@
                 }
             }
             .kel-dialog__title {
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
                 font-weight: 700;
             }
         }
@@ -90,7 +90,7 @@
             border-top-right-radius: var(--kel-border-radius-round);
             border-top-left-radius: var(--kel-border-radius-round);
             background: var(--ks-dialog-header);
-            font-size: var(--kel-font-size-medium);
+            font-size: var(--ks-font-size-md);
 
             .kel-dialog__headerbtn {
                 height: 62px;

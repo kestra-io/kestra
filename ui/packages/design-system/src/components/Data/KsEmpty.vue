@@ -53,7 +53,7 @@
     }
 
     .kel-empty__description {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-secondary);
     }
 </style>

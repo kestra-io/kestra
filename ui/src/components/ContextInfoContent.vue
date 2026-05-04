@@ -43,7 +43,7 @@
         gap: 1rem;
 
         h2 {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;

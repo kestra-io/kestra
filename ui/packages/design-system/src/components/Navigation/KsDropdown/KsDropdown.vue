@@ -28,7 +28,7 @@
     @use 'element-plus/theme-chalk/src/dropdown';
 
     .kel-dropdown__popper {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         --kel-dropdown-menuItem-hover-fill: var(--ks-dropdown-background-hover);
         --kel-dropdown-menuItem-hover-color: var(--ks-content-primary);
 

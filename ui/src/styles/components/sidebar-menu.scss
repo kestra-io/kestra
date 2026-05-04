@@ -10,7 +10,7 @@
     }
 
     .vsm--icon {
-        width: var(--kel-font-size-large);
+        width: var(--ks-font-size-lg);
         margin-right: calc(1rem / 2);
         transition: left 0.2s ease;
         background-color: transparent !important;
@@ -26,7 +26,7 @@
     }
 
     .vsm--title {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         &>span {
             width: 100%;
@@ -38,7 +38,7 @@
             padding: 0;
 
             .vsm--title {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
             }
         }
 

@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="title">
-        <template v-if="$slots.cta" #additional-right>
+        <template v-if="$slots.cta" #actions>
             <slot name="cta" />
         </template>
     </TopNavBar>
@@ -123,8 +123,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
-
     :global(main:has(section#welcome)) {
         max-height: 100%;
         overflow: hidden;
@@ -171,9 +169,9 @@
             }
 
             &.kel-tag--primary {
-                border-color: var(--kel-color-primary);
-                background-color: var(--kel-color-primary);
-                color: white;
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
+                color: var(--ks-white);
             }
         }
 
@@ -194,7 +192,7 @@
         .welcome-help-title {
             margin: 0 0 0.875rem;
             color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
         }
 
         :deep(.kel-row) {

@@ -7,7 +7,14 @@
         <template #content>
             <template v-if="ast?.body">
                 <h1>{{ routeInfo.title }}</h1>
-                <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+                <div class="markdown">
+                    <MDCRenderer
+                        :body="ast.body"
+                        :data="ast.data"
+                        :key="ast"
+                        :components="proseComponents"
+                    />
+                </div>
             </template>
         </template>
     </DocsLayout>

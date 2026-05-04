@@ -38,7 +38,7 @@
 
     & p.label {
         margin-bottom: calc(1rem / 3);
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         font-weight: 500;
     }
 }

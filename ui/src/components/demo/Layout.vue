@@ -74,15 +74,15 @@
 
         h2 {
             margin: 1rem 0;
-            line-height: var(--kel-font-size-large);
-            font-size: var(--kel-font-size-medium);
+            line-height: var(--ks-font-size-lg);
+            font-size: var(--ks-font-size-md);
             font-weight: 600;
             text-align: center;
         }
 
         p {
             line-height: 16px;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             text-align: left;
             color: var(--ks-content-secondary);
         }
@@ -122,17 +122,17 @@
 
         .enterprise-tag {
             padding: .125rem 0.75rem;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
 
         .msg-block {
             h2 {
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
                 line-height: 24px;
             }
 
             p {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 line-height: 18px;
             }
         }
@@ -140,20 +140,20 @@
 
     @include res(lg) {
         .enterprise-tag {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             padding: .125rem 1rem;
         }
 
         .msg-block {
             h2 {
-                font-size: var(--kel-font-size-medium);
+                font-size: var(--ks-font-size-md);
                 line-height: 26px;
                 margin: 1.5rem 0;
             }
 
             p {
-                font-size: var(--kel-font-size-extra-small);
-                line-height: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-xs);
+                line-height: var(--ks-font-size-lg);
             }
         }
 
@@ -166,12 +166,12 @@
     @include res(xl) {
         .msg-block {
             h2 {
-                font-size: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-lg);
                 line-height: 30px;
             }
 
             p {
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
                 line-height: 22px;
             }
         }

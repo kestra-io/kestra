@@ -55,7 +55,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, reactive} from "vue";
     import {useRoute} from "vue-router";
-    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../../utils/pluginUtils";
     import {KsTaskIcon} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../stores/plugins";
     import {cap} from "../../utils/filters";
@@ -231,14 +231,14 @@
         }
 
         .kel-collapse-item__header {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
 
         ul {
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
             margin-left: .5rem;
         }
 
@@ -250,8 +250,8 @@
 
         .toc-h3 {
             .icon {
-                width: var(--kel-font-size-small);
-                height: var(--kel-font-size-small);
+                width: var(--ks-font-size-sm);
+                height: var(--ks-font-size-sm);
                 display: inline-block;
                 position: relative;
             }
@@ -264,7 +264,7 @@
                 margin-left: .5rem;
 
                 h6 {
-                    font-size: var(--kel-font-size-small);
+                    font-size: var(--ks-font-size-sm);
                     margin-bottom: .5rem;
                 }
 
@@ -292,7 +292,7 @@
             }
 
             .kel-collapse-item__header {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
             }
 
             ul {
@@ -307,7 +307,7 @@
                 }
 
                 h6 {
-                    font-size: var(--kel-font-size-extra-small);
+                    font-size: var(--ks-font-size-xs);
                 }
 
                 .toc-h4 {

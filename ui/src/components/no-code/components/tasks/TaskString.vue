@@ -143,9 +143,9 @@
         return $moment().seconds(0).minutes(0).hours(0).toDate();
     });
 
-    function onInputDuration(value: Date | "" | null) {
+    function onInputDuration(value: string | Date | null | undefined) {
         const emitted =
-            value === "" || value === null
+            !(value instanceof Date)
                 ? undefined
                 : $moment
                     .duration({
@@ -229,14 +229,14 @@
     }
 
     .ks-pebble * {
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         vertical-align: top;
     }
 }
 
 .duration-unit{
     color: var(--ks-content-inactive);
-    font-size: var(--kel-font-size-small);
+    font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;
 }

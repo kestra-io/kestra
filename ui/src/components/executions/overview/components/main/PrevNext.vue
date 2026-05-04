@@ -95,7 +95,7 @@
     margin-bottom: 1rem;
 
     .kel-button {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
     }
 }
 </style>

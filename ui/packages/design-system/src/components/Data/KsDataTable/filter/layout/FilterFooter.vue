@@ -50,7 +50,7 @@
     border-top: 1px solid var(--ks-border-primary);
 
     .selection-display {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

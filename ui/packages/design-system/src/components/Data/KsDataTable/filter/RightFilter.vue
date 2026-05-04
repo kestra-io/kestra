@@ -128,7 +128,7 @@
     .saved-btn {
         box-shadow: none;
         margin: 0;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         box-shadow: var(--ks-box-shadow);
 
         .saved-content {
@@ -155,7 +155,7 @@
         margin: 0;
         padding: 0.5rem;
         border-radius: 0.25rem;
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-primary) !important;
     }
 
@@ -165,7 +165,7 @@
         box-shadow: none;
         margin: 0;
         padding: 0.25rem 0.5rem;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
 
         :deep(svg) {
             color: var(--ks-content-tertiary);

@@ -62,14 +62,14 @@
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
-            <div class="plugin-doc" v-if="pluginsStore.plugin">
+            <div class="plugin-doc" v-if="pluginsStore.plugin && pluginType">
                 <Suspense v-ks-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
                         :darkMode="miscStore.theme === 'dark'"
                         :schema="pluginsStore.plugin.schema"
                         :propsInitiallyExpanded="true"
-                        :pluginType="pluginType!"
+                        :pluginType="pluginType"
                         noUrlChange
                     >
                         <template #markdown="{content}">
@@ -86,7 +86,7 @@
     import {ref, computed, onMounted, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {SchemaToHtml} from "@kestra-io/ui-libs";
+    import SchemaToHtml from "./schema/SchemaToHtml.vue";
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import DocsLayout from "../docs/DocsLayout.vue";
     import PluginHome from "./PluginHome.vue";
@@ -231,8 +231,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "../../styles/components/plugin-doc";
-
     .plugin-secondary-header {
         display: flex;
         align-items: center;
@@ -251,7 +249,7 @@
         }
 
         .plugin-name {
-            font-size: var(--kel-font-size-extra-large);
+            font-size: var(--ks-font-size-xl);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -301,14 +299,14 @@
             }
 
             .plugin-name {
-                font-size: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-lg);
                 flex: 1;
                 min-width: 0;
             }
 
             .release-notes-btn {
                 padding: 6px 12px;
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 min-width: auto;
             }
 

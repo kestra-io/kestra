@@ -119,7 +119,7 @@
 
                 .option-label {
                     font-weight: 500;
-                    font-size: var(--kel-font-size-small);
+                    font-size: var(--ks-font-size-sm);
                     margin: 0 6px;
                 }
 
@@ -140,7 +140,7 @@
         box-shadow: none;
         margin: 0;
         padding: 0.25rem 0.5rem;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         :deep(svg) {
             color: var(--ks-content-tertiary);

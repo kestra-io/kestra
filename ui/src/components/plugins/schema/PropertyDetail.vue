@@ -1,0 +1,177 @@
+<template>
+    <div class="property-detail">
+        <div v-if="subtype">
+            <span>SubType</span>
+            <a v-if="subtype.startsWith('#')" :href="subtype" @click.stop>
+                <KsButton class="ref-type-button">
+                    <span class="ref-type">{{ className(subtype) }}</span>
+                    <EyeOutline />
+                </KsButton>
+            </a>
+            <span v-else class="type-box">{{ subtype }}</span>
+        </div>
+
+        <template v-for="row in VALUE_ROWS" :key="row.label">
+            <div v-if="isVisible(row)">
+                <span>{{ row.label }}</span>
+                <code class="value-pill">
+                    {{ formatValue(row) }}
+                </code>
+            </div>
+        </template>
+
+        <div v-if="enumValues !== undefined">
+            <span>Possible Values</span>
+            <div class="enum-values">
+                <code v-for="(possibleValue, index) in enumValues" :key="index" class="value-pill">
+                    {{ possibleValue }}
+                </code>
+            </div>
+        </div>
+
+        <div v-if="property.title !== undefined || property.description !== undefined">
+            <div class="property-description markdown">
+                <slot
+                    v-if="property.title !== undefined"
+                    name="markdown"
+                    :content="sanitizeForMarkdown(property.title)"
+                />
+                <slot
+                    v-if="property.description !== undefined"
+                    name="markdown"
+                    :content="sanitizeForMarkdown(property.description)"
+                />
+                <div v-if="property['$internalStorageURI']">
+                    <KsAlert type="info" showIcon :closable="false">
+                        <slot
+                            name="markdown"
+                            :content="INTERNAL_STORAGE_URI_HINT"
+                        />
+                    </KsAlert>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils";
+    import {KsAlert, KsButton} from "@kestra-io/design-system";
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+
+    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`.";
+
+    type ValueRow = {
+        key: keyof JSONProperty;
+        label: string;
+        format?: (value: JSONProperty[keyof JSONProperty]) => string;
+        show?: (value: JSONProperty[keyof JSONProperty]) => boolean;
+    };
+
+    const VALUE_ROWS: readonly ValueRow[] = [
+        {key: "default", label: "Default"},
+        {key: "pattern", label: "Validation RegExp"},
+        {key: "unit", label: "Unit", show: (value) => typeof value === "string" && value.trim().length > 0},
+        {key: "minLength", label: "Min length"},
+        {key: "maxLength", label: "Max length"},
+        {key: "minItems", label: "Min items"},
+        {key: "maxItems", label: "Max items"},
+        {key: "minimum", label: "Minimum", format: (value) => `>= ${value}`},
+        {key: "exclusiveMinimum", label: "Minimum", format: (value) => `> ${value}`},
+        {key: "maximum", label: "Maximum", format: (value) => `<= ${value}`},
+        {key: "exclusiveMaximum", label: "Maximum", format: (value) => `< ${value}`},
+        {key: "format", label: "Format"},
+    ];
+
+    const props = defineProps<{property: JSONProperty}>();
+
+    const subtype = extractTypeInfo(props.property).subType;
+    const enumValues = extractEnumValues(props.property);
+
+    const isVisible = (row: ValueRow) => {
+        const value = props.property[row.key];
+        return value !== undefined && (row.show?.(value) ?? true);
+    };
+
+    const formatValue = (row: ValueRow) => {
+        const value = props.property[row.key];
+        return row.format ? row.format(value) : value;
+    };
+</script>
+
+<style lang="scss" scoped>
+    .property-detail > * {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacer);
+        padding: 1rem 0;
+        border-top: 1px solid var(--ks-border-primary);
+
+        span, .property-description:deep(p) {
+            line-height: 1.5rem;
+            font-size: var(--ks-font-size-sm) !important;
+        }
+
+        .property-description {
+            color: var(--ks-content-secondary);
+        }
+
+        code {
+            color: var(--ks-content-primary);
+            background: var(--ks-background-card) !important;
+        }
+
+        &:first-child {
+            padding-top: 0;
+            border-top: none !important;
+        }
+
+        &:last-child {
+            padding-bottom: 0;
+        }
+
+        > * {
+            width: fit-content;
+        }
+    }
+
+    .ref-type-button {
+        display: flex;
+        align-items: center;
+        font-weight: 700;
+        font-size: var(--ks-font-size-xs);
+        line-height: 1;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--ks-border-info);
+        border-radius: 0.25rem;
+        background: transparent;
+        color: var(--ks-tag-content);
+        cursor: pointer;
+    }
+
+    .type-box {
+        font-size: var(--ks-font-size-xs);
+        line-height: 1;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        background-color: var(--ks-tag-background-active);
+        color: var(--ks-tag-content);
+        text-transform: capitalize;
+    }
+
+    .value-pill {
+        font-size: var(--ks-font-size-xs);
+        line-height: 1;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 0.25rem;
+    }
+
+    .enum-values {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 2rem;
+    }
+</style>

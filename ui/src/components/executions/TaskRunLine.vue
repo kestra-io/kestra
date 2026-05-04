@@ -368,10 +368,7 @@
                 return `${taskRunId}-${attemptNumber}`
             },
             shouldDisplayChevron(taskRun) {
-                return this.shouldDisplayProgressBar(taskRun) || this.shouldDisplayLogs(taskRun.id)
-            },
-            shouldDisplayProgressBar(taskRun) {
-                return this.taskType(taskRun) === "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable" || this.taskType(taskRun) === "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+                return this.shouldDisplayLogs(taskRun.id)
             },
             shouldDisplayLogs(taskRunId) {
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
@@ -427,7 +424,7 @@
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--kel-font-size-extra-small)
+            font-size: var(--ks-font-size-xs)
         }
 
         .task-duration small {
@@ -454,7 +451,7 @@
 
             span span {
                 color: var(--ks-content-primary);
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
 
                 html:not(.dark) & {
                     color: #26282D;

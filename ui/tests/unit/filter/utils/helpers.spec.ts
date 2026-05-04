@@ -6,11 +6,9 @@ import {
     getUniqueFilters,
     keyOfComparator,
     Comparators,
-} from "@kestra-io/design-system";
-import {
     clearFilterQueryParams,
     isSearchPath,
-} from "@kestra-io/design-system/src/components/Data/KsDataTable/filter/utils/helpers";
+} from "@kestra-io/design-system";
 
 describe("Filter Helpers", () => {
     describe("decodeSearchParams", () => {

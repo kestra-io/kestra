@@ -14,6 +14,7 @@
         v-if="tab === 'kv'"
         :label="$t('kv.inherited')"
         :icon="FamilyTree"
+        type="default"
         @click="namespacesStore.inheritedKVModalVisible = true"
     />
 

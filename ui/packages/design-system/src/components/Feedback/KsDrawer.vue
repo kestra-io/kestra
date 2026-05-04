@@ -150,7 +150,7 @@
             border-bottom: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             font-weight: bold;
-            font-size: var(--kel-font-size-medium);
+            font-size: var(--ks-font-size-md);
         }
     }
 

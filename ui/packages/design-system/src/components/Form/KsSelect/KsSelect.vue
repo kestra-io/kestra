@@ -1,7 +1,6 @@
 <template>
     <ElSelect
         v-model="model"
-        :persistent="false"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @change="emit('change', $event)"
     >
@@ -95,7 +94,7 @@
          }
 
          &:not(.kel-select--small), &:not(.kel-select--large) {
-             font-size: var(--kel-font-size-base);
+             font-size: var(--ks-font-size-base);
          }
 
         .kel-select__caret {
@@ -146,7 +145,7 @@
     }
 
     .kel-icon.kel-select__caret.kel-select__icon {
-        font-size: var(--kel-font-size-medium);
+        font-size: var(--ks-font-size-md);
     }
 
 </style>

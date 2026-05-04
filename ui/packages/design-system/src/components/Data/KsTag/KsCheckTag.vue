@@ -42,17 +42,17 @@
 
     .kel-check-tag {
         &--small {
-            --kel-font-size-base: var(--kel-font-size-extra-small);
+            --kel-font-size-base: var(--ks-font-size-xs);
             padding: 3px 8px;
         }
 
         &--default {
-            --kel-font-size-base: var(--kel-font-size-base);
+            --kel-font-size-base: var(--ks-font-size-base);
             padding: 7px 15px;
         }
 
         &--large {
-            --kel-font-size-base: var(--kel-font-size-medium);
+            --kel-font-size-base: var(--ks-font-size-md);
             padding: 9px 18px;
         }
     }

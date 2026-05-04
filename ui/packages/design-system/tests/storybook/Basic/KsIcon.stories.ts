@@ -6,7 +6,7 @@ const meta: Meta<typeof KsIcon> = {
     component: KsIcon,
     tags: ["autodocs"],
     argTypes: {
-        size: {control: "text"},
+        size: {control: "select", options: ["xs", "sm", "base", "lg", "xl"]},
         color: {control: "color"},
     },
     parameters: {
@@ -28,7 +28,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {size: 24},
+    args: {size: "lg"},
 }
 
 /** Loading animation – spinning icon */
@@ -37,7 +37,7 @@ export const Loading: Story = {
         components: {KsIcon},
         template: `
             <div style="padding:24px;display:flex;gap:16px;align-items:center">
-                <ks-icon :size="24" class="is-loading">
+                <ks-icon size="lg" class="is-loading">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
                         <path d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 0 0-94.3-139.9 437.71 437.71 0 0 0-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z" fill="currentColor"/>
                     </svg>
@@ -54,13 +54,13 @@ export const Colors: Story = {
         components: {KsIcon},
         template: `
             <div style="padding:24px;display:flex;gap:16px;align-items:center">
-                <ks-icon :size="24" color="#409eff">
+                <ks-icon size="lg" color="var(--ks-content-info)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
-                <ks-icon :size="24" color="#67c23a">
+                <ks-icon size="lg" color="var(--ks-content-success)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
-                <ks-icon :size="24" color="#f56c6c">
+                <ks-icon size="lg" color="var(--ks-content-error)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
             </div>
@@ -68,19 +68,25 @@ export const Colors: Story = {
     }),
 }
 
-/** Colors */
+/** Sizes — full token scale (xs / sm / base / lg / xl) */
 export const Sizes: Story = {
     render: () => ({
         components: {KsIcon},
         template: `
             <div style="padding:24px;display:flex;gap:16px;align-items:center">
-                <ks-icon :size="16" color="var(--kel-color-primary)">
+                <ks-icon size="xs" color="var(--ks-content-primary)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
-                <ks-icon :size="24" color="var(--kel-color-success)">
+                <ks-icon size="sm" color="var(--ks-content-primary)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
-                <ks-icon :size="32" color="var(--kel-color-danger)">
+                <ks-icon size="base" color="var(--ks-content-primary)">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+                <ks-icon size="lg" color="var(--ks-content-primary)">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
+                </ks-icon>
+                <ks-icon size="xl" color="var(--ks-content-primary)">
                     <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm32 664h-64V448h64v280zm-32-340a48 48 0 1 1 0-96 48 48 0 0 1 0 96z" fill="currentColor"/></svg>
                 </ks-icon>
             </div>
@@ -101,5 +107,5 @@ export const Tooltip: Story = {
             </div>
         `,
     }),
-    args: {tooltip: "I'm a tooltip"},
+    args: {tooltip: "I'm a tooltip", size: "lg"},
 }

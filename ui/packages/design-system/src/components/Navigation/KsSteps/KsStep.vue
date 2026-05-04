@@ -46,12 +46,12 @@
 
     .kel-steps {
         .is-process {
-            color: var(--kel-color-white);
+            color: var(--ks-white);
         }
 
         .kel-step__head {
             &.is-process .kel-step__icon {
-                border-color: var(--kel-color-white);
+                border-color: var(--ks-white);
                 box-shadow: 0 1px 3px 0 #7614B880,
                 0 5px 5px 0 #7614B86E,
                 0 11px 7px 0 #7614B842,

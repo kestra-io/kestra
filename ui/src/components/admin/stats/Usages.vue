@@ -168,7 +168,7 @@
         margin-bottom: 1.5rem;
 
         span {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
         }
     }
@@ -203,14 +203,14 @@
             flex-shrink: 0;
 
             :deep(.material-design-icon__svg) {
-                font-size: var(--kel-font-size-extra-large);
+                font-size: var(--ks-font-size-xl);
                 color: var(--ks-content-secondary);
                 vertical-align: middle;
             }
         }
 
         .usage-label {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
             line-height: 1.2;
         }
@@ -222,7 +222,7 @@
         }
 
         .usage-value {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             line-height: 1.2;
             white-space: nowrap;
         }

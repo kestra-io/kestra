@@ -540,7 +540,7 @@
                     width: 100%;
                     margin-bottom: calc(1rem / 1.5);
                     padding: 1rem;
-                    font-size: var(--kel-font-size-small);
+                    font-size: var(--ks-font-size-sm);
                     overflow: hidden;
 
                     span:not(i span) {
@@ -602,7 +602,7 @@
 
                         & .material-design-icon {
                             margin-right: 1rem;
-                            font-size: 1.375rem;
+                            font-size: var(--ks-font-size-xl);
                             color: var(--ks-content-link);
                         }
 

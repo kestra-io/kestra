@@ -80,9 +80,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
                     key: 4wjtkzwVGBM9yKnjm3yv8r
-                    conditions:
-                      - type: io.kestra.plugin.core.condition.Expression
-                        expression: "{{ trigger.body.hello == 'world' }}"
+                    when: "{{ trigger.body.hello == 'world' }}"
                 """,
             full = true
         ),

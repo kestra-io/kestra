@@ -39,7 +39,7 @@
     }
 
     .filter-label {
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         margin: 0;
         font-weight: 600;
         color: var(--ks-content-primary);
@@ -48,12 +48,12 @@
     .filter-description {
         margin-top: 0.25rem;
         color: var(--ks-content-secondary);
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.2;
     }
 
     :deep(.close-icon) {
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         padding-right: 0;
         cursor: pointer;
         color: var(--ks-content-tertiary);

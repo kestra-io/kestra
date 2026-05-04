@@ -58,7 +58,6 @@
 
     const menuOpen = ref(false);
 
-
     const rawStructure = ref<Record<string, any> | undefined>();
     const currentDocPath = computed(() => docStore.docPath);
 
@@ -140,7 +139,7 @@
 
 <style scoped lang="scss">
     ul > li > span:first-child {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 
     $scrollbar-width: 6px;
@@ -214,6 +213,8 @@
     }
 
     .docsMenu {
+        list-style: none;
+        padding-left: 0;
         max-height: calc(100vh - 210px);
         overflow-y: auto;
         padding-right: 0.25rem;
@@ -243,7 +244,7 @@
                         font-size: 0.8rem;
                         color: var(--ks-content-secondary);
                     } @else {
-                        font-size: 0.75rem;
+                        font-size: var(--ks-font-size-xs);
                         color: var(--ks-content-secondary);
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }

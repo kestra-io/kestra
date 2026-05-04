@@ -1,5 +1,5 @@
 <template>
-    <KsCollapse accordion v-model="openedDocs" :key="openedDocs.join(',')">
+    <KsCollapse accordion v-model="openedDocs" :key="openedDocs">
         <template
             :key="child.title"
             v-for="child in filteredChildren"
@@ -74,12 +74,12 @@
         return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
     })
 
-    const openedDocs = ref<string[]>([]);
+    const openedDocs = ref<string>("");
 </script>
 
 <style scoped lang="scss">
     .kel-collapse {
-        --kel-collapse-header-font-size: var(--kel-font-size-small);
+        --kel-collapse-header-font-size: var(--ks-font-size-sm);
         --kel-collapse-header-height: auto;
         border-top: none;
         border-bottom: none;

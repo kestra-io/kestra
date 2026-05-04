@@ -227,7 +227,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         overflow-y: auto;
         &::-webkit-scrollbar {
             width: 0;
@@ -239,7 +239,7 @@
         }
 
         .kel-button {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             height: auto;
             padding: 10px 5px;
             width: 32px;

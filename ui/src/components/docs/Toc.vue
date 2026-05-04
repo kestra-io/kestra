@@ -131,6 +131,6 @@
 
 <style lang="scss" scoped>
     ul > li > span:first-child {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 </style>

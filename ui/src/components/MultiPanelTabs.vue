@@ -792,7 +792,7 @@
         }
 
         .dirty-icon{
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             flex: 0 0 auto;
         }
 

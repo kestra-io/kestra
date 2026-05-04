@@ -710,14 +710,14 @@
     width: 69px;
     height: 69px;
     object-fit: contain;
-    border-radius: var(--kel-font-size-large);
+    border-radius: var(--ks-font-size-lg);
 }
 
 .ai-onboarding-title {
     margin: 0;
     max-width: 760px;
     color: var(--ks-content-primary);
-    font-size: 2.188rem;
+    font-size: var(--ks-font-size-2xl);
     line-height: 1.08;
     font-weight: 600;
     margin-bottom: 3rem;
@@ -741,14 +741,14 @@
     align-items: flex-start;
     gap: 8px;
     width: 100%;
-    font-size: var(--kel-font-size-small);
+    font-size: var(--ks-font-size-sm);
     line-height: 1.35;
     white-space: normal;
 }
 
 .ai-onboarding-info-icon {
     color: var(--ks-content-info);
-    font-size: var(--kel-font-size-base);
+    font-size: var(--ks-font-size-base);
     flex-shrink: 0;
     align-self: center;
 }
@@ -764,7 +764,7 @@
     width: 100%;
     height: 152px;
     border: 1px solid transparent;
-    border-radius: var(--kel-font-size-large);
+    border-radius: var(--ks-font-size-lg);
     background: var(--ks-background-input);
     box-shadow:
         0 8px 20px rgba(15, 23, 42, 0.035),
@@ -848,7 +848,7 @@
 .ai-custom-textarea {
     :deep(.kel-textarea__inner) {
         color: var(--ks-content-primary) !important;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         line-height: 1.6;
         resize: none;
 
@@ -903,12 +903,12 @@
         background: transparent !important;
         outline: none !important;
         box-shadow: none !important;
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         line-height: 1.45;
 
         &::placeholder {
             font-style: normal;
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
         }
 
         &:disabled {
@@ -973,7 +973,7 @@
     border: none !important;
     color: var(--ks-content-tertiary) !important;
     padding: 4px !important;
-    font-size: var(--kel-font-size-large);
+    font-size: var(--ks-font-size-lg);
 
     &:hover {
         color: var(--ks-content-primary) !important;
@@ -1010,12 +1010,12 @@
     width: 42px !important;
     height: 42px !important;
     border-radius: 999px !important;
-    color: white !important;
+    color: var(--ks-white) !important;
     margin-left: calc(1rem / 2) !important;
 
     &:hover,
     &:focus-visible {
-        color: white !important;
+        color: var(--ks-white) !important;
     }
 
     &:disabled {
@@ -1024,7 +1024,7 @@
 }
 
 .shortcut-hint {
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-content-tertiary);
 }
 
@@ -1063,10 +1063,10 @@
 
     .ai-custom-textarea-onboarding {
         :deep(.kel-textarea__inner) {
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
 
             &::placeholder {
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
             }
         }
     }

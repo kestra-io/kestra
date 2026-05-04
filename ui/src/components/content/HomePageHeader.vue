@@ -17,7 +17,7 @@
 .home-page-header {
   h2 {
     padding-top: 0;
-    font-size: var(--kel-font-size-extra-large);
+    font-size: var(--ks-font-size-xl);
     font-weight: 400;
     margin-top: 2rem;
     margin-bottom: .75rem;
@@ -25,8 +25,8 @@
   }
 
   :deep(p) {
-    font-size: var(--kel-font-size-small);
-    line-height: var(--kel-font-size-extra-large);
+    font-size: var(--ks-font-size-sm);
+    line-height: var(--ks-font-size-xl);
     margin: .5rem 0;
   }
 }

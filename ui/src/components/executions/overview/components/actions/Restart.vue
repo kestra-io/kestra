@@ -399,19 +399,19 @@
 <style scoped lang="scss">
 .modal-header {
     .modal-title {
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
         color: var(--ks-color-text-primary);
     }
 }
 .execution-description {
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-color-text-secondary);
 }
 
 .section-title {
-    font-size: var(--kel-font-size-small);
+    font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
     color: var(--ks-color-text-primary);
@@ -436,13 +436,13 @@
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--kel-color-primary);
+                background-color: var(--ks-button-background-primary);
             }
         }
     }
 
     :deep(.kel-radio__label) {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         color: var(--kel-text-color-regular);
         padding-left: 8px;
     }
@@ -451,11 +451,11 @@
     &.is-checked {
         :deep(.kel-radio__input) {
             .kel-radio__inner {
-                border-color: var(--kel-color-primary);
-                background-color: var(--kel-color-primary);
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
 
                 &::after {
-                    background-color: white;
+                    background-color: var(--ks-white);
                 }
             }
         }

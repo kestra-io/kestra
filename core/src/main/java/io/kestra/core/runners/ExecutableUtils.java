@@ -18,7 +18,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.storages.Storage;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -35,9 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Slf4j
 public final class ExecutableUtils {
 
-    public static final String TASK_VARIABLE_ITERATIONS = "iterations";
-    public static final String TASK_VARIABLE_NUMBER_OF_BATCHES = "numberOfBatches";
-    public static final String TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI = "subflowOutputsBaseUri";
+    public static final String SUBFLOW_TRIGGER_TYPE = "io.kestra.plugin.core.flow.Subflow";
 
     private ExecutableUtils() {
         // prevent initialization
@@ -109,7 +106,7 @@ public final class ExecutableUtils {
                     }
 
                     if (existingSubflowExecution.isEmpty()) {
-                        // otherwise, we try to find the correct one; this should be the case for ForEachItem tasks
+                        // otherwise, we try to find the correct one by searching child executions
                         List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
                             .filter(
                                 e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
@@ -276,79 +273,6 @@ public final class ExecutableUtils {
             .toList();
     }
 
-    @SuppressWarnings("unchecked")
-    public static TaskRunWithOutput manageIterations(Storage storage, TaskRun taskRun, Map<String, Object> outputs, TaskRun previousTaskRun, Map<String, Object> previousOutputs,
-        boolean transmitFailed, boolean allowFailure, boolean allowWarning) throws InternalException {
-        Integer numberOfBatches = (Integer) outputs.get(TASK_VARIABLE_NUMBER_OF_BATCHES);
-
-        State.Type currentState = taskRun.getState().getCurrent();
-        Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1
-            ? Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState())
-            : Optional.empty();
-
-        // search for the previous iterations, if not found, we init it with an empty map
-        Map<String, Integer> iterations = !MapUtils.isEmpty(previousOutputs) ? (Map<String, Integer>) previousOutputs.get(TASK_VARIABLE_ITERATIONS) : new HashMap<>();
-
-        int currentStateIteration = iterations.getOrDefault(currentState.toString(), 0);
-        iterations.put(currentState.toString(), currentStateIteration + 1);
-        if (previousState.isPresent() && previousState.get() != currentState) {
-            int previousStateIterations = iterations.getOrDefault(previousState.get().toString(), numberOfBatches);
-            iterations.put(previousState.get().toString(), previousStateIterations - 1);
-
-            if (previousState.get() == State.Type.RESTARTED) {
-                // if we are in a restart, we need to reset the failed executions
-                iterations.put(State.Type.FAILED.toString(), 0);
-            }
-        }
-
-        // update the state to success if terminatedIterations == numberOfBatches
-        int terminatedIterations = iterations.getOrDefault(State.Type.SUCCESS.toString(), 0) +
-            iterations.getOrDefault(State.Type.FAILED.toString(), 0) +
-            iterations.getOrDefault(State.Type.KILLED.toString(), 0) +
-            iterations.getOrDefault(State.Type.WARNING.toString(), 0) +
-            iterations.getOrDefault(State.Type.CANCELLED.toString(), 0);
-
-        if (terminatedIterations == numberOfBatches) {
-            State.Type state = transmitFailed ? findTerminalState(iterations, allowFailure, allowWarning) : State.Type.SUCCESS;
-            return new TaskRunWithOutput(
-                previousTaskRun
-                    .withIteration(taskRun.getIteration())
-                    .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                    .withState(state),
-                Map.of(
-                    TASK_VARIABLE_ITERATIONS, iterations,
-                    TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches,
-                    TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI, storage.getContextBaseURI().getPath()
-                )
-            );
-        }
-
-        // else we update the previous taskRun as it's the same taskRun that is still running
-        return new TaskRunWithOutput(
-            previousTaskRun.withIteration(taskRun.getIteration()),
-            Map.of(
-                TASK_VARIABLE_ITERATIONS, iterations,
-                TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches
-            )
-        );
-    }
-
-    private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure, boolean allowWarning) {
-        if (iterations.getOrDefault(State.Type.FAILED.toString(), 0) > 0) {
-            return allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
-        }
-        if (iterations.getOrDefault(State.Type.KILLED.toString(), 0) > 0) {
-            return State.Type.KILLED;
-        }
-        if (iterations.getOrDefault(State.Type.WARNING.toString(), 0) > 0) {
-            if (allowWarning) {
-                return State.Type.SUCCESS;
-            }
-            return State.Type.WARNING;
-        }
-        return State.Type.SUCCESS;
-    }
-
     public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask,
         TaskRun taskRun, Map<String, Object> outputs) {
         try {
@@ -368,7 +292,6 @@ public final class ExecutableUtils {
     }
 
     public static boolean isSubflow(Execution execution) {
-        return execution.getTrigger() != null && ("io.kestra.plugin.core.flow.Subflow".equals(execution.getTrigger().getType()) ||
-            "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType()));
+        return execution.getTrigger() != null && SUBFLOW_TRIGGER_TYPE.equals(execution.getTrigger().getType());
     }
 }

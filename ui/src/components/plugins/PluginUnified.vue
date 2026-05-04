@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue";
-    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "../../utils/pluginUtils";
     import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import RowLink from "../misc/RowLink.vue";
     import {usePluginsStore} from "../../stores/plugins";
@@ -222,7 +222,7 @@
         margin-bottom: 1rem;
         color: var(--ks-content-primary);
         font-weight: 600;
-        font-size: var(--kel-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         line-height: 36px;
 
         .icon {

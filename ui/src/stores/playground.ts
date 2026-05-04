@@ -159,7 +159,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const latestExecution = computed(() => executions.value[0]);
 
-    const nonFinalStates = [
+    const nonFinalStates: string[] = [
         State.KILLING,
         State.RUNNING,
         State.RESTARTED,

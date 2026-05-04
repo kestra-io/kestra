@@ -83,7 +83,6 @@ public class Extension extends AbstractExtension {
         return operators;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public Map<String, Filter> getFilters() {
         Map<String, Filter> filters = new HashMap<>();
@@ -182,6 +181,8 @@ public class Extension extends AbstractExtension {
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
         functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
+        functions.put(IsDateBeforeFunction.NAME, new IsDateBeforeFunction());
+        functions.put(IsDateAfterFunction.NAME, new IsDateAfterFunction());
         return functions;
     }
 

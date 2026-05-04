@@ -63,8 +63,8 @@
         emit("update:labels", locals.value);
     };
 
-    const update = (index: number, value: string | number, prop: keyof Label) => {
-        locals.value[index][prop] = value !== "" ? String(value) : null;
+    const update = (index: number, value: string | number | undefined, prop: keyof Label) => {
+        locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null;
         emit("update:labels", locals.value);
     };
 

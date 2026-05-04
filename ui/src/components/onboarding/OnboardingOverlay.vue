@@ -726,7 +726,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        color: var(--kel-color-success);
+        color: var(--ks-content-success);
         font-size: 0.78rem;
         font-weight: 600;
     }
@@ -734,7 +734,7 @@
     .onboarding-overlay .description {
         margin: 0.75rem 0;
         color: var(--ks-content-primary);
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         line-height: 1.45;
     }
 
@@ -785,7 +785,7 @@
     }
 
     :global(.onboarding-v2-highlight-static) {
-        --onboarding-static-color: var(--kel-color-primary);
+        --onboarding-static-color: var(--ks-button-background-primary);
         box-shadow:
             0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
             0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
@@ -794,14 +794,14 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
-        --onboarding-static-color: color-mix(in srgb, var(--kel-color-primary) 70%, white 30%);
+        --onboarding-static-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
         box-shadow:
             0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
             0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
     }
 
     :global(.onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: var(--kel-color-primary);
+        --onboarding-pulse-color: var(--ks-button-background-primary);
         --onboarding-pulse-strong: 50%;
         --onboarding-pulse-soft: 30%;
         --onboarding-pulse-scale: 1.045;
@@ -816,7 +816,7 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: color-mix(in srgb, var(--kel-color-primary) 70%, white 30%);
+        --onboarding-pulse-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
         --onboarding-pulse-strong: 52%;
         --onboarding-pulse-soft: 34%;
         --onboarding-pulse-scale: 1.04;

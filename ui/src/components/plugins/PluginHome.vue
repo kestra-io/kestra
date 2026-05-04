@@ -63,9 +63,8 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
     import {KsTaskIcon} from "@kestra-io/design-system";
-    import {isPluginMatched} from "../../utils/pluginUtils";
+    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {usePluginFilter} from "../filter/configurations";
@@ -214,7 +213,7 @@
         gap: 8px;
         border-radius: 4px;
         text-overflow: ellipsis;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         line-height: 26px;
         cursor: pointer;

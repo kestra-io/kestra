@@ -316,15 +316,15 @@
             .kel-input-group__prepend {
                 .material-design-icon {
                     .material-design-icon__svg {
-                        width: var(--kel-font-size-extra-large);
-                        height: var(--kel-font-size-extra-large);
+                        width: var(--ks-font-size-xl);
+                        height: var(--ks-font-size-xl);
                         bottom: -0.250em;
                     }
                 }
             }
 
             .validation-icon {
-                font-size:  var(--kel-font-size-large);
+                font-size:  var(--ks-font-size-lg);
                 &.error {
                     color: var(--ks-content-alert);
                 }

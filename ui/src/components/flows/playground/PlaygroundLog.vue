@@ -48,7 +48,7 @@
         background-color: var(--ks-background-panel);
         text-align: left;
         padding: .3rem .5rem;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         border-radius: 5px;
         grid-template-columns: 1fr 80px;
         grid-template-rows: 1fr 1fr;

@@ -36,6 +36,9 @@
         useNamespaceDashboardFilter,
         useFlowDashboardFilter
     } from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    useRestoreUrl();
 
     const dashboardFilter = useDashboardFilter();
     const flowDashboardFilter = useFlowDashboardFilter();
@@ -82,7 +85,7 @@
 
     const padding = computed(() => dashboardLocation.value === "home");
 
-    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "__default", charts: []});
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []});
     const isDashboardBundledWithUI = ref<boolean>(false);
     const charts = ref<Chart[]>([]);
 

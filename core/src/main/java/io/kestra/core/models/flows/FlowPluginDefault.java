@@ -9,21 +9,25 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+/**
+ * A plugin default entry scoped to a single flow.
+ * The {@code forced} flag is intentionally absent: flow-level defaults cannot override
+ * values enforced at namespace or tenant level by administrators.
+ */
 @Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor
+@NoArgsConstructor
 @PluginDefaultValidation
-public class PluginDefault implements PluginDefaultSpec {
+public class FlowPluginDefault implements PluginDefaultSpec {
     @NotNull
-    private final String type;
-
-    @Builder.Default
-    private final boolean forced = false;
+    private String type;
 
     @Schema(
         type = "object",
         additionalProperties = Schema.AdditionalPropertiesValue.FALSE
     )
-    private final Map<String, Object> values;
+    private Map<String, Object> values;
 }

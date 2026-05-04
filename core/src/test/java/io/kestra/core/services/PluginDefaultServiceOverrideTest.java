@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowPluginDefault;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.services.PluginDefaultServiceTest.DefaultPrecedenceTester;
 import io.kestra.core.utils.TestsUtils;
@@ -30,22 +31,34 @@ class PluginDefaultServiceOverrideTest {
     @Inject
     private PluginDefaultService pluginDefaultService;
 
+    /**
+     * Tests that:
+     * 1. Flow-level plugin defaults (which can never be forced) apply values not set by the task.
+     * 2. Global forced defaults override both flow defaults and explicit task values.
+     * 3. Global non-forced defaults are overridden by explicit task values and flow defaults.
+     *
+     * <p>The {@code forced} flag at flow level was removed (kestra-ee#7109). All flow-level defaults
+     * behave as non-forced regardless of the original YAML value.</p>
+     */
     @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
     @ParameterizedTest
     @MethodSource
-    void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) throws FlowProcessingException {
+    void flowDefaultsOverrideGlobalDefaults(boolean globalDefaultForced, String fooValue, String barValue, String bazValue) throws FlowProcessingException {
         final DefaultPrecedenceTester task = DefaultPrecedenceTester.builder()
             .id("test")
             .type(DefaultPrecedenceTester.class.getName())
             .propBaz("taskValue")
             .build();
 
-        final PluginDefault flowDefault = new PluginDefault(
-            DefaultPrecedenceTester.class.getName(), flowDefaultForced, ImmutableMap.of(
+        // Flow-level defaults have no 'forced' flag — always non-forced
+        final FlowPluginDefault flowDefault = FlowPluginDefault.builder()
+            .type(DefaultPrecedenceTester.class.getName())
+            .values(ImmutableMap.of(
                 "propBar", "flowValue",
                 "propBaz", "flowValue"
-            )
-        );
+            ))
+            .build();
+
         final PluginDefault globalDefault = new PluginDefault(
             DefaultPrecedenceTester.class.getName(), globalDefaultForced, ImmutableMap.of(
                 "propFoo", "globalValue",
@@ -77,10 +90,10 @@ class PluginDefaultServiceOverrideTest {
 
     private static Stream<Arguments> flowDefaultsOverrideGlobalDefaults() {
         return Stream.of(
-            Arguments.of(false, false, "globalValue", "flowValue", "taskValue"),
-            Arguments.of(false, true, "globalValue", "globalValue", "globalValue"),
-            Arguments.of(true, false, "globalValue", "flowValue", "flowValue"),
-            Arguments.of(true, true, "globalValue", "flowValue", "flowValue")
+            // Non-forced global: task wins for propBaz, flow default wins for propBar, global fills propFoo
+            Arguments.of(false, "globalValue", "flowValue", "taskValue"),
+            // Forced global: global overrides everything including task value
+            Arguments.of(true, "globalValue", "globalValue", "globalValue")
         );
     }
 }

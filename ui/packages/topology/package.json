@@ -61,7 +61,6 @@
     },
     "devDependencies": {
         "@types/dagre": "^0.7.52",
-        "@types/humanize-duration": "^3.27.4",
         "@types/js-yaml": "^4.0.9",
         "@types/lodash": "^4",
         "@types/node": "^25.5.0",

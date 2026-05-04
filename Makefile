@@ -35,16 +35,19 @@ version:
 clean:
 	./gradlew clean
 
-build: clean
+build: clean build-frontend
 	./gradlew build
 
-buildSkipTests: clean
+buildSkipTests: clean build-frontend
 	./gradlew build -x test -x integrationTest -x testCodeCoverageReport --refresh-dependencies
 
 test: clean
 	./gradlew test
 
-build-exec:
+build-frontend:
+	cd ui && npm ci && npm run build
+
+build-exec: build-frontend
 	./gradlew -q executableJar --no-daemon --priority=normal
 
 install: build-exec

@@ -1,0 +1,147 @@
+name: Helm release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Kestra version to release (e.g. 0.21.1, without v prefix)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run — package charts but do not upload to GCS'
+        required: true
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      dry_run:
+        description: 'Dry run — package charts but do not upload to GCS'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  helm-release:
+    name: Package and publish Helm charts
+    runs-on: ubuntu-latest
+    env:
+      BUCKET: helm-charts-kestra-host
+      REPO_URL: https://helm.kestra.io/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Resolve version and dry-run flag
+        id: config
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+          fi
+          DRY_RUN="${{ inputs.dry_run }}"
+          echo "tag=${TAG}"        >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "dry_run=${DRY_RUN}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION} | Tag: ${TAG} | Dry run: ${DRY_RUN}"
+
+      - name: Update Chart.yaml versions
+        env:
+          VERSION: ${{ steps.config.outputs.version }}
+          TAG: ${{ steps.config.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for chart in charts/kestra charts/kestra-starter; do
+            sed -i "s/^version:.*/version: \"${VERSION}\"/" ${chart}/Chart.yaml
+            sed -i "s/^appVersion:.*/appVersion: \"${TAG}\"/" ${chart}/Chart.yaml
+          done
+          # Update kestra dep version in kestra-starter
+          awk -v ver="${VERSION}" '
+            /- name: kestra/ { found=1 }
+            found && /version:/ { sub(/version:.*/, "version: \"" ver "\""); found=0 }
+            { print }
+          ' charts/kestra-starter/Chart.yaml > /tmp/chart-starter.yaml
+          mv /tmp/chart-starter.yaml charts/kestra-starter/Chart.yaml
+
+      - name: Lint kestra chart
+        run: |
+          helm lint charts/kestra \
+            --set "configurations.application=kestra.variable.globals.foo: bar"
+
+      - name: Package kestra chart
+        run: |
+          mkdir -p release/
+          helm package charts/kestra -d release/
+
+      - name: Bundle kestra as kestra-starter dependency
+        env:
+          VERSION: ${{ steps.config.outputs.version }}
+        run: |
+          helm repo add groundhog2k https://groundhog2k.github.io/helm-charts/
+          helm repo update groundhog2k
+          mkdir -p charts/kestra-starter/charts/
+          cp release/kestra-${VERSION}.tgz charts/kestra-starter/charts/
+          POSTGRES_VER=$(awk '/- name: postgres/{found=1} found && /version:/{gsub(/"/, ""); print $2; exit}' charts/kestra-starter/Chart.yaml)
+          helm pull groundhog2k/postgres --version "${POSTGRES_VER}" -d charts/kestra-starter/charts/
+          rm -f charts/kestra-starter/Chart.lock
+
+      - name: Lint kestra-starter chart
+        run: helm lint charts/kestra-starter
+
+      - name: Package kestra-starter chart
+        run: helm package charts/kestra-starter -d release/
+
+      - name: Verify packaged charts render
+        env:
+          VERSION: ${{ steps.config.outputs.version }}
+        run: |
+          helm template test release/kestra-${VERSION}.tgz \
+            --set "configurations.application=kestra.variable.globals.foo: bar" > /dev/null
+          echo "kestra-${VERSION}.tgz renders OK"
+          helm template test release/kestra-starter-${VERSION}.tgz > /dev/null
+          echo "kestra-starter-${VERSION}.tgz renders OK"
+
+      - name: Show packaged charts
+        run: ls -lh release/*.tgz
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/230725787862/locations/global/workloadIdentityPools/github/providers/github
+          service_account: helm-charts-publisher@kestra-host.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download existing index.yaml from GCS
+        run: gsutil cp gs://${BUCKET}/index.yaml existing-index.yaml
+
+      - name: Generate merged index.yaml
+        run: |
+          helm repo index release/ --merge existing-index.yaml --url ${REPO_URL}
+          echo "=== Preview (first 30 lines) ==="
+          head -30 release/index.yaml
+
+      - name: Dry run — show what would be uploaded
+        if: ${{ steps.config.outputs.dry_run == 'true' }}
+        run: |
+          echo "DRY RUN — no upload performed."
+          echo ""
+          echo "Would upload to gs://${BUCKET}/:"
+          ls -lh release/*.tgz release/index.yaml
+
+      - name: Upload to GCS
+        if: ${{ steps.config.outputs.dry_run == 'false' }}
+        run: |
+          set -euo pipefail
+          # Upload .tgz files first — index must never reference a missing artifact
+          gsutil -m cp release/*.tgz gs://${BUCKET}/
+          gsutil cp release/index.yaml gs://${BUCKET}/index.yaml
+          echo "Published:"
+          ls -lh release/*.tgz

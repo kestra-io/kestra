@@ -1,0 +1,218 @@
+image:
+  tag: v0.24.1
+
+common:
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+  configmapReloader:
+    enabled: true
+  jvm:
+    forceActiveProcessors:
+      enabled: true
+  labels:
+    app: kestra
+    application/team: io.kestra
+    application/name: kestra
+  resources:
+    requests:
+      cpu: '1'
+      memory: 1Gi
+    limits:
+      memory: 1Gi
+  extraEnv:
+    - name: FROM_COMMON
+      value: "true"
+  extraEnvFrom:
+    - secretRef:
+        name: common-secret
+  extraVolumes:
+    - name: kestra-plugins
+      persistentVolumeClaim:
+        claimName: kestra-plugins
+  extraVolumeMounts:
+    - name: kestra-plugins
+      mountPath: /app/plugins
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  autoscaler:
+    enabled: true
+deployments:
+  standalone:
+    revisionHistoryLimit: 5
+    workerThreads: 64
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: '3'
+        memory: 2Gi
+    extraArgs:
+      - '--no-tutorials'
+    extraEnv:
+      - name: JAVA_OPTS
+        value: "-Duser.timezone=Europe/Paris"
+    extraEnvFrom:
+      - configMapRef:
+          name: common-config
+  executor:
+    enabled: false
+  indexer:
+    enabled: false
+  scheduler:
+    enabled: false
+  worker:
+    enabled: true
+    kind: StatefulSet
+    jvm:
+      forceActiveProcessors:
+        enabled: false
+    autoscaler:
+      enabled: false
+  webserver:
+    enabled: false
+
+workerGroups:
+  test-000:
+    enabled: false
+  test-001:
+    enabled: true
+    workerThreads: 128
+    serviceAccountName: "kestra-worker-sa-external"
+    extraArgs:
+    - '--no-tutorials'
+  test-002:
+    enabled: true
+    autoscaler:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 6
+
+configurations:
+  application:
+    kestra:
+      queue:
+        type: h2
+      repository:
+        type: h2
+      storage:
+        type: local
+        local:
+          basePath: "/app/storage"
+    datasources:
+      h2:
+        url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: kestra
+        password: ""
+        driverClassName: org.h2.Driver
+  configmaps:
+    - name: kestra-others
+      key: others.yml
+  secrets:
+    - name: kestra-basic-auth
+      key: basic-auth.yml
+    - name: kestra-files
+      key: application.yml
+    - name: kestra-files
+      key: extra.yml
+
+service:
+  ports:
+    http:
+      port: 80
+    jmxremote:
+      port: 8686
+      containerPort: 8686
+      protocol: TCP
+      targetPort: jmxremote
+
+dind:
+  enabled: true
+  mode: "insecure"
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: kestra.minikube.local
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: kestra
+              port:
+                number: 80
+
+extraManifests:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: common-config
+  data:
+    MY_ENV_VAR_NAME: "with_a_value"
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: kestra-others
+  data:
+    others.yml: |
+      # kestra:
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name:  kestra-files
+  stringData:
+    application.yml: |
+      kestra: {}
+    extra.yml: |
+      kestra: {}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: kestra-basic-auth
+  stringData:
+    basic-auth.yml: |
+      kestra:
+        server:
+          basicAuth:
+            enabled: true
+            username: admin@localhost.com
+            password: ChangeMe1234!
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: common-secret
+  stringData:
+    SECRET_GITHUB_APIKEY: "1234567890"
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: kestra-plugins
+  spec:
+    capacity:
+      storage: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: standard
+    hostPath:
+      path: /mnt/data/kestra-plugins
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: kestra-plugins
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: standard
+    resources:
+      requests:
+        storage: 10Gi

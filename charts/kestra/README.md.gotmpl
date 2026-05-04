@@ -1,0 +1,239 @@
+<p align="center">
+  <a href="https://www.kestra.io">
+    <img src="https://kestra.io/banner.png"  alt="Kestra workflow orchestrator" />
+  </a>
+</p>
+
+<h1 align="center" style="border-bottom: none">
+    Event-Driven Declarative Orchestrator
+</h1>
+
+<br />
+
+<p align="center">
+    <a href="https://twitter.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="twitter" /></a> &nbsp;
+    <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
+<a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
+</p>
+
+<br />
+<p align="center">
+    <a href="https://go.kestra.io/video/product-overview" target="_blank">
+        <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
+    </a>
+</p>
+<p align="center" style="color:grey;"><i>Get started with Kestra in 4 minutes.</i></p>
+
+{{ template "chart.header" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+## Installing the Chart
+
+To install the chart with the release name `my-{{ template "chart.name" . }}`:
+
+```console
+$ helm repo add kestra https://helm.kestra.io/
+$ helm install my-{{ template "chart.name" . }} kestra/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
+```
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "extra.migration01" . }}"
+
+{{ template "chart.valuesSection" . }}
+
+{{ define "extra.migration01" -}}
+## Migration from 0.x.x to 1.0.0
+
+> Breaking changes have been made to the Helm chart in order to support the new features and improvements introduced in Kestra 1.0.0. Please review the following changes carefully before upgrading:
+
+### If you need to change the kestra docker repository
+
+Before:
+```yaml
+image:
+  image: kestra/kestra
+```
+
+After:
+```yaml
+image:
+  repository: kestra/kestra
+```
+
+### We changed the way to configure service account
+
+Before:
+```yaml
+serviceAccountName: ""
+```
+
+After:
+```yaml
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+```
+
+### We removed postgres, minio, kafka and elasticsearch from the chart dependencies. You can now use your own managed services or deploy them separately.
+
+### Most of the deployment configuration options have been restructured. There is now a common entry in the values.yaml.
+
+Before:
+```yaml
+nodeSelector: {}
+tolerations: []
+affinity: {}
+extraVolumeMounts: []
+extraVolumes: []
+extraEnv: []
+# more...
+```
+
+After:
+```yaml
+common:
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraVolumeMounts: []
+  extraVolumes: []
+  extraEnv: []
+  # more...
+```
+
+### You can override all those configuration options in the deployments entry in the values.yaml.
+
+```yaml
+deployments:
+  standalone:
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    extraVolumeMounts: []
+    extraVolumes: []
+    extraEnv: []
+    # more...
+```
+
+### We changed the way to provide custom configuration files to Kestra. It's now all under configurations entry in the values.yaml.
+
+Before:
+```yaml
+### This creates a config map of the Kestra configuration
+configuration: {}
+# Example: Setting the plugin defaults for the Docker runner
+#   kestra:
+#     plugins:
+#       configurations:
+#         - type:  io.kestra.plugin.scripts.runner.docker.Docker
+#           values:
+#             volume-enabled: true
+### This will create a Kubernetes Secret for the values provided
+## This will be appended to kestra-secret with the key application-secrets.yml
+secrets: {}
+# Example: Store your postgres backend credentials in a secret
+#   secrets:
+#     kestra:
+#       datasources:
+#         postgres:
+#           username: pguser
+#           password: mypass123
+#           url: jdbc:postgresql://pghost:5432/db
+### Load Kestra configuration from existing secret
+## Here this assumes the secret is already deployed and the following apply:
+## 1. The secret type is "Opaque"
+## 2. The secret has a single key
+## 3. The value of the secret is the Kestra configuration.
+externalSecret: {}
+  #secretName: secret-name
+  #key: application-kestra.yml
+### configuration files
+## This option allows you to reference existing local files to configure Kestra, e.g.
+configurationPath:
+# configurationPath: /app/application.yml,/app/application-secrets.yml
+extraConfigMapEnvFrom:
+  # - name: my-existing-configmap-no-prefix
+  # - name: my-existing-configmap-with-prefix
+  #   prefix: KESTRA_
+extraSecretEnvFrom:
+  # - name: my-existing-no-prefix
+  # - name: my-existing-with-prefix
+  #   prefix: SECRET_
+```
+
+After:
+```yaml
+configurations:
+  application:
+    kestra:
+      queue:
+        type: h2
+      repository:
+        type: h2
+      storage:
+        type: local
+        local:
+          basePath: "/app/storage"
+    datasources:
+      h2:
+        url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: kestra
+        password: ""
+        driverClassName: org.h2.Driver
+  configmaps:
+    - name: kestra-others
+      key: others.yml
+  secrets:
+    - name: kestra-basic-auth
+      key: basic-auth.yml
+```
+
+No need of taking care of `configurationPath:`; It's automatically managed by the chart.
+
+If you need to add extra environment variables from existing ConfigMaps or Secrets, you can still use `extraEnv` and `extraEnvFrom` under the `common` entry.
+
+If you want your deployment to restart if `configurations.application` change, you can enable the option `common.configmapReloader.enabled: true` (default to false).
+
+### We upgrade also the way the dind is managed. It's now under the `dind` entry in the values.yaml.
+
+We add `dind.mode`, to choose between `rootless` and `insecure` ; `rootless` is the default and recommended mode.
+
+### Usage for enterprise edition workerGroups
+
+```yaml
+workerGroups:
+  test-000:
+    enabled: false
+  test-001:
+    enabled: true
+    workerThreads: 128
+    serviceAccountName: "kestra-worker-sa-external"
+  test-002:
+    enabled: true
+```
+The **workerGroups** follow exactly the same pattern you see in deployments key **worker**.
+
+{{- end }}
+
+## Documentation
+* Full documentation can be found under [kestra.io/docs](https://kestra.io/docs)
+* Deployment on Kubernetes documentation can be found [here](https://kestra.io/docs/installation/kubernetes)
+
+## License
+Apache 2.0 © [Kestra Technologies](https://kestra.io)
+
+## Stay up to date
+
+We release new versions every month. Give the [main repository](https://github.com/kestra-io/kestra) a star to stay up to date with the latest releases and get notified about future updates.
+
+![Star the repo](https://kestra.io/star.gif)

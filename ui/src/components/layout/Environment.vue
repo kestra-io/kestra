@@ -42,7 +42,7 @@
         border-radius: var(--kel-border-radius-base);
         color: var(--ks-content-primary);
         padding: 0.125rem 0.25rem;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;

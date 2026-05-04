@@ -50,7 +50,7 @@
 
         .loading-text {
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
     }
 </style>

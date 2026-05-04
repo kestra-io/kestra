@@ -88,7 +88,7 @@
 
 <style scoped lang="scss">
     .shortcut {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.25rem;
         gap: .25rem;
     }

@@ -120,6 +120,9 @@
     import {useDocStore} from "../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useBlueprintFilter} from "../../filter/configurations";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     const blueprintFilter = useBlueprintFilter();
 
@@ -272,6 +275,9 @@
     };
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
+        // Skip while useRestoreUrl is restoring the URL — the route.query
+        // watcher will trigger resetAndReload once the restore lands.
+        if (!loadInit.value) return;
         const beforeLoadBlueprintType = props.blueprintType;
         try {
             await Promise.all([
@@ -299,7 +305,12 @@
 
     const syncFromRoute = () => {
         searchText.value = route.query?.["filters[q][EQUALS]"] ?? "";
-        selectedTags.value = initSelectedTags();
+        const newTags = initSelectedTags();
+        const same = newTags.length === selectedTags.value.length
+            && newTags.every((t, i) => t === selectedTags.value[i]);
+        if (!same) {
+            selectedTags.value = newTags;
+        }
     };
 
     onMounted(() => {
@@ -382,7 +393,7 @@
                     border-radius: 0.25rem !important;
                     border: 1px solid var(--ks-border-primary);
                     width: 100%;
-                    font-size: var(--kel-font-size-extra-small);
+                    font-size: var(--ks-font-size-xs);
                     box-shadow: none;
                     text-overflow: ellipsis;
                     overflow: hidden;
@@ -450,7 +461,7 @@
             color: var(--ks-content-primary);
             border-radius: 0.25rem;
             padding: 0.25rem 0.5rem;
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
             background: var(--ks-tag-background-active);
         }
     }
@@ -460,7 +471,7 @@
         margin-top: 0.75rem;
 
         .title {
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             font-weight: 600;
             color: var(--ks-content-primary);
             line-height: 22px;

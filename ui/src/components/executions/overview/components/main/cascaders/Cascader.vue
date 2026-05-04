@@ -174,7 +174,7 @@
             width: 100%;
             display: flex;
             align-items: center;
-            font-size: 1.375rem;
+            font-size: var(--ks-font-size-xl);
         }
 
         > .kel-input {
@@ -190,7 +190,7 @@
     }
 
     .empty {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-secondary);
     }
 
@@ -227,7 +227,7 @@
         & .kel-cascader-node {
             height: min-content;
             line-height: 36px;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 

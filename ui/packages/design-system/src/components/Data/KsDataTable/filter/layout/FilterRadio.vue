@@ -121,13 +121,13 @@
             padding-right: .5rem;
 
             .title {
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
                 font-weight: 500;
                 color: var(--ks-content-primary);
             }
 
             .desc {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 color: var(--ks-content-tertiary);
                 line-height: 1.4;
             }

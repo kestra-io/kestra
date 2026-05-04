@@ -226,7 +226,7 @@
             align-items: center;
             gap: .5rem;
             width: 268px;
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             margin: .8rem 1rem;
             font-weight: normal;
             margin-bottom: 0.5rem;
@@ -259,7 +259,7 @@
         gap: 2px;
         button{
             padding: 0.2rem .5rem;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-tertiary);
             background-color: transparent;
             border: none;

@@ -16,7 +16,7 @@ $prefix: 'kbs-';
     --kbs-font-sans-serif: #{inspect($font-family-sans-serif)};
     --kbs-font-monospace: #{inspect($font-family-monospace)};
     --kbs-body-font-family: #{inspect($font-family-base)};
-    @include rfs($font-size-base, --kbs-body-font-size);
+    @include rfs(var(--ks-font-size-base), --kbs-body-font-size);
     --kbs-body-font-weight: #{$font-weight-base};
     --kbs-body-line-height: #{$line-height-base};
     --kbs-body-text-align: #{$body-text-align};

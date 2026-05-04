@@ -8,7 +8,7 @@
             </KsLink>
         </div>
         <div class="icon-row">
-            <KsIcon :size="24">
+            <KsIcon size="lg">
                 <component :is="icon" />
             </KsIcon>
             <div>
@@ -58,7 +58,7 @@
 
         :deep(.kel-icon) {
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             position: absolute;
             top: -0.875rem;
             right: 0;
@@ -71,13 +71,13 @@
 
     .title {
         font-weight: 700;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         line-height: 1.375rem;
     }
 
     .desc {
         margin: 0;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.25rem;
         color: var(--ks-content-secondary);
     }

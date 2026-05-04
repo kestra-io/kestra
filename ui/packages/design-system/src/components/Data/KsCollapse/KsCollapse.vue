@@ -43,8 +43,8 @@
         --kel-collapse-header-text-color: var(--ks-content-primary);
         --kel-collapse-header-border-color: var(--ks-border-primary);
         --kel-collapse-header-height: auto;
-        --kel-collapse-header-font-size: var(--kel-font-size-base);
-        --kel-collapse-content-font-size: var(--kel-font-size-base);
+        --kel-collapse-header-font-size: var(--ks-font-size-base);
+        --kel-collapse-content-font-size: var(--ks-font-size-base);
         --kel-collapse-border-color: var(--ks-border-primary);
 
         border: none;

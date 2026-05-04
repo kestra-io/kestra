@@ -64,7 +64,7 @@
 
     .label {
         display: block;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin: 0.25rem 0;
         color: var(--ks-content-tertiary);
@@ -79,13 +79,13 @@
     padding: 4px 0;
 
     .comp-label {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         line-height: 1.2;
     }
 
     .comp-desc {
         color: var(--ks-content-tertiary);
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.3;
     }
 }

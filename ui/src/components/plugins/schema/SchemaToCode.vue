@@ -71,7 +71,7 @@
         border-radius: 0.5rem;
 
         .language {
-            font-size: 0.75rem;
+            font-size: var(--ks-font-size-xs);
             color: var(--ks-content-tertiary);
         }
 

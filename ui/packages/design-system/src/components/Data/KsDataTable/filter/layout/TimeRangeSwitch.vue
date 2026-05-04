@@ -61,7 +61,7 @@
     align-items: center;
     background-color: var(--ks-background-body);
     border: 1px solid var(--ks-border-primary);
-    border-radius: var(--kel-font-size-large);
+    border-radius: var(--ks-font-size-lg);
     cursor: pointer;
     display: flex;
     padding: 4px;
@@ -74,7 +74,7 @@
 
 .switch-option {
     color: var(--ks-content-primary);
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     font-weight: 500;
     padding: 6px 16px;
     position: relative;

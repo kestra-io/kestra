@@ -55,7 +55,7 @@
         display: inline-block;
         z-index: 2;
         margin: 0 auto;
-        font-size: var(--kel-font-size-extra-small) !important;
+        font-size: var(--ks-font-size-xs) !important;
         html.dark &{
             background: #FBFBFB26;
         }

@@ -57,7 +57,10 @@
     import _merge from "lodash/merge";
     import moment from "moment";
     import {useLogFilter} from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
+
+    const {loadInit} = useRestoreUrl();
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
@@ -224,6 +227,7 @@
     };
 
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         isLoading.value = true;
 
         await logsStore.findLogs(loadQuery({

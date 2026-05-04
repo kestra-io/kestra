@@ -40,6 +40,8 @@
             :loadData="loadData"
             :data="executionsStore.executions"
             :total="executionsStore.total"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
             @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
             @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
@@ -395,6 +397,9 @@
     import Labels from "../layout/Labels.vue";
 
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -591,6 +596,7 @@
     const dataTable = useTemplateRef<any>("dataTable");
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         lastRefreshDate.value = new Date();
 
         await executionsStore.findExecutions(loadQuery({
@@ -609,6 +615,9 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query;
         return filters;
     });
+
+    const urlPage = computed(() => Number(route.query.page ?? 1) || 1);
+    const urlSize = computed(() => Number(route.query.size ?? 25) || 25);
 
     watch(filterQuery, () => {
         if (!props.embed) {
@@ -1040,13 +1049,13 @@
     box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
 
     :deep(.kel-alert__title) {
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-warning);
         font-weight: bold;
     }
 
     :deep(.kel-alert__description) {
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 
     :deep(.kel-alert__icon) {

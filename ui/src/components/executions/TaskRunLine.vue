@@ -424,7 +424,7 @@
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--kel-font-size-extra-small)
+            font-size: var(--ks-font-size-xs)
         }
 
         .task-duration small {
@@ -451,7 +451,7 @@
 
             span span {
                 color: var(--ks-content-primary);
-                font-size: var(--kel-font-size-small);
+                font-size: var(--ks-font-size-sm);
 
                 html:not(.dark) & {
                     color: #26282D;

@@ -139,8 +139,8 @@
 <style scoped lang="scss">
     :deep(div.ks-task-icon) {
         display: inline-block;
-        width: var(--kel-font-size-large);
-        height: var(--kel-font-size-large);
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
         margin-right: 1rem;
     }
 
@@ -186,7 +186,7 @@
             }
 
             .title {
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 color: var(--ks-content-secondary);
                 line-height: 1.2;
                 white-space: normal;

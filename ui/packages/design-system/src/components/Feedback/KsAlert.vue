@@ -40,7 +40,7 @@
     @use "element-plus/theme-chalk/src/common/var" as *;
 
     .kel-alert {
-        --kel-alert-description-font-size: var(--kel-font-size-small);
+        --kel-alert-description-font-size: var(--ks-font-size-sm);
 
         @each $type in $types {
             &.kel-alert--#{$type}.is-light {

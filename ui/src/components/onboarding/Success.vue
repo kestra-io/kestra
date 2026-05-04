@@ -141,7 +141,7 @@
         h1 {
             margin: 0.5rem 0 1rem;
             color: var(--ks-content-primary);
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
         }
 
@@ -149,7 +149,7 @@
             max-width: 460px;
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }
     }

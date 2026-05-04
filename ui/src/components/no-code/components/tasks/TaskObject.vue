@@ -341,8 +341,8 @@
     .type-tag {
         background-color: var(--ks-tag-background-active);
         color: var(--ks-tag-content);
-        font-size: var(--kel-font-size-extra-small);
-        line-height: var(--kel-font-size-large);
+        font-size: var(--ks-font-size-xs);
+        line-height: var(--ks-font-size-lg);
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;

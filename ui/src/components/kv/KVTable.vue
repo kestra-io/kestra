@@ -254,6 +254,9 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -293,6 +296,7 @@
     const kvStore = useKvStore();
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         const kvsResponse = await kvStore.find(loadQuery({
             size,
             page,

@@ -110,7 +110,7 @@
 
         span, .property-description:deep(p) {
             line-height: 1.5rem;
-            font-size: .875rem !important;
+            font-size: var(--ks-font-size-sm) !important;
         }
 
         .property-description {
@@ -140,7 +140,7 @@
         display: flex;
         align-items: center;
         font-weight: 700;
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-info);
@@ -151,7 +151,7 @@
     }
 
     .type-box {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border-radius: 0.5rem;
@@ -161,7 +161,7 @@
     }
 
     .value-pill {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-primary);

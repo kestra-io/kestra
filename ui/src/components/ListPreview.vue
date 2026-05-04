@@ -158,13 +158,13 @@
         white-space: pre-wrap;
         word-wrap: break-word;
         font-family: var(--kel-font-family-monospace), monospace;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.4;
     }
 
     .expand-button {
         margin-top: 4px;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 
     :deep(.ks-editor) {

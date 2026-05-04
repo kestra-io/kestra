@@ -173,7 +173,7 @@
         .value,
         .in,
         .val {
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
             color: var(--ks-content-primary);
             white-space: nowrap;
             display: flex;
@@ -206,12 +206,12 @@
         padding: 0;
         margin: 0;
         color: var(--ks-content-tertiary);
-        font-size: var(--kel-font-size-base);
+        font-size: var(--ks-font-size-base);
         &:hover {
             color: var(--ks-content-secondary);
         }
         :deep(svg) {
-            font-size: var(--kel-font-size-base);
+            font-size: var(--ks-font-size-base);
         }
     }
 

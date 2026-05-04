@@ -138,7 +138,7 @@
 <style scoped lang="scss">
 .selected {
     span{
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
     }
 }
 .dropdown {

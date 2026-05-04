@@ -249,7 +249,7 @@
         }
 
         .plugin-name {
-            font-size: var(--kel-font-size-extra-large);
+            font-size: var(--ks-font-size-xl);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -299,14 +299,14 @@
             }
 
             .plugin-name {
-                font-size: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-lg);
                 flex: 1;
                 min-width: 0;
             }
 
             .release-notes-btn {
                 padding: 6px 12px;
-                font-size: var(--kel-font-size-extra-small);
+                font-size: var(--ks-font-size-xs);
                 min-width: auto;
             }
 

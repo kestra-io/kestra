@@ -157,7 +157,7 @@
 
 .customize-button {
     background-color: var(--ks-button-background-secondary);
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     flex-shrink: 0;
     box-shadow: var(--ks-box-shadow);
 
@@ -167,13 +167,13 @@
 
     :deep(svg) {
         color: var(--ks-content-tertiary) !important;
-        font-size: var(--kel-font-size-medium);
+        font-size: var(--ks-font-size-md);
     }
 }
 
 .refresh-btn {
     margin: 0 !important;
-    font-size: var(--kel-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-content-secondary);
 
     &:hover {

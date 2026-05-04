@@ -963,14 +963,14 @@
         }
 
         & h3 {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
             color: var(--ks-content-secondary);
         }
 
         & p {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
     }
 
@@ -992,7 +992,7 @@
     }
 
     .filename {
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1007,7 +1007,7 @@
         & li {
             height: 30px;
             padding: 16px;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
 
             &:hover {

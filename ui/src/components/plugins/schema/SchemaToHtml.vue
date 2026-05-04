@@ -305,10 +305,10 @@
     }
 
     .plugin-title {
-        font-size: var(--kel-font-size-large);
+        font-size: var(--ks-font-size-lg);
 
         :deep(p) {
-            font-size: 1rem;
+            font-size: var(--ks-font-size-base);
         }
     }
 
@@ -361,7 +361,7 @@
         }
 
         .collapse-button {
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             line-height: 1.5rem;
         }
 
@@ -385,7 +385,7 @@
         }
 
         [id$="-body"]:not(#examples-body) span {
-            font-size: .875rem;
+            font-size: var(--ks-font-size-sm);
             font-weight: 400;
         }
     }

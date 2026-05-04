@@ -567,7 +567,7 @@
     pointer-events: none;
     display: flex;
     gap: .5rem;
-    font-size: var(--kel-font-size-medium);
+    font-size: var(--ks-font-size-md);
 }
 
 .cascader-item {
@@ -582,7 +582,7 @@
     margin: 0.75rem 0 1.25rem 0;
     display: flex;
     justify-content: space-between;
-    font-size: var(--kel-font-size-medium);
+    font-size: var(--ks-font-size-md);
     pointer-events: none;
 }
 
@@ -646,7 +646,7 @@
     & .kel-cascader-node {
         height: 36px;
         line-height: 36px;
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-primary);
 
         &[aria-haspopup="false"] {
@@ -690,8 +690,8 @@
 
         .task .output-task-icon {
             align-self: center;
-            height: var(--kel-font-size-small);
-            width: var(--kel-font-size-small);
+            height: var(--ks-font-size-sm);
+            width: var(--ks-font-size-sm);
         }
 
         code span.regular {

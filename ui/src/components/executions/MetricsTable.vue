@@ -172,6 +172,6 @@
         border: 1px solid var(--ks-badge-border);
         background-color: var(--ks-badge-background);
         color: var(--ks-badge-content);
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
     }
 </style>

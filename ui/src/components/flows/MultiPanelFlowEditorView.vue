@@ -270,7 +270,7 @@
         h3 {
             margin: 0 0 0.75rem;
             color: var(--ks-content-primary);
-            font-size: var(--kel-font-size-large);
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.15;
         }
@@ -278,7 +278,7 @@
         p {
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             line-height: 1.45;
         }
     }
@@ -309,11 +309,11 @@
 
         .onboarding-execute-hint__content {
             h3 {
-                font-size: var(--kel-font-size-large);
+                font-size: var(--ks-font-size-lg);
             }
 
             p {
-                font-size: var(--kel-font-size-base);
+                font-size: var(--ks-font-size-base);
             }
         }
     }

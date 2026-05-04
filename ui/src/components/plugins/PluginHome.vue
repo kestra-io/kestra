@@ -213,7 +213,7 @@
         gap: 8px;
         border-radius: 4px;
         text-overflow: ellipsis;
-        font-size: var(--kel-font-size-extra-small);
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         line-height: 26px;
         cursor: pointer;

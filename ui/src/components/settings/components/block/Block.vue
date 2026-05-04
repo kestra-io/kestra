@@ -44,7 +44,7 @@ section {
         align-items: center;
         margin-bottom: calc(1rem * 2);
         justify-content: space-between;
-        font-size: 1.375rem;
+        font-size: var(--ks-font-size-xl);
         font-weight: 600;
 
         & .content {

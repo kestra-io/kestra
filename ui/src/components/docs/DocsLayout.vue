@@ -82,11 +82,11 @@
 
         .toggle-btn {
             white-space:nowrap;
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
         }
 
         > div > ul > li > span:first-child {
-            font-size: var(--kel-font-size-extra-small);
+            font-size: var(--ks-font-size-xs);
         }
     }
 

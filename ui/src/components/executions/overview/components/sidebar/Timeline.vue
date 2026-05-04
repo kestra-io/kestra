@@ -69,7 +69,7 @@
     & :deep(.kel-collapse-item__content) {
         padding-bottom: 0;
         background-color: var(--ks-background-table-row);
-        font-size: var(--kel-font-size-small);
+        font-size: var(--ks-font-size-sm);
     }
 
     & :deep(.kel-collapse-item__header) {
@@ -103,7 +103,7 @@
 
         & * {
             line-height: 1.5;
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
         }
     }
 
@@ -136,7 +136,7 @@
         gap: 4px;
 
         .timeline-timestamp {
-            font-size: var(--kel-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-tertiary);
         }
     }

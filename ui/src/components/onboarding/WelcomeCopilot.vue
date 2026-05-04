@@ -123,8 +123,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
-
     :global(main:has(section#welcome)) {
         max-height: 100%;
         overflow: hidden;
@@ -194,7 +192,7 @@
         .welcome-help-title {
             margin: 0 0 0.875rem;
             color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
         }
 
         :deep(.kel-row) {

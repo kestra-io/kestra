@@ -36,7 +36,7 @@ export default defineConfig([
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {
             parser: tseslint.parser,
-            project: ["./tsconfig.json"],
+            project: ["./tsconfig.json", "./packages/design-system/tsconfig.json", "./packages/topology/tsconfig.json"],
             tsconfigRootDir: process.cwd(),
             extraFileExtensions: [".vue"],
         }},

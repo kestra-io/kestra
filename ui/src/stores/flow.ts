@@ -8,7 +8,7 @@ import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
-import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
+import {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
 import {makeToast} from "../utils/toast";
 import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";

@@ -43,7 +43,7 @@ export default defineConfig(({mode}) => {
             watch: {
                 ignored: [
                     "!**/node_modules/@kestra-io/design-system/src/**",
-                    "!**/node_modules/@kestra-io/topology/src/**"
+                    "!**/node_modules/@kestra-io/topology/src/**",
                 ]
             },
             proxy: {
@@ -56,9 +56,17 @@ export default defineConfig(({mode}) => {
         },
         resolve: {
             preserveSymlinks: true,
-            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia"],
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
+                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
+
+                {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
+                {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
+                {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
+
+
                 // to be removed when all mdc import are removed
                 // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
                 {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
@@ -115,11 +123,13 @@ export default defineConfig(({mode}) => {
                 "humanize-duration",
                 "moment",
                 "moment-timezone",
-                "moment-range"
+                "moment-range",
+                "dagre"
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",
-                "@kestra-io/design-system"
+                "@kestra-io/design-system",
+                "@kestra-io/topology"
             ]
         },
     };

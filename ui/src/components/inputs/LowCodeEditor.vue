@@ -104,7 +104,7 @@
     import Collapse from "../layout/Collapse.vue";
     import Editor from "./Editor.vue";
 
-    import {Topology} from "@kestra-io/ui-libs";
+    import {Topology} from "@kestra-io/topology";
     import {SECTIONS, KsMarkdown} from "@kestra-io/design-system";
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 

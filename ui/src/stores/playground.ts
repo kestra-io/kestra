@@ -1,7 +1,7 @@
 import {computed, ref, watch, type Ref} from "vue";
 import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
-import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
+import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
 import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";

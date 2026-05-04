@@ -12,15 +12,8 @@
         "url": "https://github.com/kestra-io/kestra/issues"
     },
     "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
-        "./vue-flow-utils": {
-            "types": "./dist/vue-flow-utils.d.ts",
-            "import": "./dist/vue-flow-utils.js"
-        },
-        "./style.css": "./dist/style.css"
+        ".": "./src/index.ts",
+        "./vue-flow-utils": "./src/vue-flow-utils.ts"
     },
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",

@@ -11,10 +11,6 @@
     --ks-border-radius-pill: 50rem;
 }
 
-html.dark {
-    --ks-topology-dot-color: #{$base-gray-500};
-}
-
 $node-colors: (
     "success": $base-green-400,
     "primary": $base-purple-500,

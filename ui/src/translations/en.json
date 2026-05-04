@@ -1585,6 +1585,7 @@
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
+      "switch": "Switch Dashboard",
       "preview": "Preview Dashboard",
       "empty": "There are no results to be shown.",
       "creation": {

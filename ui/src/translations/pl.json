@@ -240,7 +240,8 @@
         "plural": "Dashboardy",
         "singular": "Dashboard"
       },
-      "preview": "Podgląd Dashboardu"
+      "preview": "Podgląd Dashboardu",
+      "switch": "Przełącz Dashboard"
     },
     "data": "Dane",
     "dataFilters": "Filtry Danych",

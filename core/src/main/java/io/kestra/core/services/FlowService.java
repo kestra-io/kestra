@@ -464,8 +464,7 @@ public class FlowService {
             .toList();
         flowTriggers.forEach(flowTrigger ->
         {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty()
-                && ListUtils.isEmpty(flowTrigger.getDependsOn())
+            if (ListUtils.isEmpty(flowTrigger.getDependsOn())
                 && (flowTrigger.getWhen() == null || "true".equals(flowTrigger.getWhen()))) {
                 warnings.add(
                     "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the dependsOn property to the Flow trigger '" + flowTrigger.getId()

@@ -317,6 +317,27 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
     }
 
     @Test
+    void findDistinctNamespace() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        String namespace1 = TestsUtils.randomNamespace();
+        String namespace2 = TestsUtils.randomNamespace();
+        String deletedNamespace = TestsUtils.randomNamespace();
+
+        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build());
+        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.delete(deletedEntry);
+
+        List<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+
+        assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
+        assertThat(namespaces).doesNotContain(deletedNamespace);
+    }
+
+    @Test
     void purgeAllVersions() throws IOException {
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();

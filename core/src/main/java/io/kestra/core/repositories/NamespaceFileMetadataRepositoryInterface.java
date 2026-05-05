@@ -11,6 +11,10 @@ import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.micronaut.data.model.Pageable;
 
 public interface NamespaceFileMetadataRepositoryInterface {
+    default List<String> findDistinctNamespace(String tenantId) {
+        return List.of();
+    }
+
     Optional<NamespaceFileMetadata> findByPath(
         String tenantId,
         String namespace,

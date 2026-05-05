@@ -45,6 +45,23 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
     }
 
     @Override
+    public List<String> findDistinctNamespace(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .select(field("namespace"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId, false))
+                    .and(lastCondition())
+                    .groupBy(field("namespace"))
+                    .fetch()
+                    .map(record -> record.getValue("namespace", String.class))
+            );
+    }
+
+    @Override
     public Optional<NamespaceFileMetadata> findByPath(String tenantId, String namespace, String path) {
         return jdbcRepository
             .getDslContextWrapper()

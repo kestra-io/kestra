@@ -11,6 +11,10 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.micronaut.data.model.Pageable;
 
 public interface KvMetadataRepositoryInterface {
+    default List<String> findDistinctNamespace(String tenantId) {
+        return List.of();
+    }
+
     Optional<PersistedKvMetadata> findByName(
         String tenantId,
         String namespace,

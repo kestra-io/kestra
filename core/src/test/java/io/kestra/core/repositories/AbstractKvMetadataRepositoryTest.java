@@ -262,6 +262,24 @@ public abstract class AbstractKvMetadataRepositoryTest {
         assertThat(kvMetadataRepositoryInterface.findByName(tenantId, namespace, key).isPresent()).isFalse();
     }
 
+    @Test
+    void findDistinctNamespace() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        String namespace1 = TestsUtils.randomNamespace();
+        String namespace2 = TestsUtils.randomNamespace();
+        String deletedNamespace = TestsUtils.randomNamespace();
+
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, namespace1, "key1"));
+        kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, namespace2, "key2"));
+        PersistedKvMetadata deletedEntry = kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, deletedNamespace, "key3"));
+        kvMetadataRepositoryInterface.delete(deletedEntry);
+
+        List<String> namespaces = kvMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+
+        assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
+        assertThat(namespaces).doesNotContain(deletedNamespace);
+    }
+
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {
         return PersistedKvMetadata.builder()
             .tenantId(tenantId)

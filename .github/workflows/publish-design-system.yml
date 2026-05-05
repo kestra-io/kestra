@@ -71,13 +71,18 @@ jobs:
 
       - name: Read new version
         id: version
-        run: echo "value=$(npm pkg get version --workspace @kestra-io/design-system | tr -d '"')" >> "$GITHUB_OUTPUT"
+        # Read the new version from the package.json and set it as an output for later steps
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/design-system | jq -r '."@kestra-io/design-system"')" >> $GITHUB_OUTPUT 
 
       - name: Commit and tag
         working-directory: .
         run: |
+          # remove changes to the export field of package.json (check tsdown.config)
+          git reset --hard HEAD
+          # setup the bot for commit and tag
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # commit the version bump and tag
           git add ui/packages/design-system/package.json
           git add ui/package-lock.json
           git commit -m "chore(deps): bump @kestra-io/design-system to v${{ steps.version.outputs.value }}"

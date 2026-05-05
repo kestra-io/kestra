@@ -28,7 +28,7 @@
     "play": "vite",
     "typecheck": "vue-tsc --noEmit",
     "release": "bumpp",
-    "prepublishOnly": "pnpm run build",
+    "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6007 --no-open",
     "test": "npm run lint:test & npm run types:test & npm run unit:test & npm run storybook:test & wait",
     "build:watch": "vite build --watch",

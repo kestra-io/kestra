@@ -19,7 +19,6 @@ import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 
 import io.micronaut.context.ApplicationContext;
@@ -82,9 +81,13 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
 
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return Map.of("kestra.migration.enabled", "false");
+    }
+
     @Override
     public Integer call() throws Exception {
-        MigrationRunner.setSkipAutoRun(true);
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
         initLogger();
         sendServerLog();

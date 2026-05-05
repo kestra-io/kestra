@@ -35,7 +35,7 @@ public class UnlockMigrationCommand extends AbstractCommand {
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
+        return Map.of("kestra.migration.enabled", "true");
     }
 
     @Override

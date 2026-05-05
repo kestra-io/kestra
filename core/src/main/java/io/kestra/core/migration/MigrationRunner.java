@@ -1,6 +1,7 @@
 package io.kestra.core.migration;
 
 import io.micronaut.context.annotation.Context;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import jakarta.annotation.PostConstruct;
@@ -45,6 +46,8 @@ import java.util.List;
 @Slf4j
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@Requires(property = "kestra.migration.enabled", value = "true", defaultValue = "true")
+@Requires(property = "kestra.repository.type")
 public class MigrationRunner implements MigrationRunnerInterface {
 
     /**

@@ -13,6 +13,7 @@ import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 
+import io.kestra.core.migration.MigrationRunnerInterface;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -23,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KvUpdateCommandTest {
     @Test
-    void string() throws IOException, ResourceExpiredException {
+    void string() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -51,8 +53,9 @@ class KvUpdateCommandTest {
     }
 
     @Test
-    void integer() throws IOException, ResourceExpiredException {
+    void integer() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -79,8 +82,9 @@ class KvUpdateCommandTest {
     }
 
     @Test
-    void integerStr() throws IOException, ResourceExpiredException {
+    void integerStr() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -109,8 +113,9 @@ class KvUpdateCommandTest {
     }
 
     @Test
-    void object() throws IOException, ResourceExpiredException {
+    void object() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -137,8 +142,9 @@ class KvUpdateCommandTest {
     }
 
     @Test
-    void objectStr() throws IOException, ResourceExpiredException {
+    void objectStr() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
@@ -167,8 +173,9 @@ class KvUpdateCommandTest {
     }
 
     @Test
-    void fromFile() throws IOException, ResourceExpiredException {
+    void fromFile() throws Exception {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
 
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();

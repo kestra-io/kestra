@@ -3,7 +3,7 @@ import {PebbleAutoCompletion, resetExpressionCache, functionToSnippet} from "../
 
 const axiosGet = vi.fn();
 
-vi.mock("../../../src/utils/axios", () => ({
+vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
         get: axiosGet,
     }),

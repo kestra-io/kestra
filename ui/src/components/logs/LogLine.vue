@@ -30,7 +30,8 @@
                     </span>
                 </span>
             </div>
-            <div
+            <pre
+                ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
                 v-html="renderedHtml"
             />

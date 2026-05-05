@@ -393,16 +393,21 @@ public class ExecutionService {
     }
 
     public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
-        Execution newExecution = markAs(execution, flow, taskRunId, newState);
+        // Resolve the actual execution containing the task run — may be a loop sub-execution
+        Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+            .map(ExecutionWithTaskRun::execution)
+            .orElse(execution);
 
-        List<Label> newLabels = new ArrayList<>(newExecution.getLabels());
+        Execution newExecution = markAs(targetExecution, flow, taskRunId, newState);
+
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(newExecution.getLabels()));
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
         }
         newExecution = newExecution.withLabels(newLabels);
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
-        if (execution.getState().canChangeStatus()) {
+        if (targetExecution.getState().canChangeStatus()) {
             List<TaskRun> newTaskRuns = newExecution.getTaskRunList();
             // We need to remove global error tasks and flowable error tasks if any
             flow
@@ -423,15 +428,49 @@ public class ExecutionService {
             throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
 
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, targetExecution, CrudEventType.UPDATE));
         return newExecution;
     }
 
-    public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
-        return this.markAs(execution, flow, taskRunId, newState, null, null);
+    /**
+     * Find the execution (main or loop sub-execution) that contains the given task run.
+     * Searches the given execution first; if not found, searches loop sub-executions.
+     *
+     * @param execution the parent execution to search first
+     * @param taskRunId the task run ID to find
+     * @return the execution and task run pair, or empty if not found in any execution
+     */
+    public Optional<ExecutionWithTaskRun> findExecutionWithTaskRun(Execution execution, String taskRunId) {
+        Optional<TaskRun> maybeTaskRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(tr -> tr.getId().equals(taskRunId))
+            .findFirst();
+        if (maybeTaskRun.isPresent()) {
+            return Optional.of(new ExecutionWithTaskRun(execution, maybeTaskRun.get()));
+        }
+
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream()
+            .flatMap(sub -> ListUtils.emptyOnNull(sub.getTaskRunList()).stream()
+                .filter(tr -> tr.getId().equals(taskRunId))
+                .map(tr -> new ExecutionWithTaskRun(sub, tr)))
+            .findFirst();
     }
 
-    @SuppressWarnings("deprecation")
+    public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
+        // The task run may live in a loop sub-execution; find the right execution to operate on
+        Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+            .map(ExecutionWithTaskRun::execution)
+            .orElse(execution);
+        return this.markAs(targetExecution, flow, taskRunId, newState, null, null);
+    }
+
+    /**
+     * Holds an execution alongside the specific task run found within it.
+     *
+     * @param execution the execution (main or sub-execution) that contains the task run
+     * @param taskRun   the task run found in that execution
+     */
+    public record ExecutionWithTaskRun(Execution execution, TaskRun taskRun) {}
+
     private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
         @Nullable Pause.Resumed resumed) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(

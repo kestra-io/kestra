@@ -130,7 +130,7 @@ class ExecutionServiceTest {
     @LoadFlows({"flows/valids/restart-loop.yaml"})
     @Disabled("This is not implemented yet for loops")
     void restartFlowable() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -149,7 +149,7 @@ class ExecutionServiceTest {
     @LoadFlows(value = {"flows/valids/restart-loop.yaml"}, tenantId = TENANT_1)
     @Disabled("This is not implemented yet for loops")
     void restartFlowable2() throws Exception {
-        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
+        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "restart-loop", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -382,23 +382,27 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows(value = { "flows/valids/loop-serial.yaml" }, tenantId = TENANT_1)
-    @Disabled("This is not implemented yet for loops")
     void markAsEachPara() throws Exception {
+        // Given
         Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "loop-serial");
         Flow flow = flowRepository.findByExecution(execution);
 
-        assertThat(execution.getTaskRunList()).hasSize(7);
+        assertThat(execution.getTaskRunList()).hasSize(1); // only the Loop task run in the parent
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getId(), State.Type.FAILED);
+        // child task runs live in loop sub-executions, not in the parent
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
+        assertThat(subExecutions).hasSize(3);
+        TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
 
+        // When: markAs routes to the sub-execution that owns the task run
+        Execution restart = executionService.markAs(execution, flow, itemTaskRun.getId(), State.Type.FAILED);
+
+        // Then: the returned execution is the sub-execution with the task run marked
+        assertThat(restart.getId()).isEqualTo(subExecutions.getFirst().getId());
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getMetadata().getAttemptNumber()).isEqualTo(2);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(7);
-        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(restart.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getState().getHistories()).hasSize(5);
+        assertThat(restart.findTaskRunsByTaskId("item").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test

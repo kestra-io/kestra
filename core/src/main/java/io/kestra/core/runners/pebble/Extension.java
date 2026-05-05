@@ -143,7 +143,6 @@ public class Extension extends AbstractExtension {
 
         functions.put(NowFunction.NAME, new NowFunction());
         functions.put(FromJsonFunction.NAME, new FromJsonFunction());
-        functions.put(CurrentEachOutputFunction.NAME, new CurrentEachOutputFunction());
         functions.put(SecretFunction.NAME, secretFunction);
         functions.put(KvFunction.NAME, kvFunction);
         functions.put(ReadFileFunction.NAME, readFileFunction);
@@ -173,9 +172,7 @@ public class Extension extends AbstractExtension {
         functions.put(IsFileEmptyFunction.NAME, isFileEmptyFunction);
         functions.put(NanoIDFunction.NAME, new NanoIDFunction());
         functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
-        functions.put(IterationOutputFunction.NAME, new IterationOutputFunction());
         functions.put(HttpFunction.NAME, httpFunction);
-        functions.put(ParentOutputFunction.NAME, new ParentOutputFunction());
         functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
         functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
         functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());

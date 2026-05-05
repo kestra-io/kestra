@@ -1,4 +1,4 @@
-id: finally-foreach
+id: finally-loop
 namespace: io.kestra.tests
 
 inputs:
@@ -8,7 +8,7 @@ inputs:
 
 tasks:
   - id: each
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     values: '["1", "2", "3"]'
     concurrencyLimit: 0
     tasks:

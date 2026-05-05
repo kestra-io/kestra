@@ -214,11 +214,9 @@ public final class RunVariables {
         loopRunMap.put("value", loopRun.value());
         if (loopRun.parents() != null) {
             loopRunMap.put("parent", of(loopRun.parents().getLast()));
-            if (loopRun.parents().size() > 1) {
-                List<Map<String, Object>> parents = new ArrayList<>();
-                loopRun.parents().forEach(parent -> parents.add(of(parent)));
-                loopRunMap.put("parents", parents);
-            }
+            List<Map<String, Object>> parents = new ArrayList<>();
+            loopRun.parents().forEach(parent -> parents.add(of(parent)));
+            loopRunMap.put("parents", parents);
         }
         return loopRunMap;
     }

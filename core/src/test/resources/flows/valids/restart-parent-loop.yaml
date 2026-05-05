@@ -1,4 +1,4 @@
-id: restart-parent-for-each
+id: restart-parent-loop
 namespace: io.kestra.tests
 tasks:
   - id: hello
@@ -6,7 +6,7 @@ tasks:
     message: Hello Parent 1
 
   - id: each
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     values: ["1", "2", "3"]
     tasks:
       - id: callSubflow

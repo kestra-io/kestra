@@ -110,6 +110,9 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
+      
+      - name: Create release tarball
+        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination ui/packages/design-system
 
       - name: Create GitHub Release
         working-directory: .
@@ -118,4 +121,5 @@ jobs:
         run: |
           gh release create "${{ inputs.package }}/v${{ steps.version.outputs.value }}" \
             --title "@kestra-io/${{ inputs.package }} v${{ steps.version.outputs.value }}" \
-            --generate-notes
+            --notes "${{ inputs.package }} version ${{ steps.version.outputs.value }} published to npm.\n\n To install, run: \`npm install @kestra-io/${{ inputs.package }}@${{ steps.version.outputs.value }}\`" \
+            ui/packages/design-system/*design-system*.tgz

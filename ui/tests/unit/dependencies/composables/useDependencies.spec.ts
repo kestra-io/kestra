@@ -314,6 +314,7 @@ describe("useDependencies composable", () => {
             ],
             count: 3,
         });
+        vi.useFakeTimers();
         const wrapper = mount({
             template: "<div></div>",
             setup() {
@@ -323,13 +324,14 @@ describe("useDependencies composable", () => {
                 return {composable};
             },
         });
-        // Flush microtasks (promise resolution + Vue reactivity) then
-        // allow jsdom's setTimeout-based requestAnimationFrame to fire.
+        // Flush microtasks (promise resolution + Vue reactivity) so onMounted's
+        // async fetch resolves, then advance fake timers past jsdom's rAF polyfill
+        // (setTimeout 16 ms) so capturePositions() runs and storedPositions is populated.
         await nextTick();
         await nextTick();
-        await new Promise(resolve => setTimeout(resolve, 0));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await vi.runAllTimersAsync();
         await nextTick();
+        vi.useRealTimers();
         chartMock.setOption.mockClear();
         const {selectNode} = wrapper.vm.composable as ReturnType<typeof useDependencies>;
         return {selectNode, chartMock};

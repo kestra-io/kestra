@@ -19,6 +19,9 @@ const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: 
 export default defineConfig({
     plugins: [vue()],
     resolve: resolvedViteConfig.resolve,
+    coverage: {
+        exclude: ["**/*.json"],
+    },
     test: {
         projects: [
             "./vitest.config.unit.js",

@@ -124,7 +124,10 @@ export default defineConfig(({mode}) => {
                 "moment",
                 "moment-timezone",
                 "moment-range",
-                "dagre"
+                "dagre",
+                "@vue-flow/background",
+                "@vue-flow/controls",
+                "html-to-image"
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

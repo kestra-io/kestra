@@ -85,7 +85,7 @@ jobs:
           npm pkg set --workspace @kestra-io/${{ inputs.package }} version=$publishedVersion
           # Bump the version based on the input increment (patch, minor, major)
           newVersion=$(npm version ${{ inputs.increment }} --workspace @kestra-io/${{ inputs.package }} --no-git-tag-version)
-          echo "New version: $newVersion
+          echo "New version: $newVersion"
 
       - name: Read new version
         id: version

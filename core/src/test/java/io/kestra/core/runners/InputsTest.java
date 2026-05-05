@@ -228,7 +228,7 @@ public class InputsTest {
 
         assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
 
         assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("file").getFirst()).get("value"))
@@ -396,7 +396,7 @@ public class InputsTest {
 
         assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
 
         assertThat(execution.getInputs().get("json1")).isInstanceOf(Map.class);

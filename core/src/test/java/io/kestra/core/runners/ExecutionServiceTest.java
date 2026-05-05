@@ -556,7 +556,6 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({"flows/valids/loop-pause.yaml"})
-    @Disabled("This is not implemented yet for loops")
     void killExecutionWithFlowableTask() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause");
 

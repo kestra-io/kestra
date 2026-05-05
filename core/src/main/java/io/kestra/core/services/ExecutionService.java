@@ -777,6 +777,28 @@ public class ExecutionService {
     }
 
     /**
+     * Lookup for all loop sub-executions created by the given execution that are still running or paused,
+     * and returns the relevant {@link ExecutionKilledExecution} events that should be requested.
+     * This method is not responsible for executing the events.
+     *
+     * @param tenantId    of the parent execution.
+     * @param executionId of the parent execution.
+     * @return a list of zero or more {@link ExecutionKilledExecution}.
+     */
+    public List<ExecutionKilledExecution> killLoopSubExecutions(final String tenantId, final String executionId) {
+        return executionRepository.findLoopSubExecutions(tenantId, executionId)
+            .stream()
+            .filter(subExecution -> subExecution.getState().isRunning() || subExecution.getState().isPaused())
+            .map(subExecution -> (ExecutionKilledExecution) ExecutionKilledExecution.builder()
+                .executionId(subExecution.getId())
+                .isOnKillCascade(true)
+                .state(ExecutionKilled.State.REQUESTED)
+                .tenantId(tenantId)
+                .build())
+            .toList();
+    }
+
+    /**
      * Kill an execution.
      *
      * @return the execution in a KILLING state if not already terminated

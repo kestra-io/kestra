@@ -162,15 +162,15 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable List<FlowFilter> flows);
 
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
-    default List<Execution> findLoopSubExecutions(Execution parentExecution) {
+    default List<Execution> findLoopSubExecutions(String tenantId, String parentExecutionId) {
         return find(
             Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
-            parentExecution.getTenantId(),
+            tenantId,
             List.of(
                 QueryFilter.builder()
                     .field(QueryFilter.Field.PARENT_ID)
                     .operation(QueryFilter.Op.EQUALS)
-                    .value(parentExecution.getId())
+                    .value(parentExecutionId)
                     .build(),
                 QueryFilter.builder()
                     .field(QueryFilter.Field.KIND)

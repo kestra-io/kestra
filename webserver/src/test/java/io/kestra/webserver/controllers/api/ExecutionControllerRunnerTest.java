@@ -285,7 +285,7 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(result.getTaskRunList().size()).isEqualTo(13);
 
-        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result);
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result.getTenantId(), result.getId());
         assertThat(subExecutions).hasSize(3);
     }
 

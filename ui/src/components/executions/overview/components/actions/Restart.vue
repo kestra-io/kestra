@@ -1,15 +1,11 @@
 <template>
-    <el-tooltip
+    <KsTooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
-        :persistent="false"
-        :hideAfter="0"
         :content="tooltip"
         popperClass="ks-restart-tooltip--no-pointer"
         rawContent
-        transition=""
-        effect="light"
     >
         <component
             v-if="component !== 'el-dropdown-item'"
@@ -34,9 +30,9 @@
                 {{ $t(replayOrRestart) }}
             </component>
         </span>
-    </el-tooltip>
+    </KsTooltip>
 
-    <el-dialog
+    <KsDialog
         v-if="enabled && isOpen && !isReplay"
         v-model="isOpen"
         destroyOnClose
@@ -48,7 +44,7 @@
                 <h3 class="modal-title">
                     {{ t("restart execution title") }}
                 </h3>
-                <el-divider />
+                <KsDivider />
             </div>
         </template>
 
@@ -57,16 +53,16 @@
         </div>
 
         <template #footer>
-            <el-button @click="isOpen = false">
+            <KsButton @click="isOpen = false">
                 {{ t("cancel") }}
-            </el-button>
-            <el-button type="primary" @click="handleRestartExecute">
+            </KsButton>
+            <KsButton type="primary" @click="handleRestartExecute">
                 {{ t("restart") }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <el-dialog
+    <KsDialog
         v-if="enabled && isOpen && isReplay"
         v-model="isOpen"
         destroyOnClose
@@ -78,7 +74,7 @@
                 <h3 class="modal-title">
                     {{ t("replay execution title") }}
                 </h3>
-                <el-divider />
+                <KsDivider />
             </div>
         </template>
 
@@ -86,39 +82,39 @@
             <p class="mb-0">
                 {{ t("replay execution description") }}
             </p>
-            <Id :value="execution.id" :shrink="false" />
+            <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
                 {{ t("replay using") }}:
             </h4>
 
-            <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <el-radio value="original" class="radio-item">
+            <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
+                <KsRadio value="original" class="radio-item">
                     {{ t("flow revision original") }}
-                </el-radio>
-                <el-radio value="latest" class="radio-item">
+                </KsRadio>
+                <KsRadio value="latest" class="radio-item">
                     {{ t("flow revision latest") }}
-                </el-radio>
-                <el-radio value="specific" class="radio-item">
+                </KsRadio>
+                <KsRadio value="specific" class="radio-item">
                     {{ t("flow revision specific") }}
-                </el-radio>
-            </el-radio-group>
+                </KsRadio>
+            </KsRadioGroup>
 
-            <el-form
+            <KsForm
                 v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
                 class="mt-2"
             >
-                <el-form-item>
-                    <el-select v-model="revisionsSelected">
-                        <el-option
+                <KsFormItem>
+                    <KsSelect v-model="revisionsSelected">
+                        <KsOption
                             v-for="item in revisionsOptions"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
-                    </el-select>
-                </el-form-item>
-            </el-form>
+                    </KsSelect>
+                </KsFormItem>
+            </KsForm>
 
             <template v-if="hasInputs">
                 <template v-if="!taskRun">
@@ -126,14 +122,14 @@
                         {{ t("replay inputs") }}:
                     </h4>
 
-                    <el-radio-group v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
-                        <el-radio value="reuse" class="radio-item">
+                    <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
+                        <KsRadio value="reuse" class="radio-item">
                             {{ t("reuse original inputs") }}
-                        </el-radio>
-                        <el-radio value="modify" class="radio-item">
+                        </KsRadio>
+                        <KsRadio value="modify" class="radio-item">
                             {{ t("modify inputs") }}
-                        </el-radio>
-                    </el-radio-group>
+                        </KsRadio>
+                    </KsRadioGroup>
                 </template>
                 <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
                     {{ t("replay inputs new required") }}
@@ -142,16 +138,16 @@
         </div>
 
         <template #footer>
-            <el-button @click="isOpen = false">
+            <KsButton @click="isOpen = false">
                 {{ t("cancel") }}
-            </el-button>
-            <el-button type="primary" @click="handleReplayExecute">
+            </KsButton>
+            <KsButton type="primary" @click="handleReplayExecute">
                 {{ t("execute") }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <el-dialog
+    <KsDialog
         v-if="isReplayWithInputsOpen"
         v-model="isReplayWithInputsOpen"
         destroyOnClose
@@ -173,7 +169,7 @@
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -181,7 +177,7 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -190,7 +186,7 @@
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import Id from "../../../../Id.vue"
+    import {KsId} from "@kestra-io/design-system"
 
     defineOptions({inheritAttrs: false})
 
@@ -403,19 +399,19 @@
 <style scoped lang="scss">
 .modal-header {
     .modal-title {
-        font-size: 16px;
+        font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
         color: var(--ks-color-text-primary);
     }
 }
 .execution-description {
-    font-size: 13px;
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-color-text-secondary);
 }
 
 .section-title {
-    font-size: 14px;
+    font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
     color: var(--ks-color-text-primary);
@@ -427,45 +423,45 @@
     align-items: flex-start;
 }
 
-.modal-header :deep(.el-divider--horizontal) {
+.modal-header :deep(.kel-divider--horizontal) {
     margin-bottom: 8px;
 }
 
 .radio-item {
-    :deep(.el-radio__input) {
-        .el-radio__inner {
+    :deep(.kel-radio__input) {
+        .kel-radio__inner {
             width: 18px;
             height: 18px;
 
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--el-color-primary);
+                background-color: var(--ks-button-background-primary);
             }
         }
     }
 
-    :deep(.el-radio__label) {
-        font-size: 13px;
-        color: var(--el-text-color-regular);
+    :deep(.kel-radio__label) {
+        font-size: var(--ks-font-size-xs);
+        color: var(--kel-text-color-regular);
         padding-left: 8px;
     }
 
 
     &.is-checked {
-        :deep(.el-radio__input) {
-            .el-radio__inner {
-                border-color: var(--el-color-primary);
-                background-color: var(--el-color-primary);
+        :deep(.kel-radio__input) {
+            .kel-radio__inner {
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
 
                 &::after {
-                    background-color: white;
+                    background-color: var(--ks-white);
                 }
             }
         }
 
-        :deep(.el-radio__label) {
-            color: var(--el-text-color-regular) !important;
+        :deep(.kel-radio__label) {
+            color: var(--kel-text-color-regular) !important;
         }
     }
 }

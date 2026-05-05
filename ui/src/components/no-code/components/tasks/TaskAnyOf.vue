@@ -1,28 +1,28 @@
 <template>
-    <el-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
-        <el-select
+    <KsFormItem :class="{'radio-wrapper':!isSelectingPlugins}">
+        <KsSelect
             v-if="isSelectingPlugins"
             v-model="selectedSchema"
             filterable
         >
-            <el-option
+            <KsOption
                 v-for="item in schemaOptions"
                 :key="item.value"
                 :label="item.id"
                 :value="item.value"
             />
-        </el-select>
-        <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
-            <el-radio
+        </KsSelect>
+        <KsRadioGroup v-else v-model="selectedSchema" @change="onSelectType">
+            <KsRadio
                 v-for="radioSchema in schemaOptions"
                 :key="radioSchema.value"
                 :value="radioSchema.value"
             >
                 {{ radioSchema.label }}
-            </el-radio>
-        </el-radio-group>
-    </el-form-item>
-    <el-form labelPosition="top" v-if="selectedSchema">
+            </KsRadio>
+        </KsRadioGroup>
+    </KsFormItem>
+    <KsForm labelPosition="top" v-if="selectedSchema">
         <component
             :is="currentSchemaType"
             v-if="currentSchema"
@@ -32,13 +32,13 @@
             @update:model-value="onAnyOfInput"
             merge
         />
-    </el-form>
+    </KsForm>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue";
     import {Schema} from "./getTaskComponent";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
     import {useBlockComponent} from "./useBlockComponent";
 
@@ -343,23 +343,23 @@
 </script>
 
 <style scoped lang="scss">
-.el-form {
+.kel-form {
     width: 100%;
 }
 
 .radio-wrapper {
-    :deep(.el-radio-group) {
+    :deep(.kel-radio-group) {
         display: flex;
         flex-wrap: wrap;
         gap: 1rem;
         margin-bottom: .5rem;
     }
 
-    :deep(.el-radio) {
+    :deep(.kel-radio) {
         margin-right: 0;
         height: 40px;
 
-        .el-radio__inner {
+        .kel-radio__inner {
             width: 24px;
             height: 24px;
             border: 2px solid var(--ks-content-link);
@@ -373,20 +373,20 @@
         }
 
         &.is-checked {
-            .el-radio__label {
+            .kel-radio__label {
                 color: var(--ks-content-link);
             }
-            .el-radio__inner {
+            .kel-radio__inner {
                 border-color: var(--ks-content-link);
                 background: transparent;
             }
         }
 
         &:hover {
-            .el-radio__label {
+            .kel-radio__label {
                 color: var(--ks-content-link-hover);
             }
-            .el-radio__inner {
+            .kel-radio__inner {
                 border-color: var(--ks-content-link-hover);
             }
         }

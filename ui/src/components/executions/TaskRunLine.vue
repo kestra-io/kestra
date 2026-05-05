@@ -1,7 +1,7 @@
 <template>
     <div class="taskrun-header">
         <div>
-            <el-icon
+            <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
                 type="default"
                 @click.stop="() => $emit('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
@@ -10,10 +10,10 @@
                     v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                 />
                 <ChevronRight v-else />
-            </el-icon>
+            </KsIcon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
-            <TaskIcon
+            <KsTaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 onlyIcon
@@ -25,7 +25,7 @@
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
-            <el-tooltip :persistent="false" transition="" :hideAfter="0" effect="light">
+            <KsTooltip>
                 <template #content>
                     {{ $t("from") }} :
                     {{ $filters.date(selectedAttempt(currentTaskRun).state.startDate) }}
@@ -43,7 +43,7 @@
                         {{ currentTaskRun.value }}
                     </small>
                 </span>
-            </el-tooltip>
+            </KsTooltip>
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
@@ -53,18 +53,18 @@
         </div>
 
         <div class="task-status">
-            <Status size="small" :status="currentTaskRun.state.current" />
+            <KsExecutionStatus size="small" :status="currentTaskRun.state.current" />
         </div>
 
         <slot name="buttons" />
 
-        <el-dropdown trigger="click">
-            <el-button type="default" class="task-run-buttons">
+        <KsDropdown trigger="click">
+            <KsButton type="default" class="task-run-buttons">
                 <DotsVertical title="" />
-            </el-button>
+            </KsButton>
             <template #dropdown>
-                <el-dropdown-menu>
-                    <el-dropdown-item
+                <KsDropdownMenu>
+                    <KsDropdownItem
                         v-if="selectedAttempt(currentTaskRun).state.current === 'FAILED'"
                         @click="fixErrorWithAi(currentTaskRun)"
                     >
@@ -72,7 +72,7 @@
                             <AiIcon class="me-1" />
                             <span>{{ $t('fix_with_ai') }}</span>
                         </span>
-                    </el-dropdown-item>
+                    </KsDropdownItem>
                     <SubFlowLink
                         v-if="isSubflow(currentTaskRun)"
                         component="el-dropdown-item"
@@ -117,51 +117,51 @@
                         :revision="followedExecution.flowRevision"
                         :flowSource="flow?.source"
                     />
-                    <el-dropdown-item
+                    <KsDropdownItem
                         :icon="Download"
                         @click="downloadContent(currentTaskRun.id)"
                     >
                         {{ $t("download logs") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
+                    </KsDropdownItem>
+                    <KsDropdownItem
                         :icon="Copy"
                         @click="copyContent(currentTaskRun.id)"
                     >
                         {{ $t("copy logs") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
+                    </KsDropdownItem>
+                    <KsDropdownItem
                         :icon="Delete"
                         @click="deleteLogs(currentTaskRun.id)"
                     >
                         {{ $t("delete logs") }}
-                    </el-dropdown-item>
+                    </KsDropdownItem>
                     <WorkerInfo
                         component="el-dropdown-item"
                         v-if="hasWorkerId(currentTaskRun) !== null"
                         :taskRun="currentTaskRun"
                         @follow="$emit('follow', $event)"
                     />
-                </el-dropdown-menu>
+                </KsDropdownMenu>
             </template>
-        </el-dropdown>
+        </KsDropdown>
     </div>
     <div class="attempt-header">
-        <el-select
+        <KsSelect
             class="d-none d-md-inline-block attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="$emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
-            <el-option
+            <KsOption
                 v-for="(_, index) in attempts(currentTaskRun)"
                 :key="`attempt-${index}-${currentTaskRun.id}`"
                 :value="index"
                 :label="`${$t('attempt')} ${index + 1}`"
             />
-        </el-select>
+        </KsSelect>
 
         <div class="task-status">
-            <Status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+            <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
         <div class="task-duration d-none d-md-inline-block">
@@ -175,7 +175,8 @@
 <script>
     import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
@@ -191,7 +192,8 @@
     import AiIcon from "../ai/AiIcon.vue";
     import FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
-    import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";
@@ -204,12 +206,12 @@
 
     export default {
         components: {
-            TaskIcon,
+            KsTaskIcon,
+            KsExecutionStatus,
             Outputs,
             SubFlowLink,
             TaskEdit,
             ChangeStatus,
-            Status,
             Metrics,
             Restart,
             Duration,
@@ -404,7 +406,6 @@
     }
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .task-duration {
         padding: .375rem 0;
@@ -422,8 +423,8 @@
         }
 
         small {
-            font-family: var(--bs-font-monospace);
-            font-size: var(--font-size-xs)
+            font-family: var(--kel-font-family-monospace);
+            font-size: var(--ks-font-size-xs)
         }
 
         .task-duration small {
@@ -438,7 +439,7 @@
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;
-            border-radius: $border-radius-lg;
+            border-radius: 0.5rem;
             margin-left: -0.5rem;
         }
 
@@ -450,32 +451,32 @@
 
             span span {
                 color: var(--ks-content-primary);
-                font-size: 14px;
+                font-size: var(--ks-font-size-sm);
 
                 html:not(.dark) & {
-                    color: $black;
+                    color: #26282D;
                 }
             }
         }
 
         .task-run-buttons {
             padding: 0 .5rem;
-            border: 1px solid rgba($white, .05);
+            border: 1px solid rgba(#FFFFFF, .05);
             background-color: var(--ks-button-background-secondary) !important;
             // FIXME: what does this mean?
             &:not(:hover) {
-                background: rgba($white, .10);
+                background: rgba(#FFFFFF, .10);
             }
         }
     }
 
     .attempt-header {
-        .el-select {
+        .kel-select {
             width: 10rem;
             height: 24px;
             margin-top: 0.35rem;
 
-            :deep(.el-select__wrapper) {
+            :deep(.kel-select__wrapper) {
                 height: 24px;
                 min-height: 24px;
             }
@@ -483,15 +484,13 @@
         }
 
         .attempt-number {
-            background: var(--bs-gray-400);
+            background: var(--ks-tag-background);
             padding: .375rem .75rem;
             white-space: nowrap;
         }
     }
-</style>
 
-<style lang="scss">
-.attempt-select > .el-select__wrapper {
-    height: 100%;
-}
+    :deep(.attempt-select > .kel-select__wrapper) {
+        height: 100%;
+    }
 </style>

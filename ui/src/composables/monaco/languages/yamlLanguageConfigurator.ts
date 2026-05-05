@@ -9,7 +9,7 @@ import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/servi
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
-import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
@@ -68,7 +68,7 @@ function filterMissingRequiredTaskProperties({
         }
 
         for (const probeIndex of probeIndexes) {
-            const localized = YamlUtils.localizeElementAtIndex(
+            const localized = YAML_UTILS.localizeElementAtIndex(
                 source,
                 probeIndex,
             );
@@ -374,7 +374,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
                     const cursorPosition = model.getOffsetAt(position);
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),
@@ -384,7 +384,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         null,
                         true,
                     );
-                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(
+                    const elementUnderCursor = YAML_UTILS.localizeElementAtIndex(
                         source,
                         cursorPosition,
                     );

@@ -7,7 +7,7 @@
         :class="{overlay: verticalLayout}"
     >
         <template #footer>
-            <Auth />    
+            <Auth />
         </template>
     </SideBar>
 </template>
@@ -39,14 +39,14 @@
 
 <style scoped lang="scss">
 #side-menu {
-    .el-select {
+    .kel-select {
         padding: 0 30px;
         padding-bottom: 15px;
         transition: all 0.2s ease;
         background-color: transparent;
     }
     &.vsm_collapsed {
-        .el-select {
+        .kel-select {
             padding-left: 5px;
             padding-right: 5px;
         }

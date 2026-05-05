@@ -167,7 +167,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     states:
                       - FAILED
                       - WARNING
-                    where: "{{execution.namespace | startsWith 'company'}}\""""
+                    when: "{{execution.namespace | startsWith 'company'}}\""""
         ),
         @Example(
             full = true,
@@ -193,8 +193,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                   - states
                       - FAILED
                       - WARNING
-                    namespace: company.payroll
-                    prefix: false"""
+                    namespace: company.payroll"""
         ),
         @Example(
             full = true,

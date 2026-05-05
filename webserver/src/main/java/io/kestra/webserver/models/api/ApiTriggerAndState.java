@@ -2,6 +2,7 @@ package io.kestra.webserver.models.api;
 
 import io.kestra.core.models.triggers.AbstractTrigger;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,7 +11,7 @@ import lombok.Getter;
  */
 @Builder
 public record ApiTriggerAndState(
-    AbstractTrigger trigger,
-    ApiTriggerState state
+    @NotNull AbstractTrigger trigger,
+    @NotNull ApiTriggerState state
 ) {
 }

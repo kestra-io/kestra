@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <TaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
         </div>
 
         <div class="flex-grow-1 label">
@@ -39,7 +39,7 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
     } from "../../../injectionKeys";
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {KsTaskIcon} from "@kestra-io/design-system";
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 
@@ -84,7 +84,6 @@
 
 <style scoped lang="scss">
 @import "../../../styles/code.scss";
-@import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {
     cursor: pointer;
@@ -111,8 +110,8 @@
     }
 
     .playground-run-task{
-        color: $base-white;
-        background-color: $base-blue-400;
+        color: var(--ks-button-content-primary);
+        background-color: var(--ks-playground-bg-color);
         height: 16px;
         width: 16px;
         font-size: 4px;
@@ -124,7 +123,7 @@
         border: none;
     }
 
-    .delete-element {        color: $base-white;
+    .delete-element {        color: var(--ks-button-content-primary);
         border: none;
         background-color: transparent;
     }

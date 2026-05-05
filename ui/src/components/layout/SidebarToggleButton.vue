@@ -1,5 +1,5 @@
 <template>
-    <IconButton
+    <KsIconButton
         class="collapseButton sidebar-toggle"
         @click="$emit('toggle')"
         aria-label="Toggle menu"
@@ -18,11 +18,11 @@
                 fill="currentColor" 
             />
         </svg>
-    </IconButton>
+    </KsIconButton>
 </template>
 
 <script setup lang="ts">
-    import IconButton from "../IconButton.vue";
+    import {KsIconButton} from "@kestra-io/design-system";
 
     defineEmits<{
         (e: "toggle"): void;

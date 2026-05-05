@@ -1,5 +1,5 @@
 <template>
-    <el-alert id="error" type="error" showIcon :closable="false">
+    <KsAlert id="error" type="error" showIcon :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
@@ -14,13 +14,13 @@
             </div>
             <div v-if="logs.length > 3" class="link">
                 <router-link :to>
-                    <el-button>
+                    <KsButton>
                         {{ $t("errorLogs") }}
-                    </el-button>
+                    </KsButton>
                 </router-link>
             </div>
         </div>
-    </el-alert>
+    </KsAlert>
 </template>
 
 <script setup lang="ts">
@@ -69,32 +69,31 @@
     });
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #error {
-    :deep(.el-alert__content) {
+    :deep(.kel-alert__content) {
         cursor: pointer;
         width: 100%;
         max-width: 100%;
         gap: 0;
 
-        & .el-alert__title {
+        & .kel-alert__title {
             & div,
             & span {
                 display: flex;
                 justify-content: space-between;
-                font-size: var(--el-alert-title-font-size);
+                font-size: var(--kel-alert-title-font-size);
                 line-height: 24px;
-                color: var(--el-color-error);
+                color: var(--ks-content-error);
 
             }
         }
 
-        & .el-alert__description {
+        & .kel-alert__description {
             color: var(--ks-content-primary);
 
             & .logs {
-                padding-top: calc($spacer * 1.5);
+                padding-top: calc(1rem * 1.5);
 
                 > div {
                     width: 100%;
@@ -103,7 +102,7 @@
                         & .header {
                             display: flex;
                             flex-wrap: wrap;
-                            margin-bottom: calc($spacer / 2);
+                            margin-bottom: calc(1rem / 2);
 
                             & span {
                                 margin-left: 0;
@@ -112,12 +111,12 @@
                     }
                 }
 
-                .el-button {
+                .kel-button {
                     color: var(--ks-log-content-error);
                 }
 
                 .link {
-                    padding: $spacer 0 calc($spacer / 2) 0;
+                    padding: 1rem 0 calc(1rem / 2) 0;
                     border-top: 1px solid var(--ks-border-primary);
                     text-align: right;
                 }

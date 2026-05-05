@@ -25,23 +25,23 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KestraIcon
+                            <KsIcon
                                 v-if="isTableChart(chart.type)"
                                 :tooltip="$t('dashboards.export')"
                             >
-                                <el-button
+                                <KsButton
                                     @click="dashboardStore.export(dashboard, chart, {filters})"
                                     :icon="Download"
                                     link
                                     class="ms-2"
                                 />
-                            </KestraIcon>
+                            </KsIcon>
 
-                            <KestraIcon
+                            <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
                                 :tooltip="$t('dashboards.edition.chart')"
                             >
-                                <el-button
+                                <KsButton
                                     tag="router-link"
                                     :to="{
                                         name: 'dashboards/update',
@@ -51,7 +51,7 @@
                                     link
                                     class="ms-2"
                                 />
-                            </KestraIcon>
+                            </KsIcon>
                         </div>
                     </div>
 
@@ -83,8 +83,6 @@
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
-
-    import KestraIcon from "../../Kicon.vue";
 
     import Download from "vue-material-design-icons/Download.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -129,7 +127,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .dashboard-sections-container{
     container-type: inline-size;
@@ -158,7 +155,7 @@ section#charts {
             padding: 1.5rem;
             background: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
-            border-radius: $border-radius;
+            border-radius: 0.25rem;
             box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
         }
 

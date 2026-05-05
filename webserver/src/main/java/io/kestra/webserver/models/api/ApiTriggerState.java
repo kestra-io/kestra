@@ -8,16 +8,18 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.scheduler.model.TriggerState;
 
+import jakarta.validation.constraints.NotNull;
+
 /**
  * API DTO for exposing trigger state to the UI.
  * <p>
  * Excludes internal scheduler fields ({@code tenantId}, {@code vnode}, {@code lastEventId}, {@code type}).
  */
 public record ApiTriggerState(
-    String namespace,
-    String flowId,
-    String triggerId,
-    Instant updatedAt,
+    @NotNull String namespace,
+    @NotNull String flowId,
+    @NotNull String triggerId,
+    @NotNull Instant updatedAt,
     Instant evaluatedAt,
     Instant nextEvaluationDate,
     Backfill backfill,

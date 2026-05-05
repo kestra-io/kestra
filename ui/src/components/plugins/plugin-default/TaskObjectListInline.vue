@@ -11,13 +11,13 @@
         >
             <div class="item-header d-flex justify-content-between align-items-center mb-2 px-2">
                 <span class="index-tag">#{{ index + 1 }}</span>
-                <el-button
+                <KsButton
                     link
                     type="danger"
                     @click="remove(index)"
                 >
                     <DeleteOutline />
-                </el-button>
+                </KsButton>
             </div>
             <TaskObjectInline
                 :modelValue="modelValue?.[index]"
@@ -74,14 +74,14 @@
 <style scoped lang="scss">
 .task-list {
     .label {
-        font-family: var(--bs-font-monospace);
+        font-family: var(--kel-font-family-monospace);
         color: var(--ks-content-primary);
-        font-size: 0.875rem;
+        font-size: var(--ks-font-size-sm);
         font-weight: 600;
     }
 
     .index-tag {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         color: var(--ks-content-tertiary);
         text-transform: uppercase;

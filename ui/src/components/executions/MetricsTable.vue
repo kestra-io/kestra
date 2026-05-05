@@ -1,90 +1,96 @@
 <template>
-    <DataTable
-        @page-changed="onPageChanged"
+    <KsDataTable
         ref="dataTable"
+        :loadData="loadData"
+        :data="metrics"
         :total="metricsTotal"
-        :embed="true"
+        :defaultSort="{prop: 'name', order: 'ascending'}"
     >
         <template #navbar>
             <slot name="navbar" />
         </template>
-        <template #table>
-            <el-table
-                :data="metrics"
-                :defaultSort="{prop: 'name', order: 'ascending'}"
-                tableLayout="auto"
-                fixed
-                @sort-change="onSort"
-            >
-                <template v-for="col in displayColumns" :key="col">
-                    <el-table-column v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
-                        <template #default="scope">
-                            <p class="m-0">
-                                {{ scope.row.taskId }}
-                            </p>
-                        </template>
-                    </el-table-column>
 
-                    <el-table-column v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
-                        <template #default="scope">
-                            <template v-if="scope.row.type === 'timer'">
-                                <Kicon><Timer /></Kicon>
-                            </template>
-                            <template v-else>
-                                <Kicon><Counter /></Kicon>
-                            </template>
-                            &nbsp;<code>{{ scope.row.name }}</code>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
-                        <template #default="scope">
-                            <span v-if="scope.row.type === 'timer'">
-                                {{ humanizeDuration((scope.row.value / 1000).toString()) }}
-                            </span>
-                            <span v-else>
-                                {{ humanizeNumber(scope.row.value) }}
-                            </span>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
-                        <template #default="scope">
-                            <el-tag
-                                v-for="(value, key) in scope.row.tags"
-                                :key="key"
-                                class="tag"
-                                type="info"
-                                size="small"
-                                disableTransitions
-                            >
-                                {{ key }}: <strong>{{ value }}</strong>
-                            </el-tag>
-                        </template>
-                    </el-table-column>
+        <template v-for="col in displayColumns" :key="col">
+            <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
+                <template #default="scope">
+                    <p class="m-0">
+                        {{ scope.row.taskId }}
+                    </p>
                 </template>
-            </el-table>
+            </KsTableColumn>
+
+            <KsTableColumn v-else-if="col === 'name'" prop="name" sortable :label="$t('name')">
+                <template #default="scope">
+                    <template v-if="scope.row.type === 'timer'">
+                        <KsIcon><Timer /></KsIcon>
+                    </template>
+                    <template v-else>
+                        <KsIcon><Counter /></KsIcon>
+                    </template>
+                    &nbsp;<code>{{ scope.row.name }}</code>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn v-else-if="col === 'value'" prop="value" sortable :label="$t('value')">
+                <template #default="scope">
+                    <span v-if="scope.row.type === 'timer'">
+                        {{ humanizeDuration((scope.row.value / 1000).toString()) }}
+                    </span>
+                    <span v-else>
+                        {{ humanizeNumber(scope.row.value) }}
+                    </span>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn v-else-if="col === 'tags'" prop="tags" :label="$t('tags')">
+                <template #default="scope">
+                    <KsTag
+                        v-for="(value, key) in scope.row.tags"
+                        :key="key"
+                        class="tag"
+                        type="info"
+                        size="small"
+                        disableTransitions
+                    >
+                        {{ key }}: <strong>{{ value }}</strong>
+                    </KsTag>
+                </template>
+            </KsTableColumn>
+
+
+            <KsTableColumn className="row-action">
+                <template #default="scope">
+                    <router-link
+                        :to="{name: 'flows/update',
+                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tab: 'metrics', tenant: scope.row.tenant},
+                              query: {'filters[q][EQUALS]': scope.row.name}
+                        }"
+                    >
+                        <KsIconButton>
+                            <ChartAreaspline />
+                        </KsIconButton>
+                    </router-link>
+                </template>
+            </KsTableColumn>
         </template>
-    </DataTable>
+    </KsDataTable>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, useTemplateRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
 
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
 
-    import Kicon from "../Kicon.vue";
-    import DataTable from "../layout/DataTable.vue";
 
     import type {Execution} from "../../stores/executions";
     import {humanizeDuration, humanizeNumber} from "../../utils/filters";
 
     import {useExecutionsStore} from "../../stores/executions";
-    
+
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
 
     const {t} = useI18n();
 
@@ -114,67 +120,45 @@
         storageKey: "execution-metrics"
     });
 
-    const dataTable = ref();
-
     const executionsStore = useExecutionsStore();
 
     const metrics = ref<any[] | undefined>(undefined);
     const metricsTotal = ref<number>(0);
 
-    const loadData = (callback?: () => void) => {
+    const dataTable = useTemplateRef("dataTable");
+
+    const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
         let params: Record<string, any> = {};
 
         if (props.taskRunId) {
             params.taskRunId = props.taskRunId;
         }
 
-        if (internalPageNumber.value) {
-            params.page = internalPageNumber.value;
+        if (page) {
+            params.page = page;
         }
 
-        if (internalPageSize.value) {
-            params.size = internalPageSize.value;
+        if (size) {
+            params.size = size;
         }
 
-        if (internalSort.value) {
-            params.sort = internalSort.value;
-        } else {
-            params.sort = "name:asc";
-        }
+        params.sort = sort ?? "name:asc";
 
-        executionsStore.loadMetrics({
+        const response: any = await executionsStore.loadMetrics({
             executionId: props.execution?.id ?? "",
             params: params,
             store: false
-        }).then((response: any) => {
-            metrics.value = response.results;
-            metricsTotal.value = response.total;
-            if (callback) {
-                callback();
-            }
         });
+        metrics.value = response.results;
+        metricsTotal.value = response.total;
     };
 
-    const {
-        internalPageNumber,
-        internalPageSize,
-        internalSort,
-        onPageChanged,
-        onSort,
-        onDataLoaded
-    } = useDataTableActions({
-        embed: props.embed,
-        dataTableRef: dataTable,
-        loadData: loadData
-    });
-
     watch(() => props.taskRunId, () => {
-        loadData(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     defineExpose({
         loadData,
-        onDataLoaded,
         updateDisplayColumns
     });
 </script>
@@ -188,6 +172,6 @@
         border: 1px solid var(--ks-badge-border);
         background-color: var(--ks-badge-background);
         color: var(--ks-badge-content);
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
     }
 </style>

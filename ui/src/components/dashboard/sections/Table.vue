@@ -1,16 +1,20 @@
 <template>
     <section v-if="data?.results?.length" id="table">
-        <el-table
+        <KsDataTable
             :id="containerID"
             :data="data.results"
+            :total="isPaginationEnabled(props.chart) ? data.total : 0"
+            :currentPage="pageNumber"
+            :pageSize="pageSize"
             :height="240"
             size="small"
+            @page-changed="handlePageChange"
         >
-            <el-table-column
+            <KsTableColumn
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
-                :width="value.field === 'STATE' ? 140 : null"
+                :width="value.field === 'STATE' ? 140 : undefined"
             >
                 <template #default="scope">
                     <template v-if="resolvedComponent(value.field) === undefined">
@@ -18,23 +22,15 @@
                     </template>
                     <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
                 </template>
-            </el-table-column>
-        </el-table>
-
-        <Pagination
-            v-if="isPaginationEnabled(props.chart)"
-            :total="data.total"
-            :page="pageNumber"
-            :size="pageSize"
-            @page-changed="handlePageChange"
-        />
+            </KsTableColumn>
+        </KsDataTable>
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <KsEmpty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref, computed} from "vue";
+    import {PropType, watch, ref} from "vue";
 
     import type {Chart} from "../types.ts";
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
@@ -43,10 +39,7 @@
     import Duration from "./table/columns/Duration.vue";
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
-    import {Status} from "@kestra-io/ui-libs";
-
-    import Pagination from "../../layout/Pagination.vue";
-    import NoData from "../../layout/NoData.vue";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
 
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},
@@ -65,7 +58,7 @@
         case "NAMESPACE":
             return Namespace;
         case "STATE":
-            return Status;
+            return KsExecutionStatus;
         case "DURATION":
             return Duration;
         default:
@@ -106,17 +99,12 @@
     const route = useRoute();
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
 
-    const getData = async () => (data.value = await generate(pagination.value));
+    const getData = async () => (data.value = await generate(
+        isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : undefined
+    ));
 
     const pageNumber = ref(1);
     const pageSize = ref(25);
-
-    const pagination = computed(() => {
-        return isPaginationEnabled(props.chart)
-            ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
-            : undefined;
-    });
-
 
     const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;
@@ -146,7 +134,7 @@
 </script>
 
 <style lang="scss" scoped>
-section#table :deep(.el-scrollbar__thumb) {
+section#table :deep(.kel-scrollbar__thumb) {
     background-color: var(--ks-button-background-primary) !important;
 }
 </style>

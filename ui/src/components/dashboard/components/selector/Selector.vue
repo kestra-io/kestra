@@ -1,9 +1,9 @@
 <template>
     <template v-if="asItem">
-        <el-dropdown-item :icon="SwapHorizontal" @click="isOpen = true">
+        <KsDropdownItem :icon="SwapHorizontal" @click="isOpen = true">
             {{ selected?.title ?? $t("dashboards.default") }}
-        </el-dropdown-item>
-        <el-dialog
+        </KsDropdownItem>
+        <KsDialog
             v-model="isOpen"
             destroyOnClose
             appendToBody
@@ -23,18 +23,18 @@
                 @edit="edit"
                 @remove="remove"
             />
-        </el-dialog>
+        </KsDialog>
     </template>
-    <el-dropdown v-else trigger="click" hideOnClick placement="bottom-end">
+    <KsDropdown v-else trigger="click" hideOnClick placement="bottom-end">
         <slot>
-            <el-button :icon="SwapHorizontal" class="selected">
+            <KsButton :icon="SwapHorizontal" class="selected">
                 <span v-if="!verticalLayout" class="text-truncate">
                     {{ selected?.title ?? $t('dashboards.default') }}
                 </span>
-            </el-button>
+            </KsButton>
         </slot>
         <template #dropdown>
-            <el-dropdown-menu class="p-3 dropdown">
+            <KsDropdownMenu class="p-3 dropdown">
                 <Content
                     :dashboards="dashboards"
                     :selected="selected"
@@ -44,9 +44,9 @@
                     @edit="edit"
                     @remove="remove"
                 />
-            </el-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">
@@ -69,7 +69,7 @@
 
     import {useDashboardStore} from "../../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
-    
+
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
 
@@ -87,8 +87,8 @@
 
     const dashboards = ref<{id: string; title: string; isDefault: boolean}[]>([]);
 
-    const selected = computed(() => dashboardStore.activeDashboard 
-        ? {id: dashboardStore.activeDashboard.id, title: dashboardStore.activeDashboard.title ?? dashboardStore.activeDashboard.id} 
+    const selected = computed(() => dashboardStore.activeDashboard
+        ? {id: dashboardStore.activeDashboard.id, title: dashboardStore.activeDashboard.title ?? dashboardStore.activeDashboard.id}
         : undefined);
 
     const onSelect = (id: string) => {
@@ -133,13 +133,12 @@
         }
     }, {immediate: true});
 
-
 </script>
 
 <style scoped lang="scss">
 .selected {
     span{
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
     }
 }
 .dropdown {

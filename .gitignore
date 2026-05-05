@@ -40,6 +40,10 @@ ui/test-report.junit.xml
 ui/frontend.*
 *storybook.log
 storybook-static
+ui-design-system/node_modules
+ui-design-system/dist
+ui-design-system/coverage
+ui-design-system/*.tsbuildinfo
 
 ### Docker
 /.env
@@ -60,3 +64,7 @@ core/src/main/resources/gradle.properties
 **/allure-results/*
 
 /jmh-benchmarks/src/main/resources/gradle.properties
+
+# Helm chart dependencies (downloaded at build time, not committed)
+charts/kestra/charts/
+charts/kestra-starter/charts/

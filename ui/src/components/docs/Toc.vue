@@ -1,5 +1,5 @@
 <template>
-    <el-autocomplete
+    <KsAutocomplete
         ref="search"
         class="flex-shrink-0"
         v-model="query"
@@ -19,7 +19,7 @@
                 <ArrowRight class="is-justify-end" />
             </RouterLink>
         </template>
-    </el-autocomplete>
+    </KsAutocomplete>
     <ul class="list-unstyled d-flex flex-column gap-3">
         <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
             <span class="text-secondary">
@@ -115,7 +115,7 @@
         }
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
-            section, 
+            section,
             toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
         ]);
     });
@@ -131,6 +131,6 @@
 
 <style lang="scss" scoped>
     ul > li > span:first-child {
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 </style>

@@ -4,9 +4,9 @@
 
         <CopyToClipboard :text="curlCommand" />
 
-        <el-alert class="mt-3" type="info" showIcon :closable="false">
+        <KsAlert class="mt-3" type="info" showIcon :closable="false">
             {{ $t('curl.note') }}
-        </el-alert>
+        </KsAlert>
     </div>
 </template>
 
@@ -120,7 +120,7 @@
 
 <style scoped lang="scss">
     pre {
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--kel-border-radius-base);
     }
 
     /* Allow line-wraps */

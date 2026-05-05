@@ -1,17 +1,26 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
-            <el-button :icon="Download" @click="exportTriggersAsStream()">
+        <template #actions>
+            <KsButton :icon="Download" @click="exportTriggersAsStream()">
                 {{ $t('export_csv') }}
-            </el-button>
+            </KsButton>
         </template>
     </TopNavBar>
-    <section class="container" v-if="ready">
+    <section class="container">
         <div>
-            <DataTable
-                @page-changed="onPageChanged"
+            <KsDataTable
                 ref="dataTable"
+                :loadData="loadData"
+                :data="triggersMerged"
                 :total="total"
+                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+                @ready="ready = true"
+                :defaultSort="{prop: 'flowId', order: 'ascending'}"
+                expandable
+                :rowClassName="getClasses"
+                :no-data-text="$t('no_results.triggers')"
+                :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
             >
                 <template #navbar>
                     <KSFilter
@@ -20,7 +29,7 @@
                         @update-properties="updateDisplayColumns"
                         :tableOptions="{
                             chart: {shown: false},
-                            refresh: {shown: true, callback: () => load()}
+                            refresh: {shown: true, callback: () => dataTable?.reload()}
                         }"
                         :properties="{
                             displayColumns,
@@ -32,283 +41,254 @@
                         :defaultTimeRange="false"
                     />
                 </template>
-                <template #table>
-                    <SelectTable
-                        :data="triggersMerged"
-                        ref="selectTable"
-                        :defaultSort="{prop: 'flowId', order: 'ascending'}"
-                        tableLayout="auto"
-                        fixed
-                        @sort-change="onSort"
-                        @selection-change="onSelectionChange"
-                        expandable
-                        :rowClassName="getClasses"
-                        :no-data-text="$t('no_results.triggers')"
-                        :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
-                    >
-                        <template #expand>
-                            <el-table-column type="expand">
-                                <template #default="props">
-                                    <LogsWrapper
-                                        class="m-3"
-                                        :filters="props.row"
-                                        v-if="hasLogsContent(props.row)"
-                                        :withCharts="false"
-                                        embed
-                                    />
-                                </template>
-                            </el-table-column>
+                <template #expand>
+                    <KsTableColumn type="expand">
+                        <template #default="props">
+                            <LogsWrapper
+                                class="m-3"
+                                :filters="props.row"
+                                v-if="hasLogsContent(props.row)"
+                                :withCharts="false"
+                                embed
+                            />
                         </template>
-                        <template #select-actions>
-                            <BulkSelect
-                                :selectAll="queryBulkAction"
-                                :selections="selection"
-                                :total="total"
-                                @update:select-all="toggleAllSelection"
-                                @unselect="toggleAllUnselected"
-                            >
-                                <el-button @click="setDisabledTriggers(false)">
-                                    {{ $t("enable") }}
-                                </el-button>
-                                <el-button @click="setDisabledTriggers(true)">
-                                    {{ $t("disable") }}
-                                </el-button>
-                                <el-button @click="unlockTriggers()">
-                                    {{ $t("unlock") }}
-                                </el-button>
-                                <el-button @click="pauseBackfills()">
-                                    {{ $t("pause backfills") }}
-                                </el-button>
-                                <el-button @click="unpauseBackfills()">
-                                    {{ $t("continue backfills") }}
-                                </el-button>
-                                <el-button @click="deleteBackfills()">
-                                    {{ $t("delete backfills") }}
-                                </el-button>
-                                <el-button @click="deleteTriggers()">
-                                    {{ $t("delete triggers") }}
-                                </el-button>
-                            </BulkSelect>
-                        </template>
-                        <el-table-column
-                            prop="triggerId"
-                            sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
-                            :label="$t('id')"
-                        >
-                            <template #default="scope">
-                                <div class="text-nowrap">
-                                    {{ scope.row.id }}
-                                </div>
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
-                            v-for="col in visibleColumns"
-                            :key="col.prop"
-                            :prop="col.prop"
-                            :label="col.label"
-                            :sortable="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? 'custom' : false"
-                            :sortOrders="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
-                        >
-                            <template #header v-if="col.prop === 'lastTriggeredDate'">
-                                <el-tooltip
-                                    :content="$t('last trigger date tooltip')"
-                                    placement="top"
-                                    effect="light"
-                                    popperClass="wide-tooltip"
-                                >
-                                    <span>{{ col.label }}</span>
-                                </el-tooltip>
-                            </template>
-                            <template #header v-else-if="col.prop === 'updatedAt'">
-                                <el-tooltip
-                                    :content="$t('context updated date tooltip')"
-                                    placement="top"
-                                    effect="light"
-                                    popperClass="wide-tooltip"
-                                >
-                                    <span>{{ col.label }}</span>
-                                </el-tooltip>
-                            </template>
-                            <template #header v-else-if="col.prop === 'nextExecutionDate'">
-                                <el-tooltip
-                                    :content="$t('next evaluation date tooltip')"
-                                    placement="top"
-                                    effect="light"
-                                    popperClass="wide-tooltip"
-                                >
-                                    <span>{{ col.label }}</span>
-                                </el-tooltip>
-                            </template>
-                            <template #default="scope">
-                                <template v-if="col.prop === 'flowId'">
-                                    <router-link
-                                        v-if="scope.row.namespace && scope.row.flowId"
-                                        :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
-                                    >
-                                        {{ invisibleSpace(scope.row.flowId) }}
-                                    </router-link>
-                                    <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
-                                    <MarkdownTooltip
-                                        v-if="scope.row.namespace && scope.row.flowId"
-                                        :id="scope.row.namespace + '-' + scope.row.flowId"
-                                        :description="scope.row.description"
-                                        :title="scope.row.namespace + '.' + scope.row.flowId"
-                                    />
-                                </template>
-                                <template v-else-if="col.prop === 'namespace'">
-                                    {{ invisibleSpace(scope.row.namespace) }}
-                                </template>
-                                <template v-else-if="col.prop === 'workerId'">
-                                    <Id
-                                        :value="scope.row.workerId"
-                                        :shrink="true"
-                                    />
-                                </template>
-                                <template v-else-if="col.prop === 'lastTriggeredDate'">
-                                    <DateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'updatedAt'">
-                                    <DateAgo :inverted="true" :date="scope.row.updatedAt" />
-                                </template>
-                                <template v-else-if="col.prop === 'nextEvaluationDate'">
-                                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
-                                </template>
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column :label="$t('details')">
-                            <template #default="scope">
-                                <TriggerAvatar
-                                    v-if="!scope.row.missingSource"
-                                    :flow="{id: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
-                                    :triggerId="scope.row.id"
-                                />
-                            </template>
-                        </el-table-column>
-
-                        <el-table-column
-                            v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            columnKey="action"
-                            className="row-action"
-                        >
-                            <template #default="scope">
-                                <div class="action-container">
-                                    <IconButton
-                                        v-if="scope.row.locked"
-                                        :tooltip="$t('unlock trigger.tooltip.evaluation')"
-                                        placement="left"
-                                        @click="triggerToUnlock = scope.row"
-                                    >
-                                        <LockOff />
-                                    </IconButton>
-                                    <IconButton
-                                        :tooltip="$t('delete trigger')"
-                                        placement="left"
-                                        @click="confirmDeleteTrigger(scope.row)"
-                                    >
-                                        <Delete />
-                                    </IconButton>
-                                </div>
-                            </template>
-                        </el-table-column>
-                        <el-table-column :label="$t('backfill')" columnKey="backfill">
-                            <template #default="scope">
-                                <div class="backfillContainer items-center gap-2">
-                                    <span v-if="scope.row.backfill" class="statusIcon">
-                                        <el-tooltip
-                                            v-if="!scope.row.backfill.paused"
-                                            :content="$t('backfill running')"
-                                            effect="light"
-                                        >
-                                            <PlayBox font />
-                                        </el-tooltip>
-                                        <el-tooltip v-else :content="$t('backfill paused')">
-                                            <PauseBox />
-                                        </el-tooltip>
-                                    </span>
-
-                                    <el-button
-                                        :icon="CalendarCollapseHorizontalOutline"
-                                        v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                                        @click="setBackfillModal(scope.row, true)"
-                                        size="small"
-                                        type="primary"
-                                        :disabled="scope.row.disabled || scope.row.codeDisabled"
-                                    >
-                                        {{ $t("backfill executions") }}
-                                    </el-button>
-                                </div>
-                            </template>
-                        </el-table-column>
-
-
-                        <el-table-column :label="$t('enabled')" columnKey="disable" className="row-action">
-                            <template #default="scope">
-                                <el-tooltip
-                                    v-if="!scope.row.missingSource"
-                                    :content="$t('trigger disabled')"
-                                    :disabled="!scope.row.codeDisabled"
-                                    effect="light"
-                                >
-                                    <el-switch
-                                        :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
-                                        @change="setDisabled(scope.row, $event)"
-                                        inlinePrompt
-                                        class="switch-text"
-                                        :disabled="scope.row.codeDisabled"
-                                    />
-                                </el-tooltip>
-                                <el-tooltip v-else :content="$t('flow source not found')" effect="light">
-                                    <AlertCircle />
-                                </el-tooltip>
-                            </template>
-                        </el-table-column>
-                    </SelectTable>
+                    </KsTableColumn>
                 </template>
-            </DataTable>
+                <template #bulk-actions>
+                    <KsButton @click="setDisabledTriggers(false)">
+                        {{ $t("enable") }}
+                    </KsButton>
+                    <KsButton @click="setDisabledTriggers(true)">
+                        {{ $t("disable") }}
+                    </KsButton>
+                    <KsButton @click="unlockTriggers()">
+                        {{ $t("unlock") }}
+                    </KsButton>
+                    <KsButton @click="pauseBackfills()">
+                        {{ $t("pause backfills") }}
+                    </KsButton>
+                    <KsButton @click="unpauseBackfills()">
+                        {{ $t("continue backfills") }}
+                    </KsButton>
+                    <KsButton @click="deleteBackfills()">
+                        {{ $t("delete backfills") }}
+                    </KsButton>
+                    <KsButton @click="deleteTriggers()">
+                        {{ $t("delete triggers") }}
+                    </KsButton>
+                </template>
+                <KsTableColumn
+                    prop="triggerId"
+                    sortable="custom"
+                    :sortOrders="['ascending', 'descending']"
+                    :label="$t('id')"
+                >
+                    <template #default="scope">
+                        <div class="text-nowrap">
+                            {{ scope.row.id }}
+                        </div>
+                    </template>
+                </KsTableColumn>
 
-            <el-dialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
+                <KsTableColumn
+                    v-for="col in visibleColumns"
+                    :key="col.prop"
+                    :prop="col.prop"
+                    :label="col.label"
+                    :sortable="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? 'custom' : false"
+                    :sortOrders="['flowId', 'namespace', 'nextEvaluationDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
+                >
+                    <template #header v-if="col.prop === 'lastTriggeredDate'">
+                        <KsTooltip
+                            :content="$t('last trigger date tooltip')"
+                            placement="top"
+                            popperClass="wide-tooltip"
+                        >
+                            <span>{{ col.label }}</span>
+                        </KsTooltip>
+                    </template>
+                    <template #header v-else-if="col.prop === 'updatedAt'">
+                        <KsTooltip
+                            :content="$t('context updated date tooltip')"
+                            placement="top"
+                            popperClass="wide-tooltip"
+                        >
+                            <span>{{ col.label }}</span>
+                        </KsTooltip>
+                    </template>
+                    <template #header v-else-if="col.prop === 'nextExecutionDate'">
+                        <KsTooltip
+                            :content="$t('next evaluation date tooltip')"
+                            placement="top"
+                            popperClass="wide-tooltip"
+                        >
+                            <span>{{ col.label }}</span>
+                        </KsTooltip>
+                    </template>
+                    <template #default="scope">
+                        <template v-if="col.prop === 'flowId'">
+                            <router-link
+                                v-if="scope.row.namespace && scope.row.flowId"
+                                :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}"
+                            >
+                                {{ invisibleSpace(scope.row.flowId) }}
+                            </router-link>
+                            <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
+                            <MarkdownTooltip
+                                v-if="scope.row.namespace && scope.row.flowId"
+                                :id="scope.row.namespace + '-' + scope.row.flowId"
+                                :description="scope.row.description"
+                                :title="scope.row.namespace + '.' + scope.row.flowId"
+                            />
+                        </template>
+                        <template v-else-if="col.prop === 'namespace'">
+                            {{ invisibleSpace(scope.row.namespace) }}
+                        </template>
+                        <template v-else-if="col.prop === 'workerId'">
+                            <KsId
+                                :value="scope.row.workerId"
+                                :shrink="true"
+                            />
+                        </template>
+                        <template v-else-if="col.prop === 'lastTriggeredDate'">
+                            <KsDateAgo :inverted="true" :date="scope.row.lastTriggeredDate" />
+                        </template>
+                        <template v-else-if="col.prop === 'updatedAt'">
+                            <KsDateAgo :inverted="true" :date="scope.row.updatedAt" />
+                        </template>
+                        <template v-else-if="col.prop === 'nextEvaluationDate'">
+                            <KsDateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
+                        </template>
+                    </template>
+                </KsTableColumn>
+
+                <KsTableColumn :label="$t('details')">
+                    <template #default="scope">
+                        <TriggerAvatar
+                            v-if="!scope.row.missingSource"
+                            :flow="{id: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
+                            :triggerId="scope.row.id"
+                        />
+                    </template>
+                </KsTableColumn>
+
+                <KsTableColumn
+                    v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                    columnKey="action"
+                    className="row-action"
+                >
+                    <template #default="scope">
+                        <div class="action-container">
+                            <KsIconButton
+                                v-if="scope.row.locked"
+                                :tooltip="$t('unlock trigger.tooltip.evaluation')"
+                                placement="left"
+                                @click="triggerToUnlock = scope.row"
+                            >
+                                <LockOff />
+                            </KsIconButton>
+                            <KsIconButton
+                                :tooltip="$t('delete trigger')"
+                                placement="left"
+                                @click="confirmDeleteTrigger(scope.row)"
+                            >
+                                <Delete />
+                            </KsIconButton>
+                        </div>
+                    </template>
+                </KsTableColumn>
+                <KsTableColumn :label="$t('backfill')" columnKey="backfill">
+                    <template #default="scope">
+                        <div class="backfillContainer items-center gap-2">
+                            <span v-if="scope.row.backfill" class="statusIcon">
+                                <KsTooltip
+                                    v-if="!scope.row.backfill.paused"
+                                    :content="$t('backfill running')"
+                                >
+                                    <PlayBox font />
+                                </KsTooltip>
+                                <KsTooltip v-else :content="$t('backfill paused')">
+                                    <PauseBox />
+                                </KsTooltip>
+                            </span>
+
+                            <KsButton
+                                :icon="CalendarCollapseHorizontalOutline"
+                                v-if="authStore.user?.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                @click="setBackfillModal(scope.row, true)"
+                                size="small"
+                                type="primary"
+                                :disabled="scope.row.disabled || scope.row.codeDisabled"
+                            >
+                                {{ $t("backfill executions") }}
+                            </KsButton>
+                        </div>
+                    </template>
+                </KsTableColumn>
+
+
+                <KsTableColumn :label="$t('enabled')" columnKey="disable" className="row-action">
+                    <template #default="scope">
+                        <KsTooltip
+                            v-if="!scope.row.missingSource"
+                            :content="$t('trigger disabled')"
+                            :disabled="!scope.row.codeDisabled"
+                        >
+                            <KsSwitch
+                                :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
+                                @change="setDisabled(scope.row, $event as boolean)"
+                                inlinePrompt
+                                class="switch-text"
+                                :disabled="scope.row.codeDisabled"
+                            />
+                        </KsTooltip>
+                        <KsTooltip v-else :content="$t('flow source not found')">
+                            <AlertCircle />
+                        </KsTooltip>
+                    </template>
+                </KsTableColumn>
+            </KsDataTable>
+
+            <KsDialog v-model="triggerToUnlock" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('unlock trigger.confirmation')" />
                 </template>
                 {{ $t("unlock trigger.warning") }}
                 <template #footer>
-                    <el-button :icon="LockOff" @click="unlock" type="primary">
+                    <KsButton :icon="LockOff" @click="unlock" type="primary">
                         {{ $t("unlock trigger.button") }}
-                    </el-button>
+                    </KsButton>
                 </template>
-            </el-dialog>
+            </KsDialog>
 
-            <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+            <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
                 <template #header>
                     <span v-html="$t('backfill executions')" />
                 </template>
-                <el-form :model="backfill" labelPosition="top">
+                <KsForm :model="backfill" labelPosition="top">
                     <div class="pickers">
                         <div class="small-picker">
-                            <el-form-item label="Start">
-                                <el-date-picker
+                            <KsFormItem label="Start">
+                                <KsDatePicker
                                     v-model="backfill.start"
                                     type="datetime"
                                     placeholder="Start"
                                     :disabledDate="disabledStartDate"
                                 />
-                            </el-form-item>
+                            </KsFormItem>
                         </div>
                         <div class="small-picker">
-                            <el-form-item label="End">
-                                <el-date-picker
+                            <KsFormItem label="End">
+                                <KsDatePicker
                                     v-model="backfill.end"
                                     type="datetime"
                                     placeholder="End"
                                     :disabledDate="disabledEndDate"
                                 />
-                            </el-form-item>
+                            </KsFormItem>
                         </div>
                     </div>
-                </el-form>
+                </KsForm>
                 <FlowRun
                     @update-inputs="backfill.inputs = $event"
                     @update-labels="backfill.labels = $event"
@@ -317,25 +297,25 @@
                     :embed="true"
                 />
                 <template #footer>
-                    <el-button
+                    <KsButton
                         type="primary"
                         @click="postBackfill()"
                         :disabled="checkBackfill"
                     >
                         {{ $t("execute backfill") }}
-                    </el-button>
+                    </KsButton>
                 </template>
-            </el-dialog>
+            </KsDialog>
         </div>
     </section>
 </template>
 <script setup lang="ts">
     import _merge from "lodash/merge";
-    import {ref, computed, watch} from "vue";
+    import {ref, computed, watch, useTemplateRef} from "vue";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import {ElMessage} from "element-plus";
+    import {useRoute, useRouter} from "vue-router";
+    import {KsMessage} from "@kestra-io/design-system";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -344,9 +324,10 @@
     import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger";
     import {useExecutionsStore} from "../../stores/executions";
     import {useTriggerFilter} from "../filter/configurations";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
-    import {useSelectTableActions} from "../../composables/useSelectTableActions";
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -358,18 +339,14 @@
     import Delete from "vue-material-design-icons/Delete.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
+    import {KsId, KsIconButton} from "@kestra-io/design-system";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
-    import DateAgo from "../layout/DateAgo.vue";
-    import DataTable from "../layout/DataTable.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";
+
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
 
@@ -377,6 +354,7 @@
 
 
     const route = useRoute();
+    const router = useRouter();
     const toast = useToast();
     const {t} = useI18n({useScope: "global"});
 
@@ -385,8 +363,7 @@
     const triggerStore = useTriggerStore();
     const executionsStore = useExecutionsStore();
 
-    const dataTable = ref();
-    const selectTable = ref();
+    const dataTable = useTemplateRef("dataTable");
 
     const total = ref();
     const triggers = ref<any[]>([]);
@@ -458,43 +435,40 @@
             .filter(Boolean) as ColumnConfig[]
     );
 
-    const loadData = (callback?: () => void) => {
+    const ready = ref(false);
+
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         const query = loadQuery({
-            size: parseInt(String(route.query?.size ?? "25")),
-            page: parseInt(String(route.query?.page ?? "1")),
-            sort: String(route.query?.sort ?? "triggerId:asc")
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "triggerId:asc")
         });
 
         const previousSelection = selection.value;
-        triggerStore.search(query).then(async triggersData => {
+        await triggerStore.search(query).then(async triggersData => {
             triggers.value = triggersData?.results;
             total.value = triggersData?.total;
 
-            if (previousSelection && selectTable.value) {
-                await selectTable.value.waitTableRender();
-                selectTable.value.setSelection(previousSelection);
-            }
-
-            if (callback) {
-                callback();
+            if (previousSelection && dataTable.value) {
+                await dataTable.value.waitTableRender();
+                dataTable.value.setSelection(previousSelection);
             }
         });
     };
 
-    const {ready, onSort, onPageChanged, queryWithFilter, load} = useDataTableActions({
-        dataTableRef: dataTable,
-        loadData
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
     });
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload();
+    }, {deep: true});
 
-    const {
-        queryBulkAction,
-        selection,
-        handleSelectionChange,
-        toggleAllUnselected,
-        toggleAllSelection
-    } = useSelectTableActions({
-        dataTableRef: selectTable
-    });
+    const selection = computed(() => dataTable.value?.selection ?? []);
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
+
 
     const routeInfo = computed(() => ({
         title: t("triggers")
@@ -505,8 +479,6 @@
     const updateDisplayColumns = (newColumns: string[]) => {
         updateVisibleColumns(newColumns);
     };
-
-    const onSelectionChange = handleSelectionChange;
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (!trigger) {
@@ -559,19 +531,19 @@
         return hasLogsContent(row) ? "expandable" : "no-expand";
     };
 
-    const disabledStartDate = (time: Date) => {
-        return new Date() < time || (backfill.value.end && time > backfill.value.end);
+    const disabledStartDate = (time: Date): boolean => {
+        return new Date() < time || !!(backfill.value.end && time > backfill.value.end);
     };
 
-    const disabledEndDate = (time: Date) => {
-        return new Date() < time || (backfill.value.start && backfill.value.start > time);
+    const disabledEndDate = (time: Date): boolean => {
+        return new Date() < time || !!(backfill.value.start && backfill.value.start > time);
     };
 
     const triggerLoadDataAfterBulkEditAction = () => {
-        loadData();
-        setTimeout(() => loadData(), 200);
-        setTimeout(() => loadData(), 1000);
-        setTimeout(() => loadData(), 5000);
+        dataTable.value?.reload();
+        setTimeout(() => dataTable.value?.reload(), 200);
+        setTimeout(() => dataTable.value?.reload(), 1000);
+        setTimeout(() => dataTable.value?.reload(), 5000);
     };
 
     const unlock = async () => {
@@ -584,7 +556,7 @@
             triggerId: triggerId
         });
 
-        ElMessage({
+        KsMessage({
             message: t("unlock trigger.success"),
             type: "success"
         });
@@ -599,7 +571,7 @@
 
     const setDisabled = (trigger: any, value: boolean) => {
         if (trigger.codeDisabled) {
-            ElMessage({
+            KsMessage({
                 message: t("triggerflow disabled"),
                 type: "error",
                 showClose: true,
@@ -632,7 +604,7 @@
                 triggerId: trigger.triggerId
             }).then(() => {
                 toast.success(t("delete trigger success", {id: trigger.id}));
-                loadData();
+                dataTable.value?.reload();
             }).catch(error => {
                 toast.error(t("delete trigger error", {id: trigger.id}));
                 console.error(error);
@@ -755,7 +727,7 @@
     };
 
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter();
+        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>;
 
         const timeRange = queryFilter["filters[timeRange][EQUALS]"];
         if (timeRange) {
@@ -812,12 +784,6 @@
         return all;
     });
 
-    watch(ready, (newReady: any) => {
-        if (newReady) {
-            loadData(load);
-        }
-    });
-
     async function exportTriggersAsStream() {
         await triggerStore.exportTriggersAsCSV(route.query);
     }
@@ -854,15 +820,15 @@
         font-size: 1.4em;
     }
 
-    :deep(.el-table__expand-icon) {
+    :deep(.kel-table__expand-icon) {
         pointer-events: none;
 
-        .el-icon {
+        .kel-icon {
             display: none;
         }
     }
 
-    :deep(.el-switch) {
+    :deep(.kel-switch) {
         .is-text {
             padding: 0 3px;
             color: inherit;
@@ -870,12 +836,12 @@
 
         &.is-checked {
             .is-text {
-                color: #ffffff;
+                color: var(--ks-white);
             }
         }
     }
 
-    .el-table {
+    .kel-table {
         a {
             color: var(--ks-content-link);
         }
@@ -888,27 +854,27 @@
         color: var(--ks-content-primary) !important;
     }
 
-    :deep(.el-collapse) {
-        border-radius: var(--bs-border-radius-lg);
+    :deep(.kel-collapse) {
+        border-radius: var(--kel-border-radius-round);
         border: 1px solid var(--ks-border-primary);
-        background: var(--bs-gray-100);
+        background: var(--ks-tag-background);
 
-        .el-collapse-item__header {
+        .kel-collapse-item__header {
             background: transparent;
             border-bottom: 1px solid var(--ks-border-primary);
-            font-size: var(--bs-font-size-sm);
+            font-size: var(--ks-font-size-sm);
         }
 
-        .el-collapse-item__content {
-            background: var(--bs-gray-100);
+        .kel-collapse-item__content {
+            background: var(--ks-tag-background);
             border-bottom: 1px solid var(--ks-border-primary);
         }
 
-        .el-collapse-item__header,
-        .el-collapse-item__content {
+        .kel-collapse-item__header,
+        .kel-collapse-item__content {
             &:last-child {
-                border-bottom-left-radius: var(--bs-border-radius-lg);
-                border-bottom-right-radius: var(--bs-border-radius-lg);
+                border-bottom-left-radius: var(--kel-border-radius-round);
+                border-bottom-right-radius: var(--kel-border-radius-round);
             }
         }
     }

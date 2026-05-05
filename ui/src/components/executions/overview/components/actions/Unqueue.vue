@@ -1,13 +1,13 @@
 <template>
-    <el-button
+    <KsButton
         v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
     >
         {{ $t('unqueue') }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('unqueue')" />
         </template>
@@ -15,30 +15,29 @@
         <template #default>
             <p v-html="$t('unqueue title', {id: execution.id})" />
 
-            <el-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
-                :persistent="false"
             >
-                <el-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
+            <KsButton :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
                 {{ $t('unqueue') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -46,7 +45,8 @@
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State, Status} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useAuthStore} from "override/stores/auth"
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../../../../utils/toast";

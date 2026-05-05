@@ -1,6 +1,6 @@
 <template>
     <div class="search-container" ref="searchContainer">
-        <el-input
+        <KsInput
             v-model="searchQuery"
             :placeholder="$t('search_docs')"
             class="search-input"
@@ -14,7 +14,7 @@
             <template #prefix>
                 <Magnify class="search-icon" />
             </template>
-        </el-input>
+        </KsInput>
         <div v-if="loading" class="loading-indicator">
             {{ $t('searching') }}
         </div>
@@ -151,7 +151,7 @@
     .search-input {
         width: 100%;
     }
-    .el-input__wrapper {
+    .kel-input__wrapper {
         background-color: var(--ks-background-input);
         box-shadow: 0 0 0 1px var(--ks-border-color);
         border-radius: 6px;
@@ -163,23 +163,23 @@
         }
     }
 
-    .el-input__inner {
+    .kel-input__inner {
         color: var(--ks-content-primary);
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
         height: 1.25rem;
         background: transparent;
     }
 
-    .el-input__inner::placeholder {
+    .kel-input__inner::placeholder {
         color: var(--ks-content-secondary);
     }
 
-    .el-input__prefix {
+    .kel-input__prefix {
         margin-right: 0.5rem;
     }
 
     .search-icon {
-        font-size: 1rem;
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-tertiary);
     }
 
@@ -189,7 +189,7 @@
         top: 60%;
         transform: translateY(-50%);
         color: var(--ks-content-secondary);
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
     }
 
     .search-results {
@@ -231,11 +231,11 @@
             font-weight: 400;
             color: var(--ks-content-primary);
             margin-bottom: 2px;
-            font-size: 14px;
+            font-size: var(--ks-font-size-sm);
         }
 
         .result-preview {
-            font-size: 12px;
+            font-size: var(--ks-font-size-xs);
             color: var(--ks-content-secondary);
             margin: 0;
             opacity: 0.8;
@@ -247,7 +247,7 @@
         text-align: center;
         cursor: default;
         padding: 6px 12px;
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
 
         &:hover {
             background: none;

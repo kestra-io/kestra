@@ -2,7 +2,7 @@
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
-            <ElDatePicker
+            <KsDatePicker
                 ref="datePicker"
                 type="datetime"
                 v-model="selectedDate"
@@ -31,6 +31,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
+    import {isOffsetInPebbleBlock} from "../../utils/pebbleBlock";
 
     const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"});
 
@@ -88,20 +89,12 @@
     };
 
     function isCursorInPebbleBlock(editor: monaco.editor.ICodeEditor) {
-        const editorValue = editor.getValue()
-        const cursorPos = editor.getPosition()
-
+        const cursorPos = editor.getPosition();
         if(!cursorPos){
             return false;
         }
-
-        // get the absolute index in the string
-        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
-
-        // if the previous token is {{ it means we are in a pebble block -> true
-        // if a }} comes after the {{ we have come out of the block and are not -> false
-        // if both are empty, they both return -1 -> false
-        return editorValue.lastIndexOf("{{", absoluteOffset) > editorValue.lastIndexOf("}}", absoluteOffset);
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0;
+        return isOffsetInPebbleBlock(editor.getValue(), absoluteOffset);
     }
 </script>
 
@@ -131,11 +124,11 @@
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import {STATES, TaskIcon} from "@kestra-io/ui-libs";
+    import {STATES} from "@kestra-io/design-system";
 
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
-    import {ElDatePicker} from "element-plus";
+    import {KsDatePicker, KsTaskIcon} from "@kestra-io/design-system";
     import moment, {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
     import Utils from "../../utils/utils";
@@ -438,11 +431,11 @@
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
                 if (pluginsStore?.icons?.[completionValue] !== undefined) {
-                    replaceRowIcon(vsCodeIcon, h(TaskIcon, {
+                    replaceRowIcon(vsCodeIcon, h(KsTaskIcon, {
                         cls: completionValue,
                         "only-icon": true,
                         icons: pluginsStore.icons,
-                    }));
+                    } as any));
                 }
             } else if (STATES[completionValue] !== undefined) {
                 replaceRowIcon(vsCodeIcon, h(STATES[completionValue].icon));
@@ -454,7 +447,7 @@
 
     const selectedDate = ref<Date>(nowMoment.toDate());
     const datePickerWrapper = ref<HTMLElement>();
-    const datePicker = ref<typeof ElDatePicker>();
+    const datePicker = ref<typeof KsDatePicker>();
     const datePickerShown = ref(false);
     let datePickerWidget: editor.IContentWidget;
 
@@ -933,11 +926,17 @@
                     }
                 });
 
+                let wasInPebbleBlock = false;
                 localEditor.value.onDidChangeCursorPosition(debounce(() => {
+                    if (!localEditor.value) return;
+                    const inPebble = isCursorInPebbleBlock(localEditor.value);
                     if (suggestController.model.state !== 0) {
                         suggestController.cancelSuggestWidget();
-                        localEditor.value!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
+                        localEditor.value.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
+                    } else if (inPebble && !wasInPebbleBlock) {
+                        localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {});
                     }
+                    wasInPebbleBlock = inPebble;
                 }, 300))
 
                 localEditor.value.onMouseMove((e) => {
@@ -1068,7 +1067,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "../../styles/layout/root-dark";
     .ks-monaco-editor {
         position: absolute;
         width: 100%;

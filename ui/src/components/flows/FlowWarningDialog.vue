@@ -4,17 +4,17 @@
         <strong>{{ $t("warning") }}</strong>
     </div>
 
-    <Markdown :source="$t('trigger_check_warning')" />
+    <KsMarkdown :content="$t('trigger_check_warning')" />
 </template>
 
 <script setup lang="ts">
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
 </script>
 
 <style lang="scss">
 .flow-warning-dialog .icon {
-    font-size: var(--font-size-lg);
+    font-size: var(--ks-font-size-lg);
     color: var(--ks-content-warning);
 }
 </style>

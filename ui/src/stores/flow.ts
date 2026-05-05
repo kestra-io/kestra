@@ -1,14 +1,14 @@
 import {computed, h, ref, watch} from "vue";
-import {ElMessageBox} from "element-plus";
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
 import permission from "../models/permission";
 import action from "../models/action";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
-import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
+import {FlowGraph} from "@kestra-io/topology/vue-flow-utils";
 import {makeToast} from "../utils/toast";
 import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
@@ -18,7 +18,6 @@ import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
-import Markdown from "../components/layout/Markdown.vue"
 
 const textYamlHeader = {
     headers: {
@@ -252,7 +251,7 @@ export const useFlowStore = defineStore("flow", () => {
         let overrideFlow = false;
         if (flowErrors.value) {
             if (flowValidation.value?.outdated && isCreating.value) {
-                overrideFlow = await ElMessageBox({
+                overrideFlow = await KsMessageBox({
                     title: t("override.title"),
                     message: () => {
                         return h("div", null, [
@@ -283,9 +282,9 @@ export const useFlowStore = defineStore("flow", () => {
                 isCreating.value = false;
             } catch (error: any) {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
-                    const shouldRedirect = await ElMessageBox({
+                    const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
-                        message: () => h(Markdown, {source: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
                         type: "warning",
                         showCancelButton: true,
                     }).then(async () => {
@@ -305,7 +304,7 @@ export const useFlowStore = defineStore("flow", () => {
                         content: error.response.data
                     }
                 }
-                
+
                 throw error;
             }
         } else {
@@ -436,7 +435,7 @@ export const useFlowStore = defineStore("flow", () => {
         overallTotal.value = 1;
 
         return response.data;
-        
+
     }
     function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
         return axios.get(
@@ -726,7 +725,7 @@ function deleteFlowAndDependencies() {
                 flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
-        
+
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
                 const validResults = response.data[0] ?? {};
@@ -740,7 +739,7 @@ function deleteFlowAndDependencies() {
                 }
 
                 flowValidation.value = validResults;
-                
+
                 return validResults
             })
     }
@@ -773,14 +772,14 @@ function deleteFlowAndDependencies() {
                 return response.data
             })
     }
-    function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string }) {
+    function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
             .then(response => {
                 aggregatedMetrics.value = response.data
                 return response.data
             })
     }
-    function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string }) {
+    function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
             .then(response => {
                 aggregatedMetrics.value = response.data

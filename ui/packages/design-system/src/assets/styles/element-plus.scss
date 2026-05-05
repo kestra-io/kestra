@@ -1,0 +1,224 @@
+@use "variables.scss" as global-var;
+@use "color-palette" as palette;
+
+@forward 'element-plus/theme-chalk/src/mixins/config.scss' with (
+  $namespace: 'kel'
+);
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
+    $font-family: (
+        '':  var(--ks-font-family-sans),
+        'monospace': var(--ks-font-family-mono)
+    ),
+
+    $font-size: (
+        'extra-large': var(--ks-font-size-xl),
+        'large': var(--ks-font-size-lg),
+        'medium': var(--ks-font-size-md),
+        'base': var(--ks-font-size-base),
+        'small': var(--ks-font-size-sm),
+        'extra-small': var(--ks-font-size-xs),
+    ),
+
+    $colors: (
+        'white': palette.$base-white,
+        'black': palette.$base-black,
+        'primary': (
+            'base': palette.$base-purple-500,
+        ),
+        'success': (
+            'base': palette.$base-green-500,
+        ),
+        'warning': (
+            'base': palette.$base-orange-500,
+        ),
+        'danger': (
+            'base': palette.$base-red-500,
+        ),
+        'error': (
+            'base': palette.$base-red-500,
+        ),
+        'info': (
+            'base': palette.$base-blue-500,
+        ),
+    ),
+
+    $box-shadow: (
+        '': (
+            var(--ks-shadow-base)
+        ),
+        'light': (
+            var(--ks-shadow-sm)
+        ),
+        'lighter': (
+            var(--ks-shadow-sm)
+        ),
+        'dark': (
+            var(--ks-shadow-lg)
+        ),
+    ),
+
+    $border-radius: (
+        'base': var(--ks-radius-base),
+        'small': var(--ks-radius-sm),
+        'round': var(--ks-radius-lg),
+    ),
+
+    $input: (
+        'bg-color': var(--ks-background-input),
+    ),
+
+    $checkbox: (
+        'bg-color': var(--ks-background-input),
+    ),
+
+    $radio: (
+        'input-bg-color': var(--ks-background-input),
+    ),
+
+    $select: (
+        'input-color': var(--ks-background-input),
+    ),
+);
+
+// Foundation
+@use "element-plus/theme-chalk/src/base.scss";
+
+// Infrastructure – loaded here because they're not owned by a single component
+@use "element-plus/theme-chalk/src/loading.scss";
+@use "element-plus/theme-chalk/src/overlay.scss";
+@use "element-plus/theme-chalk/src/popper.scss";
+
+// Programmatic components (ElMessage, ElNotification, ElMessageBox – no Vue wrapper)
+@use "element-plus/theme-chalk/src/message.scss";
+@use "element-plus/theme-chalk/src/message-box.scss";
+@use "element-plus/theme-chalk/src/notification.scss";
+
+// All other component styles are loaded directly in their Ks* wrapper components.
+
+@forward 'element-plus/theme-chalk/src/dark/var.scss' as dark-* with (
+    $box-shadow: (
+        '': (
+            var(--ks-shadow-base)
+        ),
+        'light': (
+            var(--ks-shadow-sm)
+        ),
+        'lighter': (
+            var(--ks-shadow-sm)
+        ),
+        'dark': (
+            var(--ks-shadow-lg)
+        ),
+    ),
+);
+
+@use "element-plus/theme-chalk/src/dark/css-vars";
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+
+:root,
+html.dark {
+    #{--kel-bg-color}: var(--ks-background-body);
+    #{--kel-bg-color-page}: var(--ks-background-body);
+    #{--kel-bg-color-overlay}: var(--ks-dropdown-background);
+
+    #{--kel-disabled-bg-color}: var(--ks-button-background-inactive);
+
+    #{--kel-text-color-primary}: var(--ks-content-primary);
+    #{--kel-text-color-regular}: var(--ks-content-primary);
+    #{--kel-text-color-secondary}: var(--ks-content-secondary);
+    #{--kel-text-color-placeholder}: var(--ks-content-tertiary);
+    #{--kel-text-color-disabled}: var(--ks-content-inactive);
+
+    #{--kel-border-color}: var(--ks-border-primary);
+    #{--kel-border-color-light}: var(--ks-border-primary);
+    #{--kel-border-color-lighter}: var(--ks-border-primary);
+    #{--kel-border-color-extra-light}: var(--ks-border-primary);
+    #{--kel-border-color-dark}: var(--ks-border-secondary);
+    #{--kel-border-color-darker}: var(--ks-border-secondary);
+
+    #{--kel-fill-color}: var(--ks-button-background-secondary-active); // used in buttons .is-text
+    #{--kel-fill-color-light}: var(--ks-dropdown-background-active); // used in many places autocomplete suggestion highlighted
+    #{--kel-fill-color-lighter}: var(--ks-button-background-secondary-active); // used to be for table stripped but not anymore
+    #{--kel-fill-color-dark}: var(--ks-button-background-secondary-active); // used in buttons .is-text when active
+    #{--kel-fill-color-blank}: var(--ks-background-card); // used in many places --kel-input-background-color
+    #{--kel-input-bg-color}: var(--ks-background-input);
+    #{--kel-menu-hover-bg-color}: var(--ks-button-background-secondary);
+    #{--kel-menu-hover-text-color}: var(--ks-content-primary);
+    #{--kel-menu-active-color}: var(--ks-content-link);
+
+    #{--kel-button-active-text-color}: var(--ks-content-primary);
+    #{--kel-popper-bg-color-light}: var(--ks-dropdown-background);
+    #{--kel-border-color-hover}: var(--ks-border-primary);
+
+    #{--kel-color-danger}: var(--ks-content-alert);
+    #{--kel-color-error}: var(--ks-content-alert);
+}
+
+// popper
+.kel-popper {
+    box-shadow: var(--kel-box-shadow);
+    border: 1px solid var(--ks-border-primary) !important;
+
+    & > .kel-popper__arrow::before {
+        border: 1px solid var(--ks-border-primary) !important;
+    }
+}
+
+// loading
+.kel-loading-mask {
+    -webkit-backdrop-filter: blur(3px) opacity(0.85);
+    backdrop-filter: blur(3px) opacity(0.85);
+    inset: 0;
+    background: none;
+    transition: backdrop-filter 0.2s;
+}
+
+// notifications
+.kel-notification {
+    --kel-notification-border-color: var(--ks-border-primary);
+    --kel-notification-title-color: var(--ks-content-primary);
+
+    .kel-notification__group {
+        flex-grow: 2;
+    }
+
+    .kel-notification__content {
+        text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: var(--ks-font-size-sm);
+        line-height: inherit;
+    }
+
+    &.kel-notification__large {
+        width: 70%;
+        @include res(xs) {
+            width: 95%;
+        }
+
+        @include res(md) {
+            width: 70%;
+        }
+
+        @include res(lg) {
+            width: 35%;
+            min-width: auto;
+        }
+    }
+}
+
+// message box
+.kel-message-box {
+    border: 1px solid var(--ks-border-primary);
+
+    .kel-message-box__headerbtn .kel-message-box__close {
+        color: var(--ks-content-primary);
+    }
+}
+
+// overlay
+.kel-overlay {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}

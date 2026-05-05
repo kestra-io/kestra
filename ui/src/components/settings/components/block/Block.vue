@@ -2,7 +2,7 @@
     <section>
         <h1 class="heading">
             <div class="content">
-                <el-popover
+                <KsPopover
                     v-if="note"
                     :content="note"
                     trigger="hover"
@@ -12,7 +12,7 @@
                     <template #reference>
                         <InformationOutline />
                     </template>
-                </el-popover>
+                </KsPopover>
                 <span>{{ heading }}</span>
             </div>
             <div class="actions">
@@ -20,7 +20,7 @@
             </div>
         </h1>
         <slot name="content" />
-        <el-divider v-if="!last" />
+        <KsDivider v-if="!last" />
     </section>
 </template>
 
@@ -35,33 +35,32 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 section {
-    margin: calc($spacer * 2);
+    margin: calc(1rem * 2);
 
     & > h1.heading {
         display: flex;
         align-items: center;
-        margin-bottom: calc($spacer * 2);
+        margin-bottom: calc(1rem * 2);
         justify-content: space-between;
-        font-size: $font-size-xl;
+        font-size: var(--ks-font-size-xl);
         font-weight: 600;
 
         & .content {
             display: flex;
             align-items: center;
 
-            & > span.el-tooltip__trigger {
+            & > span.kel-tooltip__trigger {
                 cursor: pointer;
-                margin-right: calc($spacer / 2);
+                margin-right: calc(1rem / 2);
             }
         }
 
         & .actions {
             display: flex;
             align-items: center;
-            gap: calc($spacer / 2);
+            gap: calc(1rem / 2);
         }
     }
 }

@@ -1,23 +1,23 @@
 <template>
     <div class="wrapper">
-        <el-checkbox-button
+        <KsCheckboxButton
             v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
-            :label="$t('no_code.toggle_pebble')"
             :title="$t('no_code.toggle_pebble')"
+            :aria-label="$t('no_code.toggle_pebble')"
             class="ks-pebble"
         >
             <IconCodeBracesBox />
-        </el-checkbox-button>
+        </KsCheckboxButton>
 
-        <el-date-picker
+        <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
-            @update:model-value="onInput($event.toISOString())"
+            @update:model-value="(v) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
-        <el-input-number
+        <KsInputNumber
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
             align="right"
@@ -29,8 +29,8 @@
             <template #suffix>
                 <span class="duration-unit">{{ $t("days") }}</span>
             </template>
-        </el-input-number>
-        <el-time-picker
+        </KsInputNumber>
+        <KsTimePicker
             v-if="!pebble && schema?.format === 'duration'"
             :modelValue="timeDurationValue"
             type="time"
@@ -143,9 +143,9 @@
         return $moment().seconds(0).minutes(0).hours(0).toDate();
     });
 
-    function onInputDuration(value: Date | "" | null) {
+    function onInputDuration(value: string | Date | null | undefined) {
         const emitted =
-            value === "" || value === null
+            !(value instanceof Date)
                 ? undefined
                 : $moment
                     .duration({
@@ -188,7 +188,7 @@
 </script>
 
 <style scoped lang="scss">
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     &::placeholder {
         color: var(--ks-content-inactive) !important;
     }
@@ -210,7 +210,7 @@
         border-radius: 4px;
     }
 
-    :deep(.el-input__wrapper),
+    :deep(.kel-input__wrapper),
     :deep(.editor-container) {
         box-shadow: none;
     }
@@ -219,7 +219,7 @@
         flex: 1;
     }
 
-    :deep(.el-checkbox-button__inner) {
+    :deep(.kel-checkbox-button__inner) {
         padding: 4px;
         border: none;
     }
@@ -229,14 +229,14 @@
     }
 
     .ks-pebble * {
-        font-size: 24px;
+        font-size: var(--ks-font-size-xl);
         vertical-align: top;
     }
 }
 
 .duration-unit{
     color: var(--ks-content-inactive);
-    font-size: 0.875rem;
+    font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;
 }

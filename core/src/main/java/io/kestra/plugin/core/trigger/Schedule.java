@@ -524,9 +524,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
      * schedule dates (so when can render {@code {{ trigger.date }}}).
      */
     private boolean whenConditionMatch(RunContext runContext, Output candidateOutput) throws InternalException {
+        Map<String, Object> outputMap = this.timezone != null
+            ? candidateOutput.toMap(ZoneId.of(this.timezone))
+            : candidateOutput.toMap();
         Map<String, Object> additionalVariables = Map.of(
-            "schedule", candidateOutput.toMap(),
-            "trigger", candidateOutput.toMap()
+            "schedule", outputMap,
+            "trigger", outputMap
         );
         return this.getWhen() == null || TruthUtils.isTruthy(runContext.render(this.getWhen(), additionalVariables));
     }

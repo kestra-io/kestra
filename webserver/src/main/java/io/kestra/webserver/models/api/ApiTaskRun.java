@@ -5,15 +5,17 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 
-public record ApiTaskRun(String id,
-                         String taskId,
+public record ApiTaskRun(@NotNull String id,
+                         @NotNull String taskId,
                          String parentTaskRunId,
                          String value,
                          List<TaskRunAttempt> attempts,
                          AssetsInOut assets,
-                         State state,
+                         @NotNull State state,
                          Integer iteration,
                          Boolean dynamic,
                          Boolean forceExecution) {

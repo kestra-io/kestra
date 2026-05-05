@@ -6,7 +6,7 @@
         ref="taskEdit"
     >
         <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <Drawer
+        <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
@@ -14,10 +14,10 @@
                 <code>{{ taskId || task?.id || $t("add task") }}</code>
             </template>
             <template #footer>
-                <div v-loading="isLoading">
+                <div v-ks-loading="isLoading">
                     <ValidationError class="me-2" link :errors="errors" />
 
-                    <el-button
+                    <KsButton
                         :icon="ContentSave"
                         @click="saveTask"
                         v-if="canSave && !readOnly"
@@ -25,8 +25,8 @@
                         type="primary"
                     >
                         {{ $t("save task") }}
-                    </el-button>
-                    <el-alert
+                    </KsButton>
+                    <KsAlert
                         showIcon
                         :closable="false"
                         class="mb-0 mt-3"
@@ -34,12 +34,12 @@
                         type="warning"
                     >
                         <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
-                    </el-alert>
+                    </KsAlert>
                 </div>
             </template>
 
-            <el-tabs v-model="activeTabs">
-                <el-tab-pane v-if="!readOnly" name="form">
+            <KsTabs v-model="activeTabs">
+                <KsTabPane v-if="!readOnly" name="form">
                     <template #label>
                         <span>{{ $t("form") }}</span>
                     </template>
@@ -49,8 +49,8 @@
                         :section="section"
                         @update:model-value="onInput"
                     />
-                </el-tab-pane>
-                <el-tab-pane name="source">
+                </KsTabPane>
+                <KsTabPane name="source">
                     <template #label>
                         <span>{{ $t("source") }}</span>
                     </template>
@@ -65,33 +65,31 @@
                         lang="yaml"
                         @update:model-value="onInput"
                     />
-                </el-tab-pane>
-                <el-tab-pane v-if="pluginMarkdown" name="documentation">
+                </KsTabPane>
+                <KsTabPane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
                             {{ $t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
-                        <Markdown :source="pluginMarkdown" />
+                        <KsMarkdown :content="pluginMarkdown" />
                     </div>
-                </el-tab-pane>
-            </el-tabs>
-        </Drawer>
+                </KsTabPane>
+            </KsTabs>
+        </KsDrawer>
     </component>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "../no-code/components/TaskEditor.vue";
-    import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
-    import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
     import {useAuthStore} from "override/stores/auth";
@@ -164,7 +162,7 @@
             ? revisions.value?.[props.revision - 1]?.source
             : flowStore.flow?.source;
     });
-   
+
     const load = async (taskId: string) => {
         await flowStore.loadFlow({
             namespace: props.namespace,

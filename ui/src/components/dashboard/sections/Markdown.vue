@@ -1,9 +1,9 @@
 <template>
     <section v-if="data" id="markdown">
-        <Markdown :source="data" />
+        <KsMarkdown :content="data" />
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <KsEmpty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
@@ -12,8 +12,7 @@
     import type {Chart} from "../composables/useDashboards";
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
-    import Markdown from "../../layout/Markdown.vue";
-    import NoData from "../../layout/NoData.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({

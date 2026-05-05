@@ -683,6 +683,7 @@ class ScheduleTest {
             .build();
 
         ZonedDateTime now = ZonedDateTime.now()
+            .withDayOfMonth(1)
             .withHour(12)
             .withMinute(0)
             .withSecond(0)

@@ -1,4 +1,4 @@
-import {onMounted, computed, ref} from "vue";
+import {onMounted, onBeforeUnmount, computed, ref} from "vue";
 
 import {useRoute} from "vue-router";
 
@@ -6,7 +6,7 @@ import {useDashboardStore} from "../../../stores/dashboard";
 
 import {useI18n} from "vue-i18n";
 
-import {decodeSearchParams} from "../../filter/utils/helpers";
+import {decodeSearchParams} from "@kestra-io/design-system";
 
 
 import {FilterObject} from "../../../utils/filters";
@@ -39,24 +39,32 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
+    let isMounted = true;
+    onBeforeUnmount(() => {
+        isMounted = false;
+    });
+
     async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[]) {
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
+        let result;
         if (!props.showDefault) {
             if(!dashboardId){
                 throw new Error("to generate charts from backend we need a dashboard id")
             }
-            data.value = await dashboardStore.generate(dashboardId, props.chart.id, parameters);
+            result = await dashboardStore.generate(dashboardId, props.chart.id, parameters);
         } else {
             if (!props.chart.content){
                 throw new Error("Chart content must exist for preview.");
             }
 
             const request: Request = {chart: props.chart.content, globalFilter: parameters};
-            data.value = await dashboardStore.chartPreview(request);
+            result = await dashboardStore.chartPreview(request);
         }
 
+        if (!isMounted) return;
+        data.value = result;
         return data.value;
     };
 

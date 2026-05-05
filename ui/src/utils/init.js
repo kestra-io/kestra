@@ -16,27 +16,14 @@ import "moment/dist/locale/zh-cn"
 import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
-import {
-    ArcElement,
-    BarController,
-    BarElement,
-    CategoryScale,
-    Chart,
-    DoughnutController,
-    Filler,
-    Legend,
-    LinearScale,
-    LineController,
-    LineElement,
-    PointElement,
-    Tooltip,
-} from "chart.js";
 import VueVirtualScroller from "vue-virtual-scroller";
 import {createPinia} from "pinia";
 
 import Toast from "./toast";
 import filters from "./filters";
-import ElementPlus from "element-plus";
+import KestraDesignSystem from "@kestra-io/design-system";
+import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesignSystemI18n} from "@kestra-io/design-system";
+import {date as dateFilter} from "./filters";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
@@ -49,24 +36,6 @@ import Utils from "./utils";
 
 
 export default async (app, routes, _stores, translations, additionalTranslations = {}) => {
-    // charts
-    Chart.register(
-        CategoryScale,
-        LinearScale,
-        BarElement,
-        BarController,
-        LineElement,
-        LineController,
-        PointElement,
-        Filler,
-        ArcElement,
-        DoughnutController,
-        Tooltip,
-        Legend,
-        CategoryScale,
-        LinearScale
-    );
-
     // router
     const router = createRouter({
         // make e2e tests pass in dev mode
@@ -126,15 +95,23 @@ export default async (app, routes, _stores, translations, additionalTranslations
         warnHtmlMessage: false,
     });
 
+    // Merge design-system locales before first render, so parent computeds
+    // that call t() on design-system keys don't cache the raw key.
+    registerDesignSystemI18n(i18n);
+
     if(locale !== "en"){
         await loadLocaleMessages(i18n, locale, additionalTranslations);
         await setI18nLanguage(i18n, locale);
     }
+    setDesignSystemLocale(locale);
     app.use(i18n);
 
     // moment
     moment.locale(locale);
-    app.config.globalProperties.$moment = extendMoment(moment);
+    const momentExtended = extendMoment(moment);
+    app.config.globalProperties.$moment = momentExtended;
+    setMomentInstance(momentExtended);
+    setDateFormatter(dateFilter);
 
     // others plugins
     app.use(VueSidebarMenu);
@@ -145,8 +122,8 @@ export default async (app, routes, _stores, translations, additionalTranslations
     // filters
     app.config.globalProperties.$filters = filters;
 
-    // element-plus
-    app.use(ElementPlus)
+    // kestra design system (registers KsSelect, etc. globally)
+    app.use(KestraDesignSystem)
 
     // navigation guard
     createUnsavedChanged(app, router);

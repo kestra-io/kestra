@@ -1,13 +1,13 @@
 <template>
     <TopNavBar :title="title">
-        <template v-if="$slots.cta" #additional-right>
+        <template v-if="$slots.cta" #actions>
             <slot name="cta" />
         </template>
     </TopNavBar>
 
     <section id="welcome" class="container mt-0">
-        <el-row justify="center">
-            <el-col :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
+        <KsRow justify="center">
+            <KsCol :xs="24" :sm="24" :md="18" :lg="16" :xl="14">
                 <AiCopilot
                     :flow="activeExample.yaml"
                     :conversationId="conversationId"
@@ -25,7 +25,7 @@
                 />
 
                 <div class="mt-2 welcome-copilot-tags">
-                    <el-tag
+                    <KsTag
                         v-for="(example, i) in visibleExamples"
                         :key="i"
                         round
@@ -34,9 +34,9 @@
                         @click="selectExample(i)"
                     >
                         {{ example.label }}
-                    </el-tag>
+                    </KsTag>
 
-                    <el-tag
+                    <KsTag
                         v-if="examples.length > 5"
                         round
                         effect="plain"
@@ -44,7 +44,7 @@
                         @click="allShown = !allShown"
                     >
                         {{ allShown ? $t("welcome_copilot.show_less") : $t("welcome_copilot.show_more") }}
-                    </el-tag>
+                    </KsTag>
                 </div>
 
                 <div v-if="welcomeResources.length > 0" class="welcome-help-section">
@@ -53,8 +53,8 @@
                     </p>
                     <OnboardingResourceList :items="welcomeResources" />
                 </div>
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 
@@ -123,8 +123,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
-
     :global(main:has(section#welcome)) {
         max-height: 100%;
         overflow: hidden;
@@ -154,7 +152,7 @@
             }
         }
 
-        .el-tag {
+        .kel-tag {
             cursor: pointer;
             height: 30px;
             margin: calc(1rem / 4);
@@ -162,7 +160,7 @@
             background-color: var(--ks-button-background-secondary);
             color: var(--ks-content-primary);
 
-            & :deep(.el-tag__content) {
+            & :deep(.kel-tag__content) {
                 padding: 4px 13px;
             }
 
@@ -170,10 +168,10 @@
                 background-color: var(--ks-button-background-secondary-hover);
             }
 
-            &.el-tag--primary {
-                border-color: var(--el-color-primary);
-                background-color: var(--el-color-primary);
-                color: white;
+            &.kel-tag--primary {
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
+                color: var(--ks-white);
             }
         }
 
@@ -194,10 +192,10 @@
         .welcome-help-title {
             margin: 0 0 0.875rem;
             color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
         }
 
-        :deep(.el-row) {
+        :deep(.kel-row) {
             position: relative;
             z-index: 1;
         }

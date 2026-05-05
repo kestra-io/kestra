@@ -1,21 +1,20 @@
 <template>
-    <el-select
+    <KsSelect
         :modelValue="values"
         @update:model-value="onInput"
         filterable
         clearable
-        :persistent="false"
         allowCreate
         :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
         :disabled="!task.namespace"
     >
-        <el-option
+        <KsOption
             v-for="item in flowIds"
             :key="item"
             :label="item"
             :value="item"
         />
-    </el-select>
+    </KsSelect>
 </template>
 <script>
     import {mapStores} from "pinia";

@@ -16,6 +16,12 @@ const dirname =
 const MF_RUNTIME_STUB = path.resolve(dirname, "plugins/stub-module-federation-runtime.js");
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
 
+// No backend is available during tests — clear the API proxy so Vite doesn't
+// emit "[vite] http proxy error" for every story that fires an /api request.
+if (resolvedViteConfig.server) {
+    resolvedViteConfig.server.proxy = {};
+}
+
 // @vue/compiler-dom passes a browser-only `decodeEntities` option to
 // @vue/compiler-core during Vite's Node.js transform phase. The core
 // compiler warns that the option is ignored in non-browser builds — this
@@ -51,12 +57,6 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
-                server: {
-                    // No backend is running during tests — disable the API proxy so
-                    // Vite doesn't emit "[vite] http proxy error" for every story
-                    // that happens to trigger an /api request.
-                    proxy: {},
-                },
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],

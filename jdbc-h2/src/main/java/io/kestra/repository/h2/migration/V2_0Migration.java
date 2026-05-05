@@ -26,7 +26,6 @@ import jakarta.inject.Singleton;
 public class V2_0Migration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init";
-    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/baseline-h2.sql");
 
     private final DataSource dataSource;
 
@@ -47,7 +46,7 @@ public class V2_0Migration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return CHECKSUM;
+        return MigrationScript.checksumOfResources("/migrations/baseline-h2.sql");
     }
 
     @Override

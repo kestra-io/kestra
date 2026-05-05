@@ -180,13 +180,13 @@ public class MigrationRunner implements MigrationRunnerInterface {
      */
     public List<MigrationScript> pendingScripts() throws Exception {
         historyStore.bootstrapIfNeeded();
-        boolean isFlywayUpgrade = historyStore.detectFlywayUpgrade();
+        boolean isLegacyUpgrade = historyStore.detectLegacyUpgrade();
 
         List<MigrationScript> pending = new ArrayList<>();
         for (MigrationScript script : scripts.stream()
             .sorted(Comparator.comparing(MigrationScript::scriptId))
             .toList()) {
-            if (isFlywayUpgrade && INIT_SCRIPT_IDS.contains(script.scriptId())) {
+            if (isLegacyUpgrade && INIT_SCRIPT_IDS.contains(script.scriptId())) {
                 continue;
             }
             if (!historyStore.isApplied(script.scriptId())) {
@@ -201,8 +201,8 @@ public class MigrationRunner implements MigrationRunnerInterface {
     private void executeMigrations() throws Exception {
         historyStore.bootstrapIfNeeded();
 
-        boolean isFlywayUpgrade = historyStore.detectFlywayUpgrade();
-        if (isFlywayUpgrade) {
+        boolean isLegacyUpgrade = historyStore.detectLegacyUpgrade();
+        if (isLegacyUpgrade) {
             log.info("Detected existing Flyway-managed schema. Init scripts will be marked as applied without execution.");
         }
 
@@ -211,16 +211,16 @@ public class MigrationRunner implements MigrationRunnerInterface {
             .toList();
 
         for (MigrationScript script : sortedScripts) {
-            runScript(script, isFlywayUpgrade);
+            runScript(script, isLegacyUpgrade);
         }
     }
 
-    private void runScript(final MigrationScript script, final boolean isFlywayUpgrade) throws Exception {
+    private void runScript(final MigrationScript script, final boolean isLegacyUpgrade) throws Exception {
         String scriptId = script.scriptId();
 
         // Init scripts are skipped for pre-migration-system upgrades (schema already exists from Flyway).
         // We still record them as applied (executionMs=0) so subsequent startups don't see them as pending.
-        if (isFlywayUpgrade && INIT_SCRIPT_IDS.contains(scriptId)) {
+        if (isLegacyUpgrade && INIT_SCRIPT_IDS.contains(scriptId)) {
             historyStore.markApplied(script, 0L);
             log.info("Migration [{}] recorded as applied without execution (Flyway upgrade: schema pre-existing)", scriptId);
             return;

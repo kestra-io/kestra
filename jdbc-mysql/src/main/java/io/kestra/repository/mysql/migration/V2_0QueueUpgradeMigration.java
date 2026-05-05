@@ -27,7 +27,6 @@ import jakarta.inject.Singleton;
 public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "2.0-queue";
-    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-queue-mysql.sql");
 
     private final DataSource dataSource;
 
@@ -48,7 +47,7 @@ public class V2_0QueueUpgradeMigration extends AbstractSQLMigrationScript {
 
     @Override
     public String checksum() {
-        return CHECKSUM;
+        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-queue-mysql.sql");
     }
 
     @Override

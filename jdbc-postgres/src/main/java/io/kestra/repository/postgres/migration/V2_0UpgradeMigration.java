@@ -29,8 +29,6 @@ import jakarta.inject.Singleton;
 @PostgresRepositoryEnabled
 public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
-    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-postgres.sql");
-
     private final DataSource dataSource;
 
     @Inject
@@ -45,7 +43,7 @@ public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
     @Override
     public String checksum() {
-        return CHECKSUM;
+        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-postgres.sql");
     }
 
     @Override

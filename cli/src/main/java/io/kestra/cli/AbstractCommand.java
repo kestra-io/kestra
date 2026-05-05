@@ -19,6 +19,7 @@ import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 
 import io.micronaut.context.ApplicationContext;
@@ -83,6 +84,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     @Override
     public Integer call() throws Exception {
+        MigrationRunner.setSkipAutoRun(true);
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
         initLogger();
         sendServerLog();
@@ -184,13 +186,14 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     /**
      * Whether automatic migrations should run as part of this command's startup sequence.
-     * Returns {@code true} by default. Override to return {@code false} in commands that
-     * manage migrations explicitly.
+     * Returns {@code false} by default — only server commands override this to {@code true}.
+     * Migration-specific commands (e.g. {@code kestra migrate run}) bypass this entirely
+     * and call {@link MigrationRunnerInterface#runAlways()} directly.
      *
      * @return {@code true} to run migrations automatically on startup
      */
     protected boolean shouldAutoMigrate() {
-        return true;
+        return false;
     }
 
     private void maybeStartWebserver() {

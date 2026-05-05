@@ -4,12 +4,15 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
 import io.kestra.core.migration.MigrationLock;
 import io.kestra.repository.postgres.PostgresRepositoryEnabled;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jdbc.DataSourceResolver;
 import jakarta.inject.Inject;
@@ -32,39 +35,59 @@ public class PostgresMigrationLock implements MigrationLock {
 
     /** Arbitrary constant used as the advisory lock key. */
     private static final long LOCK_KEY = 7_516_827L;
+    private static final long RETRY_DELAY_MS = 1_000;
 
     private final DataSource dataSource;
+    private final Duration lockTimeout;
 
     /**
-     * Dedicated connection held open for the duration of the lock. {@code volatile} because
-     * {@link #acquire()} and {@link #release()} can be called from different JVM instances or
-     * threads in a multi-node deployment. Without visibility, {@link #release()} could observe
-     * {@code null} and silently skip the advisory-lock release, leaving other nodes blocked.
+     * Dedicated connection held open for the duration of the lock.
+     * All access is guarded by {@code synchronized} methods.
      */
-    private volatile Connection lockConnection;
+    private Connection lockConnection;
 
     @Inject
     public PostgresMigrationLock(final DataSource dataSource,
-        @Nullable final DataSourceResolver dataSourceResolver) {
+        @Nullable final DataSourceResolver dataSourceResolver,
+        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
+        this.lockTimeout = lockTimeout;
     }
 
     @Override
-    public void acquire() throws SQLException {
-        log.debug("Acquiring PostgreSQL advisory migration lock (key={})", LOCK_KEY);
-        lockConnection = dataSource.getConnection();
-        try (Statement stmt = lockConnection.createStatement()) {
-            stmt.execute("SELECT pg_advisory_lock(" + LOCK_KEY + ")");
-        } catch (SQLException e) {
-            lockConnection.close();
-            lockConnection = null;
-            throw e;
+    public synchronized void acquire() throws Exception {
+        log.debug("Acquiring PostgreSQL advisory migration lock (key={}, timeout={})", LOCK_KEY, lockTimeout);
+        long deadline = System.currentTimeMillis() + lockTimeout.toMillis();
+        while (true) {
+            lockConnection = dataSource.getConnection();
+            try (
+                Statement stmt = lockConnection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT pg_try_advisory_lock(" + LOCK_KEY + ")")
+            ) {
+                if (rs.next() && rs.getBoolean(1)) {
+                    log.debug("PostgreSQL advisory migration lock acquired (key={})", LOCK_KEY);
+                    return;
+                }
+                lockConnection.close();
+                lockConnection = null;
+            } catch (SQLException e) {
+                lockConnection.close();
+                lockConnection = null;
+                throw e;
+            }
+            if (System.currentTimeMillis() >= deadline) {
+                throw new IllegalStateException(
+                    "Could not acquire PostgreSQL migration lock within %s (configurable via kestra.migration.lock-acquire-timeout)"
+                        .formatted(lockTimeout)
+                );
+            }
+            log.debug("PostgreSQL advisory migration lock held by another process, retrying in {}ms", RETRY_DELAY_MS);
+            TimeUnit.MILLISECONDS.sleep(RETRY_DELAY_MS);
         }
-        log.debug("PostgreSQL advisory migration lock acquired (key={})", LOCK_KEY);
     }
 
     @Override
-    public boolean tryAcquire() throws SQLException {
+    public synchronized boolean tryAcquire() throws SQLException {
         log.debug("Trying to acquire PostgreSQL advisory migration lock (key={}, non-blocking)", LOCK_KEY);
         lockConnection = dataSource.getConnection();
         try (
@@ -87,7 +110,7 @@ public class PostgresMigrationLock implements MigrationLock {
     }
 
     @Override
-    public void forceRelease() {
+    public synchronized void forceRelease() {
         log.warn(
             "PostgreSQL advisory locks are session-scoped and cannot be released from another process. "
                 + "The lock will be automatically released when the holding process terminates or its connection closes."
@@ -95,7 +118,7 @@ public class PostgresMigrationLock implements MigrationLock {
     }
 
     @Override
-    public void release() throws SQLException {
+    public synchronized void release() throws SQLException {
         if (lockConnection == null) {
             return;
         }

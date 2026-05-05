@@ -37,12 +37,10 @@ public class MysqlMigrationLock implements MigrationLock {
     private final Duration lockTimeout;
 
     /**
-     * Dedicated connection held open for the duration of the lock. {@code volatile} because
-     * {@link #acquire()} and {@link #release()} can be called from different JVM instances or
-     * threads in a multi-node deployment. Without visibility, {@link #release()} could observe
-     * {@code null} and silently skip the GET_LOCK release, leaving other nodes blocked.
+     * Dedicated connection held open for the duration of the lock.
+     * All access is guarded by {@code synchronized} methods.
      */
-    private volatile Connection lockConnection;
+    private Connection lockConnection;
 
     @Inject
     public MysqlMigrationLock(final DataSource dataSource,
@@ -53,7 +51,7 @@ public class MysqlMigrationLock implements MigrationLock {
     }
 
     @Override
-    public void acquire() throws SQLException {
+    public synchronized void acquire() throws Exception {
         log.debug("Acquiring MySQL migration lock '{}'", LOCK_NAME);
         lockConnection = dataSource.getConnection();
         try (PreparedStatement ps = lockConnection.prepareStatement("SELECT GET_LOCK(?, ?)")) {
@@ -63,7 +61,7 @@ public class MysqlMigrationLock implements MigrationLock {
                 if (!rs.next() || rs.getInt(1) != 1) {
                     lockConnection.close();
                     lockConnection = null;
-                    throw new SQLException(
+                    throw new IllegalStateException(
                         "Could not acquire MySQL migration lock '%s' within %s (configurable via kestra.migration.lock-acquire-timeout)"
                             .formatted(LOCK_NAME, lockTimeout)
                     );
@@ -80,7 +78,7 @@ public class MysqlMigrationLock implements MigrationLock {
     }
 
     @Override
-    public boolean tryAcquire() throws SQLException {
+    public synchronized boolean tryAcquire() throws SQLException {
         log.debug("Trying to acquire MySQL migration lock '{}' (non-blocking)", LOCK_NAME);
         lockConnection = dataSource.getConnection();
         try (PreparedStatement ps = lockConnection.prepareStatement("SELECT GET_LOCK(?, 0)")) {
@@ -105,7 +103,7 @@ public class MysqlMigrationLock implements MigrationLock {
     }
 
     @Override
-    public void forceRelease() {
+    public synchronized void forceRelease() {
         log.warn(
             "MySQL named locks are session-scoped and cannot be released from another process. "
                 + "The lock will be automatically released when the holding process terminates or its connection closes."
@@ -113,7 +111,7 @@ public class MysqlMigrationLock implements MigrationLock {
     }
 
     @Override
-    public void release() throws SQLException {
+    public synchronized void release() throws SQLException {
         if (lockConnection == null) {
             return;
         }

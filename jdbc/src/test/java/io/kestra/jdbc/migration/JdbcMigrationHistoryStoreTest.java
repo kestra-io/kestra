@@ -86,9 +86,9 @@ class JdbcMigrationHistoryStoreTest {
     }
 
     @Test
-    void detectFlywayUpgrade_returnsFalseOnFreshInstall() throws Exception {
+    void shouldReturnFalseForLegacyUpgradeOnFreshInstall() throws Exception {
         // Given: fresh H2 database with no flyway_schema_history table
-        assertThat(store.detectFlywayUpgrade()).isFalse();
+        assertThat(store.detectLegacyUpgrade()).isFalse();
     }
 
     // --- Helpers ---

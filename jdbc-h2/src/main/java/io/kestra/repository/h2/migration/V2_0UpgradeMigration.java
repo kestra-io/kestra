@@ -29,8 +29,6 @@ import jakarta.inject.Singleton;
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
 public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
-    private static final String CHECKSUM = MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-h2.sql");
-
     private final DataSource dataSource;
 
     @Inject
@@ -45,7 +43,7 @@ public class V2_0UpgradeMigration extends AbstractV2UpgradeMigration {
 
     @Override
     public String checksum() {
-        return CHECKSUM;
+        return MigrationScript.checksumOfResources("/migrations/upgrade-v2.0-h2.sql");
     }
 
     @Override

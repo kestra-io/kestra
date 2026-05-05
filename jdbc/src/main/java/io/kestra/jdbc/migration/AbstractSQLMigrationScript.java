@@ -66,7 +66,12 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      */
     public static void executeSqlScript(final DataSource dataSource, final String resourcePath)
         throws IOException, SQLException {
-        try (InputStream is = AbstractSQLMigrationScript.class.getResourceAsStream(resourcePath)) {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+            cl = AbstractSQLMigrationScript.class.getClassLoader();
+        }
+        String normalizedPath = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+        try (InputStream is = cl.getResourceAsStream(normalizedPath)) {
             if (is == null) {
                 throw new IllegalArgumentException("SQL resource not found on classpath: " + resourcePath);
             }

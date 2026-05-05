@@ -76,10 +76,10 @@ class MigrationRunnerTest {
     }
 
     @Test
-    void runAlways_skipsInitScriptOnFlywayUpgrade() throws Exception {
-        // Given: simulate Flyway upgrade — history store reports detectFlywayUpgrade()=true
+    void runAlways_skipsInitScriptOnLegacyUpgrade() throws Exception {
+        // Given: simulate Flyway upgrade — history store reports detectLegacyUpgrade()=true
         InMemoryHistoryStore historyStore = new InMemoryHistoryStore();
-        historyStore.simulateFlywayUpgrade = true;
+        historyStore.simulateLegacyUpgrade = true;
 
         AtomicInteger initCalls = new AtomicInteger(0);
         AtomicInteger upgradeCalls = new AtomicInteger(0);
@@ -557,7 +557,7 @@ class MigrationRunnerTest {
     private static class InMemoryHistoryStore implements MigrationHistoryStore {
 
         /** Flip to {@code true} to simulate an upgrade from a pre-migration-system deployment. */
-        boolean simulateFlywayUpgrade = false;
+        boolean simulateLegacyUpgrade = false;
 
         private final Map<String, String> applied = new HashMap<>();
 
@@ -594,8 +594,8 @@ class MigrationRunnerTest {
         }
 
         @Override
-        public boolean detectFlywayUpgrade() {
-            return simulateFlywayUpgrade;
+        public boolean detectLegacyUpgrade() {
+            return simulateLegacyUpgrade;
         }
     }
 }

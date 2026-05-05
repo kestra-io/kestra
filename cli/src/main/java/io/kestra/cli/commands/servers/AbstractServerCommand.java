@@ -20,6 +20,11 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
         return super.call();
     }
 
+    @Override
+    protected boolean shouldAutoMigrate() {
+        return true;
+    }
+
     private long maxMemoryInMB() {
         return Runtime.getRuntime().maxMemory() / 1024 / 1024;
     }

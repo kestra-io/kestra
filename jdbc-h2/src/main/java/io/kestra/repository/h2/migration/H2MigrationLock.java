@@ -40,7 +40,7 @@ public class H2MigrationLock implements MigrationLock {
     public void acquire() throws Exception {
         if (!lock.tryLock(lockTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
             throw new IllegalStateException(
-                "Could not acquire H2 migration lock within " + lockTimeout
+                "Could not acquire H2 migration lock within " + lockTimeout + " (configurable via kestra.migration.lock-acquire-timeout)"
             );
         }
     }

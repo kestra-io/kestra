@@ -141,7 +141,7 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
     }
 
     @Override
-    public boolean detectFlywayUpgrade() throws SQLException {
+    public boolean detectLegacyUpgrade() throws SQLException {
         if (hasAnyApplied()) {
             return false;
         }

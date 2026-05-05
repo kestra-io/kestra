@@ -73,5 +73,5 @@ public interface MigrationHistoryStore {
      * @return {@code true} if upgrading from a pre-migration-system deployment
      * @throws Exception on backend error
      */
-    boolean detectFlywayUpgrade() throws Exception;
+    boolean detectLegacyUpgrade() throws Exception;
 }

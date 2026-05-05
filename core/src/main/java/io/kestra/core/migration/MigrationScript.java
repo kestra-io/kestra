@@ -107,8 +107,13 @@ public interface MigrationScript {
     static String checksumOfResources(final String... resourcePaths) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            if (cl == null) {
+                cl = MigrationScript.class.getClassLoader();
+            }
             for (String path : resourcePaths) {
-                try (InputStream is = MigrationScript.class.getResourceAsStream(path)) {
+                String normalizedPath = path.startsWith("/") ? path.substring(1) : path;
+                try (InputStream is = cl.getResourceAsStream(normalizedPath)) {
                     if (is == null) {
                         throw new IllegalArgumentException("Resource not found on classpath: " + path);
                     }

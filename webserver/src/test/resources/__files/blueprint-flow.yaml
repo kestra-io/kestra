@@ -11,7 +11,7 @@ description: |
   You can generate a file on the bucket using the flow `extract-bigquery-table-to-gcs`
 tasks:
   - id: each
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     tasks:
       - id: subflow-etl-flow
         type: io.kestra.plugin.core.flow.Subflow
@@ -21,7 +21,7 @@ tasks:
           filename: \"{{ taskrun.value | jq ('.name') | first }}\"
         flowId: subflow-etl-flow
         wait: true
-    concurrent: 8
+    concurrencyLimit: 8
     value: \"{{ trigger.blobs }}\"
 triggers:
   - id: watch

@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -130,34 +131,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/foreach-concurrent-subflow-notfound.yaml")
-    void eachParallelWithSubflowMissing(Execution execution) {
-        assertThat(execution).isNotNull();
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        // on JDBC, when using an each parallel, the flow is failed even if not all subtasks of the each parallel are ended as soon as
-        // there is one failed task FIXME https://github.com/kestra-io/kestra/issues/2179
-        // so instead of asserting that all tasks FAILED we assert that at least two failed (the each parallel and one of its subtasks)
-        assertThat(
-            execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed())
-                .count()
-        ).isGreaterThanOrEqualTo(2L); // Should be 3
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/foreach-nested.yaml")
-    void nested(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(16);
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/foreach-concurrent-no-limit.yaml")
-    void eachParallel(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(7);
-    }
-
-    @Test
     @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
     void restartFailed() throws Exception {
         restartCaseTest.restartFailedThenSuccess();
@@ -176,9 +149,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/restart-each.yaml" })
-    void replayEach() throws Exception {
-        restartCaseTest.replayEach();
+    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    void replayLoop() throws Exception {
+        restartCaseTest.replayLoop();
     }
 
     @Test
@@ -200,9 +173,10 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/restart-parent-for-each.yaml", "flows/valids/restart-child.yaml" })
-    protected void restartSubflowWithForEach() throws Exception {
-        restartCaseTest.restartSubflowWithForEach();
+    @LoadFlows({"flows/valids/restart-parent-loop.yaml", "flows/valids/restart-child.yaml" })
+    @Disabled("This is not implemented yet for loops")
+    protected void restartSubflowWithLoop() throws Exception {
+        restartCaseTest.restartSubflowWithLoop();
     }
 
     @Test
@@ -347,20 +321,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/each-null.yaml" }, tenantId = "eachwithnull")
-    void eachWithNull() throws Exception {
-        List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        logsQueue.addListener(logs::add);
-
-        Execution execution = runnerUtils.runOne("eachwithnull", "io.kestra.tests", "each-null", Duration.ofSeconds(60));
-
-        assertThat(execution.getTaskRunList()).hasSize(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found a null value inside the iteration values"));
-        assertThat(matchingLog).isNotNull();
-    }
-
-    @Test
     @LoadFlows({ "flows/tests/plugin-defaults.yaml" })
     void taskDefaults() throws Exception {
         pluginDefaultsCaseTest.pluginDefaults();
@@ -390,20 +350,20 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/working-directory.yaml" })
-    public void workerSuccess() throws Exception {
+    public void workingDirectorySuccess() throws Exception {
         workingDirectoryTest.success(runnerUtils);
     }
 
     @Test
     @LoadFlows(value = { "flows/valids/working-directory.yaml" }, tenantId = TENANT_1)
-    public void workerFailed() throws Exception {
+    public void workingDirectoryFailed() throws Exception {
         workingDirectoryTest.failed(TENANT_1, runnerUtils);
     }
 
     @Test
-    @LoadFlows({ "flows/valids/working-directory-each.yaml" })
-    public void workerEach() throws Exception {
-        workingDirectoryTest.each(runnerUtils);
+    @LoadFlows({"flows/valids/working-directory-loop.yaml"})
+    public void workingDirectoryLoop() throws Exception {
+        workingDirectoryTest.loop(runnerUtils);
     }
 
     @Test
@@ -428,12 +388,6 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/pause-duration-from-input.yaml" })
     public void pauseRunDurationFromInput() throws Exception {
         pauseTest.runDurationFromInput(runnerUtils);
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/foreach-concurrent-pause.yaml" })
-    public void pauseRunParallelDelay() throws Exception {
-        pauseTest.runParallelDelay(runnerUtils);
     }
 
     @Test
@@ -616,8 +570,38 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @ExecuteFlow("flows/valids/loop-outputs-failed-render.yaml")
-    protected void loopOutputsFailedRender(Execution execution) throws Exception {
+    protected void loopOutputsFailedRender(Execution execution) {
         loopCaseTest.loopOutputsFailedRender(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-empty.yaml")
+    protected void loopEmpty(Execution execution) {
+        loopCaseTest.loopEmpty(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-null.yaml" )
+    protected void loopWithNull(Execution execution) {
+        loopCaseTest.loopWithNull(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-object.yaml")
+    public void loopObject(Execution execution) throws InternalException {
+        loopCaseTest.loopObject(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-object-in-list.yaml")
+    public void loopObjectInList(Execution execution) throws InternalException {
+        loopCaseTest.loopObjectInList(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-switch.yaml")
+    public void loopSwitch(Execution execution) throws InternalException {
+        loopCaseTest.loopSwitch(execution);
     }
 
     @Test

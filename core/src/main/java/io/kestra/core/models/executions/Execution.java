@@ -426,10 +426,10 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
      * Creates a derived loop execution from the current execution and the loop task run
      * with the given index information (value and index).
      */
-    public Execution loopExecution(String loopExecutionId, TaskRun taskRun, int index, @Nullable String key, String value) {
+    public Execution loopExecution(TaskRun taskRun, int index, @Nullable String key, String value) {
         return new Execution(
             this.tenantId,
-            loopExecutionId,
+            IdUtils.create(),
             this.namespace,
             this.flowId,
             this.flowRevision,

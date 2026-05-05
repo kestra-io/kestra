@@ -68,8 +68,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
     @Inject
-    private DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue;
-    @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
     private final Tracer tracer;
@@ -166,6 +164,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+                            final List<TaskRun> currentTaskRuns = executor.getExecution().getTaskRunList();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->
@@ -193,8 +192,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
+
                                             // flowable attempt state transition to running
-                                            if (workerTask.getTask().isFlowable()) {
+                                            // Skip if the task was already terminated by handleChildWorkerTaskResult (e.g., empty Loop)
+                                            if (workerTask.getTask().isFlowable() && !workerTask.getTaskRun().getState().isTerminated()) {
                                                 List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
                                                     .map(ArrayList::new)
                                                     .orElseGet(ArrayList::new);

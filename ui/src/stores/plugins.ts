@@ -197,10 +197,9 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.data;
     }
 
-    async function listTriggers(options: {group?: "core" | "realtime" | "app"; includeDeprecated?: boolean} = {}) {
+    async function listTriggers() {
         const response = await axios.get<{results: TriggerPluginDto[]; total: number}>(
-            `${apiUrlWithoutTenants()}/plugins/triggers`,
-            {params: options}
+            `${apiUrlWithoutTenants()}/plugins/triggers`
         );
         return response.data.results;
     }

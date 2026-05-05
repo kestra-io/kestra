@@ -150,24 +150,16 @@ public class PluginController {
         summary = "Get list of trigger plugins grouped by category",
         description = "Feeds the 'Add Trigger' catalog UI. Returns one entry per non-internal, non-deprecated " +
             "trigger class, classified as core (bundled with Kestra Core), realtime (implements " +
-            "RealtimeTriggerInterface) or app (implements PollingTriggerInterface). Optionally filter by " +
-            "group. The 'ee' flag is true when the trigger ships with an Enterprise Edition module."
+            "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
     )
-    public PagedResults<ApiTriggerPlugin> listTriggerPlugins(
-        @Parameter(description = "Optional category filter: core, realtime, or app")
-        @Nullable @QueryValue(value = "group") TriggerPluginCategory group,
-        @Parameter(description = "Include deprecated triggers")
-        @Nullable @QueryValue(value = "includeDeprecated", defaultValue = "false") Boolean includeDeprecated
-    ) {
+    public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
         List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
             .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
                 .filter(c -> !isInternal(c))
                 .filter(c -> !c.getName().startsWith("org.kestra."))
-                .filter(c -> Boolean.TRUE.equals(includeDeprecated) || !isDeprecated(c))
                 .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
-            .filter(dto -> group == null || group == TriggerPluginCategory.UNKNOWN || dto.group() == group)
             .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
                 .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
             .toList();
@@ -177,7 +169,7 @@ public class PluginController {
 
     private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
         io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
-        String title = schema != null && !schema.title().isEmpty() ? schema.title() : triggerClass.getSimpleName();
+        String title = triggerClass.getSimpleName();
         String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
         Boolean deprecated = isDeprecated(triggerClass) ? Boolean.TRUE : null;
 

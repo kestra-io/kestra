@@ -119,7 +119,7 @@
     onMounted(async () => {
         try {
             const [triggers] = await Promise.all([
-                pluginsStore.listTriggers({}),
+                pluginsStore.listTriggers(),
                 pluginsStore.fetchIcons(),
             ]);
             allTriggers.value = triggers;

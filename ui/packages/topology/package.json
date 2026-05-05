@@ -26,6 +26,11 @@
         "build": "tsdown",
         "dev": "tsdown --watch",
         "typecheck": "vue-tsc --noEmit",
+        "test": "npm run unit:test",
+        "unit:test": "vitest run --config vitest.unit.config.ts",
+        "unit:watch": "vitest --config vitest.unit.config.ts",
+        "lint:fix": "eslint --fix",
+        "lint:test": "eslint",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
@@ -61,6 +66,7 @@
         "tsdown": "^0.21.7",
         "typescript": "^6.0.3",
         "vite": "^8.0.10",
+        "vitest": "^4.1.0",
         "vue": "^3.5.0",
         "vue-i18n": "^11.0.0",
         "vue-tsc": "^3.2.6"

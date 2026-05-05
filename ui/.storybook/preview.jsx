@@ -3,6 +3,7 @@ import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import {configureAxios} from "@kestra-io/kestra-sdk";
 import axios from "axios";
+import {vueRouter} from "storybook-vue3-router";
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
@@ -35,6 +36,7 @@ const preview = {
     },
   },
   decorators: [
+    vueRouter(),
     withThemeByClassName({
         themes: {
           light: "light",

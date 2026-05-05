@@ -1,6 +1,6 @@
 <template>
     <template v-if="initialInputs">
-        <el-form-item
+        <KsFormItem
             v-for="input in inputsMetaData"
             :key="input.id"
             :required="input.required !== false"
@@ -10,7 +10,7 @@
             :inlineMessage="true"
         >
             <template #label>
-                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
             <Editor
                 :fullHeight="false"
@@ -22,7 +22,7 @@
                 @update:model-value="onChange(input)"
                 @confirm="onSubmit"
             />
-            <el-select
+            <KsSelect
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -34,30 +34,30 @@
                 filterable
                 clearable
             >
-                <el-option
+                <KsOption
                     v-for="item in input.values"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
-                </el-option>
-            </el-select>
-            <el-radio-group
+                    <KsMarkdown :content="item" />
+                </KsOption>
+            </KsSelect>
+            <KsRadioGroup
                 v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
-                <el-input
+                <KsRadio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <KsInput
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     :placeholder="$t('custom value')"
                 />
-            </el-radio-group>
-            <el-select
+            </KsRadioGroup>
+            <KsSelect
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
@@ -70,16 +70,16 @@
                 clearable
                 :allowCreate="input.allowCustomValue"
             >
-                <el-option
+                <KsOption
                     v-for="item in (input.values ?? input.options)"
                     :key="item"
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
-                </el-option>
-            </el-select>
-            <el-input
+                    <KsMarkdown :content="item" />
+                </KsOption>
+            </KsSelect>
+            <KsInput
                 type="password"
                 v-if="input.type === 'SECRET'"
                 :data-testid="`input-form-${input.id}`"
@@ -88,7 +88,7 @@
                 showPassword
             />
             <span v-if="input.type === 'INT'">
-                <el-input-number
+                <KsInputNumber
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -99,7 +99,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <span v-if="input.type === 'FLOAT'">
-                <el-input-number
+                <KsInputNumber
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
@@ -109,28 +109,28 @@
                 />
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
-            <el-switch
+            <KsSwitch
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             />
-            <el-date-picker
+            <KsDatePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="datetime"
             />
-            <el-date-picker
+            <KsDatePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="date"
             />
-            <el-time-picker
+            <KsTimePicker
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputsValues[input.id]"
@@ -158,51 +158,51 @@
             >
                 <div v-if="editingArrayId !== input.id" class="preview">
                     <div class="tags">
-                        <el-tag
+                        <KsTag
                             v-for="(item, index) in parseArrayValue(input.id)"
                             :key="index"
                         >
                             {{ item }}
-                        </el-tag>
+                        </KsTag>
                     </div>
-                    <el-button
+                    <KsButton
                         class="p-3"
                         @click="toggleArrayEdit(input.id)"
                         :icon="Pencil"
                     >
                         {{ $t('edit') }}
-                    </el-button>
+                    </KsButton>
                 </div>
 
                 <div v-else class="edit_input">
                     <div>
                         <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
-                            <el-input
+                            <KsInput
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
                             />
-                            <el-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <KsButton @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
                             <div class="d-flex flex-column controls-input">
                                 <ChevronUp @click="moveArrayItem(input, 'up', index)" />
                                 <ChevronDown @click="moveArrayItem(input, 'down', index)" />
                             </div>
                         </div>
                     </div>
-                    <el-button
+                    <KsButton
                         class="add-new mt-1 border-0"
                         @click="addNewArrayItem(input)"
                         :icon="Plus"
                     >
                         {{ $t('add_new_item') }}
-                    </el-button>
+                    </KsButton>
                     <div class="d-flex justify-content-end mt-2">
-                        <el-button
+                        <KsButton
                             @click="toggleArrayEdit(input.id)"
                             type="primary"
                             :icon="ContentSave"
                         >
                             {{ $t('save') }}
-                        </el-button>
+                        </KsButton>
                     </div>
                 </div>
             </div>
@@ -226,35 +226,35 @@
                 :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <DurationPicker
+            <KsDurationPicker
                 v-if="input.type === 'DURATION'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-        </el-form-item>
+            <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
+        </KsFormItem>
         <div class="d-flex justify-content-end">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
     </template>
 
-    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
-    </el-alert>
+    </KsAlert>
 </template>
 
 <script setup lang="ts">
-    import {ElMessage} from "element-plus";
-    import type {FormItemRule} from "element-plus";
+    import {KsMessage} from "@kestra-io/design-system";
+    import type {FormItemRule} from "@kestra-io/design-system";
     import ValidationError from "../flows/ValidationError.vue";
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue";
     import {Execution, useExecutionsStore} from "../../stores/executions";
     import {useI18n} from "vue-i18n";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import {normalize, type InputType} from "../../utils/inputs";
-    import DurationPicker from "./DurationPicker.vue";
+
     // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask";
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue";
@@ -388,18 +388,18 @@
         }
     }
 
-    function inputError(id: string): string | null {
+    function inputError(id: string): string | undefined {
         // if this input has not been edited yet
         // showing any error is annoying
         if (!inputsValidated.value.has(id)) {
-            return null;
+            return undefined;
         }
 
         const errors = inputsMetaData.value
             .filter((it) => it.id === id && it.errors && it.errors.length > 0)
             .map(it => it.errors!.map(err => err.message).join("\n"));
 
-        return errors.length > 0 ? errors[0] : null;
+        return errors.length > 0 ? errors[0] : undefined;
     }
 
     function updateDefaults(): void {
@@ -483,7 +483,7 @@
             });
 
             if (!isAllowed) {
-                ElMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}));
+                KsMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}));
                 target.value = "";
                 return;
             }
@@ -762,34 +762,34 @@
 
 <style scoped lang="scss">
 .md-label {
-    height: 20px;
+    height: var(--ks-font-size-lg);
 }
 
 .hint {
-    font-size: var(--font-size-xs);
-    color: var(--bs-gray-700);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-content-secondary);
 }
 
 .text-description {
     width: 100%;
-    font-size: var(--font-size-xs);
-    color: var(--bs-gray-700);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-content-secondary);
 }
 
 :deep(.boolean-inputs) {
     display: flex;
     align-items: center;
 
-    .el-radio-button {
+    .kel-radio-button {
         &.is-active {
-            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
                 color: var(--ks-content-primary);
-                background-color: var(--bs-gray-100);
+                background-color: var(--ks-button-background-secondary-active);
                 box-shadow: 0 0 0 0 var(--ks-border-active);
             }
         }
 
-        .el-radio-button__inner {
+        .kel-radio-button__inner {
             border: var(--ks-border-primary);
             transition: 0.3s ease-in-out;
 
@@ -806,15 +806,15 @@
     }
 }
 
-.el-input-file {
+.kel-input-file {
     display: flex;
     align-items: center;
 
-    .el-input__inner {
+    .kel-input__inner {
         cursor: pointer;
     }
 
-    .el-input__wrapper {
+    .kel-input__wrapper {
         padding: 0.5rem;
     }
 
@@ -836,7 +836,7 @@
         padding: 5px;
         gap: 4px;
 
-        :deep(.el-tag) {
+        :deep(.kel-tag) {
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -852,15 +852,15 @@
         margin-bottom: 8px;
 
         .array-cell {
-            :deep(.el-input__wrapper) {
+            :deep(.kel-input__wrapper) {
                 box-shadow: none;
                 border: 1px solid var(--ks-border-primary);
                 border-radius: 5px;
             }
 
-            :deep(.el-input__inner) {
+            :deep(.kel-input__inner) {
                 color: #eeae7e !important;
-                font-size: var(--font-size-sm) !important;
+                font-size: var(--ks-font-size-sm) !important;
 
                 html.light & {
                     color: #dd5f00 !important;
@@ -898,7 +898,7 @@
     .add-new {
         padding: 5px 8px;
         color: var(--ks-content-tertiary);
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
         background: none;
 
         &:hover {
@@ -907,7 +907,7 @@
     }
 }
 
-.el-form-item {
+.kel-form-item {
     &:has(.edit_input) {
         padding: 1rem;
         border-radius: 8px;
@@ -933,8 +933,8 @@
   visibility: hidden;
 }
 
-.el-input-file {
-  .el-input__wrapper {
+.kel-input-file {
+  .kel-input__wrapper {
     display: flex;
     align-items: center;
     padding: 4px 0 4px 0;

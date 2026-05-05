@@ -42,7 +42,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     .onboarding-resource-list {
         overflow: hidden;
@@ -111,14 +110,14 @@
         h3 {
             margin: 0 0 0.25rem;
             color: var(--ks-content-primary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
             font-weight: 600;
         }
 
         p {
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
             line-height: 1.4;
         }
     }

@@ -4,7 +4,7 @@ import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import action from "../models/action";
 import permission from "../models/permission";
 import {apiUrl} from "override/utils/route";

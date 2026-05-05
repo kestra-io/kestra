@@ -51,25 +51,25 @@
             </template>
         </Topology>
 
-        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+        <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
             <template #header>
                 <code>{{ selectedTask.id }}</code>
             </template>
             <div v-if="isShowLogsOpen">
                 <Collapse>
-                    <el-form-item>
+                    <KsFormItem>
                         <SearchField
                             :router="false"
                             @search="onSearch"
                             class="me-2"
                         />
-                    </el-form-item>
-                    <el-form-item>
+                    </KsFormItem>
+                    <KsFormItem>
                         <LogLevelSelector
                             :value="logLevel"
                             @update:model-value="onLevelChange"
                         />
-                    </el-form-item>
+                    </KsFormItem>
                 </Collapse>
                 <TaskRunDetails
                     v-for="taskRun in selectedTask.taskRuns"
@@ -88,8 +88,8 @@
                 />
             </div>
             <div v-if="isShowDescriptionOpen">
-                <Markdown
-                    :source="selectedTask.description"
+                <KsMarkdown
+                    :content="selectedTask.description"
                 />
             </div>
             <div v-if="isShowConditionOpen">
@@ -126,7 +126,7 @@
                     class="mt-3"
                 />
             </div>
-        </Drawer>
+        </KsDrawer>
     </div>
 </template>
 
@@ -138,19 +138,16 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    import {Topology} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-
     import SearchField from "../layout/SearchField.vue";
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Collapse from "../layout/Collapse.vue";
-    import Drawer from "../Drawer.vue";
-    import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
+    import {Topology} from "@kestra-io/topology";
+    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
     import {useCoreStore} from "../../stores/core";

@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
 import {useValues} from "../composables/useValues";
 import {useFlowStore} from "../../../stores/flow";
 import {useI18n} from "vue-i18n";
@@ -73,17 +73,6 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                         }));
                     },
                     searchable: true
-                },
-                {
-                    key: "aggregation",
-                    label: t("filter.aggregation.label"),
-                    description: t("filter.aggregation.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("metrics");
-                        return [...VALUES.AGGREGATIONS, {label: "Count", value: "COUNT"}];
-                    }
                 },
                 {
                     key: "timeRange",

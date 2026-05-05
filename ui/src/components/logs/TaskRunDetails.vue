@@ -20,7 +20,7 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <el-card class="attempt-wrapper">
+                <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
                         :followedExecution="followedExecution"
@@ -79,8 +79,8 @@
                                 :data-index="index"
                             >
                                 <Teleport v-if="item.logFile" to="#buttons">
-                                    <el-button-group class="line">
-                                        <el-button
+                                    <KsButtonGroup class="line">
+                                        <KsButton
                                             type="primary"
                                             tag="a"
                                             :href="fileUrl(item.logFile)"
@@ -90,12 +90,12 @@
                                             rel="noopener noreferrer"
                                         >
                                             {{ $t("download") }}
-                                        </el-button>
+                                        </KsButton>
                                         <FilePreview
                                             :value="item.logFile"
                                             :executionId="followedExecution.id"
                                         />
-                                        <el-button
+                                        <KsButton
                                             disabled
                                             size="small"
                                             type="primary"
@@ -106,8 +106,8 @@
                                             ({{
                                                 logFileSizeByPath[item.logFile]
                                             }})
-                                        </el-button>
-                                    </el-button-group>
+                                        </KsButton>
+                                    </KsButtonGroup>
                                 </Teleport>
                                 <LogLine
                                     class="line"
@@ -199,7 +199,7 @@
                             </DynamicScrollerItem>
                         </template>
                     </DynamicScroller>
-                </el-card>
+                </KsCard>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>
@@ -211,7 +211,7 @@
 
 <script>
     import LogLine from "./LogLine.vue";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
     import _xor from "lodash/xor";
     import _groupBy from "lodash/groupBy";
     import moment from "moment";
@@ -923,7 +923,6 @@
     };
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .log-wrapper {
     :deep(
@@ -943,7 +942,7 @@
         margin-bottom: 0;
         border: 1px solid var(--ks-border-primary);
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             padding: 0;
         }
 
@@ -971,10 +970,10 @@
 
     pre {
         border: 1px solid var(--light);
-        background-color: var(--bs-gray-200);
+        background-color: var(--ks-scrollbar-content);
         padding: 10px;
         margin-top: 5px;
-        margin-bottom: 20px;
+        margin-bottom: var(--ks-font-size-lg);
     }
 
     .log-lines {
@@ -989,7 +988,7 @@
             padding: 1rem;
 
             &.cursor {
-                background-color: var(--bs-gray-300);
+                background-color: var(--ks-tooltip-border);
             }
         }
     }

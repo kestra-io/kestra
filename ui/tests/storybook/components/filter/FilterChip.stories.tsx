@@ -1,8 +1,9 @@
 import {ref} from "vue";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import FilterChip from "../../../../src/components/filter/components/layout/FilterChip.vue";
+import FilterChip from "@kestra-io/design-system/src/components/Data/KsDataTable/filter/layout/FilterChip.vue";
 import {useValues} from "../../../../src/components/filter/composables/useValues";
-import {AppliedFilter, Comparators, FilterKeyConfig, FilterValue} from "../../../../src/components/filter/utils/filterTypes";
+import type {AppliedFilter, FilterKeyConfig, FilterValue} from "@kestra-io/design-system";
+import {Comparators} from "@kestra-io/design-system";
 
 interface StoryFilter extends AppliedFilter {
     filterKey: FilterKeyConfig;
@@ -188,7 +189,7 @@ export const AllLayout: Story = {
                                 key={filter.id}
                                 filter={filter}
                                 filterKey={filter.filterKey}
-                                onUpdate={(updated) => handleUpdate(updated, index)}
+                                onUpdate={(updated: AppliedFilter) => handleUpdate(updated, index)}
                                 onRemove={handleRemove}
                             />
                         ))}

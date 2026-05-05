@@ -1,4 +1,3 @@
-@import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 #app {
     .v-sidebar-menu.vsm_expanded.overlay {
@@ -11,8 +10,8 @@
     }
 
     .vsm--icon {
-        width: 20px;
-        margin-right: calc($spacer / 2);
+        width: var(--ks-font-size-lg);
+        margin-right: calc(1rem / 2);
         transition: left 0.2s ease;
         background-color: transparent !important;
         padding-bottom: 15px;
@@ -27,7 +26,7 @@
     }
 
     .vsm--title {
-        font-size: $font-size-sm;
+        font-size: var(--ks-font-size-sm);
 
         &>span {
             width: 100%;
@@ -39,7 +38,7 @@
             padding: 0;
 
             .vsm--title {
-                font-size: $font-size-xs;
+                font-size: var(--ks-font-size-xs);
             }
         }
 
@@ -84,7 +83,7 @@
             background-color: var(--ks-button-background-secondary-hover);
         }
 
-        .el-tooltip__trigger {
+        .kel-tooltip__trigger {
             display: flex;
         }
 
@@ -111,12 +110,12 @@
             margin-left: 3.6rem;
 
             & span {
-                margin-left: calc($spacer / 4);
+                margin-left: calc(1rem / 4);
             }
         }
 
         .vsm--icon {
-            margin-left: calc($spacer / 2);
+            margin-left: calc(1rem / 2);
             color: var(--ks-content-secondary);
         }
 
@@ -170,10 +169,10 @@
     }
 
     .vsm--mobile-bg {
-        border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
+        border-radius: 0 var(--kel-border-radius-base) var(--kel-border-radius-base) 0;
     }
 
-    .el-tooltip__trigger .lock-icon.material-design-icon>.material-design-icon__svg {
+    .kel-tooltip__trigger .lock-icon.material-design-icon>.material-design-icon__svg {
         bottom: 0 !important;
         margin-left: 5px;
     }

@@ -3,7 +3,7 @@
         <span v-if="required" class="me-1 text-danger">*</span>
         <span class="me-3 label">{{ label }}:</span>
         <span class="wrapper">
-            <el-switch v-model="input" @input="handleInput" :disabled />
+            <KsSwitch v-model="input" @input="handleInput" :disabled />
         </span>
 
         <slot />

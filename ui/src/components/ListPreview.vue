@@ -1,13 +1,13 @@
 <template>
     <div class="list-preview-container">
-        <el-table :data="previewData" stripe class="ion-table-preview">
-            <el-table-column type="index" :index="indexMethod" label="#" width="60" align="center" />
-            <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
+        <KsTable :data="previewData" stripe class="ion-table-preview">
+            <KsTableColumn type="index" :index="indexMethod" label="#" width="60" align="center" />
+            <KsTableColumn v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
                 <template #default="scope">
                     <div :class="['cell-wrapper', {'expanded': expandedCells.has(getCellKey(scope.$index, column))}]">
                         <span v-if="isComplex(scope.row[column])">
                             <span class="preview-cell">{{ getTruncatedContent(scope.row[column], scope.$index, column) }}</span>
-                            <el-button
+                            <KsButton
                                 v-if="needsExpansion(scope.row[column])"
                                 link
                                 type="primary"
@@ -16,20 +16,20 @@
                                 @click="toggleExpand(scope.$index, column)"
                             >
                                 {{ expandedCells.has(getCellKey(scope.$index, column)) ? $t('preview.collapse') : $t('preview.expand') }}
-                            </el-button>
+                            </KsButton>
                         </span>
                         <span v-else class="preview-cell">
                             {{ scope.row[column] }}
                         </span>
                     </div>
                 </template>
-            </el-table-column>
-        </el-table>
+            </KsTableColumn>
+        </KsTable>
 
-        <Pagination
+        <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :size="pageSize"
+            :size="(pageSize as any)"
             :page="currentPage"
             @page-changed="onPageChanged"
         />
@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    import Pagination from "./layout/Pagination.vue";
 
     const MAX_CELL_CHARS = 2000;
 
@@ -136,7 +135,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.el-table__body-wrapper) {
+        :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }
@@ -158,14 +157,14 @@
         display: block;
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-family: monospace;
-        font-size: 12px;
+        font-family: var(--kel-font-family-monospace), monospace;
+        font-size: var(--ks-font-size-xs);
         line-height: 1.4;
     }
 
     .expand-button {
         margin-top: 4px;
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 
     :deep(.ks-editor) {

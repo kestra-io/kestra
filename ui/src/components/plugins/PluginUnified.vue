@@ -2,7 +2,7 @@
     <div>
         <div class="p-4">
             <h1>
-                <TaskIcon
+                <KsTaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="currentIcon"
@@ -10,8 +10,8 @@
                 />
                 {{ displayTitle }}
             </h1>
-            <Markdown :source="plugin.description" />
-            <Markdown :source="plugin.longDescription" />
+            <KsMarkdown :content="plugin.description" />
+            <KsMarkdown :content="plugin.longDescription" />
         </div>
 
         <div v-if="showElements" class="elements-view">
@@ -29,7 +29,7 @@
                 </div>
             </div>
         </div>
-                
+
         <div v-else class="sub-sec">
             <div class="sub-grid">
                 <RowLink
@@ -47,10 +47,10 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue";
-    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate} from "../../utils/pluginUtils";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
     import RowLink from "../misc/RowLink.vue";
     import {usePluginsStore} from "../../stores/plugins";
-    import Markdown from "../layout/Markdown.vue";
     import {getShortName, formatPluginTitle} from "../../utils/global";
 
     interface PluginElement {
@@ -79,17 +79,17 @@
     const plugin = ref<any>({});
     const groupedElements = ref<Record<string, Record<string, string[]>>>({});
     const elementsData = ref<Record<string, string[]>>({});
-    const icons = ref<Record<string, string>>({});
+    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({});
     const subgroupTitles = ref<Record<string, string>>({});
 
     const isSubgroupView = computed(() => !!props.subgroup);
-    
+
     const availableSubgroups = computed(() => Object.keys(groupedElements.value));
-    
+
     const showElements = computed(() => !!props.subgroup || Object.keys(groupedElements.value).length === 1);
 
-    const displayTitle = computed(() => 
-        props.subgroup 
+    const displayTitle = computed(() =>
+        props.subgroup
             ? formatPluginTitle(subgroupTitles.value[getShortName(props.subgroup)]) ?? formatPluginTitle(getShortName(props.subgroup))
             : formatPluginTitle(plugin.value?.title)
     );
@@ -138,8 +138,8 @@
     };
 
     const loadSubgroupData = async (matchingPlugin: any, plugins: any[]) => {
-        const subgroupPlugin = plugins.find(p => 
-            p.group === props.group && 
+        const subgroupPlugin = plugins.find(p =>
+            p.group === props.group &&
             (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`))
         );
         if (subgroupPlugin?.title) subgroupTitles.value[getShortName(props.subgroup!)] = subgroupPlugin.title;
@@ -222,7 +222,7 @@
         margin-bottom: 1rem;
         color: var(--ks-content-primary);
         font-weight: 600;
-        font-size: 24px;
+        font-size: var(--ks-font-size-xl);
         line-height: 36px;
 
         .icon {

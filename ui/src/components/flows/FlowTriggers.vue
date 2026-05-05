@@ -19,19 +19,19 @@
         :defaultTimeRange="false"
     />
 
-    <el-table
+    <KsTable
         v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
         tableLayout="auto"
         defaultExpandAll
     >
-        <el-table-column type="expand">
+        <KsTableColumn type="expand">
             <template #default="props">
                 <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
             </template>
-        </el-table-column>
-        <el-table-column
+        </KsTableColumn>
+        <KsTableColumn
             prop="id"
             :label="$t('id')"
         >
@@ -40,9 +40,9 @@
                     {{ scope.row.id }}
                 </code>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column
+        <KsTableColumn
             v-for="column in orderedColumns.filter(col => displayColumns.includes(col.prop))"
             :key="column.prop"
             :prop="column.prop"
@@ -50,26 +50,26 @@
         >
             <template #default="scope">
                 <template v-if="column.prop === 'workerId'">
-                    <Id
+                    <KsId
                         :value="scope.row.workerId"
                         :shrink="true"
                     />
                 </template>
                 <template v-else-if="column.prop === 'nextEvaluationDate'">
-                    <DateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
+                    <KsDateAgo :inverted="true" :date="scope.row.nextEvaluationDate" />
                 </template>
                 <template v-else>
                     {{ scope.row[column.prop] }}
                 </template>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column columnKey="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
+        <KsTableColumn columnKey="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
             </template>
             <template #default="scope">
-                <el-button
+                <KsButton
                     :icon="CalendarCollapseHorizontalOutline"
                     v-if="isSchedule(scope.row.type) && !scope.row.backfill && userCan(action.CREATE)"
                     @click="setBackfillModal(scope.row, true)"
@@ -78,11 +78,11 @@
                     type="primary"
                 >
                     {{ $t("backfill executions") }}
-                </el-button>
+                </KsButton>
                 <template v-else-if="isSchedule(scope.row.type) && userCan(action.UPDATE)">
                     <div class="backfill-cell">
                         <div class="progress-cell">
-                            <el-progress
+                            <KsProgress
                                 :percentage="backfillProgression(scope.row.backfill)"
                                 :status="scope.row.backfill.paused ? 'warning' : ''"
                                 :stroke-width="12"
@@ -92,48 +92,47 @@
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
-                            <IconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
                                 <Pause />
-                            </IconButton>
+                            </KsIconButton>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
-                            <IconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
                                 <Play />
-                            </IconButton>
+                            </KsIconButton>
 
-                            <IconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
+                            <KsIconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
                                 <Delete />
-                            </IconButton>
+                            </KsIconButton>
                         </template>
                     </div>
                 </template>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-tooltip
+                <KsTooltip
                     v-if="hasTrigger(scope.row)"
                     :content="$t('trigger disabled')"
                     :disabled="!scope.row.sourceDisabled"
-                    effect="light"
                 >
-                    <el-switch
+                    <KsSwitch
                         size="small"
                         :activeText="$t('enabled')"
                         :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
-                        @change="setDisabled(scope.row, $event)"
+                        @change="setDisabled(scope.row, $event as boolean)"
                         class="switch-text"
                         :activeActionIcon="Check"
                         :disabled="scope.row.sourceDisabled"
                     />
-                </el-tooltip>
+                </KsTooltip>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('restart trigger.button')"
@@ -141,13 +140,13 @@
                     @click="restart(scope.row)"
                 >
                     <Restart />
-                </IconButton>
+                </KsIconButton>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
+        <KsTableColumn columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <IconButton
+                <KsIconButton
                     v-if="scope.row.locked"
                     size="small"
                     :tooltip="$t('unlock trigger.button')"
@@ -155,33 +154,33 @@
                     @click="unlock(scope.row)"
                 >
                     <LockOff />
-                </IconButton>
+                </KsIconButton>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column>
+        <KsTableColumn>
             <template #default="scope">
                 <TriggerAvatar :flow="flowStore.flow" :triggerId="scope.row.id" />
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column columnKey="action" className="row-action">
+        <KsTableColumn columnKey="action" className="row-action">
             <template #default="scope">
-                <IconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
+                <KsIconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
                     <TextSearch />
-                </IconButton>
+                </KsIconButton>
             </template>
-        </el-table-column>
-    </el-table>
+        </KsTableColumn>
+    </KsTable>
 
     <div v-if="triggersWithType.length" class="mt-4">
-        <el-button
+        <KsButton
             @click="addNewTrigger"
             :icon="Plus"
             class="border-0 p-3"
         >
             {{ $t('no_code.creation.triggers') }}
-        </el-button>
+        </KsButton>
     </div>
 
     <Empty
@@ -189,45 +188,45 @@
         type="triggers"
     >
         <template #button>
-            <el-button
+            <KsButton
                 type="primary"
                 @click="addNewTrigger"
                 :icon="Plus"
                 class="mt-3"
             >
                 {{ $t('no_code.creation.triggers') }}
-            </el-button>
+            </KsButton>
         </template>
     </Empty>
 
-    <el-dialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('backfill executions')" />
         </template>
-        <el-form :model="backfill" labelPosition="top">
+        <KsForm :model="backfill" labelPosition="top">
             <div class="pickers">
                 <div class="small-picker">
-                    <el-form-item label="Start">
-                        <el-date-picker
+                    <KsFormItem label="Start">
+                        <KsDatePicker
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabledDate="(time: Date) => new Date() < time || (backfill.end && time > backfill.end)"
+                            :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.end && time > backfill.end)"
                         />
-                    </el-form-item>
+                    </KsFormItem>
                 </div>
                 <div class="small-picker">
-                    <el-form-item label="End">
-                        <el-date-picker
+                    <KsFormItem label="End">
+                        <KsDatePicker
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabledDate="(time: Date) => new Date() < time || (backfill.start && backfill.start > time)"
+                            :disabledDate="(time: Date): boolean => new Date() < time || !!(backfill.start && backfill.start > time)"
                         />
-                    </el-form-item>
+                    </KsFormItem>
                 </div>
             </div>
-        </el-form>
+        </KsForm>
         <FlowRun
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
@@ -236,17 +235,17 @@
             :embed="true"
         />
         <template #footer>
-            <el-button
+            <KsButton
                 type="primary"
                 @click="postBackfill()"
                 :disabled="checkBackfill"
             >
                 {{ $t("execute backfill") }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <Drawer
+    <KsDrawer
         v-if="isOpen"
         v-model="isOpen"
     >
@@ -254,9 +253,9 @@
             <code>{{ triggerId }}</code>
         </template>
 
-        <Markdown v-if="triggerDefinition && (triggerDefinition as any).description" :source="(triggerDefinition as any).description" />
+        <KsMarkdown v-if="triggerDefinition && (triggerDefinition as any).description" :content="(triggerDefinition as any).description" />
         <Vars :data="modalData" />
-    </Drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">
@@ -276,18 +275,15 @@
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
-    import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
+    import {KsId, KsIconButton} from "@kestra-io/design-system";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
-    import DateAgo from "../layout/DateAgo.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import Empty from "../layout/empty/Empty.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
 
     import action from "../../models/action";
     import permission from "../../models/permission";

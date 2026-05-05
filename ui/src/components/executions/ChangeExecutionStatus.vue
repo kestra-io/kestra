@@ -1,13 +1,13 @@
 <template>
-    <el-button
+    <KsButton
         :disabled="!enabled"
         :icon="SwapHorizontal"
         @click="visible = !visible"
     >
         {{ $t('change state') }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -16,41 +16,40 @@
             <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
-                {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
+                {{ $t("change state current state") }} <KsExecutionStatus size="small" class="me-1" :status="execution.state.current" />
             </p>
 
-            <el-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
-                :persistent="false"
             >
-                <el-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <el-button @click="visible = false">
+            <KsButton @click="visible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="changeStatus()"
                 :disabled="selectedStatus === execution.state.current || selectedStatus === null"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -59,7 +58,7 @@
 
     import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue";
 
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useToast} from "../../utils/toast";

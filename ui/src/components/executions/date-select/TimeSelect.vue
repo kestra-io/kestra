@@ -7,9 +7,9 @@
         :clearable="clearable"
         @change="onTimeRangeSelect"
     />
-    <el-tooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
-        <el-input class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
-    </el-tooltip>
+    <KsTooltip v-if="allowCustom && timeRangeSelect === undefined" :content="allowInfinite ? $t('datepicker.leave empty for infinite') : $t('datepicker.duration example')">
+        <KsInput class="mt-2" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+    </KsTooltip>
 </template>
 
 <script lang="ts" setup>
@@ -72,17 +72,19 @@
         return props.allowCustom ? t("datepicker.custom") : undefined;
     });
 
-    const onTimeRangeSelect = (range: string | undefined) => {
-        timeRangeSelect.value = range;
-        onTimeRangeChange(range);
+    const onTimeRangeSelect = (range: string | number | undefined) => {
+        const strRange = range !== undefined ? String(range) : undefined;
+        timeRangeSelect.value = strRange;
+        onTimeRangeChange(strRange);
     };
 
     const emit = defineEmits<{
         (e: "update:modelValue", payload: { timeRange: string | undefined }): void;
     }>();
 
-    const onTimeRangeChange = (range: string | undefined) => {
-        emit("update:modelValue", {timeRange: range});
+    const onTimeRangeChange = (range: string | number | undefined) => {
+        const strRange = range !== undefined ? String(range) : undefined;
+        emit("update:modelValue", {timeRange: strRange});
     };
 
     // Watcher

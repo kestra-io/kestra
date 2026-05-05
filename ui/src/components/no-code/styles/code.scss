@@ -6,7 +6,7 @@ $code-card-color: var(--ks-background-card);
 $code-border-color: var(--ks-border-primary);
 
 // Typography
-$code-font-sm: var(--el-font-size-small);
+$code-font-sm: var(--ks-font-size-sm);
 
 .collapse {
     & * {
@@ -14,16 +14,16 @@ $code-font-sm: var(--el-font-size-small);
     }
 
     :deep(*) {
-        --el-collapse-header-bg-color: initial;
-        --el-collapse-header-text-color: #{--ks-content-secondary};
-        --el-collapse-content-bg-color: initial;
+        --kel-collapse-header-bg-color: initial;
+        --kel-collapse-header-text-color: #{--ks-content-secondary};
+        --kel-collapse-content-bg-color: initial;
 
-        .el-collapse-item__header,
-        .el-collapse-item__content {
+        .kel-collapse-item__header,
+        .kel-collapse-item__content {
             padding: 0.5rem 0;
         }
 
-        .el-collapse-item__header {
+        .kel-collapse-item__header {
             justify-content: space-between;
             color: $code-secondary;
         }
@@ -46,10 +46,10 @@ $code-font-sm: var(--el-font-size-small);
 
 .wrapper {
     :deep(*) {
-        --el-disabled-text-color: #{$code-gray};
+        --kel-disabled-text-color: #{$code-gray};
 
-        .el-input__inner,
-        .el-textarea__inner {
+        .kel-input__inner,
+        .kel-textarea__inner {
             color: $code-gray;
             font-size: $code-font-sm;
         }
@@ -57,7 +57,7 @@ $code-font-sm: var(--el-font-size-small);
 }
 
 :deep(.is-disabled) {
-    .el-input__inner{
+    .kel-input__inner{
         -webkit-text-fill-color: var(--ks-content-inactive);
     }
 }

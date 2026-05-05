@@ -1,6 +1,6 @@
 <template>
-    <el-row :gutter="32">
-        <el-col :xs="24" :md="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name" class="edition-col">
+    <KsRow :gutter="32">
+        <KsCol :xs="24" :md="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name" class="edition-col">
             <EditionCharacteristics
                 class="h-100"
                 :name="characteristics.name"
@@ -8,8 +8,8 @@
                 :features="characteristics.features"
                 :button="characteristics.button"
             />
-        </el-col>
-    </el-row>
+        </KsCol>
+    </KsRow>
 </template>
 <script setup lang="ts">
     import EditionCharacteristics from "./EditionCharacteristics.vue";

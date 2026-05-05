@@ -1,10 +1,10 @@
 <template>
-    <el-dialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
+    <KsDialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
-                <el-icon :size="30">
+                <KsIcon size="xl">
                     <Keyboard />
-                </el-icon>
+                </KsIcon>
                 <span class="fs-6">
                     {{ $t("editor_shortcuts.label") }}
                 </span>
@@ -19,7 +19,7 @@
             >
                 <div class="d-flex align-items-center gap-2 keys">
                     <template v-for="(key, index) in command.keys" :key="index">
-                        <el-tag>{{ key }}</el-tag>
+                        <KsTag>{{ key }}</KsTag>
                         <span
                             v-if="index < command.keys.length - 1"
                             class="fw-bold"
@@ -31,7 +31,7 @@
                 </div>
             </div>
         </div>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -101,10 +101,10 @@
 </script>
 
 <style scoped lang="scss">
-.el-tag {
+.kel-tag {
     background-color: var(--ks-tag-background);
     color: var(--ks-tag-content);
-    font-size: var(--el-tag-font-size);
+    font-size: var(--kel-tag-font-size);
     text-transform: capitalize;
     font-weight: 500;
     border: 1px solid var(--ks-border-primary);
@@ -113,7 +113,7 @@
     padding: 6px 10px;
 }
 
-.el-tag::after {
+.kel-tag::after {
     content: attr(data-content);
     text-transform: none;
 }

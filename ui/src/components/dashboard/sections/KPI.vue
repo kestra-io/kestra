@@ -6,7 +6,7 @@
         </p>
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <KsEmpty v-else :description="EMPTY_TEXT" />
 </template>
 
 <script setup lang="ts">
@@ -15,7 +15,6 @@
     import {Chart} from "../composables/useDashboards";
     import {getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
-    import NoData from "../../layout/NoData.vue";
     import {useRoute} from "vue-router";
     import {FilterObject} from "../../../utils/filters";
 
@@ -43,7 +42,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 section#kpi {
     height: 100%;

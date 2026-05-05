@@ -1,38 +1,39 @@
 <template>
     <div class="outputs">
-        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-auto left">
-                    <ElCascaderPanel
+        <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <KsSplitterPanel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
+                <div class="left-panel">
+                    <KsCascaderPanel
                         v-if="tasksWithOutputs"
                         ref="cascader"
                         v-model="selected"
                         :props="cascaderProps"
                         :border="false"
-                        class="flex-grow-1 cascader"
+                        class="cascader"
                         @expand-change="() => scrollRight()"
                     >
                         <template #default="{data}">
                             <div
                                 v-if="data.heading"
                                 @click="expandedValue = data.path"
-                                class="pe-none d-flex fs-5"
+                                class="cascader-heading"
                             >
-                                <component :is="data.component" class="me-2" />
+                                <component :is="data.component" />
                                 <span>{{ data.label }}</span>
                             </div>
 
                             <div
                                 v-else
                                 @click="expandedValue = data.path"
-                                class="w-100 d-flex justify-content-between"
+                                class="cascader-item"
                             >
-                                <div class="pe-1 d-flex task">
-                                    <TaskIcon
+                                <div class="task">
+                                    <KsTaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
+                                        class="output-task-icon"
                                     />
                                     <span :class="{'ms-3': data.icon}" class="task-label">
                                         <span>{{ data.label }}&nbsp;</span>
@@ -52,26 +53,26 @@
                                 </code>
                             </div>
                         </template>
-                    </ElCascaderPanel>
+                    </KsCascaderPanel>
                 </div>
-            </el-splitter-panel>
-            <el-splitter-panel>
-                <div class="right wrapper">
+            </KsSplitterPanel>
+            <KsSplitterPanel>
+                <div class="right-panel wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
-                        class="w-100 overflow-auto p-3 content-container"
+                        class="content-container"
                     >
-                        <div class="d-flex justify-content-between pe-none fs-5 values">
+                        <div class="values">
                             <code class="d-block">
                                 {{ selectedNode()?.label ?? "Value" }}
                             </code>
                         </div>
 
-                        <el-collapse
+                        <KsCollapse
                             v-model="debugCollapse"
                             class="mb-3 debug bordered"
                         >
-                            <el-collapse-item name="debug">
+                            <KsCollapseItem name="debug">
                                 <template #title>
                                     <span>{{ $t("eval.title") }}</span>
                                 </template>
@@ -89,17 +90,17 @@
                                         class="w-100"
                                     />
 
-                                    <el-button
+                                    <KsButton
                                         type="primary"
                                         @click="
                                             onDebugExpression(
                                                 editorValue.length > 0 ? editorValue : computedDebugValue,
                                             )
                                         "
-                                        class="mt-3 el-button--wrap"
+                                        class="mt-3 kel-button--wrap"
                                     >
                                         {{ $t("eval.title") }}
-                                    </el-button>
+                                    </KsButton>
 
                                     <Editor
                                         v-if="debugExpression"
@@ -114,10 +115,10 @@
                                         class="mt-3"
                                     />
                                 </div>
-                            </el-collapse-item>
-                        </el-collapse>
+                            </KsCollapseItem>
+                        </KsCollapse>
 
-                        <el-alert
+                        <KsAlert
                             v-if="debugError"
                             type="error"
                             :closable="false"
@@ -136,7 +137,7 @@
                             <pre class="mb-0" style="overflow: scroll">{{
                                 debugStackTrace
                             }}</pre>
-                        </el-alert>
+                        </KsAlert>
 
                         <VarValue
                             v-if="displayVarValue()"
@@ -149,20 +150,21 @@
                         />
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {CascaderOption, CascaderProps, ElCascaderPanel} from "element-plus";
+    import {CascaderOption, CascaderProps}from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
 
     import {useI18n} from "vue-i18n";
     import {apiUrl} from "override/utils/route";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import Editor from "../../inputs/Editor.vue";
@@ -204,7 +206,7 @@
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.getCheckedNodes(false)?.[0]?.label as string | undefined);
+            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined);
         const taskRunList = [...execution.value?.taskRunList ?? []];
         return taskRunList.find((e) => e.taskId === filter);
     });
@@ -221,7 +223,7 @@
         } else {
             return [];
         }
-                
+
     }
 
     const cascaderProps: CascaderProps = {
@@ -288,7 +290,7 @@
             });
     };
 
-    const cascader = ref<InstanceType<typeof ElCascaderPanel> | null>(null);
+    const cascader = ref<InstanceType<typeof KsCascaderPanel> | null>(null);
     const scrollRight = () =>
         setTimeout(
             () =>
@@ -315,7 +317,7 @@
     }
 
     const processedValue = (data: TransformedTask) => {
-        const regular = false;      
+        const regular = false;
 
         if(!data.leaf || data.taskId) {
             return {label: "", regular};
@@ -327,7 +329,6 @@
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
-        
 
         return {label: trim(data.value), regular: true};
     };
@@ -351,7 +352,7 @@
     });
 
     const selectedNode = () => {
-        const node = cascader.value?.getCheckedNodes(false);
+        const node = cascader.value?.cascader?.getCheckedNodes(false);
 
         if (!node?.length) return {label: undefined, value: undefined};
 
@@ -427,7 +428,7 @@
                         }
                     }
                 }
-                    
+
             }
         },
         {immediate: true},
@@ -472,7 +473,7 @@
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
                 let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
-                
+
                 do {
                     selectedLocal.push(child.value);
                     if(child?.path) {
@@ -486,7 +487,7 @@
                 if(expandedValueLocal){
                     expandedValue.value = expandedValueLocal;
                 }
-            })  
+            })
         }
     })
 
@@ -538,18 +539,18 @@
     overflow: hidden;
 }
 
-:deep(.el-splitter) {
+:deep(.kel-splitter) {
     height: 100%;
     min-height: 0;
 }
 
-:deep(.el-splitter-panel) {
+:deep(.kel-splitter-panel) {
     display: flex;
     min-height: 0;
     overflow: hidden;
 }
 
-:deep(.el-splitter-bar) {
+:deep(.kel-splitter-bar) {
     width: 3px !important;
     background-color: var(--ks-border-primary);
 
@@ -558,20 +559,41 @@
     }
 }
 
-:deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
+.cascader {
+    flex-grow: 1;
+}
+
+.cascader-heading {
+    pointer-events: none;
+    display: flex;
+    gap: .5rem;
+    font-size: var(--ks-font-size-md);
+}
+
+.cascader-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+:deep(.kel-scrollbar.kel-cascader-menu:nth-of-type(-n + 2) ul li:first-child),
 .values {
     pointer-events: none;
     margin: 0.75rem 0 1.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--ks-font-size-md);
+    pointer-events: none;
 }
 
-:deep(.el-cascader-menu__list) {
+:deep(.kel-cascader-menu__list) {
     /* Let the cascader list be constrained by its parent container
        so it can scroll independently instead of forcing page height */
     min-height: 0;
     height: 100%;
 }
 
-:deep(.el-cascader-panel) {
+:deep(.kel-cascader-panel) {
     height: 100%;
 }
 
@@ -583,25 +605,24 @@
     border: 1px solid var(--ks-border-primary);
 }
 
-.bordered > :deep(.el-collapse-item) {
+.bordered > :deep(.kel-collapse-item) {
     margin-bottom: 0px !important;
 }
 
-.wrapper {
-    background: var(--ks-background-card);
-    position: relative;
-    z-index: 1;
-}
-
 /* Left column container: take full splitter-panel height and scroll internally */
-.outputs .left {
+.outputs .left-panel {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
-.right.wrapper {
+.outputs .right-panel{
+    background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -610,7 +631,7 @@
     overflow: hidden;
 }
 
-:deep(.el-cascader-menu) {
+:deep(.kel-cascader-menu) {
     min-width: 300px;
     max-width: 300px;
 
@@ -618,14 +639,14 @@
         border-right: 1px solid var(--ks-border-primary);
     }
 
-    .el-cascader-menu__wrap {
+    .kel-cascader-menu__wrap {
         height: 100%;
     }
 
-    & .el-cascader-node {
+    & .kel-cascader-node {
         height: 36px;
         line-height: 36px;
-        font-size: var(--el-font-size-small);
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-primary);
 
         &[aria-haspopup="false"] {
@@ -642,18 +663,20 @@
             font-weight: normal;
         }
 
-        .el-cascader-node__prefix {
+        .kel-cascader-node__prefix {
             display: none;
         }
 
         .task {
+            display: flex;
+            padding-right: .25rem;
             width: 100%;
             max-width: 100%;
 
             & .task-label {
                 width: 100%;
                 max-width: 100%;
-                
+
                 & .task-iteration-value {
                     display: inline-block;
                     width: 80px;
@@ -665,10 +688,10 @@
             }
         }
 
-        .task .wrapper {
+        .task .output-task-icon {
             align-self: center;
-            height: var(--el-font-size-small);
-            width: var(--el-font-size-small);
+            height: var(--ks-font-size-sm);
+            width: var(--ks-font-size-sm);
         }
 
         code span.regular {
@@ -686,14 +709,16 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
+    width: 100%;
+    padding: 1rem;
 }
 
-:deep(.el-collapse) {
-    .el-collapse-item__wrap {
+:deep(.kel-collapse) {
+    .kel-collapse-item__wrap {
         max-height: none !important;
     }
 
-    .el-collapse-item__content {
+    .kel-collapse-item__content {
         word-wrap: break-word;
         word-break: break-word;
     }
@@ -720,7 +745,7 @@
 
 //Mobile Version
 @media (max-width: 768px) {
-    :deep(.el-splitter) {
+    :deep(.kel-splitter) {
         .outputs-top {
             margin: 10px;
             border: 2px solid var(--ks-border-primary);
@@ -730,7 +755,7 @@
             min-height: 0 !important;
         }
     }
-    :deep(.el-splitter-bar){
+    :deep(.kel-splitter-bar){
         height: 4px !important;
         width: auto !important;
 

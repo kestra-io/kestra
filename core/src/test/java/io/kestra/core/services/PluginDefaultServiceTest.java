@@ -1,13 +1,19 @@
 package io.kestra.core.services;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -177,8 +183,8 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void shouldInjectForcedDefaultsGivenForcedTrue() throws FlowProcessingException {
-        // Given
+    public void shouldIgnoreForcedAtFlowLevel() throws FlowProcessingException {
+        // Given — flow-level forced: true must be ignored; explicit task value wins
         String source = """
                 id: default-test
                 namespace: io.kestra.tests
@@ -209,8 +215,8 @@ class PluginDefaultServiceTest {
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
         FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
 
-        // Then
-        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(2));
+        // Then — explicit task value (set: 1) wins since forced is ignored at flow level
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(1));
     }
 
     @Test
@@ -329,6 +335,54 @@ class PluginDefaultServiceTest {
 
         // Then
         assertThat(((Log) injected.getTasks().getFirst()).getLevel().toString(), is(Level.INFO.name()));
+    }
+
+    @Test
+    public void shouldWarnWhenForcedSetAtFlowLevel() throws FlowProcessingException {
+        // Given — capture WARN from PluginDefaultService logger
+        Logger serviceLogger = (Logger) LoggerFactory.getLogger(PluginDefaultService.class);
+        List<ILoggingEvent> capturedLogs = new ArrayList<>();
+        AppenderBase<ILoggingEvent> appender = new AppenderBase<>() {
+            @Override
+            protected void append(ILoggingEvent event) {
+                capturedLogs.add(event);
+            }
+        };
+        appender.setContext(serviceLogger.getLoggerContext());
+        appender.start();
+        serviceLogger.addAppender(appender);
+
+        try {
+            String source = """
+                    id: warn-test
+                    namespace: io.kestra.tests
+
+                    tasks:
+                    - id: test
+                      type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                      set: 1
+
+                    pluginDefaults:
+                    - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                      forced: true
+                      values:
+                        set: 99
+                """;
+
+            // When
+            var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+            pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+            // Then — at least one WARN mentioning 'forced'
+            assertThat(
+                capturedLogs.stream()
+                    .filter(e -> e.getLevel() == ch.qos.logback.classic.Level.WARN)
+                    .anyMatch(e -> e.getFormattedMessage().contains("forced")),
+                is(true)
+            );
+        } finally {
+            serviceLogger.detachAppender(appender);
+        }
     }
 
     @SuperBuilder

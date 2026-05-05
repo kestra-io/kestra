@@ -1,25 +1,25 @@
 <template>
-    <el-button
+    <KsButton
         v-if="enabled"
         :icon="Play"
         @click="click"
     >
         {{ $t('resume') }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
-        <el-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
+        <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
-        </el-form>
+        </KsForm>
         <template #footer>
-            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
+            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup>
@@ -29,7 +29,7 @@
 <script>
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/design-system"
     import FlowUtils from "../../../../../utils/flowUtils";
     import * as ExecutionUtils from "../../../../../utils/executionUtils";
     import InputsForm from "../../../../../components/inputs/InputsForm.vue";

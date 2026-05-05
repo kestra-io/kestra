@@ -1,5 +1,5 @@
 <template>
-    <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
+    <div id="topologyWrapper" v-ks-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
             :flowGraph="flowGraph"
@@ -15,21 +15,21 @@
             @swapped-task="onSwappedTask"
         />
         <div v-else-if="invalidGraph">
-            <el-alert
+            <KsAlert
                 :title="$t('topology-graph.invalid')"
                 type="error"
                 class="invalid-graph"
                 :closable="false"
             >
                 {{ $t('topology-graph.invalid_description') }}
-            </el-alert>
+            </KsAlert>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {stringUtils} from "@kestra-io/design-system";
     import LowCodeEditor from "./LowCodeEditor.vue";
     import {useFlowStore} from "../../stores/flow";
 
@@ -64,7 +64,7 @@
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
+                    stringUtils.afterLastDot(expandedSubflow)
                 );
             }
             if (expandedSubflow === swappedTasks[1]) {
@@ -74,7 +74,7 @@
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
+                    stringUtils.afterLastDot(expandedSubflow)
                 );
             }
 
@@ -89,7 +89,7 @@
             editorViewType: "YAML",
             topologyVisible: true,
         })
-        
+
         if (currentIsFlow && source) {
             await flowStore.loadGraphFromSource({
                 flow: source,
@@ -97,7 +97,7 @@
                 console.error("Error loading graph:", error);
             })
         }
-        
+
         return result
     }
 </script>

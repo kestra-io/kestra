@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <Action
                 v-if="!isOSS && canCreate"
                 :label="$t('create')"
@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <el-row class="p-5">
+    <KsRow class="p-5">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
@@ -25,20 +25,20 @@
             }"
         />
 
-        <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
+        <KsCol v-if="namespaces.length === 0" class="p-3 namespaces">
             <span>{{ $t("no_namespaces") }}</span>
-        </el-col>
+        </KsCol>
 
-        <el-col
+        <KsCol
             v-for="namespace in namespacesHierarchy"
             :key="namespace.id"
             class="namespaces"
             :class="{system: namespace.id === systemNamespace}"
         >
-            <el-tree
+            <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                :props="{class: 'tree'}"
+                :props="({class: 'tree'} as any)"
                 class="h-auto p-2 rounded-full"
             >
                 <template #default="{data}">
@@ -63,18 +63,18 @@
                                 {{ $t("system_namespace") }}
                             </span>
                         </div>
-                        <el-button size="small">
+                        <KsButton size="small">
                             <TextSearch />
-                        </el-button>
+                        </KsButton>
                     </router-link>
                 </template>
-            </el-tree>
-        </el-col>
-    </el-row>
+            </KsTree>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, Ref, ref, watch} from "vue";
+    import {computed, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
     import useRouteContext from "../../../composables/useRouteContext";
@@ -84,19 +84,16 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
-    import useRestoreUrl from "../../../composables/useRestoreUrl";
-
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
-    
+
     const namespacesFilter = useNamespacesFilter();
-    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     interface Node {
         id: string;
@@ -114,7 +111,6 @@
     const routeInfo = computed(() => ({title: t("namespaces")}));
     useRouteContext(routeInfo);
 
-
     const authStore = useAuthStore();
     const canCreate = computed(() => {
         return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
@@ -128,13 +124,9 @@
         ).all();
     };
 
-    onMounted(() => loadData());
     watch(
         () => route.query["filters[q][EQUALS]"],
-        () => {
-            loadData();
-            saveRestoreUrl();
-        },
+        () => loadData(),
         {immediate: true}
     );
 
@@ -142,7 +134,7 @@
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
     );
-    
+
     const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {
@@ -204,34 +196,33 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 .namespaces {
     margin: 0.25rem 0;
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: var(--kel-border-radius-round);
     border: 1px solid var(--ks-border-primary);
     box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     &.system {
-        border-color: $base-blue-300;
+        border-color: var(--ks-border-active);
 
         & span.system {
             line-height: 1.5rem;
-            font-size: var(--font-size-xs);
+            font-size: var(--ks-font-size-xs);
             color: var(--ks-content-primary);
         }
     }
 
     .rounded-full {
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
         background-color: var(--ks-background-card)
     }
 
-    :deep(.el-tree-node__content) {
+    :deep(.kel-tree-node__content) {
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
 
         &:hover {
             background: var(--ks-background-body);

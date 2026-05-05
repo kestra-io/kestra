@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <KsButton
         v-if="isFlowContext"
         @click="fixWithAi"
         class="el-button--small"
@@ -7,8 +7,8 @@
     >
         <AiIcon class="me-1" />
         <span>{{ $t("fix_with_ai") }}</span>
-    </el-button>
-    <span v-html="markdownRenderer" v-if="items.length === 0" />
+    </KsButton>
+    <KsMarkdown :content="markdownRenderer" v-if="items.length === 0" />
     <ul>
         <li v-for="(item, index) in items" :key="index" class="font-monospace">
             <template v-if="item.path">
@@ -23,7 +23,6 @@
     import {ref, computed, onMounted, watch} from "vue";
     import {useRoute} from "vue-router";
     import AiIcon from "vue-material-design-icons/Creation.vue";
-    import * as Markdown from "../utils/markdown";
     import {useFlowStore} from "../stores/flow";
 
     interface ErrorItem {
@@ -61,11 +60,12 @@
         return routeName === "flows/update" || routeName === "flows/create";
     });
 
-    const renderMarkdown = async (): Promise<string> => {
+    const renderMarkdown = (): string => {
         if (props.message.response && props.message.response.status === 503) {
-            return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
+            return "Server is temporarily unavailable. Please try again later.";
         }
-        return await Markdown.render(props.message.message || props.message.content?.message || "", {html: true});
+
+        return props.message.message || props.message.content?.message || "";
     };
 
     const fixWithAi = async () => {
@@ -93,12 +93,12 @@
     };
 
     // Watch for changes in message
-    watch(() => props.message, async () => {
-        markdownRenderer.value = await renderMarkdown();
+    watch(() => props.message, () => {
+        markdownRenderer.value = renderMarkdown();
     }, {deep: true});
 
     onMounted(async () => {
-        markdownRenderer.value = await renderMarkdown();
+        markdownRenderer.value = renderMarkdown();
     });
 </script>
 
@@ -110,7 +110,7 @@
     }
 
     li {
-        font-size: 0.8rem;
+        font-size: var(--ks-font-size-sm);
         margin-top: .5rem;
 
     }

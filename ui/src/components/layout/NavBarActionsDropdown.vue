@@ -1,12 +1,14 @@
 <template>
-    <el-dropdown trigger="click">
-        <el-button :icon="DotsVertical" />
+    <KsDropdown trigger="click">
+        <KsIconButton :ariaLabel="$t('actions')">
+            <DotsVertical />
+        </KsIconButton>
         <template #dropdown>
-            <el-dropdown-menu>
+            <KsDropdownMenu>
                 <slot />
-            </el-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">

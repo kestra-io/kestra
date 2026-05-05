@@ -3,7 +3,8 @@ import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
-import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+
 import {useI18n} from "vue-i18n";
 import {ComputedRef} from "vue";
 
@@ -67,6 +68,7 @@ export function registerPebbleAutocompletion(
 
             const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length;
             return {
+                incomplete: true,
                 suggestions: (await (autoCompletion.rootFieldAutoCompletion()))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
@@ -87,7 +89,7 @@ export function registerFunctionParametersAutoCompletion(
         triggerCharacters: ["("],
         async provideCompletionItems(model, position) {
             const source = model.getValue();
-            const parsed = YamlUtils.parse(source, false);
+            const parsed = YAML_UTILS.parse(source, false);
 
             const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true);
             if (functionMatcher === null || functionMatcher.matches === null) {
@@ -99,6 +101,7 @@ export function registerFunctionParametersAutoCompletion(
                 ?? 0;
             const startOfWordColumn = position.column - wordStartOffset;
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.functionAutoCompletion(
                         parsed,
                         functionMatcher.matches[1],
@@ -137,7 +140,7 @@ export function registerNestedValueAutoCompletion(
         triggerCharacters: ["."],
         async provideCompletionItems(model, position) {
             const source = model.getValue();
-            const parsed = YamlUtils.parse(completionSource?.value ?? source, false);
+            const parsed = YAML_UTILS.parse(completionSource?.value ?? source, false);
 
             const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
             if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {
@@ -146,6 +149,7 @@ export function registerNestedValueAutoCompletion(
 
             const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1], model.getOffsetAt(position)))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
@@ -183,6 +187,7 @@ export function registerFilterAutoCompletion(
             const endColumn = position.column;
 
             return {
+                incomplete: true,
                 suggestions: (await autoCompletion.filterAutoCompletion())
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,

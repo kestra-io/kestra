@@ -1,6 +1,6 @@
 <template>
-    <el-button-group v-if="isFileValid(value)">
-        <el-button
+    <KsButtonGroup v-if="isFileValid(value)">
+        <KsButton
             type="primary"
             tag="a"
             :href="itemUrl(value.toString())"
@@ -10,14 +10,14 @@
             rel="noopener noreferrer"
         >
             {{ $t('download') }}
-        </el-button>
+        </KsButton>
         <FilePreview v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
-        <el-button disabled size="small" type="primary" v-if="humanSize">
+        <KsButton disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
-        </el-button>
-    </el-button-group>
-    <el-button-group v-else-if="isURI(value)">
-        <el-button
+        </KsButton>
+    </KsButtonGroup>
+    <KsButtonGroup v-else-if="isURI(value)">
+        <KsButton
             type="primary"
             tag="a"
             size="small"
@@ -26,8 +26,8 @@
             :icon="OpenInNew"
         >
             {{ $t('open') }}
-        </el-button>
-    </el-button-group>
+        </KsButton>
+    </KsButtonGroup>
 
     <span v-else-if="value === null">
         <em>null</em>

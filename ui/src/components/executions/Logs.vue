@@ -10,7 +10,7 @@
             @search="filter = $event"
         />
         <Collapse>
-            <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
+            <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
                     v-if="countByLogLevel[logLevel] > 0"
                     :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
@@ -21,35 +21,35 @@
                     @close="logCursor = undefined"
                     class="w-100"
                 />
-            </el-form-item>
-            <el-form-item>
-                <el-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
-                </el-button>
-            </el-form-item>
-            <el-form-item>
-                <el-tooltip
+                </KsButton>
+            </KsFormItem>
+            <KsFormItem>
+                <KsTooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <el-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                    <KsButton @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
-                    </el-button>
-                </el-tooltip>
-            </el-form-item>
-            <el-form-item>
-                <el-button-group class="ks-b-group">
+                    </KsButton>
+                </KsTooltip>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButtonGroup class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="forwardEvent('follow', $event)" />
-                    <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
+                    <KsIconButton :tooltip="$t('download logs')" @click="downloadContent()">
                         <Download />
-                    </IconButton>
-                    <IconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
+                    </KsIconButton>
+                    <KsIconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
                         <ContentCopy />
-                    </IconButton>
-                    <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
+                    </KsIconButton>
+                    <KsIconButton :tooltip="$t('refresh')" @click="loadLogs()">
                         <Refresh />
-                    </IconButton>
-                </el-button-group>
-            </el-form-item>
+                    </KsIconButton>
+                </KsButtonGroup>
+            </KsFormItem>
         </Collapse>
 
         <TaskRunDetails
@@ -67,7 +67,7 @@
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
-        <el-card v-else class="attempt-wrapper">
+        <KsCard v-else class="attempt-wrapper">
             <DynamicScroller
                 ref="logScroller"
                 :items="temporalLogs"
@@ -98,7 +98,7 @@
                     </DynamicScrollerItem>
                 </template>
             </DynamicScroller>
-        </el-card>
+        </KsCard>
     </div>
 </template>
 
@@ -112,12 +112,13 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import ViewList from "vue-material-design-icons/ViewList.vue";
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
-    import IconButton from "../IconButton.vue";
+    import {KsIconButton} from "@kestra-io/design-system";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
-    import {State, Utils as LibUtils} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/design-system"
+
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./overview/components/actions/Restart.vue";
@@ -125,21 +126,25 @@
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {storageKeys} from "../../utils/constants";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
+    } from "@kestra-io/design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/design-system";
+
+    function distinctFilter(value, index, array) {
+        return array.indexOf(value) === index;
+    }
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
             LogLevelNavigator,
-            IconButton,
+            KsIconButton,
             Download,
             ContentCopy,
             Collapse,
@@ -339,7 +344,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
             },
             nextLogForLevel(level) {
@@ -349,7 +354,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
@@ -360,8 +365,7 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
-    .attempt-wrapper {
+        .attempt-wrapper {
         background-color: var(--ks-background-card);
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
@@ -394,16 +398,16 @@
         max-width: max-content !important;
     }
 
-    :deep(.el-form) {
+    :deep(.kel-form) {
         padding: 1rem 1rem 0.5rem 1rem;
         margin-bottom: 1rem;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         border-radius: 0.5rem;
         background-color: var(--ks-background-panel);
         box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
     }
 
-    :deep(.el-form-item) {
+    :deep(.kel-form-item) {
         margin-bottom: 0.5rem !important;
     }
 </style>

@@ -1,10 +1,9 @@
-
 <template>
     <span class="d-none" />
 </template>
 
 <script setup lang="ts">
-    import {ElNotification} from "element-plus";
+    import {KsNotification} from "@kestra-io/design-system";
     import {pageFromRoute} from "../utils/eventsRouter";
     import {h, onMounted, watch, computed, ref} from "vue";
     import ErrorToastContainer from "./ErrorToastContainer.vue";
@@ -112,7 +111,7 @@
 
         apiStore.events(error);
 
-        notifications.value = ElNotification({
+        notifications.value = KsNotification({
             title: title.value || "Error",
             message: h(ErrorToastContainer, {
                 message: {
@@ -127,7 +126,7 @@
             type: props.message.variant || "error",
             duration: 0,
             dangerouslyUseHTMLString: true,
-            customClass: "error-notification large"
+            customClass: "error-notification kel-notification__large"
         });
     });
 </script>
@@ -136,7 +135,7 @@
     .error-notification {
         max-height: 90svh;
 
-        .el-notification__title {
+        .kel-notification__title {
             max-width: calc(100% - 15ch);
         }
 
@@ -147,7 +146,7 @@
             gap: .5rem;
         }
 
-        .el-notification__content {
+        .kel-notification__content {
             overflow-y: auto;
             max-height: 100%;
         }

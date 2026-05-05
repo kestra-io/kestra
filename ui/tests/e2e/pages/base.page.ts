@@ -13,7 +13,7 @@ export class BasePage {
 
         await this.page.goto("/");
 
-        await expect(this.page.getByRole("heading", {name: "Overview"})).toBeVisible();
+        await expect(this.page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible();
     }
 
     async addQueryParam(page: Page, key: string, value: string) {

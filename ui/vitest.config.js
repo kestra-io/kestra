@@ -14,26 +14,22 @@ const dirname =
         : path.dirname(fileURLToPath(import.meta.url));
 
 const MF_RUNTIME_STUB = path.resolve(dirname, "plugins/stub-module-federation-runtime.js");
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
     plugins: [vue()],
     resolve: {
+        ...resolvedViteConfig.resolve,
         alias: [
-            ...viteConfig.resolve.alias,
-            {find: /^@module-federation\/enhanced(\/runtime)?$/, replacement: MF_RUNTIME_STUB},
-        ],
+            ...resolvedViteConfig.resolve.alias,
+            {find: "module-federation/runtime", replacement: MF_RUNTIME_STUB},
+        ]
     },
     test: {
         projects: [
             "./vitest.config.unit.js",
-            mergeConfig(viteConfig, {
-                resolve: {
-                    alias: [
-                        ...viteConfig.resolve.alias,
-                        {find: /^@module-federation\/enhanced(\/runtime)?$/, replacement: MF_RUNTIME_STUB},
-                    ],
-                },
+            mergeConfig(resolvedViteConfig, {
                 plugins: [
                     // The plugin will run tests for the stories defined in your Storybook config
                     // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest

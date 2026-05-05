@@ -68,36 +68,38 @@
             :showProgressBar="false"
         />
         <KsCard v-else class="attempt-wrapper">
-            <DynamicScroller
-                ref="logScroller"
-                :items="temporalLogs"
-                :minItemSize="50"
-                keyField="uid"
-                class="log-lines temporal"
-                :buffer="200"
-                :prerender="20"
-            >
-                <template #default="{item, active}">
-                    <DynamicScrollerItem
-                        :item="item"
-                        :active="active"
-                        :sizeDependencies="[item.message]"
-                        :data-index="item.index"
-                        :key="item.uid"
-                    >
-                        <LogLine
-                            @click="logCursor = item.index.toString()"
-                            class="line"
-                            :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
-                            :cursor="item.index.toString() === logCursor"
-                            :excludeMetas="['namespace', 'flowId', 'executionId']"
-                            :level="effectiveLevel"
-                            :filter="filter"
-                            :log="item"
-                        />
-                    </DynamicScrollerItem>
-                </template>
-            </DynamicScroller>
+            <div class="log-lines temporal" style="height: calc(100vh - 335px); overflow: hidden; margin-top: 0.5rem;">
+                <DynamicScroller
+                    ref="logScroller"
+                    :items="temporalLogs"
+                    :minItemSize="50"
+                    keyField="uid"
+                    :buffer="200"
+                    :prerender="20"
+                    style="height: 100%"
+                >
+                    <template #default="{item, active}">
+                        <DynamicScrollerItem
+                            :item="item"
+                            :active="active"
+                            :sizeDependencies="[item.message]"
+                            :data-index="item.index"
+                            :key="item.uid"
+                        >
+                            <LogLine
+                                @click="logCursor = item.index.toString()"
+                                class="line"
+                                :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
+                                :cursor="item.index.toString() === logCursor"
+                                :excludeMetas="['namespace', 'flowId', 'executionId']"
+                                :level="effectiveLevel"
+                                :filter="filter"
+                                :log="item"
+                            />
+                        </DynamicScrollerItem>
+                    </template>
+                </DynamicScroller>
+            </div>
         </KsCard>
     </div>
 </template>
@@ -368,6 +370,11 @@
         .attempt-wrapper {
         background-color: var(--ks-background-card);
 
+        :deep(.kel-card__body) {
+            overflow: hidden;
+            padding: 0;
+        }
+
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
             border-top: 1px solid var(--ks-border-primary);
         }
@@ -378,12 +385,12 @@
     }
 
     .log-lines {
-        max-height: calc(100vh - 335px);
-        transition: max-height 0.2s ease-out;
-        margin-top: .5rem;
-
         .line {
             padding: .5rem;
+        }
+
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
         }
     }
 

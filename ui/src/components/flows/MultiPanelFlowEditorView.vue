@@ -34,13 +34,14 @@
                         <h3>{{ $t("welcome_copilot.execute_hint.title") }}</h3>
                         <p>{{ $t("welcome_copilot.execute_hint.description") }}</p>
                     </div>
-                    <el-button
+                    <KsButton
                         link
                         class="onboarding-execute-hint__close"
+                        :aria-label="$t('close')"
                         @click="showExecuteHint = false"
                     >
                         <Close />
-                    </el-button>
+                    </KsButton>
                 </div>
             </div>
         </Transition>

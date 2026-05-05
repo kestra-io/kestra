@@ -19,6 +19,7 @@ import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
+import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 
 import io.micronaut.context.ApplicationContext;
@@ -83,7 +84,8 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
-        return Map.of("kestra.migration.enabled", "false");
+        MigrationRunner.setSkipAutoRun(true);
+        return Map.of();
     }
 
     @Override

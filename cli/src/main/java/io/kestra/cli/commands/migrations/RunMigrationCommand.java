@@ -36,7 +36,7 @@ public class RunMigrationCommand extends AbstractCommand {
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         MigrationRunner.setSkipAutoRun(true);
-        return Map.of("kestra.migration.enabled", "true");
+        return Map.of();
     }
 
     /** Disable the automatic migration in super.call(); we run it explicitly below. */

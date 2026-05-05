@@ -14,7 +14,7 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
-        return Map.of("kestra.migration.enabled", "true");
+        return Map.of();
     }
 
     @Override

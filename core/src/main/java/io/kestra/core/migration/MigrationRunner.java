@@ -46,7 +46,6 @@ import java.util.List;
 @Slf4j
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Requires(property = "kestra.migration.enabled", value = "true", defaultValue = "true")
 @Requires(property = "kestra.repository.type")
 public class MigrationRunner implements MigrationRunnerInterface {
 

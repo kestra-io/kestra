@@ -1,6 +1,6 @@
 <template>
-    <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
-        <el-splitter-panel
+    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+        <KsSplitterPanel
             min="10%"
             key="sideBar"
             :size="sideBarSize"
@@ -9,15 +9,15 @@
                 :currentNS="namespace"
                 style="width: 100%;height: 100%;"
             />
-        </el-splitter-panel>
-        <el-splitter-panel
+        </KsSplitterPanel>
+        <KsSplitterPanel
             min="20%"
             key="editor"
             :size="editorSize"
         >
             <MultiPanelTabs v-if="mounted" v-model="panels" />
-        </el-splitter-panel>
-    </el-splitter>
+        </KsSplitterPanel>
+    </KsSplitter>
 </template>
 
 <script setup lang="ts">

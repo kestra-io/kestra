@@ -40,6 +40,10 @@ ui/test-report.junit.xml
 ui/frontend.*
 *storybook.log
 storybook-static
+ui-design-system/node_modules
+ui-design-system/dist
+ui-design-system/coverage
+ui-design-system/*.tsbuildinfo
 
 ### Docker
 /.env

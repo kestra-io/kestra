@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration} from "../../../components/filter/utils/filterTypes";
+import type {FilterConfiguration} from "@kestra-io/design-system";
 import {useI18n} from "vue-i18n";
 
 export const useNamespacesFilter = (): ComputedRef<FilterConfiguration> => {

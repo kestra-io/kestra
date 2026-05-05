@@ -70,9 +70,13 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kvsList(this: any, item: {id: string}) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${item.id}/kv`, VALIDATE);
-        kvs.value = response.data;
-        return response.data;
+        const {data} = await axios.get(`${apiUrl()}/kv`, {
+            ...VALIDATE,
+            params: {
+                filters: {namespace: {EQUALS: item.id}}
+            }
+        });
+        return kvs.value = data?.results;
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
@@ -106,19 +110,16 @@ export const useBaseNamespacesStore = () => {
                 }
             }
         );
-        return kvsList.call(this, {id: payload.namespace});
     }
 
     async function deleteKv(this: any, payload: {namespace: string; key: string}) {
         await axios.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
-        return kvsList.call(this, {id: payload.namespace});
     }
 
     async function deleteKvs(this: any, payload: {namespace: string; request: any}) {
         await axios.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv`, {
             data: payload.request
         });
-        return kvsList.call(this, {id: payload.namespace});
     }
 
     async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {

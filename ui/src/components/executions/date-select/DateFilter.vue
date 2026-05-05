@@ -1,21 +1,21 @@
 <template>
     <div v-if="wrap">
-        <el-radio-group
+        <KsRadioGroup
             v-model="selectedFilterType"
             @change="onSelectedFilterType()"
             class="filter"
         >
-            <el-radio-button
+            <KsRadioButton
                 :value="filterType.RELATIVE"
             >
                 {{ $t("relative") }}
-            </el-radio-button>
-            <el-radio-button
+            </KsRadioButton>
+            <KsRadioButton
                 :value="filterType.ABSOLUTE"
             >
                 {{ $t("absolute") }}
-            </el-radio-button>
-        </el-radio-group>
+            </KsRadioButton>
+        </KsRadioGroup>
         <DateRange
             v-if="selectedFilterType === filterType.ABSOLUTE"
             :startDate="startDate"
@@ -30,22 +30,22 @@
         />
     </div>
     <template v-else>
-        <el-radio-group
+        <KsRadioGroup
             v-model="selectedFilterType"
             @change="onSelectedFilterType()"
             class="filter"
         >
-            <el-radio-button
+            <KsRadioButton
                 :value="filterType.RELATIVE"
             >
                 {{ $t("relative") }}
-            </el-radio-button>
-            <el-radio-button
+            </KsRadioButton>
+            <KsRadioButton
                 :value="filterType.ABSOLUTE"
             >
                 {{ $t("absolute") }}
-            </el-radio-button>
-        </el-radio-group>
+            </KsRadioButton>
+        </KsRadioGroup>
         <DateRange
             v-if="selectedFilterType === filterType.ABSOLUTE"
             :startDate="startDate"

@@ -1,12 +1,12 @@
 <template>
-    <el-row
+    <KsRow
         v-for="(element, index) in items"
         :key="'array-' + index"
         :gutter="10"
         align="top"
         class="w-100"
     >
-        <el-col :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
+        <KsCol :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
             <ChevronUp
                 @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
@@ -15,8 +15,8 @@
                 @click.prevent.stop="moveItem(index, 'down')"
                 :class="{disabled: index === items.length - 1}"
             />
-        </el-col>
-        <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
+        </KsCol>
+        <KsCol :span="items.length > 1 ? 20 : 22" class="pe-2">
             <Wrapper :merge="!needWrapper">
                 <template #tasks>
                     <component
@@ -31,11 +31,11 @@
                     />
                 </template>
             </Wrapper>
-        </el-col>
-        <el-col :span="2" class="delete">
+        </KsCol>
+        <KsCol :span="2" class="delete">
             <DeleteOutline @click="removeItem(index)" />
-        </el-col>
-    </el-row>
+        </KsCol>
+    </KsRow>
     <Add @add="addItem()" />
 </template>
 

@@ -1,15 +1,15 @@
 <template>
     <div class="clipboard">
-        <el-tooltip
+        <KsTooltip
             trigger="click"
             :content="$t('copied')"
             placement="left"
             :autoClose="2000"
         >
-            <el-button :icon="ContentCopy" type="default" :link @click="copyText">
+            <KsButton :icon="ContentCopy" type="default" :link @click="copyText">
                 <span v-if="label">{{ label }}</span>
-            </el-button>
-        </el-tooltip>
+            </KsButton>
+        </KsTooltip>
 
         <slot name="right" />
     </div>
@@ -25,13 +25,12 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .clipboard {
     z-index: 1;
     position: absolute;
-    top: $spacer;
-    right: $spacer;
+    top: 1rem;
+    right: 1rem;
     display: inline-flex;
 }
 </style>

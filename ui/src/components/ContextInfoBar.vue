@@ -1,6 +1,6 @@
 <template>
     <div v-if="hasButtons && !activeTab.length" class="barWrapper">
-        <el-button
+        <KsButton
             v-for="(button, key) of contextButtons"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
@@ -12,39 +12,35 @@
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
             <OpenInNew v-if="button.url" class="open-in-new" />
             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-        </el-button>
+        </KsButton>
 
         <div style="flex:1" />
 
-        <el-tooltip
-            effect="light"
-            :persistent="false"
-            transition=""
-            :hideAfter="0"
+        <KsTooltip
             :disabled="!miscStore.configs?.commitId"
         >
             <template #content>
-                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                <code>{{ miscStore.configs?.commitId }}</code> <KsDateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
             </template>
             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-        </el-tooltip>
-        <el-button class="theme-switcher" @click="onSwitchTheme">
+        </KsTooltip>
+        <KsButton class="theme-switcher" @click="onSwitchTheme">
             <WeatherNight v-if="themeIsDark" />
             <WeatherSunny v-else />
-        </el-button>
+        </KsButton>
     </div>
 
     <div v-else-if="hasButtons" class="contextInfoSidebar" :style="{width: `${sidebarWidth}px`}">
-        <el-splitter
+        <KsSplitter
             class="contextInfoSplitter"
             :style="{width: `${maxSidebarWidth}px`}"
         >
-            <el-splitter-panel class="contextInfoSpacerPanel" :min="0" />
+            <KsSplitterPanel class="contextInfoSpacerPanel" :min="0" />
 
-            <el-splitter-panel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
+            <KsSplitterPanel v-model:size="sidebarWidth" :min="minSidebarWidth" :max="maxSidebarWidth">
                 <div class="contextInfoContent">
                     <div class="barWrapper opened">
-                        <el-button
+                        <KsButton
                             v-for="(button, key) of contextButtons"
                             :key="key"
                             :type="activeTab === key ? 'primary' : 'default'"
@@ -56,26 +52,22 @@
                             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
                             <OpenInNew v-if="button.url" class="open-in-new" />
                             <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                        </el-button>
+                        </KsButton>
 
                         <div style="flex:1" />
 
-                        <el-tooltip
-                            effect="light"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
+                        <KsTooltip
                             :disabled="!miscStore.configs?.commitId"
                         >
                             <template #content>
-                                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                                <code>{{ miscStore.configs?.commitId }}</code> <KsDateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
                             </template>
                             <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-                        </el-tooltip>
-                        <el-button class="theme-switcher" @click="onSwitchTheme">
+                        </KsTooltip>
+                        <KsButton class="theme-switcher" @click="onSwitchTheme">
                             <WeatherNight v-if="themeIsDark" />
                             <WeatherSunny v-else />
-                        </el-button>
+                        </KsButton>
                     </div>
 
                     <div class="panelWrapper">
@@ -93,8 +85,8 @@
                         </div>
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
     </div>
 </template>
 
@@ -103,7 +95,6 @@
     import {useStorage, useWindowSize} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
-    import DateAgo from "./layout/DateAgo.vue"
 
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -186,7 +177,7 @@
         height: 100%;
         flex-shrink: 0;
 
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             min-width: 0;
         }
 
@@ -195,11 +186,11 @@
             pointer-events: none;
         }
 
-        :deep(.el-splitter-bar) {
+        :deep(.kel-splitter-bar) {
             background-color: transparent;
         }
 
-        :deep(.el-splitter__splitter) {
+        :deep(.kel-splitter__splitter) {
             width: 5px;
             background-color: transparent;
             transition: background-color .1s;
@@ -236,7 +227,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
         overflow-y: auto;
         &::-webkit-scrollbar {
             width: 0;
@@ -247,15 +238,15 @@
             border-right: 1px solid var(--ks-border-primary);
         }
 
-        .el-button {
-            font-size: var(--font-size-sm);
+        .kel-button {
+            font-size: var(--ks-font-size-sm);
             height: auto;
             padding: 10px 5px;
             width: 32px;
             position: relative;
         }
 
-        .el-button + .el-button {
+        .kel-button + .kel-button {
             margin-left: 0;
         }
 
@@ -279,7 +270,6 @@
             transform: rotate(90deg);
             margin-top: 0.75rem;
             margin-bottom: 0;
-            color: var(--bs-text-opacity-5);
             opacity: .25;
         }
 

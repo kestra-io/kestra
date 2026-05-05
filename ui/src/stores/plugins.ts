@@ -5,7 +5,8 @@ import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
 import InitialFlowSchema from "./flow-schema.json"
-import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type JSONSchema} from "@kestra-io/ui-libs";
+import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils";
+import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils";
 import {useAxios} from "../utils/axios";
 
 export interface PluginComponent {
@@ -20,7 +21,7 @@ export interface PluginComponent {
     markdown?: string;
 }
 
-export type {Plugin} from "@kestra-io/ui-libs";
+export type {Plugin} from "../utils/pluginUtils";
 
 interface LoadOptions {
     cls: string;
@@ -41,14 +42,19 @@ export function removeRefPrefix(ref?: string): string {
     return ref?.replace(/^#\/definitions\//, "") ?? "";
 }
 
+interface PluginIconData {
+    icon: string;
+    flowable: boolean;
+}
+
 function usePluginsIcons() {
     const apiStore = useApiStore();
 
     const iconsLoaded = ref(false)
 
-    const apiIcons = ref<Record<string, string>>({});
-    const pluginsIcons = ref<Record<string, string>>({});
-    const _iconsPromise = ref<Promise<Record<string, string>>>();
+    const apiIcons = ref<Record<string, PluginIconData>>({});
+    const pluginsIcons = ref<Record<string, PluginIconData>>({});
+    const _iconsPromise = ref<Promise<Record<string, PluginIconData>>>();
     const axios = useAxios();
 
     const icons = computed(() => {

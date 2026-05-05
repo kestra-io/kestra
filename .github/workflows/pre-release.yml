@@ -42,9 +42,16 @@ jobs:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  design-system-frontend-tests:
+    name: Design System Frontend tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-maven:
     name: Publish Maven
-    needs: [ backend-tests, frontend-tests ]
+    needs: [ backend-tests, frontend-tests, design-system-frontend-tests ]
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
     secrets:

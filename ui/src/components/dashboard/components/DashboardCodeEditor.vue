@@ -36,7 +36,7 @@
     import {onMounted, ref, computed} from "vue";
     import {useDashboardStore} from "../../../stores/dashboard";
     import Editor from "../../inputs/Editor.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../../stores/plugins";
     import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue";
     import AITriggerButton from "../../ai/AITriggerButton.vue";

@@ -1,37 +1,37 @@
 <template>
-    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
-        <el-table-column prop="key" rowspan="3" :label="$t('name')">
+    <KsTable tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+        <KsTableColumn prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column prop="value" :label="$t('value')">
+        <KsTableColumn prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
-                    <Markdown :source="scope.row.value" />
+                    <KsMarkdown :content="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'cron'">
                     <Cron :cronExpression="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <el-button @click="emit('on-copy', null)">
+                    <KsButton @click="emit('on-copy', null)">
                         {{ $t('copy url') }}
-                    </el-button>
+                    </KsButton>
                 </template>
                 <template v-else>
                     <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
-        </el-table-column>
-    </el-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import VarValue from "../executions/VarValue.vue";
-    import Markdown from "../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import Cron from "../layout/Cron.vue";
     import {Execution} from "../../stores/executions";
 
@@ -66,7 +66,7 @@
         }
     }
 
-    :deep(.el-table__cell:nth-child(2) span) {
+    :deep(.kel-table__cell:nth-child(2) span) {
         color: var(--ks-content-secondary);
     }
 </style>

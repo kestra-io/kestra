@@ -1,11 +1,11 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right v-if="miscStore.configs?.secretsEnabled">
+        <template #actions v-if="miscStore.configs?.secretsEnabled">
             <ul>
                 <li>
-                    <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
+                    <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
                         {{ $t('secret.add') }}
-                    </el-button>
+                    </KsButton>
                 </li>
             </ul>
         </template>
@@ -82,7 +82,10 @@
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
     import useRouteContext from "../../composables/useRouteContext";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import {useMiscStore} from "override/stores/misc";
+
+    useRestoreUrl();
     import DemoButtons from "../demo/DemoButtons.vue";
     import EnterpriseTag from "../EnterpriseTag.vue";
 
@@ -112,7 +115,7 @@
 
         .header-block {
             p {
-                font-size: .875rem;
+                font-size: var(--ks-font-size-sm);
             }
 
         }
@@ -166,7 +169,7 @@
             .header-block {
 
                 p {
-                    font-size: 0.8125rem;
+                    font-size: var(--ks-font-size-sm);
                 }
             }
 
@@ -179,11 +182,11 @@
             .header-block {
 
                 h5 {
-                    font-size: 1.125rem;
+                    font-size: var(--ks-font-size-md);
                 }
 
                 p {
-                    font-size: 0.75rem;
+                    font-size: var(--ks-font-size-xs);
                 }
             }
         }
@@ -198,7 +201,7 @@
 
         ul,
         li {
-            font-size: .875rem;
+            font-size: var(--ks-font-size-sm);
         }
     }
 

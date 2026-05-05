@@ -1,19 +1,19 @@
 <template>
     <div id="buttons">
-        <el-button
+        <KsButton
             :icon="ChevronLeft"
             :disabled="!results.previous"
             @click="navigate('previous')"
         >
             {{ $t("prev_execution") }}
-        </el-button>
+        </KsButton>
 
-        <el-button :disabled="!results.next" @click="navigate('next')">
+        <KsButton :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
-            <el-icon class="el-icon--right">
+            <KsIcon class="el-icon--right">
                 <ChevronRight />
-            </el-icon>
-        </el-button>
+            </KsIcon>
+        </KsButton>
     </div>
 </template>
 
@@ -87,16 +87,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #buttons {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $spacer;
+    margin-bottom: 1rem;
 
-    .el-button {
-        font-size: $font-size-sm;
+    .kel-button {
+        font-size: var(--ks-font-size-sm);
     }
 }
 </style>

@@ -1,10 +1,10 @@
 <template>
     <div :id="cascaderID">
         <div class="header">
-            <el-text truncated>
+            <KsText truncated>
                 {{ props.title }}
-            </el-text>
-            <el-input
+            </KsText>
+            <KsInput
                 v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
@@ -13,7 +13,7 @@
         </div>
 
         <template v-if="props.elements">
-            <el-cascader-panel
+            <KsCascaderPanel
                 :options="filteredOptions"
                 @expand-change="onExpandChange"
             >
@@ -30,7 +30,7 @@
                         <VarValue :value="data.value" :execution />
                     </div>
                 </template>
-            </el-cascader-panel>
+            </KsCascaderPanel>
         </template>
 
         <span v-else class="empty">{{ props.empty }}</span>
@@ -151,7 +151,7 @@
 
         await nextTick(() => {
             // Open first node by default on page mount
-            const selector = `#${cascaderID} .el-cascader-node`;
+            const selector = `#${cascaderID} .kel-cascader-node`;
             const nodes = document.querySelectorAll(selector);
 
             if (nodes.length > 0) (nodes[0] as HTMLElement).click();
@@ -160,7 +160,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 [id^="cascader-"] {
     overflow: hidden;
@@ -169,33 +168,33 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: $spacer;
+        padding-bottom: 1rem;
 
-        > .el-text {
+        > .kel-text {
             width: 100%;
             display: flex;
             align-items: center;
-            font-size: $font-size-xl;
+            font-size: var(--ks-font-size-xl);
         }
 
-        > .el-input {
+        > .kel-input {
             display: flex;
             align-items: center;
-            width: calc($spacer * 16);
+            width: calc(1rem * 16);
         }
     }
 
-    .el-cascader-panel {
+    .kel-cascader-panel {
         overflow: auto;
         width: 100%;
     }
 
     .empty {
-        font-size: $font-size-sm;
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-secondary);
     }
 
-    :deep(.el-cascader-menu) {
+    :deep(.kel-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
 
@@ -203,11 +202,11 @@
             max-width: none;
         }
 
-        .el-cascader-menu__list {
+        .kel-cascader-menu__list {
             padding: 0;
         }
 
-        .el-cascader-menu__wrap {
+        .kel-cascader-menu__wrap {
             height: 100%;
         }
 
@@ -225,10 +224,10 @@
             }
         }
 
-        & .el-cascader-node {
+        & .kel-cascader-node {
             height: min-content;
             line-height: 36px;
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 
@@ -246,7 +245,7 @@
                 font-weight: normal;
             }
 
-            .el-cascader-node__prefix {
+            .kel-cascader-node__prefix {
                 display: none;
             }
 

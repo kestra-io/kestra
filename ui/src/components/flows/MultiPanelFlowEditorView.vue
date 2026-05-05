@@ -217,12 +217,10 @@
 </script>
 
 <style lang="scss" scoped>
-    @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     .playgroundMode :deep(.tabs-wrapper) {
-        #{--el-color-primary}: colorPalette.$base-blue-500;
-        color: colorPalette.$base-white;
+        #{--kel-color-primary}: var(--ks-playground-bg-color);
+        color: var(--ks-button-content-primary);
         background-position: 10% 0;
     }
 
@@ -272,7 +270,7 @@
         h3 {
             margin: 0 0 0.75rem;
             color: var(--ks-content-primary);
-            font-size: $font-size-lg;
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.15;
         }
@@ -280,7 +278,7 @@
         p {
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
             line-height: 1.45;
         }
     }
@@ -311,11 +309,11 @@
 
         .onboarding-execute-hint__content {
             h3 {
-                font-size: 1.25rem;
+                font-size: var(--ks-font-size-lg);
             }
 
             p {
-                font-size: 1rem;
+                font-size: var(--ks-font-size-base);
             }
         }
     }

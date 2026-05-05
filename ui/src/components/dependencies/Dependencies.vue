@@ -1,58 +1,66 @@
 <template>
-    <div v-if="!TESTING && isLoading" v-loading="true" class="h-100" />
+    <div v-if="!TESTING && isLoading" v-ks-loading="true" class="h-100" />
     <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
-    <el-splitter v-else class="dependencies">
-        <el-splitter-panel id="graph" v-bind="PANEL">
-            <div v-loading="isRendering" ref="container" />
+    <KsSplitter v-else class="dependencies">
+        <KsSplitterPanel id="graph" v-bind="PANEL">
+            <KsGraph
+                ref="graphRef"
+                class="graph-canvas"
+                :nodes="chartNodes"
+                :edges="chartEdges"
+                :loading="isRendering"
+                :options="{series: [{emphasis: {focus: 'none'}}]}"
+                @node-click="handleNodeClick"
+            />
 
             <div class="controls">
-                <el-button
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.zoom_in')"
                     @click="handlers.zoomIn"
                 >
                     <Plus />
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.zoom_out')"
                     @click="handlers.zoomOut"
                 >
                     <Minus />
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.clear_selection')"
                     @click="handlers.clearSelection"
                 >
                     <SelectionRemove />
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     size="small"
                     :title="$t('dependency.controls.fit_view')"
                     @click="handlers.fit"
                 >
                     <FitToScreenOutline />
-                </el-button>
-                <el-dropdown>
-                    <el-button size="small" :title="$t('export')">
+                </KsButton>
+                <KsDropdown>
+                    <KsButton size="small" :title="$t('export')">
                         <Download />
-                    </el-button>
+                    </KsButton>
                     <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item @click="handlers.exportAsImage('jpeg', selectedNodeID)">
+                        <KsDropdownMenu>
+                            <KsDropdownItem @click="handlers.exportAsImage('jpeg', selectedNodeID)">
                                 {{ $t("export_as", {format: "JPEG"}) }}
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handlers.exportAsImage('png', selectedNodeID)">
+                            </KsDropdownItem>
+                            <KsDropdownItem @click="handlers.exportAsImage('png', selectedNodeID)">
                                 {{ $t("export_as", {format: "PNG"}) }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </el-dropdown>
+                </KsDropdown>
             </div>
-        </el-splitter-panel>
+        </KsSplitterPanel>
 
-        <el-splitter-panel id="table">
+        <KsSplitterPanel id="table">
             <Table
                 :elements="getElements()"
                 :highlightShown="handlers.highlightShown"
@@ -60,8 +68,8 @@
                 :subtype="SUBTYPE"
                 @select="selectNode"
             />
-        </el-splitter-panel>
-    </el-splitter>
+        </KsSplitterPanel>
+    </KsSplitter>
 </template>
 
 <script setup lang="ts">
@@ -69,6 +77,8 @@
 
     import Table from "./components/Table.vue";
     import Empty from "../layout/empty/Empty.vue";
+
+    import {KsGraph} from "@kestra-io/design-system";
 
     import {useDependencies} from "./composables/useDependencies";
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
@@ -84,6 +94,8 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import {use} from "echarts/core";
+    import {TitleComponent} from "echarts/components";
 
     const props = defineProps<{
         fetchAssetDependencies?: () => Promise<{
@@ -94,32 +106,37 @@
 
     const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
-    const container = ref(null);
+    const graphRef = ref(null);
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
+    use([TitleComponent]);
+
     const {
         getElements,
+        chartNodes,
+        chartEdges,
         isLoading,
         isRendering,
         selectedNodeID,
         selectNode,
+        handleNodeClick,
         handlers,
-    } = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
 </script>
 
 <style scoped lang="scss">
 .dependencies {
     display: flex;
     width: 100%;
-    height: calc(100vh - 135px);
+    height: calc(100vh - 145px);
 
     & div#graph {
         position: relative; // for absolute positioning of controls
 
-        & > div:not(.controls) {
+        & .graph-canvas {
             height: 100%;
-            overflow: hidden scroll;
+            overflow: hidden;
             background-color: transparent;
             background-image: radial-gradient(circle, var(--ks-dots-topology) 1px, transparent 1px);
             background-repeat: repeat;
@@ -147,6 +164,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        overflow-y: auto;
     }
 }
 </style>

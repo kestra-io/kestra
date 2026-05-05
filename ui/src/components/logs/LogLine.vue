@@ -5,9 +5,9 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
+        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
             <MenuRight />
-        </el-icon>
+        </KsIcon>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
@@ -30,23 +30,22 @@
                     </span>
                 </span>
             </div>
-            <div
+            <pre
                 ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="renderedMarkdown"
+                v-html="message"
             />
         </div>
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, nextTick} from "vue";
+    import {ref, computed, watch, nextTick} from "vue";
     import Convert from "ansi-to-html";
     import {useStorage} from "@vueuse/core";
     import xss from "xss";
-    import * as Markdown from "../../utils/markdown";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import linkify from "./linkify";
+    import linkify, {processLinkTags} from "./linkify";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import {LevelKey} from "../../utils/logs";
     import {Log} from "../../stores/logs";
@@ -64,7 +63,6 @@
     }>();
 
     // State
-    const renderedMarkdown = ref<string | undefined>(undefined);
     const logsFontSize = useStorage<number>("logsFontSize", 12);
     const lineContent = ref<HTMLElement>();
 
@@ -147,26 +145,16 @@
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
             "$1<a href='$2' target='_blank'>$2</a>$3"
         );
+        logMessage = processLinkTags(logMessage);
         return logMessage;
     });
 
-    const router = useRouter()
-    onMounted(() => {
-        setTimeout(() => {
-            linkify(lineContent.value, router);
-        }, 200);
-    });
-
-    watch(renderedMarkdown, () => {
+    const router = useRouter();
+    watch(message, () => {
         nextTick(() => {
             linkify(lineContent.value, router);
         });
-    });
-
-    // Initial markdown render
-    (async () => {
-        renderedMarkdown.value = (await Markdown.render(message.value, {onlyLink: true, html: true})).trim();
-    })();
+    }, {immediate: true});
 </script>
 <style scoped lang="scss">
 div.line {
@@ -222,9 +210,16 @@ div.line {
         .header > * + * {
             margin-left: 1rem;
         }
+
+        pre {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            font-size: inherit;
+        }
     }
 
-    .el-tag {
+    .kel-tag {
         height: auto;
     }
 
@@ -238,7 +233,7 @@ div.line {
 
         span:first-child {
             margin-right: 6px;
-            font-family: var(--bs-font-sans-serif);
+            font-family: var(--kbs-body-font-family);
             user-select: none;
 
             &::after {
@@ -247,7 +242,7 @@ div.line {
         }
 
         & a {
-            border-radius: var(--bs-border-radius);
+            border-radius: var(--kel-border-radius-base);
         }
 
         &.log-level {

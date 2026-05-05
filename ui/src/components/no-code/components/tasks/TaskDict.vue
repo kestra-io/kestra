@@ -1,5 +1,5 @@
 <template>
-    <el-alert
+    <KsAlert
         v-if="duplicatedKeys?.length"
         :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
         type="error"
@@ -39,8 +39,8 @@
         </Wrapper>
     </template>
     <template v-else>
-        <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
-            <el-col :span="6">
+        <KsRow v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <KsCol :span="6">
                 <InputText
                     :ref="el => { if (el) keyInputRefs[index] = el }"
                     :modelValue="item[0]"
@@ -49,8 +49,8 @@
                     placeholder="Key"
                     :haveError="duplicatedKeys.includes(item[0])"
                 />
-            </el-col>
-            <el-col :span="16">
+            </KsCol>
+            <KsCol :span="16">
                 <TaskExpression
                     :modelValue="item[1]"
                     @update:model-value="onValueChange(index, $event)"
@@ -59,11 +59,11 @@
                     :required="isRequired(item[0])"
                     :disabled
                 />
-            </el-col>
-            <el-col :span="2" class="col align-self-center delete">
+            </KsCol>
+            <KsCol :span="2" class="col align-self-center delete">
                 <DeleteOutline @click="removeItem(index)" />
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </template>
     <Add v-if="!props.disabled" :disabled="addButtonDisabled" @add="addItem()" />
 </template>

@@ -2,8 +2,8 @@
     <div v-if="playgroundStore.enabled && isTask && taskModel?.id" class="flow-playground">
         <PlaygroundRunTaskButton :taskId="taskModel?.id" />
     </div>
-    <el-form v-if="isTaskDefinitionBasedOnType" labelPosition="top">
-        <el-form-item>
+    <KsForm v-if="isTaskDefinitionBasedOnType" labelPosition="top">
+        <KsFormItem>
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>
@@ -15,11 +15,11 @@
                 :blockSchemaPath
                 @update:model-value="onTaskTypeSelect"
             />
-        </el-form-item>
-    </el-form>
+        </KsFormItem>
+    </KsForm>
     <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
-            v-loading="isLoading || isPluginSchemaLoading"
+            v-ks-loading="isLoading || isPluginSchemaLoading"
             v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskModel"
@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../utils/types";
@@ -257,7 +257,7 @@
                 isPluginSchemaLoading.value = false;
             }
         }
-    }, {immediate: true}); 
+    }, {immediate: true});
 
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){

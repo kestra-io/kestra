@@ -57,9 +57,16 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  design-system-frontend-tests:
+    name: Design System Frontend tests
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-develop-docker:
     name: Publish Docker
-    needs: [backend-tests, frontend-tests]
+    needs: [backend-tests, frontend-tests, design-system-frontend-tests]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:

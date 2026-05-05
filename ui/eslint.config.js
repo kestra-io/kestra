@@ -1,3 +1,4 @@
+import process from "node:process";
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
@@ -8,7 +9,7 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
-    globalIgnores(["node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -33,7 +34,12 @@ export default defineConfig([
     ...pluginVue.configs["flat/strongly-recommended"],
     {
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
-        languageOptions: {parserOptions: {parser: tseslint.parser}},
+        languageOptions: {parserOptions: {
+            parser: tseslint.parser,
+            project: ["./tsconfig.json", "./packages/design-system/tsconfig.json", "./packages/topology/tsconfig.json"],
+            tsconfigRootDir: process.cwd(),
+            extraFileExtensions: [".vue"],
+        }},
         rules: {
             "vue/block-lang": ["warn",
                 {
@@ -64,6 +70,7 @@ export default defineConfig([
                 },
             ],
             "vue/multi-word-component-names": ["off"],
+            "vue/one-component-per-file": "off",
             "vue/no-deprecated-router-link-tag-prop": "off",
             "vue/object-curly-spacing": ["error", "never"],
             "vue/block-order": [
@@ -125,5 +132,5 @@ export default defineConfig([
         rules: {
             "no-console": ["off"]
         }
-    }
+    },
 ]);

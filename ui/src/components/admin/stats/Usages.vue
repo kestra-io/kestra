@@ -7,15 +7,15 @@
         <div class="usage-card-body">
             <div v-for="item in usageItems" :key="item.key" class="usage-row">
                 <component :is="item.icon" class="usage-icon" />
-                <el-text size="small" class="usage-label">
+                <KsText size="small" class="usage-label">
                     {{ $t(item.labelKey) }}
-                </el-text>
+                </KsText>
                 <div class="usage-divider" />
-                <el-text size="small" class="usage-value">
+                <KsText size="small" class="usage-value">
                     {{ item.value }}
-                </el-text>
+                </KsText>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <el-button class="wh-15" :icon="TextSearchVariant" link />
+                    <KsButton class="wh-15" :icon="TextSearchVariant" link />
                 </router-link>
             </div>
             <slot name="additional-usages" />
@@ -168,7 +168,7 @@
         margin-bottom: 1.5rem;
 
         span {
-            font-size: 1.25rem;
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
         }
     }
@@ -190,7 +190,7 @@
         &:first-child {
             padding-top: 0;
         }
-        &:last-child { 
+        &:last-child {
             padding-bottom: 0;
         }
 
@@ -203,14 +203,14 @@
             flex-shrink: 0;
 
             :deep(.material-design-icon__svg) {
-                font-size: 24px;
+                font-size: var(--ks-font-size-xl);
                 color: var(--ks-content-secondary);
                 vertical-align: middle;
             }
         }
 
         .usage-label {
-            font-size: 14px;
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
             line-height: 1.2;
         }
@@ -222,12 +222,12 @@
         }
 
         .usage-value {
-            font-size: 14px;
+            font-size: var(--ks-font-size-sm);
             line-height: 1.2;
             white-space: nowrap;
         }
 
-        .el-button {
+        .kel-button {
             color: var(--ks-content-primary);
             display: flex;
             align-items: center;

@@ -1,6 +1,6 @@
 import {v4 as uuid} from "uuid";
 
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/design-system";
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE} from "../../../src/components/dependencies/utils/types";
 import type {Types, Node, Edge, Element} from "../../../src/components/dependencies/utils/types";
 

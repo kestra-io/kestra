@@ -11,17 +11,18 @@
                         <slot name="title" />
                     </template>
                 </Breadcrumb>
-                <el-tooltip v-if="description" :content="description">
+                <KsTooltip v-if="description" :content="description">
                     <Information class="ms-2 icon" />
-                </el-tooltip>
+                </KsTooltip>
                 <Badge v-if="beta" label="Beta" />
-                <el-button
+                <KsIconButton
                     class="icon"
                     :class="{'active': bookmarked}"
-                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                    circle
+                    :ariaLabel="t('bookmark')"
                     @click="onStarClick"
-                />
+                >
+                    <component :is="bookmarked ? StarIcon : StarOutlineIcon" />
+                </KsIconButton>
             </div>
             <div v-if="longDescription || $slots.description" class="description">
                 <slot name="description">
@@ -31,7 +32,7 @@
         </div>
         <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <GlobalSearch class="trigger-flow-guided-step" />
-            <slot name="additional-right" />
+            <slot name="actions" />
         </div>
     </nav>
 </template>
@@ -100,39 +101,31 @@
     };
 </script>
 
-<style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-
+<style lang="scss" scoped>
     nav {
         top: 0;
         position: sticky;
         z-index: 1000;
-        padding: 0.5rem 1rem;
+        padding: 1rem 2rem;
         gap: 1rem;
         border-bottom: 1px solid var(--ks-border-primary);
         background: var(--ks-background-card);
 
         .title-section {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-            flex: 1 0 0;
+            flex: 1 1 auto;
             min-width: 0;
             overflow: hidden;
-            mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
         }
 
         .description {
             font-size: var(--font-size-sm);
+            margin-top: 0.25rem;
             color: var(--ks-content-secondary);
-            white-space: nowrap;
         }
 
         .icon {
             border: none;
             color: var(--ks-content-tertiary);
-            flex-shrink: 0;
 
             &:deep(svg) {
                 fill: currentColor;
@@ -140,7 +133,7 @@
             }
 
             &.active {
-                color: $base-purple-300;
+                color: var(--ks-content-link-hover);
             }
         }
 
@@ -150,17 +143,25 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
-                gap: .5rem;
+                gap: 0.5rem;
                 align-items: center;
             }
         }
 
         @media (max-width: 992px) {
-            padding: 0.5rem 0.75rem;
+            padding: 0.75rem 1.5rem;
         }
 
         @media (max-width: 768px) {
-            padding: 0.5rem;
+            padding: 0.75rem;
         }
+
+        @media (max-width: 664px) {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    .beta-badge {
+        border-radius: calc(var(--kel-border-radius-round) * 2);
     }
 </style>

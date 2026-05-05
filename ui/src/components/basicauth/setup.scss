@@ -80,11 +80,11 @@ $survey-group-spacing: 0.75rem;
     top: 0;
     right: 0;
     @extend %text-primary;
-    font-size: 14px;
+    font-size: var(--ks-font-size-sm);
     font-weight: 400;
     transition: color 0.2s;
     background-color: var(--ks-button-background-secondary);
-    
+
     &:hover {
       background-color: var(--ks-button-background-secondary-hover);
     }
@@ -93,7 +93,7 @@ $survey-group-spacing: 0.75rem;
   .header-title {
     @extend %text-primary;
     font-weight: 600;
-    font-size: 24px;
+    font-size: var(--ks-font-size-xl);
     line-height: 36px;
   }
 
@@ -109,9 +109,9 @@ $survey-group-spacing: 0.75rem;
 .password-requirements {
   margin-top: -8px;
 
-  .el-text {
+  .kel-text {
     color: var(--ks-content-tertiary);
-    font-size: 12px;
+    font-size: var(--ks-font-size-xs);
   }
 }
 
@@ -119,23 +119,23 @@ $survey-group-spacing: 0.75rem;
   margin: $survey-group-spacing 0;
 }
 
-:deep(.newsletter-form-item.el-form-item) {
+:deep(.newsletter-form-item.kel-form-item) {
   margin-bottom: 0;
 }
 
-.el-step {
-  :deep(.el-step__head > .el-step__icon) {
+.kel-step {
+  :deep(.kel-step__head > .kel-step__icon) {
     width: $step-icon-size !important;
     height: $step-icon-size !important;
   }
 
-  :deep(.el-step__line) {
+  :deep(.kel-step__line) {
     left: $step-line-offset;
   }
 
-  
-    
-    :deep(.el-step__title) {
+
+
+    :deep(.kel-step__title) {
     vertical-align: middle;
     line-height: $step-icon-size;
     color: var(--ks-content-inactive);
@@ -143,7 +143,7 @@ $survey-group-spacing: 0.75rem;
     &.is-process {
       color: var(--ks-content-primary);
       font-weight: 400;
-      font-size: 16px;
+      font-size: var(--ks-font-size-base);
     }
   }
 
@@ -152,7 +152,7 @@ $survey-group-spacing: 0.75rem;
     }
 }
 
-.primary-icon :deep(.el-step__icon-inner) {
+.primary-icon :deep(.kel-step__icon-inner) {
   color: var(--ks-content-primary);
 }
 
@@ -166,20 +166,20 @@ $survey-group-spacing: 0.75rem;
     grid-template-columns: 1fr;
   }
 
-  :deep(.el-radio) {
+  :deep(.kel-radio) {
     margin: 0 !important;
     width: 100%;
     min-width: 0;
     display: flex;
     align-items: center;
 
-    .el-radio__input {
+    .kel-radio__input {
       margin-right: 8px;
       align-self: center;
     }
 
-    .el-radio__label {
-      font-size: 14px;
+    .kel-radio__label {
+      font-size: var(--ks-font-size-sm);
       padding-left: 0;
       line-height: 1.4;
       align-self: center;
@@ -189,7 +189,7 @@ $survey-group-spacing: 0.75rem;
       word-break: break-word;
     }
 
-    .el-radio__inner {
+    .kel-radio__inner {
       width: $radio-size;
       height: $radio-size;
       border: 2px solid var(--ks-border-primary);
@@ -202,7 +202,7 @@ $survey-group-spacing: 0.75rem;
       }
     }
 
-    &.is-checked .el-radio__inner {
+    &.is-checked .kel-radio__inner {
       border-color: var(--ks-content-link);
     }
   }
@@ -211,7 +211,7 @@ $survey-group-spacing: 0.75rem;
 .use-case-checkboxes {
   margin-top: $survey-group-spacing;
 
-  :deep(.el-checkbox-group) {
+  :deep(.kel-checkbox-group) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: $survey-group-spacing;
@@ -238,18 +238,18 @@ $survey-group-spacing: 0.75rem;
   column-gap: 8px;
   align-items: center;
 
-  :deep(.el-checkbox__label) {
+  :deep(.kel-checkbox__label) {
     padding-left: 8px;
     text-wrap: wrap;
   }
 }
 
 %checkbox-shared {
-  :deep(.el-checkbox__input) {
+  :deep(.kel-checkbox__input) {
     margin-right: 8px;
     align-self: center;
 
-    .el-checkbox__inner {
+    .kel-checkbox__inner {
       border: 2px solid $checkbox-border-color;
       @extend %border-reset;
       width: $checkbox-size;
@@ -259,7 +259,7 @@ $survey-group-spacing: 0.75rem;
       &::after {
         content: "";
         position: absolute;
-        border: 2px solid white;
+        border: 2px solid var(--ks-white);
         border-top: 0;
         border-left: 0;
         width: 4px;
@@ -271,7 +271,7 @@ $survey-group-spacing: 0.75rem;
       }
     }
 
-    &.is-checked .el-checkbox__inner {
+    &.is-checked .kel-checkbox__inner {
       border-color: $checkbox-checked-color;
       background-color: $checkbox-checked-color;
 
@@ -281,8 +281,8 @@ $survey-group-spacing: 0.75rem;
     }
   }
 
-  :deep(.el-checkbox__label) {
-    font-size: 14px;
+  :deep(.kel-checkbox__label) {
+    font-size: var(--ks-font-size-sm);
     padding-left: 0;
     line-height: 1.4;
     align-self: center;
@@ -335,12 +335,12 @@ $survey-group-spacing: 0.75rem;
   }
 
   .success-title {
-    font-size: 24px;
+    font-size: var(--ks-font-size-xl);
     line-height: 36px;
   }
 
   .success-subtitle {
-    font-size: 18.4px;
+    font-size: var(--ks-font-size-md);
     line-height: 28px;
   }
 
@@ -349,38 +349,38 @@ $survey-group-spacing: 0.75rem;
   }
 }
 
-:deep(.el-button:not(.skip-button)) {
+:deep(.kel-button:not(.skip-button)) {
   margin-top: 1rem;
 }
 
-:deep(.el-card__body) {
+:deep(.kel-card__body) {
   @extend %flexcol;
-  gap: calc(var(--spacer) / 2);
+  gap: calc(1rem / 2);
 }
 
-:deep(.el-form-item.is-error .el-input__wrapper) {
+:deep(.kel-form-item.is-error .kel-input__wrapper) {
   box-shadow: 0 0 0 1px var(--ks-border-error) inset;
 }
 
-:deep(.el-form-item.is-error .el-input__suffix-inner),
-:deep(.el-form-item__error) {
+:deep(.kel-form-item.is-error .kel-input__suffix-inner),
+:deep(.kel-form-item__error) {
   color: var(--ks-content-alert) !important;
 }
 
-:deep(.el-input__inner) {
-  font-size: 14px;
+:deep(.kel-input__inner) {
+  font-size: var(--ks-font-size-sm);
 
   &::placeholder {
     color: var(--ks-content-tertiary) !important;
   }
 }
 
-.el-row {
-  .el-divider {
+.kel-row {
+  .kel-divider {
     flex: 1;
   }
 
-  .el-col .el-card:deep(.el-card__header) {
+  .kel-col .kel-card:deep(.kel-card__header) {
     border-bottom: 0;
   }
 }

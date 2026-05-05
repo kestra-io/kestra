@@ -16,19 +16,19 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
+                <KsDateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
-            <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
+            <KsMarkdown class="markdown-tooltip postParagraph" :content="feed.description" />
 
             <div class="newsButtonBar">
-                <el-button
+                <KsButton
                     style="flex:1"
                     @click="expanded[feed.id] = !expanded[feed.id]"
                 >
                     <MenuDown class="expandIcon" />
                     {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     v-if="feed.href"
                     :title="$t('open in new tab')"
                     tag="a"
@@ -37,10 +37,10 @@
                     :href="feed.href"
                 >
                     <OpenInNew :title="feed.link" />
-                </el-button>
+                </KsButton>
             </div>
 
-            <el-divider class="mb-2" v-if="index !== feeds.length - 1" />
+            <KsDivider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>
@@ -53,8 +53,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 
-    import Markdown from "./Markdown.vue";
-    import DateAgo from "./DateAgo.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import ContextInfoContent from "../ContextInfoContent.vue";
 
     import {useApiStore} from "../../stores/api";
@@ -83,7 +82,7 @@
 
         h5 {
             margin-bottom: 0;
-            font-size: var(--font-size-lg);
+            font-size: var(--ks-font-size-lg);
         }
 
         img {
@@ -91,7 +90,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
         }
 
         .metaBlock {
@@ -104,17 +103,17 @@
         }
 
         hr {
-            border-top-color: var(--bs-gray-700);
+            border-top-color: var(--ks-border-primary);
             margin-top: .5rem;
             margin-bottom: .5rem;
         }
 
         .small {
-            font-size:  var(--font-size-sm);
+            font-size:  var(--ks-font-size-sm);
             opacity: 0.7;
         }
 
-        a.el-button {
+        a.kel-button {
             font-weight: bold;
         }
 

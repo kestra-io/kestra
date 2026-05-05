@@ -10,10 +10,10 @@
         />
 
         <div class="buttons">
-            <el-button type="primary" :icon="Refresh" @click="onRender">
+            <KsButton type="primary" :icon="Refresh" @click="onRender">
                 {{ $t("eval.render") }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 :disabled="!result && !error"
                 :icon="CloseCircleOutline"
                 @click="clearAll"
@@ -35,7 +35,7 @@
             />
         </template>
 
-        <el-alert
+        <KsAlert
             v-else-if="error"
             type="error"
             :title="error"
@@ -43,7 +43,7 @@
             :closable="false"
         >
             <pre v-if="stackTrace" class="mb-0 stack-trace">{{ stackTrace }}</pre>
-        </el-alert>
+        </KsAlert>
     </div>
 </template>
 
@@ -147,34 +147,33 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #debug {
     display: flex;
     flex-direction: column;
     height: 100%;
-    margin-top: calc($spacer / 2);
-    padding: calc($spacer / 2) $spacer;
-    border: 1px solid var(--el-border-color-light);
+    margin-top: calc(1rem / 2);
+    padding: calc(1rem / 2) 1rem;
+    border: 1px solid var(--kel-border-color-light);
 
     :deep(.ks-editor) {
         &.expression {
-            height: calc($spacer * 2);
-            margin-bottom: $spacer;
+            height: calc(1rem * 2);
+            margin-bottom: 1rem;
         }
 
         &.result {
-            height: calc($spacer * 10);
+            height: calc(1rem * 10);
         }
     }
 
     .buttons {
         display: inline-flex;
 
-        & :deep(.el-button) {
-            margin-bottom: $spacer;
-            padding: $spacer;
-            font-size: $font-size-sm;
+        & :deep(.kel-button) {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            font-size: var(--ks-font-size-sm);
             overflow: hidden;
 
             span:not(i span) {
@@ -186,16 +185,16 @@
             }
         }
 
-        & :deep(.el-button:nth-of-type(2)) {
-            width: calc($spacer * 4);
+        & :deep(.kel-button:nth-of-type(2)) {
+            width: calc(1rem * 4);
         }
     }
 
     .stack-trace {
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-size: $font-size-xs;
-        max-height: calc($spacer * 15);
+        font-size: var(--ks-font-size-xs);
+        max-height: calc(1rem * 15);
         overflow: auto;
     }
 }

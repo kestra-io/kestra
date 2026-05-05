@@ -1,7 +1,7 @@
 import {describe, expect, it, vi, beforeAll} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
 const defaultFlow = `inputs:
   - id: input1

@@ -1,18 +1,18 @@
 <template>
-    <el-select
+    <KsSelect
         v-model="modelValue"
         :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
         clearable
     >
-        <el-option
+        <KsOption
             v-for="item in taskModels"
             :key="item.cls"
             :label="item.cls"
             :value="item.cls"
         >
             <span class="options">
-                <TaskIcon
+                <KsTaskIcon
                     v-if="hasIcons"
                     :cls="item?.cls"
                     :onlyIcon="true"
@@ -25,22 +25,22 @@
                     </div>
                 </div>
             </span>
-        </el-option>
+        </KsOption>
 
         <template #prefix>
-            <TaskIcon
+            <KsTaskIcon
                 v-if="modelValue && hasIcons"
                 :cls="modelValue"
                 :onlyIcon="true"
                 :icons="pluginsStore.icons"
             />
         </template>
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
         FULL_SCHEMA_INJECTION_KEY,
@@ -137,25 +137,25 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(div.wrapper) {
+    :deep(div.ks-task-icon) {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
         margin-right: 1rem;
     }
 
-    :deep(.el-input__prefix-inner) {
-        .wrapper {
+    :deep(.kel-input__prefix-inner) {
+        .ks-task-icon {
             top: 0;
             margin-right: 0;
         }
     }
 
-    :deep(.el-select__suffix) {
+    :deep(.kel-select__suffix) {
         display: flex !important;
     }
 
-    .el-select-dropdown__item {
+    .kel-select-dropdown__item {
         height: fit-content;
         line-height: normal;
         padding: 8px 12px;
@@ -166,7 +166,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.wrapper) {
+        :deep(.ks-task-icon) {
             width: 2rem;
             height: 2rem;
         }
@@ -186,7 +186,7 @@
             }
 
             .title {
-                font-size: 0.75rem;
+                font-size: var(--ks-font-size-xs);
                 color: var(--ks-content-secondary);
                 line-height: 1.2;
                 white-space: normal;

@@ -1,6 +1,6 @@
 <template>
     <div class="docsMenuWrapper">
-        <el-button
+        <KsButton
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
@@ -10,7 +10,7 @@
                 class="expandIcon"
                 :class="{'rotate-icon': menuOpen}"
             />
-        </el-button>
+        </KsButton>
         <div v-if="menuOpen" class="docsMenuContainer">
             <ul class="docsMenu list-unstyled d-flex flex-column m-0">
                 <template v-if="rawStructure">
@@ -57,7 +57,6 @@
     const docStore = useDocStore();
 
     const menuOpen = ref(false);
-
 
     const rawStructure = ref<Record<string, any> | undefined>();
     const currentDocPath = computed(() => docStore.docPath);
@@ -126,7 +125,8 @@
     })
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) => ({
+        .map(([section, childrenTitles]) =>({
+
             section,
             children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
@@ -138,10 +138,14 @@
 </script>
 
 <style scoped lang="scss">
+    ul > li > span:first-child {
+        font-size: var(--ks-font-size-xs);
+    }
+
     $scrollbar-width: 6px;
     $link-radius: 6px;
     $transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
-    
+
     @mixin custom-scrollbar {
         &::-webkit-scrollbar {
             width: $scrollbar-width;
@@ -209,6 +213,8 @@
     }
 
     .docsMenu {
+        list-style: none;
+        padding-left: 0;
         max-height: calc(100vh - 210px);
         overflow-y: auto;
         padding-right: 0.25rem;
@@ -229,7 +235,7 @@
 
             @for $i from 0 through 5 {
                 $base-pad: 0.5rem + ($i * 1rem);
-                
+
                 &.depth-#{$i} {
                     padding-left: $base-pad;
                     @if $i == 0 {
@@ -238,12 +244,12 @@
                         font-size: 0.8rem;
                         color: var(--ks-content-secondary);
                     } @else {
-                        font-size: 0.75rem;
+                        font-size: var(--ks-font-size-xs);
                         color: var(--ks-content-secondary);
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }
                 }
-                
+
                 &.active-page.depth-#{$i} {
                     padding-left: calc(#{$base-pad} - 3px);
                 }

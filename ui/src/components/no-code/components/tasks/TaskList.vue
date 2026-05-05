@@ -1,7 +1,7 @@
 <template>
     <div class="tasks-wrapper">
-        <el-collapse v-model="expanded" class="collapse">
-            <el-collapse-item
+        <KsCollapse v-model="expanded" class="collapse">
+            <KsCollapseItem
                 :name="section"
                 :title="`${section}${elements ? ` (${elements.length})` : ''}`"
                 :disabled="merge"
@@ -36,8 +36,8 @@
                             )
                     "
                 />
-            </el-collapse-item>
-        </el-collapse>
+            </KsCollapseItem>
+        </KsCollapse>
     </div>
 </template>
 
@@ -46,7 +46,7 @@
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
     import Creation from "./taskList/buttons/Creation.vue";
     import Element from "./taskList/Element.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import {CollapseItem} from "../../utils/types";
 
@@ -66,7 +66,7 @@
     const blockSchemaPath = computed(() => {
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            // if second part is a property not defined in properties, 
+            // if second part is a property not defined in properties,
             // it can only be defined by additionalProperties
             const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
             if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){
@@ -209,7 +209,7 @@
     cursor: not-allowed;
 }
 
-.merge :deep(.el-collapse-item__header){
+.merge :deep(.kel-collapse-item__header){
     cursor: default;
 }
 </style>

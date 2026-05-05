@@ -3,20 +3,28 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <KsDataTable
+                ref="dataTable"
+                class="blueprints"
+                :loadData="loadData"
+                :total="total"
+                divider
+                @ready="ready = true"
+                @page-changed="onPageChanged"
+            >
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">
-                            <el-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
-                                <el-checkbox-button
+                            <KsCheckboxGroup v-model="selectedTags" class="tags-checkbox-group">
+                                <KsCheckboxButton
                                     v-for="tag in Object.values(tags || {})"
                                     :key="tag.id"
-                                    :label="tag.id"
+                                    :value="tag.id"
                                     class="hoverable"
                                 >
                                     {{ tag.name }}
-                                </el-checkbox-button>
-                            </el-checkbox-group>
+                                </KsCheckboxButton>
+                            </KsCheckboxGroup>
                         </div>
                     </div>
                     <nav v-else-if="system" class="header pb-3">
@@ -29,7 +37,7 @@
                     </nav>
                 </template>
                 <template #top>
-                    <el-row class="mb-3" justify="center">
+                    <KsRow class="mb-3" justify="center">
                         <KSFilter
                             :configuration="blueprintFilter"
                             :buttons="{
@@ -39,14 +47,14 @@
                             :searchInputFullWidth="true"
                             @search="handleSearch"
                         />
-                    </el-row>
+                    </KsRow>
                 </template>
                 <template #table>
-                    <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
+                    <KsAlert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
-                    </el-alert>
+                    </KsAlert>
                     <div class="card-grid">
-                        <el-card
+                        <KsCard
                             class="blueprint-card"
                             v-for="blueprint in blueprints"
                             :key="blueprint.id"
@@ -66,44 +74,43 @@
                                 </div>
                                 <div class="bottom-section">
                                     <div class="task-icons">
-                                        <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
+                                        <KsTaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
                                     <div class="d-flex align-items-center gap-2">
-                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
-                                            <el-button
+                                        <KsTooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
+                                            <KsButton
                                                 type="primary"
                                                 size="default"
                                                 :icon="icon.ContentCopy"
                                                 @click.prevent.stop="copy(blueprint.id)"
                                                 class="p-2"
                                             />
-                                        </el-tooltip>
+                                        </KsTooltip>
                                         <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <el-button v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            <KsButton v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                                 {{ $t('use') }}
-                                            </el-button>
+                                            </KsButton>
                                         </slot>
                                     </div>
                                 </div>
                             </div>
-                        </el-card>
+                        </KsCard>
                     </div>
                 </template>
-            </DataTable>
+            </KsDataTable>
             <slot name="bottom-bar" />
         </slot>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onActivated, watch} from "vue";
+    import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import DataTable from "../../../components/layout/DataTable.vue";
     import Errors from "../../../components/errors/Errors.vue";
-    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {editorViewTypes} from "../../../utils/constants";
     import Utils from "../../../utils/utils";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -112,8 +119,10 @@
     import {useCoreStore} from "../../../stores/core";
     import {useDocStore} from "../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {useDataTableActions} from "../../../composables/useDataTableActions";
     import {useBlueprintFilter} from "../../filter/configurations";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
 
     const blueprintFilter = useBlueprintFilter();
 
@@ -131,12 +140,13 @@
         tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
     });
 
-    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
-
     const emit = defineEmits(["goToDetail", "loaded"]);
 
     const route = useRoute();
     const router = useRouter();
+
+    const dataTable = useTemplateRef("dataTable");
+    const ready = ref(false);
 
     const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]";
 
@@ -161,6 +171,10 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
+    };
+
+    const onPageChanged = ({page}: {page: number; size: number}) => {
+        router.push({query: {...route.query, page}});
     };
 
     const pluginsStore = usePluginsStore();
@@ -234,10 +248,10 @@
         }
     };
 
-    async function loadBlueprints (beforeLoadBlueprintType: string) {
+    async function loadBlueprints (beforeLoadBlueprintType: string, page: number, size: number) {
         const query: Record<string, any> = {};
-        if (route.query.page || internalPageNumber.value) query.page = parseInt((route.query.page || internalPageNumber.value) as string);
-        if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
+        if (page) query.page = page;
+        if (size) query.size = size;
         if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value;
         if (props.system) {
             query.tags = "system";
@@ -260,19 +274,20 @@
         }
     };
 
-    async function loadData() {
+    async function loadData({page, size}: {page: number; size: number; sort?: string}) {
+        // Skip while useRestoreUrl is restoring the URL — the route.query
+        // watcher will trigger resetAndReload once the restore lands.
+        if (!loadInit.value) return;
         const beforeLoadBlueprintType = props.blueprintType;
         try {
             await Promise.all([
                 loadTags(beforeLoadBlueprintType),
-                loadBlueprints(beforeLoadBlueprintType)
+                loadBlueprints(beforeLoadBlueprintType, page, size)
             ]);
             emit("loaded");
-            onDataLoaded();
         } catch {
             if (props.embed) error.value = true;
             else coreStore.error = 404;
-            onDataLoaded();
         }
     };
 
@@ -290,30 +305,34 @@
 
     const syncFromRoute = () => {
         searchText.value = route.query?.["filters[q][EQUALS]"] ?? "";
-        selectedTags.value = initSelectedTags();
+        const newTags = initSelectedTags();
+        const same = newTags.length === selectedTags.value.length
+            && newTags.every((t, i) => t === selectedTags.value[i]);
+        if (!same) {
+            selectedTags.value = newTags;
+        }
     };
 
     onMounted(() => {
         syncFromRoute();
-        load(onDataLoaded);
         docStore.docId = `blueprints.${props.blueprintType}`;
     });
 
     onActivated(() => {
         syncFromRoute();
-        load(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     watch(
         () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
         () => {
             syncFromRoute();
-            load(onDataLoaded);
+            dataTable.value?.resetAndReload();
         }
     );
 
     watch(searchText, () => {
-        load(onDataLoaded);
+        dataTable.value?.resetAndReload();
     });
 
     watch(selectedTags, (newTags) => {
@@ -326,7 +345,7 @@
             }
             router.push({query});
         } else {
-            load(onDataLoaded);
+            dataTable.value?.resetAndReload();
         }
     });
 
@@ -340,17 +359,15 @@
     })
 
     watch([() => props.blueprintType, () => props.blueprintKind], () => {
-        loadData();
+        dataTable.value?.resetAndReload();
     });
 
     defineExpose({
-        reload: () => load(onDataLoaded),
+        reload: () => dataTable.value?.reload(),
     });
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .blueprints {
         width: 100%;
@@ -367,16 +384,16 @@
             width: 100%;
             gap: .5rem;
             flex-wrap: wrap;
-            --el-button-bg-color: var(--ks-background-card);
+            --kel-button-bg-color: var(--ks-background-card);
 
             & > * {
                 max-width: 50%;
 
                 :deep(span) {
-                    border-radius: $border-radius !important;
+                    border-radius: 0.25rem !important;
                     border: 1px solid var(--ks-border-primary);
                     width: 100%;
-                    font-size: var(--el-font-size-extra-small);
+                    font-size: var(--ks-font-size-xs);
                     box-shadow: none;
                     text-overflow: ellipsis;
                     overflow: hidden;
@@ -421,7 +438,7 @@
             height: 24px;
         }
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             height: 100%;
             width: 100%;
         }
@@ -444,7 +461,7 @@
             color: var(--ks-content-primary);
             border-radius: 0.25rem;
             padding: 0.25rem 0.5rem;
-            font-size: 12px;
+            font-size: var(--ks-font-size-xs);
             background: var(--ks-tag-background-active);
         }
     }
@@ -454,7 +471,7 @@
         margin-top: 0.75rem;
 
         .title {
-            font-size: 1rem;
+            font-size: var(--ks-font-size-base);
             font-weight: 600;
             color: var(--ks-content-primary);
             line-height: 22px;
@@ -476,7 +493,7 @@
             flex: 1;
             flex-wrap: wrap;
 
-            :deep(.wrapper) {
+            :deep(.ks-task-icon) {
                 height: 1.5rem;
                 width: 1.5rem;
             }

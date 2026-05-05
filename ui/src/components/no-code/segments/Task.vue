@@ -11,8 +11,8 @@
 
 <script setup lang="ts">
     import {ref, watch, computed, inject, nextTick} from "vue";
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {SECTIONS} from "@kestra-io/design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,

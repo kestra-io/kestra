@@ -51,6 +51,12 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
+                server: {
+                    // No backend is running during tests — disable the API proxy so
+                    // Vite doesn't emit "[vite] http proxy error" for every story
+                    // that happens to trigger an /api request.
+                    proxy: {},
+                },
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],

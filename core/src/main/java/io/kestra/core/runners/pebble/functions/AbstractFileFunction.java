@@ -47,7 +47,7 @@ abstract class AbstractFileFunction implements KestraFunction {
     protected Provider<NamespaceFactory> namespaceFactory;
 
     @Inject
-    protected Provider<LocalFilesConfiguration> localFilesConfiguration;
+    protected LocalFilesConfiguration localFilesConfiguration;
 
     //    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
     //    private String serverType;
@@ -171,7 +171,7 @@ abstract class AbstractFileFunction implements KestraFunction {
     }
 
     private String checkEnabledLocalFileAndReturnNamespace(Map<String, Object> args, Map<String, String> flow) {
-        if (!localFilesConfiguration.get().enableFileFunctions()) {
+        if (!localFilesConfiguration.enableFileFunctions()) {
             throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
         }
 

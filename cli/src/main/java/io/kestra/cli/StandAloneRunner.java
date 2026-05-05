@@ -108,10 +108,10 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     }
 
     private Duration getRunningTimeout() {
-        if (serverConfig.standalone() != null && serverConfig.standalone().running() != null) {
-            return serverConfig.standalone().running().timeout();
-        }
-        return Duration.ofMinutes(1);
+        return Optional.ofNullable(serverConfig.standalone())
+            .map(ServerConfig.Standalone::running)
+            .map(ServerConfig.Standalone.Running::timeout)
+            .orElse(Duration.ofMinutes(1));
     }
 
     public boolean isRunning() {

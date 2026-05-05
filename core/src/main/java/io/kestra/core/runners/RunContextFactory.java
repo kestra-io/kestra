@@ -10,6 +10,7 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -68,7 +69,7 @@ public class RunContextFactory {
     protected EncryptionConfig encryptionConfig;
 
     @Inject
-    protected io.kestra.core.contexts.configuration.KestraConfiguration kestraConfiguration;
+    protected KestraConfiguration kestraConfiguration;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;

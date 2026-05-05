@@ -29,6 +29,7 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;
@@ -60,7 +61,7 @@ public class TriggerStateService {
         final TriggerEventQueue triggerEventQueue,
         final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
         final AsyncOperationWaiter asyncOperationWaiter,
-        final io.kestra.webserver.configuration.AsyncOperationsConfiguration asyncOperationsConfiguration) {
+        final AsyncOperationsConfiguration asyncOperationsConfiguration) {
         this.triggerRepository = triggerRepository;
         this.flowRepository = flowRepository;
         this.triggerEventQueue = triggerEventQueue;

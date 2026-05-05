@@ -51,7 +51,10 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.contexts.configuration.KestraConfiguration;
+import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.storages.*;
@@ -66,6 +69,7 @@ import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
+import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
@@ -204,24 +208,14 @@ public class ExecutionController {
     @Inject
     private ObjectMapper objectMapper;
 
-    private Integer initialPreviewRows;
-    private Integer maxPreviewRows;
-    private String kestraUrl;
-    private boolean enableLocalFilePreview;
-    private Duration asyncWaitTimeout;
+    @Inject
+    private ServerConfig serverConfig;
 
     @Inject
-    void initConfig(
-        io.kestra.core.server.ServerConfig serverConfig,
-        io.kestra.core.contexts.configuration.KestraConfiguration kestraConfiguration,
-        io.kestra.core.runners.configuration.LocalFilesConfiguration localFilesConfiguration,
-        io.kestra.webserver.configuration.AsyncOperationsConfiguration asyncOperationsConfiguration) {
-        this.initialPreviewRows = serverConfig.preview() != null ? serverConfig.preview().initialRows() : 100;
-        this.maxPreviewRows = serverConfig.preview() != null ? serverConfig.preview().maxRows() : 5000;
-        this.kestraUrl = kestraConfiguration.url();
-        this.enableLocalFilePreview = localFilesConfiguration.enablePreview();
-        this.asyncWaitTimeout = asyncOperationsConfiguration.waitTimeout();
-    }
+    private KestraConfiguration kestraConfiguration;
+
+    @Inject
+    private LocalFilesConfiguration localFilesConfiguration;
 
     @Inject
     private WebhookService webhookService;
@@ -230,7 +224,7 @@ public class ExecutionController {
     private AsyncOperationWaiter asyncOperationWaiter;
 
     @Inject
-    private io.kestra.webserver.configuration.AsyncOperationsConfiguration asyncOperationsConfiguration;
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -745,7 +739,7 @@ public class ExecutionController {
     }
 
     private URI executionUrl(Execution execution) {
-        String baseUrl = java.util.Optional.ofNullable(kestraUrl).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
+        String baseUrl = Optional.ofNullable(kestraConfiguration.url()).map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
         return URI.create(
             baseUrl + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId() : "")
                 + "/executions/"
@@ -824,7 +818,7 @@ public class ExecutionController {
 
     protected <T> HttpResponse<T> validateFile(Execution execution, URI path, String redirect) {
         if (LocalPath.FILE_SCHEME.equals(path.getScheme())) {
-            if (!enableLocalFilePreview) {
+            if (!localFilesConfiguration.enablePreview()) {
                 throw new SecurityException("Local file preview is disabled");
             }
             return null;
@@ -1136,7 +1130,7 @@ public class ExecutionController {
                         throw new RuntimeException(e);
                     }
                 },
-                asyncWaitTimeout
+                asyncOperationsConfiguration.waitTimeout()
             );
         } catch (TimeoutException e) {
             throw new HttpStatusException(HttpStatus.GATEWAY_TIMEOUT, "Operation timed out waiting for state transition");
@@ -1870,7 +1864,7 @@ public class ExecutionController {
                 extension,
                 fileStream,
                 charset,
-                maxRows == null ? this.initialPreviewRows : (maxRows > this.maxPreviewRows ? this.maxPreviewRows : maxRows)
+                maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
             );
 
             return HttpResponse.ok(fileRender);
@@ -2538,4 +2532,15 @@ public class ExecutionController {
         void accept(T first, U second) throws QueueException;
     }
 
+    private int getPreviewInitialRows() {
+        return Optional.ofNullable(serverConfig.preview())
+            .map(ServerConfig.Preview::initialRows)
+            .orElse(100);
+    }
+
+    private int getPreviewMaxRows() {
+        return Optional.ofNullable(serverConfig.preview())
+            .map(ServerConfig.Preview::maxRows)
+            .orElse(5000);
+    }
 }

@@ -2,9 +2,7 @@ package io.kestra.core.contexts;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
-
-import io.kestra.core.contexts.configuration.StorageTypeConfiguration;
+import io.kestra.core.contexts.configuration.StorageConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
@@ -38,7 +36,7 @@ public class KestraBeansFactory {
     StorageConfig storageConfig;
 
     @Inject
-    protected StorageTypeConfiguration storageTypeConfiguration;
+    protected StorageConfiguration storageConfiguration;
 
     @Singleton
     public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
@@ -65,7 +63,7 @@ public class KestraBeansFactory {
     }
 
     public String getStoragePluginId(StorageInterfaceFactory storageInterfaceFactory) {
-        return Optional.ofNullable(storageTypeConfiguration.type()).orElseThrow(
+        return storageConfiguration.type().orElseThrow(
             () -> new KestraRuntimeException(
                 String.format(
                     "No storage configured through the application property '%s'. Supported types are: %s", KESTRA_STORAGE_TYPE_CONFIG,

@@ -1,8 +1,9 @@
 package io.kestra.core.runners;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
-import io.kestra.core.runners.configuration.WorkingDirConfiguration;
+import io.kestra.core.runners.configuration.TasksConfiguration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -14,7 +15,7 @@ import jakarta.inject.Singleton;
 public class WorkingDirFactory {
 
     @Inject
-    protected WorkingDirConfiguration workingDirConfiguration;
+    protected TasksConfiguration tasksConfiguration;
 
     /**
      * Creates a new {@link WorkingDir} instance.
@@ -26,7 +27,9 @@ public class WorkingDirFactory {
     }
 
     private Path getTmpDir() {
-        String path = workingDirConfiguration.path();
-        return Path.of(path != null ? path : System.getProperty("java.io.tmpdir"));
+        return Optional.ofNullable(tasksConfiguration.tmpDir())
+            .map(TasksConfiguration.TmpDir::path)
+            .map(Path::of)
+            .orElse(Path.of(System.getProperty("java.io.tmpdir")));
     }
 }

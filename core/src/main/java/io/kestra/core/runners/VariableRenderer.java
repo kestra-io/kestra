@@ -267,7 +267,7 @@ public class VariableRenderer {
             this.cacheEnabled = true;
             this.cacheSize = 1000;
             this.recursiveRendering = false;
-            this.redactedEnvVars = java.util.List.of(
+            this.redactedEnvVars = List.of(
                 "KESTRA_PLUGINS_PATH", "KESTRA_CONFIGURATION_PATH", "KESTRA_CONFIGURATION", "KESTRA_JAVA_OPTS"
             );
         }
@@ -275,6 +275,6 @@ public class VariableRenderer {
         Boolean cacheEnabled;
         Integer cacheSize;
         Boolean recursiveRendering;
-        java.util.List<String> redactedEnvVars;
+        List<String> redactedEnvVars;
     }
 }

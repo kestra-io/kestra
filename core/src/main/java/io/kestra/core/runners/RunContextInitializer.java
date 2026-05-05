@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.TaskRun;
@@ -58,7 +59,7 @@ public class RunContextInitializer {
     protected RunContextCache runContextCache;
 
     @Inject
-    protected io.kestra.core.contexts.configuration.KestraConfiguration kestraConfiguration;
+    protected KestraConfiguration kestraConfiguration;
 
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.

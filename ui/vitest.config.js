@@ -16,6 +16,17 @@ const dirname =
 const MF_RUNTIME_STUB = path.resolve(dirname, "plugins/stub-module-federation-runtime.js");
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
 
+// @vue/compiler-dom passes a browser-only `decodeEntities` option to
+// @vue/compiler-core during Vite's Node.js transform phase. The core
+// compiler warns that the option is ignored in non-browser builds — this
+// is a known false-positive that produces no functional difference.
+// Suppress it so test output stays clean.
+const _consoleWarn = console.warn.bind(console);
+console.warn = (...args) => {
+    if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return;
+    _consoleWarn(...args);
+};
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
     plugins: [vue()],
@@ -42,6 +53,7 @@ export default defineConfig({
                 ],
                 test: {
                     name: "storybook",
+                    setupFiles: ["./.storybook/vitest.setup.js"],
                     browser: {
                         enabled: true,
                         headless: true,

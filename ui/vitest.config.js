@@ -26,6 +26,9 @@ export default defineConfig({
             {find: "module-federation/runtime", replacement: MF_RUNTIME_STUB},
         ]
     },
+    coverage: {
+        exclude: ["**/*.json"],
+    },
     test: {
         projects: [
             "./vitest.config.unit.js",

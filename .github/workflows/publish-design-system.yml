@@ -65,6 +65,9 @@ jobs:
 
       - name: Build
         run: npm run build --workspace @kestra-io/design-system
+      
+      - name: Remove export changes
+        run: git reset --hard HEAD
 
       - name: Bump version
         run: npm version --workspace @kestra-io/design-system ${{ inputs.increment }} --no-git-tag-version
@@ -77,8 +80,6 @@ jobs:
       - name: Commit and tag
         working-directory: .
         run: |
-          # remove changes to the export field of package.json (check tsdown.config)
-          git reset --hard HEAD
           # setup the bot for commit and tag
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

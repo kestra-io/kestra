@@ -63,6 +63,7 @@ public class DocumentationGenerator {
             })
             .autoEscaping(false)
             .extension(new Extension())
+            .allowOverrideCoreOperators(true)
             .build();
     }
 

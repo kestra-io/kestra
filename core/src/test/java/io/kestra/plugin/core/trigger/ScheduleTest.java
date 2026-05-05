@@ -354,7 +354,7 @@ class ScheduleTest {
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .when("{{isDateBefore(trigger.date, '2021-08-02T12:00:00+02:00')}}")
+            .when("{{trigger.date < '2021-08-02T12:00:00+02:00'}}")
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");

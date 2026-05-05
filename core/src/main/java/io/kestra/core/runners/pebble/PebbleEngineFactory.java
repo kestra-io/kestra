@@ -67,7 +67,8 @@ public class PebbleEngineFactory {
             .strictVariables(true)
             .cacheActive(this.variableConfiguration.getCacheEnabled())
             .newLineTrimming(false)
-            .autoEscaping(false);
+            .autoEscaping(false)
+            .allowOverrideCoreOperators(true);
 
         if (this.variableConfiguration.getCacheEnabled()) {
             PebbleLruCache cache = new PebbleLruCache(this.variableConfiguration.getCacheSize());

@@ -5,7 +5,7 @@
         :showAfter="250"
         :hideAfter="0"
         effect="light"
-        popperClass="trigger-card-tooltip"
+        :popperStyle="TOOLTIP_POPPER_STYLE"
     >
         <template #content>
             <KsMarkdown v-if="trigger.description" :content="trigger.description" />
@@ -22,7 +22,7 @@
                 >
                     EE
                 </KsTag>
-                <KsButton type="primary" class="add-button" @click="$emit('add', trigger)">
+                <KsButton type="primary" class="add-button">
                     {{ $t("triggers_add_card_add") }}
                 </KsButton>
             </div>
@@ -41,11 +41,19 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import {KsMarkdown, KsTaskIcon} from "@kestra-io/design-system";
-    import {usePluginsStore, type TriggerPluginDto} from "../../stores/plugins";
+    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins";
     import {triggerDisplayName} from "./triggerCatalog";
 
     const props = defineProps<{ trigger: TriggerPluginDto }>();
-    defineEmits<{ (e: "add", trigger: TriggerPluginDto): void }>();
+    defineEmits<{ add: [trigger: TriggerPluginDto] }>();
+
+    const TOOLTIP_POPPER_STYLE = {
+        maxWidth: "26.25rem",
+        fontSize: "0.75rem",
+        lineHeight: "1.5",
+        padding: "0.625rem 0.75rem",
+        color: "var(--ks-content-primary)",
+    };
 
     const pluginsStore = usePluginsStore();
     const displayName = computed(() => triggerDisplayName(props.trigger));
@@ -56,12 +64,12 @@
     .trigger-card {
         display: flex;
         flex-direction: column;
-        gap: .5rem;
+        gap: 0.5rem;
         padding: 1rem;
         border: 1px solid var(--ks-border-primary);
-        border-radius: .5rem;
+        border-radius: 0.5rem;
         background: var(--ks-background-card);
-        transition: all .12s ease;
+        transition: border-color 0.12s ease;
         cursor: pointer;
 
         &:hover {
@@ -72,7 +80,7 @@
     .card-header {
         display: flex;
         align-items: center;
-        gap: .5rem;
+        gap: 0.5rem;
         min-width: 0;
     }
 
@@ -92,38 +100,29 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: .875rem;
+        font-size: 0.875rem;
         font-weight: 600;
         color: var(--ks-content-primary);
     }
 
     .trigger-description {
-        font-size: .75rem;
+        font-size: 0.75rem;
         line-height: 1.4;
         color: var(--ks-content-tertiary);
         min-height: calc(1.4em * 2);
         display: -webkit-box;
+        line-clamp: 2;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
 
         code {
-            font-family: var(--font-monospace, monospace);
-            font-size: .92em;
-            padding: 1px .25rem;
+            font-family: var(--ks-font-family-mono);
+            font-size: 0.92em;
+            padding: 1px 0.25rem;
             border-radius: 3px;
-            background: color-mix(in srgb, var(--ks-content-link) 12%, transparent);
+            background: var(--ks-tag-background);
             color: var(--ks-content-primary);
         }
-    }
-</style>
-
-<style lang="scss">
-    .trigger-card-tooltip {
-        max-width: 26.25rem;
-        font-size: 0.75rem;
-        line-height: 1.5;
-        padding: 0.625rem 0.75rem;
-        color: var(--ks-content-primary);
     }
 </style>

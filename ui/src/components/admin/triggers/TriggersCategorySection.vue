@@ -40,7 +40,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
     import TriggerCatalogCard from "./TriggerCatalogCard.vue";
-    import type {TriggerPluginDto} from "../../stores/plugins";
+    import type {TriggerPluginDto} from "../../../stores/plugins";
 
     const props = defineProps<{
         title: string;
@@ -50,7 +50,7 @@
     }>();
 
     defineEmits<{
-        (e: "add", trigger: TriggerPluginDto): void;
+        add: [trigger: TriggerPluginDto];
     }>();
 
     const DEFAULT_VISIBLE_COUNT = 8;
@@ -61,9 +61,10 @@
         !props.expandAll && props.triggers.length > DEFAULT_VISIBLE_COUNT
     );
 
-    const visibleTriggers = computed(() => (props.expandAll || expanded.value || !canCollapse.value)
-        ? props.triggers
-        : props.triggers.slice(0, DEFAULT_VISIBLE_COUNT)
+    const visibleTriggers = computed(() =>
+        canCollapse.value && !expanded.value
+            ? props.triggers.slice(0, DEFAULT_VISIBLE_COUNT)
+            : props.triggers
     );
 </script>
 

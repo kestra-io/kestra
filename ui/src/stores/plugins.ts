@@ -198,10 +198,11 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     async function listTriggers(options: {group?: "core" | "realtime" | "app"; includeDeprecated?: boolean} = {}) {
-        const response = await axios.get<TriggerPluginDto[]>(`${apiUrlWithoutTenants()}/plugins/triggers`, {
-            params: options
-        });
-        return response.data;
+        const response = await axios.get<{results: TriggerPluginDto[]; total: number}>(
+            `${apiUrlWithoutTenants()}/plugins/triggers`,
+            {params: options}
+        );
+        return response.data.results;
     }
 
     async function listWithSubgroup(options: Record<string, any>) {

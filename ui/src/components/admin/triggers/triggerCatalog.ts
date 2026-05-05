@@ -1,5 +1,5 @@
-import {formatPluginTitle, getShortName} from "../../utils/global";
-import type {TriggerPluginDto} from "../../stores/plugins";
+import {formatPluginTitle, getShortName} from "../../../utils/global";
+import type {TriggerPluginDto} from "../../../stores/plugins";
 
 export const MCP_TOOL_TYPE = "io.kestra.core.models.triggers.McpTool";
 

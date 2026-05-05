@@ -311,16 +311,16 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {KsMessage} from "@kestra-io/design-system";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
+    import {useToast} from "../../../utils/toast";
+    import {useFlowStore} from "../../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
-    import {invisibleSpace} from "../../utils/filters";
-    import {storageKeys} from "../../utils/constants";
-    import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {useTriggerFilter} from "../filter/configurations";
-    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import {invisibleSpace} from "../../../utils/filters";
+    import {storageKeys} from "../../../utils/constants";
+    import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger";
+    import {useExecutionsStore} from "../../../stores/executions";
+    import {useTriggerFilter} from "../../filter/configurations";
+    import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
 
     import action from "../../models/action";
     import resource from "../../models/resource";
@@ -332,10 +332,10 @@
     import Delete from "vue-material-design-icons/Delete.vue";
 
     //@ts-expect-error No declaration file
-    import FlowRun from "../flows/FlowRun.vue";
-    import LogsWrapper from "../logs/LogsWrapper.vue";
-    import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
+    import FlowRun from "../../flows/FlowRun.vue";
+    import LogsWrapper from "../../logs/LogsWrapper.vue";
+    import TriggerAvatar from "../../flows/TriggerAvatar.vue";
+    import MarkdownTooltip from "../../layout/MarkdownTooltip.vue";
 
     const triggerFilter = useTriggerFilter();
 

@@ -10,12 +10,12 @@
             </div>
             <KsRadioGroup v-model="activeCategoryFilter" class="filter-group">
                 <KsRadioButton
-                    v-for="option in filterOptions"
-                    :key="option.value"
-                    :value="option.value"
-                    :label="option.value"
+                    v-for="value in FILTER_VALUES"
+                    :key="value"
+                    :value="value"
+                    :label="value"
                 >
-                    {{ option.label }}
+                    {{ $t(`triggers_add_filter_${value}`) }}
                 </KsRadioButton>
             </KsRadioGroup>
         </div>
@@ -30,15 +30,15 @@
         </div>
 
         <template v-else>
-            <template v-for="section in SECTIONS" :key="section.key">
-                <TriggersCategorySection
-                    v-if="showCategory(section.key)"
-                    v-bind="section.props"
-                    :triggers="groupedTriggers[section.key]"
-                    :expandAll="section.expandAll"
-                    @add="openConfigureModal"
-                />
-            </template>
+            <TriggersCategorySection
+                v-for="section in visibleSections"
+                :key="section.key"
+                :title="$t(`triggers_add_category_${section.key}_title`)"
+                :description="$t(`triggers_add_category_${section.key}_description`)"
+                :triggers="groupedTriggers[section.key]"
+                :expandAll="section.expandAll"
+                @add="openConfigureModal"
+            />
         </template>
 
         <TriggerConfigureModal
@@ -52,21 +52,26 @@
 
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue";
-    import {useI18n} from "vue-i18n";
 
-    import SearchField from "../layout/SearchField.vue";
+    import SearchField from "../../layout/SearchField.vue";
     import TriggersCategorySection from "./TriggersCategorySection.vue";
     import TriggerConfigureModal from "./TriggerConfigureModal.vue";
 
-    import {usePluginsStore, type TriggerPluginDto} from "../../stores/plugins";
+    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins";
     import {MCP_TOOL_TYPE} from "./triggerCatalog";
 
-    type CategoryFilter = "all" | "core" | "realtime" | "app";
-    type TriggerGroup = Exclude<CategoryFilter, "all">;
+    const TRIGGER_GROUPS = ["core", "realtime", "app"] as const;
+    const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const;
 
-    const CATEGORY_FILTER_VALUES: CategoryFilter[] = ["all", "core", "realtime", "app"];
+    type TriggerGroup = typeof TRIGGER_GROUPS[number];
+    type CategoryFilter = typeof FILTER_VALUES[number];
 
-    const {t} = useI18n({useScope: "global"});
+    const SECTIONS: { key: TriggerGroup; expandAll?: boolean }[] = [
+        {key: "core", expandAll: true},
+        {key: "realtime"},
+        {key: "app"},
+    ];
+
     const pluginsStore = usePluginsStore();
 
     const loading = ref(true);
@@ -76,66 +81,31 @@
     const selectedTrigger = ref<TriggerPluginDto | null>(null);
     const configureModalVisible = ref(false);
 
-    const SECTIONS = computed(() => [
-        {
-            key: "core" as TriggerGroup,
-            expandAll: true,
-            props: {
-                title: t("triggers_add_category_core_title"),
-                description: t("triggers_add_category_core_description"),
-            }
-        },
-        {
-            key: "realtime" as TriggerGroup,
-            props: {
-                title: t("triggers_add_category_realtime_title"),
-                description: t("triggers_add_category_realtime_description"),
-            }
-        },
-        {
-            key: "app" as TriggerGroup,
-            props: {
-                title: t("triggers_add_category_app_title"),
-                description: t("triggers_add_category_app_description"),
-            }
-        }
-    ]);
-
-    const filterOptions = computed(() => CATEGORY_FILTER_VALUES.map(value => ({
-        value,
-        label: t(`triggers_add_filter_${value}`)
-    })));
-
-    function filterBySearch(triggers: TriggerPluginDto[]) {
+    const groupedTriggers = computed(() => {
         const q = searchQuery.value.trim().toLowerCase();
-        if (!q) return triggers;
-
-        return triggers.filter(tr =>
+        const matches = (tr: TriggerPluginDto) =>
+            !q ||
             tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
-            (tr.description ?? "").toLowerCase().includes(q)
-        );
-    }
+            (tr.description ?? "").toLowerCase().includes(q);
 
-    const groupedTriggers = computed(() => {
-        const filtered = filterBySearch(allTriggers.value);
+        const inGroup = (group: TriggerGroup) =>
+            allTriggers.value.filter(tr => tr.group === group && matches(tr));
 
         return {
-            core: filtered
-                .filter(tr => tr.group === "core")
-                .sort((a, b) => {
-                    if (a.type === MCP_TOOL_TYPE) return -1;
-                    if (b.type === MCP_TOOL_TYPE) return 1;
-                    return a.name.localeCompare(b.name);
-                }),
-            realtime: filtered.filter(tr => tr.group === "realtime"),
-            app: filtered.filter(tr => tr.group === "app")
+            core: inGroup("core").sort((a, b) => {
+                if (a.type === MCP_TOOL_TYPE) return -1;
+                if (b.type === MCP_TOOL_TYPE) return 1;
+                return a.name.localeCompare(b.name);
+            }),
+            realtime: inGroup("realtime"),
+            app: inGroup("app"),
         };
     });
 
-    function showCategory(group: TriggerGroup): boolean {
-        return activeCategoryFilter.value === "all" || activeCategoryFilter.value === group;
-    }
+    const visibleSections = computed(() =>
+        SECTIONS.filter(s => activeCategoryFilter.value === "all" || activeCategoryFilter.value === s.key)
+    );
 
     const hasAnyVisibleTrigger = computed(() =>
         Object.values(groupedTriggers.value).some(triggers => triggers.length > 0)

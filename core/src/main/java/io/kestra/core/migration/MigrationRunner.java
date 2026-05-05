@@ -1,6 +1,7 @@
 package io.kestra.core.migration;
 
 import io.micronaut.context.annotation.Context;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import jakarta.annotation.PostConstruct;
@@ -74,8 +75,8 @@ public class MigrationRunner implements MigrationRunnerInterface {
 
     @Inject
     public MigrationRunner(
-        final MigrationLock lock,
-        final MigrationHistoryStore historyStore,
+        @Nullable final MigrationLock lock,
+        @Nullable final MigrationHistoryStore historyStore,
         final Collection<MigrationScript> scripts
     ) {
         this.lock = lock;
@@ -133,6 +134,10 @@ public class MigrationRunner implements MigrationRunnerInterface {
      */
     @Override
     public void runAlways() throws Exception {
+        if (lock == null || historyStore == null) {
+            log.debug("No migration backend available, skipping migration.");
+            return;
+        }
         if (scripts.isEmpty()) {
             log.debug("No migration scripts found, skipping migration.");
             return;
@@ -150,6 +155,10 @@ public class MigrationRunner implements MigrationRunnerInterface {
     @Override
     public void runOrFailIfLocked() throws MigrationLockedException, Exception {
         if (hasRun) {
+            return;
+        }
+        if (lock == null || historyStore == null) {
+            log.debug("No migration backend available, skipping migration.");
             return;
         }
         if (scripts.isEmpty()) {
@@ -179,6 +188,9 @@ public class MigrationRunner implements MigrationRunnerInterface {
      * @return list of pending scripts
      */
     public List<MigrationScript> pendingScripts() throws Exception {
+        if (historyStore == null) {
+            return List.of();
+        }
         historyStore.bootstrapIfNeeded();
         boolean isLegacyUpgrade = historyStore.detectLegacyUpgrade();
 

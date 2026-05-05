@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ui/packages/design-system
+        working-directory: ui
 
     steps:
       - name: Checkout
@@ -60,17 +60,17 @@ jobs:
 
       - name: Run tests
         if: inputs.skip-test != 'true'
-        run: npm run test
+        run: npm run test --workspace @kestra-io/design-system
 
       - name: Build
-        run: npm run build
+        run: npm run build --workspace @kestra-io/design-system
 
       - name: Bump version
-        run: npm version ${{ inputs.increment }} --no-git-tag-version
+        run: npm version --workspace @kestra-io/design-system ${{ inputs.increment }} --no-git-tag-version
 
       - name: Read new version
         id: version
-        run: echo "value=$(npm pkg get version | tr -d '"')" >> "$GITHUB_OUTPUT"
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/design-system | tr -d '"')" >> "$GITHUB_OUTPUT"
 
       - name: Commit and tag
         working-directory: .
@@ -78,6 +78,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ui/packages/design-system/package.json
+          git add ui/package-lock.json
           git commit -m "chore(deps): bump @kestra-io/design-system to v${{ steps.version.outputs.value }}"
           git tag "design-system/v${{ steps.version.outputs.value }}"
           git push origin HEAD --tags
@@ -89,7 +90,7 @@ jobs:
           npm version
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --workspace @kestra-io/design-system -- --access public
 
       - name: Create GitHub Release
         working-directory: .

@@ -106,8 +106,8 @@ public class ExecutionService {
     }
 
     /**
-     * Retry set the given taskRun in created state
-     * and return the execution in running state
+     * Retry set the given taskRun in the created state
+     * and return the execution in the running state
      **/
     public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
@@ -115,29 +115,36 @@ public class ExecutionService {
 
         if (taskRun.getParentTaskRunId() != null) {
             // we need to find the parent to remove any errors or finally tasks already executed
-            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
-            Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
-            if (parentTask instanceof FlowableTask<?> flowableTask) {
-                if (flowableTask.getErrors() != null) {
-                    List<Task> allErrors = Stream.concat(
-                        flowableTask.getErrors().stream()
-                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
-                            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
-                        flowableTask.getErrors().stream()
-                    )
-                        .toList();
-                    allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
-                }
+            // When the task run belongs to a Loop sub-execution its logical
+            // parent (the Loop task run) lives in the parent execution, not this one.
+            Optional<TaskRun> maybeParentTaskRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+                .filter(t -> t.getId().equals(taskRun.getParentTaskRunId()))
+                .findFirst();
+            if (maybeParentTaskRun.isPresent()) {
+                TaskRun parentTaskRun = maybeParentTaskRun.get();
+                Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+                if (parentTask instanceof FlowableTask<?> flowableTask) {
+                    if (flowableTask.getErrors() != null) {
+                        List<Task> allErrors = Stream.concat(
+                            flowableTask.getErrors().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
+                            flowableTask.getErrors().stream()
+                        )
+                            .toList();
+                        allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    }
 
-                if (flowableTask.getFinally() != null) {
-                    List<Task> allFinally = Stream.concat(
-                        flowableTask.getFinally().stream()
-                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
-                            .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
-                        flowableTask.getFinally().stream()
-                    )
-                        .toList();
-                    allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    if (flowableTask.getFinally() != null) {
+                        List<Task> allFinally = Stream.concat(
+                            flowableTask.getFinally().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
+                            flowableTask.getFinally().stream()
+                        )
+                            .toList();
+                        allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    }
                 }
             }
 
@@ -839,7 +846,19 @@ public class ExecutionService {
      * Climb up the hierarchy of parent taskruns and kill them all.
      */
     public Execution killParentTaskruns(TaskRun taskRun, Execution execution) throws InternalException {
-        var parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
+        if (execution.getTaskRunList() == null) {
+            return execution;
+        }
+
+        Optional<TaskRun> maybeParent = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getId().equals(taskRun.getParentTaskRunId()))
+            .findFirst();
+        // Parent may live in a different execution (e.g., a Loop task run in the parent execution when this is a Loop sub-execution).
+        // Skip kill propagation in that case, this is handled directly by killExecution.
+        if (maybeParent.isEmpty()) {
+            return execution;
+        }
+        var parentTaskRun = maybeParent.get();
         Execution newExecution = execution;
         if (parentTaskRun.getState().getCurrent() != State.Type.KILLED) {
             newExecution = newExecution.withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.KILLED));

@@ -471,11 +471,16 @@ public class ExecutorService {
         } else if (executor.getExecution().getLoopRun() != null) { // should always be true but better be safe
             // for LOOP executions: we only execute the loop itself, not the whole execution
             Loop loop = (Loop) executor.getFlow().findTaskByTaskId(executor.getExecution().getLoopRun().taskId());
+            // Build a minimal task run representing the Loop in the parent execution so that child task runs get parentTaskRunId set.
+            TaskRun loopTaskRun = TaskRun.builder()
+                .id(executor.getExecution().getLoopRun().taskRunId())
+                .build();
             nextTaskRuns = FlowableUtils.resolveSequentialNexts(
                 executor.getExecution(),
-                ResolvedTask.of(loop.getTasks()),
-                ResolvedTask.of(loop.getErrors()),
-                ResolvedTask.of(loop.getFinally())
+                FlowableUtils.resolveTasks(loop.getTasks(), loopTaskRun),
+                FlowableUtils.resolveTasks(loop.getErrors(), loopTaskRun),
+                FlowableUtils.resolveTasks(loop.getFinally(), loopTaskRun),
+                loopTaskRun
             );
         } else {
             // should never happen but better be safe

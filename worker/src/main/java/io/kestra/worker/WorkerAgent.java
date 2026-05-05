@@ -56,14 +56,14 @@ public class WorkerAgent extends AbstractWorker implements Worker {
     /**
      * {@inheritDoc}
      * <p>
-     * Resolves the worker group by performing the gRPC handshake against the
-     * worker controller. The controller may override the user-supplied key
-     * with a server-assigned group.
+     * Resolves the Worker Queue id by performing the gRPC handshake against
+     * the worker controller. The controller normalizes an unresolved id to
+     * {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}.
      */
     @Override
-    protected String resolveWorkerGroup(String workerGroupKey) {
+    protected String resolveWorkerGroupId() {
         WorkerConnectionService.ConnectionResult connectionResult =
-            workerConnectionService.connect(getId(), workerGroupKey);
-        return connectionResult.workerGroup();
+            workerConnectionService.connect(getId());
+        return connectionResult.workerGroupId();
     }
 }

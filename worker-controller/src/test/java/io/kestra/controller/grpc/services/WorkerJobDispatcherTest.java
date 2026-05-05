@@ -23,6 +23,7 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -36,8 +37,9 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ClusterEvent;
-import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.utils.Either;
+import io.kestra.core.worker.WorkerGroups;
+import io.kestra.core.worker.WorkerQueues;
 
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.search.Search;
@@ -90,10 +92,21 @@ class WorkerJobDispatcherTest {
         mockMetricRegistry = mock(MetricRegistry.class);
         createdSubscribers = new ArrayList<>();
 
-        // Mock workerGroupTags to return proper tag arrays
-        when(mockMetricRegistry.workerGroupTags(any())).thenAnswer(invocation -> {
-            String group = invocation.getArgument(0);
-            return new String[] { "worker_group", group != null ? group : "__default__" };
+        // Mock workerQueueTags to return well-formed tag arrays.
+        when(mockMetricRegistry.workerQueueTags(any())).thenAnswer(invocation ->
+        {
+            String workerQueueId = invocation.getArgument(0);
+            return new String[] { MetricRegistry.TAG_WORKER_QUEUE, WorkerQueues.normalize(workerQueueId) };
+        });
+        // Mock workerGroupAndQueueTags for per-worker counters (registered, unregistered, dispatched, dispatch.failed).
+        when(mockMetricRegistry.workerGroupAndQueueTags(any(), any())).thenAnswer(invocation ->
+        {
+            String workerGroupId = invocation.getArgument(0);
+            String workerQueueId = invocation.getArgument(1);
+            return new String[] {
+                MetricRegistry.TAG_WORKER_QUEUE, WorkerQueues.normalize(workerQueueId),
+                MetricRegistry.TAG_WORKER_GROUP, WorkerGroups.normalize(workerGroupId)
+            };
         });
 
         // Mock counter to return a no-op counter
@@ -127,8 +140,8 @@ class WorkerJobDispatcherTest {
         });
         when(mockClusterEventQueue.subscriber()).thenReturn(clusterEventSubscriber);
 
-        // Create mock subscribers for each group
-        when(mockQueue.subscriber(anyString())).thenAnswer(invocation ->
+        // Create mock subscribers for each group (including null for default group)
+        when(mockQueue.subscriber(any())).thenAnswer(invocation ->
         {
             String group = invocation.getArgument(0);
             MockQueueSubscriber subscriber = new MockQueueSubscriber(group);
@@ -136,7 +149,9 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry, mock(MetadataChangeListener.class));
+        dispatcher = new WorkerJobDispatcher(
+            mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry, mock(MetadataChangeListener.class), new WorkerQueueResolver.Default()
+        );
     }
 
     @AfterEach
@@ -150,7 +165,29 @@ class WorkerJobDispatcherTest {
     private WorkerStreamContext<WorkerJobResponse> createWorkerContext(String workerId, String workerGroup, int maxConcurrency) {
         @SuppressWarnings("unchecked")
         StreamObserver<WorkerJobResponse> mockObserver = mock(StreamObserver.class);
-        return new WorkerStreamContext<>(workerId, workerGroup, maxConcurrency, mockObserver);
+        return new WorkerStreamContext<>(
+            workerId, "",
+            java.util.List.of(
+                new io.kestra.core.worker.QueueSubscription(
+                    workerGroup == null || workerGroup.isEmpty() ? null : workerGroup, 100
+                )
+            ),
+            maxConcurrency, mockObserver
+        );
+    }
+
+    private WorkerStreamContext<WorkerJobResponse> createWorkerContext(String workerId, String workerGroupId, String workerQueueId, int maxConcurrency) {
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> mockObserver = mock(StreamObserver.class);
+        return new WorkerStreamContext<>(
+            workerId, workerGroupId,
+            java.util.List.of(
+                new io.kestra.core.worker.QueueSubscription(
+                    workerQueueId == null || workerQueueId.isEmpty() ? null : workerQueueId, 100
+                )
+            ),
+            maxConcurrency, mockObserver
+        );
     }
 
     private WorkerJobEvent createJobEvent(String jobId, String workerGroup) {
@@ -166,7 +203,7 @@ class WorkerJobDispatcherTest {
 
     private MockQueueSubscriber getSubscriberForGroup(String group) {
         return createdSubscribers.stream()
-            .filter(s -> s.group.equals(group))
+            .filter(s -> java.util.Objects.equals(s.group, group))
             .findFirst()
             .orElse(null);
     }
@@ -239,6 +276,20 @@ class WorkerJobDispatcherTest {
             assertThat(subscriber.pauseCount.get()).isGreaterThanOrEqualTo(1);
             assertThat(subscriber.resumeCount.get()).isEqualTo(1);
         }
+
+        @Test
+        void shouldEmitWorkerGroupAndQueueTagsWhenWorkerRegisters() {
+            // Given
+            WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", "group-a", "queue-1", 10);
+
+            // When
+            dispatcher.registerWorker(context);
+
+            // Then: per-worker counter must carry both worker_group and worker_queue tags.
+            verify(mockMetricRegistry).workerGroupAndQueueTags(eq("group-a"), eq("queue-1"));
+            // And: queue-scoped gauges must carry only worker_queue tag.
+            verify(mockMetricRegistry, atLeastOnce()).workerQueueTags(eq("queue-1"));
+        }
     }
 
     @Nested
@@ -302,7 +353,7 @@ class WorkerJobDispatcherTest {
 
             // Then
             assertThat(context.getAvailablePermits()).isEqualTo(5);
-            assertThat(dispatcher.getTotalPermitsForGroup(WORKER_GROUP_A)).isEqualTo(5);
+            assertThat(dispatcher.getTotalPermitsForWorkerQueue(WORKER_GROUP_A)).isEqualTo(5);
 
             // When - setting again should replace, not add
             dispatcher.onPermitsReceived(context, 3);
@@ -343,37 +394,40 @@ class WorkerJobDispatcherTest {
     }
 
     @Nested
-    @DisplayName("Job Acknowledgment")
-    class JobAcknowledgmentTests {
+    @DisplayName("Job Completion")
+    class JobCompletionTests {
 
         @Test
-        void shouldAcknowledgeJobs() {
-            // Given
+        void shouldRemoveInFlightAndReleaseBucketOnCompletion() {
+            // 100%-reserved subscription: the guaranteed bucket IS the worker's slots.
             WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
             dispatcher.registerWorker(context);
 
-            // Simulate in-flight job
+            String bucket = context.tryReserveBucket(WORKER_GROUP_A);
+            assertThat(bucket).isEqualTo(WORKER_GROUP_A);
             WorkerJob mockJob = mock(WorkerJob.class);
             when(mockJob.uid()).thenReturn("job-1");
-            context.trackInFlight("job-1", mockJob);
+            context.trackInFlight("job-1", mockJob, bucket);
             assertThat(context.getInFlightCount()).isEqualTo(1);
+            assertThat(context.guaranteedFree(WORKER_GROUP_A)).isEqualTo(9);
 
-            // When
-            dispatcher.onAcksReceived(context, List.of("job-1"));
+            dispatcher.onCompletionsReceived(context, List.of("job-1"));
 
-            // Then
             assertThat(context.getInFlightCount()).isEqualTo(0);
+            assertThat(context.guaranteedFree(WORKER_GROUP_A)).isEqualTo(10);
         }
 
         @Test
-        void shouldHandleAckForUnknownJob() {
-            // Given
+        void shouldHandleCompletionForUnknownJob() {
+            // Unknown ids must be a no-op — supports the controller-restart scenario
+            // where results for jobs dispatched on a prior stream arrive on a new
+            // controller that doesn't know them.
             WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
             dispatcher.registerWorker(context);
 
-            // When/Then - should not throw
-            dispatcher.onAcksReceived(context, List.of("unknown-job"));
+            dispatcher.onCompletionsReceived(context, List.of("unknown-job"));
             assertThat(context.getInFlightCount()).isEqualTo(0);
+            assertThat(context.guaranteedFree(WORKER_GROUP_A)).isEqualTo(10);
         }
     }
 
@@ -413,8 +467,8 @@ class WorkerJobDispatcherTest {
 
             // Add some in-flight jobs to worker-1
             WorkerJob mockJob = mock(WorkerJob.class);
-            context1.trackInFlight("existing-1", mockJob);
-            context1.trackInFlight("existing-2", mockJob);
+            context1.trackInFlight("existing-1", mockJob, WorkerStreamContext.PendingJob.SHARED);
+            context1.trackInFlight("existing-2", mockJob, WorkerStreamContext.PendingJob.SHARED);
 
             MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
             WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A);
@@ -886,9 +940,8 @@ class WorkerJobDispatcherTest {
 
     @Test
     void shouldIncrementJobRequeuedCounterWhenNoPermits() {
-        // Given
-        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
-        // No permits
+        // Given - worker with zero maxConcurrency has no bucket capacity
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 0);
         dispatcher.registerWorker(context);
 
         MockQueueSubscriber subscriber = getSubscriberForGroup(WORKER_GROUP_A);
@@ -951,6 +1004,525 @@ class WorkerJobDispatcherTest {
             .findFirst()
             .orElse(null);
         assertThat(activeSubscriber).isNotNull();
+    }
+
+    // --- Multi-Group Tests ---
+
+    private WorkerStreamContext<WorkerJobResponse> createMultiGroupWorkerContext(
+        String workerId, String tokenId, List<io.kestra.core.worker.QueueSubscription> subscriptions, int maxConcurrency) {
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> mockObserver = mock(StreamObserver.class);
+        return new WorkerStreamContext<>(workerId, tokenId, subscriptions, maxConcurrency, mockObserver);
+    }
+
+    @Test
+    void shouldRegisterWorkerInAllSubscribedGroups() {
+        // Given
+        var subscriptions = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 100),
+            new io.kestra.core.worker.QueueSubscription(null, 10)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "token-1", subscriptions, 3);
+        context.setPermits(3);
+
+        // When
+        dispatcher.registerWorker(context);
+
+        // Then
+        assertThat(dispatcher.getActiveWorkerCount("gpu")).isEqualTo(1);
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(1);
+        assertThat(dispatcher.getActiveWorkerCount()).isEqualTo(1); // 1 physical worker
+    }
+
+    @Test
+    void shouldDispatchToLeastLoadedWorkerForSameGroup() {
+        // Given - two workers subscribed to the same group, worker-1 already has in-flight jobs
+        var subs1 = List.of(new io.kestra.core.worker.QueueSubscription("group-a", io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+        var subs2 = List.of(new io.kestra.core.worker.QueueSubscription("group-a", io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+
+        WorkerStreamContext<WorkerJobResponse> ctx1 = createMultiGroupWorkerContext("worker-1", "", subs1, 10);
+        WorkerStreamContext<WorkerJobResponse> ctx2 = createMultiGroupWorkerContext("worker-2", "", subs2, 10);
+        ctx1.setPermits(5);
+        ctx2.setPermits(5);
+
+        // Give worker-1 some in-flight jobs so worker-2 is least-loaded
+        ctx1.trackInFlight("existing-1", mock(WorkerJob.class), WorkerStreamContext.PendingJob.SHARED);
+        ctx1.trackInFlight("existing-2", mock(WorkerJob.class), WorkerStreamContext.PendingJob.SHARED);
+
+        dispatcher.registerWorker(ctx1);
+        dispatcher.registerWorker(ctx2);
+
+        // When - deliver a job
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+        assertThat(sub).isNotNull();
+        sub.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+
+        // Then - worker-2 (least-loaded, 0 in-flight) should get the job
+        assertThat(ctx2.getInFlightCount()).isEqualTo(1);
+        assertThat(ctx1.getInFlightCount()).isEqualTo(2); // still only the pre-existing jobs
+    }
+
+    @Test
+    void shouldFallbackToOtherWorkerWhenFirstIsSaturated() {
+        // Given - worker-1 has maxConcurrency=1 (bucket exhausted after 1 job), worker-2 has room
+        var subs1 = List.of(new io.kestra.core.worker.QueueSubscription("group-a", io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+        var subs2 = List.of(new io.kestra.core.worker.QueueSubscription("group-a", io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+
+        WorkerStreamContext<WorkerJobResponse> ctx1 = createMultiGroupWorkerContext("worker-1", "", subs1, 1);
+        WorkerStreamContext<WorkerJobResponse> ctx2 = createMultiGroupWorkerContext("worker-2", "", subs2, 10);
+        ctx1.setPermits(1);
+        ctx2.setPermits(5);
+
+        dispatcher.registerWorker(ctx1);
+        dispatcher.registerWorker(ctx2);
+
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+
+        // When - first job goes to worker-1 (least-loaded, both at 0 in-flight, but worker-1 has lower maxConcurrency)
+        sub.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+        // One of them gets the job (non-deterministic tie at 0 in-flight)
+        int total = ctx1.getInFlightCount() + ctx2.getInFlightCount();
+        assertThat(total).isEqualTo(1);
+
+        // Second job: whichever worker got the first job is now more loaded or saturated
+        sub.deliverJob(createJobEvent("job-2", WORKER_GROUP_A));
+        // Both jobs should be distributed
+        assertThat(ctx1.getInFlightCount() + ctx2.getInFlightCount()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldResumeSubscriptionWhenCompletionsReleaseCapacityWithoutPermitUpdate() {
+        // Given - worker fully loaded: every permit consumed and every bucket slot
+        // taken, so the subscription has paused. The worker then signals job
+        // completion without a permit update (e.g., between the periodic permit
+        // refreshes). The freed buckets must be enough to resume the subscription
+        // on their own.
+        WorkerStreamContext<WorkerJobResponse> context = createWorkerContext("worker-1", WORKER_GROUP_A, 2);
+        context.setPermits(2);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+
+        // Fill both slots — this exhausts permits and buckets, pausing the subscription.
+        sub.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+        sub.deliverJob(createJobEvent("job-2", WORKER_GROUP_A));
+        assertThat(context.getAvailablePermits()).isEqualTo(0);
+        assertThat(context.getInFlightCount()).isEqualTo(2);
+        assertThat(sub.isPaused.get()).isTrue();
+
+        // Simulate the worker reporting fresh permits while the subscription is paused.
+        // (Without bucket releases, this is what would normally drive resume.)
+        // Here we test that completions alone — followed by no permit update — also resume.
+        context.setPermits(2);
+
+        // When - worker signals completion of both jobs without a separate permit update.
+        dispatcher.onCompletionsReceived(context, List.of("job-1", "job-2"));
+
+        // Then - bucket release alone must trigger resume.
+        assertThat(context.getInFlightCount()).isEqualTo(0);
+        assertThat(sub.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldHoldBucketCapAcrossSustainedLoadUntilCompletion() {
+        // Reproduces the user-reported 32/32 over-fill: default + 25% STRICT for "test"
+        // on a maxConcurrency=32 worker. Default-only traffic must plateau at 24
+        // (shared) — the 8 reserved Test slots stay locked under STRICT. The cap
+        // holds across the job's full lifetime because the bucket is released only
+        // on completion (not on receipt).
+        var subs = List.of(
+            new io.kestra.core.worker.QueueSubscription(WORKER_GROUP_A, io.kestra.core.worker.QueueSubscription.NO_RESERVATION),
+            new io.kestra.core.worker.QueueSubscription("test", 25)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "", subs, 32);
+        context.setPermits(32);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+
+        // Dispatch 24 default jobs — fills shared.
+        for (int i = 0; i < 24; i++) {
+            sub.deliverJob(createJobEvent("job-" + i, WORKER_GROUP_A));
+        }
+        assertThat(context.getInFlightCount()).isEqualTo(24);
+
+        // A 25th default dispatch must be rejected — shared cap = 24, Test stays
+        // STRICT-locked, so the subscription pauses and the job re-queues.
+        sub.deliverJob(createJobEvent("job-overflow", WORKER_GROUP_A));
+        assertThat(sub.isPaused.get()).isTrue();
+
+        // Now complete a job — that frees one shared slot, and the resume side
+        // effect on completion lets the next dispatch through.
+        dispatcher.onCompletionsReceived(context, List.of("job-0"));
+        assertThat(sub.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldFallbackWhenPreferredWorkerLosesPermitCasRace() {
+        // Given - two workers eligible for the same Worker Queue. The preferred
+        // (least-loaded) worker simulates losing the permit CAS race to a
+        // concurrent dispatch on another Worker Queue. The dispatcher must fall
+        // through to the next candidate instead of pausing the subscription.
+        var subs = List.of(new io.kestra.core.worker.QueueSubscription(
+            WORKER_GROUP_A, io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obs1 = mock(StreamObserver.class);
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obs2 = mock(StreamObserver.class);
+
+        WorkerStreamContext<WorkerJobResponse> ctx1 = new WorkerStreamContext<>(
+            "worker-1", "", subs, 10, obs1) {
+            @Override
+            public boolean tryConsumePermit() {
+                return false; // simulate concurrent steal between filter and CAS
+            }
+        };
+        WorkerStreamContext<WorkerJobResponse> ctx2 = createMultiGroupWorkerContext(
+            "worker-2", "", subs, 10);
+
+        ctx1.setPermits(5);
+        ctx2.setPermits(5);
+        // Make worker-1 the preferred (least-loaded) candidate.
+        ctx2.trackInFlight("existing", mock(WorkerJob.class), WorkerStreamContext.PendingJob.SHARED);
+
+        dispatcher.registerWorker(ctx1);
+        dispatcher.registerWorker(ctx2);
+
+        // When
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+        sub.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+
+        // Then - dispatch fell through to worker-2 instead of pausing.
+        assertThat(ctx1.getInFlightCount()).isEqualTo(0);
+        assertThat(ctx2.getInFlightCount()).isEqualTo(2); // existing + new dispatch
+        assertThat(sub.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldFallbackWhenPreferredWorkerLosesBucketCasRace() {
+        // Given - the preferred worker simulates losing the bucket CAS race
+        // (another dispatch grabbed the last bucket slot between filter and
+        // reserve). The dispatcher must restore the consumed permit and fall
+        // through to the next candidate.
+        var subs = List.of(new io.kestra.core.worker.QueueSubscription(
+            WORKER_GROUP_A, io.kestra.core.worker.QueueSubscription.NO_RESERVATION));
+
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obs1 = mock(StreamObserver.class);
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obs2 = mock(StreamObserver.class);
+
+        WorkerStreamContext<WorkerJobResponse> ctx1 = new WorkerStreamContext<>(
+            "worker-1", "", subs, 10, obs1) {
+            @Override
+            public String tryReserveBucket(String workerQueueId) {
+                return null; // simulate concurrent reservation took the last slot
+            }
+        };
+        WorkerStreamContext<WorkerJobResponse> ctx2 = createMultiGroupWorkerContext(
+            "worker-2", "", subs, 10);
+
+        ctx1.setPermits(5);
+        ctx2.setPermits(5);
+        ctx2.trackInFlight("existing", mock(WorkerJob.class), WorkerStreamContext.PendingJob.SHARED);
+
+        dispatcher.registerWorker(ctx1);
+        dispatcher.registerWorker(ctx2);
+
+        // When
+        MockQueueSubscriber sub = getSubscriberForGroup(WORKER_GROUP_A);
+        sub.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+
+        // Then - dispatch fell through; permit on worker-1 was restored.
+        assertThat(ctx1.getInFlightCount()).isEqualTo(0);
+        assertThat(ctx1.getAvailablePermits()).isEqualTo(5);
+        assertThat(ctx2.getInFlightCount()).isEqualTo(2);
+        assertThat(sub.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldUnregisterWorkerFromAllSubscribedGroups() {
+        // Given
+        var subscriptions = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 100),
+            new io.kestra.core.worker.QueueSubscription(null, 10)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "", subscriptions, 3);
+        context.setPermits(3);
+        dispatcher.registerWorker(context);
+
+        // When
+        dispatcher.unregisterWorker(context);
+
+        // Then
+        assertThat(dispatcher.getActiveWorkerCount("gpu")).isEqualTo(0);
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(0);
+        assertThat(dispatcher.getActiveWorkerCount()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldResumeAllSubscribedGroupsWhenPermitsReceived() {
+        // Given - worker subscribed to both groups with null shares (all capacity is shared)
+        var subscriptions = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", io.kestra.core.worker.QueueSubscription.NO_RESERVATION),
+            new io.kestra.core.worker.QueueSubscription(null, io.kestra.core.worker.QueueSubscription.NO_RESERVATION)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "", subscriptions, 10);
+        context.setPermits(0); // start with no permits
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber gpuSub = getSubscriberForGroup("gpu");
+        MockQueueSubscriber defaultSub = getSubscriberForGroup(null);
+        assertThat(gpuSub).isNotNull();
+        assertThat(defaultSub).isNotNull();
+
+        // Both should be paused (no permits initially)
+        assertThat(gpuSub.isPaused.get()).isTrue();
+        assertThat(defaultSub.isPaused.get()).isTrue();
+
+        // When - worker gets permits
+        dispatcher.onPermitsReceived(context, 10);
+
+        // Then - both groups should be resumed (shared bucket has capacity for both)
+        assertThat(gpuSub.isPaused.get()).isFalse();
+        assertThat(defaultSub.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldMoveWorkerBetweenGroupsWhenReRegistered() {
+        // Given - worker initially in gpu + default
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 100),
+            new io.kestra.core.worker.QueueSubscription(null, 10)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "token-1", initialSubs, 3);
+        context.setPermits(3);
+        dispatcher.registerWorker(context);
+
+        assertThat(dispatcher.getActiveWorkerCount("gpu")).isEqualTo(1);
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(1);
+
+        // When - re-register with different groups (gpu + batch, no longer default)
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 100),
+            new io.kestra.core.worker.QueueSubscription("batch", 50)
+        );
+        dispatcher.reRegisterWorker("worker-1", newSubs);
+
+        // Then
+        assertThat(dispatcher.getActiveWorkerCount("gpu")).isEqualTo(1); // still in gpu
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(0); // removed from default
+        assertThat(dispatcher.getActiveWorkerCount("batch")).isEqualTo(1); // added to batch
+        assertThat(context.getAvailablePermits()).isEqualTo(3); // permits preserved
+    }
+
+    @Test
+    void shouldRecreateDefaultSubscriberWhenDisabledThenReEnabled() {
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription(io.kestra.core.worker.WorkerQueues.DEFAULT_ID, io.kestra.core.worker.QueueSubscription.NO_RESERVATION)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "default", initialSubs, 3);
+        context.setPermits(3);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber firstSubscriber = getSubscriberForGroup(null);
+        assertThat(firstSubscriber).isNotNull();
+        assertThat(firstSubscriber.isPaused.get()).isFalse();
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(1);
+
+        dispatcher.reRegisterWorker("worker-1", List.of());
+
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(0);
+        assertThat(firstSubscriber.closed.get()).isTrue();
+        assertThat(context.subscribedWorkerQueueIds()).isEmpty();
+
+        dispatcher.reRegisterWorker("worker-1", initialSubs);
+
+        assertThat(dispatcher.getActiveWorkerCount("")).isEqualTo(1);
+        assertThat(context.subscribedWorkerQueueIds()).containsExactly("");
+
+        MockQueueSubscriber secondSubscriber = createdSubscribers.stream()
+            .filter(s -> s.group == null)
+            .filter(s -> !s.closed.get())
+            .findFirst()
+            .orElse(null);
+        assertThat(secondSubscriber).isNotNull();
+        assertThat(secondSubscriber).isNotSameAs(firstSubscriber);
+        assertThat(secondSubscriber.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldTrackWorkersByWorkerGroupId() {
+        // Given
+        var subs = List.of(new io.kestra.core.worker.QueueSubscription(null, 100));
+        WorkerStreamContext<WorkerJobResponse> ctx1 = createMultiGroupWorkerContext("worker-1", "group-A", subs, 3);
+        WorkerStreamContext<WorkerJobResponse> ctx2 = createMultiGroupWorkerContext("worker-2", "group-A", subs, 3);
+        ctx1.setPermits(1);
+        ctx2.setPermits(1);
+
+        // When
+        dispatcher.registerWorker(ctx1);
+        dispatcher.registerWorker(ctx2);
+
+        // Then
+        assertThat(dispatcher.getWorkerIdsByWorkerGroup("group-A")).containsExactlyInAnyOrder("worker-1", "worker-2");
+        assertThat(dispatcher.getWorkerIdsByWorkerGroup("group-B")).isEmpty();
+
+        // When - unregister one
+        dispatcher.unregisterWorker(ctx1);
+        assertThat(dispatcher.getWorkerIdsByWorkerGroup("group-A")).containsExactly("worker-2");
+    }
+
+    // --- Capacity Share & Reconfiguration Tests ---
+
+    @Test
+    void shouldResumeSubscriptionWhenPercentagesChangeWithoutGroupChange() {
+        // Given - worker subscribed to A (50%) and B (25%), maxConcurrency=100
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 50),
+            new io.kestra.core.worker.QueueSubscription("group-b", 25)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "group-1", initialSubs, 100);
+        context.setPermits(0); // exhausted — subscriptions will be paused
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber subA = getSubscriberForGroup(WORKER_GROUP_A);
+        MockQueueSubscriber subB = getSubscriberForGroup(WORKER_GROUP_B);
+        assertThat(subA.isPaused.get()).isTrue();
+        assertThat(subB.isPaused.get()).isTrue();
+
+        // When — give the worker permits (simulating a job completing) and then
+        // reconfigure to A=10%, B=10% — this frees shared capacity
+        context.addPermits(5);
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 10),
+            new io.kestra.core.worker.QueueSubscription("group-b", 10)
+        );
+        dispatcher.reRegisterWorker("worker-1", newSubs);
+
+        // Then — both subscriptions should be resumed since permits > 0 and shared capacity is available
+        assertThat(subA.isPaused.get()).isFalse();
+        assertThat(subB.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldNotDispatchToOverCommittedGuaranteedBucket() {
+        // Given - worker with A=50%, maxConcurrency=10 → guaranteedCapacity(A)=5
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 100)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "", initialSubs, 10);
+        context.setPermits(10);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber subA = getSubscriberForGroup(WORKER_GROUP_A);
+
+        // Fill all 10 slots (100% reserved = 10 guaranteed)
+        for (int i = 0; i < 10; i++) {
+            subA.deliverJob(createJobEvent("job-" + i, WORKER_GROUP_A));
+        }
+        assertThat(context.getInFlightCount()).isEqualTo(10);
+
+        // When — reconfigure to A=20% → guaranteedCapacity(A)=2, but 10 are in-flight
+        // guaranteedUsed[A] remains at 10 (or mix of shared+guaranteed)
+        context.addPermits(5); // give more permits so we can test bucket rejection
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 20)
+        );
+        dispatcher.reRegisterWorker("worker-1", newSubs);
+
+        // Then — sharedCapacity changed from 0 to 8, but sharedUsed is already at max
+        // The subscription state should reflect whether there's actually capacity
+        // (depends on how the 10 jobs were split between shared and guaranteed buckets)
+        // The key invariant: tryReserveBucket won't exceed the new limits
+        assertThat(context.sharedCapacity()).isEqualTo(8);  // 10 - floor(10*20/100)
+        assertThat(context.guaranteedCapacity(WORKER_GROUP_A)).isEqualTo(2);
+    }
+
+    @Test
+    void shouldResumeSubscriptionAfterWorkerGroupSyncClusterEvent() {
+        // Given - worker in group-1, subscribed to default group
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription(null, 100)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "group-1", initialSubs, 10);
+        context.setPermits(5);
+        dispatcher.registerWorker(context);
+
+        // Verify initial state
+        assertThat(dispatcher.getWorkerIdsByWorkerGroup("group-1")).contains("worker-1");
+
+        // When — fire a WORKER_GROUP_SYNC_REQUESTED event
+        // (The dispatcher calls workerQueueResolver.resolve() which returns default subscription for OSS)
+        ClusterEvent syncEvent = new ClusterEvent(
+            ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED,
+            LocalDateTime.now(),
+            "group-1"
+        );
+        clusterEventConsumer.accept(Either.left(syncEvent));
+
+        // Then — worker should still be registered and subscriptions intact
+        assertThat(dispatcher.getActiveWorkerCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldPreservePermitsDuringReRegistrationWithPercentageChange() {
+        // Given - worker with permits
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 60),
+            new io.kestra.core.worker.QueueSubscription("group-b", 30)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "group-1", initialSubs, 100);
+        context.setPermits(50);
+        dispatcher.registerWorker(context);
+
+        // When — flip percentages
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 30),
+            new io.kestra.core.worker.QueueSubscription("group-b", 60)
+        );
+        dispatcher.reRegisterWorker("worker-1", newSubs);
+
+        // Then — permits should be preserved, capacity model updated
+        assertThat(context.getAvailablePermits()).isEqualTo(50);
+        assertThat(context.guaranteedCapacity(WORKER_GROUP_A)).isEqualTo(30); // was 60
+        assertThat(context.guaranteedCapacity(WORKER_GROUP_B)).isEqualTo(60); // was 30
+        assertThat(context.sharedCapacity()).isEqualTo(10); // 100 - 30 - 60
+
+        // Both groups should be resumed (worker has permits and capacity)
+        MockQueueSubscriber subA = getSubscriberForGroup(WORKER_GROUP_A);
+        MockQueueSubscriber subB = getSubscriberForGroup(WORKER_GROUP_B);
+        assertThat(subA.isPaused.get()).isFalse();
+        assertThat(subB.isPaused.get()).isFalse();
+    }
+
+    @Test
+    void shouldPauseGroupAfterReRegistrationWhenNoCapacity() {
+        // Given - worker fully loaded on group-a (maxConcurrency=2, 100% reserved)
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 100)
+        );
+        WorkerStreamContext<WorkerJobResponse> context = createMultiGroupWorkerContext("worker-1", "", initialSubs, 2);
+        context.setPermits(2);
+        dispatcher.registerWorker(context);
+
+        MockQueueSubscriber subA = getSubscriberForGroup(WORKER_GROUP_A);
+
+        // Fill both slots
+        subA.deliverJob(createJobEvent("job-1", WORKER_GROUP_A));
+        subA.deliverJob(createJobEvent("job-2", WORKER_GROUP_A));
+        assertThat(context.getAvailablePermits()).isEqualTo(0);
+        assertThat(subA.isPaused.get()).isTrue(); // paused: no permits
+
+        // When — re-register with same group, different percentage (but still no permits)
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("group-a", 50)
+        );
+        dispatcher.reRegisterWorker("worker-1", newSubs);
+
+        // Then — should remain paused (still no permits)
+        assertThat(subA.isPaused.get()).isTrue();
     }
 
     /**

@@ -245,8 +245,9 @@ class FlowServiceTest {
               - id: for
                 type: io.kestra.plugin.core.flow.Loop
                 values: [1, 2, 3]
-                workerGroup:
-                  key: toto
+                workerSelector:
+                  tags:
+                    - toto
                 timeout: PT10S
                 taskCache:
                   enabled: true
@@ -254,8 +255,9 @@ class FlowServiceTest {
                 - id: hello
                   type: io.kestra.plugin.core.log.Log
                   message: Hello World! 🚀
-                  workerGroup:
-                    key: toto
+                  workerSelector:
+                    tags:
+                      - toto
                   timeout: PT10S
                   taskCache:
                     enabled: true
@@ -270,7 +272,7 @@ class FlowServiceTest {
         assertThat(results.getFirst().getWarnings()).containsExactlyInAnyOrder(
             "The task 'for' cannot use the 'timeout' property as it's only relevant for runnable tasks.",
             "The task 'for' cannot use the 'taskCache' property as it's only relevant for runnable tasks.",
-            "The task 'for' cannot use the 'workerGroup' property as it's only relevant for runnable tasks."
+            "The task 'for' cannot use the 'workerSelector' property as it's only relevant for runnable tasks."
         );
     }
 

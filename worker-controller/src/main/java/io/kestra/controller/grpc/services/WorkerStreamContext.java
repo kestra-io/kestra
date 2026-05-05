@@ -2,9 +2,14 @@ package io.kestra.controller.grpc.services;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.runners.WorkerJob;
 
 import io.grpc.stub.StreamObserver;
@@ -18,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  * <li>Available permits (how many jobs we can send to this worker)</li>
  * <li>In-flight jobs (sent but not yet ACKed by the worker)</li>
- * <li>Connection metadata (workerId, workerGroup, etc.)</li>
+ * <li>Connection metadata (workerId, queue subscriptions, etc.)</li>
  * </ul>
  * <p>
  * Thread-safe: all operations are safe for concurrent access from multiple threads.
@@ -30,7 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 public class WorkerStreamContext<T> {
 
     private final String workerId;
-    private final String workerGroup;
+    private final String workerGroupId;
+    private volatile List<QueueSubscription> queueSubscriptions;
     private final int maxConcurrency;
     private final StreamObserver<T> responseObserver;
 
@@ -41,36 +47,248 @@ public class WorkerStreamContext<T> {
     private final AtomicInteger availablePermits = new AtomicInteger(0);
 
     /**
-     * Jobs that have been sent to the worker but not yet acknowledged.
-     * Key: job UID, Value: pending job info.
+     * Jobs that have been dispatched to the worker and have not yet reached a terminal
+     * state. Key: job UID, Value: pending job info (carries the reserved bucket so
+     * {@link #completeJob} can return the slot to the right counter).
      * <p>
-     * This is used for controller-side memory cleanup only.
-     * The actual job state is persisted in WorkerJobRunningStateStore before sending.
+     * Entries live from dispatch ({@link #trackInFlight}) to completion
+     * ({@link #completeJob}). They count toward {@link #getInFlightCount()} for
+     * least-loaded worker selection and toward
+     * {@code METRIC_CONTROLLER_JOB_INFLIGHT}, so both signals now reflect real
+     * concurrent work rather than network pipeline depth.
+     * <p>
+     * The actual job state is persisted in {@code WorkerJobRunningStateStore} before
+     * dispatch; this map is purely in-memory bookkeeping for the connected stream.
      */
     private final ConcurrentHashMap<String, PendingJob> inFlightJobs = new ConcurrentHashMap<>();
 
     /**
-     * Timestamp of last activity (permit request or ACK) from this worker.
+     * Timestamp of last activity (permit request or completion) from this worker.
      */
     private volatile Instant lastActivity;
+
+    /**
+     * Number of slots currently occupied in the shared (unreserved) bucket.
+     */
+    private final AtomicInteger sharedUsed = new AtomicInteger(0);
+
+    /**
+     * Per-Task-Queue counts of slots currently occupied in guaranteed buckets.
+     * Populated lazily on first reserve/release for a Worker Queue.
+     */
+    private final ConcurrentHashMap<String, AtomicInteger> guaranteedUsed = new ConcurrentHashMap<>();
 
     /**
      * Creates a new worker stream context.
      *
      * @param workerId unique identifier for this worker instance
-     * @param workerGroup worker group this worker belongs to (may be null for default)
+     * @param workerGroupId the resolved worker group ID; the controller normalizes the
+     *                      absent case to {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}
+     *                      before the worker echoes it here, so the value is always set.
+     * @param queueSubscriptions the Worker Queue subscriptions with reservedPercent values
      * @param maxConcurrency maximum concurrent jobs this worker can handle
      * @param responseObserver gRPC stream observer for sending jobs to the worker
      */
     public WorkerStreamContext(String workerId,
-        String workerGroup,
+        String workerGroupId,
+        List<QueueSubscription> queueSubscriptions,
         int maxConcurrency,
         StreamObserver<T> responseObserver) {
         this.workerId = workerId;
-        this.workerGroup = workerGroup == null || workerGroup.isEmpty() ? "" : workerGroup;
+        this.workerGroupId = workerGroupId;
+        this.queueSubscriptions = queueSubscriptions == null ? List.of() : List.copyOf(queueSubscriptions);
         this.maxConcurrency = maxConcurrency;
         this.responseObserver = responseObserver;
         this.lastActivity = Instant.now();
+    }
+
+    /**
+     * Returns the set of Worker Queue ids this worker is subscribed to.
+     */
+    public Set<String> subscribedWorkerQueueIds() {
+        return queueSubscriptions.stream()
+            .map(QueueSubscription::normalizedWorkerQueueId)
+            .collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * Computes the guaranteed-slot bucket size for the given Worker Queue:
+     * {@code floor(maxConcurrency x reservedPercent / 100)}. Worker Queues with no
+     * reservation get 0.
+     */
+    public int guaranteedCapacity(String workerQueueId) {
+        String normalized = workerQueueId == null ? "" : workerQueueId;
+        return queueSubscriptions.stream()
+            .filter(s -> Objects.equals(s.normalizedWorkerQueueId(), normalized))
+            .findFirst()
+            .map(s -> s.hasReservation() ? (maxConcurrency * s.reservedPercent()) / 100 : 0)
+            .orElse(0);
+    }
+
+
+    /**
+     * Total guaranteed slots across all subscriptions.
+     */
+    public int totalGuaranteed() {
+        return queueSubscriptions.stream()
+            .mapToInt(s -> s.hasReservation() ? (maxConcurrency * s.reservedPercent()) / 100 : 0)
+            .sum();
+    }
+
+    /** Size of the shared bucket: {@code maxConcurrency - totalGuaranteed}. */
+    public int sharedCapacity() {
+        return maxConcurrency - totalGuaranteed();
+    }
+
+    /** Free slots currently available in the shared bucket. */
+    public int sharedFree() {
+        return sharedCapacity() - sharedUsed.get();
+    }
+
+    /** Free slots currently available in the given Worker Queue's guaranteed bucket. */
+    public int guaranteedFree(String workerQueueId) {
+        AtomicInteger used = guaranteedUsed.get(workerQueueId);
+        int u = used == null ? 0 : used.get();
+        return guaranteedCapacity(workerQueueId) - u;
+    }
+
+    /**
+     * Attempts to atomically reserve a slot for the given Worker Queue.
+     * <p>
+     * Reservation order:
+     * <ol>
+     *   <li>The Worker Queue's own guaranteed bucket — reserved capacity is honored first.</li>
+     *   <li>The shared (unreserved) bucket.</li>
+     *   <li>Any other {@link QueueSubscription.Mode#ELASTIC} subscription's guaranteed
+     *       bucket that has idle slots. The borrower's own mode does <em>not</em> affect
+     *       this — only the lender opts in by being ELASTIC. The bucket name returned is
+     *       the <em>lender's</em> uid so that {@link #releaseBucket(String)} returns the
+     *       slot to the right counter.</li>
+     * </ol>
+     * Returns {@code null} if no tier has capacity (caller should pause the subscription).
+     *
+     * @param workerQueueId the Worker Queue id the job is being dispatched for
+     * @return the Worker Queue id (own bucket or borrowed lender uid),
+     *         {@link PendingJob#SHARED}, or {@code null}
+     */
+    public String tryReserveBucket(String workerQueueId) {
+        AtomicInteger counter = guaranteedUsed.computeIfAbsent(workerQueueId, k -> new AtomicInteger(0));
+        if (tryIncrement(counter, guaranteedCapacity(workerQueueId))) {
+            return workerQueueId;
+        }
+        if (tryIncrement(sharedUsed, sharedCapacity())) {
+            return PendingJob.SHARED;
+        }
+        String borrowed = tryBorrowFromElasticLender(workerQueueId);
+        if (borrowed != null) {
+            return borrowed;
+        }
+        return null;
+    }
+
+    /**
+     * Attempts to borrow a slot from another {@link QueueSubscription.Mode#ELASTIC}
+     * subscription's guaranteed bucket. Iterates other subscriptions on this worker;
+     * for each elastic one with free guaranteed slots, CAS-increments its counter
+     * and returns the lender's uid. Returns {@code null} if no lender has capacity.
+     * <p>
+     * Only the lender's mode is checked — any borrower may attempt to borrow from any
+     * ELASTIC lender. The lender's STRICT mode is the load-bearing protection.
+     */
+    private String tryBorrowFromElasticLender(String borrowerUid) {
+        String normalizedBorrower = borrowerUid == null || borrowerUid.isEmpty() ? "" : borrowerUid;
+        for (QueueSubscription lender : queueSubscriptions) {
+            String lenderUid = lender.normalizedWorkerQueueId();
+            if (normalizedBorrower.equals(lenderUid)) {
+                continue;
+            }
+            if (!lender.isElastic() || !lender.hasReservation()) {
+                continue;
+            }
+            int capacity = guaranteedCapacity(lenderUid);
+            if (capacity <= 0) {
+                continue;
+            }
+            AtomicInteger counter = guaranteedUsed.computeIfAbsent(lenderUid, k -> new AtomicInteger(0));
+            if (tryIncrement(counter, capacity)) {
+                return lenderUid;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns {@code true} if any other {@link QueueSubscription.Mode#ELASTIC}
+     * subscription on this worker has idle guaranteed slots that {@code borrowerUid}
+     * could borrow. Used by {@link #hasCapacityForQueue(String)} so the dispatcher
+     * doesn't pause an elastic subscription that could otherwise borrow.
+     */
+    private boolean anyElasticLenderHasFree(String borrowerUid) {
+        String normalizedBorrower = borrowerUid == null || borrowerUid.isEmpty() ? "" : borrowerUid;
+        for (QueueSubscription lender : queueSubscriptions) {
+            String lenderUid = lender.normalizedWorkerQueueId();
+            if (normalizedBorrower.equals(lenderUid)) {
+                continue;
+            }
+            if (!lender.isElastic() || !lender.hasReservation()) {
+                continue;
+            }
+            if (guaranteedFree(lenderUid) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Releases a previously reserved bucket slot.
+     *
+     * @param bucket {@link PendingJob#SHARED} or a Worker Queue id
+     */
+    public void releaseBucket(String bucket) {
+        if (bucket == null) {
+            return;
+        }
+        if (PendingJob.SHARED.equals(bucket)) {
+            sharedUsed.updateAndGet(v -> Math.max(0, v - 1));
+        } else {
+            AtomicInteger counter = guaranteedUsed.get(bucket);
+            if (counter != null) {
+                counter.updateAndGet(v -> Math.max(0, v - 1));
+            }
+        }
+    }
+
+    /**
+     * Returns {@code true} if the worker has any available capacity for tasks from
+     * the given Worker Queue — own guaranteed, shared, or borrowable from any ELASTIC
+     * lender's idle reserved slots on this worker.
+     * <p>
+     * The dispatcher uses this to decide whether to pause the subscription; it must
+     * mirror the tiers in {@link #tryReserveBucket(String)}, otherwise a subscription
+     * that could borrow would be paused before ever attempting to.
+     */
+    public boolean hasCapacityForQueue(String workerQueueId) {
+        if (sharedFree() > 0 || guaranteedFree(workerQueueId) > 0) {
+            return true;
+        }
+        return anyElasticLenderHasFree(workerQueueId);
+    }
+
+    private static boolean tryIncrement(AtomicInteger counter, int limit) {
+        int current;
+        do {
+            current = counter.get();
+            if (current >= limit) return false;
+        } while (!counter.compareAndSet(current, current + 1));
+        return true;
+    }
+
+    /**
+     * Replaces this worker's queue subscriptions (dynamic reconfiguration).
+     */
+    public void replaceQueueSubscriptions(List<QueueSubscription> newSubscriptions) {
+        this.queueSubscriptions = newSubscriptions == null ? List.of() : List.copyOf(newSubscriptions);
     }
 
     /**
@@ -102,17 +320,15 @@ public class WorkerStreamContext<T> {
     }
 
     /**
-     * Attempts to consume a single permit.
-     *
-     * @return true if a permit was consumed, false if no permits available
+     * Atomically decrements the available permits by one only if at least one is available.
+     * Returns {@code true} if a permit was consumed, {@code false} if none were available.
+     * Used to atomically reserve worker capacity before dispatching a job.
      */
     public boolean tryConsumePermit() {
         int current;
         do {
             current = availablePermits.get();
-            if (current <= 0) {
-                return false;
-            }
+            if (current <= 0) return false;
         } while (!availablePermits.compareAndSet(current, current - 1));
         return true;
     }
@@ -127,31 +343,49 @@ public class WorkerStreamContext<T> {
     }
 
     /**
-     * Tracks a job as in-flight (sent to worker, awaiting ACK).
+     * Tracks a dispatched job. The entry lives in {@link #inFlightJobs} until the
+     * worker signals a terminal state via {@link #completeJob}, holding the bucket
+     * reservation for the job's full lifetime.
      *
      * @param jobId the job's unique identifier
      * @param job the worker job
+     * @param bucket either {@link PendingJob#SHARED} or a worker queue key
      */
-    public void trackInFlight(String jobId, WorkerJob job) {
-        inFlightJobs.put(jobId, new PendingJob(jobId, job, Instant.now()));
-        log.trace("Worker {} tracking in-flight job {}", workerId, jobId);
+    public void trackInFlight(String jobId, WorkerJob job, String bucket) {
+        inFlightJobs.put(jobId, new PendingJob(jobId, job, Instant.now(), bucket));
+        log.trace("Worker {} tracking in-flight job {} in bucket {}", workerId, jobId, bucket);
     }
 
     /**
-     * Acknowledges receipt of a job, removing it from in-flight tracking.
-     * This is for controller memory cleanup only; the job state in
-     * WorkerJobRunningStateStore is cleaned up when the job completes.
+     * Removes the job from in-flight tracking and releases the bucket slot reserved
+     * for it. Called when the worker signals a terminal state over the bidi stream
+     * (see {@code completedJobIds} in {@code WorkerJobRequest}) or when a dispatch
+     * fails before reaching the worker.
      *
      * @param jobId the job's unique identifier
-     * @return the pending job if it was in-flight, null otherwise
+     * @return the bucket that was released, or {@code null} if the job was unknown
+     *         (e.g., the result arrived on a new controller after a restart)
      */
-    public PendingJob acknowledgeJob(String jobId) {
+    public String completeJob(String jobId) {
         PendingJob removed = inFlightJobs.remove(jobId);
-        if (removed != null) {
-            lastActivity = Instant.now();
-            log.trace("Worker {} acknowledged job {}", workerId, jobId);
+        if (removed == null) {
+            return null;
         }
-        return removed;
+        releaseBucket(removed.bucket());
+        lastActivity = Instant.now();
+        log.trace("Worker {} completed job {} (released bucket={})", workerId, jobId, removed.bucket());
+        return removed.bucket();
+    }
+
+    /**
+     * Releases bucket slots for every job still in-flight on this stream (called when
+     * the worker disconnects). The worker's still-running tasks will post their
+     * results via {@code sendWorkerTaskResults} independently; they just no longer
+     * count toward bucket usage on this controller.
+     */
+    public void releaseAllInFlightBuckets() {
+        inFlightJobs.values().forEach(p -> releaseBucket(p.bucket()));
+        inFlightJobs.clear();
     }
 
     /**
@@ -191,12 +425,31 @@ public class WorkerStreamContext<T> {
     }
 
     /**
+     * Completes the worker stream.
+     * Synchronized on the same lock as {@link #sendResponse} so onNext/onCompleted
+     * are never called concurrently — gRPC requires StreamObserver callbacks to be
+     * serialized.
+     */
+    public void complete() {
+        synchronized (streamLock) {
+            try {
+                responseObserver.onCompleted();
+            } catch (Exception e) {
+                log.debug("Error completing stream for worker {}: {}", workerId, e.getMessage());
+            }
+        }
+    }
+
+    /**
      * Represents a job that has been sent to a worker but not yet acknowledged.
      *
      * @param jobId unique identifier of the job
      * @param job the worker job
      * @param sentAt when the job was sent to the worker
+     * @param bucket where this job was slotted on the worker ({@link #SHARED} or a group key)
      */
-    public record PendingJob(String jobId, WorkerJob job, Instant sentAt) {
+    public record PendingJob(String jobId, WorkerJob job, Instant sentAt, String bucket) {
+        /** Sentinel bucket value for the shared (unreserved) slot pool. */
+        public static final String SHARED = "__shared__";
     }
 }

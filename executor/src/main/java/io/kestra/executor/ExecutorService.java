@@ -16,6 +16,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -36,6 +37,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.worker.WorkerQueues;
 import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
@@ -60,7 +62,7 @@ public class ExecutorService {
     private MetricRegistry metricRegistry;
 
     @Inject
-    private WorkerGroupMetaStore workerGroupMetaStore;
+    private WorkerQueueMetaStore workerQueueMetaStore;
 
     @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
@@ -69,7 +71,7 @@ public class ExecutorService {
     private ExecutionService executionService;
 
     @Inject
-    private WorkerGroupService workerGroupService;
+    private WorkerQueueService workerQueueService;
 
     @Inject
     private SLAService slaService;
@@ -999,48 +1001,49 @@ public class ExecutorService {
                     .task(task)
                     .executionKind(executor.getExecution().getKind())
                     .build();
-                // Get worker group
-                Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
-                if (workerGroup.isPresent()) {
-                    // Check if the worker group exist
-                    String tenantId = executor.getFlow().getTenantId();
-                    String workerGroupKey = runContext.render(workerGroup.get().getKey());
-                    if (WorkerGroup.isDefault(workerGroupKey)) {
-                        // Explicit default worker group - dispatch without existence check
+                // Resolve the target Worker Queue for this task
+                Optional<WorkerQueueRouting> routing;
+                try {
+                    routing = workerQueueService.resolveWorkerQueueForJob(executor.getFlow(), workerTask);
+                } catch (NoMatchingWorkerQueueException e) {
+                    runContext.logger()
+                        .error(e.getMessage(), workerTask.getTaskRun().getId(), e);
+                    // fail the task-run because we cannot determine the target Worker Queue
+                    return new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
+                }
+                if (routing.isEmpty() || routing.get().isDefault()) {
+                    return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                } else {
+                    String workerQueueId = routing.get().workerQueueId();
+                    if (workerQueueMetaStore.isWorkerQueueAvailableForId(workerQueueId)) {
                         return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
                     }
-                    if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
-                        // Check whether at-least one worker is available
-                        if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
-                            return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
-                        } else {
-                            WorkerGroup.Fallback fallback = workerGroup.map(wg -> wg.getFallback()).orElse(WorkerGroup.Fallback.WAIT);
-                            return switch (fallback) {
-                                case FAIL -> {
-                                    runContext.logger()
-                                        .error("No workers are available for worker group '{}', failing the task.", workerGroupKey);
-                                    yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
-                                }
-                                case CANCEL -> {
-                                    runContext.logger()
-                                        .info("No workers are available for worker group '{}', canceling the task.", workerGroupKey);
-                                    yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED)), runContext);
-                                }
-                                case WAIT -> {
-                                    runContext.logger()
-                                        .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
-                                    yield new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
-                                }
-                            };
+                    // No worker available - apply the routing fallback policy.
+                    // Prefer the source tags carried by the routing for log messages —
+                    // much more readable than the resolved uid.
+                    String workerQueueForLog = WorkerQueues.forLog(routing.get().tags(), workerQueueId);
+                    WorkerQueueFallback fallback = routing.map(WorkerQueueRouting::fallback).orElse(WorkerQueueFallback.WAIT);
+                    return switch (fallback) {
+                        case FAIL -> {
+                            runContext.logger()
+                                .error("No workers are available for {}, failing the task.", workerQueueForLog);
+                            yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
                         }
-                    } else {
-                        runContext.logger()
-                            .error("Cannot run task. No worker group exist for key '{}'.", workerGroupKey);
-                        // fail the task-run because no worker can run the task
-                        return new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
-                    }
-                } else {
-                    return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                        case CANCEL -> {
+                            runContext.logger()
+                                .info("No workers are available for {}, canceling the task.", workerQueueForLog);
+                            yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED)), runContext);
+                        }
+                        case WAIT -> {
+                            runContext.logger()
+                                .info("No workers are available for {}, waiting for one to be available.", workerQueueForLog);
+                            yield new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                        }
+                        // IGNORE is a resolution-time directive consumed by the resolver; it
+                        // never appears on a resolved routing.
+                        case IGNORE -> throw new IllegalStateException(
+                            "WorkerQueueFallback.IGNORE must be consumed at resolution time and must not appear on a resolved routing");
+                    };
                 }
             })
             )

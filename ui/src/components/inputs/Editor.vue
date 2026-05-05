@@ -3,34 +3,26 @@
         <nav v-if="!isDiff && navbar" class="top-nav">
             <slot name="nav">
                 <div class="text-nowrap">
-                    <el-button-group>
-                        <el-tooltip
-                            effect="light"
+                    <KsButtonGroup>
+                        <KsTooltip
                             :content="$t('Fold content lines')"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
                         >
-                            <el-button
+                            <KsButton
                                 :icon="icon.UnfoldLessHorizontal"
                                 @click="autoFold(true)"
                                 size="small"
                             />
-                        </el-tooltip>
-                        <el-tooltip
-                            effect="light"
+                        </KsTooltip>
+                        <KsTooltip
                             :content="$t('Unfold content lines')"
-                            :persistent="false"
-                            transition=""
-                            :hideAfter="0"
                         >
-                            <el-button
+                            <KsButton
                                 :icon="icon.UnfoldMoreHorizontal"
                                 @click="unfoldAll"
                                 size="small"
                             />
-                        </el-tooltip>
-                    </el-button-group>
+                        </KsTooltip>
+                    </KsButtonGroup>
                     <slot name="extends-navbar" />
                 </div>
             </slot>
@@ -745,11 +737,9 @@
 </script>
 
 <style lang="scss">
-@import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-@import "../../styles/layout/root-dark.scss";
 
 .highlight-lines{
-    background-color: rgba($base-blue-400, .2);
+    background-color: rgba(#3991ff, .2);
 }
 
 .editor-content-widget-content{
@@ -757,12 +747,12 @@
     align-items: center;
     justify-content: center;
 
-    .el-button-group {
+    .kel-button-group {
         display: inline-flex;
     }
 }
 
-:not(.namespace-defaults, .el-drawer__body) > .ks-editor {
+:not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
     z-index: 1001;
@@ -772,7 +762,7 @@
     z-index: 1;
 }
 
-.el-form .ks-editor {
+.kel-form .ks-editor {
     display: flex;
     width: 100%;
 }
@@ -783,19 +773,15 @@
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: var(--kel-border-radius-round);
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
     }
 
     .editor-absolute-container {
         position: absolute;
         top: 8px;
-        right: 20px;
+        right: var(--ks-font-size-lg);
         z-index: 10;
         color: var(--ks-content-secondary);
         cursor: pointer;
@@ -815,17 +801,17 @@
         }
 
         &.single-line {
-            min-height: var(--el-component-size);
+            min-height: var(--kel-component-size);
             padding: 7px 11px;
             background-color: var(
-                --el-input-bg-color,
-                var(--el-fill-color-blank)
+                --kel-input-bg-color,
+                var(--kel-fill-color-blank)
             );
             border-radius: var(
-                --el-input-border-radius,
-                var(--el-border-radius-base)
+                --kel-input-border-radius,
+                var(--kel-border-radius-base)
             );
-            transition: var(--el-transition-box-shadow);
+            transition: var(--kel-transition-box-shadow);
             box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
 
             &.custom-dark-vs-theme {
@@ -833,7 +819,7 @@
             }
 
             &.theme-light {
-                background-color: $base-white;
+                background-color: var(--ks-background-card);
             }
         }
 
@@ -854,9 +840,9 @@
 
             .monaco-hover-content {
                 h4 {
-                    font-size: var(--font-size-base);
+                    font-size: var(--ks-font-size-base);
                     font-weight: bold;
-                    line-height: var(--bs-body-line-height);
+                    line-height: var(--kbs-body-line-height);
                 }
 
                 p {

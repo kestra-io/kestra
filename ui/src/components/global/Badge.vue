@@ -1,9 +1,9 @@
 <template>
-    <el-tooltip :content="props.tooltip ?? props.label">
-        <el-button type="primary" size="small" class="badge">
+    <KsTooltip :content="props.tooltip ?? props.label">
+        <KsButton type="primary" size="small" class="badge">
             {{ props.label }}
-        </el-button>
-    </el-tooltip>
+        </KsButton>
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">
@@ -16,11 +16,11 @@
 
 <style scoped lang="scss">
 .badge {
-    --el-button-border-color: var(--ks-button-content-primary);
+    --kel-button-border-color: var(--ks-button-content-primary);
 
     margin-left: 0.5rem;
     border-color: var(--ks-button-content-primary);
-    border-radius: calc(var(--el-border-radius-round) * 2);
+    border-radius: calc(var(--kel-border-radius-round) * 2);
 
     &:hover {
         border-color: var(--ks-button-content-primary);

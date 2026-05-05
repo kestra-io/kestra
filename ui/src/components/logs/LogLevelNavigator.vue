@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex el-select__wrapper space-between gap-2" :style="wrapperStyle(level)">
+    <div class="d-flex kel-select__wrapper space-between gap-2" :style="wrapperStyle(level)">
         <div class="d-flex align-items-center gap-2">
             <span class="circle" :style="circle(level)" />
             <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level }}</span>
@@ -35,7 +35,7 @@
             : {};
 </script>
 <style scoped lang="scss">
-.el-select__wrapper {
+.kel-select__wrapper {
     cursor: unset;
 
     &:hover {
@@ -51,7 +51,7 @@
 
     .icon-button {
         cursor: pointer;
-        font-size: 1.1rem;
+        font-size: var(--ks-font-size-md);
     }
 }
 </style>

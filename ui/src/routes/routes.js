@@ -8,7 +8,6 @@ import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
-import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
@@ -23,25 +22,6 @@ export default [
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
-        beforeEnter: (to, _from, next) => {
-            // This specific case is to avoid redirecting dashboards twice:
-            // - once here in beforeEnter
-            // - once in useDefaultFilter composable
-
-            // We analyzed other ways to fix this:
-            // - using nextTick in useDefaultFilter to delay the redirection
-            // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
-            // but both were more complex and fragile than this simple check.
-            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true})
-            if(change) {
-                next({
-                    ...to,
-                    query,
-                });
-                return;
-            }
-            next()
-        },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},

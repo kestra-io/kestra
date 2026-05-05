@@ -1,5 +1,5 @@
-import {Comparators} from "../components/filter/utils/filterTypes";
-import {getComparator} from "../components/filter/utils/helpers";
+import {Comparators} from "@kestra-io/design-system";
+import {getComparator} from "@kestra-io/design-system";
 
 type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
 const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {

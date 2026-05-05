@@ -1,8 +1,8 @@
 <template>
     <ul>
         <li>
-            <el-button
-                :type="props.type || 'primary'"
+            <KsButton
+                :type="(props.type || 'primary') as any"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"
@@ -10,7 +10,7 @@
                 :loading="props.loading ?? false"
             >
                 {{ props.label }}
-            </el-button>
+            </KsButton>
         </li>
     </ul>
 </template>

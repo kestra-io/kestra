@@ -1,24 +1,24 @@
 <template>
-    <el-dropdown
+    <KsDropdown
         splitButton
         @visible-change="playgroundStore.dropdownOpened = $event"
         :buttonProps="{class: 'el-button--playground'}"
         @click="playgroundStore.runUntilTask(taskId)"
         :disabled="!playgroundStore.readyToStart"
     >
-        <el-icon><Play /></el-icon>
+        <KsIcon><Play /></KsIcon>
         <span>{{ $t('playground.run_task') }}</span>
         <template #dropdown>
-            <el-dropdown-menu>
-                <el-dropdown-item :icon="Play" @click="playgroundStore.runUntilTask(taskId)">
+            <KsDropdownMenu>
+                <KsDropdownItem :icon="Play" @click="playgroundStore.runUntilTask(taskId)">
                     {{ $t('playground.run_this_task') }}
-                </el-dropdown-item>
-                <el-dropdown-item :icon="PlayBoxMultiple" @click="playgroundStore.runUntilTask(taskId, true)">
+                </KsDropdownItem>
+                <KsDropdownItem :icon="PlayBoxMultiple" @click="playgroundStore.runUntilTask(taskId, true)">
                     {{ $t('playground.run_task_and_downstream') }}
-                </el-dropdown-item>
-            </el-dropdown-menu>
+                </KsDropdownItem>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">

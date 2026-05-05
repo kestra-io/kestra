@@ -1,103 +1,136 @@
 import path from "path";
-import {defineConfig} from "vite";
+import {createLogger, defineConfig, loadEnv} from "vite";
 import vue from "@vitejs/plugin-vue";
+
+// silence some scss warnings about sourceMaps of 
+// element-plus/theme-chalk/src in the wrong directory 
+// and will not be published in prod builds
+const logger = createLogger();
+const loggerWarnOnce = logger.warnOnce.bind(logger);
+logger.warnOnce = (msg, options) => {
+    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return;
+    loggerWarnOnce(msg, options);
+};
 
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-const MDC_STUB = path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js");
-const NUXTJS_MDC_STUB = path.resolve(__dirname, "plugins/stub-nuxtjs-mdc.js");
+export default defineConfig(({mode}) => {
+    process.env = {...process.env, ...loadEnv(mode, process.cwd())};
 
-export default defineConfig({
-    base: "",
-    build: {
-        outDir: "../webserver/src/main/resources/ui",
-        rollupOptions: {
-            output: {
-                codeSplitting: {
-                    groups: [
-                        {
-                            test: /src\/components\/dashboard/i,
-                            name: "dashboard",
-                        },
-                        {
-                            test: /src\/components\/flows/i,
-                            name: "flows",
-                        },
-                        {
-                            test: /(shiki\/langs)|(src\/utils\/markdownDeps)/,
-                            name: "markdownDeps",
-                        },
-                    ],
-                }
-            }
-        }
-    },
-    server: {
-        proxy: {
-            "^/api": {
-                target: "http://localhost:8080",
-                ws: true,
-                changeOrigin: true
-            }
-        }
-    },
-    resolve: {
-        alias: [
-            {find: "override", replacement: path.resolve(__dirname, "src/override/")},
-            {find: "#imports", replacement: MDC_STUB},
-            {find: "#build/mdc-image-component.mjs", replacement: MDC_STUB},
-            {find: "#mdc-imports", replacement: MDC_STUB},
-            {find: "#mdc-configs", replacement: MDC_STUB},
-            {find: "@storybook/addon-actions", replacement: "storybook/actions"},
-            // @nuxtjs/mdc is a peer dep of @kestra-io/ui-libs that is not installed here;
-            // all its subpaths are stubbed out to prevent Rolldown from erroring on
-            // unresolved imports (Vite 8 treats them as errors, not warnings).
-            {find: /^@nuxtjs\/mdc(\/.*)?$/, replacement: NUXTJS_MDC_STUB},
-        ],
-    },
-    plugins: [
-        vue({
-            template: {
-                compilerOptions: {
-                    isCustomElement: (tag) => {
-                        return tag === "rapi-doc";
+    return {
+        base: "",
+        build: {
+            outDir: "../webserver/src/main/resources/ui",
+            rollupOptions: {
+                output: {
+                    advancedChunks: {
+                        groups: [
+                            {
+                                test: /src\/components\/dashboard/i,
+                                name: "dashboard",
+                            },
+                            {
+                                test: /src\/components\/flows/i,
+                                name: "flows",
+                            },
+                        ],
                     }
                 }
             }
-        }),
-        commit(),
-        codecovVitePlugin({
-            enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-            bundleName: "ui",
-            uploadToken: process.env.CODECOV_TOKEN,
-            telemetry: false
-        }),
-    ],
-    assetsInclude: ["**/*.md"],
-    css: {
-        devSourcemap: true,
-        preprocessorOptions: {
-            scss: {
-                silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"]
+        },
+        server: {
+            watch: {
+                ignored: [
+                    "!**/node_modules/@kestra-io/design-system/src/**",
+                    "!**/node_modules/@kestra-io/topology/src/**",
+                ]
             },
-        }
-    },
-    optimizeDeps: {
-        include: [
-            "lodash",
-            // the 3 dependencies below are used by ui-libs
-            // optimizing them allows storybook to run properly
-            // without allowing interop in typescript
-            "dayjs",
-            "debug",
-            "@braintree/sanitize-url",
-            "monaco-yaml/yaml.worker",
-            "lodash-es",
-            "nprogress"
+            proxy: {
+                "^/api": {
+                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    ws: true,
+                    changeOrigin: true
+                }
+            }
+        },
+        resolve: {
+            preserveSymlinks: true,
+            dedupe: ["echarts", "vue-echarts", "dayjs", "vue", "vue-router", "vue-i18n", "@vueuse/core", "pinia", "@vue-flow/core", "@vue-flow/background", "@vue-flow/controls"],
+            alias: [
+                {find: "override", replacement: path.resolve(__dirname, "src/override/")},
+                {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
+                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
+
+                {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
+                {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
+                {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
+
+
+                // to be removed when all mdc import are removed
+                // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
+                {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#build/mdc-image-component.mjs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#mdc-imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+                {find: "#mdc-configs", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},
+            ],
+        },
+        plugins: [
+            vue({
+                template: {
+                    compilerOptions: {
+                        isCustomElement: (tag) => {
+                            return tag === "rapi-doc";
+                        }
+                    }
+                }
+            }),
+            commit(),
+            codecovVitePlugin({
+                enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+                bundleName: "ui",
+                uploadToken: process.env.CODECOV_TOKEN,
+                telemetry: false
+            }),
         ],
-        exclude: [
-            "* > @kestra-io/ui-libs"
-        ]
-    },
-})
+        assetsInclude: ["**/*.md"],
+        customLogger: logger,
+        css: {
+            devSourcemap: true,
+            preprocessorOptions: {
+                scss: {
+                    silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"],
+                    loadPaths: [path.resolve(__dirname, "node_modules")]
+                },
+            }
+        },
+        optimizeDeps: {
+            entries: [
+                "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}"
+            ],
+            include: [
+                "lodash",
+                "debug",
+                "@braintree/sanitize-url",
+                "monaco-yaml/yaml.worker",
+                "lodash-es",
+                "nprogress",
+                // CJS-only packages imported as ESM defaults by unified, fault, @kestra-io/ui-libs, etc.
+                // Adding them here makes Vite pre-bundle them as ESM so Chromium (storybook) can load them.
+                "extend",
+                "format",
+                "humanize-duration",
+                "moment",
+                "moment-timezone",
+                "moment-range",
+                "dagre"
+            ],
+            exclude: [
+                "* > @kestra-io/ui-libs",
+                "@kestra-io/design-system",
+                "@kestra-io/topology"
+            ]
+        },
+    };
+});

@@ -1,11 +1,11 @@
 <template>
-    <el-splitter
+    <KsSplitter
         v-if="execution"
         id="overview"
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <el-splitter-panel :size="verticalLayout ? '50%' : '30%'">
+        <KsSplitterPanel :size="verticalLayout ? '50%' : '30%'">
             <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: $t('state')}]">
@@ -16,22 +16,22 @@
                             />
                         </template>
                     </Row>
-                    <Status :status="execution.state.current" />
+                    <KsExecutionStatus :status="execution.state.current" />
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="general">
                     <Row :rows="general" />
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
                     />
-                    <el-row :gutter="12">
-                        <el-col
+                    <KsRow :gutter="12">
+                        <KsCol
                             v-for="(action, aIdx) in actions"
                             :key="aIdx"
                             :span="12"
@@ -42,20 +42,20 @@
                                 v-on="action.on || {}"
                                 :execution
                             />
-                        </el-col>
-                    </el-row>
+                        </KsCol>
+                    </KsRow>
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="metadata">
                     <Row :rows="[property]" v-for="property in metadata" :key="property.label">
                         <template v-if="property.value instanceof Date" #value>
-                            <DateAgo :date="property.value" format="L LTS" />
+                            <KsDateAgo :date="property.value" format="L LTS" />
                         </template>
                     </Row>
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="labels">
                     <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
                         <template #action>
@@ -65,18 +65,18 @@
                     <Labels :labels="execution.labels || []" />
                 </div>
             </div>
-        </el-splitter-panel>
+        </KsSplitterPanel>
 
-        <el-splitter-panel>
+        <KsSplitterPanel>
             <div class="main">
                 <div id="alerts">
-                    <el-alert
+                    <KsAlert
                         v-if="matchesStatus('replayed')"
                         :title="$t('execution replayed')"
                         :closable="false"
                     />
 
-                    <el-alert v-if="matchesStatus('replay')" :closable="false">
+                    <KsAlert v-if="matchesStatus('replay')" :closable="false">
                         <template #title>
                             <div>
                                 {{ $t("execution replay") }}
@@ -89,16 +89,16 @@
                                         )
                                     "
                                 >
-                                    <Id
+                                    <KsId
                                         :value="execution.originalId"
                                         :shrink="false"
                                     />
                                 </router-link>.
                             </div>
                         </template>
-                    </el-alert>
+                    </KsAlert>
 
-                    <el-alert
+                    <KsAlert
                         v-if="matchesStatus('restarted')"
                         :title="
                             $t('execution restarted', {
@@ -139,17 +139,17 @@
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
-                                <el-select
+                                <KsSelect
                                     v-model="timerange"
                                     @change="chartRef!.refresh(filters)"
                                 >
-                                    <el-option
+                                    <KsOption
                                         v-for="option in options"
                                         :key="option.value"
                                         :label="option.label"
                                         :value="option.value"
                                     />
-                                </el-select>
+                                </KsSelect>
                             </div>
                         </section>
                         <TimeSeries
@@ -164,12 +164,12 @@
 
                 <PrevNext :execution />
             </div>
-        </el-splitter-panel>
-    </el-splitter>
-    <NoData
+        </KsSplitterPanel>
+    </KsSplitter>
+    <KsEmpty
         v-else
         id="empty"
-        :text="$t('execution not found', {executionId: route.params.id})"
+        :description="$t('execution not found', {executionId: route.params.id})"
     />
 </template>
 
@@ -193,24 +193,21 @@
 
     import {verticalLayout} from "./utils/layout";
     import {createLink} from "./utils/links";
-    import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
-    import {Status, State} from "@kestra-io/ui-libs";
+    import {State, durationUtils} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
 
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
-    import DateAgo from "../../layout/DateAgo.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
-    import Id from "../../Id.vue";
+    import {KsId} from "@kestra-io/design-system";
     import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
-
-    import NoData from "../../layout/NoData.vue";
 
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
     import SetLabels from "../SetLabels.vue";
@@ -334,7 +331,7 @@
 
                     const deltaSeconds = (stop - start) / 1000;
 
-                    return Utils.humanDuration(deltaSeconds);
+                    return durationUtils.humanDuration(deltaSeconds);
                 })(),
             },
             {
@@ -497,16 +494,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #overview {
-    :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
+    :deep(.kel-splitter-panel:has(> .sidebar:first-child)) {
         background-color: var(--ks-background-table-row);
     }
 
     .sidebar > div,
     .main > div {
-        padding: calc($spacer * 1.5);
+        padding: calc(1rem * 1.5);
     }
 
     .sidebar {
@@ -514,8 +510,8 @@
 
         & :deep(.state),
         & :deep(.labels) {
-            .el-row {
-                margin-bottom: calc($spacer * 1.5);
+            .kel-row {
+                margin-bottom: calc(1rem * 1.5);
             }
 
             & button {
@@ -532,19 +528,19 @@
             }
         }
 
-        & .actions .el-row {
-            margin-top: calc($spacer * 1.5);
+        & .actions .kel-row {
+            margin-top: calc(1rem * 1.5);
 
-            & .el-col {
+            & .kel-col {
                 &:empty {
                     display: none; // If button is not displayed for any reason, hide the whole column
                 }
 
-                & :deep(.el-button) {
+                & :deep(.kel-button) {
                     width: 100%;
-                    margin-bottom: calc($spacer / 1.5);
-                    padding: $spacer;
-                    font-size: $font-size-sm;
+                    margin-bottom: calc(1rem / 1.5);
+                    padding: 1rem;
+                    font-size: var(--ks-font-size-sm);
                     overflow: hidden;
 
                     span:not(i span) {
@@ -564,7 +560,7 @@
             padding-bottom: 0;
 
             &:last-child {
-                padding-bottom: calc($spacer * 1.5);
+                padding-bottom: calc(1rem * 1.5);
             }
         }
 
@@ -573,31 +569,31 @@
                 display: none;
             }
 
-            .el-alert {
+            .kel-alert {
                 &:not(:first-child) {
-                    margin-top: $spacer;
+                    margin-top: 1rem;
                 }
 
-                & :deep(.el-alert__icon) {
-                    font-size: var(--el-alert-icon-size);
-                    width: var(--el-alert-icon-size);
-                    margin-right: calc($spacer * 1.5);
+                & :deep(.kel-alert__icon) {
+                    font-size: var(--kel-alert-icon-size);
+                    width: var(--kel-alert-icon-size);
+                    margin-right: calc(1rem * 1.5);
                 }
             }
         }
 
         #chart {
             > div {
-                padding: calc($spacer * 2);
-                border: 1px solid var(--el-border-color-light);
-                border-radius: calc($spacer / 2);
+                padding: calc(1rem * 2);
+                border: 1px solid var(--kel-border-color-light);
+                border-radius: calc(1rem / 2);
                 background-color: var(--ks-background-card);
 
                 > section:first-child {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: $spacer;
+                    margin-bottom: 1rem;
 
                     & .heading {
                         display: flex;
@@ -605,8 +601,8 @@
                         overflow: hidden;
 
                         & .material-design-icon {
-                            margin-right: $spacer;
-                            font-size: $font-size-xl;
+                            margin-right: 1rem;
+                            font-size: var(--ks-font-size-xl);
                             color: var(--ks-content-link);
                         }
 
@@ -620,28 +616,28 @@
                     }
 
                     & .timerange {
-                        .el-select {
-                            width: calc($spacer * 10);
+                        .kel-select {
+                            width: calc(1rem * 10);
                         }
                     }
                 }
             }
         }
 
-        & :deep(.el-empty) {
+        & :deep(.kel-empty) {
             padding: 0;
 
-            & .el-empty__image {
-                width: calc($spacer * 8) !important;
+            & .kel-empty__image {
+                width: calc(1rem * 8) !important;
             }
 
-            & .el-empty__description {
-                margin-top: calc($spacer / 2);
+            & .kel-empty__description {
+                margin-top: calc(1rem / 2);
             }
         }
     }
 
-    div.el-divider {
+    div.kel-divider {
         margin: 0;
         padding: 0;
     }

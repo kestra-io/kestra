@@ -1,17 +1,17 @@
 <template>
-    <el-row v-for="(row, rIdx) in props.rows" :key="rIdx">
-        <el-col :span="14" class="label">
+    <KsRow v-for="(row, rIdx) in props.rows" :key="rIdx">
+        <KsCol :span="14" class="label">
             <component :is="row.icon" />
-            <el-text truncated>
+            <KsText truncated>
                 {{ row.label }}
-            </el-text>
-        </el-col>
+            </KsText>
+        </KsCol>
 
-        <el-col v-if="$slots.value" :span="10" class="value">
+        <KsCol v-if="$slots.value" :span="10" class="value">
             <slot name="value" />
-        </el-col>
-        <el-col v-else-if="row.value" :span="10" class="value">
-            <el-text truncated>
+        </KsCol>
+        <KsCol v-else-if="row.value" :span="10" class="value">
+            <KsText truncated>
                 <router-link v-if="row.to" :to="row.to">
                     {{ row.value }}
                 </router-link>
@@ -19,13 +19,13 @@
                 <template v-else>
                     {{ row.value }}
                 </template>
-            </el-text>
-        </el-col>
+            </KsText>
+        </KsCol>
 
-        <el-col v-if="$slots.action" :span="10">
+        <KsCol v-if="$slots.action" :span="10">
             <slot name="action" />
-        </el-col>
-    </el-row>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
@@ -44,16 +44,15 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
-.el-row:not(:last-child) {
-    margin-bottom: calc($spacer / 2);
+.kel-row:not(:last-child) {
+    margin-bottom: calc(1rem / 2);
 }
 
-.el-row {
-    & :deep(.el-text),
-    & :deep(.el-button) {
-        font-size: $font-size-sm;
+.kel-row {
+    & :deep(.kel-text),
+    & :deep(.kel-button) {
+        font-size: var(--ks-font-size-sm);
     }
 
     & :deep(.label) {
@@ -61,10 +60,10 @@
         align-items: center;
 
         & span.material-design-icon {
-            margin-right: calc($spacer / 2);
+            margin-right: calc(1rem / 2);
         }
 
-        & .el-text {
+        & .kel-text {
             color: var(--ks-content-secondary);
         }
     }

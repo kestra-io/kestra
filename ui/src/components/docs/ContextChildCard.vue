@@ -1,34 +1,35 @@
 <template>
-    <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
-        <ContextDocsLink
-            :href="item.path"
-            class="col"
-            v-for="item in navigation"
-            :key="item.path"
-            useRaw
-        >
-            <div class="card h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="card-icon">
-                        <img
-                            :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
-                            :alt="item.title"
-                            width="50px"
-                            height="50px"
-                        >
-                    </span>
-                    <div class="overflow-hidden">
-                        <h4 class="card-title">
-                            {{ item.title }}
-                        </h4>
-                        <p class="card-text mb-0">
-                            {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
-                        </p>
+    <KsRow :gutter="16">
+        <KsCol :span="12" v-for="item in navigation" :key="item.path" class="mb-3">
+            <ContextDocsLink
+                :href="item.path"
+                class="flex-1"
+                useRaw
+            >
+                <div class="card h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <span class="card-icon">
+                            <img
+                                v-if="item.icon"
+                                :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
+                                :alt="item.title"
+                                width="50px"
+                                height="50px"
+                            >
+                        </span>
+                        <div class="overflow-hidden">
+                            <h4 class="card-title">
+                                {{ item.title }}
+                            </h4>
+                            <p class="card-text mb-0">
+                                {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </ContextDocsLink>
-    </div>
+            </ContextDocsLink>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
@@ -55,7 +56,6 @@
         }
     })
 
-
     const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value);
@@ -81,15 +81,14 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .card-title {
-        font-size: $font-size-xl !important;
+        font-size: var(--ks-font-size-xl) !important;
         line-height: 1.375rem !important;
     }
 
     .card-text {
-        font-size: $font-size-sm !important;
+        font-size: var(--ks-font-size-sm) !important;
         line-height: 1rem !important;
     }
 

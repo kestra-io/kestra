@@ -1,7 +1,7 @@
 <template>
     <div class="tabs-wrapper">
         <div class="tabs">
-            <el-tooltip
+            <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
                 :content="element.button.label"
@@ -15,7 +15,7 @@
                     <component class="tabs-icon" :is="element.button.icon" />
                     <span class="tab-label">{{ element.button.label }}</span>
                 </button>
-            </el-tooltip>
+            </KsTooltip>
         </div>
         <slot />
     </div>
@@ -39,8 +39,8 @@
 </script>
 
 <style scoped lang="scss">
-    @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
-    
+    @use "@kestra-io/design-system/src/assets/styles/_color-palette" as colorPalette;
+
     .tabs-wrapper {
         display: flex;
         align-items: center;
@@ -51,7 +51,7 @@
         background-position: 100% 0;
         transition: background-position .2s;
         overflow-x: auto;
-        scrollbar-width: none; 
+        scrollbar-width: none;
 
         .dark & {
             background-image: linear-gradient(
@@ -73,7 +73,7 @@
             );
         }
     }
-    
+
     .tabs {
         padding: .5rem 1rem;
         display: flex;
@@ -81,12 +81,12 @@
         align-items: center;
         gap: .5rem;
 
-        > button { 
+        > button {
             background: transparent;
             border: 1px solid transparent;
             border-radius: 6px;
             padding: 0.35rem 0.75rem;
-            font-size: 0.85rem;
+            font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             color: var(--ks-color-text-primary);
             display: inline-flex;
@@ -134,7 +134,7 @@
             gap: 0.25rem;
             padding: 0.4rem 0.5rem;
         }
-        
+
         .tabs > button {
             padding: 0.5rem;
             gap: 0;

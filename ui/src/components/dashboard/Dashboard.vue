@@ -22,13 +22,13 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue";
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
     import {processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import Sections from "./sections/Sections.vue";
 
     import {
@@ -36,6 +36,9 @@
         useNamespaceDashboardFilter,
         useFlowDashboardFilter
     } from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    useRestoreUrl();
 
     const dashboardFilter = useDashboardFilter();
     const flowDashboardFilter = useFlowDashboardFilter();
@@ -90,7 +93,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
         }
     };
 
@@ -109,7 +112,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true;
     }
 
@@ -182,7 +185,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .filterPadding {
     margin-top: 1.5rem;

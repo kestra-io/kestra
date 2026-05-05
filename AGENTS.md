@@ -185,6 +185,12 @@ class ServiceTest {
 - Storybook component tests
 - Use JSdom environment for DOM testing
 
+## UI Design System
+
+The full UI design-system rules, component catalogue, token reference, and frontend best practices live in [ui/AGENTS.md](ui/AGENTS.md). That file is auto-loaded by AI coding agents whenever work happens under `ui/` in OSS or `ui-ee/` in Enterprise edition, and should be consulted (and kept up to date) for any frontend change.
+
+@ui/AGENTS.md
+
 ## Frontend Code Style (Vue 3)
 
 **File Organization:**

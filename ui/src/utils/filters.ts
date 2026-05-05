@@ -1,12 +1,13 @@
 import Utils from "./utils";
 import {storageKeys} from "../utils/constants";
 import moment from "moment-timezone";
+import {durationUtils} from "@kestra-io/design-system";
 
 export function invisibleSpace (value:string) {
         return value.replace(/\./g, "\u200B" + ".");
 }
 export function humanizeDuration (value:string, options?:any) {
-    return Utils.humanDuration(value, options);
+    return durationUtils.humanDuration(value, options);
 }
 export function humanizeNumber (value:string) {
     return parseInt(value).toLocaleString(Utils.getLang());

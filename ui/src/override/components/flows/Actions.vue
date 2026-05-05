@@ -40,7 +40,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {useFlowStore} from "../../../stores/flow";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";

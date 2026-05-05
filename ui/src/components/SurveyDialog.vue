@@ -1,5 +1,5 @@
 <template>
-    <el-dialog
+    <KsDialog
         v-model="isVisible"
         :title="$t('setup.titles.survey')"
         width="550px"
@@ -13,56 +13,56 @@
             <div class="question-section">
                 <h4>{{ $t('setup.survey.company_size') }}</h4>
                 <div class="company-size-options">
-                    <el-radio-group v-model="companySize">
-                        <el-radio 
-                            v-for="option in companySizeOptions" 
-                            :key="option.value" 
+                    <KsRadioGroup v-model="companySize">
+                        <KsRadio
+                            v-for="option in companySizeOptions"
+                            :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </el-radio>
-                    </el-radio-group>
+                        </KsRadio>
+                    </KsRadioGroup>
                 </div>
             </div>
 
-            <el-divider />
-            
+            <KsDivider />
+
             <div class="question-section">
                 <h4>{{ $t('setup.survey.use_case') }}</h4>
                 <div class="use-case-options">
-                    <el-checkbox-group v-model="useCases">
-                        <el-checkbox 
-                            v-for="option in useCaseOptions" 
-                            :key="option.value" 
+                    <KsCheckboxGroup v-model="useCases">
+                        <KsCheckbox
+                            v-for="option in useCaseOptions"
+                            :key="option.value"
                             :value="option.value"
                         >
                             {{ $t(option.labelKey) }}
-                        </el-checkbox>
-                    </el-checkbox-group>
+                        </KsCheckbox>
+                    </KsCheckboxGroup>
                 </div>
             </div>
 
-            <el-divider />
+            <KsDivider />
 
-            
+
             <div class="newsletter-section">
-                <el-checkbox v-model="subscribeNewsletter">
+                <KsCheckbox v-model="subscribeNewsletter">
                     <span v-html="$t('setup.survey.newsletter')" />
-                </el-checkbox>
+                </KsCheckbox>
             </div>
         </div>
-        
+
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="handleSkip">
+                <KsButton @click="handleSkip">
                     {{ $t('setup.survey.skip') }}
-                </el-button>
-                <el-button type="primary" @click="handleSubmit">
+                </KsButton>
+                <KsButton type="primary" @click="handleSubmit">
                     {{ $t('setup.survey.continue') }}
-                </el-button>
+                </KsButton>
             </div>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -138,20 +138,20 @@
             useCases: useCases.value,
             subscribeNewsletter: subscribeNewsletter.value
         }
-        
+
         trackSurveyEvent("survey_submitted", {
             company_size: surveyData.companySize,
             use_cases: surveyData.useCases,
             newsletter_subscribed: surveyData.subscribeNewsletter
         })
-        
+
         emit("submit", surveyData)
         emit("close")
     }
 
     const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
         const configs = miscStore.configs
-        
+
         apiStore.posthogEvents({
             type: eventName,
             instance_id: configs?.uuid,
@@ -165,29 +165,29 @@
 :deep(.hello-survey-dialog) {
     border-radius: 8px;
     border: 1px solid var(--ks-dialog-border, #404559);
-    
-    .el-dialog {
+
+    .kel-dialog {
         border-radius: 8px;
     }
-    
-    .el-dialog__header {
+
+    .kel-dialog__header {
         background-color: var(--ks-background-card, #2c2f36);
         border-bottom: 1px solid var(--ks-border-primary, #404559);
         padding: 20px 24px;
-        
-        .el-dialog__title {
+
+        .kel-dialog__title {
             color: var(--ks-content-primary, #ffffff);
-            font-size: 18px;
+            font-size: var(--ks-font-size-md);
             font-weight: 600;
         }
     }
-    
-    .el-dialog__body {
+
+    .kel-dialog__body {
         padding: 24px;
         background-color: var(--ks-background-card, #2c2f36);
     }
-    
-    .el-dialog__footer {
+
+    .kel-dialog__footer {
         background-color: var(--ks-background-card, #2c2f36);
         border-top: 1px solid var(--ks-border-primary, #404559);
         padding: 20px 24px;
@@ -199,43 +199,43 @@
 
     .question-section {
         margin-bottom: 32px;
-        
+
         h4 {
             color: var(--ks-content-primary, #ffffff);
-            font-size: 16px;
+            font-size: var(--ks-font-size-base);
             font-weight: 700;
             margin: 0 0 16px 0;
         }
     }
-    
+
     .company-size-options {
-        :deep(.el-radio-group) {
+        :deep(.kel-radio-group) {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
-            
-            .el-radio {
+
+            .kel-radio {
                 margin-right: 0;
                 margin-bottom: 0;
-                
-                .el-radio__input {
-                    .el-radio__inner {
+
+                .kel-radio__input {
+                    .kel-radio__inner {
                         background-color: transparent;
                         border-color: #918BA9;
                         border-width: 2px;
                         width: 24px;
                         height: 24px;
-                        
+
                         &::after {
                             display: none;
                         }
                     }
-                    
-                    &.is-checked .el-radio__inner {
+
+                    &.is-checked .kel-radio__inner {
                         background-color: transparent;
                         border-color: #8405FF;
                         border-width: 2px;
-                        
+
                         &::after {
                             display: block;
                             content: '';
@@ -250,89 +250,89 @@
                         }
                     }
                 }
-                
-                .el-radio__label {
+
+                .kel-radio__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 8px;
-                    font-size: 14px;
+                    font-size: var(--ks-font-size-sm);
                 }
             }
         }
     }
-    
+
     .use-case-options {
-        :deep(.el-checkbox-group) {
+        :deep(.kel-checkbox-group) {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px 24px;
-            
-            .el-checkbox {
+
+            .kel-checkbox {
                 margin-right: 0;
                 margin-bottom: 0;
-                
-                .el-checkbox__input {
-                    .el-checkbox__inner {
+
+                .kel-checkbox__input {
+                    .kel-checkbox__inner {
                         background-color: transparent;
                         border-color: #918BA9;
                         width: 18px;
                         height: 18px;
                         border-radius: 2px;
-                        
+
                         &::after {
-                            border-color: #ffffff;
+                            border-color: var(--ks-white);
                             width: 6px;
                             height: 9px;
                             left: 4px;
                             top: 1px;
                         }
                     }
-                    
-                    &.is-checked .el-checkbox__inner {
-                        background-color: var(--el-color-primary, #7c3aed);
-                        border-color: var(--el-color-primary, #7c3aed);
+
+                    &.is-checked .kel-checkbox__inner {
+                        background-color: var(--ks-button-background-primary, #7c3aed);
+                        border-color: var(--ks-button-background-primary, #7c3aed);
                     }
                 }
-                
-                .el-checkbox__label {
+
+                .kel-checkbox__label {
                     color: var(--ks-content-primary, #ffffff);
                     padding-left: 10px;
-                    font-size: 14px;
+                    font-size: var(--ks-font-size-sm);
                     line-height: 22px;
                 }
             }
         }
     }
-    
+
     .newsletter-section {
         padding-top: 4px;
-        
-        :deep(.el-checkbox) {
-            .el-checkbox__input {
-                .el-checkbox__inner {
+
+        :deep(.kel-checkbox) {
+            .kel-checkbox__input {
+                .kel-checkbox__inner {
                     background-color: transparent;
                     border-color: #918BA9;
                     width: 18px;
                     height: 18px;
                     border-radius: 2px;
-                    
+
                     &::after {
-                        border-color: #ffffff;
+                        border-color: var(--ks-white);
                         width: 6px;
                         height: 9px;
                         left: 4px;
                         top: 1px;
                     }
                 }
-                
-                &.is-checked .el-checkbox__inner {
-                    background-color: var(--el-color-primary, #7c3aed);
-                    border-color: var(--el-color-primary, #7c3aed);
+
+                &.is-checked .kel-checkbox__inner {
+                    background-color: var(--ks-button-background-primary, #7c3aed);
+                    border-color: var(--ks-button-background-primary, #7c3aed);
                 }
             }
-            
-            .el-checkbox__label {
+
+            .kel-checkbox__label {
                 color: var(--ks-content-secondary, #9ca3af);
-                font-size: 14px;
+                font-size: var(--ks-font-size-sm);
                 line-height: 22px;
                 padding-left: 10px;
             }

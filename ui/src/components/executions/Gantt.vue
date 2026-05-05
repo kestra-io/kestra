@@ -15,7 +15,7 @@
             @filter="onFilterChange"
         />
         <div class="gantt-stage">
-            <el-card
+            <KsCard
                 id="gantt"
                 data-onboarding-target="execution-gantt"
                 shadow="never"
@@ -54,7 +54,7 @@
                                             <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                             <ChevronDown v-else />
                                         </div>
-                                        <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                        <KsTooltip placement="top-start">
                                             <template #content>
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -67,17 +67,17 @@
                                                 <code>{{ item.name }}</code>
                                                 <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                             </span>
-                                        </el-tooltip>
+                                        </KsTooltip>
                                         <div>
-                                            <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                            <KsTooltip v-if="item.attempts > 1" placement="right">
                                                 <template #content>
                                                     <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                 </template>
                                                 <Warning class="attempt_warn me-3" />
-                                            </el-tooltip>
+                                            </KsTooltip>
                                         </div>
                                         <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                            <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                            <KsTooltip placement="top">
                                                 <template #content>
                                                     <span style="white-space: pre-wrap;">
                                                         {{ item.tooltip }}
@@ -87,16 +87,17 @@
                                                     :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                                     class="task-progress"
                                                 >
-                                                    <div class="progress">
-                                                        <div
-                                                            :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
-                                                            class="progress-bar"
-                                                            :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                                            role="progressbar"
-                                                        />
-                                                    </div>
+                                                    <KsProgress
+                                                        :left="Math.min(item.left, 90)"
+                                                        :percentage="Math.max(100 - item.left, 10)"
+                                                        :color="item.color"
+                                                        :stroke-width="25"
+                                                        :striped="item.running"
+                                                        :stripedFlow="item.running"
+                                                        :showText="false"
+                                                    />
                                                 </div>
-                                            </el-tooltip>
+                                            </KsTooltip>
                                         </div>
                                     </div>
                                     <div v-if="selectedTaskRuns.includes(item.id)" class="p-2">
@@ -114,16 +115,16 @@
                         </template>
                     </DynamicScroller>
                 </template>
-            </el-card>
+            </KsCard>
         </div>
         <OnboardingSuccessPopup
             :modelValue="showOnboardingSuccessPopup"
             :backdrop="false"
-            @update:model-value="showOnboardingSuccessPopup = $event"
+            @update:modks-value="showOnboardingSuccessPopup = $event"
         />
         <SaveExecuteAnimation
             :modelValue="showSaveExecuteAnimation"
-            @update:model-value="showSaveExecuteAnimation = $event"
+            @update:modks-value="showSaveExecuteAnimation = $event"
             @finished="onSaveExecuteAnimationFinished"
         />
     </template>
@@ -136,10 +137,9 @@
     import {useRoute} from "vue-router";
     // @ts-expect-error no types yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import {State} from "@kestra-io/ui-libs";
+    import {State, durationUtils} from "@kestra-io/design-system";
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
-    import Utils from "../../utils/utils";
     // @ts-expect-error JS module without declarations
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
@@ -151,15 +151,15 @@
     import ExecutionPending from "./ExecutionPending.vue";
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue";
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
-    import {Comparators, type AppliedFilter} from "../filter/utils/filterTypes";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import {Comparators, type AppliedFilter} from "@kestra-io/design-system";
     import {useGanttExecutionFilter} from "../filter/configurations";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
+    } from "@kestra-io/design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/design-system";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
 
     interface TaskRun {
@@ -229,7 +229,7 @@
     // Constants
     const TASKRUN_THRESHOLD = 50;
     const ts = (date: string | Date): number => new Date(date).getTime();
-    const colors = State.colorClass();
+    const colors = State.color();
     const taskTypesToExclude = [
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit",
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs",
@@ -446,11 +446,11 @@
 
             const taskDelta = stopTs - startTs;
 
-            let tooltip = `${t("duration")} : ${Utils.humanDuration(taskDelta / 1000)}`;
+            let tooltip = `${t("duration")} : ${durationUtils.humanDuration(taskDelta / 1000)}`;
 
             if (runningState.length > 0) {
-                tooltip += `\n${t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
-                tooltip += `\n${t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
+                tooltip += `\n${t("queued duration")} : ${durationUtils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
+                tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
             }
 
             let width = (taskStop / executionDelta) * 100;
@@ -596,13 +596,12 @@
 </script>
 
 <style scoped lang="scss">
-    .el-card {
+    .kel-card {
         padding: 0;
 
-        :deep(.el-card__header) {
+        :deep(.kel-card__header) {
             padding: 0;
-            font-size: var(--font-size-sm);
-            background-color: var(--bs-gray-200);
+            font-size: var(--ks-font-size-sm);
 
             > div {
                 > * {
@@ -611,7 +610,7 @@
                 }
 
                 > .th {
-                    background-color: var(--bs-gray-100-darken-5);
+                    background-color: var(--ks-tag-background-hover);
                 }
 
                 > :not(.th) {
@@ -627,14 +626,14 @@
                     font-weight: normal;
 
                     .timeline-start, .timeline-end {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
                 }
             }
         }
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
@@ -664,7 +663,7 @@
                     padding: 1rem .5rem;
                 }
 
-                .el-tooltip__trigger {
+                .ks-tooltip__trigger {
                     flex: 1;
                     white-space: nowrap;
                     overflow: hidden;
@@ -672,12 +671,12 @@
 
                     small {
                         margin-left: 5px;
-                        font-family: var(--bs-font-monospace);
-                        font-size: var(--font-size-xs);
+                        font-family: var(--kel-font-family-monospace);
+                        font-size: var(--ks-font-size-xs);
                     }
 
                     code {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
                 }
@@ -690,19 +689,19 @@
                     text-overflow: ellipsis;
 
                     code {
-                        font-size: var(--font-size-sm);
+                        font-size: var(--ks-font-size-sm);
                         color: var(--ks-content-primary);
                     }
 
                     small {
                         margin-left: 5px;
-                        font-family: var(--bs-font-monospace);
-                        font-size: var(--font-size-xs);
+                        font-family: var(--kel-font-family-monospace);
+                        font-size: var(--ks-font-size-xs);
                     }
                 }
 
                 .attempt_warn{
-                    color: var(--el-color-warning);
+                    color: var(--ks-color-warning);
                     vertical-align: middle;
                 }
 
@@ -710,23 +709,6 @@
                     position: relative;
                     transition: all 0.3s;
                     min-width: 5px;
-
-                    .progress {
-                        height: 25px;
-                        border-radius: var(--bs-border-radius-sm);
-                        background-color: var(--bs-gray-200);
-                        cursor: pointer;
-
-                        .progress-bar {
-                            position: absolute;
-                            height: 25px;
-                            transition: none;
-
-                            &.bg-gray {
-                                background-color: #5a6268;
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -752,7 +734,7 @@
 
     :deep(.log-wrapper) {
         > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
         }
     }
 </style>

@@ -1,0 +1,51 @@
+@use "color-palette" as palette;
+
+// font family
+$font-family-sans-serif: "Public Sans", sans-serif;
+$font-family-monospace: "Source Code Pro", monospace;
+
+// font sizes
+$font-size-base: 1rem;
+$font-size-xs: $font-size-base * 0.75;
+$font-size-sm: $font-size-base * 0.875;
+$font-size-md : $font-size-base * 1;
+$font-size-lg: $font-size-base * 1.25;
+$font-size-xl: $font-size-base * 1.375;
+$font-size-2xl : $font-size-base * 2.188;
+$font-size-3xl : $font-size-base * 3;
+$font-size-4xl : $font-size-base * 3.75;
+
+// base colors
+$black: #14181f;
+$white: #ffffff;
+
+// shadow
+$box-shadow: 0 .5rem 1rem rgba($black, .15);
+$box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
+$box-shadow-lg: 0 1rem 3rem rgba($black, .175);
+
+$gray-dark-50:  #14181f;
+$gray-dark-100: #1C1E27;
+$gray-dark-200: #21242E;
+$gray-dark-300: #202435;
+$gray-dark-400: #2C303F;
+$gray-dark-500: #2F3342;
+$gray-dark-600: #404559;
+$gray-dark-700: #918BA9;
+$gray-dark-800: #A69FC1;
+$gray-dark-900: #CAC5DA;
+$gray-dark-950: #f9f9fa;
+
+$colors: (
+    'primary': palette.$base-purple-500,
+    'success': palette.$base-green-500,
+    'warning': palette.$base-orange-500,
+    'danger': palette.$base-red-500,
+    'error': palette.$base-red-500,
+    'info': palette.$base-blue-500,
+);
+
+// border radius
+$border-radius: 0.25rem !default;
+$border-radius-lg: 0.5rem !default;
+$border-radius-sm: 0.15rem !default;

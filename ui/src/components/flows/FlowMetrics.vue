@@ -7,53 +7,73 @@
             columns: {shown: false},
             refresh: {shown: true, callback: load}
         }"
+        :buttons="{savedFilters: {shown: false}, tableOptions: {shown: false}}"
         :defaultScope="false"
         :defaultTimeRange="false"
-    />
-
-    <div v-bind="$attrs" v-loading="isLoading">
-        <el-card>
-            <el-tooltip
-                effect="light"
-                placement="bottom"
-                :persistent="false"
-                :hideAfter="0"
-                transition=""
-                :popperClass="
-                    tooltipContent === '' ? 'd-none' : 'tooltip-stats'
-                "
-                v-if="flowStore.aggregatedMetrics"
-            >
-                <template #content>
-                    <span v-html="tooltipContent" />
-                </template>
-                <Bar
-                    ref="chartRef"
-                    :data="chartData"
-                    :options="options"
-                    v-if="flowStore.aggregatedMetrics"
+    >
+        <template #extra>
+            <div class="metric-controls">
+                <KsSegmented
+                    :modelValue="currentAggregation"
+                    :options="aggregationOptions"
+                    @change="setAggregation"
                 />
-            </el-tooltip>
-            <span v-else>
-                <el-alert type="info" :closable="false">
-                    {{ $t("metric choice") }}
-                </el-alert>
-            </span>
-        </el-card>
+                <KsSegmented
+                    :modelValue="currentChartType"
+                    :options="chartTypeOptions"
+                    @change="setChartType"
+                />
+            </div>
+        </template>
+    </KSFilter>
+
+    <div v-bind="$attrs">
+        <KsRow v-if="displayedMetrics.length > 0" :gutter="16">
+            <KsCol
+                :md="12"
+                :lg="8"
+                v-for="metric in displayedMetrics"
+                :key="metric"
+            >
+                <KsCard class="metric-chart-card">
+                    <div class="metric-title">
+                        {{ metric }}
+                    </div>
+                    <KsBar
+                        v-if="currentChartType === 'bar'"
+                        class="chart"
+                        :data="getSeriesData(metric)"
+                        :categories="getCategories(metric)"
+                        :loading="isLoading"
+                    />
+                    <KsLine
+                        v-else
+                        class="chart"
+                        :data="getSeriesData(metric)"
+                        :categories="getCategories(metric)"
+                        :loading="isLoading"
+                    />
+                </KsCard>
+            </KsCol>
+        </KsRow>
+        <KsCard v-else-if="!isLoading">
+            <KsAlert type="info" :closable="false">
+                {{ $t("metric choice") }}
+            </KsAlert>
+        </KsCard>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {Bar} from "vue-chartjs";
     import moment from "moment";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "override/stores/misc";
     import {useFlowStore} from "../../stores/flow";
-    import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";
-    import {cssVariable} from "@kestra-io/ui-libs";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {getFormat} from "../dashboard/composables/charts";
+    import {cssVar, KsBar, KsLine, KsSegmented} from "@kestra-io/design-system";
+    import type {KsChartSeriesItem} from "@kestra-io/design-system";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {useFlowMetricFilter} from "../filter/configurations";
 
     defineOptions({
@@ -66,198 +86,216 @@
     const {t} = useI18n();
 
     const flowMetricFilter = useFlowMetricFilter();
-    const miscStore = useMiscStore();
     const flowStore = useFlowStore();
 
-    const tooltipContent = ref("");
     const isLoading = ref(false);
+    const metricsData = ref<Record<string, any>>({});
 
     interface MetricAggregation {
         date: string;
         value?: number;
     }
 
-    const display = computed(() => {
-        return route.query.metric && route.query.aggregation;
+    const currentAggregation = computed(() => {
+        return (route.query.aggregation as string) ?? "sum";
     });
 
-    const chartData = computed(() => {
-        const aggregations = (flowStore.aggregatedMetrics?.aggregations ?? []) as MetricAggregation[];
-        const groupBy = flowStore.aggregatedMetrics?.groupBy;
-
-        const aggregationQuery = route.query.aggregation;
-        const aggregationValue = Array.isArray(aggregationQuery)
-            ? aggregationQuery[0]
-            : aggregationQuery;
-        const aggregationLabel = aggregationValue?.toLowerCase() ?? "";
-
-        return {
-            labels: aggregations.map((e: MetricAggregation) =>
-                moment(e.date).format(getFormat(groupBy)),
-            ),
-            datasets: [
-                !display.value
-                    ? {data: [] as number[], label: "", backgroundColor: ""}
-                    : {
-                        label: `${t(aggregationLabel)} ${t("of")} ${route.query.metric}`,
-                        backgroundColor: cssVariable("--el-color-success"),
-                        borderRadius: 4,
-                        data: aggregations.map(
-                            (e: MetricAggregation) => (e.value ? e.value : 0),
-                        ),
-                    },
-            ],
-        };
+    const currentChartType = computed(() => {
+        return (route.query.chartType as string) ?? "bar";
     });
 
-    const options = computed(() => {
-        const darken =
-            miscStore.theme === "light"
-                ? cssVariable("--bs-gray-700")
-                : cssVariable("--bs-gray-800");
-        const lighten =
-            miscStore.theme === "light"
-                ? cssVariable("--bs-gray-200")
-                : cssVariable("--bs-gray-400");
+    const aggregationOptions = computed(() => [
+        {label: t("sum"), value: "sum"},
+        {label: t("avg"), value: "avg"},
+        {label: t("min"), value: "min"},
+        {label: t("max"), value: "max"},
+    ]);
 
-        return defaultConfig(
+    const chartTypeOptions = computed(() => [
+        {label: t("bar"), value: "bar"},
+        {label: t("line"), value: "line"},
+    ]);
+
+    function setAggregation(value: string | number | boolean): void {
+        router.push({query: {...route.query, aggregation: String(value)}});
+    }
+
+    function setChartType(value: string | number | boolean): void {
+        router.push({query: {...route.query, chartType: String(value)}});
+    }
+
+    const selectedMetric = computed(() => {
+        return route.query["filters[metric][EQUALS]"] as string | undefined;
+    });
+
+    const selectedTextSearch = computed(() => {
+        return route.query["filters[q][EQUALS]"] as string | undefined;
+    });
+
+    const selectedTask = computed(() => {
+        return route.query["filters[task][EQUALS]"] as string | undefined;
+    });
+
+    const displayedMetrics = computed(() => {
+        const metrics = (flowStore.metrics ?? []) as string[];
+        if (selectedMetric.value) {
+            return metrics.filter((m) => m === selectedMetric.value);
+        }
+
+        if (selectedTextSearch.value) {
+            const search = selectedTextSearch.value;
+            return metrics.filter((m) => m.indexOf(search) !== -1);
+        }
+
+        return metrics;
+    });
+
+    function getTimeRangeParams(): {startDate?: string; endDate?: string} {
+        const timeRange = route.query["filters[timeRange][EQUALS]"] as string | undefined;
+        if (!timeRange) return {};
+        const endDate = moment().toISOString();
+        const startDate = moment().subtract(moment.duration(timeRange)).toISOString();
+        return {startDate, endDate};
+    }
+
+    function getCategories(metric: string): string[] {
+        const data = metricsData.value[metric];
+        if (!data) return [];
+        const aggregations = (data.aggregations ?? []) as MetricAggregation[];
+        return aggregations.map((e) => moment(e.date).format(getFormat(data.groupBy)));
+    }
+
+    function getSeriesData(metric: string): KsChartSeriesItem[] {
+        const data = metricsData.value[metric];
+        if (!data) return [];
+        const aggregations = (data.aggregations ?? []) as MetricAggregation[];
+        const aggregationLabel = currentAggregation.value.toLowerCase();
+        return [
             {
-                plugins: {
-                    tooltip: {
-                        external: (context: { tooltip: any }) => {
-                            tooltipContent.value = tooltip(context.tooltip) ?? "";
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        grid: {
-                            borderColor: lighten,
-                            color: lighten,
-                            drawTicks: false,
-                        },
-                        ticks: {
-                            color: darken,
-                            autoSkip: true,
-                            minRotation: 0,
-                            maxRotation: 0,
-                        },
-                    },
-                    y: {
-                        display: true,
-                        grid: {
-                            borderColor: lighten,
-                            color: lighten,
-                            drawTicks: false,
-                        },
-                        ticks: {
-                            color: darken,
-                        },
-                    },
-                },
+                name: `${t(aggregationLabel)} ${t("of")} ${metric}`,
+                data: aggregations.map((e) => e.value ?? 0),
+                itemStyle: {color: cssVar("--ks-content-success")},
             },
-            miscStore.theme,
-        );
-    });
+        ];
+    }
 
-    function loadMetrics(): void {
-        const params = route.params as { namespace: string; id: string };
+    async function loadAllAggregatedMetrics(): Promise<void> {
+        const metrics = displayedMetrics.value;
+        if (!metrics.length) {
+            metricsData.value = {};
+            return;
+        }
+
+        isLoading.value = true;
+
+        const params = route.params as {namespace: string; id: string};
+        const taskId = selectedTask.value;
+        const aggregation = currentAggregation.value;
+        const timeRangeParams = getTimeRangeParams();
+
+        const newData: Record<string, any> = {};
+
+        await Promise.all(
+            metrics.map(async (metric) => {
+                const options = {
+                    namespace: params.namespace,
+                    id: params.id,
+                    metric,
+                    aggregation,
+                    ...timeRangeParams,
+                };
+                if (taskId) {
+                    newData[metric] = await flowStore.loadTaskAggregatedMetrics({...options, taskId});
+                } else {
+                    newData[metric] = await flowStore.loadFlowAggregatedMetrics(options);
+                }
+            }),
+        );
+
+        metricsData.value = newData;
+        isLoading.value = false;
+    }
+
+    async function loadMetrics(): Promise<void> {
+        const params = route.params as {namespace: string; id: string};
 
         flowStore.loadTasksWithMetrics({
             namespace: params.namespace,
             id: params.id,
         });
 
-        const taskId = route.query.task as string | undefined;
+        const taskId = selectedTask.value;
+        let metrics: string[];
 
         if (taskId) {
-            flowStore.loadTaskMetrics({
+            metrics = await flowStore.loadTaskMetrics({
                 namespace: params.namespace,
                 id: params.id,
-                taskId: taskId,
-            }).then(handleMetricsLoaded);
+                taskId,
+            });
         } else {
-            flowStore.loadFlowMetrics({
+            metrics = await flowStore.loadFlowMetrics({
                 namespace: params.namespace,
                 id: params.id,
-            }).then(handleMetricsLoaded);
+            });
         }
-    }
 
-    function handleMetricsLoaded(): void {
-        if ((flowStore.metrics?.length ?? -1) > 0) {
-            if (
-                route.query.metric &&
-                !flowStore.metrics?.includes(route.query.metric as string)
-            ) {
-                const query = {...route.query};
-                delete query.metric;
-
-                router
-                    .push({query: query})
-                    .then(() => loadAggregatedMetrics());
-            } else {
-                loadAggregatedMetrics();
-            }
+        if (
+            selectedMetric.value &&
+            metrics?.length > 0 &&
+            !metrics.includes(selectedMetric.value)
+        ) {
+            const query = {...route.query};
+            delete query["filters[metric][EQUALS]"];
+            await router.push({query});
         }
-    }
 
-    function loadAggregatedMetrics(): void {
-        isLoading.value = true;
-
-        if (display.value) {
-            const params = route.params as { namespace: string; id: string };
-            const metric = route.query.metric as string;
-            const taskId = route.query.task as string | undefined;
-
-            if (taskId) {
-                flowStore.loadTaskAggregatedMetrics({
-                    namespace: params.namespace,
-                    id: params.id,
-                    taskId: taskId,
-                    metric: metric,
-                });
-            } else {
-                flowStore.loadFlowAggregatedMetrics({
-                    namespace: params.namespace,
-                    id: params.id,
-                    metric: metric,
-                });
-            }
-        } else {
-            flowStore.aggregatedMetrics = undefined;
-        }
-        isLoading.value = false;
+        await loadAllAggregatedMetrics();
     }
 
     function load(): void {
-        if (!route.query.metric) {
-            loadMetrics();
-        } else {
-            loadAggregatedMetrics();
-        }
+        loadMetrics();
     }
 
-    // Watch for route query changes
     watch(
         () => route.query,
-        (query) => {
-            if (!query.metric) {
+        (newQuery, oldQuery) => {
+            const taskChanged = newQuery["filters[task][EQUALS]"] !== oldQuery["filters[task][EQUALS]"];
+            const metricChanged = newQuery["filters[metric][EQUALS]"] !== oldQuery["filters[metric][EQUALS]"];
+            const searchChanged = newQuery["filters[q][EQUALS]"] !== oldQuery["filters[q][EQUALS]"];
+            const aggregationChanged = newQuery.aggregation !== oldQuery.aggregation;
+            const timeRangeChanged = newQuery["filters[timeRange][EQUALS]"] !== oldQuery["filters[timeRange][EQUALS]"];
+
+            if (taskChanged || metricChanged || searchChanged) {
                 loadMetrics();
-            } else {
-                loadAggregatedMetrics();
+            } else if (aggregationChanged || timeRangeChanged) {
+                loadAllAggregatedMetrics();
             }
         },
     );
 
-    // Initial load (equivalent to created hook)
     loadMetrics();
 </script>
 
-<style scoped>
-.navbar-flow-metrics {
-    display: flex;
-    width: 100%;
-}
+<style scoped lang="scss">
+    .metric-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .metric-chart-card {
+        margin-bottom: 1rem;
+    }
+
+    .metric-title {
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--ks-content-secondary);
+    }
+
+    .chart {
+        height: 231px;
+    }
 </style>

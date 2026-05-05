@@ -14,7 +14,7 @@ import lombok.Getter;
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @PluginDefaultValidation
-public class PluginDefault {
+public class PluginDefault implements PluginDefaultSpec {
     @NotNull
     private final String type;
 

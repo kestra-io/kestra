@@ -87,7 +87,7 @@
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton";
     import {aiGenerationTypes} from "../../utils/constants";
 
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import Editor from "./Editor.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";

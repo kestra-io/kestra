@@ -1,16 +1,17 @@
 <template>
     <DocIdDisplay />
-    <el-config-provider>
-        <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
-        <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
-            <router-view />
-        </component>
-        <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
-        <UnsavedChangesDialog />
-    </el-config-provider>
+    <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
+    <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+        <router-view />
+    </component>
+    <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
+    <UnsavedChangesDialog />
 </template>
 
 <script lang="ts" setup>
+    import "./styles/vendor.scss"
+    import "./styles/app.scss"
+
     import {ref, computed, watch, onMounted} from "vue";
     import {useRoute} from "vue-router";
     import {useApiStore} from "./stores/api";
@@ -26,9 +27,6 @@
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
-    import "./styles/vendor.scss"
-    import "@kestra-io/ui-libs/style.css";
-    import "./styles/app.scss"
     import {usePluginsStore} from "./stores/plugins";
 
     const loaded = ref(false);

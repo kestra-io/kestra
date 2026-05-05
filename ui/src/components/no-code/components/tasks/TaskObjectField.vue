@@ -15,7 +15,7 @@
         :disabled
         class="mt-1 mb-2 wrapper"
     />
-    <el-form-item v-else-if="fieldKey" :required="isRequired">
+    <KsFormItem v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -33,31 +33,28 @@
                         @click="modelValue = undefined; taskComponent?.resetSelectType?.();"
                     />
                 </div>
-                <el-tag
+                <KsTag
                     v-if="!isAnyOf"
                     disableTransitions
                     size="small"
                     class="type-tag"
                 >
                     {{ simpleType }}
-                </el-tag>
-                <el-tooltip
+                </KsTag>
+                <KsTooltip
                     v-if="!isAnyOf && hasTooltip"
-                    :persistent="false"
-                    :hideAfter="0"
-                    effect="light"
                     placement="left-start"
                     :showArrow="false"
                     popperClass="singleton-tooltip"
                 >
                     <template #content>
-                        <Markdown
+                        <KsMarkdown
                             class="markdown-tooltip"
-                            :source="helpText"
+                            :content="helpText"
                         />
                     </template>
                     <Help />
-                </el-tooltip>
+                </KsTooltip>
             </div>
         </template>
         <TaskObjectTaskInline
@@ -74,7 +71,7 @@
             :disabled
             class="mt-1 mb-2 wrapper"
         />
-    </el-form-item>
+    </KsFormItem>
 </template>
 
 <script setup lang="ts">
@@ -83,7 +80,7 @@
     import {INLINE_TASK_MODE_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
 
     import ClearButton from "./ClearButton.vue";
-    import Markdown from "../../../layout/Markdown.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import Help from "vue-material-design-icons/Information.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import TaskObjectListInline from "../../../plugins/plugin-default/TaskObjectListInline.vue";
@@ -182,10 +179,10 @@
 </script>
 
 <style scoped lang="scss">
-.el-form-item {
+.kel-form-item {
     width: 100%;
 
-    > :deep(.el-form-item__label) {
+    > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;
@@ -209,13 +206,13 @@
     }
 
     .label {
-        font-family: var(--bs-font-monospace);
+        font-family: var(--kel-font-family-monospace);
         color: var(--ks-content-primary);
         min-width: 0;
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.875rem;
+        font-size: var(--ks-font-size-sm);
     }
 
     .label-anyof{
@@ -225,8 +222,8 @@
     .type-tag {
         background-color: var(--ks-tag-background-active);
         color: var(--ks-tag-content);
-        font-size: 12px;
-        line-height: 20px;
+        font-size: var(--ks-font-size-xs);
+        line-height: var(--ks-font-size-lg);
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;

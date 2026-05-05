@@ -5,10 +5,10 @@
                 Loading plugins...
             </div>
         </div>
-        <PluginList 
+        <PluginList
             v-else
-            :plugins="pluginsData" 
-            :key="useMiscStore().theme" 
+            :plugins="pluginsData"
+            :key="useMiscStore().theme"
         />
     </div>
 </template>
@@ -50,7 +50,7 @@
 
         .loading-text {
             color: var(--ks-content-secondary);
-            font-size: 14px;
+            font-size: var(--ks-font-size-sm);
         }
     }
 </style>

@@ -1,4 +1,39 @@
-import {extractPluginElements, type Plugin} from "@kestra-io/ui-libs";
+export type PluginElement = {
+    cls: string;
+    deprecated?: boolean;
+};
+
+export type Plugin = {
+    name: string;
+    title: string;
+    group: string;
+    longDescription?: string;
+    description?: string;
+    subGroup?: string;
+    tooltipContent?: string;
+    categories?: string[];
+    controllers?: string[];
+    storages?: string[];
+    aliases?: string[];
+    guides?: string[];
+    manifest?: Record<string, any>;
+    [pluginElement: string]: PluginElement[] | string | string[] | Record<string, any> | undefined;
+};
+
+export function isEntryAPluginElementPredicate(key: string, value: any): value is PluginElement[] {
+    return Array.isArray(value) &&
+        !["categories", "controllers", "storages", "aliases", "guides"].includes(key) &&
+        ((value as any[]).length === 0 ||
+        value[0]?.cls !== undefined);
+}
+
+export function extractPluginElements(plugin: Plugin): Record<string, string[]> {
+    return Object.fromEntries(
+        Object.entries(plugin)
+            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+            .map(([key, value]) => [key.replace(/[A-Z]/g, match => ` ${match}`), (value as PluginElement[]).filter(({deprecated}) => !deprecated).map(({cls}) => cls)])
+    );
+}
 
 export function isPluginMatched(plugin: Plugin, search: string): boolean {
     if (!search) return true;
@@ -26,4 +61,3 @@ export const getPluginReleaseUrl = (pluginClass?: string): string | null => {
     const repoPrefix = groupId === "storage" ? "storage" : "plugin";
     return `https://github.com/kestra-io/${repoPrefix}-${pluginType}/releases`;
 };
-

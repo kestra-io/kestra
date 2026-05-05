@@ -1,12 +1,24 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <KsDataTable
+            ref="dataTable"
+            :loadData="loadData"
+            :data="secrets"
+            :total="total"
+            :defaultSort="{prop: 'key', order: 'ascending'}"
+            :selectable="false"
+            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            :no-data-text="$t('no_results.secrets')"
+            class="fill-height"
+            :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+        >
             <template #top>
                 <KSFilter
                     :configuration="secretsFilter"
                     :tableOptions="{
                         chart: {shown: false},
-                        refresh: {shown: true, callback: loadData}
+                        refresh: {shown: true, callback: () => dataTable?.reload()}
                     }"
                     :prefix="'secrets'"
                     :buttons="{savedFilters: {shown: !namespace}}"
@@ -20,132 +32,113 @@
                 />
             </template>
 
-            <template #table>
-                <SelectTable
-                    :data="secrets"
-                    ref="selectTable"
-                    :defaultSort="{prop: 'key', order: 'ascending'}"
-                    tableLayout="auto"
-                    fixed
-                    :selectable="false"
-                    @sort-change="onSort"
-                    :no-data-text="$t('no_results.secrets')"
-                    class="fill-height"
-                    :rowKey="(row: any) => `${row.namespace}-${row.key}`"
-                >
-                    <el-table-column
-                        prop="key"
-                        sortable="custom"
-                        :sortOrders="['ascending', 'descending']"
-                        :label="keyOnly ? $t('secret.names') : $t('key')"
+            <KsTableColumn
+                prop="key"
+                sortable="custom"
+                :sortOrders="['ascending', 'descending']"
+                :label="keyOnly ? $t('secret.names') : $t('key')"
+            >
+                <template #default="scope">
+                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn
+                v-for="col in visibleColumns"
+                :key="col.prop"
+                :prop="col.prop"
+                :label="col.label"
+                :sortable="col.prop === 'namespace' ? 'custom' : false"
+                :sortOrders="col.prop === 'namespace' ? ['ascending', 'descending'] : []"
+            >
+                <template #default="scope">
+                    <template v-if="col.prop === 'namespace'">
+                        <KsTag
+                            type="info"
+                            class="namespace-tag"
+                        >
+                            <FolderOpenOutline />
+                            {{ scope.row?.namespace }}
+                        </KsTag>
+                    </template>
+                    <template v-else-if="col.prop === 'description'">
+                        {{ scope.row?.description }}
+                    </template>
+                    <template v-else-if="col.prop === 'tags'">
+                        <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
+                    </template>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn columnKey="locked" className="row-action">
+                <template #default="scope">
+                    <KsTooltip
+                        v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
-                        <template #default="scope">
-                            <Id v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                        <template #content>
+                            <span v-html="$t('secret.isReadOnly')" />
                         </template>
-                    </el-table-column>
+                        <KsIcon class="d-flex justify-content-center">
+                            <Lock />
+                        </KsIcon>
+                    </KsTooltip>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column
-                        v-for="col in visibleColumns"
-                        :key="col.prop"
-                        :prop="col.prop"
-                        :label="col.label"
-                        :sortable="col.prop === 'namespace' ? 'custom' : false"
-                        :sortOrders="col.prop === 'namespace' ? ['ascending', 'descending'] : []"
+            <KsTableColumn columnKey="copy" className="row-action">
+                <template #default="scope">
+                    <KsIconButton
+                        :tooltip="$t('copy_to_clipboard')"
+                        placement="left"
+                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
                     >
-                        <template #default="scope">
-                            <template v-if="col.prop === 'namespace'">
-                                <el-tag
-                                    type="info"
-                                    class="namespace-tag"
-                                >
-                                    <FolderOpenOutline />
-                                    {{ scope.row?.namespace }}
-                                </el-tag>
-                            </template>
-                            <template v-else-if="col.prop === 'description'">
-                                {{ scope.row?.description }}
-                            </template>
-                            <template v-else-if="col.prop === 'tags'">
-                                <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
-                            </template>
-                        </template>
-                    </el-table-column>
+                        <ContentCopy />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column columnKey="locked" className="row-action">
-                        <template #default="scope">
-                            <el-tooltip
-                                v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
-                                transition=""
-                                :hideAfter="0"
-                                :persistent="false"
-                                effect="light"
-                            >
-                                <template #content>
-                                    <span v-html="$t('secret.isReadOnly')" />
-                                </template>
-                                <el-icon class="d-flex justify-content-center text-base">
-                                    <Lock />
-                                </el-icon>
-                            </el-tooltip>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column columnKey="copy" className="row-action">
-                        <template #default="scope">
-                            <IconButton
-                                :tooltip="$t('copy_to_clipboard')"
-                                placement="left"
-                                @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
-                            >
-                                <ContentCopy />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column
-                        v-if="!keyOnly && !paneView"
-                        columnKey="update"
-                        className="row-action"
+            <KsTableColumn
+                v-if="!keyOnly && !paneView"
+                columnKey="update"
+                className="row-action"
+            >
+                <template #default="scope">
+                    <KsIconButton
+                        v-if="canUpdate(scope.row)"
+                        :tooltip="$t('update')"
+                        placement="left"
+                        @click="updateSecretModal(scope.row)"
                     >
-                        <template #default="scope">
-                            <IconButton
-                                v-if="canUpdate(scope.row)"
-                                :tooltip="$t('update')"
-                                placement="left"
-                                @click="updateSecretModal(scope.row)"
-                            >
-                                <FileDocumentEdit />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
+                        <FileDocumentEdit />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column
-                        v-if="!keyOnly && !paneView"
-                        columnKey="delete"
-                        className="row-action"
+            <KsTableColumn
+                v-if="!keyOnly && !paneView"
+                columnKey="delete"
+                className="row-action"
+            >
+                <template #default="scope">
+                    <KsIconButton
+                        v-if="canDelete(scope.row)"
+                        :tooltip="$t('delete')"
+                        placement="left"
+                        @click="removeSecret(scope.row)"
                     >
-                        <template #default="scope">
-                            <IconButton
-                                v-if="canDelete(scope.row)"
-                                :tooltip="$t('delete')"
-                                placement="left"
-                                @click="removeSecret(scope.row)"
-                            >
-                                <Delete />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
-                </SelectTable>
-            </template>
-        </DataTable>
+                        <Delete />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
+        </KsDataTable>
 
-        <Drawer
+        <KsDrawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
         >
-            <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-                <el-form-item
+            <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+                <KsFormItem
                     v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
@@ -157,72 +150,72 @@
                         :includeSystemNamespace="true"
                         all
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.key')" prop="key">
-                    <el-input v-model="secret.key" :disabled="secret.update" required />
-                </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
-                    <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
-                </el-form-item>
-                <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
-                    <el-col :span="20">
-                        <MultilineSecret
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.key')" prop="key">
+                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                </KsFormItem>
+                <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
+                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                </KsFormItem>
+                <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value">
+                    <KsCol :span="20">
+                        <KsPassword
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
                         />
-                    </el-col>
-                    <el-col class="px-2" :span="4">
-                        <el-switch
+                    </KsCol>
+                    <KsCol class="px-2" :span="4">
+                        <KsSwitch
                             size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
                             :activeIcon="PencilOutline"
                             :inactiveIcon="PencilOff"
                         />
-                    </el-col>
-                </el-form-item>
-                <el-form-item :label="$t('secret.description')" prop="description">
-                    <el-input
+                    </KsCol>
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.description')" prop="description">
+                    <KsInput
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.tags')" prop="tags">
-                    <el-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                        <el-col :span="8">
-                            <el-input required v-model="tag.key" :placeholder="$t('key')" />
-                        </el-col>
-                        <el-col :span="12">
-                            <el-input required v-model="tag.value" :placeholder="$t('value')" />
-                        </el-col>
-                        <el-button-group class="d-flex flex-nowrap">
-                            <el-button
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.tags')" prop="tags">
+                    <KsRow class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                        <KsCol :span="8">
+                            <KsInput required v-model="tag.key" :placeholder="$t('key')" />
+                        </KsCol>
+                        <KsCol :span="12">
+                            <KsInput required v-model="tag.value" :placeholder="$t('value')" />
+                        </KsCol>
+                        <KsButtonGroup class="d-flex flex-nowrap">
+                            <KsButton
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
                             />
-                        </el-button-group>
-                    </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="default">
+                        </KsButtonGroup>
+                    </KsRow>
+                    <KsButton :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
-                    </el-button>
-                </el-form-item>
-            </el-form>
+                    </KsButton>
+                </KsFormItem>
+            </KsForm>
 
             <template #footer>
-                <el-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
+                <KsButton :icon="ContentSave" @click="saveSecret(form)" type="primary">
                     {{ $t('save') }}
-                </el-button>
+                </KsButton>
             </template>
-        </Drawer>
+        </KsDrawer>
     </div>
 </template>
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import type {FormInstance} from "element-plus";
+    import {useRoute, useRouter} from "vue-router";
+    import type {FormInstance} from "@kestra-io/design-system";
     import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
     import _merge from "lodash/merge";
 
@@ -236,14 +229,9 @@
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
+    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system";
     import Labels from "../layout/Labels.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import SelectTable from "../layout/SelectTable.vue";
-    import MultilineSecret from "./MultilineSecret.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import action from "../../models/action";
@@ -256,7 +244,6 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
 
     const secretsFilter = useSecretsFilter();
 
@@ -304,12 +291,12 @@
     const {t} = useI18n();
     const toast = useToast();
     const route = useRoute();
+    const router = useRouter();
     const authStore = useAuthStore();
     const secretsStore = useSecretsStore();
     const namespacesStore = useNamespacesStore();
 
     const form = ref<FormInstance>();
-    const dataTable = useTemplateRef<DataTableRef>("dataTable");
 
     const total = ref(0);
     const hasData = ref<boolean>();
@@ -449,66 +436,68 @@
             !areNamespaceSecretsReadOnly.value;
     };
 
+    const dataTable = useTemplateRef("dataTable");
+
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter();
-        return _merge(base, queryFilter);
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return _merge(base, filters);
     };
 
-    const loadData = async (callback?: () => void) => {
-        try {
-            const secretsResponse = await secretsStore.find(loadQuery({
-                size: parseInt(String(route.query?.size ?? 25)),
-                page: parseInt(String(route.query?.page ?? 1)),
-                sort: String(route.query?.sort ?? "key:asc"),
-                ...(props.namespace === undefined ? {} : {
-                    filters: {
-                        namespace: {
-                            EQUALS: props.namespace
-                        }
-                    }
-                })
-            }));
-
-            emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
-
-            let allSecrets = secretsResponse.results ?? [];
-
-            if (props.includeInherited && props.namespace) {
-                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
-
-                for (const parentNs of parentNamespaces) {
-                    const parentSecretsResponse = await secretsStore.find(loadQuery({
-                        filters: {
-                            namespace: {
-                                EQUALS: parentNs
-                            }
-                        }
-                    }));
-
-                    const parentSecrets = parentSecretsResponse?.results ?? [];
-                    if (parentSecrets.length > 0) {
-                        const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
-                        const newSecrets = parentSecrets.filter(
-                            (s: any) => s?.key && !currentKeys.has(s.key)
-                        );
-                        allSecrets.push(...newSecrets);
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const secretsResponse = await secretsStore.find(loadQuery({
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "key:asc"),
+            ...(props.namespace === undefined ? {} : {
+                filters: {
+                    namespace: {
+                        EQUALS: props.namespace
                     }
                 }
-            }
+            })
+        }));
 
-            hasData.value = (allSecrets.length ?? 0) !== 0;
-            areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
-            secrets.value = allSecrets;
-            total.value = secretsResponse.total ?? 0;
-        } finally {
-            if (callback) callback();
+        emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
+
+        let allSecrets = secretsResponse.results ?? [];
+
+        if (props.includeInherited && props.namespace) {
+            const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+
+            for (const parentNs of parentNamespaces) {
+                const parentSecretsResponse = await secretsStore.find(loadQuery({
+                    filters: {
+                        namespace: {
+                            EQUALS: parentNs
+                        }
+                    }
+                }));
+
+                const parentSecrets = parentSecretsResponse?.results ?? [];
+                if (parentSecrets.length > 0) {
+                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
+                    const newSecrets = parentSecrets.filter(
+                        (s: any) => s?.key && !currentKeys.has(s.key)
+                    );
+                    allSecrets.push(...newSecrets);
+                }
+            }
         }
+
+        hasData.value = (allSecrets.length ?? 0) !== 0;
+        areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
+        secrets.value = allSecrets;
+        total.value = secretsResponse.total ?? 0;
     };
 
-    const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
-        dataTableRef: dataTable,
-        loadData
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
     });
+
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload();
+    }, {deep: true});
 
     const updateSecretModal = (secretData: NamespaceSecret) => {
         secret.value.namespace = secretData?.namespace;
@@ -535,7 +524,7 @@
                 .then(() => {
                     toast.deleted(key);
                 })
-                .then(() => loadData());
+                .then(() => dataTable.value?.reload());
         });
     };
 
@@ -573,7 +562,7 @@
                     toast.saved(secret.value?.key || "");
                     addSecretDrawerVisible.value = false;
                     resetForm();
-                    return loadData();
+                    dataTable.value?.reload();
                 });
         });
     };
@@ -616,7 +605,7 @@
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 
-        :deep(.el-tag__content) {
+        :deep(.kel-tag__content) {
             display: flex;
             align-items: center;
             gap: 4px;

@@ -1,35 +1,35 @@
 <template>
     <div class="button-top">
-        <el-button-group class="view-buttons">
-            <el-tooltip :content="$t('source only')">
-                <el-button
+        <KsButtonGroup class="view-buttons">
+            <KsTooltip :content="$t('source only')">
+                <KsButton
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('documentation.documentation')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('documentation.documentation')">
+                <KsButton
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('chart preview')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('chart preview')">
+                <KsButton
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('dashboards.preview')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('dashboards.preview')">
+                <KsButton
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
-            </el-tooltip>
-        </el-button-group>
+            </KsTooltip>
+        </KsButtonGroup>
 
         <ValidationErrors
             class="mx-3"
@@ -37,21 +37,21 @@
             :errors="errors"
         />
 
-        <el-button
+        <KsButton
             :icon="ContentSave"
             @click="emit('save', source)"
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
-        </el-button>
+        </KsButton>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
         <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
-        <el-splitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
-            <el-splitter-panel :size="editorWidth" min="25%" max="75%">
+        <KsSplitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
+            <KsSplitterPanel :size="editorWidth" min="25%" max="75%">
                 <Editor
                     @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                     v-model="source"
@@ -63,8 +63,8 @@
                     :readOnly="false"
                     :navbar="false"
                 />
-            </el-splitter-panel>
-            <el-splitter-panel :size="100 - editorWidth">
+            </KsSplitterPanel>
+            <KsSplitterPanel :size="100 - editorWidth">
                 <PluginDocumentation
                     v-if="currentView === views.DOC"
                     class="combined-right-view enhance-readability"
@@ -82,17 +82,17 @@
                         <span>{{ chartError }}</span>
                     </div>
                     <div v-else>
-                        <el-empty :image="EmptyVisualDashboard" :imageSize="200">
+                        <KsEmpty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
                                     {{ $t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
-                        </el-empty>
+                        </KsEmpty>
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
         <div v-else class="editor-only">
             <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
@@ -122,10 +122,9 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
     import yaml from "yaml";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useDashboardStore} from "../../../stores/dashboard";
-
 
     const props = defineProps<{
         allowSaveUnchanged?: boolean;
@@ -262,9 +261,8 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
-    $spacing: 20px;
+    $spacing: var(--ks-font-size-lg);
 
     .main-editor {
         padding: .5rem 0px;
@@ -277,27 +275,23 @@
         > * {
             flex: 1;
         }
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
     }
 
-    .el-empty {
+    .kel-empty {
         background-color: transparent;
 
-        .el-empty__description {
-            font-size: var(--el-font-size-small);
+        .kel-empty__description {
+            font-size: var(--ks-font-size-sm);
         }
     }
 
     .custom {
         padding: 24px 32px;
 
-        &.el-row {
+        &.kel-row {
             width: 100%;
 
-            & .el-col {
+            & .kel-col {
                 padding-bottom: $spacing;
 
                 &:nth-of-type(even) > div {
@@ -308,7 +302,7 @@
                     height: 100%;
                     background: var(--ks-background-card);
                     border: 1px solid var(--ks-border-primary);
-                    border-radius: $border-radius;
+                    border-radius: 0.25rem;
                 }
             }
         }
@@ -331,8 +325,8 @@
         height: 100%;
 
         &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
-            background-color: var(--bs-gray-100);
+            padding: calc(1rem * 1.5);
+            background-color: var(--ks-tag-background);
         }
     }
 
@@ -360,8 +354,8 @@
     }
 
     .view-buttons {
-        .el-button {
-            &.el-button--primary {
+        .kel-button {
+            &.kel-button--primary {
                 color: var(--ks-content-link);
                 opacity: 1;
             }

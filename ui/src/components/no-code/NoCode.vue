@@ -14,7 +14,7 @@
                         v-if="creatingTask || editingTask"
                     />
 
-                    <el-form v-else labelPosition="top">
+                    <KsForm v-else labelPosition="top">
                         <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaTop" :merge="shouldMerge(v.schema)" :transparent="v.fieldKey === 'inputs'">
                             <template #tasks>
                                 <TaskObjectField
@@ -34,7 +34,7 @@
                                 />
                             </template>
                         </Wrapper>
-                    </el-form>
+                    </KsForm>
                 </div>
             </template>
         </AiCopilotWrapper>
@@ -44,7 +44,7 @@
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue";
 
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import {removeNullAndUndefined} from "./utils/cleanUp";
 
     import Task from "./segments/Task.vue";
@@ -105,7 +105,7 @@
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val; // Handle null values
-        
+
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
             source: flowYaml.value,
@@ -149,7 +149,7 @@
             // ignore parse errors here
             return;
         }
-        
+
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(parsedSource, flowStore.flowParsed)) {

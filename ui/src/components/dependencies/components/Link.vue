@@ -10,7 +10,7 @@
     import {computed} from "vue";
 
     import {ASSET} from "../utils/types";
-    import type {Types, Node} from "../utils/types";    
+    import type {Types, Node} from "../utils/types";
 
     const props = defineProps<{
         node: Node;
@@ -43,7 +43,7 @@
 code.link {
     display: block;
     max-width: 100%;
-    font-size: var(--font-size-sm);
+    font-size: var(--ks-font-size-sm);
     color: var(--ks-content-id);
 }
 </style>

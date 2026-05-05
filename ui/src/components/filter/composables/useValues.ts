@@ -1,9 +1,9 @@
 import {useI18n} from "vue-i18n";
 import {computed} from "vue";
 import {useMiscStore} from "override/stores/misc";
-import {FilterValue} from "../utils/filterTypes";
+import {FilterValue} from "@kestra-io/design-system";
 
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/design-system";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";

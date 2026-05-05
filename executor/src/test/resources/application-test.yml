@@ -83,11 +83,3 @@ datasources:
     username: sa
     password: ""
     driverClassName: org.h2.Driver
-flyway:
-  datasources:
-    h2:
-      enabled: true
-      locations:
-        - classpath:migrations/h2
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true

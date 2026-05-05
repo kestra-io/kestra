@@ -9,27 +9,19 @@ import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.flyway.FlywayConfigurationProperties;
-import io.micronaut.flyway.FlywayMigrator;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
-@Singleton
+@Context
 @Requires(property = "kestra.repository.type", pattern = "mysql|postgres|h2|memory")
 public class JdbcTestUtils {
     @Inject
     protected JooqDSLContextWrapper dslContextWrapper;
-
-    @Inject
-    private FlywayMigrator flywayMigrator;
-
-    @Inject
-    private FlywayConfigurationProperties config;
 
     @Inject
     private DataSource dataSource;
@@ -40,7 +32,9 @@ public class JdbcTestUtils {
     List<Table<?>> tables;
 
     @PostConstruct
+    @SneakyThrows
     public void setup() {
+
         dslContextWrapper.transaction((configuration) ->
         {
             DSLContext dslContext = DSL.using(configuration);
@@ -72,13 +66,10 @@ public class JdbcTestUtils {
     }
 
     /**
-     * This should never be used ideally in OSS as it defeats the concurrent test runs and may drop a table in the middle of another test
+     * No-op. Migrations are now automatically applied at context startup via
+     * {@code MigrationRunner.@PostConstruct}.
      */
     @Deprecated
     public void migrate() {
-        dslContextWrapper.transaction((configuration) ->
-        {
-            flywayMigrator.run(config, dataSource);
-        });
     }
 }

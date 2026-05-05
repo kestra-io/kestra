@@ -1,8 +1,10 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
@@ -77,6 +80,68 @@ class ScheduleOnDatesTest {
 
         // then
         assertThat(nextDate).isEqualTo(after);
+    }
+
+    @Test
+    public void shouldExposeTriggerDateInConfiguredTimezoneWhenEvaluate() throws Exception {
+        // Given
+        var fireDate = ZonedDateTime.parse("2025-05-01T17:15:00+02:00[Europe/Paris]");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .interval(null)
+            .timezone("Europe/Paris")
+            .dates(Property.ofValue(List.of(fireDate)))
+            .build();
+
+        var conditionContext = conditionContext(scheduleOnDates);
+        var triggerContext = TriggerContext.builder()
+            .namespace(conditionContext.getFlow().getNamespace())
+            .flowId(conditionContext.getFlow().getId())
+            .triggerId(scheduleOnDates.getId())
+            .date(fireDate)
+            .build();
+
+        // When
+        Optional<Execution> evaluate = scheduleOnDates.evaluate(conditionContext, triggerContext);
+
+        // Then
+        assertThat(evaluate).isPresent();
+        Map<String, Object> vars = evaluate.get().getTrigger().getVariables();
+        assertThat(vars).containsKey("date");
+        var renderedDate = ZonedDateTime.parse((String) vars.get("date"));
+        assertThat(renderedDate.toInstant()).isEqualTo(fireDate.toInstant());
+        assertThat(renderedDate.getOffset()).isEqualTo(ZoneId.of("Europe/Paris").getRules().getOffset(fireDate.toInstant()));
+    }
+
+    @Test
+    public void shouldExposeTriggerDateConvertedFromUtcToConfiguredTimezone() throws Exception {
+        // Given - dates declared in UTC, trigger configured in Asia/Tokyo
+        var fireDateUtc = ZonedDateTime.parse("2025-05-01T08:00:00Z");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .interval(null)
+            .timezone("Asia/Tokyo")
+            .dates(Property.ofValue(List.of(fireDateUtc)))
+            .build();
+
+        var conditionContext = conditionContext(scheduleOnDates);
+        var triggerContext = TriggerContext.builder()
+            .namespace(conditionContext.getFlow().getNamespace())
+            .flowId(conditionContext.getFlow().getId())
+            .triggerId(scheduleOnDates.getId())
+            .date(fireDateUtc)
+            .build();
+
+        // When
+        Optional<Execution> evaluate = scheduleOnDates.evaluate(conditionContext, triggerContext);
+
+        // Then - same instant, but rendered in Tokyo (+09:00)
+        assertThat(evaluate).isPresent();
+        var renderedDate = ZonedDateTime.parse((String) evaluate.get().getTrigger().getVariables().get("date"));
+        assertThat(renderedDate.toInstant()).isEqualTo(fireDateUtc.toInstant());
+        assertThat(renderedDate.getOffset()).isEqualTo(ZoneId.of("Asia/Tokyo").getRules().getOffset(fireDateUtc.toInstant()));
     }
 
     @Test

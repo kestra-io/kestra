@@ -2,7 +2,9 @@ package io.kestra.cli.commands.configs.sys;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -62,11 +64,15 @@ class ConfigPropertiesCommandTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             PicocliRunner.call(ConfigPropertiesCommand.class, ctx);
 
-            String output = out.toString();
+            // Migration INFO logs are interleaved with the YAML output on System.out.
+            // Filter out log lines (which start with a HH:mm:ss.ms timestamp) before parsing.
+            String yamlOnly = Arrays.stream(out.toString().split("\n"))
+                .filter(line -> !line.matches("^\\d{2}:\\d{2}:\\d{2}\\.\\d+.*"))
+                .collect(Collectors.joining("\n"));
             Yaml yaml = new Yaml();
             Throwable thrown = catchThrowable(() ->
             {
-                Map<?, ?> parsed = yaml.load(output);
+                Map<?, ?> parsed = yaml.load(yamlOnly);
                 assertThat(parsed).isInstanceOf(Map.class);
             });
             assertThat(thrown).isNull();

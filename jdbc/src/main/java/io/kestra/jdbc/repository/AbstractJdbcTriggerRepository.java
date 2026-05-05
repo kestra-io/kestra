@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -10,14 +9,12 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
@@ -25,7 +22,6 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -336,27 +332,4 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     @Override
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 
-    @SuppressWarnings("removal")
-    @Override
-    public List<Trigger> findAllForAllTenantsV1() {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                SelectJoinStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable());
-
-                return select.fetch().map(record ->
-                {
-                    String json = record.get("value", String.class);
-                    try {
-                        return JdbcMapper.of().readValue(json, Trigger.class);
-                    } catch (IOException e) {
-                        throw new DeserializationException(e, json);
-                    }
-                });
-            });
-    }
 }

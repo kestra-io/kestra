@@ -1,1 +1,0 @@
-ALTER TABLE triggers ADD COLUMN "next_execution_date" TIMESTAMPTZ GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'nextExecutionDate')) STORED;

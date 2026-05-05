@@ -4,6 +4,7 @@ import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.controller.messages.MessageFormats;
 import io.kestra.core.services.WorkerGroupService;
 
 import io.grpc.stub.StreamObserver;
@@ -22,11 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.ConnectControllerServiceImplBase implements WorkerControllerService {
 
     public static final String DEFAULT_WORKER_GROUP = "";
+
     private final WorkerGroupService workerGroupService;
+    private final WorkerConfigsProvider workerConfigsProvider;
 
     @Inject
-    public GrpcConnectControllerService(WorkerGroupService workerGroupService) {
+    public GrpcConnectControllerService(WorkerGroupService workerGroupService,
+        WorkerConfigsProvider workerConfigsProvider) {
         this.workerGroupService = workerGroupService;
+        this.workerConfigsProvider = workerConfigsProvider;
     }
 
     /**
@@ -54,6 +59,7 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
         ConnectResponse response = ConnectResponse.newBuilder()
             .setHeader(request.getHeader())
             .setWorkerGroup(resolvedWorkerGroup != null ? resolvedWorkerGroup : DEFAULT_WORKER_GROUP)
+            .setWorkerConfigs(MessageFormats.JSON.toByteString(workerConfigsProvider.get()))
             .build();
 
         responseObserver.onNext(response);

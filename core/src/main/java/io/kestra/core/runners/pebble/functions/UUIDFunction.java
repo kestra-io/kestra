@@ -6,11 +6,11 @@ import java.util.Map;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochRandomGenerator;
 
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class UUIDFunction implements Function {
+public class UUIDFunction implements KestraFunction {
+    public static final String NAME = "uuid";
 
     private static final TimeBasedEpochRandomGenerator generator = Generators.timeBasedEpochRandomGenerator();
 
@@ -23,5 +23,10 @@ public class UUIDFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of();
     }
 }

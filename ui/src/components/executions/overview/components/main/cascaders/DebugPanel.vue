@@ -5,14 +5,15 @@
             :shouldFocus="false"
             :navbar="false"
             input
+            lang="yaml-pebble"
             class="expression"
         />
 
         <div class="buttons">
-            <el-button type="primary" :icon="Refresh" @click="onRender">
+            <KsButton type="primary" :icon="Refresh" @click="onRender">
                 {{ $t("eval.render") }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 :disabled="!result && !error"
                 :icon="CloseCircleOutline"
                 @click="clearAll"
@@ -34,13 +35,15 @@
             />
         </template>
 
-        <el-alert
+        <KsAlert
             v-else-if="error"
             type="error"
             :title="error"
             showIcon
             :closable="false"
-        />
+        >
+            <pre v-if="stackTrace" class="mb-0 stack-trace">{{ stackTrace }}</pre>
+        </KsAlert>
     </div>
 </template>
 
@@ -51,32 +54,63 @@
     import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
+    import {useFlowStore} from "../../../../../../stores/flow";
 
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
 
     import Utils from "../../../../../../utils/utils";
+    import {apiUrl} from "override/utils/route";
+    import {useAxios} from "../../../../../../utils/axios";
+
+    const flowStore = useFlowStore();
 
     const props = defineProps<{
-        property: "outputs" | "trigger";
+        property?: "outputs" | "trigger";
         execution: Execution;
-        path: string;
+        path?: string;
     }>();
+
+    // Fetch the flow source and populate flowStore.flowYaml so pebble
+    // autocompletion works identically to the flow editor.
+    watch(
+        () => [props.execution?.namespace, props.execution?.flowId, props.execution?.flowRevision],
+        async ([namespace, flowId, revision]) => {
+            if (namespace && flowId && !flowStore.flowYaml) {
+                try {
+                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision as string | undefined, store: false});
+                    if (flow?.source) {
+                        flowStore.flowYaml = flow.source;
+                        flowStore.flowYamlOrigin = flow.source;
+                    }
+                } catch {
+                    // Autocompletion is best-effort; don't block the UI
+                }
+            }
+        },
+        {immediate: true},
+    );
+
+    const axios = useAxios();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);
+    const stackTrace = ref<string | undefined>(undefined);
 
     const clearAll = () => {
         result.value = undefined;
         error.value = undefined;
+        stackTrace.value = undefined;
     };
 
     const expression = ref<string>("");
     watch(
-        () => props.path,
-        (path?: string) => {
-            result.value = undefined;
-            expression.value = `{{ ${props.property}${path ? `.${path}` : ""} }}`;
+        () => [props.property, props.path],
+        ([property, path]) => {
+            if (property) {
+                clearAll();
+                expression.value = `{{ ${property}${path ? `.${path}` : ""} }}`;
+            }
         },
         {immediate: true},
     );
@@ -84,80 +118,62 @@
     const onRender = () => {
         if (!props.execution) return;
 
-        result.value = undefined;
-        error.value = undefined;
+        clearAll();
 
-        const clean = expression.value
-            .replace(/^\{\{\s*/, "")
-            .replace(/\s*\}\}$/, "")
-            .trim();
+        const url = `${apiUrl()}/executions/${props.execution.id}/eval`;
+        axios
+            .post(url, expression.value, {headers: {"Content-type": "text/plain"}})
+            .then((response) => {
+                if (response.data.error) {
+                    error.value = response.data.error;
+                    stackTrace.value = response.data.stackTrace;
+                    return;
+                }
 
-        if (clean === "outputs" || clean === "trigger") {
-            result.value = {
-                value: JSON.stringify(props.execution[props.property], null, 2),
-                type: "json",
-            };
-        }
-
-        if (!clean.startsWith("outputs.") && !clean.startsWith("trigger.")) {
-            result.value = undefined;
-            error.value = `Expression must start with "{{ ${props.property}. }}"`;
-            return;
-        }
-
-        const parts = clean.substring(props.property.length + 1).split(".");
-        let target: any = props.execution[props.property];
-
-        for (const part of parts) {
-            if (target && typeof target === "object" && part in target) {
-                target = target[part];
-            } else {
-                result.value = undefined;
-                error.value = `Property "${part}" does not exist on ${props.property}`;
-                return;
-            }
-        }
-
-        if (target && typeof target === "object") {
-            result.value = {
-                value: JSON.stringify(target, null, 2),
-                type: "json",
-            };
-        } else {
-            result.value = {value: String(target), type: "text"};
-        }
+                try {
+                    const parsed = JSON.parse(response.data.result);
+                    result.value = {
+                        value: JSON.stringify(parsed, null, 2),
+                        type: "json",
+                    };
+                } catch {
+                    result.value = {value: response.data.result, type: "text"};
+                }
+            })
+            .catch((err) => {
+                error.value = err.message || "Failed to evaluate expression";
+            });
     };
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #debug {
     display: flex;
     flex-direction: column;
     height: 100%;
-    margin-top: calc($spacer / 2);
-    padding: calc($spacer / 2) $spacer;
-    border: 1px solid var(--el-border-color-light);
+    margin-top: calc(1rem / 2);
+    padding: calc(1rem / 2) 1rem;
+    border: 1px solid var(--kel-border-color-light);
 
     :deep(.ks-editor) {
         &.expression {
-            height: calc($spacer * 2);
-            margin-bottom: $spacer;
+            height: calc(1rem * 2);
+            margin-bottom: 1rem;
         }
 
         &.result {
-            height: calc($spacer * 10);
+            height: calc(1rem * 10);
         }
     }
 
     .buttons {
         display: inline-flex;
 
-        & :deep(.el-button) {
-            margin-bottom: $spacer;
-            padding: $spacer;
-            font-size: $font-size-sm;
+        & :deep(.kel-button) {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            font-size: var(--ks-font-size-sm);
             overflow: hidden;
 
             span:not(i span) {
@@ -169,9 +185,17 @@
             }
         }
 
-        & :deep(.el-button:nth-of-type(2)) {
-            width: calc($spacer * 4);
+        & :deep(.kel-button:nth-of-type(2)) {
+            width: calc(1rem * 4);
         }
+    }
+
+    .stack-trace {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: var(--ks-font-size-xs);
+        max-height: calc(1rem * 15);
+        overflow: auto;
     }
 }
 </style>

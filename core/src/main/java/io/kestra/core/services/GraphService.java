@@ -16,6 +16,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.PebbleUtil;
 
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -90,13 +91,13 @@ public class GraphService {
         {
             SubflowGraphTask subflowGraphTask = parentWithSubflowGraphTask.getValue();
             Task task = (Task) subflowGraphTask.getTask();
-            RunContext runContext = subflowGraphTask.executableTask().subflowId().flowUid().contains("{{") && execution != null
+            RunContext runContext = PebbleUtil.containsOpeningBlockDelimiter(subflowGraphTask.executableTask().subflowId().flowUid()) && execution != null
                 ? runContextFactory.of(finalFlow, task, execution, subflowGraphTask.getTaskRun())
                 : null;
             subflowGraphTask = subflowGraphTask.withRenderedSubflowId(runContext);
             ExecutableTask.SubflowId subflowId = subflowGraphTask.executableTask().subflowId();
 
-            if (subflowId.flowUid().contains("{{")) {
+            if (PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid())) {
                 throw new IllegalArgumentException(
                     "Can't expand subflow task '" + task.getId() + "' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution."
                 );

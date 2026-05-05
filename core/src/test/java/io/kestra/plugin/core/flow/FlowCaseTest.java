@@ -37,27 +37,6 @@ public class FlowCaseTest {
         this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, false, tenantId);
     }
 
-    public void oldTaskName(String tenantId) throws Exception {
-        Execution execution = runnerUtils.runOne(
-            tenantId,
-            "io.kestra.tests",
-            "subflow-old-task-name"
-        );
-
-        Execution triggered = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().isTerminated(), tenantId, "io.kestra.tests",
-            "minimal"
-        );
-
-        assertThat(execution.getTaskRunList()).hasSize(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("executionId")).isEqualTo(triggered.getId());
-        assertThat(triggered.getTrigger().getType()).isEqualTo("io.kestra.core.tasks.flows.Subflow");
-        assertThat(triggered.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
-        assertThat(triggered.getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
-        assertThat(triggered.getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
-    }
-
     void run(String input, State.Type fromState, State.Type triggerState, int count, boolean testInherited, String tenantId) throws Exception {
         Execution execution = runnerUtils.runOne(
             tenantId,

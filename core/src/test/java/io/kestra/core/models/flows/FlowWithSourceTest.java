@@ -134,9 +134,8 @@ class FlowWithSourceTest {
             )
             .pluginDefaults(
                 List.of(
-                    PluginDefault.builder()
+                    FlowPluginDefault.builder()
                         .type(Log.class.getName())
-                        .forced(true)
                         .values(
                             Map.of(
                                 "message", "Default message"

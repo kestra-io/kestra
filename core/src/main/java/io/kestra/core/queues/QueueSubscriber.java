@@ -63,4 +63,13 @@ public interface QueueSubscriber<T extends Event> {
      * has fully stopped.
      */
     void close();
+
+    /**
+     * Returns whether this subscriber is currently active (subscribed and not yet closed).
+     *
+     * @return true if active; false if not yet started or already closed
+     */
+    default boolean isActive() {
+        return true;
+    }
 }

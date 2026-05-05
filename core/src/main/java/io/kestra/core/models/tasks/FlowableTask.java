@@ -47,7 +47,7 @@ public interface FlowableTask<T extends Output> {
     /**
      * Resolve child tasks of a flowable task.
      * <p>
-     * For a normal flowable, it should be the list of its tasks, for an iterative flowable (such as EachSequential, ForEachItem, ...),
+     * For a normal flowable, it should be the list of its tasks, for an iterative flowable (such as EachSequential, ...),
      * it should be the list of its tasks for all iterations.
      */
     List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;
@@ -55,7 +55,7 @@ public interface FlowableTask<T extends Output> {
     /**
      * Resolve next tasks to run for an execution.
      * <p>
-     * For a normal flowable, it should be <b>the</b> subsequent task, for a parallel flowable (such as Parallel, ForEachItem, ...),
+     * For a normal flowable, it should be <b>the</b> subsequent task, for a parallel flowable (such as Parallel, ...),
      * it should be a list of the next subsequent tasks of the size of the concurrency of the task.
      */
     List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;

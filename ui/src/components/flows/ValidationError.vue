@@ -1,59 +1,51 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
-            <CheckBoldIcon class="text-success" />
-        </el-button>
+        <KsButton v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
+            <CheckBoldIcon class="success" />
+        </KsButton>
 
         <!-- Errors -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="errors"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <AlertCircle class="align-middle text-danger" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <AlertCircle class="align-middle error" />
                         <span class="align-middle">
                             {{ $t("error detected") }}
                         </span>
-                    </el-header>
-                    <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
-                </el-container>
+                    </KsHeader>
+                    <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
-                <AlertCircle class="text-danger" />
-            </el-button>
-        </el-tooltip>
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
+                <AlertCircle class="error" />
+            </KsButton>
+        </KsTooltip>
 
         <!-- Warnings -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <Alert class="align-middle text-warning" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <Alert class="align-middle warning" />
                         <span class="align-middle">
                             {{ $t("warning detected") }}
                         </span>
-                    </el-header>
-                    <el-main>
+                    </KsHeader>
+                    <KsMain>
                         <span v-for="(warning, index) in warnings" :key="index">
                             {{ warning }}<br v-if="index < warnings.length - 1">
                         </span>
@@ -61,42 +53,38 @@
                         <span v-for="(info, index) in infos" :key="index">
                             {{ info }}<br v-if="index < (infos?.length ?? 0) - 1">
                         </span>
-                    </el-main>
-                </el-container>
+                    </KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
-                <Alert class="text-warning" />
-            </el-button>
-        </el-tooltip>
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
+                <Alert class="warning" />
+            </KsButton>
+        </KsTooltip>
 
         <!-- Infos -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="infos && !warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <Alert class="align-middle text-info" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <Alert class="align-middle info" />
                         <span class="align-middle">
                             {{ $t("informative notice") }}
                         </span>
-                    </el-header>
-                    <el-main>{{ infos.join("<\n") }}</el-main>
-                </el-container>
+                    </KsHeader>
+                    <KsMain>{{ infos.join("<\n") }}</KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <Alert class="text-info" />
-                <span class="text-info label">{{ $t("informative notice") }}</span>
-            </el-button>
-        </el-tooltip>
+            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="info">
+                <Alert class="info" />
+                <span class="info label">{{ $t("informative notice") }}</span>
+            </KsButton>
+        </KsTooltip>
     </span>
 </template>
 
@@ -125,7 +113,7 @@
         if(rootContainer.value === undefined) {
             return;
         }
-        const buttonLabels = rootContainer.value.querySelectorAll(".el-button span.label");
+        const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label");
 
         buttonLabels.forEach(el => el.classList.remove("d-none"))
         nextTick(() => {
@@ -142,12 +130,11 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .el-button.el-button--default {
+    .kel-button.kel-button--default {
         transition: none;
 
-        &.el-button--small {
+        &.kel-button--small {
             padding: 5px;
             height: fit-content;
         }
@@ -159,11 +146,19 @@
         &.success {
             cursor: default;
             border-color: var(--ks-border-success);
+
+            &.is-disabled,
+            &.is-disabled:hover,
+            &.is-disabled:focus {
+                opacity: 1;
+                background-color: transparent;
+                border-color: var(--ks-border-success);
+            }
         }
 
         &:not(.success) span:not(.material-design-icon) {
             margin-left: .5rem;
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
         }
 
         &.warning {
@@ -181,7 +176,7 @@
         min-width: 20vw;
         max-width: 50vw;
         max-height: 500px;
-        border-radius: $border-radius-lg;
+        border-radius: 0.5rem;
         color: var(--ks-content-primary);
         overflow-y: auto;
 
@@ -190,22 +185,22 @@
             margin: 0;
         }
 
-        .el-header {
-            padding: $spacer;
+        .kel-header {
+            padding: 1rem;
             background-color: var(--ks-background-table-header);
-            border-radius: $border-radius-lg $border-radius-lg 0 0;
-            font-size: $font-size-sm;
-            font-weight: $font-weight-bold;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-size: var(--ks-font-size-sm);
+            font-weight: 700;
 
             .material-design-icon {
-                font-size: 1.5rem;
+                font-size: var(--ks-font-size-xl);
                 margin-right: .5rem;
             }
         }
 
-        .el-main {
+        .kel-main {
             padding: 1.5rem 1rem !important;
-            font-family: $font-family-monospace;
+            font-family: "Source Code Pro", monospace;
             background-color: var(--ks-background-card);
             white-space: normal;
             border-top: 1px solid var(--ks-border-primary);
@@ -218,5 +213,21 @@
     .square {
         width: 32px;
         height: 32px;
+    }
+
+    .success {
+        color: var(--ks-content-success);
+    }
+
+    .warning {
+        color: var(--ks-content-warning);
+    }
+
+    .error {
+        color: var(--ks-content-error);
+    }
+
+    .info {
+        color: var(--ks-content-info);
     }
 </style>

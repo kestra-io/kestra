@@ -80,7 +80,7 @@ public class PebbleEngineFactory {
     private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initialExtension, List<String> maskedFunctions) {
         return (Extension) Proxy.newProxyInstance(
             initialExtension.getClass().getClassLoader(),
-            new Class[] { Extension.class },
+            new Class<?>[] { Extension.class },
             (proxy, method, methodArgs) ->
             {
                 if (method.getName().equals("getFunctions")) {
@@ -105,7 +105,7 @@ public class PebbleEngineFactory {
     private Function variableRendererProxy(VariableRenderer renderer, Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),
-            new Class[] { Function.class, RenderingFunctionInterface.class },
+            new Class<?>[] { Function.class, RenderingFunctionInterface.class },
             (functionProxy, functionMethod, functionArgs) ->
             {
                 if (functionMethod.getName().equals("variableRenderer")) {
@@ -119,7 +119,7 @@ public class PebbleEngineFactory {
     private Function maskedFunctionProxy(Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),
-            new Class[] { Function.class },
+            new Class<?>[] { Function.class },
             (functionProxy, functionMethod, functionArgs) ->
             {
                 Object result;

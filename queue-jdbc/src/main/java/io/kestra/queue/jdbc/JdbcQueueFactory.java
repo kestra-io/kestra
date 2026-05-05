@@ -1,10 +1,8 @@
 package io.kestra.queue.jdbc;
 
 import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -132,6 +130,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
 
     @QueueBean
     @Override
+    public BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue(JdbcDependencies dependencies) {
+        return new JdbcBroadcastQueue<>(
+            AsyncOperationProcessedEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
     public DispatchQueueInterface<LogEntry> logEntryQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             LogEntry.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(), dependencies.ignoreExecutionService()
@@ -161,6 +168,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
             WorkerTaskResult.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
+    public DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(JdbcDependencies dependencies) {
+        return new JdbcDispatchQueue<>(
+            TerminatedLoopExecution.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

@@ -4,7 +4,7 @@
             <div v-if="isOpen" class="search-overlay" @click="closeSearch">
                 <div class="search-modal" role="dialog" aria-modal="true" @click.stop>
                     <div class="search-container" :aria-label="$t('jump to...')">
-                        <el-input
+                        <KsInput
                             ref="searchInput"
                             v-model="query"
                             :placeholder="$t('jump to...')"
@@ -16,7 +16,7 @@
                                 <span v-if="scopePrefix" class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template #suffix>
-                                <el-button
+                                <KsButton
                                     v-if="query"
                                     class="close-button"
                                     text
@@ -24,15 +24,15 @@
                                     @click.stop="clearSearch"
                                 >
                                     <Close />
-                                </el-button>
+                                </KsButton>
                                 <span v-else class="d-none d-sm-block">
                                     <kbd>ESC</kbd> to close
                                 </span>
                             </template>
-                        </el-input>
+                        </KsInput>
 
                         <div class="results" role="listbox">
-                            <el-scrollbar v-if="results.length > 0" class="results-scroll">
+                            <KsScrollbar v-if="results.length > 0" class="results-scroll">
                                 <ul id="global-search-listbox" class="results-list">
                                     <li
                                         v-for="(item, index) in results"
@@ -67,7 +67,7 @@
                                         </component>
                                     </li>
                                 </ul>
-                            </el-scrollbar>
+                            </KsScrollbar>
                             <div v-else class="empty">
                                 {{ $t("no results") }}
                             </div>
@@ -348,7 +348,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--el-overlay-color-lighter);
+        background: var(--kel-overlay-color-lighter);
         z-index: 10000;
         display: flex;
         justify-content: center;
@@ -361,26 +361,24 @@
         max-width: 90vw;
 
         .search-container {
-            --gs-font-size: 0.875rem;
-
             background: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
-            border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+            border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
             box-shadow:
                 0 8px 24px rgba(0,0,0,0.35);
             overflow: hidden;
-            font-size: var(--gs-font-size);
+            font-size: var(--ks-font-size-sm);
         }
 
-        :deep(.el-input) {
-            font-size: var(--gs-font-size);
+        :deep(.kel-input) {
+            font-size: var(--ks-font-size-sm);
 
-            .el-input__wrapper {
+            .kel-input__wrapper {
                 padding: 8px 16px;
                 border: 0;
                 box-shadow: none;
                 background: var(--ks-background-card);
-                border-radius: var(--el-input-border-radius, var(--el-border-radius-base)) var(--el-input-border-radius, var(--el-border-radius-base)) 0 0;
+                border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
                 input {
                     color: var(--ks-content-primary);
@@ -427,7 +425,7 @@
         }
 
         .result-link {
-            font-size: var(--gs-font-size);
+            font-size: var(--ks-font-size-sm);
             padding: 6px 10px;
             border-radius: 6px;
             color: var(--ks-content-primary);
@@ -468,7 +466,7 @@
         .result-hint {
             margin-left: auto;
             color: var(--ks-content-secondary);
-            font-size: var(--gs-font-size);
+            font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
         }
@@ -476,7 +474,7 @@
         .empty {
             padding: 12px 16px;
             color: var(--ks-content-secondary);
-            font-size: var(--gs-font-size);
+            font-size: var(--ks-font-size-sm);
         }
     }
 </style>

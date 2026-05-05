@@ -1,15 +1,11 @@
 <template>
-    <el-tooltip
+    <KsTooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
         :enterable="false"
-        :persistent="false"
-        :hideAfter="0"
         :content="tooltip"
         popperClass="ks-restart-tooltip--no-pointer"
         rawContent
-        transition=""
-        effect="light"
     >
         <component
             v-if="component !== 'el-dropdown-item'"
@@ -34,10 +30,40 @@
                 {{ $t(replayOrRestart) }}
             </component>
         </span>
-    </el-tooltip>
+    </KsTooltip>
 
-    <el-dialog
-        v-if="enabled && isOpen"
+    <KsDialog
+        v-if="enabled && isOpen && !isReplay"
+        v-model="isOpen"
+        destroyOnClose
+        :appendToBody="true"
+        width="500px"
+    >
+        <template #header>
+            <div class="modal-header m-0">
+                <h3 class="modal-title">
+                    {{ t("restart execution title") }}
+                </h3>
+                <KsDivider />
+            </div>
+        </template>
+
+        <div class="p-3 pt-0">
+            <p class="mb-0" v-html="t('restart confirm', {id: execution.id})" />
+        </div>
+
+        <template #footer>
+            <KsButton @click="isOpen = false">
+                {{ t("cancel") }}
+            </KsButton>
+            <KsButton type="primary" @click="handleRestartExecute">
+                {{ t("restart") }}
+            </KsButton>
+        </template>
+    </KsDialog>
+
+    <KsDialog
+        v-if="enabled && isOpen && isReplay"
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
@@ -48,7 +74,7 @@
                 <h3 class="modal-title">
                     {{ t("replay execution title") }}
                 </h3>
-                <el-divider />
+                <KsDivider />
             </div>
         </template>
 
@@ -56,65 +82,72 @@
             <p class="mb-0">
                 {{ t("replay execution description") }}
             </p>
-            <Id :value="execution.id" :shrink="false" />
+            <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
                 {{ t("replay using") }}:
             </h4>
 
-            <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-                <el-radio label="original" class="radio-item">
+            <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
+                <KsRadio value="original" class="radio-item">
                     {{ t("flow revision original") }}
-                </el-radio>
-                <el-radio label="latest" class="radio-item">
+                </KsRadio>
+                <KsRadio value="latest" class="radio-item">
                     {{ t("flow revision latest") }}
-                </el-radio>
-                <el-radio label="specific" class="radio-item">
+                </KsRadio>
+                <KsRadio value="specific" class="radio-item">
                     {{ t("flow revision specific") }}
-                </el-radio>
-            </el-radio-group>
+                </KsRadio>
+            </KsRadioGroup>
 
-            <el-form
+            <KsForm
                 v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
                 class="mt-2"
             >
-                <el-form-item>
-                    <el-select v-model="revisionsSelected">
-                        <el-option
+                <KsFormItem>
+                    <KsSelect v-model="revisionsSelected">
+                        <KsOption
                             v-for="item in revisionsOptions"
                             :key="item.value"
                             :label="item.text"
                             :value="item.value"
                         />
-                    </el-select>
-                </el-form-item>
-            </el-form>
+                    </KsSelect>
+                </KsFormItem>
+            </KsForm>
 
-            <h4 class="section-title">
-                {{ t("replay inputs") }}:
-            </h4>
+            <template v-if="hasInputs">
+                <template v-if="!taskRun">
+                    <h4 class="section-title">
+                        {{ t("replay inputs") }}:
+                    </h4>
 
-            <el-radio-group v-model="inputMode" class="radio-vertical">
-                <el-radio label="reuse" class="radio-item">
-                    {{ t("reuse original inputs") }}
-                </el-radio>
-                <el-radio label="modify" class="radio-item">
-                    {{ t("modify inputs") }}
-                </el-radio>
-            </el-radio-group>
+                    <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
+                        <KsRadio value="reuse" class="radio-item">
+                            {{ t("reuse original inputs") }}
+                        </KsRadio>
+                        <KsRadio value="modify" class="radio-item">
+                            {{ t("modify inputs") }}
+                        </KsRadio>
+                    </KsRadioGroup>
+                </template>
+                <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
+                    {{ t("replay inputs new required") }}
+                </p>
+            </template>
         </div>
 
         <template #footer>
-            <el-button @click="isOpen = false">
+            <KsButton @click="isOpen = false">
                 {{ t("cancel") }}
-            </el-button>
-            <el-button type="primary" @click="handleReplayExecute">
+            </KsButton>
+            <KsButton type="primary" @click="handleReplayExecute">
                 {{ t("execute") }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <el-dialog
+    <KsDialog
         v-if="isReplayWithInputsOpen"
         v-model="isReplayWithInputsOpen"
         destroyOnClose
@@ -136,7 +169,7 @@
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -144,18 +177,16 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/ui-libs"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
     import permission from "../../../../../models/permission"
-    import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import Id from "../../../../Id.vue"
-    import {useAxios} from "../../../../../utils/axios"
+    import {KsId} from "@kestra-io/design-system"
 
     defineOptions({inheritAttrs: false})
 
@@ -169,15 +200,12 @@
         tooltipPosition: {type: String, default: "bottom"},
     })
 
-    const emit = defineEmits(["follow"])
-
     const {t} = useI18n()
     const toast = useToast()
     const router = useRouter()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
-    const $http = useAxios()
 
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
@@ -189,6 +217,23 @@
     const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
     const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
+
+    const currentFlow = ref<any | undefined>(undefined)
+    const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
+    const hasOriginalInputs = computed(() => {
+        const inputs = props.execution.inputs
+        return inputs != null && Object.keys(inputs).length > 0
+    })
+    const canReuseInputs = computed(() => hasInputs.value && hasOriginalInputs.value)
+
+    const effectiveRevision = computed(() => {
+        if (replayRevisionMode.value === "original") return props.execution.flowRevision
+        if (replayRevisionMode.value === "latest") {
+            const revisions = flowStore.revisions
+            return revisions?.[revisions.length - 1]?.revision
+        }
+        return revisionsSelected.value
+    })
 
     const revisionsOptions = computed(() =>
         (flowStore.revisions || [])
@@ -204,6 +249,8 @@
     )
 
     const enabled = computed(() => {
+        if (!props.execution?.state) return false
+
         const hasPermission = props.isReplay
             ? authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, props.execution.namespace)
             : authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)
@@ -227,7 +274,7 @@
             ? props.taskRun?.id
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
                 : t("replay from beginning tooltip")
-            : t("restart tooltip", {state: props.execution.state.current})
+            : t("restart tooltip", {state: props.execution.state?.current})
     )
 
     const openReplayWithInputsDialog = () => {
@@ -240,19 +287,28 @@
     }
 
     const loadFlowForReplay = async () => {
+        const revision = replayRevisionMode.value !== "latest" ? revisionsSelected.value : undefined
         await executionsStore.loadFlowForExecution({
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,
+            revision,
             store: true
         })
         isReplayWithInputsOpen.value = true
     }
 
-    const loadRevision = () => {
+    const loadRevision = async () => {
         revisionsSelected.value = props.execution.flowRevision
+        currentFlow.value = undefined
         flowStore.loadRevisions({
             namespace: props.execution.namespace,
             id: props.execution.flowId
+        })
+        currentFlow.value = await executionsStore.loadFlowForExecution({
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId,
+            revision: props.execution.flowRevision,
+            store: true
         })
     }
 
@@ -263,10 +319,15 @@
         restart()
     }
 
+    const handleRestartExecute = () => {
+        isOpen.value = false
+        restart()
+    }
+
     const handleReplayExecute = () => {
         isOpen.value = false
 
-        if (inputMode.value === "modify") {
+        if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
             openReplayWithInputsDialog()
             return
         }
@@ -291,32 +352,42 @@
             revision: revisionsSelected.value
         })
 
-        const execution =
-            response.data.id === props.execution.id
-                ? await ExecutionUtils.waitForState($http, response.data)
-                : response.data
+        const newExecution = response.data
 
-        executionsStore.execution = execution
+        toast.success(t("replayed"))
 
-        if (execution.id === props.execution.id) {
-            emit("follow")
-        } else {
-            router.push({
+        if (newExecution.id !== props.execution.id) {
+            window.location.href = router.resolve({
                 name: "executions/update",
                 params: {
-                    namespace: execution.namespace,
-                    flowId: execution.flowId,
-                    id: execution.id,
+                    namespace: newExecution.namespace,
+                    flowId: newExecution.flowId,
+                    id: newExecution.id,
                     tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant
                 }
-            })
+            }).href
+        } else {
+            window.setTimeout(() => window.location.reload(), 500)
         }
-
-        toast.success(t("replayed"))
     }
 
-    watch(isOpen, (newValue) => newValue && loadRevision())
+    watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision())
+
+    watch(effectiveRevision, async (newRevision, oldRevision) => {
+        if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return
+        currentFlow.value = undefined
+        currentFlow.value = await executionsStore.loadFlowForExecution({
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId,
+            revision: newRevision,
+            store: false
+        })
+    })
+
+    watch(canReuseInputs, (canReuse) => {
+        inputMode.value = canReuse ? "reuse" : "modify"
+    })
 </script>
 
 <style lang="scss">
@@ -328,19 +399,19 @@
 <style scoped lang="scss">
 .modal-header {
     .modal-title {
-        font-size: 16px;
+        font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
         color: var(--ks-color-text-primary);
     }
 }
 .execution-description {
-    font-size: 13px;
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-color-text-secondary);
 }
 
 .section-title {
-    font-size: 14px;
+    font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
     color: var(--ks-color-text-primary);
@@ -349,48 +420,48 @@
 .radio-vertical {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; 
+    align-items: flex-start;
 }
 
-.modal-header :deep(.el-divider--horizontal) {
+.modal-header :deep(.kel-divider--horizontal) {
     margin-bottom: 8px;
 }
 
 .radio-item {
-    :deep(.el-radio__input) {
-        .el-radio__inner {
-            width: 18px; 
-            height: 18px; 
-            
+    :deep(.kel-radio__input) {
+        .kel-radio__inner {
+            width: 18px;
+            height: 18px;
+
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--el-color-primary);
+                background-color: var(--ks-button-background-primary);
             }
         }
     }
-    
-    :deep(.el-radio__label) {
-        font-size: 13px;
-        color: var(--el-text-color-regular);
+
+    :deep(.kel-radio__label) {
+        font-size: var(--ks-font-size-xs);
+        color: var(--kel-text-color-regular);
         padding-left: 8px;
     }
-    
-    
+
+
     &.is-checked {
-        :deep(.el-radio__input) {
-            .el-radio__inner {
-                border-color: var(--el-color-primary);
-                background-color: var(--el-color-primary);
-                
+        :deep(.kel-radio__input) {
+            .kel-radio__inner {
+                border-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-primary);
+
                 &::after {
-                    background-color: white;
+                    background-color: var(--ks-white);
                 }
             }
         }
-        
-        :deep(.el-radio__label) {
-            color: var(--el-text-color-regular) !important;
+
+        :deep(.kel-radio__label) {
+            color: var(--kel-text-color-regular) !important;
         }
     }
 }

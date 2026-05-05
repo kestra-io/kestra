@@ -53,7 +53,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         @Nullable List<QueryFilter> filters,
         boolean allowExpired,
         FetchVersion fetchBehavior) {
-        var condition = allowExpired ? DSL.trueCondition()
+        var condition = allowExpired ? DSL.noCondition()
             : DSL.or(
                 field("expiration_date").greaterThan(Instant.now()),
                 field("expiration_date").isNull()

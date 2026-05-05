@@ -10,15 +10,16 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "webserver",
@@ -29,13 +30,16 @@ public class WebServerCommand extends AbstractServerCommand {
     private ExecutorService poolExecutor;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private ExecutorsUtils executorsUtils;
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
+
+    @Inject
+    private Provider<Indexer> indexer;
+
+    @Inject
+    private Provider<Controller> controller;
 
     @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     private boolean tutorialsDisabled = false;
@@ -48,6 +52,9 @@ public class WebServerCommand extends AbstractServerCommand {
 
     @CommandLine.Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
     private List<String> ignoreIndexerRecords = Collections.emptyList();
+
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @Override
     public boolean isFlowAutoLoadEnabled() {
@@ -64,6 +71,7 @@ public class WebServerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         super.call();
 
@@ -74,14 +82,13 @@ public class WebServerCommand extends AbstractServerCommand {
         // start the indexer
         if (!indexerDisabled) {
             log.info("Starting an embedded indexer, this can be disabled by using `--no-indexer`.");
-            poolExecutor.execute(applicationContext.getBean(Indexer.class));
+            poolExecutor.execute(indexer.get());
         }
 
         // start the controller
         if (!controllerDisabled) {
             log.info("Starting an embedded controller, this can be disabled by using `--no-controller`.");
-            Controller controller = applicationContext.getBean(Controller.class);
-            poolExecutor.execute(controller::start);
+            poolExecutor.execute(controller.get()::start);
         }
 
         if (poolExecutor != null) {
@@ -89,7 +96,7 @@ public class WebServerCommand extends AbstractServerCommand {
         }
 
         log.info("Webserver started");
-        Await.until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }
 }

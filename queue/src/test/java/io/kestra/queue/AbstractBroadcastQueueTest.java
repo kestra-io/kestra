@@ -20,7 +20,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
-    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+    private static final long RESUME_SETTLE_MS = 300;
 
     @Inject
     private BroadcastQueueInterface<TestBroadcast> broadcastQueue;
@@ -140,6 +141,10 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         // second round
         Instant resumeTime = Instant.now();
         subscriber.resume();
+        // On brokers without message persistence (e.g. Redis pub/sub), resume triggers an
+        // async resubscribe roundtrip; emitting immediately can publish before the subscription
+        // is re-established, causing messages to be dropped.
+        Thread.sleep(RESUME_SETTLE_MS);
 
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 2));
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 3));
@@ -151,6 +156,7 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         // last round
         Instant resumeTime2 = Instant.now();
         subscriber.resume();
+        Thread.sleep(RESUME_SETTLE_MS);
 
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 4));
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 5));

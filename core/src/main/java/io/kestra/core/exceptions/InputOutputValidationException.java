@@ -10,6 +10,8 @@ import io.kestra.core.models.flows.Output;
  * Exception that can be thrown when Inputs/Outputs have validation problems.
  */
 public class InputOutputValidationException extends KestraRuntimeException {
+    private static final long serialVersionUID = 1L;
+
     public InputOutputValidationException(String message) {
         super(message);
     }

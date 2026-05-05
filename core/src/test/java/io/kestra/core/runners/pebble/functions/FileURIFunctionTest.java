@@ -65,8 +65,9 @@ class FileURIFunctionTest {
             "fileA", "../test"
         );
 
-        var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
-        assertThat(exception.getMessage()).isEqualTo("Path must not contain '../'");
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause().getMessage()).isEqualTo("Path must not contain '../'");
     }
 
     @Test

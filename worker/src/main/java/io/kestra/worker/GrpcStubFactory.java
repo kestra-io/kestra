@@ -12,6 +12,7 @@ import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileM
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceBlockingStub;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
+import io.kestra.controller.grpc.WorkerReportingServiceGrpc;
 
 import io.grpc.Deadline;
 import io.grpc.stub.AbstractStub;
@@ -81,7 +82,12 @@ public class GrpcStubFactory {
 
     @Bean
     @Singleton
+    public WorkerReportingServiceGrpc.WorkerReportingServiceBlockingStub workerReportingServiceBlockingStub(GrpcChannelManager manager) {
+        return WorkerReportingServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
 
+    @Bean
+    @Singleton
     public <S extends AbstractStub<S>> S withWaitForReady(S stub, boolean deadline) {
         if (workerControllersConfiguration.waitForReady().enabled()) {
             stub = stub.withWaitForReady();

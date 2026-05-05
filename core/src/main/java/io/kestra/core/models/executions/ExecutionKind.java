@@ -9,5 +9,6 @@ package io.kestra.core.models.executions;
 public enum ExecutionKind {
     NORMAL,
     TEST,
-    PLAYGROUND
+    PLAYGROUND,
+    LOOP
 }

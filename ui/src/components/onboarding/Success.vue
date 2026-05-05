@@ -1,7 +1,7 @@
 <template>
     <section id="welcome-success" class="container">
-        <el-row justify="center">
-            <el-col :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
+        <KsRow justify="center">
+            <KsCol :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
                 <div class="welcome-success-hero">
                     <div class="welcome-success-icon">
                         <svg viewBox="0 0 109 109" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -96,8 +96,8 @@
                         {{ $t("welcome_copilot.success_page.restart") }}
                     </router-link>
                 </div>
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 
@@ -122,7 +122,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 #welcome-success {
     position: relative;
@@ -142,7 +141,7 @@
         h1 {
             margin: 0.5rem 0 1rem;
             color: var(--ks-content-primary);
-            font-size: $font-size-lg;
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
         }
 
@@ -150,7 +149,7 @@
             max-width: 460px;
             margin: 0;
             color: var(--ks-content-secondary);
-            font-size: $font-size-md;
+            font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }
     }

@@ -71,7 +71,7 @@ public class FileChangedEventListener {
             this.setup(paths);
 
             // Init existing flows not already in files
-            flowRepositoryInterface.findAllForAllTenants().forEach(flow ->
+            flowRepositoryInterface.findAllWithSourceForAllTenants().forEach(flow ->
             {
                 flowToFile(flow, this.buildPath(flow));
                 flows.add(FlowWithPath.of(flow, this.buildPath(flow).toString()));
@@ -238,8 +238,14 @@ public class FileChangedEventListener {
     private void flowToFile(FlowInterface flow, Path path) {
         Path defaultPath = path != null ? path : this.buildPath(flow);
 
+        String source = flow.sourceOrGenerateIfNull();
+        if (source == null || source.isBlank()) {
+            log.warn("Flow {} has no source, skipping file write to {}", flow.getId(), defaultPath);
+            return;
+        }
+
         try {
-            Files.writeString(defaultPath, flow.source());
+            Files.writeString(defaultPath, source);
             log.info("Flow {} has been written to file {}", flow.getId(), defaultPath);
         } catch (IOException e) {
             log.error("Error writing file: {}", defaultPath, e);

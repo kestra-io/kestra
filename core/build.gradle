@@ -66,6 +66,9 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.core'
     }
 
+    // Json schema validator
+    implementation 'com.networknt:json-schema-validator'
+
     // micrometer
     implementation "io.micronaut.micrometer:micronaut-micrometer-observation"
     implementation 'io.micrometer:micrometer-java21'

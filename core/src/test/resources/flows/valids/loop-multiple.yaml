@@ -1,0 +1,18 @@
+id: loop-multiple
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop1
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: return1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{item.index}} - {{ item.value }}"
+  - id: loop2
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: return2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{item.index}} - {{ item.value }}"

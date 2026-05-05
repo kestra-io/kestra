@@ -24,7 +24,6 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -120,7 +119,6 @@ public class PluginScanner {
         Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
-        List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner<?>>> taskRunners = new ArrayList<>();
@@ -156,10 +154,6 @@ public class PluginScanner {
                     case AbstractTrigger trigger -> {
                         log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
                         triggers.add(trigger.getClass());
-                    }
-                    case Condition condition -> {
-                        log.debug("Loading Condition plugin: '{}'", plugin.getClass());
-                        conditions.add(condition.getClass());
                     }
                     case StorageInterface storage -> {
                         log.debug("Loading Storage plugin: '{}'", plugin.getClass());
@@ -257,7 +251,6 @@ public class PluginScanner {
             .classLoader(classLoader)
             .tasks(tasks)
             .triggers(triggers)
-            .conditions(conditions)
             .storages(storages)
             .secrets(secrets)
             .assets(assets)

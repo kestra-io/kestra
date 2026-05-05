@@ -7,16 +7,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.cli.Kestra;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.cli.App;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.kestra.core.storages.*;
-import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.log.Log;
@@ -71,7 +70,7 @@ public class NsFilesMetadataMigrationCommandTest {
             String[] nsFilesMetadataMigrationCommand = {
                 "migrate", "metadata", "nsfiles"
             };
-            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, nsFilesMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
             // Still it's not in the metadata repository because no flow exist to find that namespace file
@@ -99,7 +98,7 @@ public class NsFilesMetadataMigrationCommandTest {
              * - namespace 2 yet/another/path is not seen because no flow exist in this namespace
              */
             out.reset();
-            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, nsFilesMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
             Optional<NamespaceFileMetadata> foundNsFile = namespaceFileMetadataRepository.findByPath(tenantId, namespace, path);
@@ -130,7 +129,7 @@ public class NsFilesMetadataMigrationCommandTest {
              * It covers the case where user didn't perform the migrate command yet but they played and added some KV from the UI (so those ones will already be in metadata database).
              */
             out.reset();
-            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, nsFilesMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
             foundNsFile = namespaceFileMetadataRepository.findByPath(tenantId, namespace, path);
@@ -165,7 +164,7 @@ public class NsFilesMetadataMigrationCommandTest {
             String[] nsFilesMetadataMigrationCommand = {
                 "migrate", "metadata", "nsfiles"
             };
-            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, nsFilesMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
             assertThat(err.toString()).doesNotContain("java.nio.file.NoSuchFileException");

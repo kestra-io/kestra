@@ -27,7 +27,7 @@ public class MysqlTriggerRepository extends AbstractJdbcTriggerRepository {
 
     @Override
     protected Condition fullTextCondition(String query) {
-        return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("namespace", "flow_id", "trigger_id", "execution_id"), query);
+        return query == null ? DSL.noCondition() : jdbcRepository.fullTextCondition(List.of("namespace", "flow_id", "trigger_id", "execution_id"), query);
     }
 
     @Override

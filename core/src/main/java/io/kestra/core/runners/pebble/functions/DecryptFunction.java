@@ -7,14 +7,22 @@ import java.util.Map;
 import io.kestra.core.encryption.EncryptionService;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class DecryptFunction implements Function {
+public class DecryptFunction implements KestraFunction {
+    public static final String NAME = "decrypt";
     @Override
     public List<String> getArgumentNames() {
         return List.of("key", "encrypted");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            "key", SecretFunction.NAME + "('encryption_key')",
+            "encrypted", "outputs.request.encryptedBody"
+        );
     }
 
     @Override

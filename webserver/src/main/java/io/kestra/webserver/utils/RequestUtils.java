@@ -121,6 +121,34 @@ public class RequestUtils {
     }
 
     /**
+     * if filters is defined, use that, otherwise map all legacy params to the new filter API
+     * if you are manipulating an entity queryable by date, use
+     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * instead
+     *
+     * @return the new filter list
+     */
+    public static List<QueryFilter> getFiltersOrDefaultToLegacyMapping(
+        List<QueryFilter> filters,
+        String query,
+        String namespace,
+        String flowId,
+        List<String> tags) {
+        var mappedFilter = getFiltersOrDefaultToLegacyMapping(filters, query, namespace, flowId, null, null, null, null, null, null, null, null);
+        if (tags != null && !tags.isEmpty()) {
+            mappedFilter.add(
+                QueryFilter.builder()
+                    .field(Field.TAGS)
+                    .operation(QueryFilter.Op.CONTAINS)
+                    .value(tags)
+                    .build()
+            );
+        }
+
+        return mappedFilter;
+    }
+
+    /**
      * same as {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, List, List, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
      * , it additionally adds an Entity queryable by date, do date validation, and potentially add startDate filter
      *

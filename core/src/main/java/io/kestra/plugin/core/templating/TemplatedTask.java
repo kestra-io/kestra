@@ -37,13 +37,20 @@ import lombok.experimental.SuperBuilder;
     examples = {
         @Example(
             code = """
-                spec: |
-                  type: io.kestra.plugin.core.http.Download
-                  {{ task.property }}: {{ task.value }}
+                id: templated_task
+                namespace: company.team
+                variables:
+                  property: uri
+                  value: https://kestra.io
+                tasks:
+                  - id: templated_task
+                    type: io.kestra.plugin.core.templating.TemplatedTask
+                    spec: |
+                      type: io.kestra.plugin.core.http.Download
+                      {{ vars.property }}: {{ vars.value }}
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.templating.TemplatedTask"
+    }
 )
 public class TemplatedTask extends Task implements RunnableTask<Output> {
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml();
@@ -61,7 +68,15 @@ public class TemplatedTask extends Task implements RunnableTask<Output> {
                 throw new IllegalArgumentException("The templated task cannot be of type 'io.kestra.plugin.core.templating.TemplatedTask'");
             }
             if (task instanceof RunnableTask<?> runnableTask) {
-                return runnableTask.run(runContext);
+                // we set the context classloader to the classloader of the resolved plugin class,
+                // so that ServiceLoader lookups inside the task resolve against the correct classloader.
+                ClassLoader previous = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(runnableTask.getClass().getClassLoader());
+                try {
+                    return runnableTask.run(runContext);
+                } finally {
+                    Thread.currentThread().setContextClassLoader(previous);
+                }
             }
             throw new IllegalArgumentException("The templated task must be a runnable task");
         } catch (JsonProcessingException e) {

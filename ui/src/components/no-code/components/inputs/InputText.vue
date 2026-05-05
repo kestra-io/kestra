@@ -2,9 +2,10 @@
     <span v-if="required" class="me-1 text-danger">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
     <div class="wrapper" :class="[props.margin, props.class]">
-        <el-input
+        <KsInput
             ref="elInputRef"
-            v-model="input"
+            :modelValue="(input as string | number | undefined)"
+            @update:model-value="input = $event"
             :id="uid"
             :placeholder
             :disabled
@@ -46,7 +47,7 @@
 
     defineExpose({
         focus: () => {
-            elInputRef.value?.focus();
+            (elInputRef.value as any)?.focus?.();
         }
     });
 </script>
@@ -54,7 +55,7 @@
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
-:deep(.el-input__icon) {
+:deep(.kel-input__icon) {
     .lock-icon {
         color: var(--ks-content-inactive);
     }

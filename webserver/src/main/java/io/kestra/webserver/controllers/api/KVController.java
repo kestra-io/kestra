@@ -67,15 +67,6 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get("/namespaces/{namespace}/kv")
-    @Operation(tags = { "KV" }, summary = "List all keys for a namespace")
-    @Deprecated
-    public List<KVEntry> listKeys(
-        @Parameter(description = "The namespace id") @PathVariable String namespace) throws IOException {
-        return kvStore(namespace).list();
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Get("/namespaces/{namespace}/kv/inheritance")
     @Operation(tags = { "KV" }, summary = "List all keys for inherited namespaces")
     public List<KVEntry> listKeysWithInheritence(

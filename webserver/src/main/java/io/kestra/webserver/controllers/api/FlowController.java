@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -38,12 +39,12 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.RequestUtils;
-
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
@@ -96,6 +97,9 @@ public class FlowController {
 
     @Inject
     private ObjectMapper objectMapper;
+
+    @Inject
+    private ExpressionContextService expressionContextService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -228,16 +232,8 @@ public class FlowController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels
-
+        @QueryFilterFormat List<QueryFilter> filters
     ) throws HttpStatusException {
-        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
-
         return PagedResults.of(
             flowRepository.find(
                 PageableUtils.from(page, size, sort),
@@ -678,14 +674,7 @@ public class FlowController {
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels) throws IOException {
-        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
-
+        @QueryFilterFormat List<QueryFilter> filters) throws IOException {
         var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
@@ -715,14 +704,7 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels) throws QueueException {
-        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
-
+        @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
         List<Flow> list = flowRepository
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
@@ -757,14 +739,7 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> disableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels) throws Exception {
-        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
-
+        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, true).size()).build());
     }
 
@@ -788,34 +763,8 @@ public class FlowController {
     )
     public HttpResponse<BulkResponse> enableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters,
-
-        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels) throws Exception {
-        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
-
+        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, false).size()).build());
-    }
-
-    protected static List<QueryFilter> mapLegacyQueryParamsToNewFilters(List<QueryFilter> filters, String query, List<FlowScope> scope, String namespace, List<String> labels) {
-        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            filters,
-            query,
-            namespace,
-            null,
-            null,
-            null,
-            scope,
-            labels,
-            null,
-            null,
-            null,
-            null
-        );
-
-        return filters;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -871,16 +820,47 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Export all flows as a streamed CSV file")
     @SuppressWarnings("unchecked")
-    public MutableHttpResponse<Flux> exportFlows(
+    public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, Map.class))
+                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "expressions", consumes = MediaType.APPLICATION_YAML)
+    @Operation(
+        tags = { "Flows" },
+        summary = "Get available Pebble expressions for a flow",
+        description = "Returns a categorized map of expression strings available for autocompletion in the No-Code editor."
+    )
+    @ApiResponse(responseCode = "200", description = "Categorized expressions map")
+    public ExpressionContext expressions(
+        @RequestBody(description = "The flow source code") @Body String source,
+        @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
+        try {
+            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
+            return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    /**
+     * Hook for subclasses to exclude expression categories the caller is not permitted
+     * to see. Default (OSS): no exclusions. Overridden in EE to gate SECRETS / KV_PAIRS /
+     * NAMESPACE_FILES on the corresponding namespace permissions.
+     */
+    protected Set<ExpressionCategory> excludedExpressionCategories(Flow flow) {
+        return Set.of();
     }
 
     protected GenericFlow parseFlowSource(final String source) {

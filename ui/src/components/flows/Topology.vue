@@ -1,5 +1,5 @@
 <template>
-    <el-card>
+    <KsCard>
         <div class="vueflow">
             <LowCodeEditor
                 v-if="flowStore.flow && flowStore.flowGraph"
@@ -11,12 +11,13 @@
                 :expandedSubflows="expandedSubflows"
                 @expand-subflow="onExpandSubflow"
                 @on-edit="(event) => emit('on-edit', event, true)"
+                :animated="false"
             />
-            <el-alert v-else type="warning" :closable="false">
+            <KsAlert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
-            </el-alert>
+            </KsAlert>
         </div>
-    </el-card>
+    </KsCard>
 </template>
 <script setup lang="ts">
     import {onBeforeUnmount} from "vue";
@@ -52,11 +53,11 @@
     });
 </script>
 <style scoped lang="scss">
-    .el-card {
+    .kel-card {
         height: calc(100vh - 174px);
         position: relative;
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             height: 100%;
             display: flex;
         }

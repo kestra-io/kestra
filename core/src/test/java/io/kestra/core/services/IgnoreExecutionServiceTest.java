@@ -72,8 +72,8 @@ class IgnoreExecutionServiceTest {
 
     @Test
     void ignoreExecutionByExecutionCommand() {
-        var executionToSkip = new Restart("not", "not", "not", "skip", Instant.now(), EventId.create(), null);
-        var executionToSkipByFlow = new Restart("tenant", "namespace", "skip", "not", Instant.now(), EventId.create(), null);
+        var executionToSkip = new Restart("not", "not", "not", "skip", Instant.now(), EventId.create(), null, null);
+        var executionToSkipByFlow = new Restart("tenant", "namespace", "skip", "not", Instant.now(), EventId.create(), null, null);
 
         ignoreExecutionService.setIgnoredExecutions(List.of("skip"));
         ignoreExecutionService.setIgnoredFlows(List.of("tenant|namespace|skip"));

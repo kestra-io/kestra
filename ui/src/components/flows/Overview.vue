@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
+    import {computed, onMounted, ref, watch} from "vue";
     import {useExecutionsStore} from "../../stores/executions";
 
     defineOptions({inheritAttrs: false});
@@ -26,8 +26,9 @@
 
     defineEmits(["expand-subflow"]);
 
-    onMounted(() => {
+    function fetchExecutions() {
         if (flow.value?.id) {
+            loaded.value = false;
             executionsStore
                 .findExecutions({namespace: flow.value.namespace, flowId: flow.value.id})
                 .then((r) => {
@@ -35,5 +36,14 @@
                     loaded.value = true;
                 });
         }
+    }
+
+    onMounted(fetchExecutions);
+
+    watch(() => flow.value?.id, (newId, oldId) => {
+        if (newId && newId !== oldId && !loaded.value) {
+            fetchExecutions();
+        }
     });
 </script>
+

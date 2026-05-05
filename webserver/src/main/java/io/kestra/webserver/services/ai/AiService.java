@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,14 +20,20 @@ import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.posthog.PosthogService;
+
+import io.micronaut.core.annotation.Nullable;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AiService<T extends AiConfiguration> implements AiServiceInterface {
     private final PosthogService postHogService;
     @Getter
@@ -36,6 +43,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final VersionProvider versionProvider;
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
+    private final ExpressionContextService expressionContextService;
+    private final PluginDefaultService pluginDefaultService;
     private final NamespaceContextTool namespaceContextTool;
     private final String instanceUid;
     private final String aiProvider;
@@ -46,9 +55,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public abstract ChatModel chatModel(List<ChatModelListener> listeners);
 
+    protected String baseUrl() {
+        return null;
+    }
+
     protected List<ChatModelListener> listeners(String spanName, String conversationId) {
         List<ChatModelListener> listeners = new ArrayList<>(this.listeners);
-        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, () -> metadataByConversationId.get(conversationId)));
+        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, this.baseUrl(), () -> metadataByConversationId.get(conversationId)));
         return listeners;
     }
 
@@ -63,14 +76,9 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     protected FlowYamlBuilder flowYamlBuilder(String conversationId) {
-        return AiServices.builder(FlowYamlBuilder.class)
-            .chatModel(
-                this.chatModel(
-                    this.listeners("FlowYamlBuilder", conversationId)
-                )
-            )
-            .tools(namespaceContextTool)
-            .build();
+        var builder = AiServices.builder(FlowYamlBuilder.class)
+            .chatModel(this.chatModel(this.listeners("FlowYamlBuilder", conversationId)));
+        return (namespaceContextTool != null ? builder.tools(namespaceContextTool) : builder).build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
@@ -89,11 +97,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final VersionProvider versionProvider,
         final InstanceService instanceService,
         final PosthogService postHogService,
-        final NamespaceContextTool namespaceContextTool,
+        @Nullable final NamespaceContextTool namespaceContextTool,
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
-        final T aiConfiguration) {
+        final T aiConfiguration,
+        final ExpressionContextService expressionContextService,
+        final PluginDefaultService pluginDefaultService) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -102,6 +112,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.displayName = displayName;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
+        this.expressionContextService = expressionContextService;
+        this.pluginDefaultService = pluginDefaultService;
         this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
@@ -118,13 +130,16 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
+        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+
         String generatedFlow = flowAiCopilot.generateFlow(
             this.pluginFinder(flowGenerationPrompt.getConversationId()),
             this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
             (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
             allPluginsMetadata(),
             flowGenerationPrompt,
-            tenantId
+            tenantId,
+            pebbleExpressions
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
@@ -154,6 +169,35 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return displayName;
     }
 
+    public ExpressionContextService expressionContextService() {
+        return expressionContextService;
+    }
+
+    private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
+        if (flowYaml != null && !flowYaml.isBlank()) {
+            try {
+                Flow flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, flowYaml, false);
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());
+            }
+        }
+        if (namespace != null && !namespace.isBlank()) {
+            try {
+                Flow flow = Flow.builder()
+                    .id("__ai_context__")
+                    .namespace(namespace)
+                    .tenantId(tenantId)
+                    .tasks(List.of())
+                    .build();
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not build namespace pebble expression context, falling back to global: {}", e.getMessage());
+            }
+        }
+        return PebbleExpressionsFormatter.format(expressionContextService.buildGlobalExpressionContext().toDisplayNameMap());
+    }
+
     public PluginFinder pluginFinderForConversation(String conversationId) {
         return this.pluginFinder(conversationId);
     }
@@ -164,10 +208,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             .build();
     }
 
-    public record ConversationMetadata(String conversationId, String ip, String parentSpanId) {
+    public record ConversationMetadata(String conversationId, String ip, String parentSpanId, String uid) {
     }
 
-    public record GenerationContext(String conversationId, String ip, String parentSpanId) {
+    public record GenerationContext(String conversationId, String ip, String parentSpanId, String uid) {
     }
 
     @Override
@@ -177,24 +221,25 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             return null;
         }
         String parentSpanId = IdUtils.create();
+        String uid = Objects.requireNonNullElse(userInfo.uid(), "api-call");
         this.postHogService.capture(
-            conversationId, "$ai_trace", Map.of(
+            uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_name", spanName + "Session",
                 "$ai_input_state", inputState
             )
         );
         this.postHogService.capture(
-            conversationId, "$ai_span", Map.of(
+            uid, "$ai_span", Map.of(
                 "$ai_trace_id", conversationId,
                 "$ai_span_id", parentSpanId,
                 "$ai_span_name", spanName + "Attempt",
                 "$ai_input_state", inputState
             )
         );
-        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId));
+        metadataByConversationId.put(conversationId, new ConversationMetadata(conversationId, userInfo.ip(), parentSpanId, uid));
 
-        return new GenerationContext(conversationId, userInfo.ip(), parentSpanId);
+        return new GenerationContext(conversationId, userInfo.ip(), parentSpanId, uid);
     }
 
     @Override
@@ -206,7 +251,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         metadataByConversationId.remove(context.conversationId());
         Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
-            context.conversationId(), "$ai_span", Map.of(
+            context.uid(), "$ai_span", Map.of(
                 "$ai_trace_id", context.conversationId(),
                 "$ai_span_id", IdUtils.create(),
                 "$ai_span_name", spanName,

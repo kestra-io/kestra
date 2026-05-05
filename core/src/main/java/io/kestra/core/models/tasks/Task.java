@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
@@ -39,54 +40,63 @@ abstract public class Task implements TaskInterface {
 
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     protected String version;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     private String description;
 
+    // implementation = Object.class prevents the Micronaut OpenAPI annotation processor from following
+    // the @JsonSubTypes on AbstractRetry, which causes a PostponeToNextRoundException at compile time
+    // due to the Micronaut constraint validators on the concrete retry subtypes (Constant, Exponential, Random).
+    @Schema(title = "Retry", description = "Retry policy applied when the task fails.", implementation = Object.class)
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     protected AbstractRetry retry;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     protected Property<Duration> timeout;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     protected Boolean disabled = false;
 
     @Valid
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "execution")
     private WorkerGroup workerGroup;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     private boolean allowFailure = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "logging")
     private boolean logToFile = false;
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
-    private String runIf = "true";
+    @PluginProperty(hidden = true, group = "reliability", dynamic = true)
+    private String when = "true";
 
     @Builder.Default
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "reliability")
     private boolean allowWarning = false;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     @Valid
     @Nullable
     private AssetsDeclaration assets;
+
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    public void setRunIf(String runIf) {
+        this.when = runIf;
+    }
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

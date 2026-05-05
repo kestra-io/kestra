@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";
@@ -69,6 +69,18 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     showComparatorSelection: true
+                },
+                {
+                    key: "scope",
+                    label: t("filter.scope.label"),
+                    description: t("filter.scope.description"),
+                    comparators: [Comparators.IN, Comparators.NOT_IN],
+                    valueType: "multi-select",
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("executions");
+                        return VALUES.SCOPES;
+                    },
+                    showComparatorSelection: false,
                 },
                 {
                     key: "labels",

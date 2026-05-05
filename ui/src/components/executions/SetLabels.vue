@@ -1,13 +1,13 @@
 <template>
-    <el-button
+    <KsButton
         :disabled="!enabled"
         :icon="Plus"
         @click="isOpen = !isOpen"
     >
         {{ $t("set_extra_labels") }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog
+    <KsDialog
         v-if="isOpen"
         v-model="isOpen"
         destroyOnClose
@@ -18,25 +18,25 @@
         </template>
 
         <template #footer>
-            <el-button @click="onCancel">
+            <KsButton @click="onCancel">
                 {{ $t("cancel") }}
-            </el-button>
-            <el-button type="primary" :loading="isSaving" @click="setLabels()">
+            </KsButton>
+            <KsButton type="primary" :loading="isSaving" @click="setLabels()">
                 {{ $t("ok") }}
-            </el-button>
+            </KsButton>
         </template>
 
         <p v-html="$t('Set labels to execution', {id: execution.id})" />
 
-        <el-form labelPosition="top">
-            <el-form-item :label="$t('execution labels')">
+        <KsForm labelPosition="top">
+            <KsFormItem :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"
                 />
-            </el-form-item>
-        </el-form>
-    </el-dialog>
+            </KsFormItem>
+        </KsForm>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -44,7 +44,7 @@
 
     import LabelInput from "../../components/labels/LabelInput.vue";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
     import {filterValidLabels} from "./utils";
 
     import {useMiscStore} from "override/stores/misc";

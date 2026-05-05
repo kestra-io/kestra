@@ -222,7 +222,7 @@ public class MavenPluginDownloader implements Closeable {
                 // Use the version from ArtifactRequest and not the one from the ArtifactResult.
                 // Otherwise, SNAPSHOT version will result in a timestamped version string.
                 highestVersion.endsWith("-SNAPSHOT") ? highestVersion : result.getArtifact().getVersion(),
-                result.getArtifact().getFile().toPath().toUri()
+                result.getArtifact().getPath().toUri()
             );
         } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
             throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);

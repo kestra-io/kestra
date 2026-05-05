@@ -9,7 +9,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.events.EventId;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -45,8 +44,9 @@ public final class TriggerState implements TriggerId {
     private final boolean locked;
     private final String workerId;
     private final TriggerType type;
-    // the last-event id that mutate this state. 
+    // the last-event id that mutate this state.
     private final EventId lastEventId;
+    private final Instant lastTriggeredDate;
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -63,6 +63,7 @@ public final class TriggerState implements TriggerId {
             .triggerId(triggerId)
             .date(toZonedDateTime(evaluatedAt))
             .nextExecutionDate(toZonedDateTime(nextEvaluationDate))
+            .backfill(backfill)
             .stopAfter(stopAfter)
             .disabled(disabled)
             .build();
@@ -98,6 +99,7 @@ public final class TriggerState implements TriggerId {
             false,
             null,
             type,
+            null,
             null
         );
     }
@@ -221,24 +223,31 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
-     * Updates this trigger state for the given {@link Execution}.
+     * Updates this trigger state when an execution is created.
      *
      * @param clock the scheduler clock.
-     * @param execution the execution.
+     * @param stateType the execution state type.
      * @return a new {@link TriggerState}
      */
-    public TriggerState updateForExecution(final Clock clock, final Execution execution) {
-        return updateForExecutionState(clock, execution.getState().getCurrent());
+    public TriggerState updateOnExecutionCreated(final Clock clock, final State.Type stateType) {
+        boolean disabled = getStopAfter() != null ? getStopAfter().contains(stateType) : isDisabled();
+        return update(clock)
+            .disabled(disabled)
+            .lastTriggeredDate(clock.instant())
+            .build();
     }
 
     /**
-     * Updates this trigger state for the given executions.
+     * Updates this trigger state when an execution terminates.
+     * <p>
+     * Unlike {@link #updateOnExecutionCreated}, this does not set {@code lastTriggeredDate}
+     * since the trigger was already marked as triggered when the execution was created.
      *
      * @param clock the scheduler clock.
-     * @param state the execution state.
+     * @param state the terminal execution state.
      * @return a new {@link TriggerState}
      */
-    public TriggerState updateForExecutionState(final Clock clock, final State.Type state) {
+    public TriggerState updateOnExecutionTerminated(final Clock clock, final State.Type state) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
         boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
 
@@ -271,7 +280,17 @@ public final class TriggerState implements TriggerId {
     }
 
     /**
-     * Sets the tenant of this trigger state.
+     * Updates this trigger state with the given last triggered date.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState lastTriggeredDate(final Clock clock) {
+        return update(clock).lastTriggeredDate(clock.instant()).build();
+    }
+
+    /**
+     * Sets the last event id of this trigger state.
      *
      * @return a new {@link TriggerState}
      */
@@ -313,7 +332,8 @@ public final class TriggerState implements TriggerId {
             .vnode(vnode)
             .disabled(disabled)
             .type(type)
-            .lastEventId(lastEventId);
+            .lastEventId(lastEventId)
+            .lastTriggeredDate(lastTriggeredDate);
     }
 
     // Lombok hack to properly generate Javadoc

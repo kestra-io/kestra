@@ -1,11 +1,7 @@
 package io.kestra.controller.grpc.services;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import io.kestra.controller.grpc.HeartbeatRequest;
-import io.kestra.controller.grpc.HeartbeatResponse;
-import io.kestra.controller.grpc.LivenessControllerServiceGrpc;
-import io.kestra.controller.grpc.WorkerControllerService;
+import io.grpc.stub.StreamObserver;
+import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.HeartbeatMessage;
 import io.kestra.controller.messages.HeartbeatMessageReply;
 import io.kestra.controller.messages.MessageFormat;
@@ -13,11 +9,11 @@ import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
-
-import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc.LivenessControllerServiceImplBase implements WorkerControllerService {
@@ -79,6 +75,19 @@ public class GrpcLivenessControllerService extends LivenessControllerServiceGrpc
                 )
                 .build()
         );
+        responseObserver.onCompleted();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void getMaintenanceMode(EmptyRequest request, StreamObserver<GetMaintenanceResponse> responseObserver) {
+        GetMaintenanceResponse response = GetMaintenanceResponse.newBuilder()
+            .setHeader(request.getHeader())
+            .setMaintenance(maintenanceMode.get())
+            .build();
+        responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 

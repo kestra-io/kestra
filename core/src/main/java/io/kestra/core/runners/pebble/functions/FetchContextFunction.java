@@ -4,16 +4,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class FetchContextFunction implements Function {
+public class FetchContextFunction implements KestraFunction {
+    public static final String NAME = "fetchContext";
+    public static final String ALIAS = "printContext";
     public List<String> getArgumentNames() {
         return List.of();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of();
     }
 
     @Override

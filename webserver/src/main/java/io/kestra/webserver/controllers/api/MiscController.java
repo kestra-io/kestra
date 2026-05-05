@@ -16,11 +16,13 @@ import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleExpressionService;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.services.ai.AiServiceManager;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -63,6 +65,9 @@ public class MiscController {
     Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
+    Optional<AiServiceManager> aiServiceManager = Optional.empty();
+
+    @Inject
     KestraConfig kestraConfig;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
@@ -103,10 +108,10 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
-    protected EditionProvider editionProvider;
+    private PebbleExpressionService pebbleExpressionService;
 
     @Inject
-    PebbleExpressionService pebbleExpressionService;
+    protected EditionProvider editionProvider;
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -129,6 +134,7 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(kestraConfig.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
@@ -191,8 +197,8 @@ public class MiscController {
 
     @Get("/pebble/functions")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Retrieve the list of available Pebble expression functions.")
-    public List<String> getExpressionFunctions() {
+    @Operation(tags = { "Misc" }, summary = "Retrieve the available Pebble expression functions with their arguments and defaults.")
+    public List<PebbleFunction> getExpressionFunctions() {
         return pebbleExpressionService.functions();
     }
 
@@ -232,6 +238,8 @@ public class MiscController {
         List<String> hiddenLabelsPrefixes;
 
         Boolean isAiEnabled;
+
+        Boolean isAiApiKeyConfigured;
 
         Boolean isBasicAuthInitialized;
 

@@ -6,7 +6,6 @@ import java.util.Map;
 
 import com.github.ksuid.KsuidGenerator;
 
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
@@ -17,7 +16,8 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
  * @see <a href="https://github.com/segmentio/ksuid">https://github.com/segmentio/ksuid</a>
  * @see <a href="https://github.com/ksuid/ksuid">https://github.com/ksuid/ksuid</a>
  */
-public class KSUIDFunction implements Function {
+public class KSUIDFunction implements KestraFunction {
+    public static final String NAME = "ksuid";
     private static final KsuidGenerator KSUID_GENERATOR = new KsuidGenerator(new SecureRandom());
 
     @Override
@@ -29,6 +29,11 @@ public class KSUIDFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of();
     }
 
     private String generateKsuid() {

@@ -61,8 +61,7 @@ import lombok.experimental.SuperBuilder;
 
                 """
         ),
-    },
-    aliases = "io.kestra.core.tasks.storages.Reverse"
+    }
 )
 public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(

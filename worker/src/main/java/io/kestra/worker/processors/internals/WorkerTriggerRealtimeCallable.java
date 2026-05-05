@@ -5,12 +5,12 @@ import java.util.function.Consumer;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 
 import reactor.core.publisher.Flux;
 
@@ -22,7 +22,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
     ConditionContext conditionContext;
     TriggerContext triggerContext;
     Consumer<? super Throwable> onError;
-    Consumer<Execution> onNext;
+    Consumer<TriggerEvaluationResult> onNext;
 
     public WorkerTriggerRealtimeCallable(
         RunContext runContext,
@@ -31,7 +31,7 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
         WorkerTrigger workerTrigger,
         RealtimeTriggerInterface realtimeTrigger,
         Consumer<? super Throwable> onError,
-        Consumer<Execution> onNext) {
+        Consumer<TriggerEvaluationResult> onNext) {
         super(runContext, realtimeTrigger.getClass().getName(), workerTrigger);
         this.streamingTrigger = realtimeTrigger;
         this.conditionContext = conditionContext;
@@ -42,10 +42,10 @@ public class WorkerTriggerRealtimeCallable extends AbstractWorkerTriggerCallable
 
     @Override
     public State.Type doCall() throws Exception {
-        Publisher<Execution> evaluate;
+        Publisher<TriggerEvaluationResult> evaluate;
 
         try {
-            evaluate = streamingTrigger.evaluate(
+            evaluate = streamingTrigger.eval(
                 conditionContext.withRunContext(runContext),
                 triggerContext
             );

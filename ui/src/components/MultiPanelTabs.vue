@@ -1,8 +1,8 @@
 <template>
-    <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <Empty v-if="!panels.length" type="panels" />
         <template v-else>
-            <el-splitter-panel
+            <KsSplitterPanel
                 v-for="(panel, panelIndex) in panels"
                 min="10%"
                 :key="panelIndex"
@@ -13,7 +13,7 @@
                 :class="{'panel-dragover': panel.dragover}"
             >
                 <div class="editor-tabs-container">
-                    <el-button
+                    <KsButton
                         :icon="DragVertical"
                         link
                         class="tab-icon drag-handle"
@@ -83,11 +83,11 @@
                             </svg>
                         </button>
 
-                        <el-dropdown trigger="click" placement="bottom-end">
-                            <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                        <KsDropdown trigger="click" placement="bottom-end">
+                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
                             <template #dropdown>
-                                <el-dropdown-menu class="m-2">
-                                    <el-dropdown-item
+                                <KsDropdownMenu class="m-2">
+                                    <KsDropdownItem
                                         :icon="DockRight"
                                         :disabled="panelIndex === panels.length - 1"
                                         @click="movePanel(panelIndex, 'right')"
@@ -95,8 +95,8 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
                                         :icon="DockLeft"
                                         :disabled="panelIndex === 0"
                                         @click="movePanel(panelIndex, 'left')"
@@ -104,18 +104,18 @@
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_left") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    </KsDropdownItem>
+                                    <KsDropdownItem v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_tabs") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item :icon="Close" @click="closeAllPanels()">
+                                    </KsDropdownItem>
+                                    <KsDropdownItem :icon="Close" @click="closeAllPanels()">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.close_all_panels") }}
                                         </span>
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
                                         v-if="panel.activeTab?.uid === 'code'"
                                         :icon="Keyboard"
                                         @click="showKeyShortcuts()"
@@ -123,10 +123,10 @@
                                         <span class="small-text">
                                             {{ $t("editor_shortcuts.label") }}
                                         </span>
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
+                                    </KsDropdownItem>
+                                </KsDropdownMenu>
                             </template>
-                        </el-dropdown>
+                        </KsDropdown>
                     </div>
                 </div>
                 <div
@@ -151,9 +151,9 @@
                         :class="{dragover: panel.dragover}"
                     />
                 </div>
-            </el-splitter-panel>
+            </KsSplitterPanel>
         </template>
-    </el-splitter>
+    </KsSplitter>
 
     <div
         v-if="showDropZones"
@@ -352,7 +352,6 @@
         if(panelIndex === -1) {
             return
         }
-
 
         const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
         const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
@@ -656,7 +655,6 @@
             return;
         }
 
-
         const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
         el.scrollLeft += delta;
     }
@@ -756,7 +754,7 @@
         font-size: .8rem;
     }
 
-    :deep(.el-dropdown-menu__item.is-disabled) {
+    :deep(.kel-dropdown-menu__item.is-disabled) {
         color: var(--ks-border-inactive);
     }
 
@@ -794,7 +792,7 @@
         }
 
         .dirty-icon{
-            font-size: 16px;
+            font-size: var(--ks-font-size-base);
             flex: 0 0 auto;
         }
 
@@ -839,18 +837,22 @@
     }
 
     .default-theme{
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             background-color: var(--ks-background-panel);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.el-splitter__splitter){
+        :deep(.kel-splitter__splitter){
             border-left-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{
                 background-color: var(--ks-content-secondary);
             }
+        }
+
+        :deep(.kel-splitter-bar) {
+            z-index: 0;
         }
     }
 
@@ -860,7 +862,7 @@
         overflow: auto;
     }
 
-    .el-splitter-panel{
+    .kel-splitter-panel{
         transition: none;
         &.dragging {
             opacity: 0.5;
@@ -914,6 +916,5 @@
     .right-drop-zone {
         border-left-width: 2px;
     }
-
 
 </style>

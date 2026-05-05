@@ -4,10 +4,10 @@
             <Logo class="logo" />
         </div>
 
-        <el-form @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
+        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
             <input type="hidden" name="from" :value="redirectPath">
-            <el-form-item prop="username">
-                <el-input
+            <KsFormItem prop="username">
+                <KsInput
                     name="username"
                     size="large"
                     id="input-username"
@@ -19,14 +19,14 @@
                         <Account />
                     </template>
                     <template #suffix v-if="getFieldError('username')">
-                        <el-tooltip placement="top" :content="getFieldError('username')">
+                        <KsTooltip placement="top" :content="getFieldError('username')">
                             <InformationOutline class="validation-icon error" />
-                        </el-tooltip>
+                        </KsTooltip>
                     </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item prop="password">
-                <el-input
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem prop="password">
+                <KsInput
                     v-model="credentials.password"
                     size="large"
                     name="password"
@@ -40,14 +40,14 @@
                         <Lock />
                     </template>
                     <template #suffix v-if="getFieldError('password')">
-                        <el-tooltip placement="top" :content="getFieldError('password')">
+                        <KsTooltip placement="top" :content="getFieldError('password')">
                             <InformationOutline class="validation-icon error" />
-                        </el-tooltip>
+                        </KsTooltip>
                     </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item>
-                <el-button
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="primary"
                     class="w-100"
                     size="large"
@@ -57,19 +57,19 @@
                     :loading="isLoading"
                 >
                     {{ $t("setup.login") }}
-                </el-button>
-            </el-form-item>
-            <el-form-item>
-                <el-button
+                </KsButton>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="default"
                     class="w-100"
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
                     {{ $t("setup.troubleshooting") }}
-                </el-button>
-            </el-form-item>
-        </el-form>
+                </KsButton>
+            </KsFormItem>
+        </KsForm>
     </div>
 </template>
 
@@ -77,8 +77,8 @@
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {ElMessage} from "element-plus"
-    import type {FormInstance} from "element-plus"
+    import {KsMessage} from "@kestra-io/design-system"
+    import type {FormInstance} from "@kestra-io/design-system"
     import axios from "axios"
     import MailChecker from "mailchecker"
 
@@ -143,10 +143,10 @@
         password: [{required: true, validator: validatePassword, trigger: "blur"}]
     }))
 
-    const getFieldError = (fieldName: string) => {
-        if (!form.value) return null
+    const getFieldError = (fieldName: string): string | undefined => {
+        if (!form.value) return undefined
         const field = form.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : null
+        return field?.validateState === "error" ? field.validateMessage : undefined
     }
 
     const redirectPath = computed(() => route.query.from as string | undefined)
@@ -192,19 +192,19 @@
             const errors = await miscStore.loadBasicAuthValidationErrors()
             if (errors?.length) {
                 errors.forEach((error: string) => {
-                    ElMessage.error({
+                    KsMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
                         duration: 5000,
                         showClose: false
                     })
                 })
             } else {
-                ElMessage.error({
+                KsMessage.error({
                     message: t("setup.validation.incorrect_creds")
                 })
             }
         } catch {
-            ElMessage.error({
+            KsMessage.error({
                 message: t("setup.validation.incorrect_creds")
             })
         }
@@ -267,7 +267,7 @@
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
-                ElMessage.error("Login failed")
+                KsMessage.error("Login failed")
             }
         } finally {
             isLoading.value = false
@@ -296,35 +296,35 @@
             margin-bottom: 40px;
         }
 
-        .el-button.el-button--default {
-            background: var(--bs-gray-200);
+        .kel-button.kel-button--default {
+            background: var(--ks-tag-background-hover);
 
             html.dark & {
-                background: var(--input-bg);
+                background: var(--ks-background-input);
 
-                &.el-button {
+                &.kel-button {
                     border: 0;
                 }
             }
         }
 
-        .el-form-item {
-            .el-input {
+        .kel-form-item {
+            .kel-input {
                 height: 54px;
             }
 
-            .el-input-group__prepend {
+            .kel-input-group__prepend {
                 .material-design-icon {
                     .material-design-icon__svg {
-                        width: 1.5em;
-                        height: 1.5em;
+                        width: var(--ks-font-size-xl);
+                        height: var(--ks-font-size-xl);
                         bottom: -0.250em;
                     }
                 }
             }
 
             .validation-icon {
-                font-size: 1.25em;
+                font-size:  var(--ks-font-size-lg);
                 &.error {
                     color: var(--ks-content-alert);
                 }

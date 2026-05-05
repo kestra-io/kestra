@@ -20,7 +20,7 @@ public class ExecutorContext {
 
     /**
      * Executor-local wrapper that pairs a {@link WorkerTask} (wire model) with its
-     * {@link RunContext} (needed for executor-side rendering like {@code runIf} and worker group keys).
+     * {@link RunContext} (needed for executor-side rendering like {@code when} and worker group keys).
      * The RunContext does NOT travel to the worker — only the WorkerTask does.
      */
     public record ExecutorWorkerTask(WorkerTask workerTask, RunContext runContext) {
@@ -39,6 +39,7 @@ public class ExecutorContext {
     private final List<ExecutionDelay> executionDelays = new ArrayList<>(0);
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>(0);
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>(0);
+    private final List<Execution> loopExecutions = new ArrayList<>(0);
     private State.Type originalState;
 
     public ExecutorContext(Execution execution) {
@@ -108,6 +109,13 @@ public class ExecutorContext {
 
     public ExecutorContext withSubflowExecutionResults(List<SubflowExecutionResult> subflowExecutionResults, String from) {
         this.subflowExecutionResults.addAll(subflowExecutionResults);
+        this.from.add(from);
+
+        return this;
+    }
+
+    public ExecutorContext withLoopExecution(Execution loopExecution, String from) {
+        this.loopExecutions.add(loopExecution);
         this.from.add(from);
 
         return this;

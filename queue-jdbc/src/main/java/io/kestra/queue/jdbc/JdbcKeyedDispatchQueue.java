@@ -32,7 +32,7 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
     }
 
     @Override
-    public QueueSubscriber<T> subscriber(String routingKey) {
+    protected QueueSubscriber<T> doSubscriber(String routingKey) {
         return new JdbcDispatchSubscriber<>(
             cls,
             queueService,

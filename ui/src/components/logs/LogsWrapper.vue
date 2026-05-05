@@ -1,8 +1,14 @@
 <template>
     <TopNavBar v-if="!embed" :title="routeInfo.title" />
-    <section v-if="ready" v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="internalPageSize" :page="internalPageNumber" :embed="embed">
+            <KsDataTable
+                ref="dataTable"
+                :loadData="loadData"
+                @ready="ready = true"
+                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                :total="logsStore.total"
+            >
                 <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
@@ -21,7 +27,7 @@
                 </template>
 
                 <template #table>
-                    <div v-loading="isLoading">
+                    <div v-ks-loading="isLoading">
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
                             <LogLine
                                 v-for="(log, i) in logsStore.logs"
@@ -35,28 +41,29 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <NoData :text="$t('no_logs_data_description')" />
+                            <KsEmpty :description="$t('no_logs_data_description')" />
                         </div>
                     </div>
                 </template>
-            </DataTable>
+            </KsDataTable>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import moment from "moment";
     import {useLogFilter} from "../filter/configurations";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+
+    const {loadInit} = useRestoreUrl();
     import Sections from "../dashboard/sections/Sections.vue";
-    import DataTable from "../../components/layout/DataTable.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
-    import NoData from "../layout/NoData.vue";
     import {storageKeys} from "../../utils/constants";
     import {
         decodeSearchParams,
@@ -64,19 +71,18 @@
         getUniqueFilters,
         isValidFilter,
         keyOfComparator
-    } from "../filter/utils/helpers";
-    import {AppliedFilter} from "../filter/utils/filterTypes";
+    } from "@kestra-io/design-system";
+    import type {AppliedFilter} from "@kestra-io/design-system";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter
-    } from "../filter/utils/logLevelQuery";
-    import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    } from "@kestra-io/design-system";
+    import {useRouteFilterPolicy} from "@kestra-io/design-system";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
     import useRouteContext from "../../composables/useRouteContext";
 
     const props = withDefaults(defineProps<{
@@ -99,9 +105,12 @@
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"]);
 
     const route = useRoute();
+    const router = useRouter();
     const {t} = useI18n();
     const logsStore = useLogsStore();
     const logFilter = useLogFilter();
+    const dataTable = useTemplateRef("dataTable");
+    const ready = ref(false);
 
     const routeInfo = computed(() => ({
         title: t("logs"),
@@ -192,7 +201,8 @@
     ]);
 
     const loadQuery = (base: any) => {
-        let queryFilter = props.filters ?? queryWithFilter();
+        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query;
+        let queryFilter = props.filters ?? {...routeFilters};
 
         if (isFlowEdit.value) {
             queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value;
@@ -216,18 +226,18 @@
         return _merge(base, queryFilter);
     };
 
-    const loadData = (callback?: () => void) => {
+    const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         isLoading.value = true;
 
-        logsStore.findLogs(loadQuery({
-            page: parseInt(route.query?.page as string ?? "1"),
-            size: parseInt(route.query?.size as string ?? "25"),
+        await logsStore.findLogs(loadQuery({
+            page,
+            size,
             minLevel: props.filters ? null : effectiveLogLevel.value,
             sort: "timestamp:desc"
         }))
             .finally(() => {
                 isLoading.value = false;
-                if (callback) callback();
             });
     };
 
@@ -239,9 +249,13 @@
         syncLevelFromAppliedFilters(filters);
     };
 
-    const {onPageChanged, queryWithFilter, internalPageNumber, internalPageSize, ready} = useDataTableActions({
-        loadData
-    });
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
     const showStatChart = () => showChart.value;
 
@@ -249,7 +263,7 @@
         showChart.value = value;
         localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
         if (showStatChart()) {
-            loadData();
+            dataTable.value?.reload();
         }
     };
 
@@ -258,7 +272,7 @@
         if (dashboardRef.value) {
             dashboardRef.value.refreshCharts();
         }
-        loadData();
+        dataTable.value?.reload();
     };
 
     watch(() => props.reloadLogs, (newValue) => {
@@ -266,7 +280,6 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
@@ -279,22 +292,22 @@
                 border: 1px solid var(--ks-border-primary);
             }
 
-            .el-empty {
+            .kel-empty {
                 background-color: transparent;
             }
         }
 
         .logs-wrapper {
             margin-bottom: 1rem;
-            border-radius: var(--bs-border-radius-lg);
+            border-radius: var(--kel-border-radius-round);
             overflow: hidden;
-            padding: $spacer;
+            padding: 1rem;
             padding-top: .5rem;
             background-color: var(--ks-background-card);
             border: 1px solid var(--ks-border-primary);
 
             html.dark & {
-                background-color: var(--bs-gray-100);
+                background-color: var(--ks-background-left-menu);
             }
 
             > * + * {

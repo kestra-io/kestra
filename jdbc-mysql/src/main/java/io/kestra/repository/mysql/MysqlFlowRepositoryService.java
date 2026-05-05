@@ -24,16 +24,33 @@ public abstract class MysqlFlowRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val(value, String.class));
                 conditions.add(valueField.eq(value != null));
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(Collections.singletonList("source_code"), query);
+    }
+
+    /**
+     * Builds a condition that matches flows containing at least one trigger of the given class type.
+     * Uses JSON_SEARCH to check if the type value exists anywhere in the triggers array.
+     *
+     * @param triggerClass the trigger class to filter by, or {@code null} to match all flows
+     * @return a jOOQ {@link Condition}
+     */
+    public static Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        if (triggerClass == null) {
+            return DSL.trueCondition();
+        }
+        return DSL.condition(
+            "JSON_SEARCH(`value`, 'one', {0}, NULL, '$.triggers[*].type') IS NOT NULL",
+            DSL.val(triggerClass.getName(), String.class)
+        );
     }
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
@@ -42,7 +59,7 @@ public abstract class MysqlFlowRepositoryService {
         if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
-                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', '" + key + "', 'value', '" + value + "')), '$.labels')", Boolean.class);
+                Field<Boolean> valueField = DSL.field("JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val((String) value, String.class));
                 if (operation.equals(EQUALS))
                     conditions.add(valueField.eq(value != null));
                 else if (operation.equals(NOT_EQUALS)) {
@@ -56,6 +73,6 @@ public abstract class MysqlFlowRepositoryService {
                 }
             });
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 }

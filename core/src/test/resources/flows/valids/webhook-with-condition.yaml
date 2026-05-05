@@ -10,6 +10,4 @@ triggers:
   - id: webhook
     type: io.kestra.plugin.core.trigger.Webhook
     key: webhookKey
-    conditions:
-      - type: io.kestra.plugin.core.condition.ExpressionCondition
-        expression: "{{trigger.body.hello == 'world'}}"
+    when: "{{trigger.body.hello == 'world'}}"

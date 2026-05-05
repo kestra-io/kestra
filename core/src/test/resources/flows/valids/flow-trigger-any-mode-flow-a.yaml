@@ -1,0 +1,7 @@
+id: flow-trigger-any-mode-flow-a
+namespace: io.kestra.tests.trigger.any.mode
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from flow-a: {{execution.id}}"

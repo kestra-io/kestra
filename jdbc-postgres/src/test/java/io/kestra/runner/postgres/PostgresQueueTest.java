@@ -38,4 +38,44 @@ class PostgresQueueTest extends JdbcQueueTest {
         assertThat(exception.getMessage()).contains("ERROR: unsupported Unicode escape sequence");
         assertThat(exception.getCause()).isInstanceOf(DataException.class);
     }
+
+    @Test
+    void invalidWorkerTaskWithLoneHighSurrogateShouldThrowDataException() throws QueueException {
+        var workerTaskResult = WorkerTaskResult.builder()
+            .taskRun(
+                TaskRun.builder()
+                    .taskId("taskId")
+                    .id(IdUtils.create())
+                    .namespace("namespace")
+                    .flowId("flowId")
+                    .state(new State().withState(State.Type.SUCCESS))
+                    .build()
+            )
+            .outputs(Variables.inMemory(Map.of("value", "test\uD800text")))
+            .build();
+
+        var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
+        assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
+        assertThat(exception.getCause()).isInstanceOf(DataException.class);
+    }
+
+    @Test
+    void invalidWorkerTaskWithLoneLowSurrogateShouldThrowDataException() throws QueueException {
+        var workerTaskResult = WorkerTaskResult.builder()
+            .taskRun(
+                TaskRun.builder()
+                    .taskId("taskId")
+                    .id(IdUtils.create())
+                    .namespace("namespace")
+                    .flowId("flowId")
+                    .state(new State().withState(State.Type.SUCCESS))
+                    .build()
+            )
+            .outputs(Variables.inMemory(Map.of("value", "\uDC59 test")))
+            .build();
+
+        var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
+        assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
+        assertThat(exception.getCause()).isInstanceOf(DataException.class);
+    }
 }

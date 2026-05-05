@@ -3,6 +3,10 @@ export type Dashboard = {
     charts: Chart[];
     title?: string;
     sourceCode?: string;
+    timeWindow?: {
+        default?: string;
+        max?: string;
+    };
     [key: string]: unknown;
 };
 

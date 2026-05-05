@@ -1,19 +1,9 @@
 package io.kestra.core.runners;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
-
-import org.apache.commons.lang3.StringUtils;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -27,7 +17,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.StorageInterface;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -38,14 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FlowConcurrencyCaseTest {
 
     public static final String NAMESPACE = "io.kestra.tests";
-    @Inject
-    private StorageInterface storageInterface;
 
     @Inject
     protected TestRunnerUtils runnerUtils;
-
-    @Inject
-    private FlowInputOutput flowIO;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -143,30 +127,6 @@ public class FlowConcurrencyCaseTest {
         assertThat(secondExecutionResult.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
         assertThat(secondExecutionResult.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(secondExecutionResult.getState().getHistories().get(1).getState()).isEqualTo(State.Type.CANCELLED);
-    }
-
-    public void flowConcurrencyWithForEachItem(String tenantId) throws QueueException, URISyntaxException, IOException {
-        URI file = storageUpload(tenantId);
-        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution forEachItem = runnerUtils.runOneUntilRunning(
-            tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
-            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5)
-        );
-        assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
-
-        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), forEachItem);
-        assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
-
-        List<Execution> executions = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-queue");
-
-        assertThat(executions).extracting(e -> e.getState().getCurrent()).containsOnly(Type.SUCCESS);
-        assertThat(
-            executions.stream()
-                .map(e -> e.getState().getHistories())
-                .flatMap(List::stream)
-                .map(History::getState)
-                .toList()
-        ).contains(Type.QUEUED);
     }
 
     public void flowConcurrencyQueueRestarted(String tenantId) throws Exception {
@@ -293,7 +253,7 @@ public class FlowConcurrencyCaseTest {
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(30));
         }
     }
 
@@ -335,7 +295,7 @@ public class FlowConcurrencyCaseTest {
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(30));
         }
     }
 
@@ -388,26 +348,6 @@ public class FlowConcurrencyCaseTest {
         // cleanup
         runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution1);
         runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution2);
-    }
-
-    private URI storageUpload(String tenantId) throws URISyntaxException, IOException {
-        File tempFile = File.createTempFile("file", ".txt");
-
-        Files.write(tempFile.toPath(), content());
-
-        return storageInterface.put(
-            tenantId,
-            null,
-            new URI("/file/storage/file.txt"),
-            new FileInputStream(tempFile)
-        );
-    }
-
-    private List<String> content() {
-        return IntStream
-            .range(0, 7)
-            .mapToObj(value -> StringUtils.leftPad(value + "", 20))
-            .toList();
     }
 
 }

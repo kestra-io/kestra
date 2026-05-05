@@ -314,7 +314,7 @@ public abstract class AbstractLogRepositoryTest {
 
         logRepository.save(log1);
 
-        logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
+        logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1), true, true, null);
 
         find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
@@ -328,10 +328,25 @@ public abstract class AbstractLogRepositoryTest {
 
         logRepository.save(log1);
 
-        logRepository.deleteByQuery(tenant, null, null, log1.getExecutionId(), List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
+        logRepository.deleteByQuery(tenant, null, null, log1.getExecutionId(), List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1), true, true, null);
 
         find = logRepository.findByExecutionId(tenant, log1.getExecutionId(), null, Pageable.from(1, 50));
         assertThat(find.size()).isZero();
+    }
+
+    @Test
+    void deleteByQueryWithBatchSize() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+        for (int i = 0; i < 5; i++) {
+            logRepository.save(logEntry(tenant, Level.INFO, executionId).build());
+        }
+
+        int deleted = logRepository.deleteByQuery(tenant, "io.kestra.unittest", "flowId", null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, 2);
+
+        assertThat(deleted).isEqualTo(5);
+        var remaining = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
+        assertThat(remaining.size()).isZero();
     }
 
     @Test

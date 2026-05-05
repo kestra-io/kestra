@@ -16,7 +16,8 @@ public record Resume(String tenantId,
     Instant timestamp,
     EventId eventId,
     Pause.Resumed resumed,
-    @Nullable Map<String, Object> resumeInputs) implements ExecutionCommand {
+    @Nullable Map<String, Object> resumeInputs,
+    @Nullable String operationId) implements ExecutionCommand {
     public static Resume from(Execution execution, Pause.Resumed resumed) {
         return new Resume(
             execution.getTenantId(),
@@ -26,6 +27,7 @@ public record Resume(String tenantId,
             Instant.now(),
             EventId.create(),
             resumed,
+            null,
             null
         );
     }
@@ -39,7 +41,12 @@ public record Resume(String tenantId,
             Instant.now(),
             EventId.create(),
             resumed,
-            resumeInputs
+            resumeInputs,
+            null
         );
+    }
+
+    public Resume withOperationId(String operationId) {
+        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId);
     }
 }

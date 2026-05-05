@@ -1,0 +1,7 @@
+id: flow-trigger-invalid-inputs-flow-a
+namespace: io.kestra.tests.trigger.invalid.inputs
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "hello"

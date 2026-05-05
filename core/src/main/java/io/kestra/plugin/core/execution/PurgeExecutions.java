@@ -49,8 +49,7 @@ import lombok.experimental.SuperBuilder;
                       - SUCCESS
                 """
         )
-    },
-    aliases = { "io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge" }
+    }
 )
 public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
     @Schema(
@@ -113,7 +112,7 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
 
     @Schema(
         title = "The size of the bulk delete",
-        description = "For performance, deletion is made by batch of by default 100 executions/logs/metrics."
+        description = "Deletion is done in batches of this many executions (default 100). If executions have a large number of logs, use `PurgeLogs` instead to control how many log rows are deleted per transaction."
     )
     @Builder.Default
     @NotNull

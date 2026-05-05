@@ -9,13 +9,14 @@
     import {computed, onBeforeUnmount} from "vue";
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {getRandomID} from "../../../scripts/id";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
+    import useRouteContext from "../../composables/useRouteContext";
 
     import type {BlueprintType} from "../../stores/blueprints"
     import {useAuthStore} from "override/stores/auth";
@@ -102,6 +103,8 @@ tasks:
             title: t("flows")
         };
     });
+
+    useRouteContext(routeInfo);
 
     flowStore.isCreating = true;
     if (route.query.reset || route.query.onboarding === "guided") {

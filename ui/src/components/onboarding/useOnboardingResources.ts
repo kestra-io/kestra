@@ -28,7 +28,7 @@ export function useOnboardingResources() {
             descriptionKey: "welcome_copilot.success_page.items.blueprints.description",
             icon: ShapePlusOutline,
             iconClass: "is-blueprints",
-            to: {name: "blueprints", params: {kind: "flow", tab: "all"}},
+            to: {name: "blueprints", params: {kind: "flow", tab: "community"}},
         },
         {
             titleKey: "welcome_copilot.success_page.items.slack.title",

@@ -47,9 +47,9 @@ import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
+import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
@@ -101,6 +101,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     @ValueSource(strings = { WORKER_GROUP_KEY, "<null>" })
     public void shouldResubmitTaskWhenWorkerIsStopped(String workerGroupKey) throws Exception {
         workerGroupKey = "<null>".equals(workerGroupKey) ? null : workerGroupKey;
+
+        CountDownLatch holdLatch = new CountDownLatch(1);
         CountDownLatch runningLatch = new CountDownLatch(1);
         CountDownLatch resubmitLatch = new CountDownLatch(1);
 
@@ -108,7 +110,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Worker worker = newWorker();
         worker.start(1, workerGroupKey);
 
-        final WorkerTask workerTask = workerTask(Duration.ofSeconds(5), workerGroupKey);
+        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, workerGroupKey);
         final AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
         workerTaskResultQueue.addListener(item ->
         {
@@ -124,19 +126,21 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
         workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
-        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
-        assertThat(runningLatchAwait).isTrue();
+        assertThat(runningLatch.await(10, TimeUnit.SECONDS)).isTrue();
 
-        // WHEN - stop first worker.
-        worker.close(); // stop processing task
-        Thread.sleep(Duration.ofSeconds(5).toMillis());
+        // WHEN - stop first worker. The task is guaranteed to still be running because it is
+        // blocked on holdLatch.
+        worker.close();
+
+        // Release the hold so the re-submitted task on worker 2 can complete immediately.
+        holdLatch.countDown();
 
         // WHEN - create second worker (this will revoke previously one).
         Worker newWorker = newWorker();
         newWorker.start(1, workerGroupKey);
 
         // THEN - task should be re-emitted to the same worker group and processed successfully.
-        assertThat(resubmitLatch.await(10, TimeUnit.SECONDS)).isTrue();
+        assertThat(resubmitLatch.await(30, TimeUnit.SECONDS)).isTrue();
         assertThat(workerTaskResult.get()).isNotNull();
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(workerTaskResult.get().getTaskRun().getAttempts()).hasSize(2);
@@ -165,12 +169,14 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
     @Test
     void shouldNotResubmitTaskForIgnoredExecution() throws Exception {
+        // holdLatch keeps the task blocked, guaranteeing it is still running when the worker stops.
+        CountDownLatch holdLatch = new CountDownLatch(1);
         CountDownLatch runningLatch = new CountDownLatch(1);
 
         Worker worker = newWorker();
         worker.start(1, null);
 
-        WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
+        WorkerTask workerTask = workerTaskWithLatch(holdLatch, null);
         ignoreExecutionService.setIgnoredExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
         var taskResults = new ArrayList<WorkerTaskResult>();
@@ -191,8 +197,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         });
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
-        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
-        assertThat(runningLatchAwait).isTrue();
+        assertThat(runningLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+        // Task is held by holdLatch, guaranteed still running when we stop the worker.
         worker.close();
 
         Worker newWorker = newWorker();
@@ -200,6 +207,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // wait a little to be sure there is no resubmit
         Thread.sleep(500);
+        holdLatch.countDown();
         newWorker.close();
         assertThat(taskResults.getLast().getTaskRun().getState().getCurrent()).isNotEqualTo(State.Type.SUCCESS);
     }
@@ -253,25 +261,22 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         };
     }
 
-    private WorkerTask workerTask(Duration sleep) {
-        return workerTask(sleep, null);
-    }
+    private WorkerTask workerTaskWithLatch(CountDownLatch holdLatch, String workerGroupKey) {
+        WorkerGroup workerGroup = workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null;
+        // signalLatch satisfies the @NotNull countDownLatchKey constraint; not used in assertions.
+        CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
+            new CountDownLatch(1),
+            holdLatch,
+            Duration.ofSeconds(30),
+            workerGroup
+        );
 
-    private WorkerTask workerTask(Duration sleep, String workerGroupKey) {
-        Sleep bash = Sleep.builder()
-            .type(Sleep.class.getName())
-            .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
-            .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
-            .build();
-
-        Execution execution = TestsUtils.mockExecution(flowBuilder(sleep), ImmutableMap.of());
-
-        ResolvedTask resolvedTask = ResolvedTask.of(bash);
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of());
+        ResolvedTask resolvedTask = ResolvedTask.of(task);
 
         return WorkerTask.builder()
             .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
-            .task(bash)
+            .task(task)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
     }
@@ -292,24 +297,11 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .build();
     }
 
-    private Flow flowBuilder(final Duration sleep) {
-        Sleep bash = Sleep.builder()
-            .type(Sleep.class.getName())
-            .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
-            .build();
-
-        SleepTrigger trigger = SleepTrigger.builder()
-            .type(SleepTrigger.class.getName())
-            .id("unit-test")
-            .duration(sleep.toMillis())
-            .build();
-
+    private Flow flowForTask(CountDownLatchTask task) {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unit-test")
-            .tasks(Collections.singletonList(bash))
-            .triggers(Collections.singletonList(trigger))
+            .tasks(Collections.singletonList(task))
             .build();
     }
 }

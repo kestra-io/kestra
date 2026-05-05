@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    
+
     import {images} from "./images";
 
     const props = defineProps({type: {type: String, required: true}});
@@ -38,7 +38,7 @@
     }
 
     h2 {
-        font-size: 1.5rem;
+        font-size: var(--ks-font-size-xl);
         color: var(--ks-content-primary);
         font-weight: 600;
     }
@@ -46,7 +46,7 @@
     p {
         width: 100%;
         max-width: 553px;
-        font-size: 1rem;
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-secondary);
         line-height: 1.5rem;
     }

@@ -6,7 +6,13 @@ import Editor from "../../../../src/components/inputs/Editor.vue";
 import {fillExpressionCache} from "../../../../src/services/autoCompletionProvider";
 
 const MOCK_FILTERS = ["upper", "lower", "capitalize", "trim", "date", "number"];
-const MOCK_FUNCTIONS = ["now", "chunk", "max", "min", "range"];
+const MOCK_FUNCTIONS = [
+    {name: "chunk", arguments: []},
+    {name: "max", arguments: []},
+    {name: "min", arguments: []},
+    {name: "now", arguments: []},
+    {name: "range", arguments: []},
+];
 
 const meta: Meta<typeof Editor> = {
     title: "Components/Inputs/Editor",
@@ -23,8 +29,13 @@ function getMonacoEditor(canvasElement: HTMLElement): monaco.editor.ICodeEditor 
     return monaco.editor.getEditors().find(e => editorEl.contains(e.getDomNode()!));
 }
 
-function suggestionLabels(editorEl: HTMLElement): string[] {
-    const suggestWidget = editorEl.querySelector(".suggest-widget");
+function getSuggestWidget(): Element | null {
+    return document.getElementById("ks-monaco-overflow-widgets")?.querySelector(".suggest-widget")
+        ?? document.querySelector(".suggest-widget");
+}
+
+function suggestionLabels(): string[] {
+    const suggestWidget = getSuggestWidget();
     if (!suggestWidget) return [];
     return Array.from(suggestWidget.querySelectorAll(".monaco-list-row .label-name"))
         .map(el => el.textContent?.trim() ?? "");
@@ -94,11 +105,11 @@ export const PebbleFilterAutocomplete: Story = {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // The suggest widget should appear with filter suggestions
-        const suggestWidget = editorEl.querySelector(".suggest-widget");
+        const suggestWidget = getSuggestWidget();
         expect(suggestWidget).toBeTruthy();
 
         // Assert at least one known filter is present
-        const labels = suggestionLabels(editorEl);
+        const labels = suggestionLabels();
         expect(labels.some(l => l.includes("upper"))).toBeTruthy();
     },
 };
@@ -144,11 +155,11 @@ export const PebbleRootFieldAutocomplete: Story = {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // The suggest widget should appear with root fields and function suggestions
-        const suggestWidget = editorEl.querySelector(".suggest-widget");
+        const suggestWidget = getSuggestWidget();
         expect(suggestWidget).toBeTruthy();
 
         // Assert at least one root variable is present
-        const labels = suggestionLabels(editorEl);
+        const labels = suggestionLabels();
         expect(labels.some(l => l.includes("outputs"))).toBeTruthy();
     },
 };
@@ -196,7 +207,7 @@ export const PebbleFilterAutocompleteOutsideExpression: Story = {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // The suggest widget should NOT be visible (no .visible class, or no filter labels)
-        const labels = suggestionLabels(editorEl);
+        const labels = suggestionLabels();
         const hasFilterSuggestions = labels.some(l => MOCK_FILTERS.includes(l));
         expect(hasFilterSuggestions).toBeFalsy();
     },

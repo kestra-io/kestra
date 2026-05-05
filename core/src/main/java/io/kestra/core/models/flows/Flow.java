@@ -90,7 +90,7 @@ public class Flow extends AbstractFlow implements HasUID {
     List<AbstractTrigger> triggers;
 
     @Valid
-    List<PluginDefault> pluginDefaults;
+    List<FlowPluginDefault> pluginDefaults;
 
     @Valid
     Concurrency concurrency;
@@ -103,6 +103,14 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     List<Output> outputs;
 
+    // implementation = Object.class prevents the Micronaut OpenAPI annotation processor from following
+    // the @JsonSubTypes on AbstractRetry, which causes a PostponeToNextRoundException at compile time
+    // due to the Micronaut constraint validators on the concrete retry subtypes (Constant, Exponential, Random).
+    @Schema(
+        title = "Retry",
+        description = "Retry policy applied when the flow fails.",
+        implementation = Object.class
+    )
     @Valid
     AbstractRetry retry;
 
@@ -122,7 +130,7 @@ public class Flow extends AbstractFlow implements HasUID {
         return Stream.of(
             Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
             allTasks().map(Task::getType),
-            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
+            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(FlowPluginDefault::getType)
         ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }

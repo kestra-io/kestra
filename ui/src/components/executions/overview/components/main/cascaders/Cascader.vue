@@ -1,10 +1,10 @@
 <template>
     <div :id="cascaderID">
         <div class="header">
-            <el-text truncated>
+            <KsText truncated>
                 {{ props.title }}
-            </el-text>
-            <el-input
+            </KsText>
+            <KsInput
                 v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
@@ -13,33 +13,10 @@
         </div>
 
         <template v-if="props.elements">
-            <template v-if="props.includeDebug">
-                <el-cascader-panel
-                    :options="filteredOptions"
-                    @expand-change="(p: string[]) => (path = p.join('.'))"
-                >
-                    <template #default="{data}">
-                        <div class="node">
-                            <div :title="data.label">
-                                {{ data.label }}
-                            </div>
-                            <div v-if="data.value && data.children">
-                                <code>{{ itemsCount(data) }}</code>
-                            </div>
-                        </div>
-                        <div v-if="isFile(data.value)" class="node buttons">
-                            <VarValue :value="data.value" :execution />
-                        </div>
-                    </template>
-                </el-cascader-panel>
-                <DebugPanel
-                    :property="props.includeDebug"
-                    :execution
-                    :path
-                />
-            </template>
-
-            <el-cascader-panel v-else :options="filteredOptions">
+            <KsCascaderPanel
+                :options="filteredOptions"
+                @expand-change="onExpandChange"
+            >
                 <template #default="{data}">
                     <div class="node">
                         <div :title="data.label">
@@ -53,7 +30,7 @@
                         <VarValue :value="data.value" :execution />
                     </div>
                 </template>
-            </el-cascader-panel>
+            </KsCascaderPanel>
         </template>
 
         <span v-else class="empty">{{ props.empty }}</span>
@@ -62,8 +39,6 @@
 
 <script setup lang="ts">
     import {onMounted, nextTick, computed, ref} from "vue";
-
-    import DebugPanel from "./DebugPanel.vue";
 
     import VarValue from "../../../../VarValue.vue";
 
@@ -95,7 +70,31 @@
         }
     >();
 
+    const emits = defineEmits<{
+        (e: "debugPath", property: string, path: string): void;
+    }>();
+
     const path = ref<string>("");
+
+    const onExpandChange = (p: string[]) => {
+        path.value = p.join(".");
+        if (props.includeDebug) {
+            let debugPath = path.value;
+            if (props.includeDebug === "trigger") {
+                // id and type are metadata, not Pebble-accessible — map to just "trigger"
+                if (debugPath === "id" || debugPath === "type") {
+                    debugPath = "";
+                }
+                // variables.<name> maps to trigger.<name> in Pebble
+                else if (debugPath.startsWith("variables.")) {
+                    debugPath = debugPath.substring("variables.".length);
+                } else if (debugPath === "variables") {
+                    debugPath = "";
+                }
+            }
+            emits("debugPath", props.includeDebug, debugPath);
+        }
+    };
 
     const isFile = (value: unknown): value is string => {
         return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
@@ -152,7 +151,7 @@
 
         await nextTick(() => {
             // Open first node by default on page mount
-            const selector = `#${cascaderID} .el-cascader-node`;
+            const selector = `#${cascaderID} .kel-cascader-node`;
             const nodes = document.querySelectorAll(selector);
 
             if (nodes.length > 0) (nodes[0] as HTMLElement).click();
@@ -161,7 +160,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 [id^="cascader-"] {
     overflow: hidden;
@@ -170,33 +168,33 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: $spacer;
+        padding-bottom: 1rem;
 
-        > .el-text {
+        > .kel-text {
             width: 100%;
             display: flex;
             align-items: center;
-            font-size: $font-size-xl;
+            font-size: var(--ks-font-size-xl);
         }
 
-        > .el-input {
+        > .kel-input {
             display: flex;
             align-items: center;
-            width: calc($spacer * 16);
+            width: calc(1rem * 16);
         }
     }
 
-    .el-cascader-panel {
+    .kel-cascader-panel {
         overflow: auto;
         width: 100%;
     }
 
     .empty {
-        font-size: $font-size-sm;
+        font-size: var(--ks-font-size-sm);
         color: var(--ks-content-secondary);
     }
 
-    :deep(.el-cascader-menu) {
+    :deep(.kel-cascader-menu) {
         min-width: 300px;
         max-width: 300px;
 
@@ -204,11 +202,11 @@
             max-width: none;
         }
 
-        .el-cascader-menu__list {
+        .kel-cascader-menu__list {
             padding: 0;
         }
 
-        .el-cascader-menu__wrap {
+        .kel-cascader-menu__wrap {
             height: 100%;
         }
 
@@ -226,10 +224,10 @@
             }
         }
 
-        & .el-cascader-node {
+        & .kel-cascader-node {
             height: min-content;
             line-height: 36px;
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 
@@ -247,7 +245,7 @@
                 font-weight: normal;
             }
 
-            .el-cascader-node__prefix {
+            .kel-cascader-node__prefix {
                 display: none;
             }
 

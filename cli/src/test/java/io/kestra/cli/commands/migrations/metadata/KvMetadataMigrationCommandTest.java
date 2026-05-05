@@ -10,9 +10,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.cli.Kestra;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.cli.App;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
@@ -82,7 +82,7 @@ public class KvMetadataMigrationCommandTest {
             String[] kvMetadataMigrationCommand = {
                 "migrate", "metadata", "kv"
             };
-            PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, kvMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             // Still it's not in the metadata repository because no flow exist to find that kv
@@ -109,7 +109,7 @@ public class KvMetadataMigrationCommandTest {
              * - expiredKey is deleted from storage and not migrated
              */
             out.reset();
-            PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, kvMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             Optional<PersistedKvMetadata> foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
@@ -135,7 +135,7 @@ public class KvMetadataMigrationCommandTest {
              * It covers the case where user didn't perform the migrate command yet but they played and added some KV from the UI (so those ones will already be in metadata database).
              */
             out.reset();
-            PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
+            PicocliRunner.call(Kestra.class, ctx, kvMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);

@@ -1,8 +1,0 @@
-id: subflow-old-task-name
-namespace: io.kestra.tests
-
-tasks:
-  - id: subflow
-    type: io.kestra.core.tasks.flows.Subflow
-    namespace: io.kestra.tests
-    flowId: minimal

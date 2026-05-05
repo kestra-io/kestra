@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -10,14 +11,22 @@ import java.util.stream.Stream;
 import io.kestra.core.serializers.FileSerde;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import reactor.core.publisher.Flux;
 
-public class FromIonFunction implements Function {
+public class FromIonFunction implements KestraFunction {
+    public static final String NAME = "fromIon";
     public List<String> getArgumentNames() {
         return List.of("ion", "allRows");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put("ion", ReadFileFunction.NAME + "('ion/namespace/file')");
+        defaults.put("allRows", null);
+        return defaults;
     }
 
     @Override

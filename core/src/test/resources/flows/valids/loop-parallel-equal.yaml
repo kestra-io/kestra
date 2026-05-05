@@ -1,0 +1,12 @@
+id: loop-parallel-equal
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 3
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: item
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{item.index}} - {{item.value}}"

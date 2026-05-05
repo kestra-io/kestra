@@ -1,13 +1,13 @@
 <template>
-    <el-card class="edition-card">
+    <KsCard class="edition-card">
         <template #header>
             <div class="header-content">
-                <el-text class="title">
+                <KsText class="title">
                     {{ name }}
-                </el-text>
-                <el-text class="price" v-if="price">
+                </KsText>
+                <KsText class="price" v-if="price">
                     {{ price }}
-                </el-text>
+                </KsText>
             </div>
         </template>
         <div class="features-container">
@@ -20,22 +20,22 @@
                     <CheckBold class="check-icon" />
                 </div>
                 <div class="feature-column">
-                    <el-text>
+                    <KsText>
                         {{ feature }}
-                    </el-text>
+                    </KsText>
                 </div>
             </div>
         </div>
 
         <a v-if="button?.href" class="button-link" :href="button.href">
-            <el-button type="primary" class="action-button">
+            <KsButton type="primary" class="action-button">
                 {{ button.text }}
-            </el-button>
+            </KsButton>
         </a>
-        <el-button v-else-if="button" class="action-button disabled" disabled>
+        <KsButton v-else-if="button" class="action-button disabled" disabled>
             {{ button.text }}
-        </el-button>
-    </el-card>
+        </KsButton>
+    </KsCard>
 </template>
 
 <script setup lang="ts">
@@ -66,13 +66,13 @@
     box-shadow: 0 2px 4px var(--ks-card-shadow);
 
 
-    :deep(.el-card__header) {
+    :deep(.kel-card__header) {
         border-bottom: 0;
         padding: 0;
 
         .header-content {
             .title {
-                font-size: 1.25rem;
+                font-size: var(--ks-font-size-lg);
                 display: block;
             }
 
@@ -83,7 +83,7 @@
         }
     }
 
-    :deep(.el-card__body) {
+    :deep(.kel-card__body) {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -103,7 +103,7 @@
 
             .check-column {
                 flex-shrink: 0;
-                width: 20px;
+                width: var(--ks-font-size-lg);
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
@@ -118,7 +118,7 @@
                 flex: 1;
                 min-width: 0;
 
-                .el-text {
+                .kel-text {
                     line-height: 1.4;
                     word-wrap: break-word;
                     overflow-wrap: break-word;

@@ -5,14 +5,14 @@
 </template>
 
 <script setup lang="ts">
-    import {cssVariable} from "@kestra-io/ui-libs";
+    import {cssVar} from "@kestra-io/design-system"
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
     import {computed} from "vue";
 
-    const layoutStore = useLayoutStore(); 
-    const miscStore = useMiscStore(); 
-    
+    const layoutStore = useLayoutStore();
+    const miscStore = useMiscStore();
+
     const name = computed(() => {
         return layoutStore.envName || miscStore.configs?.environment?.name;
     })
@@ -26,7 +26,7 @@
             return miscStore.configs.environment.color;
         }
 
-        return cssVariable("--bs-info");
+        return cssVar("--ks-content-info");
     })
 
 </script>
@@ -39,10 +39,10 @@
 
     strong {
         border: 1px solid v-bind('color');
-        border-radius: var(--bs-border-radius);
+        border-radius: var(--kel-border-radius-base);
         color: var(--ks-content-primary);
         padding: 0.125rem 0.25rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;

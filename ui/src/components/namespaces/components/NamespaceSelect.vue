@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <KsSelect
         class="fit-text"
         v-model="modelValue"
         :multiple
@@ -8,14 +8,11 @@
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
-        remote
-        remoteShowSuffix
-        :remoteMethod="onSearch"
         :placeholder="placeholder ?? $t('namespaces')"
-        :suffixIcon="readOnly ? Lock : undefined"
+        :suffixIcon="suffixIcon"
     >
         <template #tag>
-            <el-tag
+            <KsTag
                 v-for="(value, index) in validValues"
                 :key="index"
                 class="namespace-tag"
@@ -24,15 +21,15 @@
             >
                 <FolderOpenOutline class="tag-icon" />
                 {{ value }}
-            </el-tag>
+            </KsTag>
         </template>
-        <el-option
+        <KsOption
             v-for="item in options"
             :key="item.id"
             :label="item.label"
             :value="item.id"
         />
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
@@ -42,7 +39,7 @@
     import Lock from "vue-material-design-icons/Lock.vue";
     import {defaultNamespace} from "../../../composables/useNamespaces";
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
@@ -53,6 +50,8 @@
         clearable: true,
         placeholder: undefined
     });
+
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined);
 
     defineOptions({
         inheritAttrs: false
@@ -73,14 +72,9 @@
             })
     })
 
-    const onSearch = (search: string) => {
-        namespacesStore.loadAutocomplete({
-            q: search,
-            ids: modelValue.value as string[] ?? [],
-        })
-    }
-
     onMounted(() => {
+        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []});
+
         if (modelValue.value === undefined || modelValue.value.length === 0) {
             const defaultNamespaceVal = defaultNamespace();
             if (Array.isArray(modelValue.value)) {
@@ -101,13 +95,13 @@
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 
-        :deep(.el-tag__content) {
+        :deep(.kel-tag__content) {
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
-        :deep(.el-tag__close) {
+        :deep(.kel-tag__close) {
             color: var(--ks-log-content-debug);
 
             &:hover {

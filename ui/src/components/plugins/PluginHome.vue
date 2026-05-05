@@ -6,7 +6,7 @@
         :image="headerImage"
         :imageDark="headerImageDark"
     >
-        <el-row class="my-4 px-3" justify="center">
+        <KsRow class="my-4 px-3" justify="center">
             <KSFilter
                 :configuration="pluginFilter"
                 :buttons="{
@@ -16,13 +16,12 @@
                 :searchInputFullWidth="true"
                 @search="handleSearch"
             />
-        </el-row>
+        </KsRow>
         <section class="px-3 plugins-container">
-            <el-tooltip
+            <KsTooltip
                 v-for="(plugin, index) in pluginsList"
                 :showAfter="1000"
                 :key="`${plugin.name}-${index}`"
-                effect="light"
             >
                 <template #content>
                     <div class="tasks-tooltips">
@@ -48,7 +47,7 @@
                     </div>
                 </template>
                 <div class="plugin-card" @click="openGroup(plugin)">
-                    <TaskIcon
+                    <KsTaskIcon
                         class="size"
                         :onlyIcon="true"
                         :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
@@ -56,7 +55,7 @@
                     />
                     <span class="text-truncate">{{ plugin.title.capitalize() }}</span>
                 </div>
-            </el-tooltip>
+            </KsTooltip>
         </section>
     </DottedLayout>
 </template>
@@ -64,10 +63,10 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
-    import {isPluginMatched} from "../../utils/pluginUtils";
+    import {KsTaskIcon} from "@kestra-io/design-system";
+    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils";
     import DottedLayout from "../layout/DottedLayout.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
@@ -94,17 +93,6 @@
 
     const handleSearch = (query: string) => {
         searchText.value = query;
-        const newQuery: Record<string, any> = {...route.query};
-        if (query !== undefined && query !== null && String(query).trim() !== "") {
-            newQuery.q = query;
-        } else {
-            // remove an empty `q=` in the URL on plugins/view
-            delete newQuery.q;
-        }
-
-        router.push({
-            query: newQuery
-        });
     };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
@@ -184,10 +172,10 @@
 
     onBeforeMount(() => {
         loadPluginIcons();
-        searchText.value = String(route.query?.q ?? "");
+        searchText.value = String(route.query?.["filters[q][EQUALS]"] ?? "");
     });
 
-    watch(() => route.query.q, (newQ) => {
+    watch(() => route.query["filters[q][EQUALS]"], (newQ) => {
         searchText.value = String(newQ ?? "");
         saveRestoreUrl();
     });
@@ -212,7 +200,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-tag-background);
         }
     }
 
@@ -225,7 +213,7 @@
         gap: 8px;
         border-radius: 4px;
         text-overflow: ellipsis;
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         line-height: 26px;
         cursor: pointer;
@@ -245,4 +233,3 @@
         width: 2em;
     }
 </style>
-

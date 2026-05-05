@@ -99,7 +99,7 @@ class PluginControllerTest {
         // test an alias
         assertThat(
             list.entrySet().stream()
-                .filter(e -> e.getKey().equals("io.kestra.core.tasks.log.Log"))
+                .filter(e -> e.getKey().equals("io.kestra.core.runners.test.task.Alias"))
                 .findFirst().orElseThrow().getValue().getIcon()
         ).isNotNull();
     }

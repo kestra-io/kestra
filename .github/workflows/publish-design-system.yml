@@ -1,0 +1,101 @@
+name: Publish Design System
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: Version increment
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      skip-test:
+        description: "Skip test"
+        required: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "false"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui/packages/design-system
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        
+      - name: Get OIDC Token
+        env:
+          AUDIENCE: "npm:registry.npmjs.org"
+        run: |
+          TOKEN_JSON=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")
+          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -r .value)
+          echo "$TOKEN_JSON"
+          echo "NODE_AUTH_TOKEN=$ID_TOKEN" >> "$GITHUB_ENV"
+          echo "$ID_TOKEN" | awk -F. '{print $2}' | base64 -d 2>/dev/null | jq -r
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.18
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        if: inputs.skip-test != 'true'
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Bump version
+        run: npm version ${{ inputs.increment }} --no-git-tag-version
+
+      - name: Read new version
+        id: version
+        run: echo "value=$(npm pkg get version | tr -d '"')" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ui/packages/design-system/package.json
+          git commit -m "chore(deps): bump @kestra-io/design-system to v${{ steps.version.outputs.value }}"
+          git tag "design-system/v${{ steps.version.outputs.value }}"
+          git push origin HEAD --tags
+
+      # Trusted publishing need npm 11.+
+      - name: Upgrade npm
+        run: |
+          npm install -g npm@latest
+          npm version
+
+      - name: Publish to npm
+        run: npm publish --access public
+
+      - name: Create GitHub Release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "design-system/v${{ steps.version.outputs.value }}" \
+            --title "@kestra-io/design-system v${{ steps.version.outputs.value }}" \
+            --generate-notes

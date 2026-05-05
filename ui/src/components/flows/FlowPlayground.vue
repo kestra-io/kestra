@@ -10,20 +10,20 @@
                     v-if="executionsStore.execution"
                     :execution="executionsStore.execution"
                 />
-                <el-dropdown trigger="click" placement="bottom-end">
-                    <el-button :icon="DotsVertical" link class="tab-icon" />
+                <KsDropdown trigger="click" placement="bottom-end">
+                    <KsButton :icon="DotsVertical" link class="tab-icon" />
                     <template #dropdown>
-                        <el-dropdown-menu class="m-2">
-                            <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
+                        <KsDropdownMenu class="m-2">
+                            <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ $t('playground.clear_history') }}</span>
-                            </el-dropdown-item>
-                            <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                            </KsDropdownItem>
+                            <KsDropdownItem :icon="CloseIcon" @click="playgroundStore.enabled = false">
                                 <span class="small-text">{{ $t('close') }} {{ $t('playground.toggle').toLowerCase() }}</span>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </el-dropdown>
-                <el-button
+                </KsDropdown>
+                <KsButton
                     :icon="CloseIcon"
                     link
                     class="tab-icon"
@@ -138,7 +138,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
     .tab-icon{
         color: var(--ks-content-inactive);
@@ -227,7 +226,7 @@
             align-items: center;
             gap: .5rem;
             width: 268px;
-            font-size: 1rem;
+            font-size: var(--ks-font-size-base);
             margin: .8rem 1rem;
             font-weight: normal;
             margin-bottom: 0.5rem;
@@ -260,14 +259,14 @@
         gap: 2px;
         button{
             padding: 0.2rem .5rem;
-            font-size: 14px;
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-tertiary);
             background-color: transparent;
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: $base-white;
-                background-color: $base-blue-500;
+                color: var(--ks-button-content-primary);
+                background-color: var(--ks-playground-bg-color);
             }
         }
     }

@@ -93,7 +93,7 @@ public class TriggerSchedulingLoop implements Runnable {
         this.metricEventLoopTickTimer = metricRegistry
             .timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION, tags);
         this.metricEventLoopEventCounter = metricRegistry
-            .counter(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION, tags);
+            .counter(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_TOTAL, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_TOTAL_DESCRIPTION, tags);
         this.metricEventLoopProcessTimer = metricRegistry
             .timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION, tags);
     }
@@ -315,7 +315,7 @@ public class TriggerSchedulingLoop implements Runnable {
      */
     public CompletableFuture<Void> addTriggerEvents(int vNode, List<TriggerEvent> events) {
         List<CompletableFuture<Void>> futures = events.stream().map(event -> addTriggerEvent(vNode, event)).toList();
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]));
     }
 
     /**

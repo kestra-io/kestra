@@ -65,8 +65,7 @@ import lombok.experimental.SuperBuilder;
                     """
             }
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.FilterItems"
+    }
 )
 @SuperBuilder
 @ToString

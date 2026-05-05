@@ -4,8 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -32,7 +31,6 @@ import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.NameParser;
-import com.sun.jna.LastErrorException;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -42,7 +40,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.UnixModeToPosixFilePermissions;
@@ -57,6 +55,7 @@ import lombok.experimental.SuperBuilder;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
+import io.kestra.core.utils.Await;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -153,6 +152,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
+    private static final List<String> DOCKER_SOCKET_ERROR_MESSAGES = List.of(
+        "docker.sock",
+        "no such file or directory",
+        "Cannot connect to the Docker daemon"
+    );
 
     @Schema(
         title = "Docker API URI."
@@ -605,7 +609,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 WaitContainerResultCallback result = dockerClient.waitContainerCmd(runContainerId).start();
 
                 Integer exitCode = result.awaitStatusCode();
-                Await.until(ended::get);
+                Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
@@ -652,27 +656,48 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
             }
         } catch (RuntimeException e) {
-            try {
-                if (
-                    e.getCause() instanceof IOException io &&
-                        io.getCause() instanceof LastErrorException socketException &&
-                        socketException.getMessage().contains("No such file or directory") &&
-                        Socket.class.isAssignableFrom(Class.forName(io.getStackTrace()[0].getClassName()))
-                ) {
-                    throw new IllegalStateException(
-                        "Docker socket is not accessible or not found. " +
-                            "Please make sure you properly mounted the Docker socket into your Kestra container (`-v /var/run/docker.sock:/var/run/docker.sock`) and that your user or group has at least the read and write privilege. "
-                            +
-                            "Tried socket: " + resolvedHost,
-                        e
-                    );
-                }
-            } catch (ClassNotFoundException ignored) {
-                // If we can't check if the stacktrace class is a Socket, we just ignore the exception
-                throw e;
+            if (isDockerSocketAccessError(e)) {
+                throw new IllegalStateException(
+                    dockerSocketNotAccessibleMessage(resolvedHost),
+                    e
+                );
             }
             throw e;
         }
+    }
+
+    static boolean isDockerSocketAccessError(final Throwable throwable) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable current = throwable;
+
+        while (current != null && visited.add(current)) {
+            if (current instanceof NoSuchFileException) {
+                return true;
+            }
+
+            String message = current.getMessage();
+            if (message != null) {
+                String normalizedMessage = message.toLowerCase(Locale.ROOT);
+                if (DOCKER_SOCKET_ERROR_MESSAGES.stream().anyMatch(pattern -> normalizedMessage.contains(pattern.toLowerCase(Locale.ROOT)))) {
+                    return true;
+                }
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
+    private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
+        return "Docker execution failed because Docker socket is not accessible.\n\n" +
+            "Fix:\n" +
+            "- Mount docker socket:\n" +
+            "  -v /var/run/docker.sock:/var/run/docker.sock\n" +
+            "- OR use Process runner:\n" +
+            "  taskRunner:\n" +
+            "    type: io.kestra.plugin.core.runner.Process\n\n" +
+            "Tried Docker host: " + resolvedHost;
     }
 
     private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {

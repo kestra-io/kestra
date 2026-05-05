@@ -107,8 +107,7 @@ import lombok.experimental.SuperBuilder;
                         regexPattern: "^(\\w+)"
                 """
         ),
-    },
-    aliases = "io.kestra.core.tasks.storages.Split"
+    }
 )
 public class Split extends Task implements RunnableTask<Split.Output>, StorageSplitInterface {
     @Schema(

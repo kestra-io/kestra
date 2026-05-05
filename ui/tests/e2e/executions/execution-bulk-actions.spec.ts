@@ -7,6 +7,7 @@ test.describe("Executions' view Bulk Actions", () => {
 
     // Use specific flow to create executions
     test.use({flow: {fileName: "hello.yaml", flowId: "my-hello-flow-1"}});
+
     test("Labels changed only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
         test.slow(); // creating many executions
         expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
@@ -38,7 +39,7 @@ test.describe("Executions' view Bulk Actions", () => {
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the label change", async () => {
-            await executionsPage.removeFilterByLabelKey("foo"); 
+            await executionsPage.removeFilterByLabelKey("foo");
             await executionsPage.setFilterByLabel("a", "b");
 
             await executionsPage.expectCountOfExecutionsToBe(1)

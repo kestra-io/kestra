@@ -1,22 +1,33 @@
 package io.kestra.core.utils;
 
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
+
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-/**
- * @deprecated use {@link org.awaitility.Awaitility} instead
- */
-@Deprecated
+
 public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 
-    public static void until(BooleanSupplier condition) {
-        Await.until(condition, null);
+    public static ConditionFactory await(){
+        return Awaitility
+            .await()
+            .pollInSameThread()
+            .pollDelay(defaultSleep);
     }
 
+    public static void until(BooleanSupplier condition) {
+        await().forever().until(condition::getAsBoolean);
+    }
+
+    /**
+     * @deprecated use {@link #await()} instead
+     */
+    @Deprecated
     public static void until(BooleanSupplier condition, Duration sleep) {
         if (sleep == null) {
             sleep = defaultSleep;
@@ -31,10 +42,18 @@ public class Await {
         }
     }
 
+    /**
+     * @deprecated use {@link #await()} instead
+     */
+    @Deprecated
     public static void until(BooleanSupplier condition, Duration sleep, Duration timeout) throws TimeoutException {
         until(null, condition, sleep, timeout);
     }
 
+    /**
+     * @deprecated use {@link #await()} instead
+     */
+    @Deprecated
     public static void until(Supplier<String> errorMessageInCaseOfFailure, BooleanSupplier condition, Duration sleep, Duration timeout) throws TimeoutException {
         if (sleep == null) {
             sleep = defaultSleep;
@@ -73,6 +92,10 @@ public class Await {
         };
     }
 
+    /**
+     * @deprecated use {@link #await()} instead
+     */
+    @Deprecated
     public static <T> T until(Supplier<T> supplier, Duration sleep, Duration timeout) throws TimeoutException {
         AtomicReference<T> result = new AtomicReference<>();
 
@@ -81,6 +104,10 @@ public class Await {
         return result.get();
     }
 
+    /**
+     * @deprecated use {@link #await()} instead
+     */
+    @Deprecated
     public static <T> T until(Supplier<T> supplier, Duration sleep) {
         AtomicReference<T> result = new AtomicReference<>();
 

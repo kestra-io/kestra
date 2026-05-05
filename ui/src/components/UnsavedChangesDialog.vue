@@ -1,5 +1,5 @@
 <template>
-    <el-dialog
+    <KsDialog
         v-model="unsavedChangesStore.isDialogVisible"
         :title="$t('unsaved changes')"
         width="500px"
@@ -13,15 +13,15 @@
         </div>
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="unsavedChangesStore.handleCancel">
+                <KsButton @click="unsavedChangesStore.handleCancel">
                     {{ $t('cancel') }}
-                </el-button>
-                <el-button type="primary" @click="unsavedChangesStore.handleLeave">
+                </KsButton>
+                <KsButton type="primary" @click="unsavedChangesStore.handleLeave">
                     {{ $t('leave page') }}
-                </el-button>
+                </KsButton>
             </div>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script lang="ts" setup>
@@ -35,8 +35,8 @@
     p {
         margin: 0;
         line-height: 1.6;
-        color: var(--bs-body-color);
-        font-size: 14px;
+        color: var(--kbs-body-color);
+        font-size: var(--ks-font-size-sm);
     }
 }
 
@@ -46,33 +46,33 @@
     gap: 12px;
 }
 
-:deep(.el-dialog) {
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
+:deep(.kel-dialog) {
+    background-color: var(--kbs-body-bg);
+    border: 1px solid var(--ks-border-primary);
 }
 
-:deep(.el-dialog__header) {
+:deep(.kel-dialog__header) {
     padding: 20px 20px 10px;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--ks-border-primary);
 }
 
-:deep(.el-dialog__title) {
-    color: var(--bs-body-color);
-    font-size: 18px;
+:deep(.kel-dialog__title) {
+    color: var(--kbs-body-color);
+    font-size: var(--ks-font-size-md);
     font-weight: 600;
 }
 
-:deep(.el-dialog__body) {
-    padding: 20px;
-    color: var(--bs-body-color);
+:deep(.kel-dialog__body) {
+    padding: var(--ks-font-size-lg);
+    color: var(--kbs-body-color);
 }
 
-:deep(.el-dialog__footer) {
+:deep(.kel-dialog__footer) {
     padding: 10px 20px 20px;
-    border-top: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--ks-border-primary);
 }
 
-:deep(.el-button) {
+:deep(.kel-button) {
     border-radius: 4px;
 }
 </style>

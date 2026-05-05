@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunWithOutput;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
@@ -383,6 +385,141 @@ class TaskOutputServiceTest {
         assertThat(purgedCount).isEqualTo(1);
         assertThat(taskOutputRepository.findById(tenant, taskRunId1)).isEmpty();
         assertThat(taskOutputRepository.findById(tenant, taskRunId2)).isPresent();
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void getOutputs_shouldReturnDeprecatedOutputsFieldWhenSet() throws InternalException {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String taskRunId = IdUtils.create();
+
+        Map<String, Object> legacyOutputs = Map.of("legacyKey", "legacyValue", "count", 42);
+        TaskRun taskRun = TaskRun.builder()
+            .id(taskRunId)
+            .tenantId(tenant)
+            .executionId(IdUtils.create())
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("test-task")
+            .state(new State())
+            .outputs(Variables.inMemory(legacyOutputs))
+            .build();
+
+        // When - no output saved to repository; should use deprecated field directly
+        Map<String, Object> retrievedOutputs = taskOutputService.getOutputs(taskRun);
+
+        // Then - exact match to confirm no extra data was merged from the repository
+        assertThat(retrievedOutputs).containsExactlyInAnyOrderEntriesOf(legacyOutputs);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void computeOutputs_shouldReturnDeprecatedOutputsFieldWhenSet() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+
+        TaskRun taskRun1 = TaskRun.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .executionId(executionId)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("task-1")
+            .state(new State())
+            .outputs(Variables.inMemory(Map.of("output1", "value1")))
+            .build();
+
+        TaskRun taskRun2 = TaskRun.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .executionId(executionId)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("task-2")
+            .state(new State())
+            .outputs(Variables.inMemory(Map.of("output2", "value2")))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id(executionId)
+            .tenantId(tenant)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State())
+            .taskRunList(List.of(taskRun1, taskRun2))
+            .build();
+
+        // When - no outputs saved to repository; should use deprecated field directly
+        Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
+
+        // Then
+        assertThat(outputs).hasSize(2);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> task1Outputs = (Map<String, Object>) outputs.get("task-1");
+        assertThat(task1Outputs).containsExactlyInAnyOrderEntriesOf(Map.of("output1", "value1"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> task2Outputs = (Map<String, Object>) outputs.get("task-2");
+        assertThat(task2Outputs).containsExactlyInAnyOrderEntriesOf(Map.of("output2", "value2"));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void computeOutputs_shouldHandleMixedLegacyAndModernTaskRuns() throws InternalException {
+        // Given: one V1 task run (deprecated outputs field) and one V2 task run (outputs in repository)
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = IdUtils.create();
+
+        TaskRun legacyTaskRun = TaskRun.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .executionId(executionId)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("task-legacy")
+            .state(new State())
+            .outputs(Variables.inMemory(Map.of("source", "legacy")))
+            .build();
+
+        TaskRun modernTaskRun = TaskRun.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .executionId(executionId)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .taskId("task-modern")
+            .state(new State())
+            .build();
+
+        taskOutputService.saveOutputs(modernTaskRun, Map.of("source", "modern"));
+
+        Execution execution = Execution.builder()
+            .id(executionId)
+            .tenantId(tenant)
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State())
+            .taskRunList(List.of(legacyTaskRun, modernTaskRun))
+            .build();
+
+        // When
+        Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
+
+        // Then
+        assertThat(outputs).hasSize(2);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> legacyOutputs = (Map<String, Object>) outputs.get("task-legacy");
+        assertThat(legacyOutputs).containsEntry("source", "legacy");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> modernOutputs = (Map<String, Object>) outputs.get("task-modern");
+        assertThat(modernOutputs).containsEntry("source", "modern");
     }
 
     // Test Output implementation

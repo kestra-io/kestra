@@ -65,7 +65,8 @@ public class ApiAiService implements AiServiceInterface {
         return originalRequest.headers(
             Map.of(
                 "X-Kestra-Instance-Id", instanceService.fetch(),
-                "X-Kestra-User-Id", userInfo.uid()
+                "X-Kestra-User-Id", userInfo.uid(),
+                "X-Client-IP", userInfo.ip()
             )
         );
     }

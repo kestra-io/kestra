@@ -31,166 +31,138 @@ class SseRequestTest {
     @Inject
     private TestRunContextFactory runContextFactory;
 
+    @Inject
+    private ApplicationContext applicationContext;
+
+    private String serverUrl() {
+        return applicationContext.getBean(EmbeddedServer.class).start().getURL().toString();
+    }
+
     @Test
     void basicSseConsumption() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/simple"))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/simple"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            SseRequest.Output output = task.run(runContext);
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(5);
-            assertThat(output.getEvents()).hasSize(5);
-            assertThat((String) output.getEvents().getFirst().data()).contains("event");
-            assertThat(output.getResult()).isNull();
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(5);
+        assertThat(output.getEvents()).hasSize(5);
+        assertThat((String) output.getEvents().getFirst().data()).contains("event");
+        assertThat(output.getResult()).isNull();
     }
 
     @Test
     void sseWithJqPathExtraction() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/json"))
-                .concatJqExpression(Property.ofValue(".data.message"))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/json"))
+            .concatJqExpression(Property.ofValue(".data.message"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            SseRequest.Output output = task.run(runContext);
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(3);
-            assertThat(output.getResult()).isNotNull();
-            assertThat(output.getResult()).isEqualTo("HelloWorldTest");
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(3);
+        assertThat(output.getResult()).isNotNull();
+        assertThat(output.getResult()).isEqualTo("HelloWorldTest");
     }
 
     @Test
     void sseWithNestedJqPath() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/nested"))
-                .concatJqExpression(Property.ofValue(".data.data.value"))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/nested"))
+            .concatJqExpression(Property.ofValue(".data.data.value"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            SseRequest.Output output = task.run(runContext);
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(2);
-            assertThat(output.getResult()).isEqualTo("12");
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(2);
+        assertThat(output.getResult()).isEqualTo("12");
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void sseWithHeaders() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/auth"))
-                .headers(Property.ofValue(ImmutableMap.of("X-API-Key", "test-key")))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/auth"))
+            .headers(Property.ofValue(ImmutableMap.of("X-API-Key", "test-key")))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            SseRequest.Output output = task.run(runContext);
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(1);
-            assertThat(((Map<String, Object>) output.getEvents().getFirst().data()).get("status")).isEqualTo("authorized");
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(1);
+        assertThat(((Map<String, Object>) output.getEvents().getFirst().data()).get("status")).isEqualTo("authorized");
     }
 
     @Test
     void sseWithMixedJsonAndTextFailed() {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/mixed"))
-                .concatJqExpression(Property.ofValue(".data.count"))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/mixed"))
+            .concatJqExpression(Property.ofValue(".data.count"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
-            assertThatThrownBy(() -> task.run(runContext))
-                .isInstanceOf(Exception.class)
-                .hasMessageContaining("Failed to resolve JQ expression '.data.count' and value '{\"data\":\"Plain text event\"}'");
-        }
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        assertThatThrownBy(() -> task.run(runContext))
+            .isInstanceOf(Exception.class)
+            .hasMessageContaining("Failed to resolve JQ expression '.data.count' and value '{\"data\":\"Plain text event\"}'");
     }
 
     @Test
     void sseWithMixedJsonAndTextSuccess() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/mixed"))
-                .concatJqExpression(Property.ofValue(".data.count"))
-                .failedOnMissingJq(Property.ofValue(false))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/mixed"))
+            .concatJqExpression(Property.ofValue(".data.count"))
+            .failedOnMissingJq(Property.ofValue(false))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
-            SseRequest.Output output = task.run(runContext);
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(4);
-            assertThat(output.getResult()).isEqualTo("12");
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(4);
+        assertThat(output.getResult()).isEqualTo("12");
     }
 
     @Test
     void sseWithMultilineData() throws Exception {
-        try (
-            ApplicationContext applicationContext = ApplicationContext.run();
-            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start()
-        ) {
-            SseRequest task = SseRequest.builder()
-                .id(SseRequestTest.class.getSimpleName())
-                .type(SseRequest.class.getName())
-                .uri(Property.ofValue(server.getURL().toString() + "/sse/multiline"))
-                .build();
+        SseRequest task = SseRequest.builder()
+            .id(SseRequestTest.class.getSimpleName())
+            .type(SseRequest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/sse/multiline"))
+            .build();
 
-            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-            SseRequest.Output output = task.run(runContext);
+        SseRequest.Output output = task.run(runContext);
 
-            assertNotNull(output);
-            assertThat(output.getSize()).isEqualTo(1);
-            assertThat((String) output.getEvents().getFirst().data()).contains("\n");
-            assertThat((String) output.getEvents().getFirst().data()).contains("line1");
-            assertThat((String) output.getEvents().getFirst().data()).contains("line2");
-        }
+        assertNotNull(output);
+        assertThat(output.getSize()).isEqualTo(1);
+        assertThat((String) output.getEvents().getFirst().data()).contains("\n");
+        assertThat((String) output.getEvents().getFirst().data()).contains("line1");
+        assertThat((String) output.getEvents().getFirst().data()).contains("line2");
     }
 
     @Controller

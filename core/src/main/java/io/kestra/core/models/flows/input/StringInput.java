@@ -1,9 +1,8 @@
 package io.kestra.core.models.flows.input;
 
-import java.util.regex.Pattern;
-
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.utils.RegexUtils;
 import io.kestra.core.validations.Regex;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,14 +23,26 @@ public class StringInput extends Input<String> {
 
     @Override
     public void validate(String input) throws ConstraintViolationException {
-        if (validator != null && !Pattern.matches(validator, input)) {
-            throw ManualConstraintViolation.toConstraintViolationException(
-                "it must match the pattern `" + validator + "`",
-                this,
-                StringInput.class,
-                getId(),
-                input
-            );
+        if (validator != null) {
+            try {
+                if (!RegexUtils.matches(validator, input)) {
+                    throw ManualConstraintViolation.toConstraintViolationException(
+                        "it must match the pattern `" + validator + "`",
+                        this,
+                        StringInput.class,
+                        getId(),
+                        input
+                    );
+                }
+            } catch (RegexUtils.RegexTimeoutException e) {
+                throw ManualConstraintViolation.toConstraintViolationException(
+                    "the validator pattern `" + validator + "` timed out — it may be too complex",
+                    this,
+                    StringInput.class,
+                    getId(),
+                    input
+                );
+            }
         }
     }
 }

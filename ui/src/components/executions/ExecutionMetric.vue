@@ -21,7 +21,6 @@
                     refresh: {shown: true, callback: refresh}
                 }"
                 @update-properties="updateDisplayColumns"
-                legacyQuery
             />
         </template>
     </MetricsTable>
@@ -33,39 +32,39 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useMetricFilter} from "../filter/configurations";
     import MetricsTable from "../executions/MetricsTable.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
 
     const {t} = useI18n();
     const route = useRoute();
     const executionsStore = useExecutionsStore();
-    
+
     const metricFilter = useMetricFilter();
 
     const table = ref<typeof MetricsTable>();
 
     const optionalColumns = ref([
         {
-            label: t("task"), 
-            prop: "taskId", 
-            default: true, 
+            label: t("task"),
+            prop: "taskId",
+            default: true,
             description: t("filter.table_column.metrics.task")
         },
         {
-            label: t("name"), 
-            prop: "name", 
-            default: true, 
+            label: t("name"),
+            prop: "name",
+            default: true,
             description: t("filter.table_column.metrics.name")
         },
         {
-            label: t("value"), 
-            prop: "value", 
-            default: true, 
+            label: t("value"),
+            prop: "value",
+            default: true,
             description: t("filter.table_column.metrics.value")
         },
         {
-            label: t("tags"), 
-            prop: "tags", 
-            default: true, 
+            label: t("tags"),
+            prop: "tags",
+            default: true,
             description: t("filter.table_column.metrics.tags")
         },
     ]);

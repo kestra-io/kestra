@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,6 @@ import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
@@ -212,7 +212,10 @@ public class TriggerScheduler {
                                 }
                             }
                             case NONE -> {
-                                ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate();
+                                // Skip missed slots by starting from now (null triggerContext causes
+                                // NextEvaluationDate.get to seed date=now), which also lets Schedule
+                                // apply trigger conditions (e.g. DayWeek) to the next computed tick.
+                                ZonedDateTime nextEvaluationDate = NextEvaluationDate.get(clock, trigger, null, conditionContext);
                                 if (!Objects.equals(currentTriggerState.getNextEvaluationDate(), nextEvaluationDate.toInstant())) {
                                     currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
                                     triggerStateStore.save(currentTriggerState);
@@ -279,9 +282,7 @@ public class TriggerScheduler {
         triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
 
         try {
-            List<Condition> conditions = trigger.getConditions() != null ? trigger.getConditions() : List.of();
-
-            if (!conditionService.areValid(conditions, context.conditionContext())) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionContext().getVariables()))) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }
@@ -303,7 +304,7 @@ public class TriggerScheduler {
             // Save the final trigger state
             triggerState = triggerState
                 .updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger))
-                .updateForExecutionState(clock, State.Type.FAILED)
+                .updateOnExecutionTerminated(clock, State.Type.FAILED)
                 .locked(clock, false);
             triggerStateStore.save(triggerState);
 
@@ -338,7 +339,7 @@ public class TriggerScheduler {
         if (maybeExecution.isPresent()) {
             log(clock, triggerContext, maybeExecution.get());
             triggerState = triggerState
-                .updateForExecution(clock, maybeExecution.get())
+                .updateOnExecutionCreated(clock, maybeExecution.get().getState().getCurrent())
                 .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
         }
         // Save the final trigger state
@@ -374,7 +375,9 @@ public class TriggerScheduler {
         {
             try {
                 this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
-                state = state.locked(clock, mustBeLocked);
+                state = state
+                    .lastTriggeredDate(clock)
+                    .locked(clock, mustBeLocked);
                 triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(
@@ -391,8 +394,11 @@ public class TriggerScheduler {
     private Optional<TriggerState> updateNextEvaluationDateAndGetOnSuccess(Clock clock, TriggerState currentTriggerState, TriggerEvaluationContext lastTriggerEvaluationContext) {
         Logger logger = lastTriggerEvaluationContext.conditionContext().getRunContext().logger();
         try {
+            // Use currentTriggerState.context() — the caller has already set evaluatedAt=nextEvaluationDate on it.
+            // lastTriggerEvaluationContext.triggerState() is frozen at fetch time and can still carry a null
+            // evaluatedAt (first evaluation after creation), which would make Schedule skip the conditions branch.
             ZonedDateTime nextEvaluationDate = NextEvaluationDate
-                .get(clock, lastTriggerEvaluationContext.trigger(), lastTriggerEvaluationContext.triggerState().context(), lastTriggerEvaluationContext.conditionContext());
+                .get(clock, lastTriggerEvaluationContext.trigger(), currentTriggerState.context(), lastTriggerEvaluationContext.conditionContext());
             return Optional.of(currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate));
         } catch (Exception e) {
             if (e instanceof InvalidTriggerConfigurationException) {

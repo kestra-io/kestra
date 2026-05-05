@@ -81,7 +81,7 @@ public class CachedFlowMetaStore implements FlowMetaStore {
         maybeNewRevision.ifPresent(current ->
         {
             if (current.getRevision() > cached.getRevision()) {
-                partitionedCache.get(vNode).put(cacheKey, current);
+                partitionedCache.computeIfAbsent(vNode, k -> newCache()).put(cacheKey, current);
             } else {
                 // must not happen. Otherwise, this would mean that:
                 // - TriggerEvent are not consumed in order for a same flow

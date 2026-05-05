@@ -1,9 +1,9 @@
 import {useI18n} from "vue-i18n";
 import {computed} from "vue";
 import {useMiscStore} from "override/stores/misc";
-import {FilterValue} from "../utils/filterTypes";
+import {FilterValue} from "@kestra-io/design-system";
 
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/design-system";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
@@ -43,7 +43,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "P30D"},
+        {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ];
 

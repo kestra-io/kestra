@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -33,7 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @WebServerEnabled
 @Requires(property = "kestra.tutorial-flows.enabled", value = "true", defaultValue = "true")
-public class FlowAutoLoaderService {
+public class FlowAutoLoaderService implements FlowAutoLoader {
 
     public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);
 

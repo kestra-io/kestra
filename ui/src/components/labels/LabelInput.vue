@@ -5,25 +5,25 @@
         :key="index"
     >
         <div class="flex-grow-1 d-flex align-items-center">
-            <el-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('key')"
-                v-model="label.key"
+                :modelValue="(label.key as string | undefined)"
                 :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
-            <el-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('value')"
-                v-model="label.value"
+                :modelValue="(label.value as string | undefined)"
                 @update:model-value="update(index, $event, 'value')"
             />
         </div>
         <div class="flex-shrink-1">
-            <el-button-group class="d-flex">
-                <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" />
-            </el-button-group>
+            <KsButtonGroup class="d-flex">
+                <KsButton :icon="Plus" @click="addItem" />
+                <KsButton :icon="Minus" @click="removeItem(index)" />
+            </KsButtonGroup>
         </div>
     </div>
 </template>
@@ -63,8 +63,8 @@
         emit("update:labels", locals.value);
     };
 
-    const update = (index: number, value: string | null, prop: keyof Label) => {
-        locals.value[index][prop] = value;
+    const update = (index: number, value: string | number | undefined, prop: keyof Label) => {
+        locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null;
         emit("update:labels", locals.value);
     };
 

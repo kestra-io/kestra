@@ -1,0 +1,15 @@
+id: loop-outputs-failed-render
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    outputs:
+      - id: value
+        type: STRING
+        value: "{{outputs.nonExistentTask.value}}"
+    tasks:
+      - id: doWork
+        type: io.kestra.plugin.core.debug.Return
+        format: "some output"

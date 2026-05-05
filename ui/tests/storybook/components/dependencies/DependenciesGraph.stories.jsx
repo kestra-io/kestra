@@ -10,11 +10,6 @@ import {
 import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
 
-import cytoscape from "cytoscape";
-
-cytoscape.warnings(false)
-
-
 
 export default {
     title: "Dependencies/Graph",
@@ -67,7 +62,7 @@ const GraphWrapper = defineComponent({
             <div style="display:flex; gap:12px; height:680px;">
                 <div style="flex:1; position:relative; min-width:480px;">
                     <div
-                        v-loading={isRendering.value}
+                        v-ks-loading={isRendering.value}
                         ref={container}
                         style="height:100%; overflow:hidden; background:transparent;"
                     />

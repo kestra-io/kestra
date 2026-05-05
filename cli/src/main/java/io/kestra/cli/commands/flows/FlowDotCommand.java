@@ -20,8 +20,6 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class FlowDotCommand extends AbstractCommand {
-    @Inject
-    private ApplicationContext applicationContext;
 
     @CommandLine.Parameters(index = "0", description = "The flow file to display")
     private Path file;

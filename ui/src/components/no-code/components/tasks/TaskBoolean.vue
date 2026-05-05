@@ -1,5 +1,5 @@
 <template>
-    <el-switch
+    <KsSwitch
         :modelValue="modelValue"
         @update:model-value="onInput"
         :activeActionIcon="Check"
@@ -14,5 +14,5 @@
 
     const emit = defineEmits<{(e: "update:modelValue", value: boolean): void}>()
 
-    const onInput = (value: boolean) => emit("update:modelValue", value)
+    const onInput = (value: string | number | boolean | undefined) => emit("update:modelValue", Boolean(value))
 </script>

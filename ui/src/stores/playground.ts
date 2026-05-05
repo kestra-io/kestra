@@ -1,11 +1,11 @@
 import {computed, ref, watch, type Ref} from "vue";
 import {defineStore} from "pinia";
 import {useUrlSearchParams} from "@vueuse/core"
-import * as VueFlowUtils from "@kestra-io/ui-libs/vue-flow-utils"
+import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils"
 import {Execution, useExecutionsStore} from "./executions";
 import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
-import {State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/design-system";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
 import {Flow, useFlowStore} from "./flow";
@@ -159,7 +159,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const latestExecution = computed(() => executions.value[0]);
 
-    const nonFinalStates = [
+    const nonFinalStates: string[] = [
         State.KILLING,
         State.RUNNING,
         State.RESTARTED,

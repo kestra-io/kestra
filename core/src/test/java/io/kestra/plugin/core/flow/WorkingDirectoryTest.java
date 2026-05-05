@@ -134,9 +134,9 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/working-directory-invalid-runif.yaml" })
-    void invalidRunIf() throws Exception {
-        suite.invalidRunIf(runnerUtils);
+    @LoadFlows({"flows/valids/working-directory-invalid-when.yaml"})
+    void invalidWhen() throws Exception {
+        suite.invalidWhen(runnerUtils);
     }
 
     @Singleton
@@ -358,9 +358,9 @@ public class WorkingDirectoryTest {
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("decrypted").getFirst()).get("value")).isEqualTo("Hello World");
         }
 
-        public void invalidRunIf(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+        public void invalidWhen(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(
-                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-runif", null,
+                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-when", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 

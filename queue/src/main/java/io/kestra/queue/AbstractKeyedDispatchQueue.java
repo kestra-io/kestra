@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
 
@@ -62,6 +63,13 @@ public abstract class AbstractKeyedDispatchQueue<T extends KeyedDispatchEvent> e
             }
         }, asyncPoolExecutor);
     }
+
+    @Override
+    public final QueueSubscriber<T> subscriber(String routingKey) {
+        return trackSubscriber(doSubscriber(routingKey));
+    }
+
+    protected abstract QueueSubscriber<T> doSubscriber(String routingKey);
 
     protected abstract void doEmit(String routingKey, byte[] message, String key) throws QueueException;
 

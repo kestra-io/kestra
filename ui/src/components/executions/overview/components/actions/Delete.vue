@@ -1,17 +1,17 @@
 <template>
-    <el-button
+    <KsButton
         v-if="isAllowedDelete"
         :icon="TrashCanOutline"
         @click="deleteExecution"
     >
         {{ $t("delete") }}
-    </el-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">
     import {computed, ref, h} from "vue";
 
-    import {ElCheckbox, ElMessageBox} from "element-plus";
+    import {KsMessageBox, KsCheckbox} from "@kestra-io/design-system";
 
     import {
         Execution,
@@ -23,7 +23,7 @@
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
 
     import {useToast} from "../../../../../utils/toast";
     const toast = useToast();
@@ -63,7 +63,7 @@
         const deleteMetrics = ref(true);
         const deleteStorage = ref(true);
 
-        ElMessageBox({
+        KsMessageBox({
             boxType: "confirm",
             title: t("confirmation"),
             showCancelButton: true,
@@ -93,19 +93,19 @@
             message: () =>
                 h("div", null, [
                     h("p", {class: "pb-3"}, [h("span", {innerHTML: message})]),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteLogs.value,
                         label: t("execution_deletion.logs"),
                         "onUpdate:modelValue": (val) =>
                             (deleteLogs.value = Boolean(val)),
                     }),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteMetrics.value,
                         label: t("execution_deletion.metrics"),
                         "onUpdate:modelValue": (val) =>
                             (deleteMetrics.value = Boolean(val)),
                     }),
-                    h(ElCheckbox, {
+                    h(KsCheckbox, {
                         modelValue: deleteStorage.value,
                         label: t("execution_deletion.storage"),
                         "onUpdate:modelValue": (val) =>

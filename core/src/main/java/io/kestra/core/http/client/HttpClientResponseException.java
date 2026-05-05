@@ -13,10 +13,10 @@ public class HttpClientResponseException extends HttpClientException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    protected final HttpRequest request;
+    protected transient final HttpRequest request;
 
     @Nullable
-    protected HttpResponse<?> response;
+    protected transient HttpResponse<?> response;
 
     public HttpClientResponseException(String message, HttpResponse<?> response) {
         super(message);

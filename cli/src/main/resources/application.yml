@@ -288,6 +288,9 @@ kestra:
       - system.
       - internal.
 
+  async-operations:
+    wait-timeout: PT30S
+
 otel:
   exclusions:
     - /ping

@@ -5,8 +5,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
+import java.util.Set;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -61,6 +64,13 @@ public abstract class AbstractVNodeDispatchQueue<T extends VNodeDispatchEvent> e
             }
         }, asyncPoolExecutor);
     }
+
+    @Override
+    public final QueueSubscriber<T> subscriber(Set<Integer> vNodes) {
+        return trackSubscriber(doSubscriber(vNodes));
+    }
+
+    protected abstract QueueSubscriber<T> doSubscriber(Set<Integer> vNodes);
 
     protected abstract void doEmit(byte[] message, String key) throws QueueException;
 

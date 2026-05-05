@@ -69,6 +69,7 @@ class ApiAiServiceTest {
         assertThat(request.getMethodName()).isEqualTo("POST");
         assertThat(request.getHeaders().get("X-Kestra-Instance-Id")).isEqualTo("instance-1");
         assertThat(request.getHeaders().get("X-Kestra-User-Id")).isEqualTo("user-1");
+        assertThat(request.getHeaders().get("X-Client-IP")).isEqualTo("192.0.2.10");
 
         assertThat(request.getBody()).isPresent();
         assertThat(request.getBody().orElseThrow()).isInstanceOf(Map.class);
@@ -107,6 +108,7 @@ class ApiAiServiceTest {
         assertThat(request.getMethodName()).isEqualTo("POST");
         assertThat(request.getHeaders().get("X-Kestra-Instance-Id")).isEqualTo("instance-2");
         assertThat(request.getHeaders().get("X-Kestra-User-Id")).isEqualTo("user-2");
+        assertThat(request.getHeaders().get("X-Client-IP")).isEqualTo("198.51.100.5");
         assertThat(request.getBody()).isPresent();
         assertThat(request.getBody().orElseThrow()).isEqualTo(prompt);
     }

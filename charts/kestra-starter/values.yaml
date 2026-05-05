@@ -1,0 +1,111 @@
+postgres:
+  # -- see https://artifacthub.io/packages/helm/groundhog2k/postgres for all available configurations
+  # @section -- PostgreSQL Configuration
+  fullnameOverride: "kestra-starter-postgres"
+  # -- see https://artifacthub.io/packages/helm/groundhog2k/postgres for all available configurations
+  # @section -- PostgreSQL Configuration
+  serviceAccount:
+    create: true
+  # -- see https://artifacthub.io/packages/helm/groundhog2k/postgres for all available configurations
+  # @section -- PostgreSQL Configuration
+  revisionHistoryLimit: 5
+  # -- see https://artifacthub.io/packages/helm/groundhog2k/postgres for all available configurations
+  # @section -- PostgreSQL Configuration
+  settings:
+    superuser:
+      value: "postgres"
+    superuserPassword:
+      value: "SuperChangeMe#1234"
+  # -- see https://artifacthub.io/packages/helm/groundhog2k/postgres for all available configurations
+  # @section -- PostgreSQL Configuration
+  userDatabase:
+    name:
+      value: "kestra"
+    user:
+      value: "kestra"
+    password:
+      value: "ChangeMe#1234"
+
+s3Emulator:
+  image:
+    repository: "versity/versitygw"
+    tag: "v1.1.0"
+  storage:
+    size: 20Gi
+  sidecar:
+    enabled: false
+    size: 10Gi
+  
+kestra:
+  # -- see https://artifacthub.io/packages/helm/kestra/kestra for all available configurations
+  # @section -- Kestra Configuration
+  fullnameOverride: "kestra-starter"
+  # -- see https://artifacthub.io/packages/helm/kestra/kestra for all available configurations
+  # @section -- Kestra Configuration
+  common:
+    revisionHistoryLimit: 5
+    configmapReloader:
+      enabled: true
+    initContainers:
+    - name: ensure-kestra-bucket
+      image: amazon/aws-cli:2.15.57
+      command: ["sh","-lc"]
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: versitygw-root
+              key: ROOT_ACCESS_KEY
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: versitygw-root
+              key: ROOT_SECRET_KEY
+        - name: AWS_DEFAULT_REGION
+          value: "eu-west-1"
+        - name: S3_ENDPOINT_URL
+          value: "http://versitygw:7070"
+        - name: BUCKET
+          value: "kestra"
+      args:
+        - |
+          set -euo pipefail
+          echo "waiting for versitygw..."
+          for i in $(seq 1 60); do
+            echo "attempt $i..."
+            aws --endpoint-url "$S3_ENDPOINT_URL" s3api list-buckets >/dev/null 2>&1 && break
+            sleep 2
+          done
+          aws --endpoint-url "$S3_ENDPOINT_URL" s3api head-bucket --bucket "$BUCKET" >/dev/null 2>&1 \
+            || aws --endpoint-url "$S3_ENDPOINT_URL" s3 mb "s3://$BUCKET"
+  # -- see https://artifacthub.io/packages/helm/kestra/kestra for all available configurations
+  # @section -- Kestra Configuration
+  dind:
+    enabled: true
+    mode: "insecure"
+  # -- see https://artifacthub.io/packages/helm/kestra/kestra for all available configurations
+  # @section -- Kestra Configuration
+  configurations:
+    application:
+      datasources:
+        postgres:
+          url: 'jdbc:postgresql://kestra-starter-postgres:5432/kestra'
+          driverClassName: org.postgresql.Driver
+          username: 'kestra'
+          password: 'ChangeMe#1234'
+      kestra:
+        tutorialFlows:
+          enabled: true
+        queue:
+          type: 'postgres'
+        repository:
+          type: 'postgres'
+        storage:
+          type: s3
+          s3:
+            endpoint: "http://versitygw:7070"
+            region: "eu-west-1"
+            bucket: "kestra"
+            access-key: "kestra"
+            secret-key: "ChangeMe#1234"
+            force-path-style: true

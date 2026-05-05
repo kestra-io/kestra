@@ -70,7 +70,7 @@ public class QueueService {
                     && serialize.length >= queueConfiguration.getMessageProtection().getLimit()
             ) {
                 metricRegistry
-                    .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName())
+                    .counter(MetricRegistry.METRIC_QUEUE_MESSAGE_BIG_TOTAL, MetricRegistry.METRIC_QUEUE_MESSAGE_BIG_TOTAL_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName())
                     .increment();
 
                 // we let terminated execution messages to go through anyway

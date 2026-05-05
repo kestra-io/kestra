@@ -201,8 +201,7 @@ import lombok.experimental.SuperBuilder;
                           - ./venv/bin/python -c "import pandas as pd; print(pd.__version__)"
                 """
         )
-    },
-    aliases = { "io.kestra.core.tasks.flows.WorkingDirectory", "io.kestra.core.tasks.flows.Worker" }
+    }
 )
 @WorkingDirectoryTaskValidation
 public class WorkingDirectory extends Sequential implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {

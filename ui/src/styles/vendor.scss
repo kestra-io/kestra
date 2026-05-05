@@ -1,32 +1,4 @@
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
-@use "@kestra-io/ui-libs/src/scss/vendor";
-
-// element-plus
-@forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
-    $font-family: (
-        '':  global-var.$font-family-sans-serif,
-        'monospace': global-var.$font-family-monospace
-    ),
-
-    $font-size: (
-        'extra-large': global-var.$font-size-base * 1.5,
-        'large': global-var.$font-size-lg,
-        'medium': global-var.$font-size-base * 1.15 ,
-        'base': global-var.$font-size-base,
-        'small': global-var.$font-size-sm,
-        'extra-small': global-var.$font-size-xs,
-    ),
-
-    $colors: global-var.$element-colors,
-
-    $border-radius: (
-        'base': global-var.$border-radius,
-        'small': global-var.$border-radius-sm,
-        'round': global-var.$border-radius-lg,
-    ),
-);
-@use "element-plus/theme-chalk/src/index";
-@use "element-plus/theme-chalk/src/dark/css-vars";
 
 // vue-sidebar
 @use "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
@@ -42,17 +14,3 @@
 );
 
 @use "nprogress/nprogress.css";
-
-// skiki
-.shiki {
-    font-size: 0.875em;
-
-    &.github-dark {
-        background-color: var(--ks-background-card) !important;
-        border: 1px solid var(--ks-border-primary) !important;
-    }
-
-    .line {
-        display: inline;
-    }
-}

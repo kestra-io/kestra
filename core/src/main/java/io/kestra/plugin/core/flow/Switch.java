@@ -85,8 +85,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                         format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Switch"
+    }
 )
 @SwitchTaskValidation
 public class Switch extends Task implements FlowableTask<Switch.Output> {

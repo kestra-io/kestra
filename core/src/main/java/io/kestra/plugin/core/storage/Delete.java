@@ -47,8 +47,7 @@ import lombok.experimental.SuperBuilder;
                         uri: "{{ outputs.download.uri }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.Delete"
+    }
 )
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Schema(

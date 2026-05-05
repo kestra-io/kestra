@@ -80,8 +80,7 @@ import lombok.experimental.SuperBuilder;
                     transmitFailed: true
                 """
         )
-    },
-    aliases = { "io.kestra.core.tasks.flows.Subflow", "io.kestra.core.tasks.flows.Flow" }
+    }
 )
 public class Subflow extends Task implements ExecutableTask<Subflow.Output>, ChildFlowInterface {
     @NotEmpty

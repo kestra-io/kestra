@@ -17,12 +17,12 @@ import io.kestra.core.utils.Slugify;
 
 import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
-abstract class AbstractFileFunction implements Function {
+abstract class AbstractFileFunction implements KestraFunction {
     static final String SCHEME_NOT_SUPPORTED_ERROR = "Cannot process the URI %s: scheme not supported.";
     static final String KESTRA_SCHEME = "kestra:///";
     static final String TRIGGER = "trigger";
@@ -35,16 +35,16 @@ abstract class AbstractFileFunction implements Function {
     private static final Pattern EXECUTION_FILE = Pattern.compile(".*/.*/executions/.*/tasks/.*/.*");
 
     @Inject
-    protected NamespaceService namespaceService;
+    protected Provider<NamespaceService> namespaceService;
 
     @Inject
-    protected StorageInterface storageInterface;
+    protected Provider<StorageInterface> storageInterface;
 
     @Inject
-    protected LocalPathFactory localPathFactory;
+    protected Provider<LocalPathFactory> localPathFactory;
 
     @Inject
-    protected NamespaceFactory namespaceFactory;
+    protected Provider<NamespaceFactory> namespaceFactory;
 
     @Value("${" + LocalPath.ENABLE_FILE_FUNCTIONS_CONFIG + ":true}")
     protected boolean enableFileProtocol;
@@ -92,7 +92,7 @@ abstract class AbstractFileFunction implements Function {
                 } else {
                     fileUri = URI.create(Namespace.NAMESPACE_FILE_SCHEME + ":///" + str);
                     namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
-                    namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
+                    namespaceService.get().checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
                 }
             } else {
                 throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
@@ -106,6 +106,14 @@ abstract class AbstractFileFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of(PATH, NAMESPACE);
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            PATH, "outputs.download.uri",
+            NAMESPACE, "flow.namespace"
+        );
     }
 
     protected abstract String getErrorMessage();
@@ -158,7 +166,7 @@ abstract class AbstractFileFunction implements Function {
     private String checkIfFileFromAllowedNamespaceAndReturnIt(URI path, String tenantId, String fromNamespace) {
 
         String namespace = extractNamespace(path);
-        namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
+        namespaceService.get().checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
         return namespace;
     }
 
@@ -178,7 +186,7 @@ abstract class AbstractFileFunction implements Function {
         // we will transform nsfile URI into a kestra URI so it is handled seamlessly by all functions
         String customNs = Optional.ofNullable((String) args.get(NAMESPACE)).orElse(nsFileUri.getAuthority());
         if (customNs != null) {
-            namespaceService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
+            namespaceService.get().checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
         }
         return Optional.ofNullable(customNs).orElse(flow.get(NAMESPACE));
     }

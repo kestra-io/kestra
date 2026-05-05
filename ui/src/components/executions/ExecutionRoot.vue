@@ -7,7 +7,7 @@
             :tabs="tabs"
         />
     </template>
-    <div v-else class="full-space" v-loading="true">
+    <div v-else class="full-space" v-ks-loading="true">
         {{ executionsStore.execution?.id }}
     </div>
 </template>

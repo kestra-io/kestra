@@ -370,7 +370,7 @@
                 },
                 {
                     "id": "send_approval_request",
-                    "type": "io.kestra.plugin.notifications.slack.SlackIncomingWebhook",
+                    "type": "io.kestra.plugin.slack.notifications.SlackIncomingWebhook",
                     "url": "https://reqres.in/api/slack",
                     "payload": "{\n  \"channel\": \"#devops\",\n  \"text\": {{ render(vars.slack_message) | toJson }}\n}\n"
                 },

@@ -11,5 +11,5 @@ tasks:
       maxDuration: PT3S
     tasks:
       - id: return_test
-        type: io.kestra.core.tasks.debugs.Return
+        type: io.kestra.plugin.core.debug.Return
         format: "{{outputs.loop_test.iterationCount}}"

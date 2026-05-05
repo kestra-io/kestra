@@ -117,7 +117,8 @@ class IsFileEmptyFunctionTest {
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -133,7 +134,8 @@ class IsFileEmptyFunctionTest {
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -168,7 +170,8 @@ class IsFileEmptyFunctionTest {
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test

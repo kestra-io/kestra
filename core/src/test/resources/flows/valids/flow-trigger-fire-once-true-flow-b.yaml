@@ -1,0 +1,7 @@
+id: flow-trigger-fire-once-true-flow-b
+namespace: io.kestra.tests.trigger.fire.once.true
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parent: {{execution.id}}"

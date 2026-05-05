@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper vsm--item" :class="{editing}">
         <div v-if="editing" class="edit-row">
-            <el-input
+            <KsInput
                 class="vsm--input"
                 ref="titleInput"
                 v-model="updatedTitle"
@@ -40,7 +40,7 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import {ElMessageBox} from "element-plus";
+    import {KsMessageBox} from "@kestra-io/design-system";
     import {useBookmarksStore} from "../../stores/bookmarks";
 
     const {t} = useI18n({useScope: "global"});
@@ -56,7 +56,7 @@
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);
 
     function deleteBookmark() {
-        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+        KsMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
             type: "warning",
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),
@@ -107,7 +107,7 @@
 
 .vsm--input {
     flex: 1;
-    font-size: 0.875em;
+    font-size: var(--ks-font-size-sm);
 }
 
 .edit-row {
@@ -130,7 +130,7 @@
     width: 100%;
     text-decoration: none;
     color: var(--ks-content-primary);
-    font-size: 0.875em;
+    font-size: var(--ks-font-size-sm);
 }
 
 .wrapper:not(.editing) .vsm--link:hover .buttons {

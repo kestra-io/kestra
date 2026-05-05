@@ -9,7 +9,7 @@ import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/servi
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import RegexProvider from "../../../utils/regex";
-import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,
@@ -68,7 +68,7 @@ function filterMissingRequiredTaskProperties({
         }
 
         for (const probeIndex of probeIndexes) {
-            const localized = YamlUtils.localizeElementAtIndex(
+            const localized = YAML_UTILS.localizeElementAtIndex(
                 source,
                 probeIndex,
             );
@@ -319,7 +319,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         }
                     }
 
-                    suggestion.sortText = suggestion.sortText?.toLowerCase();
+                    const pluginsStore = usePluginsStore();
+                    const allProperties = pluginsStore.editorPlugin?.schema?.properties?.properties ?? {};
+                    const requiredProperties = Object.keys(allProperties).filter(p => allProperties[p]?.$required === true);
+
+                    if (requiredProperties.includes(suggestion.label)) {
+                        suggestion.detail = "required";
+                    }
+
                     return suggestion;
                 })
                 // ---- Keep `type:` filtering scoped to plugin type suggestions ----
@@ -347,6 +354,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
             return {
                 ...defaultCompletion,
+                incomplete: true,
                 suggestions,
             };
         };
@@ -366,7 +374,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
                     const cursorPosition = model.getOffsetAt(position);
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),
@@ -376,7 +384,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         null,
                         true,
                     );
-                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(
+                    const elementUnderCursor = YAML_UTILS.localizeElementAtIndex(
                         source,
                         cursorPosition,
                     );
@@ -388,12 +396,18 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     const parentStartLine = model.getPositionAt(
                         elementUnderCursor.range![0],
                     ).lineNumber;
-                    const autoCompletions =
-                        await yamlAutoCompletion.valueAutoCompletion(
+                    
+                    let autoCompletions = [];
+                    try {
+                        autoCompletions = await yamlAutoCompletion.valueAutoCompletion(
                             source,
                             parsed,
                             elementUnderCursor,
                         );
+                    } catch {
+                        return NO_SUGGESTIONS;
+                    }
+
                     return {
                         suggestions: autoCompletions.map((autoCompletion) => {
                             const [label, isKey] = autoCompletion.split(
@@ -485,7 +499,11 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     if (
                         typeof pluginsStore.updateDocumentation === "function"
                     ) {
-                        await pluginsStore.updateDocumentation({cls});
+                        try {
+                            await pluginsStore.updateDocumentation({cls});
+                        } catch {
+                            return {items: []};
+                        }
                     }
 
                     const allProperties =

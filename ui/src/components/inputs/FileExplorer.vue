@@ -5,7 +5,7 @@
         @click="onRootClick"
     >
         <div class="flex-row d-flex">
-            <el-select
+            <KsSelect
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
                 filterable
@@ -16,42 +16,32 @@
                 <template #prefix>
                     <Magnify />
                 </template>
-                <el-option
+                <KsOption
                     v-for="item in filesStore.searchResults"
                     :key="item"
                     :label="item"
                     :value="item"
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
-            </el-select>
-            <el-button-group class="d-flex">
-                <el-tooltip
-                    effect="light"
+            </KsSelect>
+            <KsButtonGroup class="d-flex">
+                <KsTooltip
                     :content="$t('namespace files.create.file')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
-                    popperClass="text-base"
                 >
-                    <el-button class="px-2" @click="toggleDialog(true, 'file')">
+                    <KsButton class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
-                    </el-button>
-                </el-tooltip>
-                <el-tooltip
-                    effect="light"
+                    </KsButton>
+                </KsTooltip>
+                <KsTooltip
                     :content="$t('namespace files.create.folder')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
-                    popperClass="text-base"
                 >
-                    <el-button
+                    <KsButton
                         class="px-2"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
-                    </el-button>
-                </el-tooltip>
+                    </KsButton>
+                </KsTooltip>
                 <input
                     ref="filePicker"
                     type="file"
@@ -70,39 +60,34 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <el-dropdown>
-                    <el-button>
+                <KsDropdown>
+                    <KsButton>
                         <PlusBox />
-                    </el-button>
+                    </KsButton>
                     <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item @click="filePicker?.click()">
+                        <KsDropdownMenu>
+                            <KsDropdownItem @click="filePicker?.click()">
                                 {{ $t("namespace files.import.files") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 @click="folderPicker?.click()"
                             >
                                 {{ $t("namespace files.import.folder") }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </el-dropdown>
-                <el-tooltip
-                    effect="light"
+                </KsDropdown>
+                <KsTooltip
                     :content="$t('namespace files.export')"
-                    transition=""
-                    :hideAfter="0"
-                    :persistent="false"
-                    popperClass="text-base"
                 >
-                    <el-button class="px-2" @click="exportFiles()">
+                    <KsButton class="px-2" @click="exportFiles()">
                         <FolderDownloadOutline />
-                    </el-button>
-                </el-tooltip>
-            </el-button-group>
+                    </KsButton>
+                </KsTooltip>
+            </KsButtonGroup>
         </div>
 
-        <el-tree
+        <KsTree
             ref="tree"
             lazy
             :load="filesStore.loadNodes"
@@ -112,8 +97,8 @@
             "
             draggable
             nodeKey="id"
-            v-loading="filesStore.fileTree === undefined"
-            :props="{class: nodeClass, isLeaf: 'leaf'}"
+            v-ks-loading="filesStore.fileTree === undefined"
+            :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
             class="mt-3"
             @node-drag-start="
                 nodeBeforeDrag = {
@@ -132,7 +117,7 @@
                 </div>
             </template>
             <template #default="{data, node}">
-                <el-dropdown
+                <KsDropdown
                     :ref="(el: any) => dropdowns[data.id as string] = el"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
@@ -161,29 +146,29 @@
                         </div>
                     </div>
                     <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item
+                        <KsDropdownMenu>
+                            <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
                                 {{ $t("namespace files.revisions.history") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
                                 {{ $t("namespace files.export_single") }}
-                            </el-dropdown-item>
-                            <el-dropdown-item
+                            </KsDropdownItem>
+                            <KsDropdownItem
                                 v-if="data.leaf && !multiSelected"
                                 @click="
                                     toggleRenameDialog(
@@ -201,8 +186,8 @@
                                         }`,
                                     )
                                 }}
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="removeSelectedFiles(data, node)">
+                            </KsDropdownItem>
+                            <KsDropdownItem @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -214,15 +199,15 @@
                                         }`
                                         , {count: selectedNodes.length})
                                 }}
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </el-dropdown>
+                </KsDropdown>
             </template>
-        </el-tree>
+        </KsTree>
 
         <!-- Creation dialog -->
-        <el-dialog
+        <KsDialog
             v-model="dialog.visible"
             :title="
                 dialog.type === 'file'
@@ -237,7 +222,7 @@
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
-            <el-input
+            <KsInput
                 ref="creation_name"
                 v-model="dialog.name"
                 size="large"
@@ -249,37 +234,37 @@
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
-            <el-select
+            <KsSelect
                 v-model="dialog.folder"
                 clearable
                 size="large"
                 class="mb-3"
             >
-                <el-option
+                <KsOption
                     v-for="folder in filesStore.folders"
                     :key="folder"
                     :value="folder"
                     :label="folder"
                 />
-            </el-select>
+            </KsSelect>
             <template #footer>
                 <div>
-                    <el-button @click="toggleDialog(false)">
+                    <KsButton @click="toggleDialog(false)">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button
+                    </KsButton>
+                    <KsButton
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
                         {{ $t("namespace files.create.label") }}
-                    </el-button>
+                    </KsButton>
                 </div>
             </template>
-        </el-dialog>
+        </KsDialog>
 
         <!-- Renaming dialog -->
-        <el-dialog
+        <KsDialog
             v-model="renameDialog.visible"
             :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
@@ -290,7 +275,7 @@
                     {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
-            <el-input
+            <KsInput
                 ref="renaming_name"
                 v-model="renameDialog.name"
                 size="large"
@@ -298,21 +283,21 @@
             />
             <template #footer>
                 <div>
-                    <el-button @click="toggleRenameDialog(false)">
+                    <KsButton @click="toggleRenameDialog(false)">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button
+                    </KsButton>
+                    <KsButton
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
                         {{ $t("namespace files.rename.label") }}
-                    </el-button>
+                    </KsButton>
                 </div>
             </template>
-        </el-dialog>
+        </KsDialog>
 
-        <el-dialog
+        <KsDialog
             v-model="confirmation.visible"
             :title="confirmationLabels.title"
             width="500"
@@ -321,17 +306,17 @@
             <span class="py-3" v-html="confirmationLabels.message" />
             <template #footer>
                 <div>
-                    <el-button @click="confirmation.visible = false">
+                    <KsButton @click="confirmation.visible = false">
                         {{ $t("cancel") }}
-                    </el-button>
-                    <el-button type="primary" @click="removeItems()">
+                    </KsButton>
+                    <KsButton type="primary" @click="removeItems()">
                         {{ $t("namespace files.dialog.deletion.confirm") }}
-                    </el-button>
+                    </KsButton>
                 </div>
             </template>
-        </el-dialog>
+        </KsDialog>
 
-        <el-dialog
+        <KsDialog
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
             width="75%"
@@ -350,9 +335,9 @@
                     <Crud permission="FLOW" :detail="{resourceType: 'NAMESPACE_FILE', namespace: route.params.namespace, path: revisionsHistory.path, revision}" />
                 </template>
             </Revisions>
-        </el-dialog>
+        </KsDialog>
 
-        <el-menu
+        <KsMenu
             v-if="tabContextMenu.visible"
             :style="{
                 left: `${tabContextMenu.x}px`,
@@ -360,13 +345,13 @@
             }"
             class="tabs-context"
         >
-            <el-menu-item @click="toggleDialog(true, 'file')">
+            <KsMenuItem @click="toggleDialog(true, 'file')">
                 {{ $t("namespace files.create.file") }}
-            </el-menu-item>
-            <el-menu-item @click="toggleDialog(true, 'folder')">
+            </KsMenuItem>
+            <KsMenuItem @click="toggleDialog(true, 'folder')">
                 {{ $t("namespace files.create.folder") }}
-            </el-menu-item>
-        </el-menu>
+            </KsMenuItem>
+        </KsMenu>
     </div>
 </template>
 
@@ -395,7 +380,7 @@
     import {
         ElTreeNode,
         getFileNameWithExtension,
-        isDirectory, 
+        isDirectory,
         TreeNode,
         TreeNodeFile,
         useFileExplorerStore
@@ -551,7 +536,7 @@
             if (selectedNodes.value.length == 1){
                 tree.value?.setCurrentKey(selectedNodes.value[0]);
             }
-            
+
             syncTreeCurrentKey();
             return;
         }
@@ -593,7 +578,7 @@
         }
         const isCtrl = event.ctrlKey || event.metaKey;
         const isShift = event.shiftKey;
-        
+
         if (selectionMode.value && !isShift && !isCtrl) {
             selectedNodes.value = [node.data.id];
 
@@ -620,7 +605,7 @@
 
     function onRootClick(event: MouseEvent) {
         const target = event.target as HTMLElement;
-        if (target.closest(".el-tree-node__content, .el-tree-node, .filename, .neon-checkbox, button, input, .el-input")) {
+        if (target.closest(".kel-tree-node__content, .kel-tree-node, .filename, .neon-checkbox, button, input, .kel-input")) {
             return;
         }
         selectedNodes.value = [];
@@ -925,7 +910,7 @@
             path: filesStore.getPath(node.id) ?? "",
             namespace: namespaceId.value,
         });
-        if(!content?.length) 
+        if(!content?.length)
             throw new Error("File is empty or undefined");
         const blob = new Blob([content], {type: "text/plain"});
         Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
@@ -948,7 +933,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
     background: var(--ks-background-panel);
@@ -959,11 +943,11 @@
 
     :deep(.revision-history-dialog-body) {
         // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--el-dialog-margin-top) * 2) - 78px);
+        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
     }
 
     .filter{
-        .el-input__wrapper {
+        .kel-input__wrapper {
             padding-right: 0px;
         }
     }
@@ -979,18 +963,18 @@
         }
 
         & h3 {
-            font-size: var(--font-size-lg);
+            font-size: var(--ks-font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
             color: var(--ks-content-secondary);
         }
 
         & p {
-            font-size: var(--font-size-sm);
+            font-size: var(--ks-font-size-sm);
         }
     }
 
-    :deep(.el-button):not(.el-dialog .el-button) {
+    :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -998,7 +982,7 @@
         padding-left: .5rem;
         padding-right: .5rem;
 
-        &.el-button--primary {
+        &.kel-button--primary {
             opacity: 1;
         }
     }
@@ -1008,7 +992,7 @@
     }
 
     .filename {
-        font-size: var(--el-font-size-small);
+        font-size: var(--ks-font-size-sm);
 
         &:hover {
             color: var(--ks-content-link-hover);
@@ -1023,7 +1007,7 @@
         & li {
             height: 30px;
             padding: 16px;
-            font-size: var(--el-font-size-small);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-content-primary);
 
             &:hover {
@@ -1032,20 +1016,20 @@
         }
     }
 
-    :deep(.el-tree) {
+    :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-background-panel);
 
-        .el-tree__empty-block {
+        .kel-tree__empty-block {
             height: auto;
         }
 
         .node {
-            --el-tree-node-hover-bg-color: transparent;
+            --kel-tree-node-hover-bg-color: transparent;
         }
 
-        .el-tree-node__content {
+        .kel-tree-node__content {
             display: flex;
             align-items: center;
             margin-bottom: 2px !important;
@@ -1063,14 +1047,14 @@
         }
 
         .is-expanded {
-            .el-tree-node__children {
+            .kel-tree-node__children {
                 margin-left: 11px !important;
                 padding-left: 0 !important;
                 border-left: 1px solid var(--ks-border-primary);
             }
         }
 
-        .el-tree-node.is-current > .el-tree-node__content {
+        .kel-tree-node.is-current > .kel-tree-node__content {
             min-width: fit-content;
             border: 1px solid var(--ks-border-active);
             background: var(--ks-button-background-primary);
@@ -1079,7 +1063,7 @@
                 color: var(--ks-button-content-primary);
             }
         }
-        .el-tree-node.selected-tree-node > .el-tree-node__content {
+        .kel-tree-node.selected-tree-node > .kel-tree-node__content {
             background-color: var(--ks-button-background-primary);
             min-width: fit-content;
             .filename {
@@ -1096,7 +1080,7 @@
     }
 
     .item-line{
-        display: flex;  
+        display: flex;
         align-items: center;
     }
 }

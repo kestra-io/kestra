@@ -71,13 +71,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                       - id: webhook
                         key: order_webhook
                         type: io.kestra.plugin.core.trigger.Webhook
-                        conditions:
-                          - type: io.kestra.plugin.core.condition.Expression
-                            expression: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
+                        when: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.executions.Labels"
+    }
 )
 public class Labels extends Task implements ExecutionUpdatableTask {
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {

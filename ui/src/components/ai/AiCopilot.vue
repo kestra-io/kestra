@@ -1,5 +1,5 @@
 <template>
-    <el-card
+    <KsCard
         shadow="never"
         :class="{
             'ai-copilot-card': !props.onboarding,
@@ -11,7 +11,7 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon />&nbsp;<span>{{ $t("ai.flow.title") }}</span>
                 </span>
-                <el-button
+                <KsButton
                     class="ai-close-button"
                     :icon="Close"
                     @click.stop="emit('close')"
@@ -23,23 +23,23 @@
             <div class="ai-onboarding-hero">
                 <div class="ai-onboarding-icon">
                     <img
-                        src="/favicon-192x192.png"
+                        :src="kestraIcon"
                         alt="Kestra"
                         class="ai-onboarding-logo"
                     >
                 </div>
                 <h2 class="ai-onboarding-title">
-                    {{ $t("welcome_copilot.title") }}
+                    {{ props.heading ?? $t("welcome_copilot.title") }}
                 </h2>
             </div>
 
             <div class="ai-onboarding-composer-wrap">
                 <div v-if="apiFeedback" class="ai-onboarding-info" :role="error ? 'alert' : 'status'">
                     <span class="ai-onboarding-info-content">
-                        <el-icon class="ai-onboarding-info-icon">
+                        <KsIcon class="ai-onboarding-info-icon">
                             <AlertBox v-if="error" />
                             <InformationOutline v-else />
-                        </el-icon>
+                        </KsIcon>
                         <span>{{ error ?? $t("welcome_copilot.remaining_quota", {count: remainingQuota}) }}</span>
                     </span>
                 </div>
@@ -61,7 +61,7 @@
                     </template>
 
                     <div v-else class="ai-input-container ai-input-container-onboarding">
-                        <el-input
+                        <KsInput
                             ref="promptInput"
                             v-if="configured || props.onboarding"
                             v-model="prompt"
@@ -76,80 +76,80 @@
                         />
                         <template v-else>
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
-                            <div class="mt-2" v-html="highlightedAiConfiguration" />
+                            <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                             <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
-                        <el-text v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
+                        <KsText v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
                             {{ error }}
-                        </el-text>
+                        </KsText>
                     </div>
 
                     <div v-if="configured" class="ai-footer ai-footer-onboarding">
-                        <el-select
+                        <KsSelect
                             v-if="providers.length > 1"
                             class="ai-provider-select"
                             :modelValue="selectedProvider"
                             @update:model-value="onProviderChange"
                             :placeholder="$t('ai.flow.select_provider')"
                         >
-                            <el-option
+                            <KsOption
                                 v-for="p in providers"
                                 :key="p.id"
                                 :label="p.displayName"
                                 :value="p.id"
                             />
-                        </el-select>
+                        </KsSelect>
 
                         <div class="footer-right">
                             <template v-if="waitingForReply">
                                 <template v-if="props.onboarding">
-                                    <el-button
+                                    <KsButton
                                         type="primary"
                                         class="send-btn send-btn-onboarding"
                                         disabled
                                     >
-                                        <el-icon class="is-loading">
+                                        <KsIcon class="is-loading">
                                             <Loading />
-                                        </el-icon>
-                                    </el-button>
+                                        </KsIcon>
+                                    </KsButton>
                                 </template>
                                 <template v-else>
                                     <span class="generating-label">
-                                        <el-icon class="is-loading"><Loading /></el-icon>
+                                        <KsIcon class="is-loading"><Loading /></KsIcon>
                                         {{ $t(`ai.flow.generating.${generationType}`) }}
                                     </span>
                                 </template>
                             </template>
                             <template v-else-if="isListening">
-                                <el-button
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="cancelVoice"
                                 >
                                     <Close />
-                                </el-button>
-                                <el-button
+                                </KsButton>
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="stopAndValidateVoice"
                                 >
                                     <Check />
-                                </el-button>
+                                </KsButton>
                             </template>
                             <template v-else>
-                                <el-button
+                                <KsButton
                                     class="no-bg-btn"
                                     @click="toggleVoiceInput"
                                 >
                                     <Microphone />
-                                </el-button>
+                                </KsButton>
 
-                                <el-button
+                                <KsButton
                                     type="primary"
                                     class="send-btn send-btn-onboarding"
                                     :disabled="!prompt.trim()"
                                     @click="submitPrompt"
                                 >
                                     <ArrowUp />
-                                </el-button>
+                                </KsButton>
                             </template>
                         </div>
                     </div>
@@ -174,7 +174,7 @@
             </template>
 
             <div v-else class="ai-input-container">
-                <el-input
+                <KsInput
                     ref="promptInput"
                     v-if="configured"
                     v-model="prompt"
@@ -188,12 +188,12 @@
                 />
                 <template v-else>
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
-                    <div class="mt-2" v-html="highlightedAiConfiguration" />
+                    <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
                     <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
-                <el-text v-if="error" type="danger" size="small" class="error-msg">
+                <KsText v-if="error" type="danger" size="small" class="error-msg">
                     {{ error }}
-                </el-text>
+                </KsText>
             </div>
         </div>
 
@@ -203,63 +203,63 @@
                     <span class="shortcut-hint">(⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}</span>
                 </div>
 
-                <el-select
+                <KsSelect
                     v-if="providers.length > 1"
                     class="w-50 mx-3"
                     :modelValue="selectedProvider"
                     @update:model-value="onProviderChange"
                     :placeholder="$t('ai.flow.select_provider')"
                 >
-                    <el-option
+                    <KsOption
                         v-for="p in providers"
                         :key="p.id"
                         :label="p.displayName"
                         :value="p.id"
                     />
-                </el-select>
+                </KsSelect>
 
                 <div class="footer-right">
                     <template v-if="waitingForReply">
                         <span class="generating-label">
-                            <el-icon class="is-loading"><Loading /></el-icon>
+                            <KsIcon class="is-loading"><Loading /></KsIcon>
                             {{ $t(`ai.flow.generating.${generationType}`) }}
                         </span>
                     </template>
                     <template v-else-if="isListening">
-                        <el-button
+                        <KsButton
                             class="no-bg-btn"
                             @click="cancelVoice"
                         >
                             <Close />
-                        </el-button>
-                        <el-button
+                        </KsButton>
+                        <KsButton
                             class="no-bg-btn"
                             @click="stopAndValidateVoice"
                         >
                             <Check />
-                        </el-button>
+                        </KsButton>
                     </template>
                     <template v-else>
-                        <el-button
+                        <KsButton
                             class="no-bg-btn"
                             @click="toggleVoiceInput"
                         >
                             <Microphone />
-                        </el-button>
+                        </KsButton>
 
-                        <el-button
+                        <KsButton
                             type="primary"
                             class="send-btn"
                             :disabled="!prompt.trim()"
                             @click="submitPrompt"
                         >
                             <ArrowUp />
-                        </el-button>
+                        </KsButton>
                     </template>
                 </div>
             </div>
         </template>
-    </el-card>
+    </KsCard>
 </template>
 
 <script setup lang="ts">
@@ -271,11 +271,11 @@
     import Check from "vue-material-design-icons/Check.vue";
     import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
     import Microphone from "vue-material-design-icons/Microphone.vue";
+    import kestraIcon from "../../assets/icon.svg";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
     import {useApiStore} from "../../stores/api";
-    import type {InputInstance} from "element-plus";
-    import Utils from "../../utils/utils";
+    import type {InputInstance} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
     import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
 
@@ -300,6 +300,7 @@
         namespace?: string,
         onboarding?: boolean,
         initialPrompt?: string,
+        heading?: string,
         onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,
         selectedFromTag?: boolean,
@@ -370,7 +371,7 @@
 
     const miscStore = useMiscStore();
     const configured = computed(() => miscStore.configs?.isAiEnabled);
-    const highlightedAiConfiguration = ref<string | undefined>();
+    const highlightedAiConfiguration = "```yaml\nkestra:\n  ai:\n    type: \"gemini\"...\n```";
     const effectiveFlowYaml = computed(() => {
         if (!props.onboarding) {
             return props.flow;
@@ -609,25 +610,6 @@
 
     onMounted(async () => {
         await fetchProviders();
-
-        if (!configured.value) {
-            const {
-                createHighlighterCore,
-                langs,
-                githubDark,
-                githubLight,
-                onigurumaEngine
-            } = await import("../../utils/markdownDeps");
-            const highlighter = await createHighlighterCore({
-                langs: [langs.yaml],
-                themes: [githubDark, githubLight],
-                engine: onigurumaEngine
-            });
-            highlightedAiConfiguration.value = highlighter.codeToHtml("kestra:\n  ai:\n    type: \"gemini\"...", {
-                lang: "yaml",
-                theme: Utils.getTheme() === "dark" ? "github-dark" : "github-light"
-            });
-        }
     });
 
     onUnmounted(() => {
@@ -664,14 +646,13 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 .ai-copilot-onboarding-card {
     border: none;
     background: transparent;
     overflow: visible;
 
-    :deep(.el-card__body) {
+    :deep(.kel-card__body) {
         padding: 0;
         overflow: visible;
     }
@@ -681,16 +662,16 @@
     background: var(--ks-background-panel);
     border: 1px solid var(--ks-border-secondary);
 
-    :deep(.el-card__header) {
+    :deep(.kel-card__header) {
         padding: 10px 16px;
         border-bottom: none;
     }
 
-    :deep(.el-card__body) {
+    :deep(.kel-card__body) {
         padding: 0;
     }
 
-    :deep(.el-card__footer) {
+    :deep(.kel-card__footer) {
         padding: 8px 16px;
         border-top: none;
     }
@@ -729,14 +710,14 @@
     width: 69px;
     height: 69px;
     object-fit: contain;
-    border-radius: 20px;
+    border-radius: var(--ks-font-size-lg);
 }
 
 .ai-onboarding-title {
     margin: 0;
     max-width: 760px;
     color: var(--ks-content-primary);
-    font-size: $font-size-2xl;
+    font-size: var(--ks-font-size-2xl);
     line-height: 1.08;
     font-weight: 600;
     margin-bottom: 3rem;
@@ -760,14 +741,14 @@
     align-items: flex-start;
     gap: 8px;
     width: 100%;
-    font-size: $font-size-sm;
+    font-size: var(--ks-font-size-sm);
     line-height: 1.35;
     white-space: normal;
 }
 
 .ai-onboarding-info-icon {
     color: var(--ks-content-info);
-    font-size: 16px;
+    font-size: var(--ks-font-size-base);
     flex-shrink: 0;
     align-self: center;
 }
@@ -783,7 +764,7 @@
     width: 100%;
     height: 152px;
     border: 1px solid transparent;
-    border-radius: 20px;
+    border-radius: var(--ks-font-size-lg);
     background: var(--ks-background-input);
     box-shadow:
         0 8px 20px rgba(15, 23, 42, 0.035),
@@ -803,9 +784,9 @@
     width: 100%;
     display: flex;
     align-items: center;
-    background: var(--el-input-bg-color, var(--el-fill-color-blank));
-    border: 1px solid var(--el-input-border-color, var(--el-border-color));
-    border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+    background: var(--kel-input-bg-color, var(--kel-fill-color-blank));
+    border: 1px solid var(--kel-input-border-color, var(--kel-border-color));
+    border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
     padding: 8px 12px;
     min-height: 58px;
 }
@@ -865,9 +846,9 @@
 }
 
 .ai-custom-textarea {
-    :deep(.el-textarea__inner) {
+    :deep(.kel-textarea__inner) {
         color: var(--ks-content-primary) !important;
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
         line-height: 1.6;
         resize: none;
 
@@ -880,18 +861,18 @@
 
 .ai-custom-textarea-onboarding {
     flex: 1;
-    --el-disabled-bg-color: transparent;
-    --el-disabled-text-color: var(--ks-content-primary);
-    --el-fill-color-light: transparent;
-    --el-fill-color-blank: transparent;
-    --el-input-border-color: transparent;
-    --el-input-hover-border-color: transparent;
-    --el-input-focus-border-color: transparent;
-    --el-border-color: transparent;
-    --el-input-focus-border: transparent;
-    --el-input-box-shadow: none;
+    --kel-disabled-bg-color: transparent;
+    --kel-disabled-text-color: var(--ks-content-primary);
+    --kel-fill-color-light: transparent;
+    --kel-fill-color-blank: transparent;
+    --kel-input-border-color: transparent;
+    --kel-input-hover-border-color: transparent;
+    --kel-input-focus-border-color: transparent;
+    --kel-border-color: transparent;
+    --kel-input-focus-border: transparent;
+    --kel-input-box-shadow: none;
 
-    :deep(.el-textarea) {
+    :deep(.kel-textarea) {
         height: 100%;
         box-shadow: none !important;
         outline: none !important;
@@ -899,21 +880,21 @@
         background: transparent !important;
     }
 
-    :deep(.el-textarea:focus-within) {
+    :deep(.kel-textarea:focus-within) {
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
         background: transparent !important;
     }
 
-    :deep(.el-textarea.is-disabled) {
+    :deep(.kel-textarea.is-disabled) {
         box-shadow: none !important;
         outline: none !important;
         border: none !important;
         background: transparent !important;
     }
 
-    :deep(.el-textarea__inner) {
+    :deep(.kel-textarea__inner) {
         min-height: 100% !important;
         height: 100% !important;
         padding: 16px 14px 8px;
@@ -922,12 +903,12 @@
         background: transparent !important;
         outline: none !important;
         box-shadow: none !important;
-        font-size: $font-size-md;
+        font-size: var(--ks-font-size-base);
         line-height: 1.45;
 
         &::placeholder {
             font-style: normal;
-            font-size: $font-size-md;
+            font-size: var(--ks-font-size-base);
         }
 
         &:disabled {
@@ -947,7 +928,7 @@
         }
     }
 
-    :deep(.el-textarea.is-disabled .el-textarea__inner) {
+    :deep(.kel-textarea.is-disabled .kel-textarea__inner) {
         background: transparent !important;
         background-color: transparent !important;
         color: var(--ks-content-primary) !important;
@@ -957,13 +938,13 @@
         border: none !important;
     }
 
-    :deep(.el-textarea__inner:hover) {
+    :deep(.kel-textarea__inner:hover) {
         box-shadow: none !important;
         border: none !important;
         outline: none !important;
     }
 
-    :deep(.el-textarea__inner::-webkit-focus-inner) {
+    :deep(.kel-textarea__inner::-webkit-focus-inner) {
         border: 0;
     }
 }
@@ -981,10 +962,6 @@
     margin-top: -2px;
 }
 
-.ai-provider-select {
-    width: min(240px, 100%);
-}
-
 .footer-right {
     display: flex;
     gap: 8px;
@@ -996,7 +973,7 @@
     border: none !important;
     color: var(--ks-content-tertiary) !important;
     padding: 4px !important;
-    font-size: 20px;
+    font-size: var(--ks-font-size-lg);
 
     &:hover {
         color: var(--ks-content-primary) !important;
@@ -1033,12 +1010,12 @@
     width: 42px !important;
     height: 42px !important;
     border-radius: 999px !important;
-    color: white !important;
+    color: var(--ks-white) !important;
     margin-left: calc(1rem / 2) !important;
 
     &:hover,
     &:focus-visible {
-        color: white !important;
+        color: var(--ks-white) !important;
     }
 
     &:disabled {
@@ -1047,8 +1024,16 @@
 }
 
 .shortcut-hint {
-    font-size: 11px;
+    font-size: var(--ks-font-size-xs);
     color: var(--ks-content-tertiary);
+}
+
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
@@ -1077,22 +1062,17 @@
     }
 
     .ai-custom-textarea-onboarding {
-        :deep(.el-textarea__inner) {
-            font-size: $font-size-md;
+        :deep(.kel-textarea__inner) {
+            font-size: var(--ks-font-size-base);
 
             &::placeholder {
-                font-size: $font-size-md;
+                font-size: var(--ks-font-size-base);
             }
         }
     }
 
     .ai-footer-onboarding {
         flex-wrap: wrap;
-    }
-
-    .ai-provider-select {
-        width: 100%;
-        order: 3;
     }
 
     .footer-left {

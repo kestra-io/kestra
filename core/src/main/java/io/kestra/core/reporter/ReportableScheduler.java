@@ -10,7 +10,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Singleton
-@Requires(property = "kestra.anonymous-usage-report.enabled", value = "true")
+@Requires(property = "kestra." + UsageReportConfig.ANONYMOUS_USAGE_REPORT + ".enabled", value = "true")
 @Requires(property = "kestra.server-type")
 @Slf4j
 public class ReportableScheduler {

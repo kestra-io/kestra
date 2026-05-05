@@ -98,6 +98,36 @@ public class InternalKVStore implements KVStore {
     }
 
     /**
+     * Puts a KV entry using an already-serialized (raw) value, bypassing ION serialization.
+     * This is intended for backup/restore where the value is already in its stored ION format.
+     *
+     * @param key      The key.
+     * @param metadata The metadata (nullable).
+     * @param rawValue The raw ION-serialized value bytes.
+     */
+    public void putRaw(String key, @Nullable KVMetadata metadata, byte[] rawValue) throws IOException {
+        KVStore.validateKey(key);
+
+        PersistedKvMetadata saved = this.kvMetadataStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(this.tenant)
+                .namespace(this.namespace)
+                .name(key)
+                .description(Optional.ofNullable(metadata).map(KVMetadata::getDescription).orElse(null))
+                .expirationDate(Optional.ofNullable(metadata).map(KVMetadata::getExpirationDate).orElse(null))
+                .deleted(false)
+                .build()
+        );
+        KVValueAndMetadata wrapper = new KVValueAndMetadata(metadata, null);
+        this.storage.put(
+            this.tenant, this.namespace, this.storageUri(key, saved.getVersion()), new StorageObject(
+                wrapper.metadataAsMap(),
+                new ByteArrayInputStream(rawValue)
+            )
+        );
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

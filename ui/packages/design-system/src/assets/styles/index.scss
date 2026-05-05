@@ -1,0 +1,116 @@
+// vendor
+@use "bootstrap.scss";
+@use "element-plus.scss";
+@use "vue-material-design-icons/styles.css";
+@use "color-palette" as palette;
+
+// css variables
+@use "fonts.scss";
+@use "ks-tokens.scss";
+@use "ks-theme-light.scss";
+@use "ks-theme-dark.scss";
+
+// material-design-icon
+.material-design-icon {
+    height: 1rem;
+    width: 1rem;
+
+    > .material-design-icon__svg {
+        height: 1rem;
+        width: 1rem;
+        bottom: 0;
+    }
+
+    &.icon-2x {
+        height: 2em;
+        width: 2em;
+    }
+
+    &.icon-2x > .material-design-icon__svg {
+        height: 2em;
+        width: 2em;
+    }
+
+    &.icon-3x {
+        height: 3em;
+        width: 3em;
+    }
+
+    &.icon-3x > .material-design-icon__svg {
+        height: 3em;
+        width: 3em;
+    }
+}
+
+// nprogress
+#nprogress {
+    .bar {
+        background: palette.$base-purple-500;
+        z-index: 9999;
+    }
+
+    .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    .peg {
+        box-shadow: 0 0 10px palette.$base-purple-500, 0 0 5px palette.$base-purple-500;
+    }
+
+    .spinner-icon {
+        border-top-color: palette.$base-purple-500;
+        border-left-color: palette.$base-purple-500;
+    }
+}
+
+// global
+html, body {
+    height: 100%;
+    background: var(--ks-background-body);
+    color: var(--ks-content-primary);
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+b {
+    font-weight: 600;
+}
+
+button {
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+[placeholder] {
+    text-overflow: ellipsis;
+}
+
+pre {
+    overflow: hidden;
+    background: var(--ks-background-input);
+    color: var(--ks-content-primary);
+    padding: 1rem;
+}
+
+blockquote {
+    border-left: 5px solid var(--ks-border-primary);
+    margin-top: 2rem;
+    padding: .25rem  0 .25rem 1rem;
+    color: var(--ks-content-primary);
+    p {
+        margin-bottom: 0;
+    }
+}
+
+hr {
+    border-color: var(--ks-border-primary);
+    opacity: 1;
+}

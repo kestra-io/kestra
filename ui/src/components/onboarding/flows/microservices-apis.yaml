@@ -25,7 +25,7 @@ tasks:
     condition: "{{ outputs.check_website.code != 200 }}"
     then:
       - id: send_slack_alert
-        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
         url: "{{ inputs.slackWebhookUrl }}"
         messageText: "Website {{ inputs.websiteUrl }} is down! Status code: {{ outputs.check_website.code }}"
     else:

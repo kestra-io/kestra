@@ -8,7 +8,9 @@ import lombok.Getter;
  */
 @Getter
 public class RunnableTaskException extends Exception {
-    private final Output output;
+    private static final long serialVersionUID = 1L;
+
+    private transient final Output output;
 
     public RunnableTaskException(Exception cause) {
         super(cause);

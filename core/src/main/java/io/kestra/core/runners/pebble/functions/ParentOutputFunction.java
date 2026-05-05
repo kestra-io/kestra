@@ -1,12 +1,12 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.utils.MapUtils;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
@@ -15,10 +15,18 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
  * By default, it retrieves the output of the direct parent.
  * If an index is passed to the function, it retrieves the outputs of this specific parent (start at 0)
  */
-public class ParentOutputFunction implements Function {
+public class ParentOutputFunction implements KestraFunction {
+    public static final String NAME = "parentOutput";
     @Override
     public List<String> getArgumentNames() {
         return List.of("index");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put("index", null);
+        return defaults;
     }
 
     @Override

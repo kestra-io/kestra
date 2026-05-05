@@ -1,17 +1,16 @@
 package io.kestra.core.http.client.configurations;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Builder(toBuilder = true)
 @Getter
@@ -44,6 +43,13 @@ public class HttpConfiguration {
     @Setter
     @Schema(title = "List of response code allowed for this request")
     private Property<List<Integer>> allowedResponseCodes;
+
+    @Schema(
+        title = "Whether to enable TCP Keep-Alive extended socket options (TCP_KEEPIDLE, TCP_KEEPINTERVAL, TCP_KEEPCOUNT).",
+        description = "Set to `false` when running on Windows workers, as these extended socket options are not supported by the Windows JDK and will cause connection failures."
+    )
+    @Builder.Default
+    private Property<Boolean> enabledTcpExtendedKeepAlive = Property.ofValue(true);
 
     @Schema(title = "The default charset for the request.")
     @Builder.Default

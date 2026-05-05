@@ -1,0 +1,12 @@
+id: flow-trigger-depends-on-flow-b
+namespace: io.kestra.tests.trigger.depends.on
+
+outputs:
+  - id: some
+    type: STRING
+    value: value
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

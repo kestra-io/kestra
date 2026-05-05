@@ -161,6 +161,12 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
+    ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        String namespace,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
+
     ArrayListTotal<FlowWithSource> findWithSource(
         Pageable pageable,
         @Nullable String tenantId,

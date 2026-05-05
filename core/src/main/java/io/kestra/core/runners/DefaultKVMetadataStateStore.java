@@ -22,7 +22,7 @@ import jakarta.inject.Singleton;
  * where the repository is available. Workers use a gRPC-based implementation instead.
  */
 @Singleton
-@Requires(property = "kestra.server-type", notEquals = "WORKER")
+@Requires(beans = KvMetadataRepositoryInterface.class)
 public class DefaultKVMetadataStateStore implements KVMetadataStateStore {
 
     private final KvMetadataRepositoryInterface kvMetadataRepository;

@@ -1,10 +1,11 @@
-import {cssVariable, LOG_LEVELS} from "@kestra-io/ui-libs";
+import {LOG_LEVELS} from "@kestra-io/design-system";
+import {cssVar} from "@kestra-io/design-system"
 
 export type LevelKey = typeof LOG_LEVELS[number];
 
 
 export function color() {
-    return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVariable("--log-chart-" + level.toLowerCase())]));
+    return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVar("--log-chart-" + level.toLowerCase())]));
 }
 
 export function graphColors(state: LevelKey) {

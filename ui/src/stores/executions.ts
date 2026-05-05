@@ -5,8 +5,9 @@ import Utils from "../utils/utils";
 import {useCoreStore} from "./core";
 import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
-import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
+import {CLUSTER_PREFIX} from "@kestra-io/design-system";
 import {useAxios} from "../utils/axios";
+import * as ExecutionUtils from "../utils/executionUtils";
 
 interface LogsState {
     total: number;
@@ -34,6 +35,9 @@ export interface Execution{
         value?: string
         executionId?: string
         outputs?: Record<string, any>
+        state?: {
+            current: string
+        }
     }[]
     state: {
         current: string;
@@ -218,6 +222,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                 taskRunId: options.taskRunId,
                 state: options.state,
             })
+    }
+    const waitForStateChange = async (source: Execution) => {
+        const updated = await ExecutionUtils.waitForState(axios, source) as Execution;
+        execution.value = updated;
+        return updated;
     }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
@@ -624,7 +633,6 @@ export const useExecutionsStore = defineStore("executions", () => {
 
             return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
 
-
         }
 
     const loadAugmentedGraph = async (options: { id: string; params?: Record<string, any> }) => {
@@ -778,6 +786,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,
+        waitForStateChange,
         kill,
         bulkKill,
         queryKill,

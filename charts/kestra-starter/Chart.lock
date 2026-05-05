@@ -1,0 +1,9 @@
+dependencies:
+- name: postgres
+  repository: https://groundhog2k.github.io/helm-charts/
+  version: 1.5.7
+- name: kestra
+  repository: https://helm.kestra.io/
+  version: 1.0.28
+digest: sha256:ab414a8c0a141f4ded784b7d37aaaa0153e3413ac7cb394f33b50065afb49592
+generated: "2026-01-21T12:08:57.418806968+01:00"

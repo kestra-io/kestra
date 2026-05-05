@@ -20,7 +20,7 @@ import Utils from "../utils/utils";
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts";
 import {useAxios} from "../utils/axios";
 import {removeRefPrefix, usePluginsStore} from "./plugins";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import _throttle from "lodash/throttle";
 import {useCoreStore} from "./core";
 import {useI18n} from "vue-i18n";

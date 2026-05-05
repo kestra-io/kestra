@@ -85,13 +85,6 @@ class LogControllerTest {
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 
-        // Test with old parameters
-        logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/search?minLevel=INFO"),
-            Argument.of(PagedResults.class, LogEntry.class)
-        );
-        assertThat(logs.getTotal()).isEqualTo(2L);
-
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/search?page=1&size=-1"))

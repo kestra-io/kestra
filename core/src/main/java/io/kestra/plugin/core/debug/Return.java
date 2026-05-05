@@ -82,8 +82,7 @@ import lombok.experimental.SuperBuilder;
     metrics = {
         @Metric(name = "length", type = Counter.TYPE),
         @Metric(name = "duration", type = Timer.TYPE)
-    },
-    aliases = "io.kestra.core.tasks.debugs.Return"
+    }
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(

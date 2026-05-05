@@ -1,0 +1,85 @@
+name: Helm migrate artifacts to GCS
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "If true, list files to copy but do not upload"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  migrate:
+    name: Copy gh-pages artifacts to GCS
+    runs-on: ubuntu-latest
+    env:
+      BUCKET: helm-charts-kestra-host
+
+    steps:
+      - name: Checkout helm-charts gh-pages
+        uses: actions/checkout@v5
+        with:
+          repository: kestra-io/helm-charts
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/230725787862/locations/global/workloadIdentityPools/github/providers/github
+          service_account: helm-charts-publisher@kestra-host.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: List artifacts
+        run: |
+          echo "=== .tgz files ==="
+          ls gh-pages/*.tgz | wc -l
+          echo "=== index.yaml ==="
+          ls gh-pages/index.yaml
+          echo "=== other tracked files ==="
+          ls gh-pages/artifacthub-repo.yml gh-pages/CNAME 2>/dev/null || true
+
+      - name: Dry run — show what would be uploaded
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "DRY RUN — no upload performed."
+          echo ""
+          echo "Would upload to gs://${BUCKET}/:"
+          gsutil ls gh-pages/*.tgz gh-pages/index.yaml | sed 's|gh-pages/|  |'
+
+      - name: Upload artifacts
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          # Upload .tgz files first so index.yaml never points at a missing tarball.
+          gsutil -m cp gh-pages/*.tgz gs://${BUCKET}/
+          gsutil cp gh-pages/index.yaml gs://${BUCKET}/index.yaml
+          gsutil cp gh-pages/artifacthub-repo.yml gs://${BUCKET}/artifacthub-repo.yml 2>/dev/null || true
+
+      - name: Verify count
+        if: ${{ !inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          LOCAL=$(ls gh-pages/*.tgz | wc -l)
+          REMOTE=$(gsutil ls "gs://${BUCKET}/*.tgz" | wc -l)
+
+          echo "Local .tgz:  ${LOCAL}"
+          echo "Remote .tgz: ${REMOTE}"
+
+          if [ "${LOCAL}" != "${REMOTE}" ]; then
+            echo "ERROR: count mismatch — migration incomplete."
+            exit 1
+          fi
+
+          echo "OK: ${REMOTE} .tgz files in bucket."
+          echo ""
+          echo "Spot-check index.yaml:"
+          gsutil cat gs://${BUCKET}/index.yaml | head -20

@@ -43,7 +43,7 @@ public class JsonSchemaCache {
     }
 
     public Map<String, Object> getSchemaForType(final SchemaType type,
-        final boolean arrayOf) {
+                                                final boolean arrayOf) {
         return schemaCache.computeIfAbsent(new CacheKey(type, arrayOf), key ->
         {
 

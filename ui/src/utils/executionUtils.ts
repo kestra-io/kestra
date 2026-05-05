@@ -4,16 +4,16 @@ import {apiUrl} from "override/utils/route";
 interface Execution {
     id: string,
     state: {
-        histories: any[]
+        histories?: any[]
     },
     taskRunList: Array<{
-        state: {
+        state?: {
             current: string
         }
     }>
 }
 
-export function waitFor($http: AxiosInstance, execution: Execution, predicate: (data: any) => boolean) {
+export function waitFor($http: AxiosInstance, execution: {id: string}, predicate: (data: any) => boolean) {
     return new Promise((resolve) => {
         const callback = () => {
             $http.get(`${apiUrl()}/executions/${execution.id}`).then(response => {
@@ -37,11 +37,11 @@ export function waitFor($http: AxiosInstance, execution: Execution, predicate: (
 }
 
 export function findTaskRunsByState(execution: Execution, state: string)  {
-    return execution.taskRunList.filter((taskRun) => taskRun.state.current === state);
+    return execution.taskRunList.filter((taskRun) => taskRun.state?.current === state);
 }
 
-export function statePredicate(execution: Execution, current: {state: {histories: any[]}}) {
-    return current.state.histories.length >= execution.state.histories.length
+export function statePredicate(execution: Execution, current: {state: {histories?: any[]}}) {
+    return (current.state.histories?.length ?? 0) >= (execution.state.histories?.length ?? 0)
 }
 
 export function waitForState($http: AxiosInstance, execution: Execution) {
@@ -49,5 +49,3 @@ export function waitForState($http: AxiosInstance, execution: Execution) {
         return statePredicate(execution, current);
     })
 }
-
-

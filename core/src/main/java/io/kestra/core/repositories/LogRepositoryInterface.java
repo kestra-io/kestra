@@ -99,10 +99,6 @@ public interface LogRepositoryInterface extends IndexingRepository<LogEntry>, Qu
 
     void deleteByFilters(String tenantId, List<QueryFilter> filters);
 
-    default int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, true, true);
-    }
-
     int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs,
-        boolean purgeNonExecutionLogs);
+        boolean purgeNonExecutionLogs, Integer batchSize);
 }

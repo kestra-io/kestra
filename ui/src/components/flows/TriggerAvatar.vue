@@ -2,7 +2,7 @@
     <div class="trigger">
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
-                <el-popover
+                <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
@@ -13,12 +13,12 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
-                </el-popover>
+                </KsPopover>
             </template>
         </span>
     </div>
@@ -29,7 +29,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import Utils from "../../utils/utils";
     import TriggerVars from "./TriggerVars.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {Execution} from "../../stores/executions";
@@ -128,7 +128,7 @@
     }
 
     :deep(div.wrapper) {
-        width: 20px;
-        height: 20px;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
     }
 </style>

@@ -44,12 +44,12 @@ public class ExecutionLogService {
      * @return the number of log entries deleted
      */
     public PurgeResult purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
-        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
         if (!purgeExecutionLogs && !purgeNonExecutionLogs) {
             return new PurgeResult(0, 0);
         }
 
-        int deleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
+        int deleted = logRepository.deleteByQuery(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs, batchSize);
 
         // When both types are purged in a single call, we can't distinguish the individual counts
         return new PurgeResult(

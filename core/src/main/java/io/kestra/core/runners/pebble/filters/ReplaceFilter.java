@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.utils.RegexUtils;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -43,12 +44,16 @@ public class ReplaceFilter implements Filter {
         final boolean regexp = args.containsKey(ARGUMENT_REGEXP) ? (Boolean) args.get(ARGUMENT_REGEXP) : false;
         Map<?, ?> replacePair = (Map<?, ?>) args.get(ARGUMENT_PAIRS);
 
-        if (input instanceof Map) {
-            return processMap((Map<String, Object>) input, replacePair, regexp);
-        } else if (input instanceof List) {
-            return processList((List<Object>) input, replacePair, regexp);
-        } else {
-            return processString(input.toString(), replacePair, regexp);
+        try {
+            if (input instanceof Map) {
+                return processMap((Map<String, Object>) input, replacePair, regexp);
+            } else if (input instanceof List) {
+                return processList((List<Object>) input, replacePair, regexp);
+            } else {
+                return processString(input.toString(), replacePair, regexp);
+            }
+        } catch (RegexUtils.RegexTimeoutException e) {
+            throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
     }
 
@@ -91,7 +96,7 @@ public class ReplaceFilter implements Filter {
         String data = input;
         for (Map.Entry<?, ?> entry : replacePair.entrySet()) {
             if (regexp) {
-                data = data.replaceAll(entry.getKey().toString(), entry.getValue().toString());
+                data = RegexUtils.replaceAll(data, entry.getKey().toString(), entry.getValue().toString());
             } else {
                 data = data.replace(entry.getKey().toString(), entry.getValue().toString());
             }

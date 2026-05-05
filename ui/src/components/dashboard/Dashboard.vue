@@ -3,14 +3,17 @@
 
     <section id="filter" :class="{filterPadding: padding}">
         <KSFilter
+            :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
             :configuration="filterConfiguration"
+            :defaultScope="false"
             :tableOptions="{
                 chart: {shown: false},
                 columns: {shown: false},
                 refresh: {shown: true, callback: () => refreshCharts()}
             }"
             :showSearchInput="false"
+            :defaultDuration="dashboard.timeWindow?.default"
         />
     </section>
 
@@ -19,13 +22,13 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue";
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
     import {processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import Sections from "./sections/Sections.vue";
 
     import {
@@ -33,6 +36,9 @@
         useNamespaceDashboardFilter,
         useFlowDashboardFilter
     } from "../filter/configurations";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    useRestoreUrl();
 
     const dashboardFilter = useDashboardFilter();
     const flowDashboardFilter = useFlowDashboardFilter();
@@ -43,7 +49,6 @@
         if (props.isFlow) return flowDashboardFilter.value;
         return dashboardFilter.value;
     });
-
 
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
@@ -80,7 +85,7 @@
 
     const padding = computed(() => dashboardLocation.value === "home");
 
-    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "__default", charts: []});
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []});
     const isDashboardBundledWithUI = ref<boolean>(false);
     const charts = ref<Chart[]>([]);
 
@@ -88,7 +93,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)});
         }
     };
 
@@ -107,7 +112,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true;
     }
 
@@ -128,17 +133,9 @@
         }
 
         if (dashboardLocation.value === "home") {
-            // Preserve timeRange filter when switching dashboards
-            const preservedQuery = Object.fromEntries(
-                Object.entries(route.query).filter(([key]) =>
-                    key.includes("timeRange")
-                )
-            );
-
             if (route.params.dashboard !== id) {
                 await router.replace({
                     params: {...route.params, dashboard: id},
-                    query: preservedQuery,
                 });
             }
         }
@@ -188,7 +185,6 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .filterPadding {
     margin-top: 1.5rem;

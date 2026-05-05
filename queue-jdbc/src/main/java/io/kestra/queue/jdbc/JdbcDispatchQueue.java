@@ -32,7 +32,7 @@ public class JdbcDispatchQueue<T extends DispatchEvent> extends AbstractDispatch
     }
 
     @Override
-    public QueueSubscriber<T> subscriber() {
+    protected QueueSubscriber<T> doSubscriber() {
         return new JdbcDispatchSubscriber<>(
             cls,
             queueService,

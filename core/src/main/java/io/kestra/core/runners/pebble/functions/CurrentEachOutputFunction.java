@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-public class CurrentEachOutputFunction implements Function {
+public class CurrentEachOutputFunction implements KestraFunction {
+    public static final String NAME = "currentEachOutput";
 
     @SuppressWarnings("unchecked")
     @Override
@@ -42,5 +42,10 @@ public class CurrentEachOutputFunction implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of("outputs");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("outputs", "outputs.forEach");
     }
 }

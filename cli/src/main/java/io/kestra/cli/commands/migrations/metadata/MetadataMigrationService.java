@@ -7,6 +7,7 @@ import java.nio.file.NoSuchFileException;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +35,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class MetadataMigrationService {
+    private static final Pattern REVISION_FILE_PATTERN = Pattern.compile(".*\\.v\\d+$");
+
     protected FlowRepositoryInterface flowRepository;
     protected TenantService tenantService;
     protected KvMetadataRepositoryInterface kvMetadataRepository;
@@ -113,6 +116,7 @@ public class MetadataMigrationService {
             {
                 List<PathAndAttributes> list = listAllFromStorage(storageInterface, StorageContext::namespaceFilePrefix, namespaceForTenant.getKey(), namespaceForTenant.getValue());
                 return list.stream()
+                    .filter(pathAndAttributes -> !REVISION_FILE_PATTERN.matcher(pathAndAttributes.path()).matches())
                     .map(pathAndAttributes -> NamespaceFileMetadata.of(namespaceForTenant.getKey(), namespaceForTenant.getValue(), pathAndAttributes.path(), pathAndAttributes.attributes()));
             }))
             .forEach(throwConsumer(nsFileMetadata ->

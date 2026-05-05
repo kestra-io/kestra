@@ -34,7 +34,7 @@ import reactor.core.publisher.FluxSink;
  *
  * @Override
  * protected Condition defaultFilter() {
- *     return DSL.trueCondition();
+ *     return DSL.noCondition();
  * }
  * }
  * </pre>

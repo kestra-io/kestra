@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -43,7 +42,6 @@ public class PluginModule extends SimpleModule {
         addDeserializer(DataFilter.class, new PluginDeserializer<>());
         addDeserializer(DataFilterKPI.class, new PluginDeserializer<>());
         addDeserializer(AbstractTrigger.class, new PluginDeserializer<>());
-        addDeserializer(Condition.class, new PluginDeserializer<>());
         addDeserializer(TaskRunner.class, new PluginDeserializer<>());
         addDeserializer(StorageInterface.class, new PluginDeserializer<>());
         addDeserializer(SecretPluginInterface.class, new PluginDeserializer<>());

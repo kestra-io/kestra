@@ -1,0 +1,138 @@
+suite: JVM ActiveProcessorCount
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: does not set KESTRA_JAVA_OPTS when feature is disabled
+    set:
+      common:
+        jvm:
+          forceActiveProcessors:
+            enabled: false
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KESTRA_JAVA_OPTS
+
+  - it: does not set KESTRA_JAVA_OPTS when nothing is configured
+    set:
+      common:
+        resources:
+          limits:
+            cpu: "1000m"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KESTRA_JAVA_OPTS
+
+  - it: sets ActiveProcessorCount=1 when cpu=250m and mode=auto
+    set:
+      common:
+        resources:
+          limits:
+            cpu: 250m
+        jvm:
+          # extraOpts is empty to keep the value deterministic
+          extraOpts: ""
+          forceActiveProcessors:
+            enabled: true
+            count: "auto"
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: KESTRA_JAVA_OPTS
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: "-XX:ActiveProcessorCount=1"
+
+  - it: sets ActiveProcessorCount=1 when cpu=1250m and mode=auto
+    set:
+      common:
+        resources:
+          limits:
+            cpu: "1250m"
+        jvm:
+          # extraOpts is empty to keep the value deterministic
+          extraOpts: ""
+          forceActiveProcessors:
+            enabled: true
+            count: "auto"
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: KESTRA_JAVA_OPTS
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: "-XX:ActiveProcessorCount=1"
+
+  - it: sets ActiveProcessorCount=3 when mode=value
+    set:
+      common:
+        resources:
+          limits:
+            cpu: "1250m"
+        jvm:
+          # extraOpts is empty to keep the value deterministic
+          extraOpts: ""
+          forceActiveProcessors:
+            enabled: true
+            count: "value"
+            value: 3
+      deployments:
+        standalone:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: KESTRA_JAVA_OPTS
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: "-XX:ActiveProcessorCount=3"
+
+  - it: uses component-level JVM config over common
+    set:
+      common:
+        jvm:
+          # extraOpts is empty to keep the value deterministic
+          extraOpts: ""
+          forceActiveProcessors:
+            enabled: true
+            count: "value"
+            value: 2
+      deployments:
+        standalone:
+          enabled: true
+          jvm:
+            # extraOpts is empty to keep the value deterministic
+            extraOpts: ""
+            forceActiveProcessors:
+              enabled: true
+              count: "value"
+              value: 5
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].env[1].name
+          value: KESTRA_JAVA_OPTS
+      - equal:
+          path: spec.template.spec.containers[0].env[1].value
+          value: "-XX:ActiveProcessorCount=5"

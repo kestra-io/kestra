@@ -256,6 +256,61 @@ class InternalKVStoreTest {
         Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
     }
 
+    @Test
+    void putRawShouldPreserveStringValue() throws IOException, ResourceExpiredException {
+        // Given - simulate backup/restore: put a value, read it raw, then putRaw into a new store
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        String stringValue = "/in";
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata("desc", Duration.ofMinutes(5)), stringValue));
+
+        // When - simulate backup read + restore write
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata("desc", Duration.ofMinutes(5)), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then - value should be identical after roundtrip
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(stringValue);
+    }
+
+    @Test
+    void putRawShouldPreserveComplexValue() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, (Duration) null), complexValue));
+
+        // When
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata(null, (Duration) null), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(complexValue);
+    }
+
+    @Test
+    void putRawShouldPreserveNumericValue() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, (Duration) null), 42));
+
+        // When
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata(null, (Duration) null), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(42);
+    }
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

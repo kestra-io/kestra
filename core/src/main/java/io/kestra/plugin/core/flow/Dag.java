@@ -85,8 +85,7 @@ import lombok.experimental.SuperBuilder;
                           - task3
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Dag"
+    }
 )
 public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull

@@ -70,8 +70,7 @@ import lombok.experimental.SuperBuilder;
                         expr: "{{ customer_email }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.storages.DeduplicateItems"
+    }
 )
 @SuperBuilder
 @ToString

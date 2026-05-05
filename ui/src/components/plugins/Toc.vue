@@ -1,14 +1,14 @@
 <template>
     <div class="plugins-list">
-        <el-input
+        <KsInput
             class="p-2 bg-transparent search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable
         />
-        <el-collapse accordion v-model="activeNames">
+        <KsCollapse accordion v-model="activeNames">
             <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
-                <el-collapse-item
+                <KsCollapseItem
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
@@ -28,7 +28,7 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <TaskIcon
+                                                    <KsTaskIcon
                                                         :onlyIcon="true"
                                                         :cls="namespace + '.' + cls"
                                                         :icons="pluginsStore.icons"
@@ -46,16 +46,17 @@
                             </ul>
                         </li>
                     </ul>
-                </el-collapse-item>
+                </KsCollapseItem>
             </template>
-        </el-collapse>
+        </KsCollapse>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch, nextTick, reactive} from "vue";
     import {useRoute} from "vue-router";
-    import {isEntryAPluginElementPredicate, TaskIcon, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../../utils/pluginUtils";
+    import {KsTaskIcon} from "@kestra-io/design-system";
     import {usePluginsStore} from "../../stores/plugins";
     import {cap} from "../../utils/filters";
 
@@ -87,12 +88,30 @@
             );
     };
 
+    const getScrollableParent = (el: HTMLElement): HTMLElement | null => {
+        let parent = el.parentElement;
+        while (parent) {
+            const style = getComputedStyle(parent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                return parent;
+            }
+            parent = parent.parentElement;
+        }
+        return null;
+    };
+
     const scrollToActivePlugin = () => {
         const activePlugin = localStorage.getItem("activePlugin");
         if (activePlugin) {
             const pluginElement = pluginRefs[activePlugin];
             if (pluginElement) {
-                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "start"});
+                const el = pluginElement.$el as HTMLElement;
+                const scrollContainer = getScrollableParent(el);
+                if (scrollContainer) {
+                    const elRect = el.getBoundingClientRect();
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"});
+                }
             }
         }
     };
@@ -124,16 +143,19 @@
             });
     });
 
-    watch(route, () => {
+    watch(() => route.params.cls, (cls) => {
+        if (!cls) return;
         props.plugins.forEach(plugin => {
             if (Object.entries(plugin).some(([key, value]) => {
                 if (isEntryAPluginElementPredicate(key, value)) {
-                    return (value as PluginElement[]).some(({cls}) => cls === route.params.cls);
+                    return (value as PluginElement[]).some(({cls: c}) => c === cls);
                 }
                 return false;
             })) {
-                activeNames.value = [plugin.group];
-                localStorage.setItem("activePlugin", plugin.group);
+                if (activeNames.value[0] !== plugin.group) {
+                    activeNames.value = [plugin.group];
+                    localStorage.setItem("activePlugin", plugin.group);
+                }
             }
         });
         nextTick(() => {
@@ -186,11 +208,12 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .plugins-list {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        height: 100%;
 
         .search {
             flex-shrink: 0;
@@ -198,37 +221,37 @@
             padding-bottom: 0.5rem;
         }
 
-        .el-collapse {
+        .kel-collapse {
             flex: 1;
         }
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-tag-background);
         }
 
-        .el-collapse-item__header {
-            font-size: 0.875rem;
+        .kel-collapse-item__header {
+            font-size: var(--ks-font-size-sm);
         }
 
         ul {
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
-            font-size: var(--font-size-xs);
+            font-size: var(--ks-font-size-xs);
             margin-left: .5rem;
         }
 
         h6,
         a {
             word-break: break-all;
-            color: var(--el-collapse-header-text-color);
+            color: var(--kel-collapse-header-text-color);
         }
 
         .toc-h3 {
             .icon {
-                width: var(--font-size-sm);
-                height: var(--font-size-sm);
+                width: var(--ks-font-size-sm);
+                height: var(--ks-font-size-sm);
                 display: inline-block;
                 position: relative;
             }
@@ -241,7 +264,7 @@
                 margin-left: .5rem;
 
                 h6 {
-                    font-size: var(--font-size-sm);
+                    font-size: var(--ks-font-size-sm);
                     margin-bottom: .5rem;
                 }
 
@@ -264,12 +287,12 @@
                 z-index: 10;
             }
 
-            .el-collapse {
+            .kel-collapse {
                 overflow-y: auto;
             }
 
-            .el-collapse-item__header {
-                font-size: 0.75rem;
+            .kel-collapse-item__header {
+                font-size: var(--ks-font-size-xs);
             }
 
             ul {
@@ -284,7 +307,7 @@
                 }
 
                 h6 {
-                    font-size: 0.75rem;
+                    font-size: var(--ks-font-size-xs);
                 }
 
                 .toc-h4 {

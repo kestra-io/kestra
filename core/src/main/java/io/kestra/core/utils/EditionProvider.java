@@ -5,8 +5,6 @@ import java.util.Optional;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -15,24 +13,22 @@ public class EditionProvider {
         return Edition.OSS;
     }
 
-    @Inject
-    private Optional<SettingRepositoryInterface> settingRepository; // repositories are not always there on unit tests
-
-    @PostConstruct
-    void start() {
-        // check the edition in the settings and update if needed, we didn't use it would allow us to detect incompatible update later if needed
-        settingRepository.ifPresent(settingRepositoryInterface -> persistEdition(settingRepositoryInterface, get()));
-    }
-
-    private void persistEdition(SettingRepositoryInterface settingRepositoryInterface, Edition edition) {
-        Optional<Setting> versionSetting = settingRepositoryInterface.findByKey(Setting.INSTANCE_EDITION);
-        if (versionSetting.isEmpty() || !versionSetting.get().getValue().equals(edition)) {
-            settingRepositoryInterface.save(
-                Setting.builder()
-                    .key(Setting.INSTANCE_EDITION)
-                    .value(edition)
-                    .build()
-            );
+    /**
+     * Persists the current edition in the settings repository.
+     * Must be called after database migrations have completed (e.g., from a startup
+     * hook).
+     *
+     * @param settingRepository the repository to persist the edition setting.
+     */
+    public void persistEdition(SettingRepositoryInterface settingRepository) {
+        Edition edition = get();
+        Optional<Setting> editionSetting = settingRepository.findByKey(Setting.INSTANCE_EDITION);
+        if (editionSetting.isEmpty() || !editionSetting.get().getValue().equals(edition)) {
+            settingRepository.save(
+                    Setting.builder()
+                            .key(Setting.INSTANCE_EDITION)
+                            .value(edition)
+                            .build());
         }
     }
 

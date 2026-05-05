@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,27 +11,37 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-public class KvFunction implements Function {
+public class KvFunction implements KestraFunction {
+    public static final String NAME = "kv";
 
     private static final String KEY_ARGS = "key";
     private static final String ERROR_ON_MISSING_ARG = "errorOnMissing";
     private static final String NAMESPACE_ARG = "namespace";
 
     @Inject
-    private KVStoreService kvStoreService;
+    private Provider<KVStoreService> kvStoreService;
 
     @Override
     public List<String> getArgumentNames() {
         return List.of(KEY_ARGS, NAMESPACE_ARG, ERROR_ON_MISSING_ARG);
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(KEY_ARGS, "'my_key'");
+        defaults.put(NAMESPACE_ARG, "flow.namespace");
+        defaults.put(ERROR_ON_MISSING_ARG, null);
+        return defaults;
     }
 
     @SuppressWarnings("unchecked")
@@ -52,7 +63,7 @@ public class KvFunction implements Function {
                 value = getValueWithInheritance(flowNamespace, key, flowTenantId);
             } else {
                 // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
-                value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
+                value = kvStoreService.get().get(flowTenantId, namespace, flowNamespace).getValue(key);
             }
         } catch (ResourceExpiredException e) {
             if (errorOnMissing) {
@@ -75,7 +86,7 @@ public class KvFunction implements Function {
         Optional<KVValue> value = Optional.empty();
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
-            value = kvStoreService.get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
+            value = kvStoreService.get().get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
             if (!inheritedNamespace.contains(".")) {
                 return value;
             }

@@ -13,8 +13,14 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderOnceFunction extends RenderFunction {
+    public static final String NAME = "renderOnce";
     public List<String> getArgumentNames() {
         return List.of("toRender");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of("toRender", "inputs.inputWithPebble");
     }
 
     @Override

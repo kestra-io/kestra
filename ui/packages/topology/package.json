@@ -1,6 +1,6 @@
 {
     "name": "@kestra-io/topology",
-    "version": "0.1.0",
+    "version": "0.0.0-dev",
     "description": "Kestra flow topology graph component – powered by Vue Flow",
     "type": "module",
     "homepage": "https://github.com/kestra-io/kestra#readme",

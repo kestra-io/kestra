@@ -141,7 +141,32 @@ class PluginControllerTest {
         );
 
         assertThat(doc.getMarkdown()).contains("io.kestra.core.plugins.test.DeprecatedTask");
-        assertThat(doc.getMarkdown()).contains("::: warning\n");
+        // alert blocks must use three-colon remark-directive container syntax, not two-colon Nuxt syntax
+        assertThat(doc.getMarkdown()).contains(":::alert{type=\"warning\"}");
+        assertThat(doc.getMarkdown()).doesNotContain("::: warning");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void schemaDescriptionAlertConversion() {
+        // Flow has ::alert{type="info"} in states.description and ::alert{type="warning"} in inputs.description
+        DocumentationWithSchema doc = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/io.kestra.plugin.core.trigger.Flow"),
+            DocumentationWithSchema.class
+        );
+
+        Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
+
+        String statesDescription = (String) ((Map<String, Object>) properties.get("states")).get("description");
+        assertThat(statesDescription).contains(":::alert{type=\"info\"}");
+        // ^::alert matches the bare two-colon form; :::alert starts with ::: so ^::alert does NOT match it
+        assertThat(statesDescription).doesNotContainPattern("(?m)^::alert\\{type=\"info\"\\}$");
+        assertThat(statesDescription).contains(":::");
+        assertThat(statesDescription).doesNotContain("::: info");
+
+        String inputsDescription = (String) ((Map<String, Object>) properties.get("inputs")).get("description");
+        assertThat(inputsDescription).contains(":::alert{type=\"warning\"}");
+        assertThat(inputsDescription).doesNotContainPattern("(?m)^::alert\\{type=\"warning\"\\}$");
     }
 
     @SuppressWarnings("unchecked")

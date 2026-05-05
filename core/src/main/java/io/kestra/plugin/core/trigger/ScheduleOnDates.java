@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +20,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
+import io.kestra.core.serializers.JacksonMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -74,11 +74,16 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
         if (nextDate.isPresent()) {
             log.info("Schedule execution on {}", nextDate.get());
 
+            Map<String, Object> rawVariables = Map.of("date", nextDate.get());
+            Map<String, Object> variables = timezone != null
+                ? JacksonMapper.toMap(rawVariables, ZoneId.of(runContext.render(timezone)))
+                : JacksonMapper.toMap(rawVariables);
+
             Execution execution = SchedulableExecutionFactory.createExecution(
                 this,
                 conditionContext,
                 triggerContext,
-                Collections.emptyMap(),
+                variables,
                 nextDate.orElse(null)
             );
 

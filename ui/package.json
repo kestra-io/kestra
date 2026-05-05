@@ -145,9 +145,7 @@
     },
     "overrides": {
         "axios": "1.13.6",
-        "bootstrap": {
-            "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
-        },
+        "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"
         }

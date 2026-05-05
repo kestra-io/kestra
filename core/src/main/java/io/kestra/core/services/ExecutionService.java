@@ -39,6 +39,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -280,6 +281,13 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+        if (taskRunId != null) {
+            // The task run may live in a loop sub-execution (possibly nested); find the right execution to operate on
+            Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+                .map(ExecutionWithTaskRun::execution)
+                .orElse(execution);
+            return replay(targetExecution, flow, taskRunId, revision, breakpoints, false);
+        }
         return replay(execution, flow, taskRunId, revision, breakpoints, false);
     }
 
@@ -448,10 +456,11 @@ public class ExecutionService {
             return Optional.of(new ExecutionWithTaskRun(execution, maybeTaskRun.get()));
         }
 
+        // Recursively search loop sub-executions to support nested loops
         return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream()
-            .flatMap(sub -> ListUtils.emptyOnNull(sub.getTaskRunList()).stream()
-                .filter(tr -> tr.getId().equals(taskRunId))
-                .map(tr -> new ExecutionWithTaskRun(sub, tr)))
+            .map(sub -> findExecutionWithTaskRun(sub, taskRunId))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .findFirst();
     }
 
@@ -998,8 +1007,8 @@ public class ExecutionService {
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
             Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil) {
-                // The current task run is the reference task run, its default state will be newState
+            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil || task instanceof Loop) {
+                // The current task run is the reference task run, its default state will be newState.
                 alterState = originalTaskRun.withState(newStateType).getState();
             } else {
                 // The current task run is an ascendant of the reference task run

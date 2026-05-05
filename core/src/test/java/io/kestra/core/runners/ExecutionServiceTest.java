@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
@@ -126,41 +124,26 @@ class ExecutionServiceTest {
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/restart-loop.yaml"})
-    @Disabled("This is not implemented yet for loops")
-    void restartFlowable() throws Exception {
+    void restartLoop() throws Exception {
+        // Given: with the Loop task, parent has only 1_each; loop sub-executions have the child task runs
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1); // only 1_each in parent; 2_end never reached
 
+        // When
         Flow flow = flowRepository.findByExecution(execution);
         Execution restart = executionService.restart(execution, flow, null);
 
+        // Then: 1_each (a Loop task) is marked RESTARTED so the executor re-initialises its sub-executions
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
-
-        assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
+        assertThat(restart.getTaskRunList()).hasSize(1);
+        assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
-    }
-
-    @RetryingTest(5)
-    @LoadFlows(value = {"flows/valids/restart-loop.yaml"}, tenantId = TENANT_1)
-    @Disabled("This is not implemented yet for loops")
-    void restartFlowable2() throws Exception {
-        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "restart-loop", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.restart(execution, flow, null);
-
-        assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
-        assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
+        var subExecutions = executionRepository.findLoopSubExecutions(restart.getTenantId(), restart.getId());
+        assertThat(subExecutions).hasSize(3);
     }
 
     @Test
@@ -224,20 +207,23 @@ class ExecutionServiceTest {
 
     @Test
     @ExecuteFlow("flows/valids/restart-loop.yaml")
-    @Disabled("This is not implemented yet for loops")
     void replayFlowable(Execution execution) throws Exception {
-        assertThat(execution.getTaskRunList()).hasSize(20);
+        // Given: with the Loop task, parent has only 2 task runs (1_each + 2_end); loop iterations are sub-executions
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(2);
 
+        // When: replay from the task that comes after the Loop (still in the parent execution)
+        String replayFrom = execution.findTaskRunsByTaskId("2_end").getFirst().getId();
         Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null, Optional.empty());
+        Execution restart = executionService.replay(execution, flow, replayFrom, null, Optional.empty());
 
+        // Then: new parent execution with 1_each kept (SUCCESS) and 2_end restarted
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(20);
-        assertThat(restart.getTaskRunList().get(19).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restart.getTaskRunList()).hasSize(2);
+        assertThat(restart.findTaskRunsByTaskId("2_end").getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
-        assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 
@@ -297,43 +283,53 @@ class ExecutionServiceTest {
 
     @Test
     @ExecuteFlow(value = "flows/valids/loop-nested.yaml", tenantId = TENANT_2)
-    @Disabled("This is not implemented yet for loops")
     void replayEachSeq(Execution execution) throws Exception {
-        assertThat(execution.getTaskRunList()).hasSize(16);
+        // Given: loop-nested has 3 levels of nesting; parent has only loop1 task run
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
+        // Navigate to a level-3 sub-execution to find the item task run
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_2, execution.getId());
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop1Subs.getFirst().getId());
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop2Subs.getFirst().getId());
+        TaskRun itemTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("item").getFirst();
+
+        // When: replay from item in the deepest sub-execution
         Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getId(), null, Optional.empty());
+        Execution restart = executionService.replay(execution, flow, itemTaskRun.getId(), null, Optional.empty());
 
+        // Then: returns a new sub-execution with item restarted; parent and parents are successors and are removed
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(2);
-        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getHistories()).hasSize(4);
-
+        assertThat(restart.getTaskRunList()).hasSize(1);
+        assertThat(restart.findTaskRunsByTaskId("item").getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
-        assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 
     @Test
     @ExecuteFlow(value = "flows/valids/loop-nested.yaml", tenantId = TENANT_1)
-    @Disabled("This is not implemented yet for loops")
     void replayEachSeq2(Execution execution) throws Exception {
-        assertThat(execution.getTaskRunList()).hasSize(16);
+        // Given: loop-nested has 3 levels of nesting; parent has only loop1 task run
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
+        // Navigate to a level-3 sub-execution to find the parents task run
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop1Subs.getFirst().getId());
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop2Subs.getFirst().getId());
+        TaskRun parentsTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("parents").getFirst();
+
+        // When: replay from parents — item and parent are predecessors and should be kept
         Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("p1", List.of("l1", "d1")).getId(), null, Optional.empty());
+        Execution restart = executionService.replay(execution, flow, parentsTaskRun.getId(), null, Optional.empty());
 
+        // Then: returns a new sub-execution with item+parent kept in SUCCESS and parents restarted
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
-        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getHistories()).hasSize(4);
-
+        assertThat(restart.findTaskRunsByTaskId("item").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(restart.findTaskRunsByTaskId("parent").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(restart.findTaskRunsByTaskId("parents").getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
-        assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 
@@ -360,23 +356,25 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({ "flows/valids/loop-serial.yaml" })
-    @Disabled("This is not implemented yet for loops")
     void replayEachPara() throws Exception {
+        // Given: parent has only the loop task run; item task runs live in sub-executions
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "loop-serial");
-        assertThat(execution.getTaskRunList()).hasSize(7);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(MAIN_TENANT, execution.getId());
+        assertThat(subExecutions).hasSize(3);
+        TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
+
+        // When: replay from item task run in a sub-execution
         Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.replay(execution, flow, execution.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getId(), null, Optional.empty());
+        Execution restart = executionService.replay(execution, flow, itemTaskRun.getId(), null, Optional.empty());
 
+        // Then: the returned execution is a new sub-execution with item restarted
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(2);
-        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getHistories()).hasSize(4);
-
+        assertThat(restart.getTaskRunList()).hasSize(1);
+        assertThat(restart.findTaskRunsByTaskId("item").getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
-        assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 

@@ -22,7 +22,6 @@ import java.util.stream.IntStream;
 
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,6 +37,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -661,7 +661,6 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-loop.yaml"})
-    @Disabled("This feature is not yet implemented")
     void restartExecutionFromTaskIdWithSequential() throws Exception {
         final String flowId = "restart-loop";
         final String referenceTaskId = "2_end";
@@ -675,7 +674,7 @@ class ExecutionControllerRunnerTest {
         Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent()).isTrue();
 
-        // Run child execution starting from a specific task and wait until it finishes
+        // Replay from 2_end (which is in the parent execution's task run list)
         Thread.sleep(100);
 
         Execution createdChildExec = client.toBlocking().retrieve(
@@ -689,17 +688,26 @@ class ExecutionControllerRunnerTest {
 
         assertThat(createdChildExec).isNotNull();
 
-        Execution restarted = runnerUtils.awaitChildExecution(
-            flow.get(),
-            parentExecution,
+        // Wait for the replayed child execution to complete.
+        // We filter by kind != LOOP to distinguish the replayed child from loop sub-executions.
+        Execution restarted = runnerUtils.awaitFlowExecution(
+            e -> parentExecution.getId().equals(e.getParentId())
+                && e.getKind() != ExecutionKind.LOOP
+                && e.getState().isTerminated(),
+            TENANT_ID, TESTS_FLOW_NS, flowId,
             Duration.ofSeconds(30)
         );
 
         assertThat(restarted.getState().getCurrent()).isEqualTo(Type.SUCCESS);
-        assertThat(restarted.getState().getHistories()).hasSize(3);
+        // Parent history [CREATED, RUNNING, SUCCESS] + RESTARTED + RUNNING + SUCCESS = 6
+        assertThat(restarted.getState().getHistories()).hasSize(6);
         assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
-        assertThat(restarted.getTaskRunList()).hasSize(20);
+        assertThat(restarted.getTaskRunList()).hasSize(2);
         assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
+
+        // 1_each (Loop) is kept as SUCCESS and not re-run, so no new sub-executions are created for the restarted execution
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(restarted.getTenantId(), restarted.getId());
+        assertThat(subExecutions).hasSize(0);
     }
 
     @Test

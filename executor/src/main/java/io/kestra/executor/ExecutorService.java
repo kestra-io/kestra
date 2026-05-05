@@ -634,7 +634,7 @@ public class ExecutorService {
                 onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
             } else if (task instanceof Loop loop) {
                 if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
-                    if (taskRun.getState().getCurrent() == State.Type.CREATED) {
+                    if (taskRun.getState().isCreated()) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                         try {
                             var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());

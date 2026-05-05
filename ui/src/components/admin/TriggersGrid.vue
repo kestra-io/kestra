@@ -8,20 +8,20 @@
                     @search="searchQuery = $event"
                 />
             </div>
-            <el-radio-group v-model="activeCategoryFilter" class="filter-group">
-                <el-radio-button
+            <KsRadioGroup v-model="activeCategoryFilter" class="filter-group">
+                <KsRadioButton
                     v-for="option in filterOptions"
                     :key="option.value"
                     :value="option.value"
                     :label="option.value"
                 >
                     {{ option.label }}
-                </el-radio-button>
-            </el-radio-group>
+                </KsRadioButton>
+            </KsRadioGroup>
         </div>
 
         <div v-if="loading" class="state-empty">
-            <el-skeleton :rows="3" animated />
+            <KsSkeleton :rows="3" animated />
         </div>
 
         <div v-else-if="!hasAnyVisibleTrigger" class="state-empty">

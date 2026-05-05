@@ -1,22 +1,20 @@
 <template>
-    <div :style="{'--top-navbar-height': navbarHeight ? `${navbarHeight}px` : undefined}">
-        <TopNavBar ref="navEl" :title="routeInfo.title">
-            <template v-if="isManageTab" #additional-right>
-                <ul>
-                    <li>
-                        <el-button :icon="Download" @click="exportTriggers()">
-                            {{ $t("export_csv") }}
-                        </el-button>
-                    </li>
-                </ul>
-            </template>
-        </TopNavBar>
-        <Tabs :tabs="tabs" routeName="admin/triggers" />
-    </div>
+    <TopNavBar :title="routeInfo.title">
+        <template v-if="isManageTab" #additional-right>
+            <ul>
+                <li>
+                    <KsButton :icon="Download" @click="exportTriggers()">
+                        {{ $t("export_csv") }}
+                    </KsButton>
+                </li>
+            </ul>
+        </template>
+    </TopNavBar>
+    <Tabs :tabs="tabs" routeName="admin/triggers" />
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw, onBeforeUnmount, onMounted, ref, useTemplateRef, watch} from "vue";
+    import {computed, markRaw, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import Download from "vue-material-design-icons/Download.vue";
@@ -59,29 +57,4 @@
     async function exportTriggers() {
         await triggerStore.exportTriggersAsCSV(route.query);
     }
-
-    const navEl = useTemplateRef<{$el?: HTMLElement} | HTMLElement>("navEl");
-    const navbarHeight = ref<number>();
-    let observer: ResizeObserver | null = null;
-
-    function measure(el: HTMLElement) {
-        const height = Math.round(el.getBoundingClientRect().height);
-        if (height > 0) {
-            navbarHeight.value = height;
-        }
-    }
-
-    onMounted(() => {
-        const instance = navEl.value;
-        if (!instance) return;
-
-        const el = ("$el" in instance ? instance.$el : instance) as HTMLElement;
-        if (!el) return;
-
-        measure(el);
-        observer = new ResizeObserver(() => measure(el));
-        observer.observe(el);
-    });
-
-    onBeforeUnmount(() => observer?.disconnect());
 </script>

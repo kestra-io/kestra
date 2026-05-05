@@ -1,5 +1,5 @@
 <template>
-    <el-dialog
+    <KsDialog
         v-model="visible"
         width="45rem"
         destroyOnClose
@@ -10,31 +10,31 @@
         <template #header>
             <div class="modal-header">
                 <div class="header-main">
-                    <div class="header-icon" :class="{'header-icon--mcp': isMcp}">
-                        <TaskIcon :cls="trigger.type" :icons="pluginsStore.icons" onlyIcon />
-                    </div>
+                    <KsTaskIcon class="header-icon" :cls="trigger.type" :icons="pluginsStore.icons" onlyIcon />
                     <div class="header-text">
                         <div class="header-title-row">
                             <h2 class="header-title">
                                 {{ displayName }}
                             </h2>
-                            <span v-if="trigger.ee" class="ee-badge">EE</span>
+                            <KsTag v-if="trigger.ee" type="info" size="small">
+                                EE
+                            </KsTag>
                         </div>
                         <code class="header-fqcn">{{ trigger.type }}</code>
                     </div>
                 </div>
-                <el-button link class="p-1" @click="$emit('cancel')">
+                <KsIconButton :aria-label="$t('cancel')" @click="$emit('cancel')">
                     <Close />
-                </el-button>
+                </KsIconButton>
             </div>
         </template>
 
-        <el-tabs v-model="activeTab" class="modal-tabs">
-            <el-tab-pane :label="$t('triggers_add_modal_tab_form')" name="form" class="tab-panel">
+        <KsTabs v-model="activeTab" class="modal-tabs">
+            <KsTabPane :label="$t('triggers_add_modal_tab_form')" name="form" class="tab-panel">
                 <div class="form-panel">
-                    <el-form labelPosition="top" :model="formModel">
-                        <el-form-item :label="$t('namespace')" required>
-                            <el-select
+                    <KsForm labelPosition="top" :model="formModel">
+                        <KsFormItem :label="$t('namespace')" required>
+                            <KsSelect
                                 v-model="formModel.namespace"
                                 filterable
                                 remote
@@ -43,72 +43,72 @@
                                 :placeholder="$t('triggers_add_modal_namespace_placeholder')"
                                 @change="onNamespaceChange"
                             >
-                                <el-option v-for="ns in namespaceOptions" :key="ns" :label="ns" :value="ns" />
-                            </el-select>
-                        </el-form-item>
+                                <KsOption v-for="ns in namespaceOptions" :key="ns" :label="ns" :value="ns" />
+                            </KsSelect>
+                        </KsFormItem>
 
-                        <el-form-item :label="$t('flow')" required>
-                            <el-select
+                        <KsFormItem :label="$t('flow')" required>
+                            <KsSelect
                                 v-model="formModel.flowId"
                                 filterable
                                 :placeholder="$t('triggers_add_modal_flow_placeholder')"
                                 :disabled="!formModel.namespace"
                                 :loading="flowsLoading"
                             >
-                                <el-option v-for="f in flowOptions" :key="f.id" :label="f.id" :value="f.id" />
-                            </el-select>
-                        </el-form-item>
+                                <KsOption v-for="f in flowOptions" :key="f.id" :label="f.id" :value="f.id" />
+                            </KsSelect>
+                        </KsFormItem>
 
-                        <el-form-item :label="$t('triggers_add_modal_trigger_id')" required>
-                            <el-input
+                        <KsFormItem :label="$t('triggers_add_modal_trigger_id')" required>
+                            <KsInput
                                 v-model="formModel.triggerId"
                                 :placeholder="$t('triggers_add_modal_trigger_id_placeholder')"
                             />
-                        </el-form-item>
-                    </el-form>
+                        </KsFormItem>
+                    </KsForm>
 
                     <p class="form-hint">
                         {{ $t("triggers_add_modal_properties_hint") }}
                     </p>
                 </div>
-            </el-tab-pane>
+            </KsTabPane>
 
-            <el-tab-pane :label="$t('triggers_add_modal_tab_source')" name="source" class="tab-panel">
+            <KsTabPane :label="$t('triggers_add_modal_tab_source')" name="source" class="tab-panel">
                 <div class="source-panel">
                     <div class="editor-wrapper">
-                        <el-button size="small" class="copy-button" @click="copySource">
+                        <KsButton size="small" class="copy-button" @click="copySource">
                             <CheckIcon v-if="copied" class="copy-icon text-success" />
                             <ContentCopy v-else class="copy-icon" />
                             <span>{{ copied ? $t("copied") : $t("copy") }}</span>
-                        </el-button>
+                        </KsButton>
                         <Editor :modelValue="sourceYaml" lang="yaml" :navbar="false" readOnly :fullHeight="false" />
                     </div>
                 </div>
-            </el-tab-pane>
+            </KsTabPane>
 
-            <el-tab-pane :label="$t('triggers_add_modal_tab_documentation')" name="documentation" class="tab-panel">
+            <KsTabPane :label="$t('triggers_add_modal_tab_documentation')" name="documentation" class="tab-panel">
                 <div class="doc-panel">
                     <PluginDocumentation
                         v-if="documentationPlugin"
                         :plugin="documentationPlugin"
                         fetchPluginDocumentation
                     />
-                    <el-skeleton v-else :rows="6" animated />
+                    <KsSkeleton v-else :rows="6" animated />
                 </div>
-            </el-tab-pane>
-        </el-tabs>
+            </KsTabPane>
+        </KsTabs>
 
         <template #footer>
             <div class="modal-footer">
-                <el-button link @click="$emit('cancel')">
+                <KsButton link @click="$emit('cancel')">
                     {{ $t("cancel") }}
-                </el-button>
-                <el-button type="primary" :disabled="!canSubmit" @click="addTriggerToFlow">
+                </KsButton>
+                <KsButton type="primary" :disabled="!canSubmit" @click="addTriggerToFlow">
                     + {{ $t("triggers_add_modal_add_button") }}
-                </el-button>
+                </KsButton>
             </div>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -118,13 +118,13 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import CheckIcon from "vue-material-design-icons/Check.vue";
     import Close from "vue-material-design-icons/Close.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {KsTaskIcon} from "@kestra-io/design-system";
 
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../stores/plugins";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useTriggerDraftStore} from "../../stores/triggerDraft";
-    import {isMcpTrigger, triggerDisplayName} from "./triggerCatalog";
+    import {triggerDisplayName} from "./triggerCatalog";
 
     import Editor from "../inputs/Editor.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
@@ -155,7 +155,6 @@
         triggerId: generateId()
     });
 
-    const isMcp = computed(() => isMcpTrigger(props.trigger));
     const displayName = computed(() => triggerDisplayName(props.trigger));
     const canSubmit = computed(() =>
         !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim()
@@ -234,20 +233,18 @@
 </script>
 
 <style scoped lang="scss">
-    $ks-tab-active: var(--ks-content-link);
-
     .trigger-configure-modal {
-        :deep(.el-dialog__header) {
+        :deep(.kel-dialog__header) {
             padding: 0;
             margin: 0;
             border-bottom: 1px solid var(--ks-border-secondary);
         }
 
-        :deep(.el-dialog__body) {
+        :deep(.kel-dialog__body) {
             padding: 0;
         }
 
-        :deep(.el-dialog__footer) {
+        :deep(.kel-dialog__footer) {
             padding: 0.75rem 1.25rem;
             border-top: 1px solid var(--ks-border-secondary);
         }
@@ -269,26 +266,9 @@
         }
 
         .header-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.5rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
             flex-shrink: 0;
-            background: color-mix(in srgb, #{$ks-tab-active} 18%, transparent);
-            color: #{$ks-tab-active};
-
-            :deep(img), :deep(svg) {
-                width: 1.375rem;
-                height: 1.375rem;
-            }
-
-            &--mcp {
-                $mcp-color: #ec4899;
-                background: color-mix(in srgb, #{$mcp-color} 18%, transparent);
-                color: $mcp-color;
-            }
         }
 
         .header-text {
@@ -312,16 +292,6 @@
             text-overflow: ellipsis;
         }
 
-        .ee-badge {
-            font-size: 0.625rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            padding: 1px 0.375rem;
-            border-radius: 3px;
-            color: #{$ks-tab-active};
-            background: color-mix(in srgb, #{$ks-tab-active} 18%, transparent);
-        }
-
         .header-fqcn {
             display: block;
             margin-top: 2px;
@@ -335,17 +305,17 @@
     }
 
     .modal-tabs {
-        :deep(.el-tabs__header) {
+        :deep(.kel-tabs__header) {
             margin: 0;
             padding: 0 1.25rem;
             border-bottom: 1px solid var(--ks-border-secondary);
         }
 
-        :deep(.el-tabs__nav-wrap::after) {
+        :deep(.kel-tabs__nav-wrap::after) {
             display: none;
         }
 
-        :deep(.el-tabs__item) {
+        :deep(.kel-tabs__item) {
             padding: 0 1rem;
             font-size: 0.8125rem;
             font-weight: 500;
@@ -362,7 +332,7 @@
             }
         }
 
-        :deep(.el-tabs__active-bar) {
+        :deep(.kel-tabs__active-bar) {
             background-color: var(--ks-content-link) !important;
             height: 2px;
         }
@@ -373,7 +343,7 @@
     }
 
     .form-panel {
-        :deep(.el-form-item):first-of-type {
+        :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }
 

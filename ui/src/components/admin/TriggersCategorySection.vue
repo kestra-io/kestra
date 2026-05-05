@@ -18,7 +18,7 @@
             />
         </div>
 
-        <el-button
+        <KsButton
             v-if="canCollapse"
             type="primary"
             link
@@ -30,7 +30,7 @@
                 ? $t("triggers_add_see_less")
                 : $t("triggers_add_see_more", {count: triggers.length - DEFAULT_VISIBLE_COUNT})
             }}
-        </el-button>
+        </KsButton>
     </section>
 </template>
 
@@ -120,10 +120,6 @@
 
         &:hover {
             color: var(--ks-content-tertiary);
-        }
-
-        :deep(.el-icon) {
-            font-size: 0.875rem;
         }
     }
 </style>

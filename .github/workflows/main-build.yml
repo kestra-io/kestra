@@ -108,3 +108,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
+          users-map: ${{ vars.GH_TO_SLACK_MAP }}

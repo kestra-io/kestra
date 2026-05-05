@@ -3,11 +3,11 @@ namespace: io.kestra.tests
 
 tasks:
   - id: iterate_and_check_name
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     tasks:
       - id: switch
         type: io.kestra.plugin.core.flow.Switch
-        value: "{{ taskrun.value }}"
+        value: "{{ item.value }}"
         cases:
           "Alice":
             - id: OOMCRM_EB_DD_000

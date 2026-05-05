@@ -1,4 +1,4 @@
-import Triggers from "../../../../src/components/admin/Triggers.vue";
+import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
 import {setMockClient} from "@kestra-io/kestra-sdk"
 

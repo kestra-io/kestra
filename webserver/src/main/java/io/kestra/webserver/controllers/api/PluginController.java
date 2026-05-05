@@ -17,8 +17,10 @@ import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -41,6 +43,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import static io.kestra.core.models.Plugin.isDeprecated;
+import static io.kestra.core.models.Plugin.isInternal;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/plugins/")
@@ -149,33 +153,35 @@ public class PluginController {
             "RealtimeTriggerInterface) or app (implements PollingTriggerInterface). Optionally filter by " +
             "group. The 'ee' flag is true when the trigger ships with an Enterprise Edition module."
     )
-    public List<TriggerPluginDto> listTriggerPlugins(
+    public PagedResults<ApiTriggerPlugin> listTriggerPlugins(
         @Parameter(description = "Optional category filter: core, realtime, or app")
         @Nullable @QueryValue(value = "group") TriggerPluginCategory group,
         @Parameter(description = "Include deprecated triggers")
         @Nullable @QueryValue(value = "includeDeprecated", defaultValue = "false") Boolean includeDeprecated
     ) {
-        return pluginRegistry.plugins().stream()
+        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
             .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
-                .filter(c -> !io.kestra.core.models.Plugin.isInternal(c))
+                .filter(c -> !isInternal(c))
                 .filter(c -> !c.getName().startsWith("org.kestra."))
-                .filter(c -> Boolean.TRUE.equals(includeDeprecated) || !io.kestra.core.models.Plugin.isDeprecated(c))
-                .map(c -> toTriggerPluginDto(registeredPlugin, c))
+                .filter(c -> Boolean.TRUE.equals(includeDeprecated) || !isDeprecated(c))
+                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
             .filter(dto -> group == null || group == TriggerPluginCategory.UNKNOWN || dto.group() == group)
-            .sorted(Comparator.comparing((TriggerPluginDto dto) -> dto.group().ordinal())
-                .thenComparing(TriggerPluginDto::name, String.CASE_INSENSITIVE_ORDER))
+            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
             .toList();
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
     }
 
-    private TriggerPluginDto toTriggerPluginDto(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+    private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
         io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
         String title = schema != null && !schema.title().isEmpty() ? schema.title() : triggerClass.getSimpleName();
         String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
-        Boolean deprecated = io.kestra.core.models.Plugin.isDeprecated(triggerClass) ? Boolean.TRUE : null;
+        Boolean deprecated = isDeprecated(triggerClass) ? Boolean.TRUE : null;
 
-        return new TriggerPluginDto(
+        return new ApiTriggerPlugin(
             triggerClass.getName(),
             title,
             description,
@@ -490,5 +496,27 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Lightweight descriptor of a trigger plugin class for the "Add Trigger" catalog UI.
+     *
+     * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
+     * @param name human-readable name (Schema#title if set, otherwise simple class name)
+     * @param description one-line description from the plugin @Schema
+     * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
+     * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
+     * @param icon icon key resolvable via {@code GET /api/v1/plugins/icons}
+     * @param deprecated whether the trigger is deprecated
+     */
+    public record ApiTriggerPlugin(
+        String type,
+        String name,
+        String description,
+        TriggerPluginCategory group,
+        boolean ee,
+        String icon,
+        Boolean deprecated
+    ) {
     }
 }

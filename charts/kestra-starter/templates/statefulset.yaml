@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: versitygw
+spec:
+  serviceName: versitygw
+  replicas: 1
+  selector:
+    matchLabels:
+      app: versitygw
+  template:
+    metadata:
+      labels:
+        app: versitygw
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: versitygw
+          image: "{{ .Values.s3Emulator.image.repository }}:{{ .Values.s3Emulator.image.tag }}"
+          args:
+            - "--port"
+            - "0.0.0.0:7070"
+            - "--health"
+            - "/health"
+            - "posix"
+            - "/data"
+          envFrom:
+            - secretRef:
+                name: versitygw-root
+          env:
+            - name: VGW_REGION
+              value: "eu-west-1"
+            {{- if .Values.s3Emulator.sidecar.enabled }}
+            - name: VGW_META_SIDECAR
+              value: "/meta"
+            {{- end }}
+          ports:
+            - containerPort: 7070
+              name: s3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 7070
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            {{- if .Values.s3Emulator.sidecar.enabled }}
+            - name: meta
+              mountPath: /meta
+            {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.s3Emulator.storage.size }}
+    {{- if .Values.s3Emulator.sidecar.enabled }}
+    - metadata:
+        name: meta
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.s3Emulator.sidecar.size }}
+    {{- end }}

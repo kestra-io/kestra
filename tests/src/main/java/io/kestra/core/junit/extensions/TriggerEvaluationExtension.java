@@ -5,7 +5,6 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import io.kestra.core.tenant.TenantService;
 import org.junit.jupiter.api.extension.*;
 
 import io.kestra.core.junit.annotations.EvaluateTrigger;
@@ -55,6 +54,10 @@ public class TriggerEvaluationExtension implements ParameterResolver {
         }
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
+
+        if (flow.getTenantId() == null) {
+            flow = flow.toBuilder().tenantId(MAIN_TENANT).build();
+        }
 
         AbstractTrigger trigger = flow.getTriggers().stream()
             .filter(t -> t.getId().equals(evaluateTrigger.triggerId()))
@@ -110,7 +113,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             .flowId(flow.getId())
             .triggerId(trigger.getId())
             .date(ZonedDateTime.now())
-            .tenantId(flow.getTenantId() != null ? flow.getTenantId() : TenantService.MAIN_TENANT)
+            .tenantId(flow.getTenantId())
             .build();
     }
 

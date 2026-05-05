@@ -1,4 +1,4 @@
-import {ref, shallowReactive, markRaw} from "vue";
+import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from "vue";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import {useClient} from "@kestra-io/kestra-sdk"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
@@ -11,6 +11,30 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
             document.head.appendChild(link);
         }
     }
+
+export const FederatedModuleErrorBoundary = defineComponent({
+    name: "FederatedModuleErrorBoundary",
+    setup(_, {slots}) {
+        const error = ref<Error | null>(null);
+
+        onErrorCaptured((err: Error) => {
+            error.value = err;
+            console.error("[FederatedModule] Error caught by boundary:", err);
+            return false; // prevent error from propagating further
+        });
+
+        return () => {
+            if (error.value) {
+                return h(
+                    "div",
+                    {class: "federated-module-error"},
+                    "A plugin component failed to load."
+                );
+            }
+            return slots.default?.();
+        };
+    },
+});
 
 export function useFederatedModule(slotName: string) {
 

@@ -37,7 +37,7 @@ import java.util.List;
 public class V2_0TriggerMigration implements MigrationScript {
 
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
-    private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
+    private static final Field<String> VALUE_FIELD = DSL.field(DSL.quotedName("value"), String.class);
 
     private final JooqDSLContextWrapper dslContextWrapper;
     private final int vnodes;
@@ -72,15 +72,15 @@ public class V2_0TriggerMigration implements MigrationScript {
             int migrated = 0;
             int skipped = 0;
 
-            try (Cursor<Record2<Object, Object>> cursor = DSL.using(configuration)
+            try (Cursor<Record2<Object, String>> cursor = DSL.using(configuration)
                 .select(KEY_FIELD, VALUE_FIELD)
                 .from(DSL.table("triggers"))
                 .fetchLazy()) {
 
                 while (cursor.hasNext()) {
-                    Record2<Object, Object> row = cursor.fetchNext();
+                    Record2<Object, String> row = cursor.fetchNext();
                     String key = row.get(KEY_FIELD, String.class);
-                    String json = row.get(VALUE_FIELD, String.class);
+                    String json = row.get(VALUE_FIELD);
 
                     try {
                         V1Trigger v1 = JdbcMapper.of().readValue(json, V1Trigger.class);
@@ -95,7 +95,7 @@ public class V2_0TriggerMigration implements MigrationScript {
 
                         DSL.using(configuration)
                             .update(DSL.table("triggers"))
-                            .set(VALUE_FIELD, (Object) newJson)
+                            .set(VALUE_FIELD, newJson)
                             .where(KEY_FIELD.eq(key))
                             .execute();
 

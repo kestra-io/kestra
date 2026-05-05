@@ -142,3 +142,168 @@ updates:
       # Temporarily ignore all axios updates due to recent supply chain vulnerability, see https://github.com/axios/axios/issues/10604
       - dependency-name: "axios"
         versions: ["*"]
+
+  # Maintain dependencies for ui/packages/design-system
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/design-system"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      # Build toolchain: tsdown, vite, vitejs plugins
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
+
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      storybook:
+        applies-to: version-updates
+        patterns: ["storybook", "@storybook/*"]
+
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
+
+      remark:
+        applies-to: version-updates
+        patterns: ["remark-*", "unified"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+    ignore:
+      # Ignore eslint major updates (same constraint as /ui)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-plugin-vue"
+        versions: ["*"]
+
+  # Maintain dependencies for ui/packages/topology
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/topology"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      # Build toolchain: tsdown, vite, vitejs plugins
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
+
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      # Vue Flow rendering engine
+      vue-flow:
+        applies-to: version-updates
+        patterns: ["@vue-flow/*"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "@tsdown/*",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]

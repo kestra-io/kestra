@@ -116,6 +116,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination ui/packages/design-system
           gh release create "${{ inputs.package }}/v${{ steps.version.outputs.value }}" \
             --title "@kestra-io/${{ inputs.package }} v${{ steps.version.outputs.value }}" \
-            --generate-notes
+            --notes "${{ inputs.package }} version ${{ steps.version.outputs.value }} published to npm.\n\n To install, run: \`npm install @kestra-io/${{ inputs.package }}@${{ steps.version.outputs.value }}\`" \
+            ui/packages/design-system/*design-system*.tgz

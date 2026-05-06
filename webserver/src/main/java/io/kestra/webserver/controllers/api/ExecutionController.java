@@ -446,6 +446,8 @@ public class ExecutionController {
     @Delete(uri = "/by-query")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Delete executions filter by query parameters")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "422", description = "Deleted with errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
@@ -1663,6 +1665,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/kill/by-query")
     @Operation(tags = { "Executions" }, summary = "Kill executions filter by query parameters")
+    @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public HttpResponse<?> killExecutionsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",

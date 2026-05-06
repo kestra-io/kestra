@@ -702,6 +702,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Delete flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
@@ -720,6 +721,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Delete flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws QueueException {
         List<Flow> list = ids
@@ -737,6 +739,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Disable flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> disableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) throws Exception {
@@ -749,6 +752,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Disable flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> disableFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws Exception {
 
@@ -761,6 +765,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Enable flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> enableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat List<QueryFilter> filters) throws Exception {
@@ -773,6 +778,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Enable flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> enableFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws Exception {
 

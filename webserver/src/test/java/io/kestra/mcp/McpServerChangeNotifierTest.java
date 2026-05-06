@@ -29,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(environments = "h2")
+@io.micronaut.context.annotation.Property(name = "kestra.server-type", value = "WEBSERVER")
 class McpServerChangeNotifierTest {
 
     @Inject

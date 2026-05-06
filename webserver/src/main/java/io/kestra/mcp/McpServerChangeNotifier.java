@@ -29,6 +29,7 @@ import static io.kestra.plugin.core.trigger.McpToolTrigger.DEFAULT_SERVER_ID;
 @Slf4j
 @Context
 @Requires(beans = McpServerHandlerTransport.class)
+@Requires(property = "kestra.server-type", pattern = "WEBSERVER")
 public class McpServerChangeNotifier {
     private final Provider<McpServerHandlerTransport> mcpServerHandlerTransport;
     private final BroadcastQueueInterface<FlowInterface> flowQueue;

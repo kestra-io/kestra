@@ -247,9 +247,9 @@ public class PluginController {
                 new DocumentationWithSchema(
                     doc,
                     new Schema(
-                        classPluginDocumentation.getPropertiesSchema(),
-                        classPluginDocumentation.getOutputsSchema(),
-                        classPluginDocumentation.getDefs()
+                        applyAlertReplacementToMap(classPluginDocumentation.getPropertiesSchema()),
+                        applyAlertReplacementToMap(classPluginDocumentation.getOutputsSchema()),
+                        applyAlertReplacementToMap(classPluginDocumentation.getDefs())
                     )
                 )
             )
@@ -372,10 +372,50 @@ public class PluginController {
         return type;
     }
 
+    /**
+     * Converts Nuxt-content-style two-colon alert directives to the three-colon remark-directive
+     * container syntax that KsMarkdown expects.
+     * <p>
+     * {@code ::alert{type="info"}} → {@code :::alert{type="info"}}
+     * {@code ::} (closing) → {@code :::}
+     */
     private String alertReplacement(@NonNull String original) {
-        // we need to replace the NuxtJS ::alert{type=} :: with the more standard ::: warning :::
-        return original.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n")
-            .replace("\n::\n", "\n:::\n");
+        return original
+            .replaceAll("(?m)^::alert\\{type=\"(.*?)\"\\}$", ":::alert{type=\"$1\"}")
+            .replaceAll("(?m)^::$", ":::");
+    }
+
+    /**
+     * Recursively walks a JSON-schema map and applies {@link #alertReplacement} to every
+     * {@code "description"} string value so that plugin property descriptions authored in
+     * Nuxt-content syntax render correctly in the UI via KsMarkdown.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> applyAlertReplacementToMap(Map<String, Object> map) {
+        if (map == null) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>(map);
+        for (String key : result.keySet().toArray(new String[0])) {
+            Object value = result.get(key);
+            if ("description".equals(key) && value instanceof String s) {
+                result.put(key, alertReplacement(s));
+            } else if (value instanceof Map<?, ?> m) {
+                result.put(key, applyAlertReplacementToMap((Map<String, Object>) m));
+            } else if (value instanceof List<?> l) {
+                result.put(key, applyAlertReplacementToList((List<Object>) l));
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> applyAlertReplacementToList(List<Object> list) {
+        return list.stream().map(item -> {
+            if (item instanceof Map<?, ?> m) return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
+            if (item instanceof List<?> l) return (Object) applyAlertReplacementToList((List<Object>) l);
+            return item;
+        }).toList();
     }
 
     public record ApiPluginVersions(

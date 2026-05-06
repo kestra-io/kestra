@@ -23,6 +23,7 @@ import {removeRefPrefix, usePluginsStore} from "./plugins";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import _throttle from "lodash/throttle";
 import {useCoreStore} from "./core";
+import {useUnsavedChangesStore} from "./unsavedChanges";
 import {useI18n} from "vue-i18n";
 import {RouteLocation} from "vue-router";
 
@@ -39,6 +40,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const isCreating = ref<boolean>(false);
 
     const sourceCode = ref("")
+    const sourceCodeOrigin = ref("")
     const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
         try {
             return YAML_UTILS.parse(sourceCode.value);
@@ -46,6 +48,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return previous;
         }
     })
+
+    const haveChange = computed(() => sourceCodeOrigin.value !== sourceCode.value);
+
+    const unsavedChangesStore = useUnsavedChangesStore();
+
+    watch(haveChange, (newValue) => {
+        unsavedChangesStore.unsavedChange = newValue;
+    });
 
     const axios = useAxios();
 
@@ -178,17 +188,20 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         activeDashboard.value = response.data;
         sourceCode.value = response.data.sourceCode ?? ""
+        sourceCodeOrigin.value = sourceCode.value;
 
         return activeDashboard.value;
     }
 
     async function create(source: Dashboard["sourceCode"]) {
         const response = await axios.post(`${apiUrl()}/dashboards`, source, header);
+        sourceCodeOrigin.value = source ?? "";
         return response.data;
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
         const response = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header);
+        sourceCodeOrigin.value = source ?? "";
         return response.data;
     }
 
@@ -368,6 +381,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         rootSchema,
         rootProperties,
         sourceCode,
+        sourceCodeOrigin,
+        haveChange,
         parsedSource,
     };
 });

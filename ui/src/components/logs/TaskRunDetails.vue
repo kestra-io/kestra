@@ -1,6 +1,6 @@
 <template>
     <DynamicScroller
-        v-if="followedExecution"
+        v-if="followedExecution && currentTaskRuns.length > 0"
         ref="taskRunScroller"
         :items="currentTaskRuns"
         :minItemSize="50"
@@ -639,22 +639,13 @@
                 });
             },
             shouldDisplayLogs(taskRun) {
+                const uid = this.attemptUid(
+                    taskRun.id,
+                    this.selectedAttemptNumberByTaskRunId[taskRun.id],
+                );
                 return (
-                    (this.taskRunId ||
-                        (this.shownAttemptsUid.includes(
-                            this.attemptUid(
-                                taskRun.id,
-                                this.selectedAttemptNumberByTaskRunId[taskRun.id],
-                            ),
-                        ) &&
-                            this.logsWithIndexByAttemptUid[
-                                this.attemptUid(
-                                    taskRun.id,
-                                    this.selectedAttemptNumberByTaskRunId[
-                                        taskRun.id
-                                    ],
-                                )
-                            ]))
+                    (this.taskRunId || this.shownAttemptsUid.includes(uid)) &&
+                    this.logsWithIndexByAttemptUid[uid]?.length > 0
                 );
             },
             closeTargetExecutionSSE() {

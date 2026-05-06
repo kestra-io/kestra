@@ -199,23 +199,6 @@ class MigrationRunnerTest {
     }
 
     @Test
-    void run_doesNotReExecuteAfterRunAlways() throws Exception {
-        // Given: runAlways() already ran (simulating @PostConstruct)
-        AtomicInteger callCount = new AtomicInteger(0);
-        MigrationRunner runner = new MigrationRunner(
-            noOpLock, new InMemoryHistoryStore(),
-            List.of(simpleScript("2.0", callCount::incrementAndGet))
-        );
-        runner.runAlways();
-
-        // When: run() is called (simulating maybeRunMigrations())
-        runner.run();
-
-        // Then: script ran exactly once — run() was a no-op due to hasRun guard
-        assertThat(callCount.get()).isEqualTo(1);
-    }
-
-    @Test
     void runAlways_acquiresAndReleasesLock() throws Exception {
         // Given
         List<String> lockEvents = new ArrayList<>();

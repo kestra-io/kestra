@@ -1,0 +1,110 @@
+name: Fork PR - Build Docker image
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  build-and-push:
+    name: Build & push Docker image
+    if: github.event.label.name == 'ci:docker-build'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_IMAGE_PATH: "ghcr.io/kestra-io/kestra-pr"
+    steps:
+      - name: Remove trigger label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'ci:docker-build'
+            }).catch(() => {});
+
+      - name: Checkout PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup build
+        uses: kestra-io/actions/composite/setup-build@main
+        with:
+          java-enabled: true
+          node-enabled: true
+          java-version: 25
+
+      - name: Npm install
+        shell: bash
+        working-directory: ui
+        run: npm ci
+
+      - name: Build executable JAR
+        shell: bash
+        run: ./gradlew executableJar
+
+      - name: Copy exe to Docker context
+        shell: bash
+        run: cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
+
+      - name: Docker init
+        uses: kestra-io/actions/composite/setup-docker@main
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine base image tag
+        id: base
+        shell: bash
+        run: |
+          if [[ "${{ github.event.pull_request.base.ref }}" == "develop" ]]; then
+            echo "tag=develop" >> "$GITHUB_OUTPUT"
+          else
+            ref="${{ github.event.pull_request.base.ref }}"
+            ref="${ref#releases/}"
+            ref="${ref%.x}"
+            echo "tag=${ref}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build & push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.pr
+          push: true
+          tags: ${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }}
+          build-args: |
+            KESTRA_DOCKER_BASE_VERSION=${{ steps.base.outputs.tag }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Post / update PR comment
+        uses: kestra-io/actions/actions/comment-update@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          title: "🐋 Docker image"
+          template: |
+            ```
+            ${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }}
+            ```
+
+            ```bash
+            docker run --pull=always --rm -it -p 8080:8080 --user=root -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp ${{ env.GITHUB_IMAGE_PATH }}:${{ github.event.pull_request.number }} server local
+            ```

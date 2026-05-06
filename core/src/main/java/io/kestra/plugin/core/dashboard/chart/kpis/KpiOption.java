@@ -16,8 +16,20 @@ public class KpiOption extends ChartOption {
     @Builder.Default
     private NumberType numberType = NumberType.FLAT;
 
+    @Builder.Default
+    private Color color = Color.DEFAULT;
+
     public enum NumberType {
         FLAT,
         PERCENTAGE
+    }
+
+    public enum Color {
+        DEFAULT,
+        SUCCESS,
+        DANGER,
+        FAILURE,
+        WARNING,
+        INFO
     }
 }

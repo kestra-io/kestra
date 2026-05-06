@@ -29,6 +29,11 @@ public class ChartOption {
     @Max(12)
     private int width = 6;
 
+    @Builder.Default
+    @Min(1)
+    @Max(4)
+    private int rowSpan = 1;
+
     public List<String> neededColumns() {
         return Collections.emptyList();
     }

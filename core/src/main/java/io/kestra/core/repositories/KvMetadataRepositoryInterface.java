@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
@@ -11,6 +12,8 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.micronaut.data.model.Pageable;
 
 public interface KvMetadataRepositoryInterface extends SaveRepositoryInterface<PersistedKvMetadata> {
+    Set<String> findDistinctNamespace(String tenantId);
+
     Optional<PersistedKvMetadata> findByName(
         String tenantId,
         String namespace,

@@ -10,6 +10,7 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -18,6 +19,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
 
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.event.Level;
@@ -508,5 +511,35 @@ public class LoopCaseTest {
         assertThat(subSubExecutions).hasSize(2);
         TaskRun switchNumber2 = subSubExecutions.get(1).findTaskRunsByTaskId("2-1-1_switch-number-2").getFirst();
         assertThat((String) taskOutputService.getOutputs(switchNumber2).get("value")).isEqualTo("2 b");
+    }
+
+    public void loopWithSubflow(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(2);
+
+        // for each sub-execution, check their subflow
+        var subflowExecution1 = findSubflowExecution(subExecutions.getFirst());
+        assertThat(subflowExecution1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subflowExecution1.getTaskRunList()).hasSize(1);
+        var subflowExecution2 = findSubflowExecution(subExecutions.get(0));
+        assertThat(subflowExecution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subflowExecution2.getTaskRunList()).hasSize(1);
+    }
+
+    private Execution findSubflowExecution(Execution parent) {
+        return  executionRepository.find(
+            Pageable.UNPAGED,
+            parent.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TRIGGER_EXECUTION_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(parent.getId())
+                    .build()
+            )
+        ).getFirst();
     }
 }

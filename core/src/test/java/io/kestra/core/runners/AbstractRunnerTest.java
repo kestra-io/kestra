@@ -605,6 +605,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopWithSubflow(Execution execution) {
+        loopCaseTest.loopWithSubflow(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);

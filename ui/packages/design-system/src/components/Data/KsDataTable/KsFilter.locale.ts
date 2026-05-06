@@ -114,6 +114,10 @@ export default {
                 "label": "Name",
                 "description": "Filter by name",
             },
+            "member": {
+                "label": "Member",
+                "description": "Filter by member"
+            },
             "group": {
                 "label": "Group",
                 "description": "Filter by group",

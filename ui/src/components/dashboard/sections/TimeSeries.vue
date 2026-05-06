@@ -179,6 +179,9 @@
             duration = helper.map(date => groupedDurations[date as string] || 0);
         }
 
+        const lineColor = cssVar("--ks-content-link") || cssVar("--ks-content-secondary") || "#5bb8ff";
+        const areaTop = cssVar("--ks-content-link") || cssVar("--ks-content-secondary") || "#5bb8ff";
+
         return {
             labels: xAxis,
             datasets: yBShown.value
@@ -188,20 +191,14 @@
                         type: "line",
                         data: duration,
                         label: label,
-                        borderColor: cssVar("--ks-gray-100"),
+                        borderColor: lineColor,
                         smooth: true,
                         areaStyle: {
-                            opacity: 0.2,
+                            opacity: 0.08,
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {
-                                    offset: 0,
-                                    color: cssVar("--ks-gray-100")
-                                },
-                                {
-                                    offset: 1,
-                                    color: cssVar("--ks-gray-900")
-                                }
-                            ])
+                                {offset: 0, color: areaTop},
+                                {offset: 1, color: "rgba(0,0,0,0)"},
+                            ]),
                         },
                     },
                     ...yDatasetData,
@@ -216,6 +213,7 @@
         const isCompact = props.short || props.execution;
         const showAxes = !isCompact && !verticalLayout.value;
 
+
         const barSeries = (pd.datasets as any[])
             .filter((ds) => ds.type !== "line")
             .map((ds) => ({
@@ -224,6 +222,7 @@
                 data: ds.data,
                 stack: "total",
                 yAxisIndex: 0,
+                z: 3,
                 itemStyle: {color: ds.backgroundColor},
                 barMaxWidth: props.short ? 8 : props.execution ? 24 : 48,
                 ...(props.short ? {barCategoryGap: "0%"} : {}),
@@ -239,7 +238,7 @@
                 smooth: true,
                 showSymbol: false,
                 z: 1,
-                lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
+                lineStyle: {width: props.short ? 0.5 : 1.5, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
             }));
 
@@ -270,7 +269,7 @@
                 "top": "10px",
                 "right": "10px",
             } : {show: false},
-            series: [...barSeries, ...lineSeries],
+            series: [...lineSeries, ...barSeries],
         };
     });
 

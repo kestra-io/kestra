@@ -6,7 +6,8 @@
                 :key="`chart__${chart.id}`"
                 class="dashboard-block"
                 :class="{
-                    [`dash-width-${chart.chartOptions?.width || 6}`]: true
+                    [`dash-width-${chart.chartOptions?.width || 6}`]: true,
+                    [`dash-height-${chart.chartOptions?.rowSpan || 1}`]: true
                 }"
             >
                 <div class="d-flex flex-column">
@@ -144,6 +145,7 @@ section#charts {
     }
     @container (min-width: #{$tablet}) {
         grid-template-columns: repeat(12, 1fr);
+        grid-auto-flow: row dense;
     }
     &.padding {
         padding: 0 2rem 1rem;
@@ -181,6 +183,15 @@ section#charts {
         }
     }
 
+    // Below the tablet breakpoint, multi-row blocks fall back to grid-row: auto.
+    // Pin a min-height so chart canvases (~240-320px) don't clip when stacked
+    // vertically on narrow viewports.
+    @for $i from 2 through 4 {
+        .dash-height-#{$i} {
+            min-height: #{14rem * $i};
+        }
+    }
+
     @container (min-width: #{$smallMobile}) {
         @for $i from 4 through 12 {
             .dash-width-#{$i} {
@@ -193,6 +204,13 @@ section#charts {
         @for $i from 4 through 12 {
             .dash-width-#{$i} {
                 grid-column: span #{$i};
+            }
+        }
+
+        @for $i from 1 through 4 {
+            .dash-height-#{$i} {
+                grid-row: span #{$i};
+                min-height: 0;
             }
         }
     }

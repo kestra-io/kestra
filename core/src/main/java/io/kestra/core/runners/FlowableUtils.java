@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -278,82 +277,6 @@ public class FlowableUtils {
         );
     }
 
-    /**
-     * resolveConcurrentNexts will resolve concurrent values
-     * For both concurrent values and subtasks, see resolveParallelNexts()
-     */
-    public static List<NextTaskRun> resolveConcurrentNexts(
-        Execution execution,
-        List<ResolvedTask> tasks,
-        List<ResolvedTask> errors,
-        List<ResolvedTask> _finally,
-        TaskRun parentTaskRun,
-        Integer concurrency) {
-        if (execution.getState().getCurrent() == State.Type.KILLING) {
-            return Collections.emptyList();
-        }
-
-        List<ResolvedTask> allTasks = execution.findTaskDependingFlowState(
-            tasks,
-            errors,
-            _finally,
-            parentTaskRun
-        );
-
-        boolean isTasks = tasks.equals(allTasks);
-
-        // errors & finally must be run as sequential tasks
-        if (!isTasks) {
-            return resolveSequentialNexts(
-                execution,
-                tasks,
-                errors,
-                _finally,
-                parentTaskRun
-            );
-        }
-
-        // all tasks run
-        List<TaskRun> taskRuns = execution.findTaskRunByTasks(allTasks, parentTaskRun);
-
-        // find all non-terminated
-        long nonTerminatedCount = taskRuns
-            .stream()
-            .filter(taskRun -> !taskRun.getState().isTerminated())
-            .count();
-
-        if (concurrency > 0 && nonTerminatedCount >= concurrency) {
-            return Collections.emptyList();
-        }
-
-        Map<String, List<ResolvedTask>> collect = allTasks
-            .stream()
-            .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
-
-        long resolvedConcurrency = concurrency == 0 ? Integer.MAX_VALUE : concurrency;
-        // if concurrencyLimit > values.size() we limit concurrency to values.size()
-        if (resolvedConcurrency > collect.size()) {
-            resolvedConcurrency = collect.size();
-        }
-        long concurrencySlots = resolvedConcurrency - nonTerminatedCount;
-
-        // first one
-        if (taskRuns.isEmpty()) {
-            return collect.values().stream()
-                .limit(concurrencySlots)
-                .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-                .toList();
-        }
-
-        // start as many tasks as we have concurrency slots
-        return collect.values().stream()
-            .map(resolvedTasks -> resolveSequentialNexts(execution, resolvedTasks, null, null, parentTaskRun))
-            .filter(resolvedTasks -> !resolvedTasks.isEmpty())
-            .limit(concurrencySlots)
-            .map(resolvedTasks -> resolvedTasks.getFirst())
-            .toList();
-    }
-
     public static List<NextTaskRun> resolveDagNexts(
         Execution execution,
         List<ResolvedTask> tasks,
@@ -473,39 +396,6 @@ public class FlowableUtils {
         }
 
         return Collections.emptyList();
-    }
-
-    /**
-     * Resolves the values, then for each value create a {@link ResolvedTask} with it.
-     *
-     * @see #resolveValues(RunContext, Object)
-     */
-    public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
-        var either = resolveValues(runContext, value);
-        if (either.isRight()) {
-            throw new IllegalArgumentException("Maps are not supported in values");
-        }
-        List<String> distinctValue = either.getLeft();
-
-        ArrayList<ResolvedTask> result = new ArrayList<>();
-
-        int iteration = 0;
-        for (String current : distinctValue) {
-            for (Task task : tasks) {
-                result.add(
-                    ResolvedTask.builder()
-                        .task(task)
-                        .value(current)
-                        .iteration(iteration)
-                        .parentId(parentTaskRun.getId())
-                        .build()
-                );
-            }
-
-            iteration++;
-        }
-
-        return result;
     }
 
     /**

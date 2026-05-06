@@ -1,4 +1,0 @@
-ALTER TABLE triggers
-ADD COLUMN "disabled" BOOL
-GENERATED ALWAYS AS (CAST(value ->> 'disabled' AS BOOL)) STORED NOT NULL;
-

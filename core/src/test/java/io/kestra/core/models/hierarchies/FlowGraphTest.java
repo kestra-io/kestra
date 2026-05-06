@@ -146,16 +146,16 @@ class FlowGraphTest {
     }
 
     @Test
-    void forEach() throws IllegalVariableEvaluationException, IOException {
-        FlowWithSource flow = this.parse("flows/valids/foreach-nested.yaml");
+    void loop() throws IllegalVariableEvaluationException, IOException {
+        FlowWithSource flow = this.parse("flows/valids/loop-nested.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size()).isEqualTo(11);
-        assertThat(flowGraph.getEdges().size()).isEqualTo(10);
-        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
+        assertThat(flowGraph.getNodes().size()).isEqualTo(14);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(13);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(3);
 
-        assertThat(edge(flowGraph, ".*each0", cluster(flowGraph, ".*each1").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
-        assertThat(edge(flowGraph, ".*each1", ".*p1").getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(edge(flowGraph, ".*loop1", cluster(flowGraph, ".*loop2").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(edge(flowGraph, ".*loop2", cluster(flowGraph, ".*loop3").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
     }
 
     @Test
@@ -189,17 +189,16 @@ class FlowGraphTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/foreach-non-concurrent.yaml")
-    void forEachWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
-        FlowWithSource flow = this.parse("flows/valids/foreach-non-concurrent.yaml");
+    @ExecuteFlow("flows/valids/loop-serial.yaml")
+    void loopWithExecution(Execution execution) throws IllegalVariableEvaluationException, IOException {
+        FlowWithSource flow = this.parse("flows/valids/loop-serial.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
 
-        assertThat(flowGraph.getNodes().size()).isEqualTo(11);
-        assertThat(flowGraph.getEdges().size()).isEqualTo(12);
+        assertThat(flowGraph.getNodes().size()).isEqualTo(6);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(5);
         assertThat(flowGraph.getClusters().size()).isEqualTo(1);
 
-        assertThat(edge(flowGraph, ".*log_value 1", ".*log_value 2").getRelation().getValue()).isEqualTo("value 2");
-        assertThat(edge(flowGraph, ".*log_value 2", ".*log_value 3").getRelation().getValue()).isEqualTo("value 3");
+        assertThat(((AbstractGraphTask) node(flowGraph, "loop")).getTaskRun()).isNotNull();
     }
 
     @Test

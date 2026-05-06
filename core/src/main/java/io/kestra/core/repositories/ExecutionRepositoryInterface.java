@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
@@ -18,6 +19,7 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -158,4 +160,24 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     List<Execution> lastExecutions(
         String tenantId,
         @Nullable List<FlowFilter> flows);
+
+    /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
+    default List<Execution> findLoopSubExecutions(Execution parentExecution) {
+        return find(
+            Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
+            parentExecution.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.PARENT_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(parentExecution.getId())
+                    .build(),
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.LOOP)
+                    .build()
+            )
+        );
+    }
 }

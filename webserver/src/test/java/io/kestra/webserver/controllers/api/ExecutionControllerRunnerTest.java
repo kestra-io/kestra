@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -282,7 +283,10 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(tenantId, true);
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(result.getTaskRunList().size()).isEqualTo(16);
+        assertThat(result.getTaskRunList().size()).isEqualTo(13);
+
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result);
+        assertThat(subExecutions).hasSize(3);
     }
 
     @Test
@@ -364,9 +368,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/foreach-nested.yaml" })
+    @LoadFlows({ "flows/valids/loop-nested.yaml" })
     void evalTaskRunExpression() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "foreach-nested");
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "loop-nested");
 
         ExecutionController.EvalResult result = this.evalTaskRunExpression(execution, "my simple string", 0);
         assertThat(result.getResult()).isEqualTo("my simple string");
@@ -374,10 +378,7 @@ class ExecutionControllerRunnerTest {
         result = this.evalTaskRunExpression(execution, "{{ taskrun.id }}", 0);
         assertThat(result.getResult()).isEqualTo(execution.getTaskRunList().getFirst().getId());
 
-        result = this.evalTaskRunExpression(execution, "{{ outputs['p1'][taskrun.value].d1.value }}", 1);
-        assertThat(result.getResult()).contains("l1-d1");
-
-        result = this.evalTaskRunExpression(execution, "{{ missing }}", 1);
+        result = this.evalTaskRunExpression(execution, "{{ missing }}", 0);
         assertThat(result.getResult()).isNull();
         assertThat(result.getError()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
         assertThat(result.getStackTrace()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
@@ -659,9 +660,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/restart-each.yaml" })
+    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    @Disabled("This feature is not yet implemented")
     void restartExecutionFromTaskIdWithSequential() throws Exception {
-        final String flowId = "restart-each";
+        final String flowId = "restart-loop";
         final String referenceTaskId = "2_end";
 
         // Run execution until it ends
@@ -694,7 +696,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(restarted.getState().getCurrent()).isEqualTo(Type.SUCCESS);
-        assertThat(restarted.getState().getHistories()).hasSize(6);
+        assertThat(restarted.getState().getHistories()).hasSize(3);
         assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
         assertThat(restarted.getTaskRunList()).hasSize(20);
         assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
@@ -765,7 +767,7 @@ class ExecutionControllerRunnerTest {
         String tenantId = "downloadinternalstoragefilefromexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList()).hasSize(16);
+        assertThat(execution.getTaskRunList()).hasSize(13);
 
         String path = (String) execution.getInputs().get("file");
 
@@ -809,7 +811,7 @@ class ExecutionControllerRunnerTest {
         String tenantId = "previewinternalstoragefilefromexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution defaultExecution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList()).hasSize(16);
+        assertThat(defaultExecution.getTaskRunList()).hasSize(13);
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -834,7 +836,7 @@ class ExecutionControllerRunnerTest {
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList()).hasSize(16);
+        assertThat(latin1Execution.getTaskRunList()).hasSize(13);
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

@@ -12,7 +12,6 @@ dependencies {
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("org.postgresql:postgresql")
-    runtimeOnly('org.flywaydb:flyway-database-postgresql')
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output

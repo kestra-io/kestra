@@ -3,6 +3,7 @@ package io.kestra.cli.commands.servers;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.contexts.KestraContext;
 
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -11,6 +12,11 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
     @CommandLine.Option(names = { "--port" }, description = "The port to bind")
     Integer serverPort;
 
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return Map.of();
+    }
+
     @Override
     public Integer call() throws Exception {
         log.info("Machine information: {} available cpu(s), {}MB max memory, Java version {}", Runtime.getRuntime().availableProcessors(), maxMemoryInMB(), Runtime.version());
@@ -18,6 +24,11 @@ public abstract class AbstractServerCommand extends AbstractCommand implements S
         this.shutdownHook(true, () -> KestraContext.getContext().shutdown());
 
         return super.call();
+    }
+
+    @Override
+    protected boolean shouldAutoMigrate() {
+        return true;
     }
 
     private long maxMemoryInMB() {

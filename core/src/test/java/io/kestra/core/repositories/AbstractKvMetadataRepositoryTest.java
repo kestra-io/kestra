@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -274,7 +275,7 @@ public abstract class AbstractKvMetadataRepositoryTest {
         PersistedKvMetadata deletedEntry = kvMetadataRepositoryInterface.save(buildTestKvDescription(tenantId, deletedNamespace, "key3"));
         kvMetadataRepositoryInterface.delete(deletedEntry);
 
-        List<String> namespaces = kvMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+        Set<String> namespaces = kvMetadataRepositoryInterface.findDistinctNamespace(tenantId);
 
         assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
         assertThat(namespaces).doesNotContain(deletedNamespace);

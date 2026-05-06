@@ -42,11 +42,11 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
     }
 
     @Override
-    public List<String> findDistinctNamespace(String tenantId) {
+    public Set<String> findDistinctNamespace(String tenantId) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(
-                configuration -> DSL
+                configuration -> new HashSet<>(DSL
                     .using(configuration)
                     .select(field("namespace"))
                     .from(this.jdbcRepository.getTable())
@@ -54,7 +54,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
                     .and(lastCondition())
                     .groupBy(field("namespace"))
                     .fetch()
-                    .map(record -> record.getValue("namespace", String.class))
+                    .map(record -> record.getValue("namespace", String.class)))
             );
     }
 

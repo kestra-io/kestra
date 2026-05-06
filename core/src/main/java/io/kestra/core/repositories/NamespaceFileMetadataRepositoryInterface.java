@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
@@ -11,9 +12,7 @@ import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.micronaut.data.model.Pageable;
 
 public interface NamespaceFileMetadataRepositoryInterface {
-    default List<String> findDistinctNamespace(String tenantId) {
-        return List.of();
-    }
+    Set<String> findDistinctNamespace(String tenantId);
 
     Optional<NamespaceFileMetadata> findByPath(
         String tenantId,

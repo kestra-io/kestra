@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -331,7 +332,7 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
             .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build());
         namespaceFileMetadataRepositoryInterface.delete(deletedEntry);
 
-        List<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+        Set<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);
 
         assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
         assertThat(namespaces).doesNotContain(deletedNamespace);

@@ -87,6 +87,7 @@ final class ConfigurationSchemaGenerator {
 
         if (pluginRegistry != null) {
             addPluginStorageSchemas(root, pluginRegistry);
+            addPluginSecretSchemas(root, pluginRegistry);
         }
 
         return root;
@@ -127,6 +128,40 @@ final class ConfigurationSchemaGenerator {
 
         if (!typeEnum.isEmpty()) {
             storageProperties.set("type", typeProperty);
+        }
+    }
+
+    private void addPluginSecretSchemas(ObjectNode root, PluginRegistry pluginRegistry) {
+        ObjectNode secretNode = navigateOrCreate(root, "kestra.secret");
+
+        if (!secretNode.has("properties")) {
+            secretNode.putObject("properties");
+        }
+        ObjectNode secretProperties = (ObjectNode) secretNode.get("properties");
+
+        ObjectNode typeProperty = MAPPER.createObjectNode();
+        typeProperty.put("type", "string");
+        typeProperty.put("description", "The secret manager plugin type identifier");
+        ArrayNode typeEnum = typeProperty.putArray("enum");
+
+        for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
+            for (Class<?> secretClass : registeredPlugin.getSecrets()) {
+                Optional<String> pluginId = Plugin.getId(secretClass);
+                if (pluginId.isEmpty()) continue;
+
+                String id = pluginId.get();
+                typeEnum.add(id);
+
+                ObjectNode pluginSecretSchema = MAPPER.createObjectNode();
+                pluginSecretSchema.put("type", "object");
+                addPluginProperties(pluginSecretSchema, secretClass);
+
+                secretProperties.set(id, pluginSecretSchema);
+            }
+        }
+
+        if (!typeEnum.isEmpty()) {
+            secretProperties.set("type", typeProperty);
         }
     }
 
@@ -260,9 +295,8 @@ final class ConfigurationSchemaGenerator {
             SoftServiceLoader.load(BeanDefinitionReference.class);
 
         var iterator = loader.iterator();
-        while (true) {
+        while (iterator.hasNext()) {
             try {
-                if (!iterator.hasNext()) break;
                 var sd = iterator.next();
                 if (!sd.isPresent()) continue;
                 BeanDefinitionReference<?> ref = sd.load();
@@ -368,6 +402,26 @@ final class ConfigurationSchemaGenerator {
                 String description = (String) a.annotationType().getMethod("description").invoke(a);
                 if (description != null && !description.isEmpty()) {
                     node.put("description", description);
+                }
+                String type = (String) a.annotationType().getMethod("type").invoke(a);
+                if (type != null && !type.isEmpty()) {
+                    node.put("type", type);
+                }
+                String format = (String) a.annotationType().getMethod("format").invoke(a);
+                if (format != null && !format.isEmpty()) {
+                    node.put("format", format);
+                }
+                String pattern = (String) a.annotationType().getMethod("pattern").invoke(a);
+                if (pattern != null && !pattern.isEmpty()) {
+                    node.put("pattern", pattern);
+                }
+                String minimum = (String) a.annotationType().getMethod("minimum").invoke(a);
+                if (minimum != null && !minimum.isEmpty()) {
+                    node.put("minimum", minimum);
+                }
+                String maximum = (String) a.annotationType().getMethod("maximum").invoke(a);
+                if (maximum != null && !maximum.isEmpty()) {
+                    node.put("maximum", maximum);
                 }
                 String example = (String) a.annotationType().getMethod("example").invoke(a);
                 if (example != null && !example.isEmpty()) {

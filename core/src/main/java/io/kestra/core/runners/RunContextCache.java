@@ -9,12 +9,13 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import lombok.Getter;
 
 @Singleton
 public class RunContextCache {
     @Inject
-    private VariableRenderer.VariableConfiguration variableConfiguration;
+    private VariableConfiguration variableConfiguration;
 
     @Inject
     private ApplicationContext applicationContext;

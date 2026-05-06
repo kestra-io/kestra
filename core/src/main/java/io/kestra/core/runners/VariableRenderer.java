@@ -6,10 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.*;
 import io.kestra.core.serializers.JacksonMapper;
 
-import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
@@ -17,7 +17,6 @@ import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
@@ -258,23 +257,5 @@ public class VariableRenderer {
         }
 
         return result;
-    }
-
-    @Getter
-    @ConfigurationProperties("kestra.variables")
-    public static class VariableConfiguration {
-        public VariableConfiguration() {
-            this.cacheEnabled = true;
-            this.cacheSize = 1000;
-            this.recursiveRendering = false;
-            this.redactedEnvVars = List.of(
-                "KESTRA_PLUGINS_PATH", "KESTRA_CONFIGURATION_PATH", "KESTRA_CONFIGURATION", "KESTRA_JAVA_OPTS"
-            );
-        }
-
-        Boolean cacheEnabled;
-        Integer cacheSize;
-        Boolean recursiveRendering;
-        List<String> redactedEnvVars;
     }
 }

@@ -1,12 +1,12 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
-        <template #additional-right v-if="displayButtons">
+        <template #actions v-if="displayButtons">
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
-                        <el-button :icon="Download" @click="exportExecutionsAsStream()">
+                        <KsButton :icon="Download" @click="exportExecutionsAsStream()">
                             {{ $t('export_csv') }}
-                        </el-button>
+                        </KsButton>
                     </li>
                     <li>
                         <template v-if="hasAnyExecute">
@@ -17,9 +17,9 @@
                 <template v-if="$route.name === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
-                            <el-button :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
+                            <KsButton :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
                                 {{ $t("edit flow") }}
-                            </el-button>
+                            </KsButton>
                         </template>
                     </li>
                     <li>
@@ -34,12 +34,23 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}" v-if="ready">
-        <DataTable
-            @page-changed="onPageChanged"
+    <section :class="{'container padding-bottom': topbar}">
+        <KsDataTable
             ref="dataTable"
+            :loadData="loadData"
+            :data="executionsStore.executions"
             :total="executionsStore.total"
-            :embed="embed"
+            :currentPage="urlPage"
+            :pageSize="urlSize"
+            @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
+            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
+            @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
+            :selectionMapper="selectionMapper"
+            @ready="ready = true"
+            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :selectable="!hidden?.includes('selection') && canCheck"
+            :no-data-text="$t('no_results.executions')"
+            :rowKey="(row: any) => row.id"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -64,229 +75,197 @@
                 <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
-            <template #table>
-                <SelectTable
-                    ref="selectTable"
-                    :data="executionsStore.executions"
-                    :defaultSort="{prop: 'state.startDate', order: 'descending'}"
-                    tableLayout="auto"
-                    fixed
-                    @row-click="(row: any) => onRowDoubleClick(executionParams(row))"
-                    @sort-change="onSort"
-                    @selection-change="handleSelectionChange"
-                    :selectable="!hidden?.includes('selection') && canCheck"
-                    :no-data-text="$t('no_results.executions')"
-                    class="executions-table"
-                    :rowKey="(row: any) => row.id"
+            <template #bulk-actions>
+                <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                    {{ $t("change state") }}
+                </KsButton>
+                <KsButton v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                    {{ $t("restart") }}
+                </KsButton>
+                <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                    {{ $t("replay") }}
+                </KsButton>
+                <KsButton v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                    {{ $t("kill") }}
+                </KsButton>
+                <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
+                    {{ $t("delete") }}
+                </KsButton>
+
+                <KsDropdown>
+                    <KsButton>
+                        <DotsVertical />
+                    </KsButton>
+                    <template #dropdown>
+                        <KsDropdownMenu>
+                            <KsDropdownItem v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                                {{ $t("Set labels") }}
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
+                                {{ $t("resume") }}
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
+                                {{ $t("pause") }}
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                                {{ $t("unqueue") }}
+                            </KsDropdownItem>
+                            <KsDropdownItem v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
+                                {{ $t("force run") }}
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
+                    </template>
+                </KsDropdown>
+                <KsDialog
+                    v-if="isOpenLabelsModal"
+                    v-model="isOpenLabelsModal"
+                    destroyOnClose
+                    :appendToBody="true"
+                    alignCenter
                 >
-                    <template #select-actions>
-                        <BulkSelect
-                            :selectAll="queryBulkAction"
-                            :selections="selection"
-                            :total="executionsStore.total"
-                            @update:select-all="toggleAllSelection"
-                            @unselect="toggleAllUnselected"
-                        >
-                            <!-- Always visible buttons -->
-                            <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
-                                {{ $t("change state") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
-                                {{ $t("restart") }}
-                            </el-button>
-                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
-                                {{ $t("replay") }}
-                            </el-button>
-                            <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
-                                {{ $t("kill") }}
-                            </el-button>
-                            <el-button v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
-                                {{ $t("delete") }}
-                            </el-button>
-
-                            <el-dropdown>
-                                <el-button>
-                                    <DotsVertical />
-                                </el-button>
-                                <template #dropdown>
-                                    <el-dropdown-menu>
-                                        <el-dropdown-item v-if="canUpdate" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
-                                            {{ $t("Set labels") }}
-                                        </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="PlayBox" @click="resumeExecutions()">
-                                            {{ $t("resume") }}
-                                        </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
-                                            {{ $t("pause") }}
-                                        </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
-                                            {{ $t("unqueue") }}
-                                        </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
-                                            {{ $t("force run") }}
-                                        </el-dropdown-item>
-                                    </el-dropdown-menu>
-                                </template>
-                            </el-dropdown>
-                        </BulkSelect>
-                        <el-dialog
-                            v-if="isOpenLabelsModal"
-                            v-model="isOpenLabelsModal"
-                            destroyOnClose
-                            :appendToBody="true"
-                            alignCenter
-                        >
-                            <template #header>
-                                <h5>{{ $t("Set labels") }}</h5>
-                            </template>
-
-                            <template #footer>
-                                <el-button @click="isOpenLabelsModal = false">
-                                    {{ $t("cancel") }}
-                                </el-button>
-                                <el-button type="primary" @click="setLabels()">
-                                    {{ $t("ok") }}
-                                </el-button>
-                            </template>
-
-                            <el-form labelPosition="top">
-                                <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput v-model:labels="executionLabels" />
-                                </ElFormItem>
-                            </el-form>
-                        </el-dialog>
+                    <template #header>
+                        <h5>{{ $t("Set labels") }}</h5>
                     </template>
-                    <template #default>
-                        <el-table-column
-                            prop="id"
-                            sortable="custom"
-                            :sortOrders="['ascending', 'descending']"
-                            :label="$t('id')"
-                        >
-                            <template #default="scope">
-                                <RouterLink
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            namespace: scope.row?.namespace,
-                                            flowId: scope.row?.flowId,
-                                            id: scope.row?.id
-                                        }
-                                    }"
-                                    class="execution-id"
-                                >
-                                    <Id :value="scope.row?.id" :shrink="true" />
-                                </RouterLink>
-                            </template>
-                        </el-table-column>
 
-                        <el-table-column
-                            v-for="col in visibleColumns"
-                            :key="col.prop"
-                            :prop="col.prop"
-                            :label="col.label"
-                            :class="col.prop === 'flowRevision' ? 'shrink' : ''"
-                            :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
-                            :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
-                            :sortable="isColumnSortable(col.prop) ? 'custom' : false"
-                            :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
-                        >
-                            <template #default="scope">
-                                <template v-if="col.prop === 'state.startDate'">
-                                    <DateAgo :inverted="true" :date="scope.row?.state?.startDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'state.endDate'">
-                                    <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'state.duration'">
-                                    <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
-                                </template>
-                                <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                                    <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
-                                </template>
-                                <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
-                                    <router-link
-                                        :to="{
-                                            name: 'flows/update',
-                                            params: {
-                                                namespace: scope.row?.namespace,
-                                                id: scope.row?.flowId
-                                            }
-                                        }"
-                                    >
-                                        {{ invisibleSpace(scope.row?.flowId) }}
-                                    </router-link>
-                                </template>
-                                <template v-else-if="col.prop === 'labels'">
-                                    <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
-                                </template>
-                                <template v-else-if="col.prop === 'state.current'">
-                                    <Status :status="scope.row?.state?.current" size="small" />
-                                </template>
-                                <template v-else-if="col.prop === 'flowRevision'">
-                                    <code class="code-text">{{ scope.row?.flowRevision }}</code>
-                                </template>
-                                <template v-else-if="col.prop === 'inputs'">
-                                    <el-tooltip effect="light">
-                                        <template #content>
-                                            <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
-                                        </template>
-                                        <div>
-                                            <Import v-if="scope.row?.inputs" class="fs-5" />
-                                        </div>
-                                    </el-tooltip>
-                                </template>
-                                <template v-else-if="col.prop === 'outputs'">
-                                    <el-tooltip effect="light">
-                                        <template #content>
-                                            <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
-                                        </template>
-                                        <div>
-                                            <Export v-if="scope.row?.outputs" class="fs-5" />
-                                        </div>
-                                    </el-tooltip>
-                                </template>
-                                <template v-else-if="col.prop === 'taskRunList.taskId'">
-                                    <code class="code-text">
-                                        {{ scope.row?.taskRunList?.slice(-1)[0]?.taskId }}
-                                        {{
-                                            scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length > 1 ? `(${scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length})` : ""
-                                        }}
-                                    </code>
-                                </template>
-                                <template v-else-if="col.prop === 'trigger'">
-                                    <TriggerAvatar :execution="scope.row" />
-                                </template>
-                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
-                                    <RouterLink
-                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
-                                        :to="{
-                                            name: 'executions/update',
-                                            params: {
-                                                namespace: scope.row?.namespace,
-                                                flowId: scope.row?.flowId,
-                                                id: scope.row?.trigger?.variables?.executionId
-                                            }
-                                        }"
-                                    >
-                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
-                                    </RouterLink>
-                                    <span v-else>-</span>
-                                </template>
-                            </template>
-                            <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
-                                <el-tooltip :content="$t('taskid column details')" effect="light">
-                                    {{ scope.column.label }}
-                                </el-tooltip>
-                            </template>
-                        </el-table-column>
+                    <template #footer>
+                        <KsButton @click="isOpenLabelsModal = false">
+                            {{ $t("cancel") }}
+                        </KsButton>
+                        <KsButton type="primary" @click="setLabels()">
+                            {{ $t("ok") }}
+                        </KsButton>
                     </template>
-                </SelectTable>
+
+                    <KsForm labelPosition="top">
+                        <KsFormItem :label="$t('execution labels')">
+                            <LabelInput v-model:labels="executionLabels" />
+                        </KsFormItem>
+                    </KsForm>
+                </KsDialog>
             </template>
-        </DataTable>
+
+            <KsTableColumn
+                prop="id"
+                sortable="custom"
+                :sortOrders="['ascending', 'descending']"
+                :label="$t('id')"
+            >
+                <template #default="scope">
+                    <RouterLink
+                        :to="{
+                            name: 'executions/update',
+                            params: {
+                                namespace: scope.row?.namespace,
+                                flowId: scope.row?.flowId,
+                                id: scope.row?.id
+                            }
+                        }"
+                        class="execution-id"
+                    >
+                        <KsId :value="scope.row?.id" :shrink="true" />
+                    </RouterLink>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn
+                v-for="col in visibleColumns"
+                :key="col.prop"
+                :prop="col.prop"
+                :label="col.label"
+                :class="col.prop === 'flowRevision' ? 'shrink' : ''"
+                :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
+                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => invisibleSpace(cellValue)) : undefined"
+                :sortable="isColumnSortable(col.prop) ? 'custom' : false"
+                :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
+            >
+                <template #default="scope">
+                    <template v-if="col.prop === 'state.startDate'">
+                        <KsDateAgo :inverted="true" :date="scope.row?.state?.startDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.endDate'">
+                        <KsDateAgo :inverted="true" :date="scope.row?.state?.endDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'state.duration'">
+                        <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
+                    </template>
+                    <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
+                        <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
+                    </template>
+                    <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
+                        <router-link
+                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
+                            }"
+                        >
+                            {{ invisibleSpace(scope.row?.flowId) }}
+                        </router-link>
+                    </template>
+                    <template v-else-if="col.prop === 'labels'">
+                        <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
+                    </template>
+                    <template v-else-if="col.prop === 'state.current'">
+                        <KsExecutionStatus :status="scope.row?.state?.current" size="small" />
+                    </template>
+                    <template v-else-if="col.prop === 'flowRevision'">
+                        <code class="code-text">{{ scope.row?.flowRevision }}</code>
+                    </template>
+                    <template v-else-if="col.prop === 'inputs'">
+                        <KsTooltip>
+                            <template #content>
+                                <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
+                            </template>
+                            <div>
+                                <Import v-if="scope.row?.inputs" class="fs-5" />
+                            </div>
+                        </KsTooltip>
+                    </template>
+                    <template v-else-if="col.prop === 'outputs'">
+                        <KsTooltip>
+                            <template #content>
+                                <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
+                            </template>
+                            <div>
+                                <Export v-if="scope.row?.outputs" class="fs-5" />
+                            </div>
+                        </KsTooltip>
+                    </template>
+                    <template v-else-if="col.prop === 'taskRunList.taskId'">
+                        <code class="code-text">
+                            {{ scope.row?.taskRunList?.slice(-1)[0]?.taskId }}
+                            {{
+                                scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length > 1 ? `(${scope.row?.taskRunList?.slice(-1)[0]?.attempts?.length})` : ""
+                            }}
+                        </code>
+                    </template>
+                    <template v-else-if="col.prop === 'trigger'">
+                        <TriggerAvatar :execution="scope.row" />
+                    </template>
+                    <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                        <RouterLink
+                            v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    namespace: scope.row?.namespace,
+                                    flowId: scope.row?.flowId,
+                                    id: scope.row?.trigger?.variables?.executionId
+                                }
+                            }"
+                        >
+                            <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                        </RouterLink>
+                        <span v-else>-</span>
+                    </template>
+                </template>
+                <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
+                    <KsTooltip :content="$t('taskid column details')">
+                        {{ scope.column.label }}
+                    </KsTooltip>
+                </template>
+            </KsTableColumn>
+        </KsDataTable>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <KsDialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -294,38 +273,37 @@
         <template #default>
             <p v-html="changeStatusToast()" />
 
-            <el-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
-                :persistent="false"
             >
-                <el-option
+                <KsOption
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <el-button @click="changeStatusDialogVisible = false">
+            <KsButton @click="changeStatusDialogVisible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="changeStatus()"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroyOnClose :appendToBody="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -333,38 +311,37 @@
         <template #default>
             <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
 
-            <el-select
+            <KsSelect
                 :required="true"
                 v-model="selectedStatus"
-                :persistent="false"
             >
-                <el-option
+                <KsOption
                     v-for="item in unQueuestates"
                     :key="item.code"
                     :value="item.code"
                 >
                     <template #default>
-                        <Status size="small" :label="false" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
-                </el-option>
-            </el-select>
+                </KsOption>
+            </KsSelect>
         </template>
 
         <template #footer>
-            <el-button @click="unqueueDialogVisible = false">
+            <KsButton @click="unqueueDialogVisible = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="unqueueExecutions()"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+    <KsDialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -374,20 +351,20 @@
         </template>
 
         <template #footer>
-            <el-button @click="isOpenReplayModal = false">
+            <KsButton @click="isOpenReplayModal = false">
                 {{ $t('cancel') }}
-            </el-button>
-            <el-button @click="replayExecutions(true)">
+            </KsButton>
+            <KsButton @click="replayExecutions(true)">
                 {{ $t('replay latest revision') }}
-            </el-button>
-            <el-button
+            </KsButton>
+            <KsButton
                 type="primary"
                 @click="replayExecutions(false)"
             >
                 {{ $t('ok') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -395,8 +372,8 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {ref, computed, watch, h, useTemplateRef} from "vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system";
 
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -414,14 +391,15 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import Download from "vue-material-design-icons/Download.vue";
 
-    import Id from "../Id.vue";
-    import {State, Status} from "@kestra-io/ui-libs";
+    import {KsId} from "@kestra-io/design-system";
+    import {State} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
     import Labels from "../layout/Labels.vue";
-    import DateAgo from "../layout/DateAgo.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";
-    import SelectTable from "../layout/SelectTable.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
+
+    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
+
+    const {loadInit} = useRestoreUrl();
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -441,8 +419,6 @@
 
     import useRouteContext from "../../composables/useRouteContext";
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
-    import {useSelectTableActions} from "../../composables/useSelectTableActions";
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -616,52 +592,46 @@
         return execution.id;
     };
 
-    const loadData = (callback?: () => void) => {
+    const ready = ref(false);
+    const dataTable = useTemplateRef<any>("dataTable");
+
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        if (!loadInit.value) return;
         lastRefreshDate.value = new Date();
 
-        executionsStore.findExecutions(loadQuery({
-            size: parseInt(route.query?.size as string ?? "25"),
-            page: parseInt(route.query?.page as string ?? "1"),
-            sort: route.query?.sort as string ?? "state.startDate:desc",
+        await executionsStore.findExecutions(loadQuery({
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses
-        })).then(() => {
-            if (props.isConcurrency) {
-                emitStateCount();
-            }
-        }).finally(callback);
+        }));
+
+        if (props.isConcurrency) {
+            emitStateCount();
+        }
     };
+
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
+    });
+
+    const urlPage = computed(() => Number(route.query.page ?? 1) || 1);
+    const urlSize = computed(() => Number(route.query.size ?? 25) || 25);
+
+    watch(filterQuery, () => {
+        if (!props.embed) {
+            dataTable.value?.resetAndReload();
+        }
+    }, {deep: true});
 
     const routeInfo = computed(() => ({title: t("executions")}));
     useRouteContext(routeInfo, props.embed);
 
-    const dataTableRef = ref(null);
-    const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
+    const selection = computed(() => dataTable.value?.selection ?? []);
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
 
-    const {
-        ready,
-        onSort,
-        onRowDoubleClick,
-        onPageChanged,
-        queryWithFilter,
-        load,
-        onDataLoaded
-    } = useDataTableActions({
-        dblClickRouteName: dblClickRouteName.value,
-        embed: props.embed,
-        dataTableRef,
-        loadData: loadData
-    });
-
-    const {
-        queryBulkAction,
-        selection,
-        handleSelectionChange,
-        toggleAllUnselected,
-        toggleAllSelection
-    } = useSelectTableActions({
-        dataTableRef: selectTableRef,
-        selectionMapper: selectionMapper
-    });
 
     const displayButtons = computed(() => {
         return (route.name === "flows/update") || (route.name === "executions/list");
@@ -746,15 +716,12 @@
 
     const refresh = () => {
         recomputeInterval.value = !recomputeInterval.value;
-        const dashboardComponent = selectTableRef.value?.$refs?.dashboardComponent;
-        if (dashboardComponent) {
-            dashboardComponent.refreshCharts();
-        }
-        load(onDataLoaded);
+        dataTable.value?.reload();
     };
 
     const loadQuery = (base: any) => {
-        let queryFilter = queryWithFilter();
+        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query;
+        let queryFilter: Record<string, any> = {...restQuery};
 
         if (props.namespace) {
             queryFilter["filters[namespace][PREFIX]"] = props.namespace;
@@ -818,7 +785,7 @@
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();
-                    loadData();
+                    dataTable.value?.reload();
                 });
         } else {
             const selectionData = {executionsId: selection.value};
@@ -832,7 +799,7 @@
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();
-                    loadData();
+                    dataTable.value?.reload();
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};
@@ -913,7 +880,7 @@
             "bulkChangeExecutionStatus",
             "executions state changed"
         );
-        window.setTimeout(() => loadData(), 100);
+        window.setTimeout(() => dataTable.value?.reload(), 100);
     };
 
     const changeStatusToast = () => {
@@ -931,42 +898,41 @@
                 "p",
                 {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})}
             ),
-            h(ElFormItem, {
+            h(KsFormItem, {
                 class: "mt-3",
                 label: t("execution-include-non-terminated")
             }, [
-                h(ElSwitch, {
+                h(KsSwitch, {
                     modelValue: includeNonTerminated.value,
                     "onUpdate:modelValue": (val: any) => {
                         includeNonTerminated.value = Boolean(val);
                     },
                 }),
             ]),
-            includeNonTerminated.value ? h(ElAlert, {
+            includeNonTerminated.value ? h(KsAlert, {
                 title: t("execution-warn-title"),
                 description: t("execution-warn-deleting-still-running"),
                 type: "warning",
                 showIcon: true,
                 closable: false,
-                class: "custom-warning"
             }) : null,
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteLogs.value,
                 label: t("execution_deletion.logs"),
                 "onUpdate:modelValue": (val: any) => (deleteLogs.value = Boolean(val)),
             }),
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteMetrics.value,
                 label: t("execution_deletion.metrics"),
                 "onUpdate:modelValue": (val: any) => (deleteMetrics.value = Boolean(val)),
             }),
-            h(ElCheckbox, {
+            h(KsCheckbox, {
                 modelValue: deleteStorage.value,
                 label: t("execution_deletion.storage"),
                 "onUpdate:modelValue": (val: any) => (deleteStorage.value = Boolean(val)),
             }),
         ]);
-        ElMessageBox.confirm(message, t("confirmation")).then(() => {
+        KsMessageBox.confirm(message, t("confirmation")).then(() => {
             actionOptions.value.includeNonTerminated = includeNonTerminated.value;
             actionOptions.value.deleteLogs = deleteLogs.value;
             actionOptions.value.deleteMetrics = deleteMetrics.value;
@@ -997,7 +963,7 @@
             return;
         }
 
-        ElMessageBox.confirm(
+        KsMessageBox.confirm(
             t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
             t("confirmation"),
             {dangerouslyUseHTMLString: true}
@@ -1014,7 +980,7 @@
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
                         toggleAllUnselected();
-                        loadData();
+                        dataTable.value?.reload();
                     });
             } else {
                 return executionsStore
@@ -1025,7 +991,7 @@
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
                         toggleAllUnselected();
-                        loadData();
+                        dataTable.value?.reload();
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};
                     }), t(e.message)));
@@ -1082,17 +1048,17 @@
     border-radius: 7px;
     box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
 
-    :deep(.el-alert__title) {
-        font-size: 16px;
+    :deep(.kel-alert__title) {
+        font-size: var(--ks-font-size-base);
         color: var(--ks-content-warning);
         font-weight: bold;
     }
 
-    :deep(.el-alert__description) {
-        font-size: 12px;
+    :deep(.kel-alert__description) {
+        font-size: var(--ks-font-size-xs);
     }
 
-    :deep(.el-alert__icon) {
+    :deep(.kel-alert__icon) {
         color: var(--ks-content-warning);
     }
 }
@@ -1101,7 +1067,7 @@
     color: var(--ks-content-primary);
 }
 
-:deep(.executions-table) .el-table__row {
+:deep(.executions-table) .kel-table__row {
     cursor: pointer;
 }
 

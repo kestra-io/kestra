@@ -55,7 +55,7 @@ export const useDocStore = defineStore("doc", {
         async children(prefix?: string): Promise<any> {
             const url = this.resourceUrl(prefix);
             if (!url) throw new Error("Resource URL template not initialized");
-            
+
             const response = await axios.get(url + "/children");
             return response.data;
         },
@@ -63,14 +63,14 @@ export const useDocStore = defineStore("doc", {
         async fetchResource(path: string): Promise<FetchResourceResponse> {
             const url = this.resourceUrl(path);
             if (!url) throw new Error("Resource URL template not initialized");
-            
+
             const response = await axios.get(url);
-            
+
             let metadata = response.headers["x-kestra-metadata"];
             if (metadata !== undefined) {
                 metadata = JSON.parse(metadata);
             }
-            
+
             return {
                 content: response.data,
                 metadata
@@ -80,7 +80,7 @@ export const useDocStore = defineStore("doc", {
         async fetchDocId(docId: string): Promise<FetchResourceResponse> {
             const url = this.resourceUrl();
             if (!url) throw new Error("Resource URL template not initialized");
-            
+
             const response = await axios.get(`${url}/doc/${docId}`);
 
             let metadata = response.headers["x-kestra-metadata"];
@@ -100,7 +100,7 @@ export const useDocStore = defineStore("doc", {
             if (scoredSearch) {
                 const url = this.resourceUrl(undefined, "search");
                 if (!url) throw new Error("Resource URL template not initialized");
-                
+
                 const response = await axios.get(`${url}?q=${q}&type=DOCS`);
                 return response.data.results.map(({url, title}: {url: string; title: string}): SearchResult => ({
                     parsedUrl: url,
@@ -110,7 +110,7 @@ export const useDocStore = defineStore("doc", {
 
             const url = this.resourceUrl();
             if (!url) throw new Error("Resource URL template not initialized");
-            
+
             const response = await axios.get(`${url}/search?q=${q}`);
             return response.data;
         },

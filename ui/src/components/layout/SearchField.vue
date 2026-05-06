@@ -1,5 +1,5 @@
 <template>
-    <el-input
+    <KsInput
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
@@ -16,7 +16,7 @@
                 </slot>
             </div>
         </template>
-    </el-input>
+    </KsInput>
 </template>
 
 <script lang="ts" setup>
@@ -88,13 +88,13 @@
 
 <style scoped lang="scss">
     .shortcut {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-xs);
         line-height: 1.25rem;
         gap: .25rem;
     }
 
-    .el-input {
-        :deep(.el-input__prefix), :deep(input)::placeholder {
+    .kel-input {
+        :deep(.kel-input__prefix), :deep(input)::placeholder {
             color: var(--ks-content-primary);
         }
     }

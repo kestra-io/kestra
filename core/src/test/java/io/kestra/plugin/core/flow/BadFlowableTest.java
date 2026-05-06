@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -12,6 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 public class BadFlowableTest {
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @ExecuteFlow(value = "flows/valids/flowable-fail.yaml", tenantId = "sequential")
@@ -25,7 +29,11 @@ public class BadFlowableTest {
     @Test
     @ExecuteFlow(value = "flows/valids/flowable-with-parent-fail.yaml", tenantId = "flowablewithparentfail")
     void flowableWithParentFail(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        assertThat(subExecutions).hasSize(2);
+        assertThat(subExecutions).extracting("state.current").containsOnly(State.Type.FAILED);
     }
 }

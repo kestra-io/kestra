@@ -2,7 +2,6 @@ package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
-import io.kestra.cli.commands.sys.database.DatabaseCommand;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -13,7 +12,6 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         ReindexCommand.class,
-        DatabaseCommand.class,
         SubmitQueuedCommand.class,
     }
 )

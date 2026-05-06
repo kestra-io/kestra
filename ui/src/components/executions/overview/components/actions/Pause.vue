@@ -1,22 +1,22 @@
 <template>
-    <el-button
+    <KsButton
         :disabled="!enabled"
         :icon="Pause"
         @click="click"
     >
         {{ $t('pause') }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="Pause" type="primary" @click="pause()" nativeType="submit">
+            <KsButton :icon="Pause" type="primary" @click="pause()" nativeType="submit">
                 {{ $t('pause') }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -24,7 +24,7 @@
     import {useExecutionsStore} from "../../../../../stores/executions";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
     import {useAuthStore} from "override/stores/auth";
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";

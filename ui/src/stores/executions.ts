@@ -5,7 +5,7 @@ import Utils from "../utils/utils";
 import {useCoreStore} from "./core";
 import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
-import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
+import {CLUSTER_PREFIX} from "@kestra-io/design-system";
 import {useAxios} from "../utils/axios";
 import * as ExecutionUtils from "../utils/executionUtils";
 

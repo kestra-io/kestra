@@ -4,14 +4,14 @@
             <slot name="actions" />
         </MultiPanelEditorTabs>
         <div class="editor-wrapper">
-            <el-splitter class="default-theme editor-panels" layout="vertical">
-                <el-splitter-panel>
+            <KsSplitter class="default-theme editor-panels" layout="vertical">
+                <KsSplitterPanel>
                     <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
-                </el-splitter-panel>
-                <el-splitter-panel v-if="bottomVisible && slots['bottom-panel']">
+                </KsSplitterPanel>
+                <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']">
                     <slot name="bottom-panel" />
-                </el-splitter-panel>
-            </el-splitter>
+                </KsSplitterPanel>
+            </KsSplitter>
         </div>
         <slot name="footer" />
     </div>
@@ -132,16 +132,16 @@
     :deep(.editor-panels){
         position: absolute;
     }
-    :deep(.el-splitter-bar){
+    :deep(.kel-splitter-bar){
         width: 2px !important;
     }
 
     .default-theme{
-        :deep(.el-splitter-panel) {
+        :deep(.kel-splitter-panel) {
             background-color: var(--ks-background-panel);
         }
 
-        :deep(.el-splitter__splitter){
+        :deep(.kel-splitter__splitter){
             border-top-color: var(--ks-border-primary);
             background-color: var(--ks-background-panel);
             &:before, &:after{

@@ -81,6 +81,8 @@ jobs:
           filters: |
             ui:
               - 'ui/**'
+            ui-design-system:
+              - 'ui/packages/design-system/**'
             backend:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -93,6 +95,14 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  design-system-frontend:
+    name: Frontend - Design System tests
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.ui-design-system == 'true'"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   backend:
     name: Backend - Tests

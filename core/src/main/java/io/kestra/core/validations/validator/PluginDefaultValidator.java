@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.models.flows.PluginDefaultSpec;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.validations.PluginDefaultValidation;
 
@@ -17,12 +17,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class PluginDefaultValidator implements ConstraintValidator<PluginDefaultValidation, PluginDefault> {
+public class PluginDefaultValidator implements ConstraintValidator<PluginDefaultValidation, PluginDefaultSpec> {
     @Inject
     private PluginDefaultService pluginDefaultService;
 
     @Override
-    public boolean isValid(@Nullable PluginDefault value, @NonNull AnnotationValue<PluginDefaultValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
+    public boolean isValid(@Nullable PluginDefaultSpec value, @NonNull AnnotationValue<PluginDefaultValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
         if (value == null) {
             return false;
         }

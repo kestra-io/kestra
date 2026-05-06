@@ -1,13 +1,13 @@
 <template>
     <div class="ai-trigger-box" v-if="show">
-        <el-button 
+        <KsButton
             v-if="!opened"
-            class="ai-trigger-button" 
-            :icon="AiIcon" 
+            class="ai-trigger-button"
+            :icon="AiIcon"
             @click="handleClick"
         >
             {{ $t("ai.flow.title") }}
-        </el-button>
+        </KsButton>
     </div>
 </template>
 
@@ -40,7 +40,7 @@
     --border-angle: 0turn;
     --main-bg: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
     --gradient-border: conic-gradient(from calc(var(--border-angle) + 50.37deg) at 50% 50%, #3991FF 0deg, #8C4BFF 124.62deg, #A396FF 205.96deg, #3991FF 299.42deg, #E0E0FF 342.69deg, #3991FF 360deg);
-    
+
     display: flex;
     flex-direction: column;
     align-items: end;
@@ -69,7 +69,7 @@
         background-color: var(--ks-button-background-secondary);
         color: var(--ks-content-primary);
         box-shadow: 0px 4px 4px 0px #00000040;
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
         font-weight: 700;
         border: none;
         border-radius: 3rem;

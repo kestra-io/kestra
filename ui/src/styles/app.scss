@@ -1,26 +1,12 @@
-@use "fonts";
-
-@use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
+@use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
+@use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
-
-@use "@kestra-io/ui-libs/style.css";
 
 // element-plus
 @use "layout/element-plus-overload";
 
-// layout
-@use "layout/root";
-@use "layout/root-dark";
-@use "layout/html-tag" as *;
-
-// components
-@use "layout/charts";
-@use "components/vue-material-design-icon";
-@use "components/vue-nprogress" with (
-    $indigo: global-var.$indigo
-);
-
 @use "components/sidebar-menu";
+@use "components/markdown";
 
 html, body, #app, #app-container {
     height: 100%;
@@ -108,17 +94,13 @@ main {
     }
 }
 
-.el-icon.el-select__caret.el-select__icon {
-    font-size: 1.1rem;
-}
-
 // status
-@each $key, $value in global-var.$colors {
+@each $key, $value in design.$colors {
     .bg-#{$key} {
         background-color: $value;
     }
 
-    .el-button.status-#{$key} {
+    .kel-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
         background: var(--ks-background-card);
@@ -128,7 +110,7 @@ main {
         }
 
         html.dark & {
-            background: var(--bs-tertiary);
+            background: #2F3342;
         }
     }
 }
@@ -166,27 +148,21 @@ html.full-screen {
 
 // setup non color CSS variables
 :root{
-    --el-box-shadow: $box-shadow;
-    --el-box-shadow-light: $box-shadow-sm;
-    --el-box-shadow-lighter: $box-shadow-sm;
-    --el-box-shadow-dark: $box-shadow-lg;
+    --kel-box-shadow: $box-shadow;
+    --kel-box-shadow-light: $box-shadow-sm;
+    --kel-box-shadow-lighter: $box-shadow-sm;
+    --kel-box-shadow-dark: $box-shadow-lg;
 
-    --el-transition-duration: 0.2s;
-    --el-transition-duration-fast: 0.2s;
-    
+    --kel-transition-duration: 0.2s;
+    --kel-transition-duration-fast: 0.2s;
+
     --top-navbar-height: 49px;
     &:has(.top-bar .description) {
         --top-navbar-height: 74px;
     }
 
-    #{--menu-width}: global-var.$menu-width;
+    #{--menu-width}: 268px;
     #{--menu-collapsed-width}: 65px;
-    #{--spacer}: global-var.$spacer;
-
-    #{--font-size-xs}: global-var.$font-size-xs;
-    #{--font-size-sm}: global-var.$font-size-sm;
-    #{--font-size-base}: global-var.$font-size-base;
-    #{--font-size-lg}: global-var.$font-size-lg;
 }
 
 body{

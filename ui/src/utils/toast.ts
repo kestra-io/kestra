@@ -1,15 +1,13 @@
-import {ElNotification, ElMessageBox, ElTable, ElTableColumn} from "element-plus"
+import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
-
-import Markdown from "../components/layout/Markdown.vue"
 
 
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
     _wrap: function(message:string) {
         if(Array.isArray(message) && message.length > 0){
             return h(
-                ElTable,
+                KsTable,
                 {
                     stripe: true,
                     tableLayout: "auto",
@@ -19,18 +17,18 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     size: "small",
                 },
                 [
-                    h(ElTableColumn, {label: "Message", formatter: (row) => { return h("span",{innerHTML:row.message})}})
+                    h(KsTableColumn, {label: "Message", formatter: (row: any) => { return h("span",{innerHTML:row.message})}})
                 ]
             )
         } else {
-            return h(Markdown, {source: message});
+            return h(KsMarkdown, {content: message});
         }
     },
     _MarkdownWrap: function(message:string) {
-        return h(Markdown, {source: message})
+        return h(KsMarkdown, {content: message})
     },
     confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
-        return ElMessageBox
+        return KsMessageBox
             .confirm(typeof message === "string" ? this._MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
             .then(() => callback())
             .catch(() => {
@@ -38,11 +36,11 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
             });
     },
     saved: function(name:string, title?:string, options?: Record<string, any>) {
-        ElNotification.closeAll();
+        KsNotification.closeAll();
         const message = options?.multiple
             ? t("multiple saved done", {name})
             : t("saved done", {name: name});
-        ElNotification({
+        KsNotification({
 
                 title: title || t("saved"),
                 message: this._wrap(message),
@@ -52,7 +50,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
         });
     },
     deleted: function(name:string, title?:string, options?: Record<string, any>) {
-        ElNotification({
+        KsNotification({
 
                 title: title || t("deleted"),
                 message: this._wrap(t("deleted confirm", {name: name})),
@@ -62,7 +60,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
         })
     },
     success: function(message:string, title?:string, options?: Record<string, any>) {
-        ElNotification({
+        KsNotification({
 
                 title: title || t("success"),
                 message: this._wrap(message),
@@ -72,7 +70,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
         })
     },
     warning: function(message:string, title?:string, options?: Record<string, any>) {
-        ElNotification({
+        KsNotification({
 
                 title: title || t("warning"),
                 message: this._wrap(message),
@@ -82,14 +80,14 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
         })
     },
     error: function(message:string, title?:string, options?: Record<string, any>) {
-        ElNotification({
+        KsNotification({
 
                 title: title ?? t("error"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "error",
                 duration: 0,
-                customClass: "large",
+                customClass: "kel-notification__large",
             ...options
         })
     }

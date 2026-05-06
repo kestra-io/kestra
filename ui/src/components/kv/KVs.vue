@@ -1,11 +1,11 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
+        <template #actions>
             <ul>
                 <li>
-                    <el-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
+                    <KsButton :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
                         {{ $t("kv.add") }}
-                    </el-button>
+                    </KsButton>
                 </li>
             </ul>
         </template>

@@ -1,0 +1,155 @@
+@use "@kestra-io/design-system/src/assets/styles/color-palette" as *;
+
+$node-default: #7081b9;
+
+$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+
+:root {
+    --ks-topology-edge-color: #9A8EB4;
+    --ks-topology-dot-color: #{$base-gray-300};
+
+    --ks-border-radius:      0.25rem;
+    --ks-border-radius-lg:   0.5rem;
+    --ks-border-radius-sm:   0.15rem;
+    --ks-border-radius-pill: 50rem;
+}
+
+$node-colors: (
+    "success": $base-green-400,
+    "primary": $base-purple-500,
+    "danger":  $base-red-500,
+    "blue":    $base-blue-500,
+    "default": $node-default,
+    "warning": $base-orange-300,
+);
+
+:root {
+    @each $name, $color in $node-colors {
+        --ks-node-#{$name}: #{$color};
+    }
+}
+
+html.dark {
+    --ks-node-default: #{$base-gray-400};
+}
+
+.bg-white { background-color: $base-white; }
+
+.text-danger { color: $base-red-500; }
+
+.vue-flow .material-design-icon {
+    height: 1em;
+    width: 1em;
+
+    > .material-design-icon__svg {
+        height: 1em;
+        width: 1em;
+        bottom: 0;
+    }
+}
+
+button.circle-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    appearance: none;
+}
+
+.circle-button {
+    border-radius: 1rem;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 0.25rem;
+    z-index: 2000;
+    cursor: pointer;
+}
+
+.button-icon {
+    font-size: 0.66rem;
+}
+
+.vue-flow__controls {
+    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-border-radius);
+}
+
+.vue-flow__controls-button {
+    color: var(--ks-content-primary);
+    border-bottom-color: var(--ks-border-primary);
+
+    svg { fill: var(--ks-content-primary); }
+
+    html.dark & { background: var(--ks-background-card); }
+}
+
+.vue-flow__container {
+    .vue-flow__node.topology-node-hovered,
+    .vue-flow__node.topology-node-drop-target {
+        outline: none !important;
+    }
+
+    .vue-flow__node.topology-node-hovered .node-wrapper {
+        border-color: var(--ks-content-primary) !important;
+    }
+
+    .vue-flow__node.topology-node-drop-target .node-wrapper {
+        border-color: var(--ks-border-active) !important;
+    }
+
+    .top-button-div {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        justify-content: center;
+        padding-right: 3px;
+        display: flex;
+        color: white;
+    }
+
+    .vue-flow__node-cluster { pointer-events: none !important; }
+    .vue-flow__handle       { opacity: 0 !important; }
+
+    .vue-flow__edge-path {
+        stroke: var(--ks-topology-edge-color);
+        fill: none;
+    }
+
+    @each $name, $color in $node-colors {
+        .ks-topology-#{$name}-border {
+            background-color: rgba($color, 0.05);
+            border: 1px solid $color;
+        }
+    }
+}
+
+.is-exporting {
+    .vue-flow__controls,
+    .vue-flow__controls-button,
+    .vue-flow__handle,
+    .top-button-div,
+    .circle-button {
+        display: none !important;
+    }
+}
+
+.ks-duration-tt {
+    text-align: left;
+    white-space: nowrap;
+    max-width: none;
+
+    .ks-duration-tt-square {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+    }
+
+    @each $value in $statusList {
+        .ks-duration-tt-square-#{$value} {
+            background-color: var(--ks-chart-#{$value});
+        }
+    }
+}

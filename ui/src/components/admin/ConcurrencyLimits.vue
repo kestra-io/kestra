@@ -2,18 +2,16 @@
     <TopNavBar :title="routeInfo.title" />
     
     <section class="container">
-        <DataTable
-            striped
-            :total="data?.total ?? 0"
-        >
+        <KsDataTable :total="data?.total ?? 0">
             <template #table>
-                <NoData v-if="data?.results === undefined || data?.results.length === 0" />
-                <el-table
+                <KsEmpty v-if="data?.results === undefined || data?.results.length === 0" />
+                <KsTable
                     v-else
                     :data="data?.results"
+                    stripe
                 >
-                    <el-table-column 
-                        v-for="k in KEYS" 
+                    <KsTableColumn
+                        v-for="k in KEYS"
                         :key="k"
                         :prop="k"
                         :label="k"
@@ -27,25 +25,25 @@
                                 {{ scope.row[k] }}
                             </span>
                         </template>
-                    </el-table-column>
-                </el-table>
+                    </KsTableColumn>
+                </KsTable>
             </template>
-        </DataTable>
-        <el-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <el-alert type="warning" :closable="false" showIcon>
+        </KsDataTable>
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+            <KsAlert type="warning" :closable="false" showIcon>
                 {{ $t("concurrency_limit.warning") }}
-            </el-alert>
+            </KsAlert>
             <br>
-            <el-input-number v-model="newRunningCount" />
+            <KsInputNumber v-model="newRunningCount" />
             <template #footer>
-                <el-button @click="editRunning = false">
+                <KsButton @click="editRunning = false">
                     {{ $t("cancel") }}
-                </el-button>
-                <el-button type="primary" @click="saveEditRunning()">
+                </KsButton>
+                <KsButton type="primary" @click="saveEditRunning()">
                     {{ $t("save") }}
-                </el-button>
+                </KsButton>
             </template>
-        </el-dialog>
+        </KsDialog>
     </section>
 </template>
 
@@ -57,8 +55,6 @@
     import {useAxios} from "../../utils/axios";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-    import DataTable from "../layout/DataTable.vue";
-    import NoData from "../layout/NoData.vue";
 
     const {t} = useI18n();
 

@@ -1,11 +1,11 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
-        <template #additional-right>
+    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
+        <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
-                    <el-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
+                    <KsButton type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
                         {{ $t('use') }}
-                    </el-button>
+                    </KsButton>
                 </router-link>
             </ul>
         </template>
@@ -13,17 +13,17 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <el-icon size="medium" @click="goBack">
+                <KsIcon size="sm" @click="goBack">
                     <ChevronLeft />
-                </el-icon>
+                </KsIcon>
             </button>
             <span class="header-title align-self-center">
                 {{ $t('blueprints.title') }}
             </span>
             <router-link v-if="userCanCreate" :to="editorRoute" class="ms-auto">
-                <el-button type="primary" @click="trackBlueprintUse('detail')">
+                <KsButton type="primary" @click="trackBlueprintUse('detail')">
                     {{ $t('use') }}
-                </el-button>
+                </KsButton>
             </router-link>
         </div>
         <div>
@@ -33,8 +33,8 @@
         </div>
     </div>
 
-    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
-        <el-card v-if="blueprint && kind === 'flow'">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-ks-loading="!blueprint">
+        <KsCard v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -46,11 +46,11 @@
                     isReadOnly
                 />
             </div>
-        </el-card>
-        <el-row :gutter="30" v-if="blueprint">
-            <el-col :md="24" :lg="embed ? 24 : 18">
+        </KsCard>
+        <KsRow :gutter="30" v-if="blueprint">
+            <KsCol :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
-                <el-card>
+                <KsCard>
                     <Editor
                         class="position-relative"
                         :readOnly="true"
@@ -64,28 +64,28 @@
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
                     </Editor>
-                </el-card>
+                </KsCard>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
                     <div class="tags text-uppercase">
                         <div v-for="tag in processedTags" :key="tag.original" class="tag-box">
-                            <el-tag type="info" size="small">
+                            <KsTag type="info" size="small">
                                 {{ tag.display }}
-                            </el-tag>
+                            </KsTag>
                         </div>
                     </div>
-                    <Markdown :source="blueprint?.description" />
+                    <KsMarkdown :content="blueprint?.description" />
                 </template>
-            </el-col>
-            <el-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
+            </KsCol>
+            <KsCol :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint?.includedTasks)]" :key="String(task)">
-                        <TaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
                     </div>
                 </div>
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 <script setup lang="ts">
@@ -96,11 +96,10 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
 
     import Editor from "../../../../components/inputs/Editor.vue";
-    import Markdown from "../../../../components/layout/Markdown.vue";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
     import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
 
     import {useFlowStore} from "../../../../stores/flow";
     import {usePluginsStore} from "../../../../stores/plugins";
@@ -108,7 +107,7 @@
     import {useApiStore} from "../../../../stores/api";
 
     import {canCreate} from "override/composables/blueprintsPermissions";
-    import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
     const props = withDefaults(defineProps<{
         blueprintId: string;
@@ -145,7 +144,7 @@
 
     const parsedFlow = computed(() => {
         return blueprint.value?.source ? {
-            ...parseFlow(blueprint.value.source),
+            ...YAML_UTILS.parse(blueprint.value.source),
             source: blueprint.value.source
         } : {};
     });
@@ -246,13 +245,12 @@
     });
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-top: calc($spacer * 2);
-        margin-bottom: $spacer;
+        margin-top: calc(1rem * 2);
+        margin-bottom: 1rem;
 
-        .el-card & {
+        .kel-card & {
             margin-top: 2.5rem;
         }
 
@@ -266,7 +264,7 @@
             .back-button {
                 height: 32px;
                 margin-left: 0;
-                margin-right: calc($spacer);
+                margin-right: calc(1rem);
                 cursor: pointer;
                 border: none;
                 background: var(--ks-background-card);
@@ -279,7 +277,7 @@
 
             .blueprint-title {
                 font-weight: 600;
-                font-size: 20px;
+                font-size: var(--ks-font-size-lg);
                 line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -290,16 +288,16 @@
     .blueprint-container {
         height: 100%;
 
-        :deep(.el-card) {
-            .el-card__body {
+        :deep(.kel-card) {
+            .kel-card__body {
                 padding: 0;
             }
         }
 
         h4 {
-            margin-top: calc($spacer * 2);
+            margin-top: calc(1rem * 2);
             font-weight: 600;
-            font-size: 18.4px;
+            font-size: var(--ks-font-size-md);
             line-height: 28px;
         }
 
@@ -314,13 +312,13 @@
             flex-wrap: wrap;
             > div {
                 background: var(--ks-background-card);
-                border-radius: var(--bs-border-radius);
+                border-radius: var(--kel-border-radius-base);
                 min-width : 100px;
                 width: 100px;
                 height : 100px;
-                padding: $spacer;
-                margin-right: $spacer;
-                margin-bottom: $spacer;
+                padding: 1rem;
+                margin-right: 1rem;
+                margin-bottom: 1rem;
                 display: flex;
                 flex-wrap: wrap;
                 border: 1px solid var(--ks-border-primary);
@@ -335,7 +333,7 @@
                         position: static;
                         background: none;
                         border-top: 0;
-                        font-size: var(--font-size-sm);
+                        font-size: var(--ks-font-size-sm);
                     }
 
                 }
@@ -347,17 +345,17 @@
         margin: 10px 0;
         display: flex;
 
-        .el-tag.el-tag--info {
+        .kel-tag.kel-tag--info {
             background-color: var(--ks-background-card);
             padding: 15px 10px;
             color: var(--ks-content-primary);
             text-transform: capitalize;
-            font-size: var(--el-font-size-small);
+            font-size: var(--ks-font-size-sm);
             border: 1px solid var(--ks-border-primary);
         }
 
         .tag-box {
-            margin-right: calc($spacer / 3);
+            margin-right: calc(1rem / 3);
         }
     }
 </style>

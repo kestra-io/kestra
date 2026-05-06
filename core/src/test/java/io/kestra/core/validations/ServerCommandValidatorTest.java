@@ -25,6 +25,7 @@ class ServerCommandValidatorTest {
         Assertions.assertDoesNotThrow(
             () -> ApplicationContext.builder()
                 .deduceEnvironment(false)
+                .environments("test")
                 .properties(
                     Map.of(
                         "kestra.server-type", "webserver",
@@ -39,7 +40,17 @@ class ServerCommandValidatorTest {
         final Throwable exception = Assertions.assertThrows(
             BeanInstantiationException.class, () -> ApplicationContext.builder()
                 .deduceEnvironment(false)
-                .properties(Map.of("kestra.server-type", "webserver"))
+                .properties(
+                    Map.of(
+                        "kestra.server-type", "webserver",
+                        "kestra.repository.type", "h2",
+                        "kestra.queue.type", "h2",
+                        "datasources.h2.url", "jdbc:h2:mem:test-cmd-validator;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                        "datasources.h2.username", "sa",
+                        "datasources.h2.password", "",
+                        "datasources.h2.driverClassName", "org.h2.Driver"
+                    )
+                )
                 .start()
         );
         final Throwable rootException = getRootException(exception);

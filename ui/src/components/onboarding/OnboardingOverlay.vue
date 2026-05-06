@@ -14,13 +14,11 @@
             </div>
             <p class="description" v-html="stepDescription" />
             <div v-if="snippetMarkdown" class="snippet-wrap">
-                <Markdown
-                    :source="snippetMarkdown"
-                    font-size-var="font-size-xs"
-                    :showCopyButtons="snippetCopyEnabled"
+                <KsMarkdown
+                    :content="snippetMarkdown"
                 />
             </div>
-            <el-alert
+            <KsAlert
                 v-if="externalActionNote"
                 type="info"
                 :closable="false"
@@ -30,8 +28,8 @@
                 <template #title>
                     <span class="feedback-note-title" v-html="externalActionNote" />
                 </template>
-            </el-alert>
-            <el-alert
+            </KsAlert>
+            <KsAlert
                 v-if="feedback.message"
                 :title="feedback.message"
                 :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
@@ -40,27 +38,27 @@
                 class="feedback"
             />
             <div v-if="!isFinishStep" class="actions">
-                <el-button @click="cancelTour">
+                <KsButton @click="cancelTour">
                     {{ t("onboarding.actions.cancel_tutorial") }}
-                </el-button>
+                </KsButton>
                 <div class="actions-right">
                     <span v-if="showStepCompleteBadge && isStepComplete && !isFinishStep" class="step-complete">
                         <CheckCircle :size="16" />
                         {{ t("onboarding.actions.complete") }}
                     </span>
-                    <el-button v-if="showNextButton" type="primary" @click="nextStep">
+                    <KsButton v-if="showNextButton" type="primary" @click="nextStep">
                         {{ nextLabel }}
-                    </el-button>
+                    </KsButton>
                 </div>
             </div>
             <div v-else class="actions finish-footer">
                 <div class="actions-right">
-                    <el-button @click="goToBlueprints">
+                    <KsButton @click="goToBlueprints">
                         {{ t("onboarding.finish_actions.explore_blueprints") }}
-                    </el-button>
-                    <el-button type="primary" :icon="Plus" @click="goToCreateFlow">
+                    </KsButton>
+                    <KsButton type="primary" :icon="Plus" @click="goToCreateFlow">
                         {{ t("onboarding.finish_actions.create_flow") }}
-                    </el-button>
+                    </KsButton>
                 </div>
             </div>
         </div>
@@ -71,12 +69,11 @@
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {ElMessageBox} from "element-plus";
+    import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
     import {useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide";
     import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
-    import Markdown from "../layout/Markdown.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 
@@ -142,7 +139,7 @@
 
         return `\`\`\`yaml\n${resolvedSnippet}\n\`\`\``;
     });
-    const snippetCopyEnabled = computed(() => currentStep.value?.snippetCopyEnabled ?? true);
+
     const nextLabel = computed(() => {
         if (isFinishStep.value) {
             return t("onboarding.actions.finish_tutorial");
@@ -232,7 +229,7 @@
         const target = event.target as HTMLElement | null;
         if (
             target?.closest(
-                "button, a, input, textarea, select, label, [role='button'], .el-button, .el-input, .el-select",
+                "button, a, input, textarea, select, label, [role='button'], .kel-button, .kel-input, .kel-select",
             )
         ) {
             return;
@@ -373,7 +370,7 @@
         }
 
         if (isExecuteStep.value) {
-            const dialog = document.querySelector("#execute-flow-dialog .el-dialog") as HTMLElement | null;
+            const dialog = document.querySelector("#execute-flow-dialog .kel-dialog") as HTMLElement | null;
             if (dialog) {
                 const rect = dialog.getBoundingClientRect();
                 const cardWidth = Math.min(475, window.innerWidth - 96);
@@ -512,7 +509,7 @@
 
         isCancelConfirmOpen.value = true;
         try {
-            await ElMessageBox.confirm(
+            await KsMessageBox.confirm(
                 t("onboarding.cancel_modal.description"),
                 t("onboarding.cancel_modal.title"),
                 {
@@ -729,7 +726,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        color: var(--el-color-success);
+        color: var(--ks-content-success);
         font-size: 0.78rem;
         font-weight: 600;
     }
@@ -737,7 +734,7 @@
     .onboarding-overlay .description {
         margin: 0.75rem 0;
         color: var(--ks-content-primary);
-        font-size: 0.875rem;
+        font-size: var(--ks-font-size-sm);
         line-height: 1.45;
     }
 
@@ -752,7 +749,7 @@
         margin-bottom: 0.75rem;
     }
 
-    .onboarding-overlay .feedback :deep(.el-alert__title) {
+    .onboarding-overlay .feedback :deep(.kel-alert__title) {
         white-space: pre-line;
     }
 
@@ -783,12 +780,12 @@
         gap: 0.5rem;
     }
 
-    .onboarding-overlay .finish-footer .actions-right :deep(.el-button + .el-button) {
+    .onboarding-overlay .finish-footer .actions-right :deep(.kel-button + .kel-button) {
         margin-left: 0;
     }
 
     :global(.onboarding-v2-highlight-static) {
-        --onboarding-static-color: var(--el-color-primary);
+        --onboarding-static-color: var(--ks-button-background-primary);
         box-shadow:
             0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
             0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
@@ -797,14 +794,14 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
-        --onboarding-static-color: color-mix(in srgb, var(--el-color-primary) 70%, white 30%);
+        --onboarding-static-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
         box-shadow:
             0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
             0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
     }
 
     :global(.onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: var(--el-color-primary);
+        --onboarding-pulse-color: var(--ks-button-background-primary);
         --onboarding-pulse-strong: 50%;
         --onboarding-pulse-soft: 30%;
         --onboarding-pulse-scale: 1.045;
@@ -812,14 +809,14 @@
         --onboarding-pulse-ring-2: 18px;
     }
 
-    :global(.onboarding-v2-highlight-pulse .el-button),
-    :global(.onboarding-v2-highlight-pulse.el-button) {
+    :global(.onboarding-v2-highlight-pulse .kel-button),
+    :global(.onboarding-v2-highlight-pulse.kel-button) {
         animation: onboardingButtonPulse 1s ease-in-out infinite alternate;
         will-change: transform, box-shadow;
     }
 
     :global(html.dark .onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: color-mix(in srgb, var(--el-color-primary) 70%, white 30%);
+        --onboarding-pulse-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
         --onboarding-pulse-strong: 52%;
         --onboarding-pulse-soft: 34%;
         --onboarding-pulse-scale: 1.04;

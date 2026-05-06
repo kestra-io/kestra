@@ -40,11 +40,11 @@ const Sut = defineComponent((props) => {
 
     const values = ref({});
     return () => (<>
-        <el-form label-position="top">
+        <ks-form label-position="top">
             <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={{namespace: "ns1", id: "flowid1"}}
                         onUpdate:modelValue={(value) => values.value = value}
             />
-        </el-form>
+        </ks-form>
         <pre data-testid="test-content">{
             JSON.stringify(values.value, null, 2)
         }</pre>

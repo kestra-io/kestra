@@ -1,0 +1,80 @@
+@use "variables" as v;
+
+:root {
+    // base colors
+    #{--ks-black}: #{v.$black};
+    #{--ks-white}: #{v.$white};
+
+    // typography
+    --ks-font-family-sans: #{v.$font-family-sans-serif};
+    --ks-font-family-mono: #{v.$font-family-monospace};
+    --ks-font-size-xs: #{v.$font-size-xs};
+    --ks-font-size-sm: #{v.$font-size-sm};
+    --ks-font-size-base: #{v.$font-size-base};
+    --ks-font-size-md: #{v.$font-size-md};
+    --ks-font-size-lg: #{v.$font-size-lg};
+    --ks-font-size-xl: #{v.$font-size-xl};
+    --ks-font-size-2xl: #{v.$font-size-2xl};
+    --ks-font-size-3xl: #{v.$font-size-3xl};
+    --ks-font-size-4xl: #{v.$font-size-4xl};
+
+    // radius
+    --ks-radius-sm: #{v.$border-radius-sm};
+    --ks-radius-base: #{v.$border-radius};
+    --ks-radius-lg: #{v.$border-radius-lg};
+
+    // shadow
+    --ks-shadow-sm: #{v.$box-shadow-sm};
+    --ks-shadow-base: #{v.$box-shadow};
+    --ks-shadow-lg: #{v.$box-shadow-lg};
+
+    // spacing (4px step)
+    --ks-spacing-px: 1px;
+    --ks-spacing-1: 0.25rem;
+    --ks-spacing-2: 0.5rem;
+    --ks-spacing-3: 0.75rem;
+    --ks-spacing-4: 1rem;
+    --ks-spacing-5: 1.5rem;
+    --ks-spacing-6: 2rem;
+    --ks-spacing-7: 2.5rem;
+    --ks-spacing-8: 3rem;
+    --ks-spacing-10: 4rem;
+    --ks-spacing-12: 5rem;
+    --ks-spacing-16: 6rem;
+
+    // font weight
+    --ks-font-weight-regular: 400;
+    --ks-font-weight-medium: 500;
+    --ks-font-weight-semibold: 600;
+    --ks-font-weight-bold: 700;
+
+    // line height
+    --ks-line-height-tight: 1.2;
+    --ks-line-height-base: 1.5;
+    --ks-line-height-loose: 1.75;
+
+    // motion
+    --ks-duration-fast: 100ms;
+    --ks-duration-base: 200ms;
+    --ks-duration-slow: 300ms;
+    --ks-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ks-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ks-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+    // border widths
+    --ks-border-width-thin: 1px;
+    --ks-border-width-base: 2px;
+    --ks-border-width-thick: 4px;
+
+    // composite borders
+    --ks-border-block-primary: var(--ks-border-width-thin) solid var(--ks-border-primary);
+    --ks-border-block-secondary: var(--ks-border-width-thin) solid var(--ks-border-secondary);
+    --ks-border-block-active: var(--ks-border-width-thin) solid var(--ks-border-active);
+
+    // icon sizes
+    --ks-icon-size-xs: 0.75rem;
+    --ks-icon-size-sm: 1rem;
+    --ks-icon-size-base: 1.25rem;
+    --ks-icon-size-lg: 1.5rem;
+    --ks-icon-size-xl: 2rem;
+}

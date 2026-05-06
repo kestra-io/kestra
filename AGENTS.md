@@ -185,6 +185,12 @@ class ServiceTest {
 - Storybook component tests
 - Use JSdom environment for DOM testing
 
+## UI Design System
+
+The full UI design-system rules, component catalogue, token reference, and frontend best practices live in [ui/AGENTS.md](ui/AGENTS.md). That file is auto-loaded by AI coding agents whenever work happens under `ui/` in OSS or `ui-ee/` in Enterprise edition, and should be consulted (and kept up to date) for any frontend change.
+
+@ui/AGENTS.md
+
 ## Frontend Code Style (Vue 3)
 
 **File Organization:**
@@ -350,6 +356,6 @@ docker compose -f docker-compose-ci.yml down
 ## Pull request guidelines
 - Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.
 - Use types: chore, feat, fix, refactor, test, docs, build
-- Use scopes: apps, assets, core, dashboards, deps, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, triggers, variables, version, worker
+- Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.

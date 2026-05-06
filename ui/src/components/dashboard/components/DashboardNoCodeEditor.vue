@@ -13,7 +13,7 @@
                         v-if="creatingTask || editingTask"
                     />
 
-                    <el-form v-else labelPosition="top">
+                    <KsForm v-else labelPosition="top">
                         <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchema" :transparent="v.fieldKey === 'inputs'" :merge="shouldMerge(v.schema)">
                             <template #tasks>
                                 <TaskObjectField
@@ -22,7 +22,7 @@
                                 />
                             </template>
                         </Wrapper>
-                    </el-form>
+                    </KsForm>
                 </div>
             </template>
         </AiCopilotWrapper>
@@ -36,7 +36,7 @@
     import {useDashboardFields} from "../composables/useDashboardFields";
     import {useDashboardStore} from "../../../stores/dashboard";
     import {usePluginsStore} from "../../../stores/plugins";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
     import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue";
     import {aiGenerationTypes} from "../../../utils/constants";
     import {
@@ -137,7 +137,7 @@
         if(type){
             pluginsStore.updateDocumentation({cls: type});
         }else{
-            pluginsStore.updateDocumentation(); 
+            pluginsStore.updateDocumentation();
         }
     })
 

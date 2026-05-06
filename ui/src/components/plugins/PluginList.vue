@@ -1,17 +1,17 @@
 <template>
     <div v-if="currentView !== 'documentation' || currentDocumentationPlugin" class="breadcrumb">
-        <el-button
+        <KsButton
             v-if="navigationStack.length > 0"
             class="back-btn"
             @click="goBack"
             aria-label="Go back"
             :icon="ChevronLeft"
         />
-        <el-breadcrumb separator="/">
-            <el-breadcrumb-item>
+        <KsBreadcrumb separator="/">
+            <KsBreadcrumbItem>
                 <a :class="{'fw-bold ps-2': navigationStack.length === 0}" href="#" @click.prevent="goToStep(-1)">{{ $t('plugins.names') }}</a>
-            </el-breadcrumb-item>
-            <el-breadcrumb-item
+            </KsBreadcrumbItem>
+            <KsBreadcrumbItem
                 v-for="(item, index) in navigationStack"
                 :key="index"
                 :class="{'is-active': index === navigationStack.length - 1}"
@@ -24,8 +24,8 @@
                     {{ item.title }}
                 </a>
                 <span v-else>{{ item.title }}</span>
-            </el-breadcrumb-item>
-        </el-breadcrumb>
+            </KsBreadcrumbItem>
+        </KsBreadcrumb>
         <SearchField
             v-if="navigationStack.length === 0"
             class="search-field"
@@ -42,7 +42,7 @@
             @click.prevent="openGroup(plugin)"
         >
             <div class="content">
-                <TaskIcon
+                <KsTaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
@@ -72,8 +72,8 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue";
-    import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
-    import {isPluginMatched} from "../../utils/pluginUtils";
+    import {KsTaskIcon} from "@kestra-io/design-system";
+    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
@@ -101,7 +101,7 @@
     const currentGroup = ref<string>("");
     const currentSubgroup = ref<string>();
     const searchQuery = ref<string>("");
-    const icons = ref<Record<string, string>>({});
+    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({});
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
     const currentView = ref<"list" | "group" | "documentation">("documentation");
@@ -334,11 +334,11 @@
         border: none;
         cursor: pointer;
         padding: 0.5rem;
+        display: inline-flex;
+        align-items: center;
 
         :deep(svg) {
-            font-size: 1.25rem;
-            position: absolute;
-            bottom: -0.10em;
+            font-size: var(--ks-font-size-lg);
         }
     }
 
@@ -346,8 +346,8 @@
         width: 35%;
         margin-left: auto;
 
-        :deep(.el-input__inner) {
-            font-size: 14px;
+        :deep(.kel-input__inner) {
+            font-size: var(--ks-font-size-sm);
 
             &::placeholder {
                 color: var(--ks-content-tertiary) !important;
@@ -355,20 +355,29 @@
         }
     }
 
-    .el-breadcrumb {
-        :deep(.el-breadcrumb__separator) {
-            font-size: 1.375rem;
+    .kel-breadcrumb {
+        :deep(.kel-breadcrumb__separator) {
+            font-size: inherit;
+            margin: 0 0.25rem;
         }
 
-        :deep(.el-breadcrumb__item .el-breadcrumb__inner) {
+        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
             text-transform: none !important;
+            color: var(--ks-content-secondary) !important;
+            font-weight: 500 !important;
         }
 
-        :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-            font-weight: 700 !important;
+        :deep(.kel-breadcrumb__item .kel-breadcrumb__inner a) {
+            color: var(--ks-content-secondary) !important;
+            font-weight: 500 !important;
+        }
+
+        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner),
+        :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner a) {
+            color: var(--ks-content-primary) !important;
+            font-weight: 600 !important;
         }
     }
-
 
 }
 
@@ -399,14 +408,14 @@
 
             .name {
                 color: var(--ks-content-primary);
-                font-size: 1rem;
+                font-size: var(--ks-font-size-base);
                 line-height: 1.5;
             }
         }
 
         .chevron-right-icon {
             color: var(--ks-content-tertiary);
-            font-size: 1.5rem;
+            font-size: var(--ks-font-size-xl);
         }
     }
 }
@@ -420,10 +429,6 @@
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
-
-    &.no-padding {
-        padding-top: 0;
-    }
 }
 
 :deep(.markdown h3){

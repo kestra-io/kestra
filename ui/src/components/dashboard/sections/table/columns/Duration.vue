@@ -1,10 +1,10 @@
 <template>
-    <span v-if="field">{{ Utils.humanDuration(calculatedField) }}</span>
-    <em v-else>{{ Utils.humanDuration(calculatedField) }}</em>
+    <span v-if="field">{{ durationUtils.humanDuration(calculatedField) }}</span>
+    <em v-else>{{ durationUtils.humanDuration(calculatedField) }}</em>
 </template>
 
 <script setup lang="ts">
-    import {Utils} from "@kestra-io/ui-libs";
+    import {durationUtils} from "@kestra-io/design-system";
     import {computed} from "vue";
 
     const props = defineProps<{

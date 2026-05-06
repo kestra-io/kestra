@@ -1,5 +1,5 @@
 import {ref, Ref, provide, watch} from "vue";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
 import {TopologyClickParams} from "../no-code/utils/types";
@@ -51,10 +51,10 @@ export function useTopologyPanels(
             }
         }
         return {
-            panelIndex, 
+            panelIndex,
             tabIndex
         }
-    }   
+    }
 
     const flowStore = useFlowStore();
     const pluginsStore = usePluginsStore();

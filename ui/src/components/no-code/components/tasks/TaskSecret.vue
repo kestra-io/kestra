@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper">
-        <MultilineSecret
+        <KsPassword
             v-model="modelValue"
             :placeholder="root ?? ''"
             pebble
@@ -9,7 +9,6 @@
 </template>
 
 <script lang="ts" setup>
-    import MultilineSecret from "../../../../components/secrets/MultilineSecret.vue";
     import {Schema} from "./getTaskComponent";
 
     defineOptions({inheritAttrs: false});
@@ -33,7 +32,7 @@
     border: 1px solid var(--ks-border-primary);
     width: 100%;
 
-    :deep(.el-input__wrapper),
+    :deep(.kel-input__wrapper),
     :deep(.editor-container) {
         box-shadow: none;
     }

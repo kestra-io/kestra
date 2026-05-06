@@ -1,0 +1,40 @@
+// bootstrap reboot only
+@import "variables.scss";
+
+$prefix: 'kbs-';
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/utilities/api";
+
+:root {
+    --kbs-root-font-size: #{$font-size-root};
+    --kbs-font-sans-serif: #{inspect($font-family-sans-serif)};
+    --kbs-font-monospace: #{inspect($font-family-monospace)};
+    --kbs-body-font-family: #{inspect($font-family-base)};
+    @include rfs(var(--ks-font-size-base), --kbs-body-font-size);
+    --kbs-body-font-weight: #{$font-weight-base};
+    --kbs-body-line-height: #{$line-height-base};
+    --kbs-body-text-align: #{$body-text-align};
+
+    --kbs-body-color: var(--ks-content-primary);
+    --kbs-body-bg: var(--ks-background-body);
+
+    --kbs-heading-color: var(--ks-content-primary);
+
+    --kbs-code-color: var(--ks-content-link);
+    --kbs-highlight-color: #{$mark-color};
+    --kbs-highlight-bg: #{$mark-bg};
+}
+
+a {
+    color: var(--ks-content-link);
+}
+
+a:hover {
+    color: var(--ks-content-link-hover);
+}

@@ -14,13 +14,10 @@
 </script>
 
 <style scoped lang="scss">
-$font-size-md: 1.5rem;
-$font-size-xs: .875rem;
-
 .home-page-header {
   h2 {
     padding-top: 0;
-    font-size: $font-size-md;
+    font-size: var(--ks-font-size-xl);
     font-weight: 400;
     margin-top: 2rem;
     margin-bottom: .75rem;
@@ -28,8 +25,8 @@ $font-size-xs: .875rem;
   }
 
   :deep(p) {
-    font-size: $font-size-xs;
-    line-height: 1.5em;
+    font-size: var(--ks-font-size-sm);
+    line-height: var(--ks-font-size-xl);
     margin: .5rem 0;
   }
 }

@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";

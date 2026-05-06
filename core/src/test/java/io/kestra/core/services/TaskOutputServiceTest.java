@@ -4,9 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -18,7 +17,6 @@ import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -34,62 +32,97 @@ class TaskOutputServiceTest {
     private TaskOutputService taskOutputService;
     @Inject
     private TaskOutputRepositoryInterface taskOutputRepository;
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
-    @ExecuteFlow("flows/valids/each-switch.yaml")
-    void outputsEachSwitch(Execution execution) throws JsonProcessingException {
+    @ExecuteFlow("flows/valids/loop-switch.yaml")
+    void outputsEachSwitch(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(12);
+        assertThat(execution.getTaskRunList()).hasSize(3);
 
-        Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
-        assertThat(outputs).hasSize(10);
-        String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo(
-            "{\"2-1_each\":{},\"2_each\":{},\"2_end\":{\"value\":\"2_end\"},\"2-1_switch-letter-a\":{\"a\":{\"value\":\"2-1_switch-letter-a\"}},\"2-1_switch-letter-b\":{\"b\":{\"value\":\"2-1_switch-letter-b\"}},\"2-1-1_switch\":{\"b\":{\"1\":{\"defaults\":false,\"value\":\"1\"},\"2\":{\"defaults\":false,\"value\":\"2\"}}},\"2-1_switch\":{\"a\":{\"defaults\":false,\"value\":\"a\"},\"b\":{\"defaults\":false,\"value\":\"b\"}},\"2-1-1_switch-number-1\":{\"b\":{\"1\":{\"value\":\"1\"}}},\"t1\":{\"value\":\"t1\"},\"2-1-1_switch-number-2\":{\"b\":{\"2\":{\"value\":\"2 b\"}}}}"
-        );
+        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        assertThat(subExecutions.size()).isEqualTo(2);
+
+        Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
+        assertThat(outputs).hasSize(4);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> switchLetterAOut = (Map<String, Object>) outputs.get("2-1_switch-letter-a");
+        assertThat(switchLetterAOut).containsExactlyInAnyOrderEntriesOf(Map.of("value", "2-1_switch-letter-a"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> switchOut = (Map<String, Object>) outputs.get("2-1_switch");
+        assertThat(switchOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "a"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> eachOut = (Map<String, Object>) outputs.get("2_each");
+        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 2, "runningIterations", 0, "iterationCount", 2));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> t1Out = (Map<String, Object>) outputs.get("t1");
+        assertThat(t1Out).containsExactlyInAnyOrderEntriesOf(Map.of("value", "t1"));
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-object-in-list.yaml")
-    void outputsEachObjectInList(Execution execution) throws JsonProcessingException {
+    @ExecuteFlow("flows/valids/loop-object-in-list.yaml")
+    void outputsEachObjectInList(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getTaskRunList()).hasSize(2);
 
-        Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
-        assertThat(outputs).hasSize(5);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        assertThat(subExecutions.size()).isEqualTo(3);
 
-        String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo(
-            "{\"not-json\":{\"value 1\":{\"value\":\"not-json > STRING > value 1\"}},\"2_end\":{\"value\":\"2_end\"},\"1_each\":{},\"json\":{\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"value\":\"json > JSON > [\\\"my-key\\\"] > [\\\"my-value\\\"]\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"value\":\"json > JSON > [\\\"my-complex\\\"] > [{\\\"sub\\\":1,\\\"bool\\\":true}]\"}},\"is-json\":{\"value 1\":{\"defaults\":false,\"value\":\"false\"},\"{\\\"value\\\":\\\"my-value\\\",\\\"key\\\":\\\"my-key\\\"}\":{\"defaults\":true,\"value\":\"true\"},\"{\\\"value\\\":{\\\"sub\\\":1,\\\"bool\\\":true},\\\"key\\\":\\\"my-complex\\\"}\":{\"defaults\":true,\"value\":\"true\"}}}"
-        );
+        Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
+        assertThat(outputs).hasSize(3);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> notJsonOut = (Map<String, Object>) outputs.get("not-json");
+        assertThat(notJsonOut).containsExactlyInAnyOrderEntriesOf(Map.of("value", "not-json > STRING > value 1"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> isJsonOut = (Map<String, Object>) outputs.get("is-json");
+        assertThat(isJsonOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "false"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> eachOut = (Map<String, Object>) outputs.get("1_each");
+        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 3, "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test
     @ExecuteFlow("flows/valids/if-in-flowable.yaml")
-    void outputsIfInFlowable(Execution execution) throws JsonProcessingException {
+    void outputsIfInFlowable(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getTaskRunList()).hasSize(1);
 
-        Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
-        assertThat(outputs).hasSize(4);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        assertThat(subExecutions.size()).isEqualTo(3);
 
-        String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo(
-            "{\"after_if\":{\"value 2\":{\"value\":\"After if: value 2\"}},\"before_if\":{\"value 1\":{\"value\":\"Before if: value 1\"},\"value 2\":{\"value\":\"Before if: value 2\"},\"value 3\":{\"value\":\"Before if: value 3\"}},\"for_each\":{},\"if\":{\"value 1\":{\"evaluationResult\":false},\"value 2\":{\"evaluationResult\":true},\"value 3\":{\"evaluationResult\":false}}}"
-        );
+        Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
+        assertThat(outputs).hasSize(3);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> beforeIfOut = (Map<String, Object>) outputs.get("before_if");
+        assertThat(beforeIfOut).containsExactlyInAnyOrderEntriesOf(Map.of("value", "Before if: value 1"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> ifOut = (Map<String, Object>) outputs.get("if");
+        assertThat(ifOut).containsExactlyInAnyOrderEntriesOf(Map.of("evaluationResult", false));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> forEachOut = (Map<String, Object>) outputs.get("for_each");
+        assertThat(forEachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 3, "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test
     @ExecuteFlow("flows/valids/waitfor-multiple-tasks.yaml")
-    void outputsWaitForMultipleTasks(Execution execution) throws JsonProcessingException {
+    void outputsWaitForMultipleTasks(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(execution);
         assertThat(outputs).hasSize(3);
-
-        String json = JacksonMapper.ofJson().writeValueAsString(outputs);
-        assertThat(json).isEqualTo("{\"output_values\":{\"values\":{\"count\":\"4\"}},\"echo\":{},\"waitfor\":{\"iterationCount\":3}}");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> outputValues = (Map<String, Object>) outputs.get("output_values");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> values = (Map<String, Object>) outputValues.get("values");
+        assertThat(values).containsExactlyInAnyOrderEntriesOf(Map.of("count", "4"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> echo = (Map<String, Object>) outputs.get("echo");
+        assertThat(echo).isEmpty();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> waitfor = (Map<String, Object>) outputs.get("waitfor");
+        assertThat(waitfor).containsExactlyInAnyOrderEntriesOf(Map.of("iterationCount", 3));
     }
 
     @Test

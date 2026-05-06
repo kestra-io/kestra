@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <KsButton
         size="small"
         type="primary"
         :icon="EyeOutline"
@@ -7,8 +7,8 @@
         :disabled="isZipFile"
     >
         {{ $t("preview.label") }}
-    </el-button>
-    <Drawer
+    </KsButton>
+    <KsDrawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
     >
@@ -16,57 +16,55 @@
             {{ $t("preview.label") }}
         </template>
         <template #default>
-            <el-alert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
+            <KsAlert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
-            </el-alert>
-            <el-form class="ks-horizontal max-size mt-3">
-                <el-form-item :label="$t('row count')">
-                    <el-select
+            </KsAlert>
+            <KsForm class="ks-horizontal max-size mt-3">
+                <KsFormItem :label="$t('row count')">
+                    <KsSelect
                         v-model="maxPreview"
                         filterable
                         clearable
                         :required="true"
-                        :persistent="false"
                         @change="getFilePreview"
                     >
-                        <el-option
+                        <KsOption
                             v-for="item in maxPreviewOptions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </el-select>
-                </el-form-item>
-                <el-form-item :label="$t('encoding')">
-                    <el-select
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem :label="$t('encoding')">
+                    <KsSelect
                         v-model="encoding"
                         filterable
                         clearable
                         :required="true"
-                        :persistent="false"
                         @change="getFilePreview"
                     >
-                        <el-option
+                        <KsOption
                             v-for="item in encodingOptions"
                             :key="item.value"
                             :label="item.label"
                             :value="item.value"
                         />
-                    </el-select>
-                </el-form-item>
-                <el-form-item :label="($t('preview.view'))">
-                    <el-switch
+                    </KsSelect>
+                </KsFormItem>
+                <KsFormItem :label="($t('preview.view'))">
+                    <KsSwitch
                         v-model="forceEditor"
                         class="ml-3"
                         :activeText="$t('preview.force-editor')"
                         :inactiveText="$t('preview.auto-view')"
                     />
-                </el-form-item>
-            </el-form>
+                </KsFormItem>
+            </KsForm>
             <ListPreview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <PdfPreview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
-            <Markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
+            <KsMarkdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :content="preview.content" />
             <Editor
                 v-else
                 :modelValue="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"
@@ -81,23 +79,23 @@
                 <template #absolute>
                     <CopyToClipboard :text="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)">
                         <template #right>
-                            <el-tooltip
+                            <KsTooltip
                                 :content="$t('toggle_word_wrap')"
                                 placement="bottom"
                                 :autoClose="2000"
                             >
-                                <el-button
+                                <KsButton
                                     :icon="Wrap"
                                     type="default"
                                     @click="wordWrap = !wordWrap"
                                 />
-                            </el-tooltip>
+                            </KsTooltip>
                         </template>
                     </CopyToClipboard>
                 </template>
             </Editor>
         </template>
-    </Drawer>
+    </KsDrawer>
 </template>
 
 <script setup lang="ts">
@@ -108,8 +106,7 @@
     import Editor from "../inputs/Editor.vue";
     import ListPreview from "../ListPreview.vue";
     import PdfPreview from "../PdfPreview.vue";
-    import Markdown from "../layout/Markdown.vue";
-    import Drawer from "../Drawer.vue";
+    import {KsMarkdown} from "@kestra-io/design-system";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 

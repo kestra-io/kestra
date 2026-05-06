@@ -1,6 +1,7 @@
 import _merge from "lodash/merge";
 import Utils from "../../../utils/utils";
-import {cssVariable, State} from "@kestra-io/ui-libs";
+import {State} from "@kestra-io/design-system";
+import {cssVar} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme";
 
 import {useMiscStore} from "override/stores/misc";
@@ -43,7 +44,7 @@ export function defaultConfig(override: {
     [key: string]: any;
 }, theme?: "dark" | "light") {
     const protectedTheme = theme ?? Utils.getTheme();
-    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
+    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVar("--ks-gray-700");
 
     return _merge(
         {
@@ -60,13 +61,13 @@ export function defaultConfig(override: {
                     display: false,
                     title: {color},
                     ticks: {color},
-                    border: {color: cssVariable("--ks-border-primary")},
+                    border: {color: cssVar("--ks-border-primary")},
                 },
                 y: {
                     display: false,
                     title: {color},
                     ticks: {color},
-                    border: {color: cssVariable("--ks-border-primary")},
+                    border: {color: cssVar("--ks-border-primary")},
                 },
                 yB: {
                     display: false,

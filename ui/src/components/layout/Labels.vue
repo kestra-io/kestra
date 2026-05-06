@@ -1,6 +1,6 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex flex-wrap gap-1">
-        <el-check-tag
+    <span v-if="props.labels.length" class="d-flex gap-1 labels-container">
+        <KsCheckTag
             v-for="(label, index) in props.labels"
             :key="index"
             :disabled="readOnly"
@@ -10,7 +10,7 @@
         >
             <template v-if="!label.key">{{ label.value }}</template>
             <template v-else>{{ label.key }}:{{ label.value }}</template>
-        </el-check-tag>
+        </KsCheckTag>
     </span>
 </template>
 
@@ -39,7 +39,7 @@
         },
     );
 
-    import {decodeSearchParams} from "../../components/filter/utils/helpers";
+    import {decodeSearchParams} from "@kestra-io/design-system";
     let query: any[] = [];
     watch(
         () => route.query,
@@ -87,20 +87,26 @@
     --ks-tag-background: #ECEBEF;
     --ks-tag-content: var(--ks-content-primary);
     --ks-tag-background-active: #414557;
-    --ks-tag-content-active: var(--bs-white);
+    --ks-tag-content-active: var(--ks-content-inverse);
 
     html.dark & {
         --ks-tag-background: #5A6079;
         --ks-tag-background-active: #F2F2F2;
-        --ks-tag-content-active: var(--bs-black);
     }
 
     background-color: var(--ks-tag-background);
     font-weight: normal;
     color: var(--ks-tag-content);
+    white-space: nowrap;
 }
 
-.label.el-check-tag.is-checked {
+.labels-container {
+    overflow: hidden;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.label.kel-check-tag.is-checked {
     background-color: var(--ks-tag-background-active);
     color: var(--ks-tag-content-active);
 }

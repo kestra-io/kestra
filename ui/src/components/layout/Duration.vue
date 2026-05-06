@@ -1,6 +1,6 @@
 <template>
     <span>
-        <el-tooltip v-if="histories" popperClass="duration-tt" :persistent="false" transition="" :hideAfter="0" effect="light">
+        <KsTooltip v-if="histories" popperClass="duration-tt">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">
                     <span class="square" :style="squareClass(history.state)" />
@@ -9,13 +9,12 @@
             </template>
 
             <span>{{ duration }}</span>
-        </el-tooltip>
+        </KsTooltip>
     </span>
 </template>
 
 <script>
-    import {State} from "@kestra-io/ui-libs"
-    import Utils from "../../utils/utils";
+    import {State, durationUtils} from "@kestra-io/design-system"
 
     const ts = date => new Date(date).getTime();
 
@@ -78,7 +77,7 @@
                 return ts(this.lastStep.date)
             },
             computeDuration() {
-                this.duration = Utils.humanDuration(this.delta() / 1000)
+                this.duration = durationUtils.humanDuration(this.delta() / 1000)
             },
             squareClass(state) {
                 let statusVarname = state.toLowerCase();

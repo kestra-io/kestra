@@ -1,5 +1,5 @@
 <template>
-    <el-card>
+    <KsCard>
         <div class="vueflow">
             <LowCodeEditor
                 :key="execution.id"
@@ -15,25 +15,24 @@
                 viewType="topology"
                 @expand-subflow="onExpandSubflow"
             />
-            <ElLoading v-else-if="loading" />
-            <el-alert v-else type="warning" :closable="false">
+            <div v-else-if="loading" v-ks-loading="true" style="height:100%;position:relative" />
+            <KsAlert v-else type="warning" :closable="false">
                 {{ $t("unable to generate graph") }}
-            </el-alert>
+            </KsAlert>
         </div>
-    </el-card>
+    </KsCard>
 </template>
 <script>
-    import {ElLoading} from "element-plus"
     import throttle from "lodash/throttle";
     import {mapStores} from "pinia";
-    import {Utils, State} from "@kestra-io/ui-libs";
+    import {stringUtils} from "@kestra-io/design-system";
+    import {State} from "@kestra-io/design-system";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";
     import {useExecutionsStore} from "../../stores/executions";
     import {useFlowStore} from "../../stores/flow";
     export default {
         emits: ["follow"],
         components: {
-            ElLoading,
             LowCodeEditor
         },
         computed: {
@@ -148,7 +147,7 @@
                 }
 
                 const taskIdMatchingTaskrun = parentExecution.taskRunList
-                    .filter(taskRun => taskRun.taskId === Utils.afterLastDot(subflow))?.[0];
+                    .filter(taskRun => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0];
                 const executionId = taskIdMatchingTaskrun?.outputs?.executionId;
 
                 if(!executionId) {
@@ -191,11 +190,11 @@
     };
 </script>
 <style scoped lang="scss">
-    .el-card {
+    .kel-card {
         height: calc(100vh - 174px);
         position: relative;
 
-        :deep(.el-card__body) {
+        :deep(.kel-card__body) {
             height: 100%;
             display: flex;
         }

@@ -3,7 +3,7 @@
         :title="routeInfo.title"
         :description="props.dashboard?.description"
     >
-        <template v-if="isAllowedDashboard || isAllowedFlow" #additional-right>
+        <template v-if="isAllowedDashboard || isAllowedFlow" #actions>
             <NavBarActions>
                 <Dashboards
                     v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard"

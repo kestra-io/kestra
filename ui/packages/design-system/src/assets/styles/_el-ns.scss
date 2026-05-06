@@ -1,0 +1,4 @@
+// Configures the Element Plus namespace for component-level style blocks.
+// @use this file before any @use of element-plus component scss to ensure
+// the $namespace is set to 'kel' for the entire Sass compilation context.
+@use 'element-plus/theme-chalk/src/mixins/config.scss' with ($namespace: 'kel');

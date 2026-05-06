@@ -8,9 +8,9 @@
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
 
-        <el-button v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
+        <KsButton v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
             {{ $t("back_to_dashboard") }}
-        </el-button>
+        </KsButton>
     </EmptyTemplate>
 </template>
 
@@ -57,12 +57,12 @@
 
     h2 {
         line-height: 30px;
-        font-size: 20px;
+        font-size: var(--ks-font-size-lg);
         font-weight: 600;
     }
 
     p {
         line-height: 22px;
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
     }
 </style>

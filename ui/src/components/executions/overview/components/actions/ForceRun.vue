@@ -1,13 +1,13 @@
 <template>
-    <el-button
+    <KsButton
         :disabled="!enabled"
         :icon="RunFast"
         @click="click"
     >
         {{ $t("force run") }}
-    </el-button>
+    </KsButton>
 
-    <el-dialog
+    <KsDialog
         v-if="isDrawerOpen"
         v-model="isDrawerOpen"
         destroyOnClose
@@ -17,21 +17,21 @@
             <span v-html="$t('force run title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button
+            <KsButton
                 :icon="QueueFirstInLastOut"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
             >
                 {{ $t("force run") }}
-            </el-button>
+            </KsButton>
         </template>
-    </el-dialog>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    import {State} from "@kestra-io/ui-libs";
+    import {State} from "@kestra-io/design-system";
     import permission from "../../../../../models/permission";
     import action from "../../../../../models/action";
     import {useExecutionsStore} from "../../../../../stores/executions";

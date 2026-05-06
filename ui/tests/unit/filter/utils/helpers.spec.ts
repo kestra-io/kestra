@@ -1,14 +1,14 @@
 import {describe, expect, it} from "vitest";
 import {
     decodeSearchParams,
-    isSearchPath,
     encodeFiltersToQuery,
     isValidFilter,
     getUniqueFilters,
+    keyOfComparator,
+    Comparators,
     clearFilterQueryParams,
-    keyOfComparator
-} from "../../../../src/components/filter/utils/helpers.ts";
-import {Comparators} from "../../../../src/components/filter/utils/filterTypes.ts";
+    isSearchPath,
+} from "@kestra-io/design-system";
 
 describe("Filter Helpers", () => {
     describe("decodeSearchParams", () => {

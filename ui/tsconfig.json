@@ -24,8 +24,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "preserveSymlinks": true,
     "paths": {
-      "override/*": ["./src/override/*"],
+      "override/*": ["./src/override/*"]
     }
   },
   "include": [

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
@@ -27,6 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class LoopCaseTest {
+    private static final TypeReference<List<Map<String, Object>>> TYPE_REFERENCE = new TypeReference<>() {
+    };
+
     @Inject
     private TaskOutputService taskOutputService;
 
@@ -352,9 +356,10 @@ public class LoopCaseTest {
 
         // the last task can access loop iteration outputs
         var loopOutputs = taskOutputService.getOutputs(execution.getTaskRunList().getLast());
-        var valueMap = JacksonMapper.toMap((String) loopOutputs.get("value"));
-        assertThat(valueMap).hasSize(3); // one output per iteration
-        var firstIterationMap = (Map<String, Object>) valueMap.get("value 1");
+        var valueList = JacksonMapper.ofJson().readValue((String) loopOutputs.get("value"), TYPE_REFERENCE);
+        assertThat(valueList).hasSize(3); // one output per iteration
+        @SuppressWarnings("unchecked")
+        var firstIterationMap = (Map<String, Object>)valueList.getFirst().get("outputs");
         assertThat(firstIterationMap).containsEntry("value", "some output");
     }
 
@@ -375,16 +380,16 @@ public class LoopCaseTest {
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
             .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+
         @SuppressWarnings("unchecked")
-        Map<String, Object> iterationOutputsMap = (Map<String, Object>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
-        assertThat(iterationOutputsMap)
-            .hasSize(3)
-            .containsKeys("value 1", "value 2", "value 3");
+        var valueList = (List<Map<String, Object>>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
+        assertThat(valueList).hasSize(3); // one output per iteration
 
         // each iteration output must carry a URI pointing to an ION file with the rendered output value
-        for (Map.Entry<String, Object> entry : iterationOutputsMap.entrySet()) {
+        for (Map<String, Object> output : valueList) {
+            assertThat(output).extracting("item.value").isIn("value 1", "value 2", "value 3");
             @SuppressWarnings("unchecked")
-            Map<String, Object> iterOutput = (Map<String, Object>) entry.getValue();
+            Map<String, Object> iterOutput = (Map<String, Object>) output.get("outputs");
             assertThat(iterOutput).containsKey("uri");
             String uri = (String) iterOutput.get("uri");
             assertThat(uri).startsWith("kestra://");
@@ -432,15 +437,15 @@ public class LoopCaseTest {
             .containsEntry(Loop.ITERATION_COUNT_OUTPUT, 3)
             .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, 3);
+
         @SuppressWarnings("unchecked")
-        Map<String, Object> iterationOutputsMap = (Map<String, Object>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
-        assertThat(iterationOutputsMap)
-            .hasSize(3);
+        var valueList = (List<Map<String, Object>>) loopTaskOutputs.get(Loop.OUTPUTS_OUTPUT);
+        assertThat(valueList).hasSize(3); // one output per iteration
 
         // each iteration output must carry a URI pointing to an ION file with the rendered output value
-        for (Map.Entry<String, Object> entry : iterationOutputsMap.entrySet()) {
+        for (Map<String, Object> entry : valueList) {
             @SuppressWarnings("unchecked")
-            Map<String, Object> iterOutput = (Map<String, Object>) entry.getValue();
+            Map<String, Object> iterOutput = (Map<String, Object>) entry.get("outputs");
             assertThat(iterOutput).containsKey("uri");
             String uri = (String) iterOutput.get("uri");
             assertThat(uri).startsWith("kestra://");

@@ -238,7 +238,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
     private Boolean transmitFailed = true;
 
     @Schema(
-        title = "Output values available and exposed outside the loop."
+        title = "Output values available and exposed outside the loop.",
+        description = "They can be fetched from the execution context using the `outputs` output of the loop task run."
     )
     @PluginProperty(dynamic = true)
     @Valid
@@ -356,10 +357,33 @@ public class Loop extends AbstractBranch<Loop.Output> {
         private Integer terminatedIterations;
 
         @Schema(
-            title = "The outputs of the loop, accessible outside of the loop for subsequent tasks",
+            title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",
             description = "Outputs must first be defined using the `outputs` property."
         )
+        private List<LoopOutput> outputs;
+    }
+
+    @Builder
+    @Getter
+    public static class LoopOutput {
+        @Schema(title = "The task run item information")
+        private LoopItem item;
+
+        @Schema(title = "The task run outputs")
         private Map<String, Object> outputs;
+    }
+
+    @Builder
+    @Getter
+    public static class LoopItem {
+        @Schema(title = "The task run value")
+        private String value;
+
+        @Schema(title = "The task run iteration number")
+        private Integer iteration;
+
+        @Schema(title = "The task run key, if applicable")
+        private String key;
     }
 
     public boolean isMySubExecution(Execution execution, TaskRun parentTaskRun) {

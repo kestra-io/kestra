@@ -212,7 +212,7 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
-        assertThat(subExecutions).hasSize(2);
+        assertThat(subExecutions).hasSize(3);
 
         // When: replay from the task that comes after the Loop (still in the parent execution)
         String replayFrom = execution.findTaskRunsByTaskId("2_end").getFirst().getId();

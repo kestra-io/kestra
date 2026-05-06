@@ -13,7 +13,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.Loop;
@@ -72,9 +72,9 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
                     int runningIteration = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT) - 1;
                     int terminatedIteration = (Integer) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT) + 1;
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (Map<String, Object>) outputs.get(Loop.OUTPUTS_OUTPUT) : new LinkedHashMap<>();
+                    List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
                     if (!MapUtils.isEmpty(message.outputs())) {
-                        taskOutputs.put(message.loopRun().value(), message.outputs());
+                        taskOutputs.add(buildIterationOutput(message));
                     }
 
                     // Check the next iteration index
@@ -136,7 +136,20 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
         });
     }
 
-    private void computeOutputs(TaskRun parentTaskRun, Map<String, Object> taskOutputs, Integer iterationCount, Integer runningIteration, Integer terminatedIteration, Long offset) throws InternalException {
+    private Map<String, Object> buildIterationOutput(TerminatedLoopExecution message) {
+        Map<String, Object> item = HashMap.newHashMap(3);
+        item.put("value", message.loopRun().value());
+        item.put("iteration", message.loopRun().index());
+        if (message.loopRun().key() != null) {
+            item.put("key", message.loopRun().key());
+        }
+        return Map.of(
+            "item", item,
+            "outputs", message.outputs()
+        );
+    }
+
+    private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Integer terminatedIteration, Long offset) throws InternalException {
         Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
         outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration);
@@ -144,7 +157,7 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
         if (offset != null) {
             outputs.put(Loop.NEXT_OFFSET_OUTPUT, offset);
         }
-        if (!MapUtils.isEmpty(taskOutputs)) {
+        if (!ListUtils.isEmpty(taskOutputs)) {
             outputs.put(Loop.OUTPUTS_OUTPUT, taskOutputs);
         }
         taskOutputService.saveOutputs(parentTaskRun, outputs);

@@ -146,7 +146,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                           - data.txt
                   - id: concat_foreach_manual
                     type: io.kestra.plugin.core.storage.Concat
-                    files: "{{ outputs.loop.outputs | jq('.[].file') }}"
+                    files: "{{ outputs.loop.outputs | jq('.[].outputs.file') }}"
                 """
         )
     }

@@ -2,6 +2,10 @@
     <section class="filter">
         <div class="top" :class="{'options': showOptions}">
             <MainFilter />
+            <PresetDurations
+                v-if="presetDurations?.length"
+                :presets="presetDurations"
+            />
             <RightFilter>
                 <template #extra>
                     <slot name="extra" />
@@ -28,6 +32,7 @@
     import MainFilter from "./filter/MainFilter.vue";
     import RightFilter from "./filter/RightFilter.vue";
     import FilterOptions from "./filter/FilterOptions.vue";
+    import PresetDurations, {type PresetDuration} from "./filter/layout/PresetDurations.vue";
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
@@ -44,6 +49,7 @@
         defaultScope?: boolean;
         defaultTimeRange?: boolean;
         defaultDuration?: string;
+        presetDurations?: PresetDuration[];
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -55,6 +61,7 @@
         defaultScope: undefined,
         defaultTimeRange: undefined,
         defaultDuration: undefined,
+        presetDurations: undefined,
     });
 
     const emits = defineEmits<{

@@ -11,11 +11,11 @@ import com.cronutils.utils.VisibleForTesting;
 
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.LocalPathFactory;
+import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.*;
 import io.kestra.core.utils.Slugify;
 
-import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -46,8 +46,8 @@ abstract class AbstractFileFunction implements KestraFunction {
     @Inject
     protected Provider<NamespaceFactory> namespaceFactory;
 
-    @Value("${" + LocalPath.ENABLE_FILE_FUNCTIONS_CONFIG + ":true}")
-    protected boolean enableFileProtocol;
+    @Inject
+    protected LocalFilesConfiguration localFilesConfiguration;
 
     //    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
     //    private String serverType;
@@ -171,7 +171,7 @@ abstract class AbstractFileFunction implements KestraFunction {
     }
 
     private String checkEnabledLocalFileAndReturnNamespace(Map<String, Object> args, Map<String, String> flow) {
-        if (!enableFileProtocol) {
+        if (!localFilesConfiguration.enableFileFunctions()) {
             throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
         }
 

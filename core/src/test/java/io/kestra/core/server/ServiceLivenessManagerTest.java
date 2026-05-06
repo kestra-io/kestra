@@ -61,7 +61,10 @@ public class ServiceLivenessManagerTest {
                 DEFAULT_DURATION, // timeout
                 DEFAULT_DURATION,
                 DEFAULT_DURATION
-            )
+            ),
+            null,
+            null,
+            null
         );
 
         KestraContext context = Mockito.mock(KestraContext.class);
@@ -243,7 +246,7 @@ public class ServiceLivenessManagerTest {
         verify(livenessListener).onLivenessUpdate(Mockito.any(), Mockito.any(), Mockito.any());
         Assertions.assertEquals(updated, serviceLivenessManager.allServiceInstances().getFirst());
     }
-    
+
     @Test
     void shouldRegisterNewInstanceAfterPreviousOneTerminated() {
         // Given - a service that completed a terminal state transition (isStateUpdatable = false)
@@ -329,7 +332,10 @@ public class ServiceLivenessManagerTest {
                 Duration.ofSeconds(10), // timeout
                 Duration.ZERO,
                 Duration.ZERO
-            )
+            ),
+            null,
+            null,
+            null
         );
         return new ServiceInstance(
             service.getId(),

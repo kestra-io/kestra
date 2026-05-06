@@ -11,10 +11,10 @@ import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.configuration.KVPurgeConfiguration;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
@@ -37,8 +37,8 @@ public class KVPurgeCleaner {
     @Inject
     private KvMetadataRepositoryInterface kvMetadataRepository;
 
-    @Value("${kestra.kv.purge-expired.batch-size:1000}")
-    private Integer batchSize;
+    @Inject
+    private KVPurgeConfiguration kvPurgeConfiguration;
 
     @Scheduled(initialDelay = "${kestra.kv.purge-expired.initial-delay:PT1H}", fixedDelay = "${kestra.kv.purge-expired.fixed-delay:PT1H}")
     public void purgeExpired() {
@@ -58,7 +58,7 @@ public class KVPurgeCleaner {
                 do {
                     expiredEntries = kvMetadataRepository.find(
                         //We always fetch the first page because we delete every KV entries that we find.
-                        Pageable.from(1, batchSize, Sort.of(Order.asc("name"))),
+                        Pageable.from(1, kvPurgeConfiguration.batchSize(), Sort.of(Order.asc("name"))),
                         tenant,
                         List.of(
                             QueryFilter.builder().field(Field.NAMESPACE).value(namespace).operation(Op.EQUALS).build(),

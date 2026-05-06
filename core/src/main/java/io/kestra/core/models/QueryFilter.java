@@ -149,6 +149,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN);
             }
         },
+        ACTION("action") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN);
+            }
+        },
         CREATED("created") {
             @Override
             public List<Op> supportedOp() {
@@ -267,12 +273,6 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS);
-            }
-        },
-        ACTION("action") {
-            @Override
-            public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.IN);
             }
         },
         RESOURCES("resources") {
@@ -562,9 +562,8 @@ public record QueryFilter(
                     Field.EXECUTION_ID,
                     Field.ID,
                     Field.USER_ID,
-                    Field.TYPE,
-                    Field.RESOURCES,
                     Field.ACTION,
+                    Field.RESOURCES,
                     Field.DETAILS,
                     Field.START_DATE,
                     Field.END_DATE

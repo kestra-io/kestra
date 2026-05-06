@@ -356,6 +356,6 @@ docker compose -f docker-compose-ci.yml down
 ## Pull request guidelines
 - Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.
 - Use types: chore, feat, fix, refactor, test, docs, build
-- Use scopes: apps, assets, core, dashboards, deps, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, triggers, variables, version, worker
+- Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.

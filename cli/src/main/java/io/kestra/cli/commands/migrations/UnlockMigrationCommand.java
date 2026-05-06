@@ -39,11 +39,6 @@ public class UnlockMigrationCommand extends AbstractCommand {
     }
 
     @Override
-    protected boolean shouldAutoMigrate() {
-        return false;
-    }
-
-    @Override
     public Integer call() throws Exception {
         super.call();
         try {

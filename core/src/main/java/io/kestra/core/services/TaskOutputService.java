@@ -16,13 +16,13 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.MapUtils;
 
-import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -41,11 +41,11 @@ public class TaskOutputService {
     private final int limit;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
-        @Value("${kestra.task.outputs.limit:-1}") int limit) {
+        TaskOutputConfiguration taskOutputConfiguration) {
         this.outputRepository = outputRepository;
         this.storageInterface = storageInterface;
         this.namespaceFactory = namespaceFactory;
-        this.limit = limit;
+        this.limit = taskOutputConfiguration.limit();
     }
 
     /**

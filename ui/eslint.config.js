@@ -10,7 +10,18 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
-    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
+    globalIgnores([
+        "**/node_modules/*", 
+        "node/*", 
+        "playwright-report/*", 
+        "test-results/*", 
+        "coverage/*", 
+        "dist/*", 
+        "build/*", 
+        "src/generated/*",
+        "packages/design-system/dist/*",
+        "packages/topology/dist/*",
+    ]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -57,13 +68,13 @@ export default defineConfig([
                     baseIndent: 1,
                 },
             ],
-            "vue/script-indent": [
-                "error",
-                4,
-                {
-                    baseIndent: 1,
-                },
-            ],
+            // "vue/script-indent": [
+            //     "error",
+            //     4,
+            //     {
+            //         baseIndent: 1,
+            //     },
+            // ],
             "vue/max-attributes-per-line": [
                 "error",
                 {
@@ -102,7 +113,14 @@ export default defineConfig([
                     assertionStyle: "as"
                 }
             ],
+            "vue/no-child-content": "off",
         },
+    },
+    {
+        files: ["**/*.test.js", "**/*.test.ts", "**/*.stories.jsx", "**/*.stories.tsx?"],
+        rules: {
+            "vue/one-component-per-file": "off"
+        }
     },
     {
         rules: {

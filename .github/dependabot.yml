@@ -33,6 +33,10 @@ updates:
   # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"
     directory: "/ui"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
+      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -146,6 +150,10 @@ updates:
   # Maintain dependencies for ui/packages/design-system
   - package-ecosystem: "npm"
     directory: "/ui/packages/design-system"
+    commit-message:
+      prefix: "build(design-system)"
+      prefix-development: "build(design-system)"
+      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -244,6 +252,10 @@ updates:
   # Maintain dependencies for ui/packages/topology
   - package-ecosystem: "npm"
     directory: "/ui/packages/topology"
+    commit-message:
+      prefix: "build(topology)"
+      prefix-development: "build(topology)"
+      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"

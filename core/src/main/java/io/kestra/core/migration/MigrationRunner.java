@@ -82,7 +82,7 @@ public class MigrationRunner implements MigrationRunnerInterface {
     /**
      * Called once at context startup (eagerly, before any repository bean is initialized).
      * Delegates to {@link #autoRun()} so EE can override startup behavior without
-     * needing to re-declare {@code @PostConstruct} (which is not inherited by overriding methods
+     * needing to redeclare {@code @PostConstruct} (which is not inherited by overriding methods
      * in Micronaut's compile-time annotation processing).
      */
     @PostConstruct

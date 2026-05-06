@@ -4,6 +4,7 @@ import pluginJs from "@eslint/js";
 import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
+import oxlint from "eslint-plugin-oxlint";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
@@ -118,7 +119,8 @@ export default defineConfig([
             ],
             "@typescript-eslint/no-this-alias": "off",
             "@typescript-eslint/no-explicit-any": "off",
-            "no-console": ["error", {allow: ["warn", "error"]}]
+            // Delegated to oxlint (configured in oxlint.json)
+            "no-console": "off",
         },
     },
     {
@@ -127,10 +129,6 @@ export default defineConfig([
         ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
-    {
-        files: ["src/translations/check.js", "**/tests/**"],
-        rules: {
-            "no-console": ["off"]
-        }
-    },
+    // Disable ESLint rules already covered by oxlint to avoid double-reporting
+    oxlint.configs["flat/recommended"],
 ]);

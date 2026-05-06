@@ -3,6 +3,29 @@ import {apiUrlWithoutTenants} from "override/utils/route";
 import {useClient} from "@kestra-io/kestra-sdk"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
 
+function wrapWithErrorBoundary(inner: any) {
+    return defineComponent({
+        name: "FederatedModuleBoundary",
+        inheritAttrs: false,
+        setup(_, {attrs, slots}) {
+            const error = ref<Error | null>(null);
+
+            onErrorCaptured((err: Error) => {
+                error.value = err;
+                console.error("[FederatedModule] Error caught by boundary:", err);
+                return false;
+            });
+
+            return () => {
+                if (error.value) {
+                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.");
+                }
+                return h(inner, attrs, slots);
+            };
+        },
+    });
+}
+
 function addCSSLinkIfNotAlreadyPresent(href: string) {
         if (!document.querySelector(`link[href="${href}"]`)) {
             const link = document.createElement("link");
@@ -11,30 +34,6 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
             document.head.appendChild(link);
         }
     }
-
-export const FederatedModuleErrorBoundary = defineComponent({
-    name: "FederatedModuleErrorBoundary",
-    setup(_, {slots}) {
-        const error = ref<Error | null>(null);
-
-        onErrorCaptured((err: Error) => {
-            error.value = err;
-            console.error("[FederatedModule] Error caught by boundary:", err);
-            return false; // prevent error from propagating further
-        });
-
-        return () => {
-            if (error.value) {
-                return h(
-                    "div",
-                    {class: "federated-module-error"},
-                    "A plugin component failed to load."
-                );
-            }
-            return slots.default?.();
-        };
-    },
-});
 
 export function useFederatedModule(slotName: string) {
 
@@ -110,7 +109,7 @@ export function useFederatedModule(slotName: string) {
                         return;
                     }
                     
-                    RemoteComponents[taskTypeKey] = markRaw(module.default);
+                    RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default));
                 }
             }
         }

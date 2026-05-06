@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 
+import io.kestra.core.migration.MigrationRunnerInterface;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -19,12 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ReindexCommandTest {
     @Test
-    void reindexFlow() {
+    void reindexFlow() throws Exception {
         URL directory = ReindexCommandTest.class.getClassLoader().getResource("flows/same");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            ctx.getBean(MigrationRunnerInterface.class).runAlways();
+
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 

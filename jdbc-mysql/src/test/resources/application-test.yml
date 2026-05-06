@@ -12,15 +12,6 @@ datasources:
     maxLifetime: 1800000
     transactionIsolation: TRANSACTION_READ_COMMITTED
 
-flyway:
-  datasources:
-    mysql:
-      enabled: true
-      locations:
-        - classpath:migrations/mysql
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-
 kestra:
   server-type: STANDALONE
   server:

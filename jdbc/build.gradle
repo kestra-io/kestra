@@ -11,11 +11,10 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-jdbc")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation("io.micronaut.sql:micronaut-jooq")
-    implementation("io.micronaut.flyway:micronaut-flyway")
-
     // see https://github.com/jOOQ/jOOQ/issues/14865
     compileOnly ("jakarta.xml.bind:jakarta.xml.bind-api:4.0.5")
 
+    testImplementation("com.h2database:h2")
     testImplementation project(':tests')
     testImplementation project(':queue')
     testImplementation project(':queue-jdbc')

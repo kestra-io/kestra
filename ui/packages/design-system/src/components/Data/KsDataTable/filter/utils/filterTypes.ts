@@ -21,6 +21,11 @@ export const TEXT_COMPARATORS = [
     Comparators.STARTS_WITH, 
 ]
 
+export interface DateFilterOption {
+    value: string;
+    label: string;
+}
+
 export interface FilterKeyConfig {
     key: string;
     label: string;
@@ -32,6 +37,10 @@ export interface FilterKeyConfig {
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
+    dateFilterOptions?: DateFilterOption[];
+    /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
+    keyLabelProvider?: (meta?: Record<string, string>) => string;
 }
 
 export interface FilterValue {
@@ -50,6 +59,8 @@ export interface AppliedFilter {
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
+    /** Extra key-value metadata (e.g. dateFilter for timeRange filters). */
+    meta?: Record<string, string>;
 }
 
 export interface SavedFilter {

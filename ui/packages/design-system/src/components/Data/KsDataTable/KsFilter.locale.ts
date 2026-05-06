@@ -145,6 +145,17 @@ export default {
             "timeRange": {
                 "label": "Interval",
                 "description": "Filter by execution time",
+                "applyTo": "Apply to",
+                "chip": {
+                    "start": "Started",
+                    "end": "Ended",
+                    "startOrEnd": "Started or ended",
+                },
+                "dateFilter": {
+                    "startDate": "Start date",
+                    "endDate": "End date",
+                    "startOrEndDate": "Start or end date",
+                },
             },
             "timeRange_dashboard": {
                 "label": "Interval",

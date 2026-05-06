@@ -58,6 +58,9 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     // When you add anything in this class, make sure to also update ApiExecution and ApiLightExecution in the webserver module
     // !!!!!!!!!!!!!!!
 
+    public static final String STATE_START_DATE_FIELD = "state.startDate";
+    public static final String STATE_END_DATE_FIELD = "state.endDate";
+
     @NotNull
     @With
     @Hidden

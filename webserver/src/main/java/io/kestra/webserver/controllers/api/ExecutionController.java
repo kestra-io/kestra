@@ -33,6 +33,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -240,13 +241,15 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat List<QueryFilter> filters
+        ) @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
 
     ) {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
+            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            dateFilter
         );
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))

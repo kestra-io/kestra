@@ -49,14 +49,19 @@ export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: (compa
         const comparatorKey = getComparatorKey(comparator)
 
         switch (key) {
-            case "timeRange":
+            case "timeRange": {
                 if (typeof value === "object" && "startDate" in value) {
                     query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString()
                     query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString()
                 } else {
                     query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
                 }
+                const dateFilter = (filter as any).meta?.dateFilter
+                if (dateFilter) {
+                    query["dateFilter"] = dateFilter
+                }
                 return query
+            }
             default: {
                 if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
                     value.forEach((item: string) => {
@@ -99,7 +104,7 @@ export const getUniqueFilters = <T extends { key: string }>(filters: T[]): T[] =
 
 export const clearFilterQueryParams = (query: Record<string, any>): void => {
     for (const key of Object.keys(query)) {
-        if (key.startsWith("filters[")) delete query[key]
+        if (key.startsWith("filters[") || key === "dateFilter") delete query[key]
     }
 }
 

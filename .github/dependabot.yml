@@ -36,7 +36,6 @@ updates:
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps)"
-      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -153,7 +152,6 @@ updates:
     commit-message:
       prefix: "build(design-system)"
       prefix-development: "build(design-system)"
-      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -255,7 +253,6 @@ updates:
     commit-message:
       prefix: "build(topology)"
       prefix-development: "build(topology)"
-      include: "scope"
     schedule:
       interval: "weekly"
       day: "wednesday"

@@ -14,6 +14,7 @@
             }"
             :showSearchInput="false"
             :defaultDuration="dashboard.timeWindow?.default"
+            :presetDurations="presetDurations"
         />
     </section>
 
@@ -48,6 +49,18 @@
         if (props.isNamespace) return namespaceDashboardFilter.value;
         if (props.isFlow) return flowDashboardFilter.value;
         return dashboardFilter.value;
+    });
+
+    const presetDurations = computed(() => {
+        if (!props.isFlow) {
+            return undefined;
+        }
+        return [
+            {label: t("dashboards.flow_overview.quick_intervals.last_1h"), value: "PT1H"},
+            {label: t("dashboards.flow_overview.quick_intervals.last_24h"), value: "PT24H"},
+            {label: t("dashboards.flow_overview.quick_intervals.last_7d"), value: "PT168H"},
+            {label: t("dashboards.flow_overview.quick_intervals.last_30d"), value: "PT720H"},
+        ];
     });
 
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";

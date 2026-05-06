@@ -174,7 +174,7 @@
     import {getHighlighterCore} from "./shikiToolset";
     import {isDeprecated, type JSONProperty, type JSONSchema, type SchemaExample} from "./utils/schemaUtils";
 
-    const COLON_NORMALIZE_REGEX = / *:(?![ /])/g;
+    const COLON_NORMALIZE_REGEX = /(?<!:):(?![: /])/g;
     const MAX_SCROLL_ATTEMPTS = 30;
 
     const props = withDefaults(defineProps<{

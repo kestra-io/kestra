@@ -88,6 +88,9 @@ jobs:
           ' charts/kestra-starter/Chart.yaml > /tmp/chart-starter.yaml
           mv /tmp/chart-starter.yaml charts/kestra-starter/Chart.yaml
 
+      - name: Regenerate helm-docs after version bump
+        uses: losisin/helm-docs-github-action@v1
+
       - name: Lint kestra chart
         run: |
           helm lint charts/kestra \

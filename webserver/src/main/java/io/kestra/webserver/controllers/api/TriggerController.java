@@ -591,13 +591,9 @@ public class TriggerController {
     }
 
     protected Trigger doSetTriggerDisabled(Trigger currentState, Boolean disabled, Flow flow, AbstractTrigger trigger) throws QueueException {
-        Trigger.TriggerBuilder<?, ?> builder = currentState.toBuilder().disabled(disabled);
-
-        if (disabled) {
-            builder = builder.nextExecutionDate(null);
-        }
-
-        Trigger updated = builder.build();
+        Trigger updated = currentState.toBuilder()
+            .disabled(disabled)
+            .build();
         triggerQueue.emit(updated);
         return updated;
     }

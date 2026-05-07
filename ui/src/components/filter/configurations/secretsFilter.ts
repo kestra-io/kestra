@@ -40,12 +40,12 @@ export const useSecretsFilter = (): ComputedRef<FilterConfiguration> => {
                                     }, []);
                                 }))].map(namespace => ({
                                     label: namespace,
-                                    value: namespace
+                                    value: namespace,
                                 }));
                         }
                         return [];
                     },
-                    searchable: true
+                    searchable: true,
                 },
             ] : [],
         };

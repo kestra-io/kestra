@@ -14,8 +14,10 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
@@ -62,6 +64,9 @@ class TriggerControllerTest {
 
     @Inject
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
+
+    @Inject
+    TriggerController triggerController;
 
     @MockBean(TenantService.class)
     public TenantService getTenantService() {
@@ -342,8 +347,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
@@ -371,8 +376,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
@@ -382,6 +387,38 @@ class TriggerControllerTest {
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
+    }
+
+    @Test
+    void shouldUseLastMissedScheduleWhenReEnablingTriggerConfiguredWithLast() throws QueueException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlowWithRecoverMissedSchedules(tenant, RecoverMissedSchedules.LAST);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(null)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+
+        Trigger updated = triggerController.doSetTriggerDisabled(currentState, false, flow, flow.getTriggers().getFirst());
+
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isBefore(ZonedDateTime.now());
+    }
+
+    @Test
+    void shouldKeepBacklogWhenReEnablingTriggerConfiguredWithAll() throws QueueException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlowWithRecoverMissedSchedules(tenant, RecoverMissedSchedules.ALL);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(null)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+
+        Trigger updated = triggerController.doSetTriggerDisabled(currentState, false, flow, flow.getTriggers().getFirst());
+
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isNull();
     }
 
     @Test
@@ -398,8 +435,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
@@ -443,8 +480,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
@@ -536,6 +573,33 @@ class TriggerControllerTest {
             .build();
     }
 
+    private Flow generateFlowWithRecoverMissedSchedules(String tenant, RecoverMissedSchedules recoverMissedSchedules) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .recoverMissedSchedules(recoverMissedSchedules)
+                        .build()
+                )
+            )
+            .build();
+    }
+
     private static Trigger createTriggerFromFlow(Flow flow1, Boolean disabled) {
         return Trigger.builder()
             .flowId(flow1.getId())
@@ -544,6 +608,18 @@ class TriggerControllerTest {
             .triggerId(flow1.getTriggers().getFirst().getId())
             .disabled(disabled)
             .build();
+    }
+
+    private void saveOrUpdateTriggerState(Trigger trigger) {
+        Optional<Trigger> existing = jdbcTriggerRepository.findLast(trigger);
+        if (existing.isPresent()) {
+            jdbcTriggerRepository.update(existing.get().toBuilder()
+                .disabled(trigger.getDisabled())
+                .build());
+            return;
+        }
+
+        jdbcTriggerRepository.save(trigger);
     }
 
     @SuppressWarnings("unchecked")

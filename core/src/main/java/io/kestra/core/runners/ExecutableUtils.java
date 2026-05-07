@@ -18,6 +18,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
+import io.micronaut.data.model.Pageable;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -106,19 +107,37 @@ public final class ExecutableUtils {
                     }
 
                     if (existingSubflowExecution.isEmpty()) {
-                        // otherwise, we try to find the correct one by searching child executions
-                        List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
-                            .filter(
-                                e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
+                        List<Execution> childExecutions;
+                        if (currentExecution.getLoopRun() != null) {
+                            // In a loop context, loopExecution IDs change on every restart so trigger.variables.executionId
+                            // is not stable. Instead, use stable loop iteration identifiers (loopTaskRunId + loopIndex)
+                            // stored in the child execution's trigger variables to find the correct one.
+                            String loopTaskRunId = currentExecution.getLoopRun().taskRunId();
+                            int loopIndex = currentExecution.getLoopRun().index();
+                            String childNamespace = runContext.render(currentTask.subflowId().namespace());
+                            String childFlowId = runContext.render(currentTask.subflowId().flowId());
+                            childExecutions = executionRepository.findByFlowId(currentExecution.getTenantId(), childNamespace, childFlowId, Pageable.UNPAGED)
+                                .stream()
+                                .filter(e -> e.getTrigger() != null
                                     && e.getTrigger().getId().equals(currentTask.getId())
-                            )
-                            .filter(
-                                e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId())
-                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue())
-                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration())
-                            )
-                            .collectList()
-                            .block();
+                                    && Objects.equals(e.getTrigger().getVariables().get("loopTaskRunId"), loopTaskRunId)
+                                    && Objects.equals(e.getTrigger().getVariables().get("loopIndex"), loopIndex))
+                                .toList();
+                        } else {
+                            // otherwise, we try to find the correct one by searching child executions
+                            childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
+                                .filter(
+                                    e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
+                                        && e.getTrigger().getId().equals(currentTask.getId())
+                                )
+                                .filter(
+                                    e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId())
+                                        && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue())
+                                        && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration())
+                                )
+                                .collectList()
+                                .block();
+                        }
 
                         if (childExecutions != null && childExecutions.size() == 1) {
                             // if there are more than one, we ignore the results and create a new one
@@ -135,9 +154,29 @@ public final class ExecutableUtils {
                         ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
                         try {
                             Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
-                            Execution restarted = executionService.restart(subflowExecution, flow, null);
+                            Execution restartedChild = executionService.restart(subflowExecution, flow, null);
+
+                            // In a loop context, the restarted child execution still has trigger variables
+                            // pointing to the old loop execution (from its original creation). Update them
+                            // to the current loop execution so SubflowExecutionEnd routes correctly and
+                            // does not re-process the old (already terminated) loop execution.
+                            if (restartedChild.getTrigger() != null && currentExecution.getLoopRun() != null) {
+                                Map<String, Object> existingVars = restartedChild.getTrigger().getVariables();
+                                Map<String, Object> updatedVars = existingVars != null ? new HashMap<>(existingVars) : new HashMap<>();
+                                updatedVars.put("executionId", currentExecution.getId());
+                                updatedVars.put("taskRunId", currentTaskRun.getId());
+                                restartedChild = restartedChild.withTrigger(
+                                    ExecutionTrigger.builder()
+                                        .id(restartedChild.getTrigger().getId())
+                                        .type(restartedChild.getTrigger().getType())
+                                        .variables(updatedVars)
+                                        .logFile(restartedChild.getTrigger().getLogFile())
+                                        .build()
+                                );
+                            }
 
                             // inject the traceparent into the new execution
+                            final Execution restarted = restartedChild;
                             propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
 
                             return Optional.of(
@@ -210,14 +249,23 @@ public final class ExecutableUtils {
                 if (currentTaskRun.getIteration() != null) {
                     variables.put("taskRunIteration", currentTaskRun.getIteration());
                 }
+                if (currentExecution.getLoopRun() != null) {
+                    // Store stable loop iteration identifiers so that restarted executions can find this
+                    // subflow even after the loopExecution is recreated with a new ID.
+                    variables.put("loopTaskRunId", currentExecution.getLoopRun().taskRunId());
+                    variables.put("loopIndex", currentExecution.getLoopRun().index());
+                }
 
+                // Subflow executions are independent executions — never LOOP kind
+                // (LOOP is only for virtual loop-iteration executions, not subflow children)
+                ExecutionKind subflowKind = currentExecution.getKind() == ExecutionKind.LOOP ? currentExecution.getLoopRun().parent().getKind() : currentExecution.getKind();
                 Execution execution = Execution
                     .newExecution(
                         flow,
                         (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
                         newLabels,
                         runContext.render(scheduleDate).as(ZonedDateTime.class),
-                        currentExecution.getKind()
+                        subflowKind
                     )
                     .withTrigger(
                         ExecutionTrigger.builder()

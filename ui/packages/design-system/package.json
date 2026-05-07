@@ -35,8 +35,8 @@
     "unit:watch": "vitest",
     "storybook:test": "vitest run --config vitest.config.ts --project 'storybook:*'",
     "storybook:build": "storybook build",
-    "lint:fix": "oxlint --fix",
-    "lint:test": "oxlint",
+    "lint:fix": "oxlint --fix && eslint --fix",
+    "lint:test": "oxlint && eslint",
     "types:test": "vue-tsc --noEmit",
     "generate:palette": "node scripts/generate-palette.mjs"
   },

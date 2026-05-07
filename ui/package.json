@@ -14,14 +14,14 @@
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",
         "check:types": "vue-tsc --noEmit",
-        "test:lint": "oxlint src packages",
+        "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./src/translations/check.js",
-        "lint": "oxlint --fix src packages",
+        "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
@@ -75,6 +75,7 @@
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@playwright/test": "^1.59.0",
+        "@typescript-eslint/parser": "^8.59.1",
         "@storybook/addon-themes": "^10.3.3",
         "@storybook/addon-vitest": "^10.3.3",
         "@storybook/vue3-vite": "^10.3.3",
@@ -97,6 +98,8 @@
         "@vueuse/router": "^14.2.1",
         "change-case": "5.4.4",
         "cross-env": "^10.1.0",
+        "eslint": "^9.39.4",
+        "eslint-plugin-vue": "^9.33.0",
         "oxlint": "^1.63.0",
         "husky": "^9.1.7",
         "jsdom": "^29.1.0",
@@ -143,6 +146,6 @@
         }
     },
     "lint-staged": {
-        "**/*.{js,mjs,cjs,ts,vue}": "oxlint --fix"
+        "**/*.{js,mjs,cjs,ts,vue}": ["oxlint --fix", "eslint --fix"]
     }
 }

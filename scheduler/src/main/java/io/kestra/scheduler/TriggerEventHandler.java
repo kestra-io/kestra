@@ -20,6 +20,8 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -197,16 +199,50 @@ public class TriggerEventHandler {
             state = state
                 .lastEventId(clock, event.eventId())
                 .disabled(clock, event.disabled());
-            // if the trigger is re-enabled, re-compute the next evaluation date
-            // this is required to not backfill all missed scheduling after re-enabling trigger.
             if (wasDisabled && !event.disabled()) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
-                if (data.getRight() != null) {
-                    state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                Flow flow = data.getLeft();
+                AbstractTrigger trigger = data.getRight();
+                if (flow != null && trigger != null) {
+                    state = updateStateForReEnabledTrigger(clock, state, flow, trigger);
                 }
             }
             triggerStateStore.save(state);
         });
+    }
+
+    private TriggerState updateStateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
+        if (!(trigger instanceof Schedulable schedulableTrigger)) {
+            return state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger));
+        }
+
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+        RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedulableTrigger.getRecoverMissedSchedules())
+            .orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
+
+        try {
+            return switch (recoverMissedSchedules) {
+                case NONE -> state.updateForNextEvaluationDate(clock, schedulableTrigger.nextEvaluationDate());
+                case LAST -> state.updateForNextEvaluationDate(clock, schedulableTrigger.previousEvaluationDate(conditionContext));
+                case ALL -> {
+                    if (state.getNextEvaluationDate() == null) {
+                        yield state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger, state.context(), conditionContext));
+                    }
+                    yield state;
+                }
+            };
+        } catch (Exception e) {
+            Logs.logExecution(
+                flow,
+                runContext.logger(),
+                Level.WARN,
+                "[trigger: {}] Unable to restore recoverMissedSchedules behavior on re-enable, falling back to next evaluation from now",
+                trigger.getId(),
+                e
+            );
+            return state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, trigger));
+        }
     }
 
     /**

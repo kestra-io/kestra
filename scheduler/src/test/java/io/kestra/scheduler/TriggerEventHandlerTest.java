@@ -14,9 +14,13 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.triggers.Schedulable;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -33,7 +37,6 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -208,10 +211,13 @@ class TriggerEventHandlerTest {
     @Test
     void shouldUpdateNextEvaluationDateWhenReEnablingTrigger() {
         // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.NONE)
+            .build());
         ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
         triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
 
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        handler = newTriggerEventHandler(List.of(flow));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 
         // WHEN
@@ -223,6 +229,53 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().isDisabled()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
         assertThat(updated.get().getNextEvaluationDate()).isAfter(initialNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldRecoverOnlyLastMissedScheduleWhenReEnablingTrigger() throws Exception {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+            .build());
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusHours(1);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(flow));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        ZonedDateTime expectedPreviousDate = schedulableTrigger(flow).previousEvaluationDate(conditionContext(flow));
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(expectedPreviousDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldPreserveBacklogWhenReEnablingTriggerConfiguredWithAll() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.ALL)
+            .build());
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusHours(1);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(flow));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -477,5 +530,14 @@ class TriggerEventHandlerTest {
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(previousNextEvaluationDate.toInstant());
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
+    }
+
+    private Schedulable schedulableTrigger(FlowWithSource flow) {
+        return (Schedulable) flow.getTriggers().getFirst();
+    }
+
+    private io.kestra.core.models.conditions.ConditionContext conditionContext(FlowWithSource flow) {
+        RunContext runContext = runContextFactory.of(flow, flow.getTriggers().getFirst());
+        return conditionService.conditionContext(runContext, flow, null);
     }
 }

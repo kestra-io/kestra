@@ -1,25 +1,26 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.server.Service;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.worker.Controller;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionTimeoutException;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.awaitility.core.ConditionTimeoutException;
+
+import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
+
+import io.micronaut.context.ApplicationContext;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("try")
 @Slf4j
@@ -40,8 +41,8 @@ public class TestRunner implements Runnable, AutoCloseable {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Value("${kestra.server.standalone.running.timeout:PT1M}")
-    private Duration runningTimeout;
+    @Inject
+    private ServerConfig serverConfig;
 
     private final List<Service> servers = new ArrayList<>();
 
@@ -82,7 +83,7 @@ public class TestRunner implements Runnable, AutoCloseable {
         servers.add(indexer);
 
         try {
-            Await.await().atMost(runningTimeout).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
+            Await.await().atMost(getRunningTimeout()).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
         } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
                 servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
@@ -90,6 +91,13 @@ public class TestRunner implements Runnable, AutoCloseable {
                     .toList() + " not started in time"
             );
         }
+    }
+
+    private Duration getRunningTimeout() {
+        if (serverConfig.standalone() != null && serverConfig.standalone().running() != null) {
+            return serverConfig.standalone().running().timeout();
+        }
+        return Duration.ofMinutes(1);
     }
 
     public boolean isRunning() {

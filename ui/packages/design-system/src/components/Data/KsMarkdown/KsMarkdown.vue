@@ -47,7 +47,7 @@
             .use(remarkFrontmatter)
             .use(remarkGfm)
             .use(remarkDirective)
-            .parse(props.content) as Root
+            .parse(props.content ?? "") as Root
     })
 
     function slugify(text: string): string {

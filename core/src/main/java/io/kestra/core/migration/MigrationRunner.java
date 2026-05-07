@@ -23,9 +23,8 @@ import java.util.List;
  *
  * <p>This service is {@code @Context} — it is eagerly initialized during
  * {@code ApplicationContext.start()}, before any repository or service bean queries the database.
- * {@code AbstractCommand.maybeRunMigrations()} calls {@link #run()} afterward as a validation step;
- * a {@link #hasRun} guard ensures {@link #runAlways()} is never invoked twice on the same node
- * (OSS no-ops silently; EE uses it to enforce the {@code kestra.migration.auto} check).
+ * {@link #initOnStartup()} runs all pending migrations unconditionally in OSS; EE overrides
+ * this method to add opt-in auto-run behavior and fresh-instance detection.
  *
  * <p>Execution flow:
  * <ol>
@@ -38,10 +37,6 @@ import java.util.List;
  *       otherwise skip if already applied (verify checksum) or execute and record</li>
  *   <li>Release the lock</li>
  * </ol>
- *
- * <p>In OSS, {@code run()} is always called unconditionally.
- * EE overrides this bean (via {@code @Replaces}) to add opt-in auto-run behavior and
- * startup failure when pending migrations exist and auto-run is disabled.
  */
 @Slf4j
 @Context
@@ -57,12 +52,11 @@ public class MigrationRunner implements MigrationRunnerInterface {
     static final List<String> INIT_SCRIPT_IDS = List.of("0-init", "0-init-ee", "0-init-queue", "0-init-queue-ee");
 
     /**
-     * Set to {@code true} after {@link #runAlways()} completes on this node.
-     * Guards {@link #run()} against re-executing migrations that {@link #initOnStartup()} already applied,
-     * avoiding a wasteful lock + N DB roundtrips on every CLI command startup.
-     * {@code volatile} because {@link #initOnStartup()} and {@link #run()} may run on different threads.
+     * Set to {@code true} by CLI commands (e.g. {@code migrate run}, {@code migrate unlock})
+     * that handle migrations explicitly. When set, {@link #initOnStartup()} skips automatic
+     * migration execution during context startup.
      */
-    private static volatile boolean skipAutoRun = false;
+    protected static volatile boolean skipAutoRun = false;
 
     public static void setSkipAutoRun(boolean skip) {
         skipAutoRun = skip;
@@ -71,7 +65,7 @@ public class MigrationRunner implements MigrationRunnerInterface {
     protected volatile boolean hasRun = false;
 
     private final MigrationLock lock;
-    private final MigrationHistoryStore historyStore;
+    protected final MigrationHistoryStore historyStore;
     private final Collection<MigrationScript> scripts;
 
     @Inject
@@ -87,12 +81,13 @@ public class MigrationRunner implements MigrationRunnerInterface {
 
     /**
      * Called once at context startup (eagerly, before any repository bean is initialized).
-     * Delegates to {@link #autoRun()} so EE can override startup behavior without adding
-     * a second {@code @PostConstruct}.
+     * Delegates to {@link #autoRun()} so EE can override startup behavior without
+     * needing to redeclare {@code @PostConstruct} (which is not inherited by overriding methods
+     * in Micronaut's compile-time annotation processing).
      */
     @PostConstruct
     @SneakyThrows
-    protected void initOnStartup() {
+    protected final void initOnStartup() {
         if (skipAutoRun) {
             log.debug("Migration auto-run skipped (skipAutoRun flag set).");
             return;
@@ -102,28 +97,13 @@ public class MigrationRunner implements MigrationRunnerInterface {
 
     /**
      * Runs migrations at context startup. OSS always applies all pending scripts.
-     * EE overrides this to respect the {@code kestra.migration.auto} configuration.
+     * EE overrides this to respect the {@code kestra.migration.auto} configuration
+     * and handle fresh-instance detection.
      *
      * @throws Exception if a migration fails
      */
     protected void autoRun() throws Exception {
         runAlways();
-    }
-
-    /**
-     * Called by {@code AbstractCommand.maybeRunMigrations()} after context startup.
-     * In OSS, short-circuits immediately if {@link #initOnStartup()} already ran on this node.
-     * EE overrides this to enforce the {@code kestra.migration.auto} check when {@link #hasRun} is false
-     * (i.e. when {@code auto=false} deferred migration to the {@code kestra migrate run} CLI command).
-     *
-     * @throws MigrationPendingException if EE detects pending scripts and auto-run is disabled
-     * @throws Exception                 if a migration fails
-     */
-    @Override
-    public void run() throws Exception {
-        if (!hasRun) {
-            runAlways();
-        }
     }
 
     /**

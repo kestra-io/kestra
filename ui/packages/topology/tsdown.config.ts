@@ -1,3 +1,4 @@
+import path from "path"
 import {defineConfig} from "tsdown"
 
 export default defineConfig({
@@ -11,5 +12,12 @@ export default defineConfig({
     dts: {vue: true},
     deps: {
         neverBundle: ["@vue/reactivity"],
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                loadPaths: [path.resolve(import.meta.dirname, "../../node_modules")],
+            },
+        },
     },
 })

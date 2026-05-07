@@ -39,12 +39,6 @@ public class RunMigrationCommand extends AbstractCommand {
         return Map.of();
     }
 
-    /** Disable the automatic migration in super.call(); we run it explicitly below. */
-    @Override
-    protected boolean shouldAutoMigrate() {
-        return false;
-    }
-
     @Override
     public Integer call() throws Exception {
         super.call();

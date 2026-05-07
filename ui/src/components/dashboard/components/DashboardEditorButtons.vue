@@ -11,6 +11,7 @@
             :icon="ContentSave"
             @click="emit('save')"
             :type="saveButtonType"
+            :disabled="!canSave"
         >
             {{ $t("save") }}
         </KsButton>
@@ -33,6 +34,8 @@
         if (dashboardStore.errors) return "danger";
         return dashboardStore.warnings ? "warning" : "primary";
     });
+
+    const canSave = computed(() => dashboardStore.haveChange || dashboardStore.isCreating);
 </script>
 <style lang="scss" scoped>
     .button-top {

@@ -56,7 +56,9 @@ public class ExecutionStreamingService {
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueSubscriber = executionQueue.subscriber().subscribe(either ->
+        this.queueSubscriber = executionQueue.subscriber();
+        this.queueSubscriber.pause();
+        this.queueSubscriber.subscribe(either ->
         {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
@@ -106,6 +108,11 @@ public class ExecutionStreamingService {
     public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<Execution>> sink, Flow flow) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
+            // resume the subscription if paused
+            if (MapUtils.isEmpty(subscribers) && this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.resume();
+            }
+
             subscribers.computeIfAbsent(executionId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, Pair.of(sink, flow));
         }
@@ -124,6 +131,11 @@ public class ExecutionStreamingService {
                 if (executionSubscribers.isEmpty()) {
                     subscribers.remove(executionId);
                 }
+            }
+
+            // pause the subscription if no one is listening anymore
+            if (MapUtils.isEmpty(subscribers) && !this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.pause();
             }
         }
     }

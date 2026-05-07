@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.services.FlowService;
@@ -48,7 +48,7 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
     protected HttpClient httpClient;
 
     @Inject
-    protected KestraConfig kestraConfig;
+    protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     @Inject
     private VersionProvider versionProvider;
@@ -80,7 +80,7 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                     {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + systemFlowsConfiguration.namespace());
                         }
                         return body;
                     })

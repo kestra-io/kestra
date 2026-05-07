@@ -16,6 +16,8 @@ If a screen feels "off-brand," looks broken in dark mode, or every page styles t
 
 Under the hood, the design system wraps Element Plus under the `kel` namespace and globally registers every component with a `Ks*` prefix. You should almost never `import` from `element-plus` directly in `ui/src/`.
 
+> **Note on `@kestra-io/ui-libs`:** The codebase may still contain imports from `@kestra-io/ui-libs`, the previous shared component library. That repository is sunsetting — all components have been migrated here into `ui/packages/`. Do not add new imports from `@kestra-io/ui-libs`; use `Ks*` components from the design system instead.
+
 ## Golden rules (non-negotiable)
 
 These rules are what keep the UI maintainable as it grows. Treat any deviation as a bug.

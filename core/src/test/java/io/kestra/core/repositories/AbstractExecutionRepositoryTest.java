@@ -19,7 +19,7 @@ import org.slf4j.event.Level;
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -544,7 +544,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 tenant,
                 State.Type.SUCCESS,
                 "second"
-            ).namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).build()
+            ).namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE).build()
         );
 
         // mysql need some time ...
@@ -1404,7 +1404,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
     private final Execution scopeSystemExecution = Execution.builder()
         .id(SCOPE_SYSTEM_EXECUTION_ID)
-        .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+        .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
         .flowId("scope-test")
         .flowRevision(1)
         .state(new State(Type.SUCCESS, List.of(

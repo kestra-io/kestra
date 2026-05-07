@@ -16,7 +16,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -62,7 +62,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull().or(field("kind").eq(ExecutionKind.NORMAL.name()));
 
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    private final KestraConfig kestraConfig;
+    private final SystemFlowsConfiguration systemFlowsConfiguration;
 
     private final JdbcFilterService filterService;
 
@@ -93,11 +93,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
         ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
-        KestraConfig kestraConfig,
+        SystemFlowsConfiguration systemFlowsConfiguration,
         JdbcFilterService filterService) {
         super(jdbcRepository);
         this.eventPublisher = eventPublisher;
-        this.kestraConfig = kestraConfig;
+        this.systemFlowsConfiguration = systemFlowsConfiguration;
         this.filterService = filterService;
     }
 
@@ -508,9 +508,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable ChildFilter childFilter) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
-                select = select.and(field("namespace").ne(kestraConfig.getSystemFlowNamespace()));
+                select = select.and(field("namespace").ne(systemFlowsConfiguration.namespace()));
             } else if (scope.contains(FlowScope.SYSTEM)) {
-                select = select.and(field("namespace").eq(kestraConfig.getSystemFlowNamespace()));
+                select = select.and(field("namespace").eq(systemFlowsConfiguration.namespace()));
             }
         }
 
@@ -758,7 +758,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 ExecutorContext executor = function.apply(execution.get());
 
                 if (executor != null) {
-                    this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    if (executor.getExecution().getId().equals(executionId)) {
+                        // same execution: we use UPDATE as it's more performant than persist/upsert
+                        this.jdbcRepository.update(executor.getExecution(), context, null);
+                    } else {
+                        // different execution ID: this is possible for ex for replay, we must INSERT via persist/upsert
+                        this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    }
                     return Optional.of(executor);
                 }
 
@@ -932,7 +938,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 .toList();
 
             if (!scopeFilters.isEmpty()) {
-                String systemNamespace = kestraConfig.getSystemFlowNamespace();
+                String systemNamespace = systemFlowsConfiguration.namespace();
                 for (AbstractFilter<F> scopeFilter : scopeFilters) {
                     selectConditionStep = selectConditionStep.and(toScopeCondition(scopeFilter, systemNamespace));
                 }

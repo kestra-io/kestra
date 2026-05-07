@@ -36,6 +36,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.12.3
+
+      - name: Install kubeconform
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/kc.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kc.tar.gz -C /usr/local/bin kubeconform
+
+      - name: Verify helm-docs are up to date
+        uses: losisin/helm-docs-github-action@v1
+
+      - name: Fail on uncommitted README diffs
+        run: git diff --exit-code -- 'charts/**/README.md'
+
       - name: Resolve version and dry-run flag
         id: config
         run: |
@@ -70,6 +88,9 @@ jobs:
           ' charts/kestra-starter/Chart.yaml > /tmp/chart-starter.yaml
           mv /tmp/chart-starter.yaml charts/kestra-starter/Chart.yaml
 
+      - name: Regenerate helm-docs after version bump
+        uses: losisin/helm-docs-github-action@v1
+
       - name: Lint kestra chart
         run: |
           helm lint charts/kestra \
@@ -98,15 +119,32 @@ jobs:
       - name: Package kestra-starter chart
         run: helm package charts/kestra-starter -d release/
 
-      - name: Verify packaged charts render
+      - name: Verify packaged charts with kubeconform
         env:
           VERSION: ${{ steps.config.outputs.version }}
         run: |
+          set -euo pipefail
           helm template test release/kestra-${VERSION}.tgz \
-            --set "configurations.application=kestra.variable.globals.foo: bar" > /dev/null
-          echo "kestra-${VERSION}.tgz renders OK"
-          helm template test release/kestra-starter-${VERSION}.tgz > /dev/null
-          echo "kestra-starter-${VERSION}.tgz renders OK"
+            --set "configurations.application=kestra.variable.globals.foo: bar" \
+            --validate=false \
+            | kubeconform -strict -summary
+          echo "kestra-${VERSION}.tgz validates OK"
+          helm template test release/kestra-starter-${VERSION}.tgz --validate=false \
+            | kubeconform -strict -summary
+          echo "kestra-starter-${VERSION}.tgz validates OK"
+
+      - name: Verify Docker Hub has appVersion image
+        env:
+          TAG: ${{ steps.config.outputs.tag }}
+        run: |
+          set -euo pipefail
+          STATUS=$(curl -fsS -o /dev/null -w "%{http_code}" \
+            "https://hub.docker.com/v2/repositories/kestra/kestra/tags/${TAG}/" || true)
+          if [[ "${STATUS}" != "200" ]]; then
+            echo "::error::Docker Hub tag kestra/kestra:${TAG} not found (HTTP ${STATUS}). Refusing to publish chart for an image that doesn't exist."
+            exit 1
+          fi
+          echo "Docker Hub tag kestra/kestra:${TAG} exists — safe to publish chart."
 
       - name: Show packaged charts
         run: ls -lh release/*.tgz

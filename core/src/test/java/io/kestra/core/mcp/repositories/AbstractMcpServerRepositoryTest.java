@@ -233,6 +233,40 @@ public abstract class AbstractMcpServerRepositoryTest {
         assertThat(defaultCount).isEqualTo(1);
     }
 
+    @Test
+    void givenMcpsAcrossTenantsWhenListAllThenAllReturned() {
+        // Given
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        mcpServerRepository.save(null, createMcpServer(tenant1));
+        mcpServerRepository.save(null, createMcpServer(tenant2));
+
+        // When
+        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 100));
+
+        // Then — both tenants' servers are present
+        long tenant1Count = results.stream().filter(s -> tenant1.equals(s.tenantId())).count();
+        long tenant2Count = results.stream().filter(s -> tenant2.equals(s.tenantId())).count();
+        assertThat(tenant1Count).isEqualTo(1);
+        assertThat(tenant2Count).isEqualTo(1);
+    }
+
+    @Test
+    void givenDeletedMcpWhenListAllThenExcluded() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        McpServer toDelete = mcpServerRepository.save(null, createMcpServer(tenant));
+        mcpServerRepository.save(null, createMcpServer(tenant));
+        mcpServerRepository.delete(tenant, toDelete.id());
+
+        // When
+        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 100));
+
+        // Then — deleted record is excluded
+        long tenantCount = results.stream().filter(s -> tenant.equals(s.tenantId())).count();
+        assertThat(tenantCount).isEqualTo(1);
+    }
+
     private static McpServer createMcpServer(String tenantId) {
         String id = "test-mcp-" + IdUtils.create().toLowerCase();
         return new McpServer(tenantId, id, "A test MCP server", null, null, null, false, false, false, null, null);

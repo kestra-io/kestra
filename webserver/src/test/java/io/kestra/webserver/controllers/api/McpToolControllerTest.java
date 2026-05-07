@@ -452,10 +452,10 @@ class McpToolControllerTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    /** Saves an MCP server record directly to the repository and returns its name. */
+    /** Saves an MCP server record directly to the repository and returns its id. */
     private String saveServer(boolean disabled, String instructions) {
-        String serverName = "server-" + IdUtils.create();
-        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverName,
+        String serverId = "server-" + IdUtils.create();
+        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverId,
             "A test MCP server", instructions, null, null, disabled, false, false, null, null);
         return mcpServerRepository.save(null, mcpServer).id();
     }

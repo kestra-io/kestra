@@ -38,7 +38,6 @@ import LockOutline from "vue-material-design-icons/LockOutline.vue";
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
 import Battery40 from "vue-material-design-icons/Battery40.vue";
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
-import McpIcon from "../../components/McpIcon.vue";
 
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
@@ -280,7 +279,6 @@ export function useLeftMenu() {
                     "kv",
                     "secrets",
                     "admin/triggers",
-                    "admin/mcp-servers",
                     "admin/auditlogs",
                     "admin/iam",
                     "admin/concurrency-limits",
@@ -332,16 +330,6 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: LightningBolt,
-                        },
-                    },
-                    {
-                        title: t("mcp.servers"),
-                        routes: routeStartWith("admin/mcp-servers"),
-                        href: {
-                            name: "admin/mcp-servers",
-                        },
-                        icon: {
-                            element: McpIcon,
                         },
                     },
                     {

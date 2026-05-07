@@ -2,7 +2,7 @@ import Table from "../../../../../src/components/dashboard/sections/Table.vue";
 import type {Chart} from "../../../../../src/components/dashboard/types.ts";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "../../../../../src/utils/axios.ts";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 import {expect, within} from "storybook/test";
 
 const meta: Meta<typeof Table> = {
@@ -38,7 +38,7 @@ export default meta;
 export const SimpleExecutionsCase: StoryObj<typeof Table> = {
     render: () => ({
         setup() {
-            const store = useAxios() as any;
+            const store = {} as any;
             store.post = async function (uri: string) {
                 if (uri.includes("charts/executions_finished")) {
 
@@ -82,6 +82,8 @@ export const SimpleExecutionsCase: StoryObj<typeof Table> = {
                 }
                 return {results: []}
             }
+
+            setMockClient(store);
 
             const chart: Chart = {
                 "id": "executions_finished",

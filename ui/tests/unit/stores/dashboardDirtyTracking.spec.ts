@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest";
 import {setActivePinia, createPinia} from "pinia";
 import {nextTick} from "vue";
+import {setMockClient} from "@kestra-io/kestra-sdk";
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
@@ -26,18 +27,15 @@ const axiosGet = vi.fn();
 const axiosPost = vi.fn().mockResolvedValue({data: {}});
 const axiosPut = vi.fn().mockResolvedValue({data: {}});
 
-vi.mock("../../../src/utils/axios", () => ({
-    useAxios: () => ({
-        get: axiosGet,
-        post: axiosPost,
-        put: axiosPut,
-        delete: vi.fn(),
-    }),
-}));
-
 describe("dashboard store dirty tracking", () => {
     beforeEach(() => {
         vi.resetModules();
+        setMockClient({
+            get: axiosGet,
+            post: axiosPost,
+            put: axiosPut,
+            delete: vi.fn(),
+        });
         axiosGet.mockReset();
         axiosPost.mockReset().mockResolvedValue({data: {}});
         axiosPut.mockReset().mockResolvedValue({data: {}});

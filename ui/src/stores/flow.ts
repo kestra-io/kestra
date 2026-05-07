@@ -15,7 +15,7 @@ import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk"
 import {defaultNamespace} from "../composables/useNamespaces";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
 
@@ -113,7 +113,7 @@ export const useFlowStore = defineStore("flow", () => {
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>();
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const coreStore = useCoreStore();
     const unsavedChangesStore = useUnsavedChangesStore();
@@ -716,13 +716,17 @@ function deleteFlowAndDependencies() {
     function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
-            const {namespace} = YAML_UTILS.getMetadata(options.flow);
-            if(authStore.user && !authStore.user?.isAllowed(
-                permission.FLOW,
-                action.CREATE,
-                namespace,
-            )) {
-                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+            try {
+                const {namespace} = YAML_UTILS.getMetadata(options.flow);
+                if(authStore.user && !authStore.user?.isAllowed(
+                    permission.FLOW,
+                    action.CREATE,
+                    namespace,
+                )) {
+                    flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+                }
+            } catch {
+                // YAML may be temporarily invalid during editing
             }
         }
 

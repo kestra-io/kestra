@@ -3,7 +3,7 @@ import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPane
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 import {useFlowStore} from "../../../../src/stores/flow";
 
 
@@ -28,7 +28,7 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const axios = useAxios()
+        const axios = {}
         const flowStore = useFlowStore()
         axios.get = async (uri) => {
             if (uri.endsWith("/plugins")) {
@@ -56,6 +56,7 @@ const Template = (args) => ({
             console.log("post request", uri)
             return {data: {}}
         }
+        setMockClient(axios);
 
         const flow = YAML_UTILS.parse(args.flow)
         flow.source = args.flow

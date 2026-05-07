@@ -30,6 +30,7 @@
     "dependencies": {
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
+        "@kestra-io/kestra-sdk": "^2.0.0-dev.466a185d.e60fb995",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",
         "@vue-flow/background": "^1.3.2",

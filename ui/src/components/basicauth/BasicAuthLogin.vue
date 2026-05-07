@@ -79,7 +79,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
-    import axios from "axios"
+    import {useClient} from "@kestra-io/kestra-sdk"
     import MailChecker from "mailchecker"
 
     import Account from "vue-material-design-icons/Account.vue"
@@ -159,6 +159,8 @@
         !MailChecker.isValid(credentials.value.username) ||
         isLoading.value
     )
+
+    const axios = useClient();
 
     const validateCredentials = async (auth: string) => {
         try {

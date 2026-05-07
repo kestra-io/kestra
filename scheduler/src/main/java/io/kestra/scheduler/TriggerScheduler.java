@@ -51,6 +51,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
+import io.kestra.scheduler.internals.RecoverMissedSchedule;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -203,27 +204,9 @@ public class TriggerScheduler {
                         .orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
                     try {
                         TriggerState currentTriggerState = triggerState;
-                        switch (recoverMissedSchedules) {
-                            case LAST -> {
-                                ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
-                                    triggerStateStore.save(currentTriggerState);
-                                }
-                            }
-                            case NONE -> {
-                                // Skip missed slots by starting from now (null triggerContext causes
-                                // NextEvaluationDate.get to seed date=now), which also lets Schedule
-                                // apply trigger conditions (e.g. DayWeek) to the next computed tick.
-                                ZonedDateTime nextEvaluationDate = NextEvaluationDate.get(clock, trigger, null, conditionContext);
-                                if (!Objects.equals(currentTriggerState.getNextEvaluationDate(), nextEvaluationDate.toInstant())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
-                                    triggerStateStore.save(currentTriggerState);
-                                }
-                            }
-                            case ALL -> {
-                                // nothing to do
-                            }
+                        TriggerState updatedTriggerState = RecoverMissedSchedule.apply(clock, currentTriggerState, trigger, schedulableTrigger, conditionContext, recoverMissedSchedules);
+                        if (updatedTriggerState != currentTriggerState) {
+                            triggerStateStore.save(updatedTriggerState);
                         }
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);

@@ -2,6 +2,7 @@ package io.kestra.scheduler;
 
 import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -21,9 +22,13 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.triggers.Schedulable;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -42,7 +47,6 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -229,7 +233,8 @@ class TriggerEventHandlerTest {
     @Test
     void shouldResetTriggerGivenExistingStateWhenResetEventHandled() {
         // GIVEN
-        triggerStateStore.save(triggerState.locked(Clock.systemDefaultZone(), true));
+        TriggerState initial = triggerState.locked(Clock.offset(CLOCK, Duration.ofSeconds(-1)), true);
+        triggerStateStore.save(initial);
         handler = newTriggerEventHandler(List.of());
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -240,7 +245,7 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
-        assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getUpdatedAt()).isAfter(initial.getUpdatedAt());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -268,7 +273,8 @@ class TriggerEventHandlerTest {
     @Test
     void shouldDisableTriggerGivenDisableEventWhenHandled() {
         // GIVEN
-        triggerStateStore.save(triggerState);
+        TriggerState initial = triggerState.lastEventId(Clock.offset(CLOCK, Duration.ofSeconds(-1)), null);
+        triggerStateStore.save(initial);
         handler = newTriggerEventHandler(List.of());
         SetDisableTrigger event = new SetDisableTrigger(triggerId, true);
 
@@ -279,17 +285,24 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isTrue();
-        assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getUpdatedAt()).isAfter(initial.getUpdatedAt());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
     @Test
     void shouldUpdateNextEvaluationDateWhenReEnablingTrigger() {
         // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.NONE)
+            .build());
         ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
-        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+        Clock initialClock = Clock.offset(CLOCK, Duration.ofSeconds(-1));
+        TriggerState initial = triggerState
+            .updateForNextEvaluationDate(initialClock, initialNextEvaluationDate)
+            .disabled(initialClock, true);
+        triggerStateStore.save(initial);
 
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        handler = newTriggerEventHandler(List.of(flow));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 
         // WHEN
@@ -299,8 +312,82 @@ class TriggerEventHandlerTest {
         Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
         assertThat(updated).isPresent();
         assertThat(updated.get().isDisabled()).isFalse();
-        assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getUpdatedAt()).isAfter(initial.getUpdatedAt());
         assertThat(updated.get().getNextEvaluationDate()).isAfter(initialNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldRecoverOnlyLastMissedScheduleWhenReEnablingTrigger() throws Exception {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+            .build());
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusHours(1);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(flow));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        ZonedDateTime expectedPreviousDate = schedulableTrigger(flow).previousEvaluationDate(conditionContext(flow));
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(expectedPreviousDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldNotRecoverLastMissedScheduleWhenAlreadyEvaluated() throws Exception {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+            .build());
+        ZonedDateTime previousDate = schedulableTrigger(flow).previousEvaluationDate(conditionContext(flow));
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusHours(1);
+        triggerStateStore.save(triggerState
+            .evaluatedAt(CLOCK, previousDate.plusSeconds(1))
+            .updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate)
+            .disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(flow));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldPreserveBacklogWhenReEnablingTriggerConfiguredWithAll() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder
+            .recoverMissedSchedules(RecoverMissedSchedules.ALL)
+            .build());
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusHours(1);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(flow));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -489,7 +576,8 @@ class TriggerEventHandlerTest {
     @Test
     void shouldNotUpdateGivenTriggerEventTwice() {
         // GIVEN
-        triggerStateStore.save(triggerState);
+        TriggerState initial = triggerState.lastEventId(Clock.offset(CLOCK, Duration.ofSeconds(-1)), null);
+        triggerStateStore.save(initial);
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
 
@@ -502,7 +590,7 @@ class TriggerEventHandlerTest {
         updated = triggerStateStore.findById(triggerId).orElseThrow();
         assertThat(updated.getLastEventId()).isEqualTo(event.eventId());
         Instant updatedAt = updated.getUpdatedAt();
-        assertThat(updatedAt).isAfter(triggerState.getUpdatedAt());
+        assertThat(updatedAt).isAfter(initial.getUpdatedAt());
 
         // WHEN (second)
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -638,11 +726,17 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
         // GIVEN a trigger evaluated once before being disabled and re-enabled
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
+            ZoneId.systemDefault().getId(),
+            DayOfWeek.SUNDAY,
+            builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.NONE).build()
+        );
+        TriggerState initial = triggerState
             .evaluatedAt(clock, FIXED_WEDNESDAY)
             .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
-            .disabled(clock, true));
-        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+            .disabled(clock, true);
+        triggerStateStore.save(initial);
+        handler = newTriggerEventHandler(List.of(flow));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 
         // WHEN
@@ -721,5 +815,14 @@ class TriggerEventHandlerTest {
         assertThat(emitted.itemId()).isEqualTo(event.uid());
         assertThat(emitted.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
         assertThat(emitted.error()).isEqualTo("boom");
+    }
+
+    private Schedulable schedulableTrigger(FlowWithSource flow) {
+        return (Schedulable) flow.getTriggers().getFirst();
+    }
+
+    private io.kestra.core.models.conditions.ConditionContext conditionContext(FlowWithSource flow) {
+        RunContext runContext = runContextFactory.of(flow, flow.getTriggers().getFirst());
+        return conditionService.conditionContext(runContext, flow, null);
     }
 }

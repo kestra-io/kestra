@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ExecutorsUtils {
-
     @Inject
     private MeterRegistry meterRegistry;
 
@@ -41,6 +40,15 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService cachedVirtualThreadPool(String name) {
+        return this.wrap(
+            name,
+            Executors.newCachedThreadPool(
+                Thread.ofVirtual().name(name + "_%d").factory()
+            )
+        );
+    }
+
     public ExecutorService maxCachedThreadPool(int maxThread, String name) {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
             maxThread,
@@ -49,6 +57,24 @@ public class ExecutorsUtils {
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(),
             ThreadMainFactoryBuilder.build(name + "_%d")
+        );
+
+        threadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        return this.wrap(
+            name,
+            threadPoolExecutor
+        );
+    }
+
+    public ExecutorService maxCachedVirtualThreadPool(int maxThread, String name) {
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+            maxThread,
+            maxThread,
+            60L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            Thread.ofVirtual().name(name + "_%d").factory()
         );
 
         threadPoolExecutor.allowCoreThreadTimeOut(true);

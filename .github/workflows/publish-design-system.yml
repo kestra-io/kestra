@@ -65,7 +65,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        if: inputs.package == 'design-system'
+        if: inputs.skip-test != 'true' && inputs.package == 'design-system'
         run: npx playwright install --with-deps chromium
 
       - name: Run tests

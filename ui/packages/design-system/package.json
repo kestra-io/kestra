@@ -43,7 +43,7 @@
   "peerDependencies": {
     "@vueuse/core": ">=11.0.0",
     "bootstrap": "^5.3.8",
-    "echarts": ">=5.4.0",
+    "echarts": ">=6.0.0",
     "element-plus": ">=2.13.5",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.2",
@@ -54,7 +54,7 @@
     "yaml": "^2.8.2"
   },
   "dependencies": {
-    "echarts": ">=5.4.0",
+    "echarts": ">=6.0.0",
     "element-plus": ">=2.13.5",
     "humanize-duration": "^3.33.2",
     "js-yaml": "^4.1.1",
@@ -67,7 +67,7 @@
     "remark-parse": "^11.0.0",
     "shiki": "^4.0.2",
     "unified": ">=11.0.0",
-    "vue-echarts": ">=7.0.0",
+    "vue-echarts": ">=8.0.0",
     "xss": "^1.0.15"
   },
   "devDependencies": {

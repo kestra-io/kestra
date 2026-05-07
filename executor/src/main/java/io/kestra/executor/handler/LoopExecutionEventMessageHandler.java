@@ -12,6 +12,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -24,11 +25,18 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
+/**
+ * Handles {@link LoopExecutionEvent} messages, propagating loop sub-execution state changes
+ * (terminated or paused) to the parent execution.
+ */
 @Singleton
 @Slf4j
-public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHandler<TerminatedLoopExecution> {
+public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<LoopExecutionEvent> {
     @Inject
     private ExecutorService executorService;
+
+    @Inject
+    private ExecutionService executionService;
 
     @Inject
     private TaskOutputService taskOutputService;
@@ -49,11 +57,18 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
     private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
 
     @Override
-    public Optional<ExecutorContext> handle(TerminatedLoopExecution message) {
+    public Optional<ExecutorContext> handle(LoopExecutionEvent message) {
         if (log.isDebugEnabled()) {
             executorService.log(log, true, message);
         }
 
+        if (message.state().isPaused()) {
+            return handlePaused(message);
+        }
+        return handleTerminated(message);
+    }
+
+    private Optional<ExecutorContext> handleTerminated(LoopExecutionEvent message) {
         return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
         {
             try {
@@ -136,7 +151,24 @@ public class TerminatedLoopExecutionMessageHandler implements ExecutorMessageHan
         });
     }
 
-    private Map<String, Object> buildIterationOutput(TerminatedLoopExecution message) {
+    private Optional<ExecutorContext> handlePaused(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            try {
+                ExecutorContext executor = new ExecutorContext(execution);
+                // throws InternalException if not found — treated as a hard failure below
+                TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
+
+                Execution pausedExecution = executionService.pauseFlowable(execution, loopTaskRun);
+
+                return executor.withExecution(pausedExecution, "pausedLoopIteration");
+            } catch (InternalException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
+    private Map<String, Object> buildIterationOutput(LoopExecutionEvent message) {
         Map<String, Object> item = HashMap.newHashMap(3);
         item.put("value", message.loopRun().value());
         item.put("iteration", message.loopRun().index());

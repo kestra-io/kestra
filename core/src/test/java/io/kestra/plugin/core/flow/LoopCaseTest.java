@@ -408,7 +408,7 @@ public class LoopCaseTest {
 
     public void loopOutputsFailedRender(Execution execution) {
         // Then — the loop output expression references a non-existent task, causing render to fail.
-        // The TerminatedLoopExecution carries FAILED state and, with transmitFailed=true (default),
+        // The LoopExecutionEvent carries FAILED state and, with transmitFailed=true (default),
         // immediately terminates the loop and propagates the failure to the parent execution.
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1);

@@ -32,6 +32,7 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.SubflowExecutionEnd;
@@ -79,6 +80,9 @@ public class ExecutorService {
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
+    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
@@ -778,7 +782,7 @@ public class ExecutorService {
         return null;
     }
 
-    private ExecutorContext handlePausedDelay(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+    private ExecutorContext handlePausedDelay(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws InternalException, QueueException {
         if (
             workerTaskResults
                 .stream()
@@ -820,9 +824,17 @@ public class ExecutorService {
             .toList();
 
         if (executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
-            return executor
+            ExecutorContext updated = executor
                 .withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePausedDelay")
                 .withWorkerTaskDelays(list, "handlePausedDelay");
+
+            // propagate the pause to the parent execution when running inside a Loop sub-execution
+            if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                loopExecutionEventQueue.emit(new LoopExecutionEvent(
+                    executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null));
+            }
+
+            return updated;
         }
 
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
@@ -1493,8 +1505,8 @@ public class ExecutorService {
         }
     }
 
-    public void log(Logger log, boolean in, TerminatedLoopExecution value) {
-        if (log.isDebugEnabled()) { // taskRun().toStringState() is costly so we avoid calling it if not needed
+    public void log(Logger log, boolean in, LoopExecutionEvent value) {
+        if (log.isDebugEnabled()) {
             log.debug(
                 "{} {} : {}",
                 in ? "<< IN " : ">> OUT",

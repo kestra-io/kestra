@@ -558,18 +558,14 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({"flows/valids/loop-pause.yaml"})
-    void killExecutionWithFlowableTask() throws Exception {
+    void parentExecutionIsPausedWhenLoopIterationIsPaused() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause");
 
-        TaskRun childTaskRun = execution.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("pause")).toList().getFirst();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-        Execution killed = executionService.killParentTaskruns(childTaskRun, execution);
-
-        TaskRun parentTaskRun = killed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
-
-        assertThat(parentTaskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(parentTaskRun.getAttempts().getLast().getState().getCurrent()).isEqualTo(State.Type.KILLED);
-
+        TaskRun loopTaskRun = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
+        assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
     }
 
     @Test

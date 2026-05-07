@@ -279,7 +279,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!isMySubExecution(execution, parentTaskRun)) {
-            // Not in this loop's own sub-execution — state is managed by the TerminatedLoopExecutionMessageHandler.
+            // Not in this loop's own sub-execution — state is managed by the LoopExecutionEventMessageHandler.
             return Optional.empty();
         }
 

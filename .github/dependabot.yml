@@ -30,7 +30,7 @@ updates:
       - dependency-name: "com.google.protobuf:*"
         versions: ["[4,)"]
 
-  # Maintain dependencies for NPM modules
+  # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
     directory: "/ui"
     commit-message:
@@ -95,7 +95,6 @@ updates:
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from minor updates
-            "moment-timezone",
             "monaco-editor",
           ]
 
@@ -134,17 +133,13 @@ updates:
       - dependency-name: "eslint-plugin-vue"
         versions: ["*"]
 
-      # Ignore vue-router major updates (v5 conflicts with @kestra-io/ui-libs peer requirement ^4.5.0)
-      - dependency-name: "vue-router"
-        update-types: ["version-update:semver-major"]
-
       # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions: [">=5.3.2"]
 
-      # Temporarily ignore all axios updates due to recent supply chain vulnerability, see https://github.com/axios/axios/issues/10604
-      - dependency-name: "axios"
-        versions: ["*"]
+      # Ignore lint-staged major updates (v17 requires Node.js >=22.22.1 which is not yet released)
+      - dependency-name: "lint-staged"
+        update-types: ["version-update:semver-major"]
 
   # Maintain dependencies for ui/packages/design-system
   - package-ecosystem: "npm"
@@ -160,10 +155,9 @@ updates:
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
-      # Build toolchain: tsdown, vite, vitejs plugins
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
@@ -187,7 +181,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -206,7 +199,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -225,7 +217,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -239,11 +230,15 @@ updates:
           ]
 
     ignore:
-      # Ignore eslint major updates (same constraint as /ui)
+      # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
+
+      # Ignore @eslint/js major updates (v10 requires eslint ^10 but project is on eslint ^9)
       - dependency-name: "@eslint/js"
         update-types: ["version-update:semver-major"]
+
+      # Ignore eslint-plugin-vue all updates (v10 requires eslint ^10 but project is on eslint ^9)
       - dependency-name: "eslint-plugin-vue"
         versions: ["*"]
 
@@ -261,16 +256,14 @@ updates:
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
-      # Build toolchain: tsdown, vite, vitejs plugins
       build:
         applies-to: version-updates
-        patterns: ["tsdown", "@tsdown/*", "vite", "@vitejs/*", "sass-embedded"]
+        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
 
       types:
         applies-to: version-updates
         patterns: ["@types/*"]
 
-      # Vue Flow rendering engine
       vue-flow:
         applies-to: version-updates
         patterns: ["@vue-flow/*"]
@@ -281,7 +274,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -295,7 +287,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",
@@ -309,7 +300,6 @@ updates:
         exclude-patterns:
           [
             "tsdown",
-            "@tsdown/*",
             "vite",
             "@vitejs/*",
             "sass-embedded",

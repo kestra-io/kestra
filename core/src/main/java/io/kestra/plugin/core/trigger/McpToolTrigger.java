@@ -188,7 +188,7 @@ public class McpToolTrigger extends AbstractTrigger implements TriggerOutput<Mcp
             .flowRevision(flow.getRevision())
             .namespace(flow.getNamespace())
             .tenantId(flow.getTenantId())
-            .kind(ExecutionKind.NORMAL)
+            .kind(null)
             .trigger(ExecutionTrigger.of(
                 this,
                 (io.kestra.core.models.tasks.Output) new McpToolTrigger.Output(additionalInputs)

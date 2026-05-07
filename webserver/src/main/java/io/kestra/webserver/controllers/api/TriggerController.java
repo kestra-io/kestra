@@ -595,11 +595,31 @@ public class TriggerController {
 
         if (disabled) {
             builder = builder.nextExecutionDate(null);
+        } else if (trigger instanceof Schedulable schedulableTrigger) {
+            builder = builder.nextExecutionDate(reEnabledNextExecutionDate(flow, schedulableTrigger, currentState));
         }
 
         Trigger updated = builder.build();
         triggerQueue.emit(updated);
         return updated;
+    }
+
+    private ZonedDateTime reEnabledNextExecutionDate(Flow flow, Schedulable schedulableTrigger, Trigger currentState) {
+        try {
+            RunContext runContext = runContextFactory.of(flow, (AbstractTrigger) schedulableTrigger);
+            ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+            RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedulableTrigger.getRecoverMissedSchedules())
+                .orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
+
+            return switch (recoverMissedSchedules) {
+                case NONE -> schedulableTrigger.nextEvaluationDate();
+                case LAST -> schedulableTrigger.previousEvaluationDate(conditionContext);
+                case ALL -> currentState.getNextExecutionDate();
+            };
+        } catch (Exception e) {
+            log.warn("Unable to restore recoverMissedSchedules on trigger re-enable, falling back to current time", e);
+            return ZonedDateTime.now();
+        }
     }
 
     protected Trigger doSetTriggerBackfill(Trigger currentState, Backfill backfill, Flow flow, AbstractTrigger trigger) throws Exception {

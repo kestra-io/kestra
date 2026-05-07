@@ -13,8 +13,10 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -58,6 +60,9 @@ class TriggerControllerTest {
 
     @Inject
     private JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    TriggerController triggerController;
 
     @BeforeEach
     protected void setup() {
@@ -357,6 +362,34 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldUseLastMissedScheduleWhenReEnablingTriggerConfiguredWithLast() throws QueueException {
+        Flow flow = generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules.LAST);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(null)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+
+        Trigger updated = triggerController.doSetTriggerDisabled(currentState, false, flow, flow.getTriggers().getFirst());
+
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isBefore(ZonedDateTime.now());
+    }
+
+    @Test
+    void shouldKeepBacklogWhenReEnablingTriggerConfiguredWithAll() throws QueueException {
+        Flow flow = generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules.ALL);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(null)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+
+        Trigger updated = triggerController.doSetTriggerDisabled(currentState, false, flow, flow.getTriggers().getFirst());
+
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isNull();
+    }
+
+    @Test
     void disableByTriggers() {
         String namespace = IdUtils.create();
         Flow flow1 = generateFlowWithTrigger(namespace);
@@ -494,6 +527,33 @@ class TriggerControllerTest {
                         .id(IdUtils.create())
                         .type(Schedule.class.getName())
                         .cron("*/1 * * * *")
+                        .build()
+                )
+            )
+            .build();
+    }
+
+    private Flow generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules recoverMissedSchedules) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TENANT_ID)
+            .namespace(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .recoverMissedSchedules(recoverMissedSchedules)
                         .build()
                 )
             )

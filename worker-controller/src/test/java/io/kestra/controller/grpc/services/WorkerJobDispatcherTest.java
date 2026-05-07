@@ -975,6 +975,11 @@ class WorkerJobDispatcherTest {
         }
 
         @Override
+        public boolean isPaused() {
+            return isPaused.get();
+        }
+
+        @Override
         public void pause() {
             isPaused.set(true);
             pauseCount.incrementAndGet();

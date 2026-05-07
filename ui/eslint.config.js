@@ -10,11 +10,11 @@ export default defineConfig([
     // Formatting rules for JS/TS files (not .vue — handled below by vue/* variants)
     {
         files: ["**/*.{js,mjs,cjs,ts}"],
+        languageOptions: {parser: tsParser},
         rules: {
             quotes: ["error", "double"],
             semi: ["error", "always"],
             "comma-dangle": ["error", "always-multiline"],
-            indent: ["error", 4],
             "object-curly-spacing": ["error", "never"],
             "array-bracket-spacing": ["error", "never"],
         },

@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     vue(),
     dts({
-        tsconfigPath: "./tsconfig.json", 
+        tsconfigPath: "./tsconfig.app.json", 
         exclude: ["tests/**"]
     })
   ],

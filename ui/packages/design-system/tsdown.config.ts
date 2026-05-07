@@ -29,7 +29,7 @@ export default defineConfig({
     dts: {vue: true, tsconfig: "./tsconfig.app.json"},
     entry: {
         index: "src/index.ts",
-        styles: "src/styles.ts",
+        styleBase: "src/styleBase.ts",
         ...componentEntries,
     },
     copy: [
@@ -39,9 +39,11 @@ export default defineConfig({
         neverBundle: [/\.png$/, "@vue/reactivity"],
     },
     css: {
+        splitting: true,
         preprocessorOptions: {
             scss: {
                 loadPaths: [path.resolve(import.meta.dirname, "../../node_modules")],
+                silenceDeprecations: ["import", "color-functions", "global-builtin", "if-function"],
             },
         },
     },

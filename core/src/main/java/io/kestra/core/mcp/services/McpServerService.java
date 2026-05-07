@@ -34,6 +34,7 @@ public class McpServerService {
             "explanations about Kestra unless explicitly asked.",
             McpServer.ServerType.PRIVATE,
             McpServer.AuthType.BASIC,
+            null,
             false,
             false, false, null, null
         );

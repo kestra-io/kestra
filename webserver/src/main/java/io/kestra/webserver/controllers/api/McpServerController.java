@@ -78,6 +78,7 @@ public class McpServerController {
         }
 
         requireEnvCompatibleAuthType(mcpServer.authType());
+        requireOAuthProvider(mcpServer.authType(), mcpServer.oauthProvider());
 
         if (mcpServerRepository.get(tenantId, mcpServer.id()).isPresent()) {
             throw new ConflictException("MCP server already exists with id: '" + mcpServer.id() + "'");
@@ -85,7 +86,7 @@ public class McpServerController {
 
         McpServer toSave = new McpServer(tenantId,
             mcpServer.id(), mcpServer.description(), mcpServer.instructions(),
-            mcpServer.serverType(), mcpServer.authType(),
+            mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(null, toSave)));
@@ -109,10 +110,11 @@ public class McpServerController {
         }
 
         requireEnvCompatibleAuthType(mcpServer.authType());
+        requireOAuthProvider(mcpServer.authType(), mcpServer.oauthProvider());
 
         McpServer toSave = new McpServer(tenantId, id,
             mcpServer.description(), mcpServer.instructions(),
-            mcpServer.serverType(), mcpServer.authType(),
+            mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(existing.get(), toSave)));
@@ -137,8 +139,15 @@ public class McpServerController {
     }
 
     private void requireEnvCompatibleAuthType(McpServer.AuthType authType) {
-        if (editionProvider.get() == EditionProvider.Edition.OSS && authType == McpServer.AuthType.API_TOKEN) {
+        if (editionProvider.get() == EditionProvider.Edition.OSS
+                && (authType == McpServer.AuthType.API_TOKEN || authType == McpServer.AuthType.OAUTH)) {
             throw new HttpStatusException(HttpStatus.FORBIDDEN, "Auth type '" + authType + "' requires Enterprise Edition");
+        }
+    }
+
+    private void requireOAuthProvider(McpServer.AuthType authType, String oauthProvider) {
+        if (authType == McpServer.AuthType.OAUTH && (oauthProvider == null || oauthProvider.isBlank())) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthProvider is required when authType is OAUTH");
         }
     }
 
@@ -155,7 +164,7 @@ public class McpServerController {
         McpServer mcpServer = existing.get();
         McpServer toggled = new McpServer(tenantId, mcpServer.id(),
             mcpServer.description(), mcpServer.instructions(),
-            mcpServer.serverType(), mcpServer.authType(),
+            mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
             !mcpServer.disabled(), false, false, null, null);
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(mcpServer, toggled)));
     }

@@ -93,6 +93,27 @@
                 </div>
             </el-form-item>
 
+            <el-form-item
+                v-if="form.serverType === 'PRIVATE' && form.authType === 'OAUTH'"
+                :label="t('mcp.oauth_provider')"
+                prop="oauthProvider"
+                :rules="[{required: true, message: t('mcp.oauth_provider_required'), trigger: 'change'}]"
+            >
+                <el-select
+                    v-model="form.oauthProvider"
+                    :placeholder="t('mcp.oauth_provider_placeholder')"
+                    :disabled="readOnly"
+                    class="mcp-edit__provider-select"
+                >
+                    <el-option
+                        v-for="provider in oauthProviders"
+                        :key="provider"
+                        :label="provider"
+                        :value="provider"
+                    />
+                </el-select>
+            </el-form-item>
+
             <el-form-item :label="t('enabled')">
                 <el-switch
                     :modelValue="!form.disabled"
@@ -138,7 +159,9 @@
     const route = useRoute()
     const router = useRouter()
     const mcpStore = useMcpStore()
+    const authStore = useAuthStore()
     const isOss = computed(() => useMiscStore().configs?.edition === "OSS")
+    const oauthProviders = computed<string[]>(() => authStore.auths?.oauths ?? [])
 
     const isUpdate = computed(() => !!route.params.id)
 
@@ -156,13 +179,15 @@
         description: string;
         instructions: string;
         serverType: "PRIVATE" | "PUBLIC";
-        authType: "BASIC" | "API_TOKEN";
+        authType: "BASIC" | "API_TOKEN" | "OAUTH";
+        oauthProvider: string;
         disabled: boolean;
     }
 
     const AUTH_OPTIONS = [
         {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
         {value: "API_TOKEN" as const, labelKey: "mcp.api_token", hintKey: "mcp.bearer_token", ee: true},
+        {value: "OAUTH" as const, labelKey: "mcp.oauth", hintKey: "mcp.oauth_hint", ee: true},
     ]
 
     const defaultForm = (): McpForm => ({
@@ -171,6 +196,7 @@
         instructions: "",
         serverType: "PRIVATE",
         authType: "BASIC",
+        oauthProvider: "",
         disabled: false,
     })
 
@@ -187,12 +213,19 @@
                 instructions: server.instructions ?? "",
                 serverType: server.serverType,
                 authType: server.authType,
+                oauthProvider: server.oauthProvider ?? "",
                 disabled: server.disabled,
             }
         } else if (!isUpdate.value) {
             form.value = defaultForm()
         }
     }, {immediate: true})
+
+    onMounted(() => {
+        if (!authStore.auths) {
+            authStore.loadAuths({});
+        }
+    });
 
     const save = async (): Promise<void> => {
         if (!formRef.value) return
@@ -206,6 +239,7 @@
                     instructions: form.value.instructions || undefined,
                     serverType: form.value.serverType,
                     authType: form.value.authType,
+                    oauthProvider: form.value.authType === "OAUTH" ? form.value.oauthProvider || undefined : undefined,
                     disabled: form.value.disabled,
                 }
                 if (isUpdate.value) {
@@ -325,6 +359,10 @@
         &__auth-hint {
             font-size: 0.8125rem;
             color: var(--ks-content-secondary);
+        }
+
+        &__provider-select {
+            width: 100%;
         }
 
         &__toggle {

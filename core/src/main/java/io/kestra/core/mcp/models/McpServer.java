@@ -38,6 +38,8 @@ public record McpServer(
 
     AuthType authType,
 
+    String oauthProvider,
+
     boolean disabled,
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -72,10 +74,12 @@ public record McpServer(
     /**
      * Authentication type for private MCP servers.
      * Only relevant when {@link ServerType} is {@link ServerType#PRIVATE}.
+     * {@link #OAUTH} and {@link #API_TOKEN} are Enterprise Edition only.
      */
     public enum AuthType {
         BASIC,
-        API_TOKEN;
+        API_TOKEN,
+        OAUTH;
 
         @JsonCreator
         public static AuthType fromString(final String value) {
@@ -120,11 +124,11 @@ public record McpServer(
     @Override
     public McpServer toDeleted() {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, disabled, isDefault, true, created, updated);
+            serverType, authType, oauthProvider, disabled, isDefault, true, created, updated);
     }
 
     public McpServer withTimestamps(Instant created, Instant updated) {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, disabled, isDefault, deleted, created, updated);
+            serverType, authType, oauthProvider, disabled, isDefault, deleted, created, updated);
     }
 }

@@ -32,6 +32,9 @@ public record ApiMcpServer(
     @Schema(description = "Authentication type for private servers.")
     McpServer.AuthType authType,
 
+    @Schema(description = "OAuth provider key from micronaut.security.oauth2.clients. Required when authType is OAUTH.")
+    String oauthProvider,
+
     @Schema(description = "Whether the MCP server is disabled.")
     boolean disabled,
 
@@ -57,6 +60,7 @@ public record ApiMcpServer(
             mcpServer.instructions(),
             mcpServer.serverType(),
             mcpServer.authType(),
+            mcpServer.oauthProvider(),
             mcpServer.disabled(),
             mcpServer.isDefault(),
             mcpServer.created(),

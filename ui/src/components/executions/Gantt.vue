@@ -121,11 +121,11 @@
         <OnboardingSuccessPopup
             :modelValue="showOnboardingSuccessPopup"
             :backdrop="false"
-            @update:modks-value="showOnboardingSuccessPopup = $event"
+            @update:model-value="showOnboardingSuccessPopup = $event"
         />
         <SaveExecuteAnimation
             :modelValue="showSaveExecuteAnimation"
-            @update:modks-value="showSaveExecuteAnimation = $event"
+            @update:model-value="showSaveExecuteAnimation = $event"
             @finished="onSaveExecuteAnimationFinished"
         />
     </template>

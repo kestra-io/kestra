@@ -7,23 +7,23 @@
                 :class="{'without-backdrop': !props.backdrop}"
             >
                 <div class="onboarding-success-card">
+                    <KsIconButton
+                        class="close-button"
+                        :ariaLabel="$t('close')"
+                        @click="closePopup"
+                    >
+                        <Close />
+                    </KsIconButton>
                     <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
                     <div class="onboarding-success-card__actions">
-                        <button
-                            class="el-button"
-                            type="button"
-                            @click="goToTutorial"
-                        >
+                        <KsButton @click="goToTutorial">
                             {{ $t("welcome_copilot.success_popup.tutorial") }}
-                        </button>
-                        <router-link
-                            class="el-button el-button--primary"
-                            :to="successRoute"
-                        >
+                        </KsButton>
+                        <KsButton type="primary" @click="goToExplore">
                             {{ $t("welcome_copilot.success_popup.explore") }}
-                        </router-link>
+                        </KsButton>
                     </div>
                 </div>
             </div>
@@ -34,6 +34,10 @@
 <script setup lang="ts">
     import {computed, nextTick} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import Close from "vue-material-design-icons/Close.vue";
+    import {KsButton, KsIconButton} from "@kestra-io/design-system";
+    import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -47,6 +51,8 @@
 
     const route = useRoute();
     const router = useRouter();
+    const onboardingStore = useOnboardingV2Store();
+    const {trackOnboarding} = useOnboardingAnalytics();
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
@@ -57,15 +63,37 @@
         params: {tenant: route.params.tenant},
     }));
 
+    function dismissPopup(action: string) {
+        trackOnboarding({
+            action,
+            mode: onboardingStore.state.mode,
+        });
+        onboardingStore.complete();
+        emit("update:modelValue", false);
+    }
+
+    function closePopup() {
+        dismissPopup("success_popup_dismissed");
+
+        const query = {...route.query};
+        delete query.onboardingSuccess;
+        void router.replace({query});
+    }
+
     async function goToTutorial() {
         if (!props.modelValue) {
             return;
         }
 
-        emit("update:modelValue", false);
+        dismissPopup("success_popup_tutorial_clicked");
         await nextTick();
         await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)));
         window.location.assign(router.resolve(tutorialRoute.value).href);
+    }
+
+    function goToExplore() {
+        dismissPopup("success_popup_explore_clicked");
+        void router.push(successRoute.value);
     }
 </script>
 
@@ -100,6 +128,12 @@
         background: var(--ks-background-card);
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
         text-align: center;
+
+        .close-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+        }
 
         h3 {
             margin: 0 0 0.75rem;

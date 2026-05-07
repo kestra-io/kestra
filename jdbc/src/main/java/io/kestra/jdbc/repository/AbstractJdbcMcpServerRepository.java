@@ -66,6 +66,11 @@ public abstract class AbstractJdbcMcpServerRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public ArrayListTotal<McpServer> listAll(Pageable pageable) {
+        return findPage(pageable, defaultFilter(), DSL.noCondition());
+    }
+
+    @Override
     public McpServer save(McpServer previousMcpServer, McpServer mcpServer) {
         if (previousMcpServer != null && previousMcpServer.equals(mcpServer)) {
             return previousMcpServer;

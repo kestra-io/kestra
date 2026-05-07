@@ -14,6 +14,8 @@ public interface McpServerRepositoryInterface {
 
     ArrayListTotal<McpServer> listAll(Pageable pageable, String tenantId);
 
+    ArrayListTotal<McpServer> listAll(Pageable pageable);
+
     McpServer save(McpServer previousMcpServer, McpServer mcpServer);
 
     Optional<McpServer> delete(String tenantId, String id);

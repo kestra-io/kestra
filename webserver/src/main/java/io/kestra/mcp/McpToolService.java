@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionStreamingService;
 import io.kestra.core.utils.ListUtils;
@@ -68,8 +69,8 @@ public class McpToolService {
     }
 
 
-    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId) {
-        return fetchFlowWithMcpToolTrigger(tenantId, serverId).stream().flatMap(flow -> flow.getTriggers().stream()
+    public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, McpServer.ServerType serverType) {
+        return fetchFlowWithMcpToolTrigger(tenantId, serverId, serverType).stream().flatMap(flow -> flow.getTriggers().stream()
                 .filter(isMcpTriggerTypeAndEnabledPredicate())
                 .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
             ).toList();
@@ -151,8 +152,12 @@ public class McpToolService {
         }
     }
 
-    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId) {
-        return flowRepositoryInterface.find(Pageable.unpaged(), tenantId, McpToolTrigger.class).stream()
+    private List<Flow> fetchFlowWithMcpToolTrigger(String tenantId, String serverId, McpServer.ServerType serverType) {
+        var flows = McpServer.ServerType.PUBLIC.equals(serverType)
+            ? flowRepositoryInterface.findWithNoAcl(Pageable.unpaged(), tenantId, McpToolTrigger.class)
+            : flowRepositoryInterface.find(Pageable.unpaged(), tenantId, McpToolTrigger.class);
+
+        return flows.stream()
             .filter(flow -> !flow.isDisabled() &&
                 flow.getTriggers().stream().anyMatch(trigger ->
                     trigger.getClass().equals(McpToolTrigger.class) && serverId.equals(

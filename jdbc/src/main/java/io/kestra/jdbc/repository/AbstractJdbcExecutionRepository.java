@@ -758,7 +758,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                 ExecutorContext executor = function.apply(execution.get());
 
                 if (executor != null) {
-                    this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    if (executor.getExecution().getId().equals(executionId)) {
+                        // same execution: we use UPDATE as it's more performant than persist/upsert
+                        this.jdbcRepository.update(executor.getExecution(), context, null);
+                    } else {
+                        // different execution ID: this is possible for ex for replay, we must INSERT via persist/upsert
+                        this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    }
                     return Optional.of(executor);
                 }
 

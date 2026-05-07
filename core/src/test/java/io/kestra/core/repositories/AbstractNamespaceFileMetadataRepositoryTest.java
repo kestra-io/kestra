@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -314,6 +315,27 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
         Instant now = Instant.now();
         assertThat(result.stream().map(nsFileMetadata -> nsFileMetadata.toBuilder().created(now).updated(null).build()).toList())
             .containsExactlyInAnyOrderElementsOf(expected.stream().map(nsFileMetadata -> nsFileMetadata.toBuilder().created(now).updated(null).build()).toList());
+    }
+
+    @Test
+    void findDistinctNamespace() throws IOException {
+        String tenantId = TestsUtils.randomTenant();
+        String namespace1 = TestsUtils.randomNamespace();
+        String namespace2 = TestsUtils.randomNamespace();
+        String deletedNamespace = TestsUtils.randomNamespace();
+
+        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build());
+        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
+            .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.delete(deletedEntry);
+
+        Set<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);
+
+        assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
+        assertThat(namespaces).doesNotContain(deletedNamespace);
     }
 
     @Test

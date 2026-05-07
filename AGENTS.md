@@ -298,6 +298,14 @@ docker compose -f docker-compose-ci.yml down
 
 2. **Access application:** http://localhost:8080
 
+### Worktree setup
+
+When working in an EE worktree (detected by: the working directory is under a `worktrees/` directory):
+```bash
+dev-tools/setup-worktree.sh ../worktrees/foo
+```
+This copies the gitignored `cli/src/main/resources/application-*.yml` files from the main checkout into the worktree. Without this step Kestra cannot boot in the worktree. The script is idempotent — safe to re-run.
+
 ### Security Considerations
 - Use tenant isolation for multi-tenant features
 - Implement proper authorization with `@HasAnyPermission`
@@ -356,6 +364,6 @@ docker compose -f docker-compose-ci.yml down
 ## Pull request guidelines
 - Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.
 - Use types: chore, feat, fix, refactor, test, docs, build
-- Use scopes: apps, assets, core, dashboards, deps, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, triggers, variables, version, worker
+- Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.

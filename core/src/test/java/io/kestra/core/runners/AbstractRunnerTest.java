@@ -723,11 +723,11 @@ public abstract class AbstractRunnerTest {
         Execution execution = Execution.newExecution(TestsUtils.mockFlow(), Collections.emptyList());
         executionQueue.emit(execution);
 
-        // We expect the initial execution message + the failed due to missing flow
+        // We expect the initial execution message only
         await()
             .during(Duration.ofMillis(500)) // Wait some time to ensure no infinite loop occurs
             .atMost(Duration.ofSeconds(10))
-            .until(() -> executions.size() == 2);
+            .until(() -> executions.size() == 1);
     }
 
     @Test

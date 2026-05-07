@@ -20,7 +20,6 @@ import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.core.migration.MigrationRunner;
-import io.kestra.core.migration.MigrationRunnerInterface;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.BeanProvider;
@@ -94,7 +93,6 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         initLogger();
         sendServerLog();
         maybeInitPlugins();
-        maybeRunMigrations();
         if (this.startupHook != null) {
             this.startupHook.start(this);
         }
@@ -167,38 +165,6 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
         if (log.isTraceEnabled() && pluginRegistry != null) {
             pluginRegistry.plugins().forEach(c -> log.trace(c.toString()));
         }
-    }
-
-    /**
-     * Runs pending database migrations before the server starts.
-     * Only executed when a {@link MigrationRunnerInterface} bean is present in the context
-     * (i.e. when a JDBC or compatible backend is configured) and {@link #shouldAutoMigrate()}
-     * returns {@code true}.
-     *
-     * <p>Commands that manage migrations explicitly (e.g. {@code kestra migrate run}) can
-     * override {@link #shouldAutoMigrate()} to return {@code false} and call
-     * {@link MigrationRunnerInterface#runAlways()} directly.
-     */
-    private void maybeRunMigrations() throws Exception {
-        if (!shouldAutoMigrate() || applicationContext == null) {
-            return;
-        }
-        Optional<MigrationRunnerInterface> runner = applicationContext.findBean(MigrationRunnerInterface.class);
-        if (runner.isPresent()) {
-            runner.get().run();
-        }
-    }
-
-    /**
-     * Whether automatic migrations should run as part of this command's startup sequence.
-     * Returns {@code false} by default — only server commands override this to {@code true}.
-     * Migration-specific commands (e.g. {@code kestra migrate run}) bypass this entirely
-     * and call {@link MigrationRunnerInterface#runAlways()} directly.
-     *
-     * @return {@code true} to run migrations automatically on startup
-     */
-    protected boolean shouldAutoMigrate() {
-        return false;
     }
 
     private void maybeStartWebserver() {

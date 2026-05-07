@@ -15,7 +15,7 @@ import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
@@ -167,7 +167,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -187,7 +187,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -205,7 +205,7 @@ public abstract class AbstractFlowRepositoryTest {
         return Stream.of(
             QueryFilter.builder().field(Field.QUERY).value("filterFlowId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.NAMESPACE).value(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(SystemFlowsConfiguration.DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value("filterFlowId").operation(Op.EQUALS).build()
         );
@@ -908,7 +908,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenantFlowExist = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowExist = FlowWithSource.builder()
             .id("flowExist")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenantFlowExist)
             .deleted(false)
             .build();
@@ -917,7 +917,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenantFlowDeleted = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowDeleted = FlowWithSource.builder()
             .id("flowDeleted")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenantFlowDeleted)
             .deleted(true)
             .build();

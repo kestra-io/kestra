@@ -49,7 +49,10 @@ class JdbcServiceLivenessManagerTest {
                 DEFAULT_DURATION, // timeout
                 DEFAULT_DURATION,
                 DEFAULT_DURATION
-            )
+            ),
+            null,
+            null,
+            null
         );
 
         this.serviceLivenessManager = new ServiceLivenessManager(

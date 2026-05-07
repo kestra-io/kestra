@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.EqualTo;
 
 public interface ITriggers extends IData<ITriggers.Fields> {
 
@@ -21,17 +20,15 @@ public interface ITriggers extends IData<ITriggers.Fields> {
         List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(ITriggers.Fields.NAMESPACE));
-            namespaceFilters.forEach(f ->
-            {
-                updatedWhere.add(EqualTo.<ITriggers.Fields> builder().field(ITriggers.Fields.NAMESPACE).value(f.value()).build());
+            namespaceFilters.forEach(f -> {
+                updatedWhere.add(f.toDashboardFilterBuilder(ITriggers.Fields.NAMESPACE, f.value()));
             });
         }
 
         List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
         if (!flowFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
-            flowFilters.forEach(f ->
-            {
+            flowFilters.forEach(f -> {
                 updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
             });
         }

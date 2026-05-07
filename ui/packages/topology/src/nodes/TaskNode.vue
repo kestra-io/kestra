@@ -373,8 +373,6 @@
 </script>
 
 <style lang="scss" scoped>
-@use "../assets/styles/color-palette" as _color-palette;
-
 .playground-button {
     position: absolute;
     bottom: 0;
@@ -390,10 +388,9 @@
     font-size: .8rem;
 }
 
-button.playground-button,
-.dark button.playground-button {
-    color: _color-palette.$base-white;
-    background-color: _color-palette.$base-blue-400;
+button.playground-button {
+    color: var(--ks-white);
+    background-color: var(--ks-playground-bg-color);
 }
 
 .view-details-action {

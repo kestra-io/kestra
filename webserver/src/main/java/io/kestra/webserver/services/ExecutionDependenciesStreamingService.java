@@ -63,7 +63,9 @@ public class ExecutionDependenciesStreamingService {
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueSubscriber = executionQueue.subscriber().subscribe(either ->
+        this.queueSubscriber = executionQueue.subscriber();
+        this.queueSubscriber.pause();
+        this.queueSubscriber.subscribe(either ->
         {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
@@ -123,6 +125,11 @@ public class ExecutionDependenciesStreamingService {
     public void registerSubscriber(String correlationId, String subscriberId, Subscriber consumer) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
+            // resume the subscription if paused
+            if (MapUtils.isEmpty(subscribers) && this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.resume();
+            }
+
             subscribers.computeIfAbsent(correlationId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, consumer);
         }
@@ -141,6 +148,11 @@ public class ExecutionDependenciesStreamingService {
                 if (executionSubscribers.isEmpty()) {
                     subscribers.remove(correlationId);
                 }
+            }
+
+            // pause the subscription if no one is listening anymore
+            if (MapUtils.isEmpty(subscribers) && !this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.pause();
             }
         }
     }

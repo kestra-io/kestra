@@ -100,7 +100,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {
         return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/restart`,
+            `${apiUrl()}/executions/${options.executionId}/actions/restart`,
             null,
             {
                 params: {
@@ -177,7 +177,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
         return axios.post<Execution>(
-            `${apiUrl()}/executions/${options.executionId}/replay`,
+            `${apiUrl()}/executions/${options.executionId}/actions/replay`,
             null,
             {
                 params: {
@@ -190,7 +190,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/replay-with-inputs`,
+            `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
             options.formData,
             {
                 params: {
@@ -206,7 +206,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
         return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/change-status`,
+            `${apiUrl()}/executions/${options.executionId}/actions/change-status`,
             null,
             {
                 params: {
@@ -217,7 +217,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
         return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/state`,
+            `${apiUrl()}/executions/${options.executionId}/actions/state`,
             {
                 taskRunId: options.taskRunId,
                 state: options.state,
@@ -230,7 +230,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return axios.delete(`${apiUrl()}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
+        return axios.delete(`${apiUrl()}/executions/${options.id}/actions/kill?isOnKillCascade=${options.isOnKillCascade}`);
     };
 
     const bulkKill = (options: { executionsId: string[] }) => {
@@ -242,7 +242,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const resume = (options: { id: string; formData: any }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data",
@@ -251,7 +251,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const validateResume = (options: { id: string; formData: any }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
                 "content-type": "multipart/form-data",
@@ -260,7 +260,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const pause = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/pause`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/pause`);
     };
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
@@ -516,7 +516,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const setLabels = (options: { executionId: string; labels: any }) => {
         return axios.post(
-            `${apiUrl()}/executions/${options.executionId}/labels`,
+            `${apiUrl()}/executions/${options.executionId}/actions/labels`,
             options.labels,
             {
                 headers: {
@@ -536,7 +536,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const unqueue = (options: { id: string; state: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/unqueue?state=${options.state}`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/unqueue?state=${options.state}`);
     };
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
@@ -555,7 +555,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     };
 
     const forceRun = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/force-run`);
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/force-run`);
     };
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {

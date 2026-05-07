@@ -120,7 +120,7 @@
 
         clearAll();
 
-        const url = `${apiUrl()}/executions/${props.execution.id}/eval`;
+        const url = `${apiUrl()}/executions/${props.execution.id}/actions/eval`;
         axios
             .post(url, expression.value, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

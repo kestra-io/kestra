@@ -264,7 +264,7 @@
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/actions/eval/${taskRun.id}`;
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

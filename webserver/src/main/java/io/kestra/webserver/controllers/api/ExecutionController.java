@@ -283,7 +283,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/eval", consumes = MediaType.TEXT_PLAIN)
+    @Post(uri = "/{executionId}/actions/eval", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this execution")
     public EvalResult evalExpression(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -308,7 +308,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
+    @Post(uri = "/{executionId}/actions/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this taskrun")
     public EvalResult evalTaskRunExpression(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -946,7 +946,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/restart")
+    @Post(uri = "/{executionId}/actions/restart")
     @Operation(tags = { "Executions" }, summary = "Restart a new execution from an old one")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be restarted")
@@ -1036,7 +1036,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay")
+    @Post(uri = "/{executionId}/actions/replay")
     @Operation(tags = { "Executions" }, summary = "Create a new execution from an old one and start it from a specified task run id")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
@@ -1055,7 +1055,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         tags = { "Executions" },
         summary = "Create a new execution from an old one and start it from a specified task run id",
@@ -1178,7 +1178,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/state")
+    @Post(uri = "/{executionId}/actions/state")
     @Operation(tags = { "Executions" }, summary = "Change state for a taskrun in an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the task run state cannot be changed")
@@ -1203,7 +1203,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/change-status")
+    @Post(uri = "/{executionId}/actions/change-status")
     @Operation(tags = { "Executions" }, summary = "Change the state of an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution state cannot be changed")
@@ -1301,7 +1301,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
@@ -1418,7 +1418,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume/validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/resume/validate", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = { "Executions" }, summary = "Validate inputs to resume a paused execution.")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
@@ -1436,7 +1436,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/resume", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         tags = { "Executions" }, summary = "Resume a paused execution.",
         extensions = @Extension(
@@ -1475,7 +1475,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume-from-breakpoint")
+    @Post(uri = "/{executionId}/actions/resume-from-breakpoint")
     @Operation(tags = { "Executions" }, summary = "Resume an execution from a breakpoint (in the 'BREAKPOINT' state).")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "If the executions is not in the 'BREAKPOINT' state or has no breakpoint")
@@ -1574,7 +1574,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/pause")
+    @Post(uri = "/{executionId}/actions/pause")
     @Operation(tags = { "Executions" }, summary = "Pause a running execution.")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is not running")
@@ -1870,7 +1870,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/labels")
+    @Post(uri = "/{executionId}/actions/labels")
     @Operation(tags = { "Executions" }, summary = "Add or update labels of a terminated execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "404", description = "If the execution cannot be found")
@@ -1996,7 +1996,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/unqueue")
+    @Post(uri = "/{executionId}/actions/unqueue")
     @Operation(tags = { "Executions" }, summary = "Unqueue an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be unqueued")
@@ -2086,7 +2086,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/force-run")
+    @Post(uri = "/{executionId}/actions/force-run")
     @Operation(tags = { "Executions" }, summary = "Force run an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be force-run")
@@ -2356,7 +2356,6 @@ public class ExecutionController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
-    @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",

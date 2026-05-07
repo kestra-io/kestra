@@ -95,7 +95,6 @@ updates:
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from minor updates
-            "moment-timezone",
             "monaco-editor",
           ]
 
@@ -281,15 +280,14 @@ updates:
       minor:
         update-types: ["minor"]
         applies-to: version-updates
-        exclude-patterns: [
+        exclude-patterns:
+          [
             "tsdown",
             "vite",
             "@vitejs/*",
             "sass-embedded",
             "@types/*",
             "@vue-flow/*",
-            # Temporary exclusion of these packages from minor updates
-            "moment-timezone",
           ]
 
       patch:

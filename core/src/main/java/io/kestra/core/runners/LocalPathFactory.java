@@ -10,7 +10,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
 
-import io.micronaut.context.annotation.Value;
+import io.kestra.core.runners.configuration.LocalFilesConfiguration;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -19,8 +20,10 @@ public class LocalPathFactory {
     private final List<String> globalAllowedPaths;
 
     @Inject
-    public LocalPathFactory(@Value("${" + LocalPath.ALLOWED_PATHS_CONFIG + ":}") List<String> globalAllowedPaths) {
-        this.globalAllowedPaths = globalAllowedPaths;
+    public LocalPathFactory(LocalFilesConfiguration localFilesConfiguration) {
+        this.globalAllowedPaths = localFilesConfiguration.allowedPaths() != null
+            ? localFilesConfiguration.allowedPaths()
+            : Collections.emptyList();
     }
 
     /**

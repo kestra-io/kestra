@@ -7,23 +7,21 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.kestra.core.runners.*;
-import io.kestra.core.server.Service;
-import io.kestra.core.utils.ExecutorsUtils;
-
-import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+
+import io.kestra.core.runners.*;
+import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.Service;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.executor.DefaultExecutor;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Await;
 
 @Slf4j
 public class StandAloneRunner implements Runnable, AutoCloseable {
@@ -56,8 +54,8 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     @Inject
     private Provider<Indexer> indexerProvider;
 
-    @Value("${kestra.server.standalone.running.timeout:PT1M}")
-    private Duration runningTimeout;
+    @Inject
+    private ServerConfig serverConfig;
 
     private final List<Service> servers = new ArrayList<>();
 
@@ -97,7 +95,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         }
 
         try {
-            Await.await().atMost(runningTimeout).until(
+            Await.await().atMost(getRunningTimeout()).until(
                 () -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
             );
         } catch (ConditionTimeoutException e) {
@@ -107,6 +105,13 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
                     .toList() + " not started in time"
             );
         }
+    }
+
+    private Duration getRunningTimeout() {
+        return Optional.ofNullable(serverConfig.standalone())
+            .map(ServerConfig.Standalone::running)
+            .map(ServerConfig.Standalone.Running::timeout)
+            .orElse(Duration.ofMinutes(1));
     }
 
     public boolean isRunning() {

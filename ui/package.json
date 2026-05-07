@@ -63,7 +63,7 @@
         "vue": "^3.5.31",
         "vue-echarts": "^7.0.3",
         "vue-gtag": "^3.7.0",
-        "vue-i18n": "^11.3.2",
+        "vue-i18n": "^11.4.2",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^4.6.4",
         "vue-sidebar-menu": "^5.9.1",

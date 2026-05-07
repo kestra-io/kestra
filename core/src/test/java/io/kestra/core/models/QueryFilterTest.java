@@ -538,30 +538,8 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.TYPE, Resource.AUDIT_LOG,
-                Set.of(
-                    Op.EQUALS,
-                    Op.NOT_EQUALS,
-                    Op.CONTAINS,
-                    Op.STARTS_WITH,
-                    Op.ENDS_WITH,
-                    Op.REGEX,
-                    Op.IN,
-                    Op.NOT_IN
-                )
-            ),
-
-            buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
-                    Op.IN
-                )
-            ),
-
-            buildQueryFiltersForOperations(
-                Field.ACTION, Resource.AUDIT_LOG,
-                Set.of(
-                    Op.EQUALS,
                     Op.IN
                 )
             ),
@@ -1303,37 +1281,9 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.TYPE, Resource.AUDIT_LOG,
-                Set.of(
-                    Op.PREFIX,
-                    Op.LESS_THAN,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.GREATER_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO
-                )
-            ),
-
-            buildQueryFiltersForOperations(
                 Field.RESOURCES, Resource.AUDIT_LOG,
                 Set.of(
                     Op.EQUALS,
-                    Op.NOT_EQUALS,
-                    Op.GREATER_THAN,
-                    Op.LESS_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.NOT_IN,
-                    Op.STARTS_WITH,
-                    Op.ENDS_WITH,
-                    Op.CONTAINS,
-                    Op.REGEX,
-                    Op.PREFIX
-                )
-            ),
-
-            buildQueryFiltersForOperations(
-                Field.ACTION, Resource.AUDIT_LOG,
-                Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,

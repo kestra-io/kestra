@@ -4,21 +4,21 @@ import java.net.URI;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class UriProvider {
-    @Nullable
-    @Value("${kestra.url:}")
-    String uri;
+    @Inject
+    KestraConfiguration kestraConfiguration;
 
     protected URI build(String url) {
+        String uri = kestraConfiguration.url();
         if (uri == null || uri.isEmpty()) {
             return null;
         }

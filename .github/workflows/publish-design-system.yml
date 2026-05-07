@@ -65,6 +65,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
+        if: inputs.skip-test != 'true' && inputs.package == 'design-system'
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
@@ -112,4 +113,4 @@ jobs:
         run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
       
       - name: Create release tarball
-        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/design-system
+        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}

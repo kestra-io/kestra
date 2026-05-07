@@ -14,7 +14,8 @@
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
-        "allowImportingTsExtensions": true
+        "allowImportingTsExtensions": true,
+        "rootDir": "./src"
     },
     "include": ["src"]
 }

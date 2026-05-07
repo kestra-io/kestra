@@ -97,7 +97,7 @@
     "playwright": "^1.59.1",
     "sass-embedded": "^1.99.0",
     "storybook": "^10.3.1",
-    "tsdown": "^0.21.10",
+    "tsdown": "^0.22.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.11",

@@ -7,6 +7,18 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     ...pluginVue.configs["flat/base"],
+    // Formatting rules for JS/TS files (not .vue — handled below by vue/* variants)
+    {
+        files: ["**/*.{js,mjs,cjs,ts}"],
+        rules: {
+            quotes: ["error", "double"],
+            semi: ["error", "always"],
+            "comma-dangle": ["error", "always-multiline"],
+            indent: ["error", 4],
+            "object-curly-spacing": ["error", "never"],
+            "array-bracket-spacing": ["error", "never"],
+        },
+    },
     {
         files: ["**/*.vue"],
         languageOptions: {parserOptions: {
@@ -14,6 +26,18 @@ export default defineConfig([
             extraFileExtensions: [".vue"],
         }},
         rules: {
+            // Formatting — vue/* variants handle indentation inside SFCs;
+            // base indent rule must be off to avoid double-reporting
+            indent: "off",
+            "vue/html-indent": ["error", 4, {baseIndent: 1}],
+            "vue/script-indent": ["error", 4, {baseIndent: 1}],
+            quotes: ["error", "double"],
+            semi: ["error", "always"],
+            "comma-dangle": ["error", "always-multiline"],
+            "object-curly-spacing": ["error", "never"],
+            "array-bracket-spacing": ["error", "never"],
+            "vue/object-curly-spacing": ["error", "never"],
+            // Semantic rules
             "vue/block-lang": ["warn", {"script": {"lang": "ts"}}],
             "vue/this-in-template": "error",
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],

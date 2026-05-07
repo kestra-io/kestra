@@ -18,7 +18,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
-import io.micronaut.data.model.Pageable;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -107,25 +106,7 @@ public final class ExecutableUtils {
                     }
 
                     if (existingSubflowExecution.isEmpty()) {
-                        List<Execution> childExecutions;
-                        if (currentExecution.getLoopRun() != null) {
-                            // In a loop context, loopExecution IDs change on every restart so trigger.variables.executionId
-                            // is not stable. Instead, use stable loop iteration identifiers (loopTaskRunId + loopIndex)
-                            // stored in the child execution's trigger variables to find the correct one.
-                            String loopTaskRunId = currentExecution.getLoopRun().taskRunId();
-                            int loopIndex = currentExecution.getLoopRun().index();
-                            String childNamespace = runContext.render(currentTask.subflowId().namespace());
-                            String childFlowId = runContext.render(currentTask.subflowId().flowId());
-                            childExecutions = executionRepository.findByFlowId(currentExecution.getTenantId(), childNamespace, childFlowId, Pageable.UNPAGED)
-                                .stream()
-                                .filter(e -> e.getTrigger() != null
-                                    && e.getTrigger().getId().equals(currentTask.getId())
-                                    && Objects.equals(e.getTrigger().getVariables().get("loopTaskRunId"), loopTaskRunId)
-                                    && Objects.equals(e.getTrigger().getVariables().get("loopIndex"), loopIndex))
-                                .toList();
-                        } else {
-                            // otherwise, we try to find the correct one by searching child executions
-                            childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
+                        List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
                                 .filter(
                                     e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
                                         && e.getTrigger().getId().equals(currentTask.getId())
@@ -137,7 +118,6 @@ public final class ExecutableUtils {
                                 )
                                 .collectList()
                                 .block();
-                        }
 
                         if (childExecutions != null && childExecutions.size() == 1) {
                             // if there are more than one, we ignore the results and create a new one
@@ -166,11 +146,8 @@ public final class ExecutableUtils {
                                 updatedVars.put("executionId", currentExecution.getId());
                                 updatedVars.put("taskRunId", currentTaskRun.getId());
                                 restartedChild = restartedChild.withTrigger(
-                                    ExecutionTrigger.builder()
-                                        .id(restartedChild.getTrigger().getId())
-                                        .type(restartedChild.getTrigger().getType())
+                                    restartedChild.getTrigger().toBuilder()
                                         .variables(updatedVars)
-                                        .logFile(restartedChild.getTrigger().getLogFile())
                                         .build()
                                 );
                             }

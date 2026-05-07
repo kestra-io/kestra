@@ -524,7 +524,7 @@ public class LoopCaseTest {
         var subflowExecution1 = findSubflowExecution(subExecutions.getFirst());
         assertThat(subflowExecution1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subflowExecution1.getTaskRunList()).hasSize(1);
-        var subflowExecution2 = findSubflowExecution(subExecutions.get(0));
+        var subflowExecution2 = findSubflowExecution(subExecutions.get(1));
         assertThat(subflowExecution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subflowExecution2.getTaskRunList()).hasSize(1);
     }

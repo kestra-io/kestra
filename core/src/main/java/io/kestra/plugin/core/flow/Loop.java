@@ -56,8 +56,7 @@ import java.util.Optional;
         @Example(
             full = true,
             title = """
-                The `{{ item.value }}` from the `loop` task is available only to direct child tasks \
-                such as the `before_if` and the `if` tasks.""",
+                The `{{ item.value }}` from the `loop` task is available to all tasks of the loop, even nested.""",
             code = """
                 id: for_loop_example
                 namespace: company.team

@@ -77,7 +77,7 @@
     "@storybook/addon-themes": "^10.3.1",
     "@storybook/addon-vitest": "^10.3.1",
     "@storybook/vue3-vite": "^10.3.1",
-    "@tsdown/css": "^0.21.10",
+    "@tsdown/css": "^0.22.0",
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",
     "@types/mdast": "^4.0.4",

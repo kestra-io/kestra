@@ -12,10 +12,13 @@ import io.kestra.plugin.core.trigger.McpToolTrigger;
 import com.google.common.annotations.VisibleForTesting;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.event.StartupEvent;
+import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -27,7 +30,7 @@ import java.util.stream.Collectors;
 import static io.kestra.plugin.core.trigger.McpToolTrigger.DEFAULT_SERVER_ID;
 
 @Slf4j
-@Context
+@Singleton
 @Requires(beans = McpServerHandlerTransport.class)
 @Requires(property = "kestra.server-type", pattern = "WEBSERVER")
 public class McpServerChangeNotifier {
@@ -52,8 +55,8 @@ public class McpServerChangeNotifier {
         this.flowRepository = flowRepository;
     }
 
-    @PostConstruct
-    public void start() {
+    @EventListener
+    void initCache(StartupEvent startupEvent) {
         this.flowSubscriber = flowQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
                 log.warn("Failed to deserialize flow event for MCP change notification: {}", either.getRight().getMessage());

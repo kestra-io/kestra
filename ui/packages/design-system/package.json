@@ -91,7 +91,7 @@
     "@vueuse/core": "^11.0.0",
     "eslint": "^9.39.4",
     "eslint-plugin-vue": "^9.33.0",
-    "globals": "^16.0.0",
+    "globals": "^17.6.0",
     "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
     "playwright": "^1.59.1",

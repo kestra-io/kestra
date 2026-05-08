@@ -24,10 +24,6 @@ export function useHelpers() {
         title: isCreate.value ? t("mcp.create") : (serverId.value ?? t("mcp.servers")),
         breadcrumb: [
             {label: t("mcp.servers"), link: {name: "admin/mcp-servers"}},
-            {
-                label: isCreate.value ? t("mcp.create") : (serverId.value ?? ""),
-                disabled: true,
-            },
         ],
     }));
 

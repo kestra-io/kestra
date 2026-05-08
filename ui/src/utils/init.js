@@ -49,7 +49,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
     /**
      * Manage docId initialization for Contextual docs
      */
-    router.beforeEach((to, from, next) => {
+    router.beforeEach((to, from) => {
         // set the docId from the path
         // so it has a default
         const pathArray = to.path.split("/");
@@ -61,9 +61,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
         // propagate showDocId query param
         // to the next page to facilitate docs binding
         if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
-            next({path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}})
-        }else{
-            next()
+            return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
         }
     })
 

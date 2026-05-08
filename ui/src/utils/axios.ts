@@ -270,14 +270,12 @@ const createAxios = (
         indexes: null
     };
 
-    router?.beforeEach((_to, _from, next) => {
+    router?.beforeEach(() => {
         if (pendingRoute) {
             requestsTotal--;
         }
         pendingRoute = true;
         initProgress();
-
-        next();
     });
 
     router?.afterEach(() => {

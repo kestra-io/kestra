@@ -62,7 +62,7 @@
         "@types/dagre": "^0.7.52",
         "@types/js-yaml": "^4.0.9",
         "@types/lodash": "^4",
-        "@types/node": "^25.6.0",
+        "@types/node": "^25.6.2",
         "@vitejs/plugin-vue": "^6.0.6",
         "sass-embedded": "^1.99.0",
         "tsdown": "^0.22.0",

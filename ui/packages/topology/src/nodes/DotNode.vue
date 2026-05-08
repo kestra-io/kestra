@@ -40,8 +40,8 @@
         align-items: center;
         font-size: 5px;
 
-        &.GraphClusterRoot { color: var(--ks-border-created); }
-        &.GraphClusterFinally { color: var(--ks-border-warning); }
+        &.GraphClusterRoot { color: var(--ks-status-info); }
+        &.GraphClusterFinally { color: var(--ks-status-warning); }
         &.GraphClusterEnd { color: var(--ks-border-active); }
     }
 </style>

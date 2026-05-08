@@ -140,7 +140,7 @@
         }
 
         &:hover, &:focus {
-            background-color: var(--ks-button-background-secondary);
+            background-color: var(--ks-btn-secondary-bg-default);
         }
 
         &.success {
@@ -162,7 +162,7 @@
         }
 
         &.warning {
-            border-color: var(--ks-border-warning);
+            border-color: var(--ks-status-warning);
         }
 
         &.error {
@@ -177,7 +177,7 @@
         max-width: 50vw;
         max-height: 500px;
         border-radius: 0.5rem;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         overflow-y: auto;
 
         > * {
@@ -187,7 +187,7 @@
 
         .kel-header {
             padding: 1rem;
-            background-color: var(--ks-background-table-header);
+            background-color: var(--ks-bg-surface);
             border-radius: 0.5rem 0.5rem 0 0;
             font-size: var(--ks-font-size-sm);
             font-weight: 700;
@@ -201,12 +201,12 @@
         .kel-main {
             padding: 1.5rem 1rem !important;
             font-family: "Source Code Pro", monospace;
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-surface);
             white-space: normal;
-            border-top: 1px solid var(--ks-border-primary);
+            border-top: 1px solid var(--ks-border-default);
             text-wrap: wrap;
             min-height: fit-content;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
@@ -216,18 +216,18 @@
     }
 
     .success {
-        color: var(--ks-content-success);
+        color: var(--ks-status-success);
     }
 
     .warning {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
     }
 
     .error {
-        color: var(--ks-content-error);
+        color: var(--ks-status-error);
     }
 
     .info {
-        color: var(--ks-content-info);
+        color: var(--ks-status-info);
     }
 </style>

@@ -319,8 +319,8 @@
 <style scoped lang="scss">
 .breadcrumb {
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid var(--ks-border-primary);
-    background-color: var(--ks-background-panel);
+    border-bottom: 1px solid var(--ks-border-default);
+    background-color: var(--ks-bg-surface);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -350,7 +350,7 @@
             font-size: var(--ks-font-size-sm);
 
             &::placeholder {
-                color: var(--ks-content-tertiary) !important;
+                color: var(--ks-text-dim) !important;
             }
         }
     }
@@ -363,18 +363,18 @@
 
         :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
             text-transform: none !important;
-            color: var(--ks-content-secondary) !important;
+            color: var(--ks-text-secondary) !important;
             font-weight: 500 !important;
         }
 
         :deep(.kel-breadcrumb__item .kel-breadcrumb__inner a) {
-            color: var(--ks-content-secondary) !important;
+            color: var(--ks-text-secondary) !important;
             font-weight: 500 !important;
         }
 
         :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner),
         :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner a) {
-            color: var(--ks-content-primary) !important;
+            color: var(--ks-text-primary) !important;
             font-weight: 600 !important;
         }
     }
@@ -390,9 +390,9 @@
         align-items: center;
         justify-content: space-between;
         padding: 0.5rem 1.5rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         cursor: pointer;
-        background-color: var(--ks-background-primary);
+        background-color: var(--ks-bg-elevated);
 
         .content {
             display: flex;
@@ -407,14 +407,14 @@
             }
 
             .name {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-base);
                 line-height: 1.5;
             }
         }
 
         .chevron-right-icon {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-xl);
         }
     }

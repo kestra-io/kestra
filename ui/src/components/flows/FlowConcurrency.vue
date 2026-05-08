@@ -133,7 +133,7 @@
     }
 
     :deep(.kel-card) {
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     .text-center {

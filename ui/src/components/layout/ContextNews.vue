@@ -103,7 +103,7 @@
         }
 
         hr {
-            border-top-color: var(--ks-border-primary);
+            border-top-color: var(--ks-border-default);
             margin-top: .5rem;
             margin-bottom: .5rem;
         }
@@ -157,6 +157,6 @@
     }
 
     :deep(.news-date) {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

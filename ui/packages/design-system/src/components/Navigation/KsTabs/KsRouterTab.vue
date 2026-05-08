@@ -185,7 +185,7 @@
         }
 
         a {
-            color: var(--ks-content-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 }

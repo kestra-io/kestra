@@ -200,22 +200,22 @@
 .namespaces {
     margin: 0.25rem 0;
     border-radius: var(--kel-border-radius-round);
-    border: 1px solid var(--ks-border-primary);
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    border: 1px solid var(--ks-border-default);
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
 
     &.system {
-        border-color: var(--ks-border-active);
+        border-color: var(--ks-border-focus);
 
         & span.system {
             line-height: 1.5rem;
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
     .rounded-full {
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-card)
+        background-color: var(--ks-bg-surface)
     }
 
     :deep(.kel-tree-node__content) {
@@ -225,11 +225,11 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-background-body);
+            background: var(--ks-bg-body);
         }
 
         .icon {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -239,11 +239,11 @@
         align-items: center;
         justify-content: space-between;
         padding: 0 0.5rem;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         &:hover {
             background: transparent;
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 }

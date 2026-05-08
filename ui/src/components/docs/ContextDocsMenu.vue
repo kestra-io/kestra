@@ -159,7 +159,7 @@
             border-radius: $link-radius;
         }
         &:hover::-webkit-scrollbar-thumb {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
         }
     }
 
@@ -205,9 +205,9 @@
         left: 27px;
         right: 27px;
         top: 100%;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: 0 0 $link-radius $link-radius;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         margin-top: -1px;
     }
@@ -222,7 +222,7 @@
         @include custom-scrollbar;
 
         a, :deep(span[class*="depth-"]) {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-decoration: none;
             display: block;
             padding: 0.25rem 0.5rem;
@@ -242,10 +242,10 @@
                         font-weight: 500;
                     } @else if $i == 1 {
                         font-size: 0.8rem;
-                        color: var(--ks-content-secondary);
+                        color: var(--ks-text-secondary);
                     } @else {
                         font-size: var(--ks-font-size-xs);
-                        color: var(--ks-content-secondary);
+                        color: var(--ks-text-secondary);
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }
                 }
@@ -257,14 +257,14 @@
 
             &:hover {
                 color: var(--ks-primary);
-                background-color: var(--ks-button-background-secondary-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
 
             &.active-page {
-                color: var(--ks-content-link) !important;
+                color: var(--ks-text-link) !important;
                 font-weight: 600;
                 opacity: 1 !important;
-                background-color: var(--ks-button-background-secondary-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
         }
 
@@ -282,14 +282,14 @@
                 font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 0.05em;
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 text-transform: uppercase;
                 border-radius: $link-radius;
             }
 
             &.active-section {
                 > span {
-                    color: var(--ks-content-link);
+                    color: var(--ks-text-link);
                 }
             }
         }

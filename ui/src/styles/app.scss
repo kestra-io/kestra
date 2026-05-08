@@ -42,17 +42,17 @@ html {
     }
 
     ::-webkit-scrollbar-track {
-        background: var(--ks-background-body) !important;
+        background: var(--ks-bg-body) !important;
     }
 
     ::-webkit-scrollbar-thumb {
-        background: var(--ks-border-primary) !important;
+        background: var(--ks-border-default) !important;
         border-radius: 8px !important;
-        border: 4px solid var(--ks-background-body) !important;
+        border: 4px solid var(--ks-bg-body) !important;
     }
 
     ::-webkit-scrollbar-corner {
-        background: var(--ks-background-body) !important;
+        background: var(--ks-bg-body) !important;
     }
 }
 
@@ -103,7 +103,7 @@ main {
     .kel-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
 
         .material-design-icon {
             color: $value;
@@ -166,12 +166,12 @@ html.full-screen {
 }
 
 body{
-    background-color: var(--ks-background-body);
+    background-color: var(--ks-bg-body);
 }
 
 .no-code-skeleton{
-    color: var(--ks-content-secondary);
-    background-color: var(--ks-background-card);
+    color: var(--ks-text-secondary);
+    background-color: var(--ks-bg-surface);
     width: 100%;
     border-radius: 4px;
     padding: 0 .5rem;

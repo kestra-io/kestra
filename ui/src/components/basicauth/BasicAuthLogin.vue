@@ -297,10 +297,10 @@
         }
 
         .kel-button.kel-button--default {
-            background: var(--ks-tag-background-hover);
+            background: var(--ks-bg-tag-hover);
 
             html.dark & {
-                background: var(--ks-background-input);
+                background: var(--ks-bg-input);
 
                 &.kel-button {
                     border: 0;
@@ -326,7 +326,7 @@
             .validation-icon {
                 font-size:  var(--ks-font-size-lg);
                 &.error {
-                    color: var(--ks-content-alert);
+                    color: var(--ks-status-error);
                 }
             }
         }

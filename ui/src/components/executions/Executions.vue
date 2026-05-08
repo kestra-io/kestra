@@ -1036,7 +1036,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .padding-bottom {
@@ -1044,13 +1044,13 @@
 }
 
 .custom-warning {
-    border: 1px solid var(--ks-chart-border-warning);
+    border: 1px solid var(--ks-status-warning);
     border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
+    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
 
     :deep(.kel-alert__title) {
         font-size: var(--ks-font-size-base);
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
         font-weight: bold;
     }
 
@@ -1059,12 +1059,12 @@
     }
 
     :deep(.kel-alert__icon) {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
     }
 }
 
 .code-text {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 
 :deep(.executions-table) .kel-table__row {
@@ -1072,6 +1072,6 @@
 }
 
 :deep(a.execution-id) code {
-    color: var(--ks-content-link);
+    color: var(--ks-text-link);
 }
 </style>

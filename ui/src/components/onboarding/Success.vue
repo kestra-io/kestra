@@ -140,7 +140,7 @@
 
         h1 {
             margin: 0.5rem 0 1rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-lg);
             font-weight: 700;
         }
@@ -148,7 +148,7 @@
         p {
             max-width: 460px;
             margin: 0;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }

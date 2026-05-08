@@ -146,9 +146,9 @@
         .kel-drawer__header {
             padding: 1rem;
             margin-bottom: 0;
-            background-color: var(--ks-background-panel);
-            border-bottom: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-primary);
+            background-color: var(--ks-bg-elevated);
+            border-bottom: 1px solid var(--ks-border-default);
+            color: var(--ks-text-primary);
             font-weight: bold;
             font-size: var(--ks-font-size-md);
         }

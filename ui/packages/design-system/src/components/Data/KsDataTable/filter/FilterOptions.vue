@@ -100,7 +100,7 @@
 <style lang="scss" scoped>
 .expand-panel {
     animation: slideDown 0.2s ease-out;
-    border-top: 1px solid var(--ks-border-secondary);
+    border-top: 1px solid var(--ks-border-subtle);
     padding-top: 0.5rem;
 
     .options-row {
@@ -143,11 +143,11 @@
         font-size: var(--ks-font-size-sm);
 
         :deep(svg) {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         &:hover {
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 }

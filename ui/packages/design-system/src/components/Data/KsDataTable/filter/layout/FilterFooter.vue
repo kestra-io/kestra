@@ -47,7 +47,7 @@
     flex-shrink: 0;
     position: sticky;
     z-index: 1;
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 
     .selection-display {
         font-size: var(--ks-font-size-xs);
@@ -55,7 +55,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         margin-right: 0.875rem;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .action-buttons {

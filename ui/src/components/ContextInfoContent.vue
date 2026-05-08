@@ -27,7 +27,7 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         .content {
             overflow-y: auto;
         }
@@ -38,7 +38,7 @@
         padding: 1rem;
         padding-left: 1.6rem;
         padding-right: 3rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
         gap: 1rem;
 

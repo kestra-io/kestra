@@ -57,7 +57,7 @@
 
 :deep(.kel-input__icon) {
     .lock-icon {
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
     }
 }
 </style>

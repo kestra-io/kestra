@@ -197,7 +197,7 @@
 
             &:hover,
             &.is-dragging {
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-btn-primary-bg-default);
             }
         }
     }
@@ -223,7 +223,7 @@
         padding: 0.75rem;
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        border-left: 1px solid var(--ks-border-primary);
+        border-left: 1px solid var(--ks-border-default);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -235,7 +235,7 @@
         scrollbar-width: none;
 
         &.opened {
-            border-right: 1px solid var(--ks-border-primary);
+            border-right: 1px solid var(--ks-border-default);
         }
 
         .kel-button {
@@ -251,7 +251,7 @@
         }
 
         .versionNumber {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             opacity: .4;
             margin-top: 1rem;
             white-space: nowrap;
@@ -280,8 +280,8 @@
         .newsDot{
             width: 10px;
             height: 10px;
-            background-color: var(--ks-content-alert);
-            border: 2px solid var(--ks-button-background-secondary);
+            background-color: var(--ks-status-error);
+            border: 2px solid var(--ks-btn-secondary-bg-default);
             border-radius: 50%;
             display: block;
             position: absolute;
@@ -305,7 +305,7 @@
             position: fixed;
             top: 1rem;
             right: 1rem;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             background: none;
             border: none;
             z-index: 5;

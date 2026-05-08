@@ -64,7 +64,7 @@
         }
 
         & .kel-text {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 

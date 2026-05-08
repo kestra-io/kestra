@@ -92,7 +92,7 @@
     transition: all 0.2s ease-in-out;
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     & > .icon {
@@ -105,13 +105,13 @@
     }
 
     &.moved {
-        background-color: var(--ks-button-background-secondary-active);
-        border-color: var(--ks-border-active);
+        background-color: var(--ks-btn-secondary-bg-active);
+        border-color: var(--ks-border-focus);
     }
 
     .playground-run-task{
-        color: var(--ks-button-content-primary);
-        background-color: var(--ks-playground-bg-color);
+        color: var(--ks-btn-primary-text);
+        background-color: var(--ks-btn-primary-bg-default);
         height: 16px;
         width: 16px;
         font-size: 4px;
@@ -123,7 +123,7 @@
         border: none;
     }
 
-    .delete-element {        color: var(--ks-button-content-primary);
+    .delete-element {        color: var(--ks-btn-primary-text);
         border: none;
         background-color: transparent;
     }

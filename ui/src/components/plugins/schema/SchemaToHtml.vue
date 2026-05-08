@@ -294,13 +294,13 @@
         display: flex;
         padding: 0.5rem !important;
         margin-bottom: 0.5rem;
-        background-color: var(--ks-background-info);
+        background-color: var(--ks-bg-info);
         border: 1px solid var(--ks-border-info);
         border-left-width: 0.25rem;
         border-radius: 0.5rem;
 
         p {
-            color: var(--ks-content-info);
+            color: var(--ks-status-info);
         }
     }
 
@@ -381,7 +381,7 @@
         }
 
         > .collapse-button:not(.collapsed) {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
 
         [id$="-body"]:not(#examples-body) span {

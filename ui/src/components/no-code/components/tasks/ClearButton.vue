@@ -17,7 +17,7 @@
     .clear-button{
         border: none;
         background: transparent;
-        color: var(--ks-content-link);
+        color: var(--ks-text-link);
         display: flex;
         align-items: center;
         gap: 0.5rem;

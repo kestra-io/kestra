@@ -366,10 +366,10 @@
 
 <style scoped lang="scss">
         .attempt-wrapper {
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--ks-border-primary);
+            border-top: 1px solid var(--ks-border-default);
         }
 
         .attempt-wrapper & {
@@ -401,10 +401,10 @@
     :deep(.kel-form) {
         padding: 1rem 1rem 0.5rem 1rem;
         margin-bottom: 1rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 0.5rem;
-        background-color: var(--ks-background-panel);
-        box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
+        background-color: var(--ks-bg-surface);
+        box-shadow: 2px 3px 3px 0px var(--ks-shadow-element);
     }
 
     :deep(.kel-form-item) {

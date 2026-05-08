@@ -42,12 +42,12 @@
         font-size: var(--ks-font-size-base);
         margin: 0;
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .filter-description {
         margin-top: 0.25rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         line-height: 1.2;
     }
@@ -56,10 +56,10 @@
         font-size: var(--ks-font-size-base);
         padding-right: 0;
         cursor: pointer;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
 
         &:hover {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 }

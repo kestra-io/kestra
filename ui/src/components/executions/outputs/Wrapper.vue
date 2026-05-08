@@ -552,10 +552,10 @@
 
 :deep(.kel-splitter-bar) {
     width: 3px !important;
-    background-color: var(--ks-border-primary);
+    background-color: var(--ks-border-default);
 
     &:hover {
-        background-color: var(--ks-border-active);
+        background-color: var(--ks-border-focus);
     }
 }
 
@@ -598,11 +598,11 @@
 }
 
 .debug {
-    background: var(--ks-background-body);
+    background: var(--ks-bg-body);
 }
 
 .bordered {
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 
 .bordered > :deep(.kel-collapse-item) {
@@ -620,7 +620,7 @@
 
 /* Right panel: make wrapper fill height and allow content to scroll independently */
 .outputs .right-panel{
-    background: var(--ks-background-card);
+    background: var(--ks-bg-surface);
     position: relative;
     z-index: 1;
     width: 100%;
@@ -636,7 +636,7 @@
     max-width: 300px;
 
     &:last-child {
-        border-right: 1px solid var(--ks-border-primary);
+        border-right: 1px solid var(--ks-border-default);
     }
 
     .kel-cascader-menu__wrap {
@@ -647,19 +647,19 @@
         height: 36px;
         line-height: 36px;
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         &[aria-haspopup="false"] {
             padding-right: 0.5rem !important;
         }
 
         &:hover {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
         }
 
         &.in-active-path,
         &.is-active {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
             font-weight: normal;
         }
 
@@ -683,7 +683,7 @@
                     max-width: 80px;
                     overflow-x: clip;
                     text-overflow: ellipsis;
-                    color: var(--ks-content-primary);
+                    color: var(--ks-text-primary);
                 }
             }
         }
@@ -695,7 +695,7 @@
         }
 
         code span.regular {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 }
@@ -748,7 +748,7 @@
     :deep(.kel-splitter) {
         .outputs-top {
             margin: 10px;
-            border: 2px solid var(--ks-border-primary);
+            border: 2px solid var(--ks-border-default);
             box-sizing: border-box;
             overflow: auto;
             flex: 1 1 0 !important;

@@ -61,13 +61,13 @@ export function defaultConfig(override: {
                     display: false,
                     title: {color},
                     ticks: {color},
-                    border: {color: cssVar("--ks-border-primary")},
+                    border: {color: cssVar("--ks-border-default")},
                 },
                 y: {
                     display: false,
                     title: {color},
                     ticks: {color},
-                    border: {color: cssVar("--ks-border-primary")},
+                    border: {color: cssVar("--ks-border-default")},
                 },
                 yB: {
                     display: false,

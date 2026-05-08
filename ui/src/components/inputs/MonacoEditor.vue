@@ -1079,7 +1079,7 @@
     }
 
     .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
-        background-color: var(--ks-background-input);
+        background-color: var(--ks-bg-input);
     }
 
     .monaco-editor {
@@ -1087,9 +1087,9 @@
             > .scrollbar {
                 .slider {
                     width: 13px !important;
-                    background: var(--ks-border-primary) !important;
+                    background: var(--ks-border-default) !important;
                     border-radius: 8px !important;
-                    border: 4px solid var(--ks-background-body) !important;
+                    border: 4px solid var(--ks-bg-body) !important;
                 }
             }
 

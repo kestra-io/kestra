@@ -61,15 +61,15 @@
 $form-timing: 0.3s;
 $form-height: 32px;
 $form-border-height: 1px;
-$form-input-bg: var(--ks-background-input);
+$form-input-bg: var(--ks-bg-input);
 $form-border-color: #8405ff;
 $form-border-radius: 8px;
 $form-after-border-radius: 4px;
-$form-box-shadow: 0 2px 4px var(--ks-card-shadow);;
+$form-box-shadow: 0 2px 4px var(--ks-shadow-surface);;
 $button-color: #8b8ba7;
 $svg-width: 17px;
 $input-font-size: 0.9rem;
-$placeholder-color: var(--ks-content-tertiary);
+$placeholder-color: var(--ks-text-dim);
 $placeholder-font-size: var(--ks-font-size-xs);
 
 .form {
@@ -81,7 +81,7 @@ $placeholder-font-size: var(--ks-font-size-xs);
     border-radius: $form-border-radius;
     transition: border-radius 0.5s ease;
     background: $form-input-bg;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     box-shadow: $form-box-shadow;
 
     button {

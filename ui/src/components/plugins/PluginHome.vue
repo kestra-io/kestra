@@ -200,7 +200,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 
@@ -218,13 +218,13 @@
         line-height: 26px;
         cursor: pointer;
 
-        border: 1px solid var(--ks-border-primary);
-        background-color: var(--ks-button-background-secondary);
-        color: var(--ks-content-primary);
+        border: 1px solid var(--ks-border-default);
+        background-color: var(--ks-btn-secondary-bg-default);
+        color: var(--ks-text-primary);
 
         &:hover {
-            border-color: var(--ks-border-active);
-            background-color: var(--ks-button-background-secondary-hover);
+            border-color: var(--ks-border-focus);
+            background-color: var(--ks-btn-secondary-bg-hover);
         }
     }
 

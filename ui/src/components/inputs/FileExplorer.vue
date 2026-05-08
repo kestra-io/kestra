@@ -935,8 +935,8 @@
 <style scoped lang="scss">
 
 .sidebar {
-    background: var(--ks-background-panel);
-    border-right: 1px solid var(--ks-border-primary);
+    background: var(--ks-bg-surface);
+    border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
@@ -956,7 +956,7 @@
         position: relative;
         top: 100px;
         text-align: center;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
 
         & img {
             margin-bottom: 2rem;
@@ -966,7 +966,7 @@
             font-size: var(--ks-font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         & p {
@@ -995,23 +995,23 @@
         font-size: var(--ks-font-size-sm);
 
         &:hover {
-            color: var(--ks-content-link-hover);
+            color: var(--ks-text-link);
         }
     }
 
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             &:hover {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
             }
         }
     }
@@ -1019,7 +1019,7 @@
     :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
-        background: var(--ks-background-panel);
+        background: var(--ks-bg-surface);
 
         .kel-tree__empty-block {
             height: auto;
@@ -1042,7 +1042,7 @@
 
             &:hover{
                 background: none;
-                border: 1px solid var(--ks-border-active);
+                border: 1px solid var(--ks-border-focus);
             }
         }
 
@@ -1050,24 +1050,24 @@
             .kel-tree-node__children {
                 margin-left: 11px !important;
                 padding-left: 0 !important;
-                border-left: 1px solid var(--ks-border-primary);
+                border-left: 1px solid var(--ks-border-default);
             }
         }
 
         .kel-tree-node.is-current > .kel-tree-node__content {
             min-width: fit-content;
-            border: 1px solid var(--ks-border-active);
-            background: var(--ks-button-background-primary);
+            border: 1px solid var(--ks-border-focus);
+            background: var(--ks-btn-primary-bg-default);
 
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
         .kel-tree-node.selected-tree-node > .kel-tree-node__content {
-            background-color: var(--ks-button-background-primary);
+            background-color: var(--ks-btn-primary-bg-default);
             min-width: fit-content;
             .filename {
-                color: var(--ks-button-content-primary);
+                color: var(--ks-btn-primary-text);
             }
         }
     }

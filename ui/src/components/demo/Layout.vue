@@ -84,14 +84,14 @@
             line-height: 16px;
             font-size: var(--ks-font-size-sm);
             text-align: left;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
             border-radius: 0.25rem;
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
             overflow: hidden;
             margin: 1rem auto;
 

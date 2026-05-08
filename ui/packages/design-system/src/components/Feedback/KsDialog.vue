@@ -63,18 +63,18 @@
 
     .kel-dialog {
         --kel-dialog-border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
 
         &.custom-dialog {
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-elevated);
 
             .kel-dialog__header {
-                background: var(--ks-background-panel);
+                background: var(--ks-bg-elevated);
                 margin-bottom: 0;
 
                 .kel-dialog__headerbtn {
                     svg {
-                        color: var(--ks-content-secondary);
+                        color: var(--ks-text-secondary);
                     }
                 }
             }
@@ -89,7 +89,7 @@
             margin: -1rem -1rem 1rem;
             border-top-right-radius: var(--kel-border-radius-round);
             border-top-left-radius: var(--kel-border-radius-round);
-            background: var(--ks-dialog-header);
+            background: var(--ks-bg-surface);
             font-size: var(--ks-font-size-md);
 
             .kel-dialog__headerbtn {
@@ -98,17 +98,17 @@
 
                 .kel-dialog__close {
 
-                    color: var(--ks-dialog-headerbtn) !important;
+                    color: var(--ks-icon-default) !important;
 
                     &:hover {
-                        color: var(--ks-dialog-headerbtn-hover) !important;
+                        color: var(--ks-icon-hover) !important;
                     }
                 }
             }
         }
 
         .kel-dialog__title {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         .bottom-buttons {

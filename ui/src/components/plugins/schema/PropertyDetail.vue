@@ -106,7 +106,7 @@
         align-items: center;
         gap: var(--spacer);
         padding: 1rem 0;
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
 
         span, .property-description:deep(p) {
             line-height: 1.5rem;
@@ -114,12 +114,12 @@
         }
 
         .property-description {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         code {
-            color: var(--ks-content-primary);
-            background: var(--ks-background-card) !important;
+            color: var(--ks-text-primary);
+            background: var(--ks-bg-surface) !important;
         }
 
         &:first-child {
@@ -146,7 +146,7 @@
         border: 1px solid var(--ks-border-info);
         border-radius: 0.25rem;
         background: transparent;
-        color: var(--ks-tag-content);
+        color: var(--ks-text-primary);
         cursor: pointer;
     }
 
@@ -155,8 +155,8 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border-radius: 0.5rem;
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
+        background-color: var(--ks-bg-tag-active);
+        color: var(--ks-text-primary);
         text-transform: capitalize;
     }
 
@@ -164,7 +164,7 @@
         font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 0.25rem;
     }
 

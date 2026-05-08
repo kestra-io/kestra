@@ -16,14 +16,14 @@
 
 <style scoped lang="scss">
 .badge {
-    --kel-button-border-color: var(--ks-button-content-primary);
+    --kel-button-border-color: var(--ks-btn-primary-text);
 
     margin-left: 0.5rem;
-    border-color: var(--ks-button-content-primary);
+    border-color: var(--ks-btn-primary-text);
     border-radius: calc(var(--kel-border-radius-round) * 2);
 
     &:hover {
-        border-color: var(--ks-button-content-primary);
+        border-color: var(--ks-btn-primary-text);
     }
 }
 </style>

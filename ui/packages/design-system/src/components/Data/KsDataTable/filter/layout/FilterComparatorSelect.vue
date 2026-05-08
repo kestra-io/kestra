@@ -67,7 +67,7 @@
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin: 0.25rem 0;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .select {
@@ -84,7 +84,7 @@
     }
 
     .comp-desc {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         line-height: 1.3;
     }

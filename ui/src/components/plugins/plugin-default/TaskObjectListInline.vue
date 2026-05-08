@@ -75,7 +75,7 @@
 .task-list {
     .label {
         font-family: var(--kel-font-family-monospace);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
         font-weight: 600;
     }
@@ -83,7 +83,7 @@
     .index-tag {
         font-size: var(--ks-font-size-xs);
         font-weight: 700;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         text-transform: uppercase;
     }
 }

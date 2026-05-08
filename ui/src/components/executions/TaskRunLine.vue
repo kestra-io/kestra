@@ -415,7 +415,7 @@
         display: flex;
         gap: .5rem;
         padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
 
         > * {
             display: flex;
@@ -429,13 +429,13 @@
 
         .task-duration small {
             white-space: nowrap;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
     }
 
     .taskrun-header {
-        background-color: var(--ks-background-table-header);
+        background-color: var(--ks-bg-surface);
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;
@@ -450,7 +450,7 @@
             padding: .375rem 0;
 
             span span {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
 
                 html:not(.dark) & {
@@ -462,7 +462,7 @@
         .task-run-buttons {
             padding: 0 .5rem;
             border: 1px solid rgba(#FFFFFF, .05);
-            background-color: var(--ks-button-background-secondary) !important;
+            background-color: var(--ks-btn-secondary-bg-default) !important;
             // FIXME: what does this mean?
             &:not(:hover) {
                 background: rgba(#FFFFFF, .10);
@@ -484,7 +484,7 @@
         }
 
         .attempt-number {
-            background: var(--ks-tag-background);
+            background: var(--ks-bg-tag);
             padding: .375rem .75rem;
             white-space: nowrap;
         }

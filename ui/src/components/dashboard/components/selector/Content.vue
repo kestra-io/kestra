@@ -89,7 +89,7 @@
 :deep(li.el-dropdown-menu__item) {
     &:hover,
     &:focus {
-        background: var(--ks-select-hover);
+        background: var(--ks-bg-hover);
     }
 }
 </style>

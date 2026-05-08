@@ -119,7 +119,7 @@
 
 .save {
     cursor: pointer;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 
 .vsm--link {
@@ -129,7 +129,7 @@
     max-width: 100%;
     width: 100%;
     text-decoration: none;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
     font-size: var(--ks-font-size-sm);
 }
 

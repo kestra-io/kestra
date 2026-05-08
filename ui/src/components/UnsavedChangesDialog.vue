@@ -48,12 +48,12 @@
 
 :deep(.kel-dialog) {
     background-color: var(--kbs-body-bg);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
 }
 
 :deep(.kel-dialog__header) {
     padding: 20px 20px 10px;
-    border-bottom: 1px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-default);
 }
 
 :deep(.kel-dialog__title) {
@@ -69,7 +69,7 @@
 
 :deep(.kel-dialog__footer) {
     padding: 10px 20px 20px;
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 }
 
 :deep(.kel-button) {

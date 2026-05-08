@@ -238,7 +238,7 @@
         gap: 1rem;
         padding: 2rem;
         padding-bottom: 0;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         flex: 1;
         min-height: 64px;
 
@@ -258,8 +258,8 @@
         }
 
         .release-notes-btn {
-            background-color: var(--ks-background-info);
-            color: var(--ks-content-info);
+            background-color: var(--ks-bg-info);
+            color: var(--ks-status-info);
             border: 1px solid var(--ks-border-info);
             font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
@@ -277,13 +277,13 @@
     }
 
     :deep(.main-container) {
-        background: var(--ks-background-panel);
+        background: var(--ks-bg-surface);
         margin: 0;
         padding: 0;
     }
 
     .plugin-doc {
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     @media (max-width: 991px) {

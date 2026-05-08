@@ -39,7 +39,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     .loading-container {
@@ -49,7 +49,7 @@
         justify-content: center;
 
         .loading-text {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
         }
     }

@@ -111,7 +111,7 @@
 <style scoped lang="scss">
 .webhook-curl {
     position: relative;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     padding: 1rem;
     border-radius: 0.5rem;
 
@@ -120,7 +120,7 @@
 
         :deep(.kel-form-item__label) {
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         :deep(.editor-container) {

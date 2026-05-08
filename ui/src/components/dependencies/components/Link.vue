@@ -44,6 +44,6 @@ code.link {
     display: block;
     max-width: 100%;
     font-size: var(--ks-font-size-sm);
-    color: var(--ks-content-id);
+    color: var(--ks-text-link);
 }
 </style>

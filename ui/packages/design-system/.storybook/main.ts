@@ -20,6 +20,7 @@ const config: StorybookConfig = {
         return mergeConfig(config, {
             define: {"process.env": {}},
             css: {
+                devSourcemap: true,
                 preprocessorOptions: {
                     scss: {
                         loadPaths: [srcDir],

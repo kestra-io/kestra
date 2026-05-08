@@ -66,13 +66,13 @@
     .code-block {
         position: relative;
         padding: 0.75rem;
-        background-color: var(--ks-background-input);
-        border: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-input);
+        border: 1px solid var(--ks-border-default);
         border-radius: 0.5rem;
 
         .language {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         :deep(pre) {
@@ -91,7 +91,7 @@
         }
 
         .copy {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             :deep(.material-design-icon) {
                 &, & * {

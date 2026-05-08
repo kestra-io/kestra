@@ -160,7 +160,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         font-size: 22px;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         pointer-events: none;
         z-index: 1;
         white-space: nowrap;

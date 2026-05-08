@@ -358,7 +358,7 @@
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
             width: calc(var(--table-header-width) - 1px);
-            background-color: var(--ks-background-table-header);
+            background-color: var(--ks-bg-active);
             border-radius: var(--kel-border-radius-round) var(--kel-border-radius-round) 0 0;
             overflow-x: auto;
 

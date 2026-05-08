@@ -166,7 +166,7 @@
 <style scoped lang="scss">
 .complex-value-editor {
     margin-top: 0.5rem;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     border-radius: 4px;
 }
 </style>

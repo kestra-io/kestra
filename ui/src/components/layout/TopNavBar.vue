@@ -108,8 +108,8 @@
         z-index: 1000;
         padding: 1rem 2rem;
         gap: 1rem;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
+        border-bottom: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-surface);
 
         .title-section {
             flex: 1 1 auto;
@@ -120,12 +120,12 @@
         .description {
             font-size: var(--font-size-sm);
             margin-top: 0.25rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         .icon {
             border: none;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
 
             &:deep(svg) {
                 fill: currentColor;
@@ -133,7 +133,7 @@
             }
 
             &.active {
-                color: var(--ks-content-link-hover);
+                color: var(--ks-text-link);
             }
         }
 

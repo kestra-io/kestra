@@ -106,17 +106,17 @@
 <style lang="scss" scoped>
 .active-pairs {
     padding: 1rem;
-    border-bottom: 1px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-default);
 
     .section-title {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin-bottom: 8px;
     }
 
     .empty-state {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         font-style: italic;
     }
@@ -132,9 +132,9 @@
             max-width: 270px;
             padding: 3px 6px;
             border-radius: 16px;
-            border: 1px solid var(--ks-badge-border);
-            background-color: var(--ks-badge-background);
-            color: var(--ks-badge-content);
+            border: 1px solid var(--ks-border-info);
+            background-color: var(--ks-bg-info);
+            color: var(--ks-text-info);
             font-size: var(--ks-font-size-xs);
 
             :deep(.kel-tag__content) {
@@ -147,7 +147,7 @@
         }
 
         :deep(.kel-tag__close) {
-            color: var(--ks-badge-content);
+            color: var(--ks-text-info);
             background: transparent;
         }
 
@@ -182,7 +182,7 @@
             margin-bottom: 6px;
             font-size: var(--ks-font-size-xs);
             font-weight: 500;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 
@@ -196,7 +196,7 @@
     font-size: var(--ks-font-size-sm);
 
     &::placeholder {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 }
 </style>

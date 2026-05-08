@@ -39,9 +39,9 @@
 
 <style scoped lang="scss">
 .kel-card {
-    background-color: var(--ks-background-card);
-    border-color: var(--ks-border-primary);
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    background-color: var(--ks-bg-surface);
+    border-color: var(--ks-border-default);
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
     position: relative;
     min-width: 100%;
     min-height: 8.625rem;
@@ -57,14 +57,14 @@
         right: 0.3125rem;
 
         :deep(.kel-icon) {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             position: absolute;
             top: -0.875rem;
             right: 0;
 
             &:hover {
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
             }
         }
     }
@@ -79,7 +79,7 @@
         margin: 0;
         font-size: var(--ks-font-size-xs);
         line-height: 1.25rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 }
 

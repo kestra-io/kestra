@@ -217,7 +217,7 @@
 
         .search {
             flex-shrink: 0;
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
             padding-bottom: 0.5rem;
         }
 
@@ -227,7 +227,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
 
         .kel-collapse-item__header {
@@ -276,7 +276,7 @@
     }
 
     .selected {
-        color: var(--ks-content-link);
+        color: var(--ks-text-link);
     }
 
     @media (max-width: 991px) {

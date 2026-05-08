@@ -290,13 +290,13 @@
 <style scoped lang="scss">
 
     .back-button {
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-color);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         border-radius: 6px;
         width: 40px;
         height: 40px;
@@ -306,7 +306,7 @@
 
         &:hover:not(.disabled),
         &:focus:not(.disabled) {
-            background: var(--ks-background-hover);
+            background: var(--ks-bg-hover);
             border-color: var(--ks-primary);
             color: var(--ks-primary);
             outline: none;
@@ -332,7 +332,7 @@
 
     .blank {
         margin-left: 1rem;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .docs-controls {

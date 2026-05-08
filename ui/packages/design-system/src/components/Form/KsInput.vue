@@ -56,12 +56,12 @@
     @use 'element-plus/theme-chalk/src/input';
 
     .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-primary);
-        --kel-input-bg-color: var(--ks-background-input);
+        --kel-input-border-color: var(--ks-border-default);
+        --kel-input-bg-color: var(--ks-bg-input);
     }
 
     .kel-input {
-        background-color: var(--ks-background-body);
+        background-color: var(--ks-bg-base);
         width: 100%;
     }
 </style>

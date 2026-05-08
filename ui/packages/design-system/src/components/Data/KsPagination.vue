@@ -41,16 +41,16 @@
 
     .kel-pagination {
         --kel-pagination-bg-color: transparent;
-        --kel-pagination-text-color: var(--ks-content-primary);
-        --kel-pagination-button-color: var(--ks-content-link);
-        --kel-pagination-hover-color: var(--ks-content-link-hover);
+        --kel-pagination-text-color: var(--ks-text-primary);
+        --kel-pagination-button-color: var(--ks-text-link);
+        --kel-pagination-hover-color: var(--ks-text-link);
 
         li, button {
-            border: 1px solid var(--ks-border-inactive);
+            border: 1px solid var(--ks-border-subtle);
             margin-right: 3px;
 
             &.is-active {
-                border: 1px solid var(--ks-border-active);
+                border: 1px solid var(--ks-border-focus);
             }
         }
     }

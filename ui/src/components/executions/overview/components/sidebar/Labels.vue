@@ -29,8 +29,8 @@
         & :deep(.kel-tag) {
             margin-left: calc(1rem / 1.5);
             overflow: hidden;
-            background-color: var(--ks-tag-background-active);
-            color: var(--ks-tag-content);
+            background-color: var(--ks-bg-tag-active);
+            color: var(--ks-text-primary);
 
             & .kel-tag__content {
                 display: block;

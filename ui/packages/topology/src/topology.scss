@@ -77,12 +77,12 @@ button.circle-button {
 }
 
 .vue-flow__controls-button {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
     border-bottom-color: var(--ks-border-primary);
 
-    svg { fill: var(--ks-content-primary); }
+    svg { fill: var(--ks-text-primary); }
 
-    html.dark & { background: var(--ks-background-card); }
+    html.dark & { background: var(--ks-bg-surface); }
 }
 
 .vue-flow__container {
@@ -92,7 +92,7 @@ button.circle-button {
     }
 
     .vue-flow__node.topology-node-hovered .node-wrapper {
-        border-color: var(--ks-content-primary) !important;
+        border-color: var(--ks-text-primary) !important;
     }
 
     .vue-flow__node.topology-node-drop-target .node-wrapper {
@@ -149,7 +149,7 @@ button.circle-button {
 
     @each $value in $statusList {
         .ks-duration-tt-square-#{$value} {
-            background-color: var(--ks-chart-#{$value});
+            background-color: var(--ks-status-#{$value});
         }
     }
 }

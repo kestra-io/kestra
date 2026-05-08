@@ -46,20 +46,20 @@
 
         .kel-tabs__active-bar {
             height: 4px;
-            background-color: var(--ks-button-background-primary);
+            background-color: var(--ks-btn-primary-bg-default);
         }
 
         .kel-tabs__item {
             padding: 1rem 1.5rem !important;
             transition: all 0.3s ease;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
 
             &:hover {
-                color: var(--ks-content-link-hover);
+                color: var(--ks-text-link);
             }
 
             &.is-disabled {
-                color: var(--ks-content-inactive) !important;
+                color: var(--ks-text-inactive) !important;
             }
         }
 
@@ -74,15 +74,15 @@
                 }
 
                 &.is-active {
-                    background-color: var(--ks-button-background-primary);
-                    color: var(--ks-button-content-primary);
+                    background-color: var(--ks-btn-primary-bg-default);
+                    color: var(--ks-btn-primary-text);
                 }
             }
         }
 
         &.kel-tabs--box {
-            background: var(--ks-background-card);
-            border-bottom: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-surface);
+            border-bottom: 1px solid var(--ks-border-default);
             padding: .5rem;
             position: sticky;
             top: var(--top-navbar-height);
@@ -112,7 +112,7 @@
                     right: -10px;
                     height: 100%;
                     width: 10px;
-                    background: linear-gradient(90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(90deg, var(--ks-bg-surface) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
@@ -125,7 +125,7 @@
                     left: -15px;
                     height: 100%;
                     width: 15px;
-                    background: linear-gradient(-90deg, var(--ks-background-card) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(-90deg, var(--ks-bg-surface) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
@@ -134,8 +134,8 @@
                 padding: .5rem 1rem !important;
 
                 &.is-active {
-                    background: var(--ks-button-background-secondary-hover);
-                    color: var(--ks-content-link);
+                    background: var(--ks-btn-secondary-bg-hover);
+                    color: var(--ks-text-link);
                     border-radius: var(--kel-border-radius-base);
                 }
             }

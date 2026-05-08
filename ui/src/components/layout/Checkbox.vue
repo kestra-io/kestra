@@ -34,8 +34,8 @@
 <style lang="scss" scoped>
     .neon-checkbox {
         --primary: var(--ks-white);
-        --border-color: var(--ks-border-primary);
-        --background-checked: var(--ks-border-active);
+        --border-color: var(--ks-border-default);
+        --background-checked: var(--ks-border-focus);
         --size: 16px;
         position: relative;
         width: var(--size);

@@ -191,7 +191,7 @@
 
     .empty {
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     :deep(.kel-cascader-menu) {
@@ -228,7 +228,7 @@
             height: min-content;
             line-height: 36px;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             padding: 0 30px 0 5px;
 
             &[aria-haspopup="false"] {
@@ -236,12 +236,12 @@
             }
 
             &:hover {
-                background-color: var(--ks-border-primary);
+                background-color: var(--ks-border-default);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--ks-border-primary);
+                background-color: var(--ks-border-default);
                 font-weight: normal;
             }
 
@@ -250,7 +250,7 @@
             }
 
             code span.regular {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
             }
         }
     }

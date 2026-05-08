@@ -121,7 +121,7 @@
         align-items: center;
         border-radius: 4px;
         &:hover{
-            border-color: var(--ks-border-primary);
+            border-color: var(--ks-border-default);
         }
     }
 </style>

@@ -811,12 +811,12 @@
     }
 
     .trigger-issue-icon {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
         font-size: 1.4em;
     }
 
     .alert-circle-icon {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
         font-size: 1.4em;
     }
 
@@ -843,7 +843,7 @@
 
     .kel-table {
         a {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -851,23 +851,23 @@
         max-width: 400px;
         white-space: normal;
         word-break: break-word;
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
-        border: 1px solid var(--ks-border-primary);
-        background: var(--ks-tag-background);
+        border: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-tag);
 
         .kel-collapse-item__header {
             background: transparent;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
             font-size: var(--ks-font-size-sm);
         }
 
         .kel-collapse-item__content {
-            background: var(--ks-tag-background);
-            border-bottom: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-tag);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .kel-collapse-item__header,

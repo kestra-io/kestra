@@ -40,11 +40,11 @@
         align-items: center;
         gap: 1rem;
         padding: 0.5rem 1.5rem;
-        border-top: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-primary);
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-elevated);
 
         &:last-child {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         &.clickable {
@@ -59,14 +59,14 @@
 
         .text {
             flex: 1;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-transform: capitalize;
             font-size: var(--ks-font-size-base);
         }
 
         .chevron {
             font-size: var(--ks-font-size-xl);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
     }
 </style>

@@ -68,7 +68,7 @@
     & :deep(.kel-collapse-item__header),
     & :deep(.kel-collapse-item__content) {
         padding-bottom: 0;
-        background-color: var(--ks-background-table-row);
+        background-color: var(--ks-bg-elevated);
         font-size: var(--ks-font-size-sm);
     }
 
@@ -77,7 +77,7 @@
     }
 
     & :deep(.kel-collapse-item__header:focus:not(:hover)) {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     & :deep(.kel-collapse-item__arrow.is-active) {
@@ -108,7 +108,7 @@
     }
 
     & :deep(.kel-timeline-item__content) {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     & :deep(.kel-timeline-item__timestamp) {
@@ -118,7 +118,7 @@
         width: 190px;
         margin-top: 0;
         text-align: right;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     & :deep(.kel-timeline-item__tail) {
@@ -137,7 +137,7 @@
 
         .timeline-timestamp {
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
     }
 }

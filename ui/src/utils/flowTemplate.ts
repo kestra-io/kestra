@@ -1,19 +1,19 @@
 import action from "../models/action";
-import permission from "../models/permission";
+import resource from "../models/resource";
 
 export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataType: string) {
     if (item === undefined) {
         return  true;
     }
 
-    const typedPermission = permission[dataType.toUpperCase() as keyof typeof permission]
+    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource]
 
     return (
         isEdit && user &&
-        user.isAllowed(typedPermission, action.UPDATE, item.namespace)
+        user.isAllowed(typedResource, action.UPDATE, item.namespace)
     ) || (
         !isEdit && user &&
-        user.isAllowed(typedPermission, action.CREATE, item.namespace)
+        user.isAllowed(typedResource, action.CREATE, item.namespace)
     );
 }
 

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -133,8 +134,6 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-// FIXME for all update on the execution (resume, pause, force run, ...) we validate the state and if validation fail we throws
-//  sometimes an IllegalStateException sometimes an IllegalArgumentException: this would be great to always throw the same exception.
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
@@ -539,10 +538,10 @@ public class ExecutionController {
 
         var flow = maybeFlow.get();
         if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute a disabled flow");
+            throw new ConflictException("Cannot execute flow: flow is disabled.");
         }
         if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
         }
 
         Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
@@ -958,9 +957,8 @@ public class ExecutionController {
         this.controlRevision(execution, revision);
 
         if (!(execution.getState().canBeRestarted())) {
-            throw new IllegalStateException(
-                "Execution must be terminated or paused to be restarted, " +
-                    "current state is '" + execution.getState().getCurrent() + "' !"
+            throw new ConflictException(
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
             );
         }
 
@@ -1190,7 +1188,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {
-            throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
+            throw new ConflictException("Cannot change task run state: execution must be terminated and not killed.");
         }
 
         return awaitBlockingAction(
@@ -1219,7 +1217,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
+            throw new ConflictException("Cannot change execution state: execution must be terminated and not killed.");
         }
 
         return awaitBlockingAction(
@@ -1326,7 +1324,7 @@ public class ExecutionController {
     protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new IllegalStateException("Cannot kill execution '%s'. Reason: Execution already terminated.".formatted(execution.getId()));
+            throw new ConflictException("Cannot kill execution: execution is already terminated.");
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1486,10 +1484,10 @@ public class ExecutionController {
         @Parameter(description = "\"Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
         if (!execution.getState().isBreakpoint()) {
-            throw new IllegalStateException("Execution is not suspended");
+            throw new ConflictException("Cannot resume execution: execution is not suspended.");
         }
         if (ListUtils.isEmpty(execution.getBreakpoints())) {
-            throw new IllegalStateException("Execution has no breakpoint");
+            throw new ConflictException("Cannot resume execution: no breakpoint defined.");
         }
 
         return awaitBlockingAction(
@@ -1584,7 +1582,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         if (!execution.getState().isRunning()) {
-            throw new IllegalArgumentException("The execution is not running");
+            throw new ConflictException("Cannot pause execution: execution is not running.");
         }
 
         return awaitBlockingAction(
@@ -2008,7 +2006,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (execution.getState().getCurrent() != State.Type.QUEUED) {
-            throw new IllegalArgumentException("Only QUEUED execution can be unqueued");
+            throw new ConflictException("Cannot unqueue execution: only QUEUED executions can be unqueued.");
         }
 
         return awaitBlockingAction(
@@ -2097,7 +2095,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (execution.getState().isTerminated()) {
-            throw new IllegalArgumentException("Only non terminated executions can be forced run.");
+            throw new ConflictException("Cannot force run execution: only non-terminated executions can be force run.");
         }
 
         return awaitBlockingAction(

@@ -196,7 +196,7 @@
     import {KsTaskIcon} from "@kestra-io/design-system";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {usePluginsStore} from "../../stores/plugins";
     import {useCoreStore} from "../../stores/core";
@@ -282,7 +282,7 @@
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
             canReadFlow() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW, this.$route.params.namespace)
             },
             Copy() {
                 return Copy;

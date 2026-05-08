@@ -286,7 +286,7 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
@@ -435,7 +435,7 @@
 
     const userCan = (act: any) => {
         if (!flowStore.flow) return false;
-        return authStore.user?.isAllowed(permission.EXECUTION, act ? act : action.READ, flowStore.flow?.namespace);
+        return authStore.user?.isAllowed(resource.EXECUTION, act ? act : action.VIEW, flowStore.flow?.namespace);
     };
 
     const loadData = () => {

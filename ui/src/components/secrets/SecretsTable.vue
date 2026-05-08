@@ -235,7 +235,7 @@
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
@@ -426,13 +426,13 @@
 
     const canUpdate = (secret: NamespaceSecret & {namespace?: string}) => {
         return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) &&
+            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, secret.namespace) &&
             !areNamespaceSecretsReadOnly.value;
     };
 
     const canDelete = (secret: NamespaceSecret & {namespace?: string}) => {
         return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(permission.SECRET, action.DELETE, secret.namespace) &&
+            authStore.user?.isAllowed(resource.SECRET, action.DELETE, secret.namespace) &&
             !areNamespaceSecretsReadOnly.value;
     };
 

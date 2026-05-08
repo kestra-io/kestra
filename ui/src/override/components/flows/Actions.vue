@@ -50,7 +50,7 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards";
-    import permission from "../../../models/permission";
+    import resource from "../../../models/resource";
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
@@ -87,11 +87,11 @@
     );
 
     const canExecute = computed(() =>
-        flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
+        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace)
     );
 
     const canEdit = computed(() =>
-        authStore.user?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
+        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace)
     );
 
     const editFlow = () => {

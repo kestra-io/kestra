@@ -23,7 +23,7 @@
     import Badge from "../global/Badge.vue";
     import Actions from "override/components/flows/Actions.vue";
     import NavBar from "../layout/TopNavBar.vue";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
@@ -41,6 +41,6 @@
 
     const isDeleted = computed(() => flowStore.flow?.deleted || false);
     const isAllowedToEdit = computed(() =>
-        authStore.user?.isAllowed(permission.FLOW, action.UPDATE, flowStore.flow?.namespace)
+        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace)
     );
 </script>

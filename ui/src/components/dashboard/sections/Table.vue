@@ -135,6 +135,6 @@
 
 <style lang="scss" scoped>
 section#table :deep(.kel-scrollbar__thumb) {
-    background-color: var(--ks-button-background-primary) !important;
+    background-color: var(--ks-btn-primary-bg-default) !important;
 }
 </style>

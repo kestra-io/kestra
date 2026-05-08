@@ -93,11 +93,11 @@
     align-items: center;
     padding: 0.375rem 1rem;
     transition: all 0.2s ease;
-    border-bottom: 1px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-default);
     cursor: move;
 
     &:hover {
-        background-color: var(--ks-dropdown-background-hover);
+        background-color: var(--ks-bg-hover-elevated);
     }
 
     &:last-child {
@@ -109,7 +109,7 @@
     }
 
     &.drag-over {
-        background-color: var(--ks-background-secondary);
+        background-color: var(--ks-bg-surface);
     }
 
     .column-info {
@@ -118,7 +118,7 @@
 
         .drag-handle {
             margin-right: 0.5rem;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         .column-text {
@@ -126,7 +126,7 @@
             flex-direction: column;
 
             small {
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 400;
             }

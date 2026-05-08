@@ -45,9 +45,9 @@
 
     .onboarding-resource-list {
         overflow: hidden;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 14px;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
     }
 
     .onboarding-resource-item {
@@ -61,11 +61,11 @@
         transition: background-color 0.15s ease;
 
         &:not(:last-child) {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         &:hover {
-            background: var(--ks-button-background-secondary-hover);
+            background: var(--ks-btn-secondary-bg-hover);
             text-decoration: none;
         }
     }
@@ -109,21 +109,21 @@
 
         h3 {
             margin: 0 0 0.25rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
         }
 
         p {
             margin: 0;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             line-height: 1.4;
         }
     }
 
     .onboarding-resource-item__arrow {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         flex-shrink: 0;
     }
 </style>

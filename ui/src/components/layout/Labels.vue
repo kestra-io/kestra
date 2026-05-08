@@ -84,19 +84,19 @@
 
 <style scoped lang="scss">
 .label {
-    --ks-tag-background: #ECEBEF;
-    --ks-tag-content: var(--ks-content-primary);
-    --ks-tag-background-active: #414557;
-    --ks-tag-content-active: var(--ks-content-inverse);
+    --ks-bg-tag: #ECEBEF;
+    --ks-bg-tag-active: #414557;
+    --label-text-active: #ffffff;
 
     html.dark & {
-        --ks-tag-background: #5A6079;
-        --ks-tag-background-active: #F2F2F2;
+        --ks-bg-tag: #5A6079;
+        --ks-bg-tag-active: #F2F2F2;
+        --label-text-active: var(--ks-text-primary);
     }
 
-    background-color: var(--ks-tag-background);
+    background-color: var(--ks-bg-tag);
     font-weight: normal;
-    color: var(--ks-tag-content);
+    color: var(--ks-text-primary);
     white-space: nowrap;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .label.kel-check-tag.is-checked {
-    background-color: var(--ks-tag-background-active);
-    color: var(--ks-tag-content-active);
+    background-color: var(--ks-bg-tag-active);
+    color: var(--label-text-active);
 }
 </style>

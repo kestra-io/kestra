@@ -45,8 +45,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
+        border-bottom: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-surface);
         background-size: 250% 100%;
         background-position: 100% 0;
         transition: background-position .2s;
@@ -97,23 +97,23 @@
             opacity: .7;
 
             &:hover {
-                background-color: var(--ks-background-body);
+                background-color: var(--ks-bg-body);
                 opacity: 1;
                 .playgroundMode & {
                     background-color: transparent;
-                    background-color: color-mix(in srgb, var(--ks-background-body) 20%, transparent);
+                    background-color: color-mix(in srgb, var(--ks-bg-body) 20%, transparent);
                 }
             }
 
             &.active {
-                background-color: var(--ks-background-body);
-                border-color: var(--ks-border-primary);
+                background-color: var(--ks-bg-body);
+                border-color: var(--ks-border-default);
                 color: var(--ks-color-text-primary);
                 opacity: 1;
                 .playgroundMode & {
                     background-color: transparent;
-                    border-color: color-mix(in srgb, var(--ks-border-primary) 60%, transparent);
-                    background-color: color-mix(in srgb, var(--ks-background-body) 30%, transparent);
+                    border-color: color-mix(in srgb, var(--ks-border-default) 60%, transparent);
+                    background-color: color-mix(in srgb, var(--ks-bg-body) 30%, transparent);
                 }
             }
         }

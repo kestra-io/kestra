@@ -157,8 +157,8 @@ If your `<style>` block needs to exist:
 ```scss
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
-    background: var(--ks-background-card);
-    color: var(--ks-content-primary);
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
     border: 1px solid var(--ks-border-primary);
 }
 ```
@@ -285,13 +285,13 @@ Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/de
 
 Token families currently exposed:
 
-- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-background-success`, `--ks-background-failed`, …)
+- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
 - `--ks-border-*` — primary / secondary borders, plus per-state borders
 - `--ks-content-*` — text colors (primary, inverse, link, link-hover, per-state)
 - `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
 - `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
-- `--ks-chart-*` — palette for charts; pair with `cssVar("--ks-chart-success")` in JS
-- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-playground-*`, `--ks-dots-*` — domain-specific surfaces
+- `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS
+- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-dots-*` — domain-specific surfaces
 
 When a needed token is missing, **add it** to both `ks-theme-light.scss` and `ks-theme-dark.scss` (and review with design) rather than picking a raw color.
 

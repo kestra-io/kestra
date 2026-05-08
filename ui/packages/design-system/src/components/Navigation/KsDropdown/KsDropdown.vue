@@ -29,8 +29,8 @@
 
     .kel-dropdown__popper {
         font-size: var(--ks-font-size-sm);
-        --kel-dropdown-menuItem-hover-fill: var(--ks-dropdown-background-hover);
-        --kel-dropdown-menuItem-hover-color: var(--ks-content-primary);
+        --kel-dropdown-menuItem-hover-fill: var(--ks-bg-hover-elevated);
+        --kel-dropdown-menuItem-hover-color: var(--ks-text-primary);
 
         &.separator-m-0 .kel-dropdown-menu__item--divided {
             margin: 0;
@@ -45,7 +45,7 @@
 
         .kel-dropdown-menu {
             padding: 0;
-            background-color: var(--ks-dropdown-background);
+            background-color: var(--ks-bg-elevated);
             border-radius: 0.5rem;
         }
 
@@ -69,7 +69,7 @@
             }
 
             &:not(.is-disabled):hover {
-                background-color: var(--ks-dropdown-background-hover);
+                background-color: var(--ks-bg-hover-elevated);
             }
         }
     }

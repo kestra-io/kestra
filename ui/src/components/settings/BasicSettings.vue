@@ -926,13 +926,13 @@
         max-width: 20vw;
 
         & .kel-input__suffix {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
     }
 
     .kel-input__count {
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
 
         .kel-input__count-inner {
             background: none !important;

@@ -82,10 +82,10 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 
     .menu-icon {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xl);
     }
 }
@@ -95,10 +95,10 @@
 .user-select  {
     &.kel-select-dropdown {
         width: 328px;
-        background: var(--ks-select-background);
-        box-shadow: 2px 3px 3px var(--ks-card-shadow);
+        background: var(--ks-bg-input);
+        box-shadow: 2px 3px 3px var(--ks-shadow-element);
         border-radius: var(--kel-border-radius-base);
-        border: 1px solid var(--ks-border-primary) !important;
+        border: 1px solid var(--ks-border-default) !important;
         margin-bottom: -2px;
 
         .kel-select-dropdown__item {

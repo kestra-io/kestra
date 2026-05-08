@@ -495,7 +495,7 @@
 
 #overview {
     :deep(.kel-splitter-panel:has(> .sidebar:first-child)) {
-        background-color: var(--ks-background-table-row);
+        background-color: var(--ks-bg-elevated);
     }
 
     .sidebar > div,
@@ -585,7 +585,7 @@
                 padding: calc(1rem * 2);
                 border: 1px solid var(--kel-border-color-light);
                 border-radius: calc(1rem / 2);
-                background-color: var(--ks-background-card);
+                background-color: var(--ks-bg-surface);
 
                 > section:first-child {
                     display: flex;
@@ -601,7 +601,7 @@
                         & .material-design-icon {
                             margin-right: 1rem;
                             font-size: var(--ks-font-size-xl);
-                            color: var(--ks-content-link);
+                            color: var(--ks-text-link);
                         }
 
                         & span:not(.material-design-icon) {
@@ -643,6 +643,6 @@
 
 #empty {
     height: 100%;
-    background-color: var(--ks-background-table-row);
+    background-color: var(--ks-bg-elevated);
 }
 </style>

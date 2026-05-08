@@ -58,19 +58,19 @@
         margin-bottom: 0.3rem;
         border-radius: .25rem;
         transition: padding 0.2s ease;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         box-shadow: none;
 
         &_active,
         body &_active:hover {
-            background-color: var(--ks-button-background-secondary-active) !important;
+            background-color: var(--ks-btn-secondary-bg-active) !important;
             font-weight: normal;
         }
 
         &.vsm--link_open,
         &.vsm--link_open:hover {
-            background-color: var(--ks-background-left-menu);
-            color: var(--ks-content-primary);
+            background-color: var(--ks-bg-sidebar);
+            color: var(--ks-text-primary);
         }
 
         &_disabled {
@@ -80,7 +80,7 @@
 
         &:hover,
         body &_hover {
-            background-color: var(--ks-button-background-secondary-hover);
+            background-color: var(--ks-btn-secondary-bg-hover);
         }
 
         .kel-tooltip__trigger {
@@ -116,7 +116,7 @@
 
         .vsm--icon {
             margin-left: calc(1rem / 2);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         &:before {
@@ -124,7 +124,7 @@
             position: absolute;
             left: -.8rem;
             height: 150%;
-            border: 2px solid var(--ks-border-primary);
+            border: 2px solid var(--ks-border-default);
             border-top: 0;
             border-right: 0;
             z-index: 2;
@@ -154,7 +154,7 @@
     }
 
     .vsm--dropdown {
-        background-color: var(--ks-background-left-menu);
+        background-color: var(--ks-bg-sidebar);
         border-radius: 4px;
         margin-bottom: .5rem;
 
@@ -164,7 +164,7 @@
     }
 
     .vsm--scroll-thumb {
-        background: var(--ks-border-primary) !important;
+        background: var(--ks-border-default) !important;
         border-radius: 8px;
     }
 
@@ -188,7 +188,7 @@
             right: 10px;
             height: 1.25rem;
             z-index: 5;
-            background: linear-gradient(to top, var(--ks-background-left-menu), transparent);
+            background: linear-gradient(to top, var(--ks-bg-sidebar), transparent);
             opacity: 0.18;
         }
     }

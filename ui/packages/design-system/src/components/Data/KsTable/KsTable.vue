@@ -84,26 +84,26 @@
     @use 'element-plus/theme-chalk/src/table';
 
     .kel-table {
-        --kel-table-border-color: var(--ks-border-primary);
-        --kel-table-border: 1px solid var(--ks-border-primary);
+        --kel-table-border-color: var(--ks-border-default);
+        --kel-table-border: 1px solid var(--ks-border-default);
 
-        --kel-table-header-text-color: var(--ks-content-primary);
-        --kel-table-header-bg-color: var(--ks-background-table-header);
-        --kel-table-row-hover-bg-color: var(--ks-background-table-row-hover);
-        --kel-table-tr-bg-color: var(--ks-background-table-row);
+        --kel-table-header-text-color: var(--ks-text-primary);
+        --kel-table-header-bg-color: var(--ks-bg-active);
+        --kel-table-row-hover-bg-color: var(--ks-bg-hover);
+        --kel-table-tr-bg-color: var(--ks-bg-surface);
 
-        outline: 1px solid var(--ks-border-primary);
+        outline: 1px solid var(--ks-border-default);
         border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-body);
+        background-color: var(--ks-bg-base);
         border-bottom-width: 0;
         font-size: var(--ks-font-size-sm);
 
         &--striped {
             .kel-table__body tr.kel-table__row--striped:not(:hover) td.kel-table__cell {
-                background: var(--ks-tag-background);
+                background: var(--ks-bg-tag);
 
                 html.dark & {
-                    background: var(--ks-background-body);
+                    background: var(--ks-bg-base);
                 }
             }
         }
@@ -119,7 +119,7 @@
         }
 
         .kel-table__empty-text {
-            color: var(--ks-content-tertiary) !important;
+            color: var(--ks-text-dim) !important;
         }
 
         th {
@@ -139,7 +139,7 @@
             }
 
             a, button, .kicon, .kel-button {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 width: 24px;
                 height: 24px;
                 border-radius: var(--kel-border-radius-base);
@@ -165,7 +165,7 @@
             button:hover,
             .kicon:hover,
             .kel-button:hover {
-                background-color: var(--ks-tag-background);
+                background-color: var(--ks-bg-tag);
             }
 
         }
@@ -200,7 +200,7 @@
             }
 
             a {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 &:hover{
                     text-decoration: underline;
                 }

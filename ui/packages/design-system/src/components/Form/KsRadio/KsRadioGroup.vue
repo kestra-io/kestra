@@ -41,8 +41,8 @@
 
     .kel-radio-group.filter {
         padding: 1px 4px;
-        box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
-        background-color: var(--ks-background-input);
+        box-shadow: 0 0 0 1px var(--ks-border-default) inset;
+        background-color: var(--ks-bg-input);
         border-radius: var(--kel-border-radius-base);
         height: var(--kel-component-size);
 
@@ -51,7 +51,7 @@
         }
 
         .kel-radio-button__inner {
-            background-color: var(--ks-background-input);
+            background-color: var(--ks-bg-input);
             padding: 4px 15px;
             border: 0 !important;
             box-shadow: none;
@@ -60,7 +60,7 @@
 
         .kel-radio-button__original-radio:checked + .kel-radio-button__inner {
             box-shadow: none;
-            background: var(--ks-content-paused);
+            background: var(--ks-border-default);
         }
     }
 </style>

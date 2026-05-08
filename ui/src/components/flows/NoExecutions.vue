@@ -60,7 +60,7 @@
         text-align: center;
         font-size: var(--ks-font-size-xl);
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .desc {
@@ -69,7 +69,7 @@
         font-size: var(--ks-font-size-base);
         line-height: 28px;
         text-align: center;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .trigger {
@@ -86,7 +86,7 @@
 }
 
 :deep(.kel-divider__text) {
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
     white-space: nowrap;
     font-size: var(--ks-font-size-xs);
 }

@@ -26,7 +26,7 @@
 </script>
 
 <style scoped lang="scss">
-    
+
     .blueprints {
         background: url('../../assets/dots-bg.jpg') no-repeat top left;
         background-color: #FAFAFF;
@@ -46,13 +46,13 @@
         margin: 0 2rem;
 
         .catch-phrase {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             margin-bottom: 0;
         }
 
         .image-box{
-            border: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-background-card);
+            border: 1px solid var(--ks-border-default);
+            background-color: var(--ks-bg-surface);
             padding: 9px;
             border-radius: 7px;
             box-shadow:

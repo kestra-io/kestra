@@ -42,12 +42,28 @@
     .kel-alert {
         --kel-alert-description-font-size: var(--ks-font-size-sm);
 
-        @each $type in $types {
-            &.kel-alert--#{$type}.is-light {
-                border: 1px solid var(--ks-border-#{$type});
-                background-color: var(--ks-background-#{$type});
-                #{--kel-color-#{$type}}: var(--ks-content-#{$type});
-            }
+        &.kel-alert--success.is-light {
+            border: 1px solid var(--ks-border-success);
+            background-color: var(--ks-bg-success);
+            --kel-color-success: var(--ks-text-success);
+        }
+
+        &.kel-alert--warning.is-light {
+            border: 1px solid var(--ks-status-warning);
+            background-color: var(--ks-bg-warning);
+            --kel-color-warning: var(--ks-text-warning);
+        }
+
+        &.kel-alert--info.is-light {
+            border: 1px solid var(--ks-border-info);
+            background-color: var(--ks-bg-info);
+            --kel-color-info: var(--ks-text-info);
+        }
+
+        &.kel-alert--error.is-light {
+            border: 1px solid var(--ks-border-error);
+            background-color: var(--ks-bg-error);
+            --kel-color-error: var(--ks-text-error);
         }
     }
 </style>

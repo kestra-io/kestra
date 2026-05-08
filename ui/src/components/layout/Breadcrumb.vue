@@ -73,31 +73,31 @@
 
         .separator {
             font-size: var(--font-size-sm);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             user-select: none;
         }
 
         .item {
             font-size: var(--font-size-sm);
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             text-decoration: none;
             white-space: nowrap;
 
             &--last {
                 font-size: var(--font-size-base);
                 font-weight: 700;
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 margin: 0;
             }
         }
 
         a.item:hover {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         .ellipsis-btn {
             font-size: var(--font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             background: none;
             border: none;
             padding: 0;

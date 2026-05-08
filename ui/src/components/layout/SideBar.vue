@@ -150,8 +150,8 @@
 #side-menu {
     position: static;
     z-index: 1039;
-    border-right: 1px solid var(--ks-border-primary);
-    background-color: var(--ks-background-left-menu);
+    border-right: 1px solid var(--ks-border-default);
+    background-color: var(--ks-bg-sidebar);
 
     .logo {
         overflow: hidden;

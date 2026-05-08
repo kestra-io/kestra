@@ -43,7 +43,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: var(--ks-background-input);
+        background: var(--ks-bg-input);
         padding: .75rem 1rem;
     }
 

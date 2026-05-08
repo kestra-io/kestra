@@ -51,3 +51,5 @@ jobs:
     uses: ./.github/workflows/helm-release.yml
     with:
       dry_run: ${{ inputs.dry-run }}
+    secrets:
+      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}

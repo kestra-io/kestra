@@ -19,6 +19,9 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      GH_PERSONAL_TOKEN:
+        required: false
 
 permissions:
   contents: write
@@ -197,6 +200,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Use PAT to bypass branch protection on develop
+          TOKEN="${{ secrets.GH_PERSONAL_TOKEN }}"
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
 
           # Rebase onto current develop so we don't clobber unrelated commits
           git fetch origin develop

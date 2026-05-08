@@ -43,11 +43,11 @@
 <script setup lang="ts">
     import {computed, ref} from "vue";
     import {useExecutionsStore} from "../../../../../stores/executions";
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/design-system"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
-    import {useAuthStore} from "override/stores/auth"
+    import {State} from "@kestra-io/design-system";
+    import {KsExecutionStatus} from "@kestra-io/design-system";
+    import {useAuthStore} from "override/stores/auth";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../../../../utils/toast";
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
@@ -80,7 +80,7 @@
     });
 
     const enabled = computed(() => {
-        if (!(authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace))) {
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
             return false;
         }
 
@@ -91,11 +91,11 @@
         executionsStore
             .unqueue({
                 id: props.execution.id,
-                state: selectedStatus.value
+                state: selectedStatus.value,
             })
             .then(() => {
                 isDrawerOpen.value = false;
                 toast.success(t("unqueue done"));
             });
-    }
+    };
 </script>

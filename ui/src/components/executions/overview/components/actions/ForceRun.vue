@@ -32,7 +32,7 @@
 <script setup lang="ts">
     import {ref, computed} from "vue";
     import {State} from "@kestra-io/design-system";
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
     import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
@@ -87,7 +87,7 @@
 
         if (
             !user?.isAllowed(
-                permission.EXECUTION,
+                resource.EXECUTION,
                 action.UPDATE,
                 props.execution.namespace,
             )

@@ -500,7 +500,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be terminated or paused to be restarted, current state is 'SUCCESS'");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated or paused.");
     }
 
     @Test
@@ -1343,8 +1343,8 @@ class ExecutionControllerRunnerTest {
             )
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getMessage()).contains("Illegal argument: You can only change the state of a terminated non killed execution.");
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Conflict: Cannot change execution state: execution must be terminated and not killed.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -1389,10 +1389,10 @@ class ExecutionControllerRunnerTest {
             )
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("You can only change the state of a task run for a terminated non killed execution.");
+        assertThat(bulkErrorResponse.get()).contains("Cannot change task run state: execution must be terminated and not killed.");
     }
 
     @Test
@@ -1916,7 +1916,7 @@ class ExecutionControllerRunnerTest {
         Execution completed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
 
         var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + completed.getId() + "/pause", null)));
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2021,7 +2021,7 @@ class ExecutionControllerRunnerTest {
         var notRunning = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + completed.getId() + "/unqueue", null))
         );
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2108,7 +2108,7 @@ class ExecutionControllerRunnerTest {
         var notRunning = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/force-run", null))
         );
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2639,7 +2639,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Execution must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated or paused.");
 
         e = assertThrows(
             HttpClientResponseException.class,

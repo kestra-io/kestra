@@ -72,10 +72,10 @@
     import Resume from "./overview/components/actions/Resume.vue";
     import Restart from "./overview/components/actions/Restart.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
 
     export default {
         components: {
@@ -83,13 +83,13 @@
             Pause,
             Resume,
             Restart,
-            TopNavBar
+            TopNavBar,
         },
         props: {
             routeInfo: {
                 type: Object,
-                required: true
-            }
+                required: true,
+            },
         },
         computed: {
             ...mapStores(useExecutionsStore, useAuthStore),
@@ -97,10 +97,10 @@
                 return this.executionsStore.execution;
             },
             isAllowedEdit() {
-                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(resource.FLOW, action.UPDATE, this.execution.namespace);
             },
             isAllowedTrigger() {
-                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.execution.namespace);
             },
             hasVisibleActions() {
                 return this.isAllowedEdit || this.primaryAction || this.fallbackToExecute;
@@ -116,21 +116,21 @@
                 if (State.isPaused(this.execution.state.current)) {
                     return {
                         component: Resume,
-                        props: {}
+                        props: {},
                     };
                 }
 
                 if (State.isRunning(this.execution.state.current)) {
                     return {
                         component: Pause,
-                        props: {}
+                        props: {},
                     };
                 }
 
                 if (this.execution.state.current === State.FAILED) {
                     return {
                         component: Restart,
-                        props: {}
+                        props: {},
                     };
                 }
 
@@ -138,8 +138,8 @@
                     return {
                         component: Restart,
                         props: {
-                            isReplay: true
-                        }
+                            isReplay: true,
+                        },
                     };
                 }
 
@@ -147,7 +147,7 @@
             },
             isATestExecution() {
                 return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
-            }
+            },
         },
         methods: {
             editFlow() {
@@ -156,11 +156,11 @@
                         namespace: this.$route.params.namespace,
                         id: this.$route.params.flowId,
                         tab: "edit",
-                        tenant: this.$route.params.tenant
-                    }
-                })
-            }
-        }
+                        tenant: this.$route.params.tenant,
+                    },
+                });
+            },
+        },
     };
 </script>
 <style scoped>

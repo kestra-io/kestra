@@ -18,9 +18,9 @@
     import {defaultNamespace} from "../../composables/useNamespaces";
     import useRouteContext from "../../composables/useRouteContext";
 
-    import type {BlueprintType} from "../../stores/blueprints"
+    import type {BlueprintType} from "../../stores/blueprints";
     import {useAuthStore} from "override/stores/auth";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
@@ -42,7 +42,7 @@
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
             : "";
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
-            permission.FLOW,
+            resource.FLOW,
             action.CREATE,
         )[0];
         let flowYaml = "";
@@ -63,7 +63,7 @@
             flowYaml = await blueprintsStore.getBlueprintSource({
                 type: blueprintSource,
                 kind: "flow",
-                id: blueprintId
+                id: blueprintId,
             });
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
@@ -100,7 +100,7 @@ tasks:
 
     const routeInfo = computed(() => {
         return {
-            title: t("flows")
+            title: t("flows"),
         };
     });
 

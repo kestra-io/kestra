@@ -1,6 +1,6 @@
 import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import permission from "../../../models/permission";
+import resource from "../../../models/resource";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
@@ -31,7 +31,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                         valueType: "multi-select" as const,
                         valueProvider: async () => {
                             const user = useAuthStore().user;
-                            if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
                                 const namespacesStore = useNamespacesStore();
                                 const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
                                 return [...new Set(namespaces
@@ -42,12 +42,12 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                                         }, []);
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
+                                        value: namespace,
                                     }));
                             }
                             return [];
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 {
@@ -60,7 +60,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("flows");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "labels",
@@ -69,7 +69,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "key-value",
                 },
-            ]
+            ],
         };
     });
-}
+};

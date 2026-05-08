@@ -86,7 +86,7 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {useNamespacesFilter} from "../../../components/filter/configurations";
-    import permission from "../../../models/permission";
+    import resource from "../../../models/resource";
     import action from "../../../models/action";
 
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
@@ -113,7 +113,7 @@
 
     const authStore = useAuthStore();
     const canCreate = computed(() => {
-        return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
+        return authStore.user?.hasAnyAction(resource.NAMESPACE, action.CREATE);
     });
 
     const namespaces = ref([]) as Ref<Namespace[]>;
@@ -127,7 +127,7 @@
     watch(
         () => route.query["filters[q][EQUALS]"],
         () => loadData(),
-        {immediate: true}
+        {immediate: true},
     );
 
     const miscStore = useMiscStore();
@@ -135,7 +135,7 @@
         () => miscStore.configs?.systemNamespace || "system",
     );
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {

@@ -677,6 +677,27 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ArrayListTotal<Flow> find(
+            Pageable pageable,
+            @Nullable String tenantId,
+            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
+        ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(
+                    context,
+                    getFindFlowSelect(tenantId, null, context, null)
+                        .and(findTriggerClassCondition(triggerClass)),
+                    pageable
+                );
+            });
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()

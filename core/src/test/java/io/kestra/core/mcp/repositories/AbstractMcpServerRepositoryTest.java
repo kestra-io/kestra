@@ -1,18 +1,25 @@
 package io.kestra.core.mcp.repositories;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.services.McpServerService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
+import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import io.kestra.core.repositories.ArrayListTotal;
 
@@ -27,6 +34,11 @@ public abstract class AbstractMcpServerRepositoryTest {
 
     @Inject
     private McpServerService mcpServerService;
+
+    @BeforeEach
+    void resetListener() {
+        McpServerListener.reset();
+    }
 
     @Test
     void givenNewMcpWhenSaveThenPersistedWithTimestamps() {
@@ -267,8 +279,89 @@ public abstract class AbstractMcpServerRepositoryTest {
         assertThat(tenantCount).isEqualTo(1);
     }
 
+    // ── CrudEvent publishing ─────────────────────────────────────────────────
+
+    @Test
+    void givenNewMcp_whenSave_thenCreateEventPublished() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        McpServer mcp = createMcpServer(tenant);
+
+        // When
+        mcpServerRepository.save(null, mcp);
+
+        // Then
+        List<CrudEvent<McpServer>> events = McpServerListener.filterByTenant(tenant);
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0).getType()).isEqualTo(CrudEventType.CREATE);
+        assertThat(events.get(0).getModel().id()).isEqualTo(mcp.id());
+    }
+
+    @Test
+    void givenExistingMcp_whenSave_thenUpdateEventPublished() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        McpServer original = mcpServerRepository.save(null, createMcpServer(tenant));
+        McpServerListener.reset();
+        McpServer updated = new McpServer(tenant, original.id(), "Updated", null, null, null, true, false, false, null, null);
+
+        // When
+        mcpServerRepository.save(original, updated);
+
+        // Then
+        List<CrudEvent<McpServer>> events = McpServerListener.filterByTenant(tenant);
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0).getType()).isEqualTo(CrudEventType.UPDATE);
+        assertThat(events.get(0).getModel().id()).isEqualTo(original.id());
+    }
+
+    @Test
+    void givenExistingMcp_whenDelete_thenDeleteEventPublished() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        McpServer saved = mcpServerRepository.save(null, createMcpServer(tenant));
+        McpServerListener.reset();
+
+        // When
+        mcpServerRepository.delete(tenant, saved.id());
+
+        // Then
+        List<CrudEvent<McpServer>> events = McpServerListener.filterByTenant(tenant);
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0).getType()).isEqualTo(CrudEventType.DELETE);
+        assertThat(events.get(0).getPreviousModel().id()).isEqualTo(saved.id());
+    }
+
     private static McpServer createMcpServer(String tenantId) {
         String id = "test-mcp-" + IdUtils.create().toLowerCase();
         return new McpServer(tenantId, id, "A test MCP server", null, null, null, false, false, false, null, null);
+    }
+
+    @Singleton
+    public static class McpServerListener implements ApplicationEventListener<CrudEvent<McpServer>> {
+        private static List<CrudEvent<McpServer>> emits = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void onApplicationEvent(CrudEvent<McpServer> event) {
+            if (
+                (event.getModel() != null && event.getModel() instanceof McpServer) ||
+                    (event.getPreviousModel() != null && event.getPreviousModel() instanceof McpServer)
+            ) {
+                emits.add(event);
+            }
+        }
+
+        public static void reset() {
+            emits = new CopyOnWriteArrayList<>();
+        }
+
+        public static List<CrudEvent<McpServer>> filterByTenant(String tenantId) {
+            return emits.stream()
+                .filter(
+                    e -> (e.getPreviousModel() != null && tenantId.equals(e.getPreviousModel().tenantId())) ||
+                        (e.getModel() != null && tenantId.equals(e.getModel().tenantId()))
+                )
+                .toList();
+        }
     }
 }

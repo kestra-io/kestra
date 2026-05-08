@@ -9,12 +9,15 @@
             <el-form-item
                 :label="t('id')"
                 prop="id"
-                :rules="[{required: true, message: t('id') + ' ' + t('required'), trigger: 'blur'}]"
+                :rules="[
+                    {required: true, message: t('id') + ' ' + t('required'), trigger: 'blur'},
+                    {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t('mcp.id_invalid'), trigger: 'blur'},
+                ]"
             >
                 <el-input
                     v-model="form.id"
                     :placeholder="t('mcp.id_placeholder')"
-                    :disabled="isUpdate"
+                    :disabled="isUpdate || readOnly"
                     class="mcp-edit__name-input"
                 />
             </el-form-item>
@@ -25,6 +28,7 @@
                     type="textarea"
                     :rows="2"
                     :placeholder="t('description')"
+                    :disabled="readOnly"
                 />
             </el-form-item>
 
@@ -35,6 +39,7 @@
                     :rows="3"
                     :placeholder="t('mcp.instructions')"
                     class="mcp-edit__instructions-input"
+                    :disabled="readOnly"
                 />
             </el-form-item>
 
@@ -44,6 +49,7 @@
                         type="button"
                         class="mcp-edit__type-btn"
                         :class="{'mcp-edit__type-btn--active': form.serverType === 'PRIVATE'}"
+                        :disabled="readOnly"
                         @click="form.serverType = 'PRIVATE'"
                     >
                         <Lock class="me-1" />
@@ -53,6 +59,7 @@
                         type="button"
                         class="mcp-edit__type-btn"
                         :class="{'mcp-edit__type-btn--active': form.serverType === 'PUBLIC'}"
+                        :disabled="readOnly"
                         @click="form.serverType = 'PUBLIC'"
                     >
                         <Web class="me-1" />
@@ -69,7 +76,7 @@
                         class="mcp-edit__auth-option"
                         :class="{
                             'mcp-edit__auth-option--selected': form.authType === opt.value,
-                            'mcp-edit__auth-option--disabled': opt.ee && isOss,
+                            'mcp-edit__auth-option--disabled': readOnly || (opt.ee && isOss),
                         }"
                     >
                         <input
@@ -77,7 +84,7 @@
                             :value="opt.value"
                             v-model="form.authType"
                             class="me-2"
-                            :disabled="opt.ee && isOss"
+                            :disabled="readOnly || (opt.ee && isOss)"
                         >
                         <span class="mcp-edit__auth-name">{{ t(opt.labelKey) }}</span>
                         <LockOutline v-if="opt.ee && isOss" class="ms-2" :size="14" />
@@ -89,17 +96,18 @@
             <el-form-item :label="t('enabled')">
                 <el-switch
                     :modelValue="!form.disabled"
+                    :disabled="readOnly"
                     @update:model-value="(val: boolean) => (form.disabled = !val)"
                     class="mcp-edit__toggle"
                 />
             </el-form-item>
 
             <div class="mcp-edit__actions">
-                <el-button type="primary" :loading="saving" @click="save">
+                <el-button v-if="canSave" type="primary" :loading="saving" @click="save">
                     {{ isUpdate ? t("mcp.save") : t("mcp.create") }}
                 </el-button>
                 <el-button
-                    v-if="isUpdate && !mcpStore.server?.isDefault"
+                    v-if="isUpdate && !mcpStore.server?.isDefault && canDelete"
                     type="danger"
                     plain
                     :loading="deleting"
@@ -119,6 +127,9 @@
     import type {FormInstance} from "element-plus";
     import {useMcpStore} from "../../../../stores/mcp";
     import {useMiscStore} from "override/stores/misc";
+    import {useAuthStore} from "override/stores/auth";
+    import resource from "../../../../models/resource";
+    import action from "../../../../models/action";
     import LockOutline from "vue-material-design-icons/LockOutline.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import Web from "vue-material-design-icons/Web.vue";
@@ -130,6 +141,15 @@
     const isOss = computed(() => useMiscStore().configs?.edition === "OSS");
 
     const isUpdate = computed(() => !!route.params.id);
+
+    const authStore = useAuthStore();
+    const canSave = computed(() =>
+        isUpdate.value
+            ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
+            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true
+    );
+    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true);
+    const readOnly = computed(() => !canSave.value);
 
     interface McpForm {
         id: string;
@@ -190,7 +210,7 @@
                 };
                 if (isUpdate.value) {
                     await mcpStore.update(form.value.id, payload);
-                    await mcpStore.load(form.value.id);
+                    router.push({name: "admin/mcp-servers"});
                 } else {
                     const created = await mcpStore.create(payload);
                     router.push({
@@ -259,6 +279,11 @@
 
             &:hover:not(.mcp-edit__type-btn--active) {
                 border-color: var(--ks-border-secondary);
+            }
+
+            &:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
             }
         }
 

@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="t('mcp.servers')" :longDescription="t('mcp.page_description')">
-        <template v-if="!instanceMode" #additional-right>
+        <template v-if="!instanceMode && (isOSS || canCreate)" #actions>
             <Action
                 :label="t('mcp.create')"
                 :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit'}}"
@@ -15,7 +15,7 @@
             </el-icon>
         </div>
 
-        <KsEmpty v-else-if="displayServers.length === 0">
+        <KsEmpty v-else-if="displayServers.length === 0" class="mcp-list__empty">
             {{ t("mcp.no_servers") }}
         </KsEmpty>
 
@@ -25,8 +25,9 @@
                 :key="server.tenantId ? `${server.tenantId}/${server.id}` : server.id"
                 class="mcp-list__item"
             >
-                <router-link
-                    :to="routeFor(server)"
+                <component
+                    :is="canView ? 'router-link' : 'div'"
+                    v-bind="canView ? {to: routeFor(server)} : {}"
                     class="mcp-list__row"
                     :class="{'mcp-list__row--disabled': server.disabled}"
                 >
@@ -55,7 +56,7 @@
                             {{ server.disabled ? t("disabled") : t("enabled") }}
                         </span>
                     </div>
-                </router-link>
+                </component>
             </el-col>
         </template>
     </el-row>
@@ -72,6 +73,10 @@
     import Lock from "vue-material-design-icons/Lock.vue";
     import Web from "vue-material-design-icons/Web.vue";
     import Loading from "vue-material-design-icons/Loading.vue";
+    import {useMiscStore} from "override/stores/misc";
+    import {useAuthStore} from "override/stores/auth";
+    import resource from "../../models/resource";
+    import action from "../../models/action";
 
     interface DisplayServer {
         id: string;
@@ -96,6 +101,10 @@
 
     const instanceMode = computed(() => props.instanceServers !== undefined);
 
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+    const authStore = useAuthStore();
+    const canCreate = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE));
+    const canView = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.VIEW));
     const displayServers = computed<DisplayServer[]>(() =>
         instanceMode.value ? (props.instanceServers ?? []) : tenantServers.value
     );
@@ -129,6 +138,10 @@
             justify-content: center;
             width: 100%;
             padding: 2rem;
+        }
+
+        &__empty {
+            width: 100%;
         }
 
         &__item {

@@ -296,7 +296,7 @@
 
     .kel-popper.singleton-tooltip {
         max-width: 300px !important;
-        background: var(--ks-tooltip-background);
+        background: var(--ks-bg-overlay);
     }
 </style>
 
@@ -330,7 +330,7 @@
     }
 
     .label {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         min-width: 0;
         flex: 1;
         overflow: hidden;
@@ -339,8 +339,8 @@
     }
 
     .type-tag {
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
+        background-color: var(--ks-bg-tag-active);
+        color: var(--ks-text-primary);
         font-size: var(--ks-font-size-xs);
         line-height: var(--ks-font-size-lg);
         padding: 0 8px;
@@ -350,7 +350,7 @@
     }
 
     .information-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: pointer;
     }
 }

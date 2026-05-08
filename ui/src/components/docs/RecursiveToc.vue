@@ -105,7 +105,7 @@
             }
 
             a {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
 
                 &.RouterLink-exact-active {
                     font-weight: 700;

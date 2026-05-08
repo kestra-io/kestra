@@ -135,7 +135,7 @@
             flex: 1;
             aspect-ratio: 16 / 9;
             border-radius: 8px;
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
             overflow: hidden;
 
             iframe {
@@ -206,7 +206,7 @@
     }
 
     .secrets-divider {
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
     }
 
     .ee-tag-wrap {

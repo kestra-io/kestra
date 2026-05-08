@@ -87,7 +87,7 @@
     @use 'element-plus/theme-chalk/src/select-dropdown';
 
     .kel-select {
-         --kel-disabled-text-color: var(--ks-content-inactive);
+         --kel-disabled-text-color: var(--ks-text-inactive);
 
          &.fit-text .kel-select__input {
              width: fit-content !important;
@@ -102,16 +102,16 @@
         }
 
          .kel-select__wrapper {
-             background-color: var(--ks-background-input);
+             background-color: var(--ks-bg-input);
 
              &.is-disabled {
                  html.dark & {
-                     background-color: var(--ks-border-primary);
+                     background-color: var(--ks-border-default);
                  }
 
                  .kel-select__suffix {
                      .kel-select__caret {
-                         color: var(--ks-content-inactive);
+                         color: var(--ks-text-inactive);
                      }
                  }
              }
@@ -121,7 +121,7 @@
     .kel-select__popper {
         // icon for selection of items in multiple choices
         .kel-select-dropdown.is-multiple .kel-select-dropdown__item.is-selected::after{
-            background-color: var(--ks-select-active-icon);
+            background-color: var(--ks-icon-active);
             -webkit-mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
             mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
             -webkit-mask-size: 100% 100%;
@@ -134,12 +134,12 @@
             margin: 0 0.6rem 1px;
 
             &.is-selected {
-                background-color: var(--ks-select-active);
-                color: var(--ks-content-primary);
+                background-color: var(--ks-bg-active);
+                color: var(--ks-text-primary);
             }
 
             &.is-hovering {
-                background-color: var(--ks-select-hover);
+                background-color: var(--ks-bg-hover-elevated);
             }
         }
     }

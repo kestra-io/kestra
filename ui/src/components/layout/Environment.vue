@@ -26,7 +26,7 @@
             return miscStore.configs.environment.color
         }
 
-        return cssVar("--ks-content-info")
+        return cssVar("--ks-status-info")
     })
 
 </script>
@@ -40,7 +40,7 @@
     strong {
         border: 1px solid v-bind('color');
         border-radius: var(--kel-border-radius-base);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         padding: 0.125rem 0.25rem;
         font-size: var(--ks-font-size-sm);
         white-space: nowrap;

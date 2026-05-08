@@ -392,7 +392,7 @@
     right: 0;
     z-index: 1;
     border: none;
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
     border-radius: 3px;
     height: 1rem;
     width: 1rem;
@@ -424,8 +424,8 @@ button.playground-button {
     padding: 4px 10px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 999px;
-    background-color: var(--ks-background-card);
-    color: var(--ks-content-secondary);
+    background-color: var(--ks-bg-surface);
+    color: var(--ks-text-secondary);
     cursor: pointer;
     font: inherit;
     font-size: 0.75rem;
@@ -439,7 +439,7 @@ button.playground-button {
     &:hover {
         border-color: var(--ks-border-active);
         background-color: var(--ks-button-background-secondary-hover);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     &:focus-visible {

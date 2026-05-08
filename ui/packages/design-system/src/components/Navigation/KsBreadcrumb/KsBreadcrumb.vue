@@ -36,13 +36,13 @@
 
         a {
             font-weight: normal;
-            color: var(--ks-content-primary) !important;
+            color: var(--ks-text-primary) !important;
             white-space: nowrap;
             cursor: pointer !important;
         }
 
         .kel--breadcrumb__separator {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         .kel--breadcrumb__item {
@@ -59,7 +59,7 @@
 
         html.dark & {
             .kel--breadcrumb__separator {
-                color: var(--ks-content-secondary) !important;
+                color: var(--ks-text-secondary) !important;
             }
         }
     }

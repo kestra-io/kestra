@@ -48,15 +48,15 @@
     @use 'element-plus/theme-chalk/src/input-number';
 
     .kel-input-number {
-        background-color: var(--ks-background-body);
+        background-color: var(--ks-bg-base);
         width: 100%;
 
         .kel-input-number__increase, .kel-input-number__decrease {
-            background: var(--ks-background-card);
+            background: var(--ks-bg-surface);
         }
 
         .kel-input-number__increase:hover, .kel-input-number__decrease:hover {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
         }
     }
 </style>

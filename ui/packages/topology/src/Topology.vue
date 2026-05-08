@@ -516,7 +516,7 @@
         margin: 0;
         z-index: 1000;
         list-style-type: none;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-primary);
         box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
         border-radius: 5px;
@@ -525,7 +525,7 @@
         & .item {
             padding: 5px 8px;
             cursor: pointer;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: 12px;
             width: 110px;
 

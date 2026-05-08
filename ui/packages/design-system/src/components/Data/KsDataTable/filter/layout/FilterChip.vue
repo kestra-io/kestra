@@ -143,8 +143,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: var(--ks-button-background-secondary);
-    border: 1px solid var(--ks-border-primary);
+    background-color: var(--ks-btn-secondary-bg-default);
+    border: 1px solid var(--ks-border-default);
     padding: 3px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -154,7 +154,7 @@
     user-select: none;
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     &.toggled {
@@ -174,7 +174,7 @@
         .in,
         .val {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;
             align-items: center;
@@ -188,14 +188,14 @@
         }
         .in,
         .val {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
         .comparator {
-            color: var(--ks-chart-success);
+            color: var(--ks-status-success);
             text-transform: lowercase;
 
             &.negative {
-                color: var(--ks-chart-failed);
+                color: var(--ks-status-error);
             }
         }
     }
@@ -205,10 +205,10 @@
         cursor: pointer;
         padding: 0;
         margin: 0;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
         &:hover {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
         :deep(svg) {
             font-size: var(--ks-font-size-base);
@@ -216,8 +216,8 @@
     }
 
     :deep(.kel-tag) {
-        background-color: var(--ks-tag-background);
-        color: var(--ks-content-secondary);
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-secondary);
         font-size: 10px;
         margin-left: 0.25rem;
     }

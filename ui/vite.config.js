@@ -2,8 +2,8 @@ import path from "path"
 import {createLogger, defineConfig, loadEnv} from "vite"
 import vue from "@vitejs/plugin-vue"
 
-// silence some scss warnings about sourceMaps of 
-// element-plus/theme-chalk/src in the wrong directory 
+// silence some scss warnings about sourceMaps of
+// element-plus/theme-chalk/src in the wrong directory
 // and will not be published in prod builds
 const logger = createLogger()
 const loggerWarnOnce = logger.warnOnce.bind(logger)
@@ -63,7 +63,9 @@ export default defineConfig(({mode}) => {
                 {find: "@storybook/addon-actions", replacement: "storybook/actions"},
 
                 {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
+                {find: /^@kestra-io\/topology\/(.*)/, replacement: path.resolve(__dirname, "packages/topology") + "/$1"},
                 {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
+                {find: /^@kestra-io\/design-system\/(.*)/, replacement: path.resolve(__dirname, "packages/design-system") + "/$1"},
                 {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
 
 

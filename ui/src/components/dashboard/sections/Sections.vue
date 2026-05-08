@@ -153,10 +153,10 @@ section#charts {
         & > div {
             height: 100%;
             padding: 1.5rem;
-            background: var(--ks-background-card);
-            border: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
             border-radius: 0.25rem;
-            box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+            box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
         }
 
         #charts_buttons {

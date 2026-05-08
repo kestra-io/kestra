@@ -686,13 +686,13 @@
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
-        background-color: var(--ks-background-body);
-        border-bottom: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-body);
+        border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
 
         button.split_right{
             border: none;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             background-color: transparent;
             padding: 0 .5rem;
             line-height: 16px;
@@ -736,18 +736,18 @@
         align-items: end;
         padding-bottom: 0;
         font-size: .8rem;
-        border-left: 1px solid var(--ks-border-primary);
+        border-left: 1px solid var(--ks-border-default);
         line-height: 1.5rem;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: none;
         &.dragover {
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
 
     .tab-icon{
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
     }
 
     .small-text {
@@ -755,16 +755,16 @@
     }
 
     :deep(.kel-dropdown-menu__item.is-disabled) {
-        color: var(--ks-border-inactive);
+        color: var(--ks-border-subtle);
     }
 
     .editor-tabs .editor-tab{
         padding: 3px .5rem;
         border: none;
-        border-right: 1px solid var(--ks-border-primary);
+        border-right: 1px solid var(--ks-border-default);
         border-radius: 2px 2px 0 0;
         border-bottom: none;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         display: flex;
         flex-wrap: nowrap;
         /* Prevent shrinking so tabs overflow and the container can scroll */
@@ -776,12 +776,12 @@
         white-space: nowrap;
         align-items: center;
         gap: .5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         opacity: .6;
 
         &.active {
             opacity: 1;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         .tab-title{
@@ -813,7 +813,7 @@
         background: transparent;
     }
     .editor-tabs::-webkit-scrollbar-thumb {
-        background-color: var(--ks-border-primary);
+        background-color: var(--ks-border-default);
         border-radius: 3px;
     }
 
@@ -832,22 +832,22 @@
         width: 4px;
         transform: translateX(-50%);
         height: 85%;
-        background-color: var(--ks-content-primary);
+        background-color: var(--ks-text-primary);
         pointer-events: none;
     }
 
     .default-theme{
         :deep(.kel-splitter-panel) {
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
         :deep(.kel-splitter__splitter){
-            border-left-color: var(--ks-border-primary);
-            background-color: var(--ks-background-panel);
+            border-left-color: var(--ks-border-default);
+            background-color: var(--ks-bg-surface);
             &:before, &:after{
-                background-color: var(--ks-content-secondary);
+                background-color: var(--ks-text-secondary);
             }
         }
 
@@ -866,13 +866,13 @@
         transition: none;
         &.dragging {
             opacity: 0.5;
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
             transition: opacity 0.2s ease;
         }
     }
 
     .panel-dragover {
-        background-color: var(--ks-background-card-hover);
+        background-color: var(--ks-bg-hover-elevated);
         transition: background-color 0.2s ease;
     }
 
@@ -896,7 +896,7 @@
         justify-content: center;
         background-color: rgba(30, 30, 30, 0.5);
         transition: all 0.2s ease;
-        border: 2px dashed var(--ks-border-primary, #444);
+        border: 2px dashed var(--ks-border-default, #444);
         border-radius: 4px;
         margin: 8px;
         pointer-events: auto;
@@ -906,7 +906,7 @@
     .new-panel-drop-zone:hover,
     .new-panel-drop-zone.panel-dragover {
         background-color: rgba(40, 40, 40, 0.8);
-        border-color: var(--ks-border-active, #888);
+        border-color: var(--ks-border-focus, #888);
     }
 
     .left-drop-zone {

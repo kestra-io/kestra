@@ -153,7 +153,7 @@
             margin-bottom: 0.25rem;
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 
@@ -161,7 +161,7 @@
         padding: 0.5rem 0.75rem;
         background-color: var(--ks-surface-secondary);
         border-radius: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         min-height: 2rem;
     }
 
@@ -178,17 +178,17 @@
         font-size: var(--ks-font-size-xs);
 
         .key {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 400;
         }
 
         .comparator {
-            color: var(--ks-chart-success);
+            color: var(--ks-status-success);
             font-weight: 400;
         }
 
         .value {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 700;
         }
     }
@@ -199,12 +199,12 @@
     padding: 0.5rem;
     border-radius: 0.25rem;
     font-size: var(--ks-font-size-base);
-    color: var(--ks-content-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
+    color: var(--ks-text-primary) !important;
+    box-shadow: 0 2px 4px var(--ks-shadow-surface);
 }
 
 .kel-button.is-disabled {
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
     cursor: not-allowed !important;
 }
 
@@ -214,7 +214,7 @@
 
 :deep(.kel-input__inner::placeholder),
 :deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-content-tertiary);
+    color: var(--ks-text-dim);
     font-size: var(--ks-font-size-sm);
 }
 

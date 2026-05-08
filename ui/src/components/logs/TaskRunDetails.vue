@@ -929,9 +929,9 @@
     }
 
     .attempt-wrapper {
-        background-color: var(--ks-background-input);
+        background-color: var(--ks-bg-input);
         margin-bottom: 0;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
 
         :deep(.kel-card__body) {
             padding: 0;
@@ -942,12 +942,12 @@
         }
 
         tbody:last-child & {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .attempt-header {
             padding: 0 0.5rem 0.5rem;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .line {
@@ -979,7 +979,7 @@
             padding: 1rem;
 
             &.cursor {
-                background-color: var(--ks-tooltip-border);
+                background-color: var(--ks-border-default);
             }
         }
     }

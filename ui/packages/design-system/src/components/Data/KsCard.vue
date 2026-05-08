@@ -38,11 +38,11 @@
 
     .kel-card {
         border-radius: var(--kel-border-radius-round);
-        --kel-card-border-color: var(--ks-border-primary);
+        --kel-card-border-color: var(--ks-border-default);
         --kel-card-border-radius: var(--kel-border-radius-round);
         --kel-card-padding: 1rem;
-        color: var(--ks-content-primary);
-        background-color: var(--ks-background-card);
+        color: var(--ks-text-primary);
+        background-color: var(--ks-bg-surface);
 
         .kel-card__header {
             padding: 0.5rem 1rem;

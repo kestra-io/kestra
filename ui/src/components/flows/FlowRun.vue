@@ -287,18 +287,18 @@
     }
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
-        border: 1px solid var(--ks-border-primary);
-        background: var(--ks-tag-background);
+        border: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-tag);
 
         .kel-collapse-item__header {
             background: transparent;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
             font-size: var(--ks-font-size-sm);
         }
 
         .kel-collapse-item__content {
-            background: var(--ks-tag-background);
-            border-bottom: 1px solid var(--ks-border-primary);
+            background: var(--ks-bg-tag);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .kel-collapse-item__header, .kel-collapse-item__content {

@@ -19,10 +19,6 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      GH_PERSONAL_TOKEN:
-        required: false
-
 permissions:
   contents: write
   id-token: write
@@ -196,18 +192,17 @@ jobs:
         env:
           VERSION: ${{ steps.config.outputs.version }}
           TAG: ${{ steps.config.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Use PAT to bypass branch protection on develop
-          TOKEN="${{ secrets.GH_PERSONAL_TOKEN }}"
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          BRANCH="chore/helm-sync-${VERSION}"
 
-          # Rebase onto current develop so we don't clobber unrelated commits
+          # Branch off current develop
           git fetch origin develop
-          git checkout -B develop origin/develop
+          git checkout -B "${BRANCH}" origin/develop
 
           # Re-apply version bump (same logic as Update Chart.yaml versions step)
           for chart in charts/kestra charts/kestra-starter; do
@@ -228,4 +223,10 @@ jobs:
                   charts/kestra-starter/Chart.yaml charts/kestra-starter/README.md
           git diff --cached --quiet && echo "Nothing to commit — already in sync." && exit 0
           git commit -m "chore(helm): bump chart versions to ${VERSION} [skip ci]"
-          git push origin develop
+          git push origin "${BRANCH}"
+
+          gh pr create \
+            --base develop \
+            --head "${BRANCH}" \
+            --title "chore(helm): bump chart versions to ${VERSION}" \
+            --body "Automated chart version sync after ${TAG} release. Bumps \`charts/kestra\` and \`charts/kestra-starter\` to \`${VERSION}\` / \`${TAG}\`."

@@ -416,9 +416,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts);
 
-        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+        Map<String, Object> outputs = null;
 
         try {
+            outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);

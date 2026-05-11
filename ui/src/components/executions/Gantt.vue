@@ -142,7 +142,7 @@
     // @ts-expect-error no types yet
     import Duration from "../layout/Duration.vue";
     // @ts-expect-error JS module without declarations
-    import FlowUtils from "../../utils/flowUtils";
+    import * as FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";

@@ -4,15 +4,15 @@ import {useI18n} from "vue-i18n";
 import {usePluginsStore} from "../../../stores/plugins";
 
 export default abstract class AbstractLanguageConfigurator {
-    private readonly _language: string;
+    private readonly langAbstract: string;
     protected static configuredLanguages: string[] = [];
 
     protected constructor(language: string) {
-        this._language = language;
+        this.langAbstract = language;
     }
 
     get language(): string {
-        return this._language;
+        return this.langAbstract;
     }
 
     async configureLanguage(_: ReturnType<typeof usePluginsStore>) {

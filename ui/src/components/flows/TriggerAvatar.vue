@@ -27,7 +27,7 @@
     import {computed, ref, nextTick} from "vue";
     import {useRoute} from "vue-router";
     import {usePluginsStore} from "../../stores/plugins";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import TriggerVars from "./TriggerVars.vue";
     import {KsTaskIcon} from "@kestra-io/design-system";
     import {useI18n} from "vue-i18n";

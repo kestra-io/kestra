@@ -43,7 +43,7 @@
     import {useMiscStore} from "override/stores/misc";
     import resource from "../../models/resource";
     import action from "../../models/action";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import {aiGenerationTypes} from "../../utils/constants";
     import type {AiGenerationType} from "../../utils/constants";
 

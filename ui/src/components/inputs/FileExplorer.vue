@@ -367,7 +367,7 @@
     import {ref, computed, nextTick, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";

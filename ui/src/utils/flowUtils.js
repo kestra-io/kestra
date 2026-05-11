@@ -1,36 +1,33 @@
-// oxlint-disable-next-line typescript/no-extraneous-class
-export default class FlowUtils {
-    static findTaskById(flow, taskId) {
-        let result = this.loopOver(flow, (value) => {
-            if (value instanceof Object) {
-                if (value.type !== undefined && value.id === taskId) {
-                    return true;
-                }
-            }
+export function loopOver(item, predicate, result) {
+    if (result === undefined) {
+        result = [];
+    }
 
-            return false;
+    if (predicate(item)) {
+        result.push(item);
+    }
+
+    if (Array.isArray(item)) {
+        item.flatMap(child => loopOver(child, predicate, result));
+    } else if (item instanceof Object) {
+        Object.entries(item).flatMap(([_key, value]) => {
+            loopOver(value, predicate, result);
         });
-
-        return result.length > 0 ? result[0] : undefined;
     }
 
-    static loopOver(item, predicate, result) {
-        if (result === undefined) {
-            result = [];
+    return result;
+}
+
+export function findTaskById(flow, taskId) {
+    let result = loopOver(flow, (value) => {
+        if (value instanceof Object) {
+            if (value.type !== undefined && value.id === taskId) {
+                return true;
+            }
         }
 
-        if (predicate(item)) {
-            result.push(item);
-        }
+        return false;
+    });
 
-        if (Array.isArray(item)) {
-            item.flatMap(child => this.loopOver(child, predicate, result));
-        } else if (item instanceof Object) {
-            Object.entries(item).flatMap(([_key, value]) => {
-                this.loopOver(value, predicate, result);
-            });
-        }
-
-        return result;
-    }
+    return result.length > 0 ? result[0] : undefined;
 }

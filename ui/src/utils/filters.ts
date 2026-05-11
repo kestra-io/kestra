@@ -1,4 +1,4 @@
-import Utils from "./utils";
+import * as Utils from "./utils";
 import {storageKeys} from "../utils/constants";
 import moment from "moment-timezone";
 import {durationUtils} from "@kestra-io/design-system";

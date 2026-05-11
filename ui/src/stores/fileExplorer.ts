@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
-import Utils from "../utils/utils";
+import * as Utils from "../utils/utils";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";

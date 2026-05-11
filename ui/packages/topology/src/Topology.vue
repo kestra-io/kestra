@@ -136,7 +136,7 @@
     import {CLUSTER_PREFIX} from "./utils/constants";
     import * as flowYamlUtils from "./utils/flowYamlUtils";
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants";
-    import Utils from "./utils/utils";
+    import * as Utils from "./utils/utils";
     import * as VueFlowUtils from "./utils/vueFlowUtils";
     import {useScreenshot} from "./composables/useScreenshot";
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys";

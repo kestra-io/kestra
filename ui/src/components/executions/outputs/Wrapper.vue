@@ -174,7 +174,7 @@
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useClient} from "@kestra-io/kestra-sdk";
     import {useMediaQuery} from "@vueuse/core";
-    import Utils from "../../../utils/utils";
+    import * as Utils from "../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -309,8 +309,7 @@
 
     function isValidURL(url: string) {
         try {
-             
-            new URL(url);
+            URL.canParse(url);
             return true;
         } catch {
             return false;

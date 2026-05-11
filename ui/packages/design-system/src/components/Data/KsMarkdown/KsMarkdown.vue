@@ -256,6 +256,7 @@
                     // align is not in KsTableColumn's defineProps but is forwarded via $attrs
                     ...(cellAlign ? {align: cellAlign} : {}),
                 } as any, {
+                    // oxlint-disable-next-line no-underscore-dangle
                     default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 });
             });

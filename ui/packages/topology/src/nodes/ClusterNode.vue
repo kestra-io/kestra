@@ -25,7 +25,7 @@
     import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue";
     import {KsTooltip} from "@kestra-io/design-system";
     import {EVENTS} from "../utils/constants";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
 
     defineOptions({inheritAttrs: false});
 

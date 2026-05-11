@@ -65,7 +65,7 @@
     import {EVENTS} from "../utils/constants";
     import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
 
 
     const emit = defineEmits([

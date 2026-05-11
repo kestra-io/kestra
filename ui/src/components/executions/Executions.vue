@@ -411,7 +411,7 @@
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {invisibleSpace} from "../../utils/filters";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
 
     import action from "../../models/action";

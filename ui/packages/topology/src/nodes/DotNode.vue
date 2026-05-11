@@ -12,7 +12,7 @@
     import {computed} from "vue";
     import {Handle, Position} from "@vue-flow/core";
     import CircleIcon from "vue-material-design-icons/Circle.vue";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
 
     defineOptions({name: "Dot", inheritAttrs: false});
 

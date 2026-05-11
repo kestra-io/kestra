@@ -1,31 +1,28 @@
 import moment from "moment";
 
-// oxlint-disable-next-line typescript/no-extraneous-class
-export default class QueryBuilder {
-    static split(q) {
-        return q.split(/[^a-zA-Z0-9_.-]+/g)
-            .filter(r => r !== "");
+export function split(q) {
+    return q.split(/[^a-zA-Z0-9_.-]+/g)
+        .filter(r => r !== "");
+}
+
+export function toLucene(q) {
+    const splitted = split(q);
+
+    let query = "(*" + splitted.join("*") + "*)^3 OR (*" + splitted.join("* AND *") + "*)";
+
+    if (splitted.length === 1 ) {
+        query = `(${q})^5 OR ${query}`;
     }
 
-    static toLucene(q) {
-        const split = QueryBuilder.split(q);
+    return `(${query})`;
+}
 
-        let query = "(*" + split.join("*") + "*)^3 OR (*" + split.join("* AND *") + "*)";
+export function toTextLucene(q) {
+    const splitted = split(q);
 
-        if (split.length === 1 ) {
-            query = `(${q})^5 OR ${query}`;
-        }
+    return `(${splitted.join(" AND ") })`;
+}
 
-        return `(${query})`;
-    }
-
-    static toTextLucene(q) {
-        const split = QueryBuilder.split(q);
-
-        return `(${split.join(" AND ") })`;
-    }
-
-    static iso(date) {
-        return moment(new Date(parseInt(date))).toISOString(true);
-    }
+export function iso(date) {
+    return moment(new Date(parseInt(date))).toISOString(true);
 }

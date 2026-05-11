@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-import FlowUtils from "../../../src/utils/flowUtils";
+import * as FlowUtils from "../../../src/utils/flowUtils";
 
 export const flat = `
 id: flat

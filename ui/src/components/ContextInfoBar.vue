@@ -101,7 +101,7 @@
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue";
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue";
 
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
     import {useMiscStore} from "override/stores/misc";
 

@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
 
     const props = defineProps<{ text: string; label?: string, link?: boolean }>();
 

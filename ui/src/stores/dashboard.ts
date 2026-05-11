@@ -15,7 +15,7 @@ const downloadHandler = (res: AxiosResponse, filename: string) => {
 
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 
-import Utils from "../utils/utils";
+import * as Utils from "../utils/utils";
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts";
 import {useClient} from "@kestra-io/kestra-sdk";

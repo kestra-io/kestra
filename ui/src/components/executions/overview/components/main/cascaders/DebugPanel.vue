@@ -59,7 +59,7 @@
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
 
-    import Utils from "../../../../../../utils/utils";
+    import * as Utils from "../../../../../../utils/utils";
     import {apiUrl} from "override/utils/route";
     import {useClient} from "@kestra-io/kestra-sdk";
 

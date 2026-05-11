@@ -1,4 +1,4 @@
-import Utils from "./utils";
+import * as Utils from "./utils";
 
 export function getUid(): string | null {
     return localStorage.getItem("uid");

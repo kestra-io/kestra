@@ -3,7 +3,7 @@ import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
 import resource from "../models/resource";
 import action from "../models/action";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-import Utils from "../utils/utils";
+import * as Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useUnsavedChangesStore} from "./unsavedChanges";

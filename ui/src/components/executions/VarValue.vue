@@ -58,7 +58,7 @@
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
     import {useClient} from "@kestra-io/kestra-sdk";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
 
     interface Execution {
         id: string;

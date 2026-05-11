@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {ref, watch} from "vue";
 import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils";
+import * as Utils from "../utils/utils";
 import {useCoreStore} from "./core";
 import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
@@ -371,26 +371,26 @@ export const useExecutionsStore = defineStore("executions", () => {
     const route = useRoute();
 
     const throttledExecutionUpdate = throttle((executionEvent: MessageEvent) => {
-        const _execution = JSON.parse(executionEvent.data);
+        const parsedExecution = JSON.parse(executionEvent.data);
 
-        const _flow = flow.value;
+        const flowValue = flow.value;
 
-        if ((!_flow ||
-            _execution.flowId !== _flow.id ||
-            _execution.namespace !== _flow.namespace ||
-            _execution.flowRevision !== _flow.revision)
+        if ((!flowValue ||
+            parsedExecution.flowId !== flowValue.id ||
+            parsedExecution.namespace !== flowValue.namespace ||
+            parsedExecution.flowRevision !== flowValue.revision)
         ) {
             loadFlowForExecutionByExecutionId(
                 {
-                    id: _execution.id,
+                    id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = _execution;
+                execution.value = parsedExecution;
             });
         }
 
-        execution.value = _execution;
+        execution.value = parsedExecution;
     }, 500);
 
     const followExecution = (options: { id: string, rawSSE?: boolean }, translate: (itn: string) => string) => {

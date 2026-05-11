@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import VarValue from "./VarValue.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
     import {useExecutionsStore} from "../../stores/executions";

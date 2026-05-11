@@ -32,7 +32,7 @@ import {useDocStore} from "../stores/doc";
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
-import Utils from "./utils";
+import * as Utils from "./utils";
 
 
 export default async (app, routes, _stores, translations, additionalTranslations = {}) => {

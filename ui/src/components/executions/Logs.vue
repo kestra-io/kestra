@@ -119,7 +119,7 @@
     import Collapse from "../layout/Collapse.vue";
     import {State} from "@kestra-io/design-system";
 
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./overview/components/actions/Restart.vue";
     import * as LogUtils from "../../utils/logs";

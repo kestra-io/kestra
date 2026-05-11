@@ -43,7 +43,7 @@
     import BasicNode from "./BasicNode.vue";
     import {KsTooltip, SECTIONS} from "@kestra-io/design-system";
     import {EVENTS} from "../utils/constants";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
 
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys";
 

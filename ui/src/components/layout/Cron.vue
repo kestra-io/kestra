@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import cronstrue from "cronstrue";
     import "cronstrue/locales/fr";
     import {computed} from "vue";

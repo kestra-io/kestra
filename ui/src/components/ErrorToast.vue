@@ -79,6 +79,7 @@
     });
 
     const items = computed(() => {
+        // oxlint-disable-next-line no-underscore-dangle
         const messages = props.message.content?._embedded?.errors || [];
         return Array.isArray(messages) ? messages : [messages];
     });

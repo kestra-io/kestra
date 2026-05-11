@@ -10,6 +10,11 @@ export interface Namespace {
 }
 
 export class NamespaceIterator extends EntityIterator<Namespace>{
+    // oxlint-disable-next-line no-useless-constructor
+    constructor(fetchSize: number, options?: any) {
+        super(fetchSize, options);
+    }
+
     fetchCall(): Promise<{ total: number; results: Namespace[] }> {
         const namespacesStore = useNamespacesStore();
         return namespacesStore.search(this.fetchOptions());

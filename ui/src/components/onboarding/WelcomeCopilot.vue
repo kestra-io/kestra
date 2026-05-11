@@ -68,7 +68,7 @@
     import type {OnboardingResourceItem} from "./OnboardingResourceList.vue";
 
     import type {AiGenerationType} from "../../utils/constants";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
 
     export interface WelcomeCopilotExample {
         label: string;

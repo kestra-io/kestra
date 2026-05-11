@@ -19,7 +19,7 @@
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
     import {useMiscStore} from "override/stores/misc";
-    import Utils from "./utils/utils";
+    import * as Utils from "./utils/utils";
     import * as BasicAuth from "./utils/basicAuth";
     import {initPosthogIfEnabled} from "./utils/posthog";
     import ErrorToast from "./components/ErrorToast.vue";

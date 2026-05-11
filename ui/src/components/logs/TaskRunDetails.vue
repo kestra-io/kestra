@@ -222,10 +222,10 @@
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import TaskRunLine from "../executions/TaskRunLine.vue";
-    import FlowUtils from "../../utils/flowUtils";
+    import * as FlowUtils from "../../utils/flowUtils";
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
     import {useClient} from "@kestra-io/kestra-sdk";
@@ -690,7 +690,7 @@
                         clearTimeout(this.timeout);
                         this.timeout = setTimeout(() => {
                             this.timer = moment();
-                            this.rawLogs = this._deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
+                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
                             this.logsBuffer = [];
                             this.scrollToBottomFailedTask();
                         }, 100);
@@ -699,7 +699,7 @@
                         if (moment().diff(this.timer, "seconds") > 0.5) {
                             clearTimeout(this.timeout);
                             this.timer = moment();
-                            this.rawLogs = this._deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
+                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer));
                             this.logsBuffer = [];
                             this.scrollToBottomFailedTask();
                         }
@@ -891,7 +891,7 @@
                 }
             },
 
-            _deduplicateLogs(logs) {
+            deduplicateLogs(logs) {
                 const list = new Set();
 
                 return logs.filter((log) => {

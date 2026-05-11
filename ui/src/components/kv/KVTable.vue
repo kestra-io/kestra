@@ -261,7 +261,7 @@
     import action from "../../models/action";
     import resource from "../../models/resource";
 
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {useKvFilter} from "../filter/configurations";

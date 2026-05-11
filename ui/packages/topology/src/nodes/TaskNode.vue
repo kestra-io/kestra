@@ -138,7 +138,7 @@
     import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system";
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants";
     import ExecutionInformations from "../misc/ExecutionInformations.vue";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
     import BasicNode from "./BasicNode.vue";
     import {
         EXECUTION_INJECTION_KEY,

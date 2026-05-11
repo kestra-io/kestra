@@ -131,7 +131,7 @@
     import {KsDatePicker, KsTaskIcon} from "@kestra-io/design-system";
     import moment, {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import {hashCode} from "../../utils/global";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
@@ -909,9 +909,8 @@
                         localEditor.value!.trigger("click", "editor.action.triggerSuggest", {});
                     });
                 }
-
                 if (props.placeholder !== undefined) {
-                     
+                    // oxlint-disable-next-line no-new
                     new PlaceholderContentWidget(props.placeholder, localEditor.value);
                 }
 

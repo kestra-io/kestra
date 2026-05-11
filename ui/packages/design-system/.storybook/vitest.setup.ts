@@ -16,9 +16,9 @@ vi.mock("vue-i18n", () => ({
 // "@vue/compiler-core: decodeEntities option is passed but will be ignored in
 // non-browser builds" — a false-positive from the esm-bundler Vue build that
 // sets __BROWSER__=false even in browser environments.
-const _warn = console.warn.bind(console);
+const warnBak = console.warn.bind(console);
 console.warn = (...args: unknown[]) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return;
-    _warn(...args);
+    warnBak(...args);
 };
 

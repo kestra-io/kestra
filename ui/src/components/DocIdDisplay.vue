@@ -15,7 +15,7 @@
     import {computed, ref} from "vue";
     import {useRoute} from "vue-router";
     import {useDocStore} from "../stores/doc";
-    import Utils from "../utils/utils";
+    import * as Utils from "../utils/utils";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
 

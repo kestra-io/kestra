@@ -190,12 +190,12 @@
     import Download from "vue-material-design-icons/Download.vue";
     import WorkerInfo from "./WorkerInfo.vue";
     import AiIcon from "../ai/AiIcon.vue";
-    import FlowUtils from "../../utils/flowUtils";
+    import * as FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
     import {SECTIONS} from "@kestra-io/design-system";
     import {KsTaskIcon} from "@kestra-io/design-system";
     import Duration from "../layout/Duration.vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import resource from "../../models/resource";
     import action from "../../models/action";
     import {usePluginsStore} from "../../stores/plugins";

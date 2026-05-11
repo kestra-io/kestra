@@ -23,7 +23,8 @@
     import {BarChart, LineChart} from "echarts/charts";
     import {Chart, useChartGenerator} from "../composables/useDashboards";
     import {extractState, getConsistentHEXColor} from "../composables/charts";
-    import KestraUtils, {useTheme} from "../../../utils/utils";
+    import * as KestraUtils from "../../../utils/utils";
+    import {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
     import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system";
     import {TooltipType, ChartFeature} from "@kestra-io/design-system";

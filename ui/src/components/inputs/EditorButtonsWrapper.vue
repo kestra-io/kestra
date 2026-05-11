@@ -50,7 +50,7 @@
     import FlowPlaygroundToggle from "./FlowPlaygroundToggle.vue";
     import ValidationError from "../flows/ValidationError.vue";
 
-    import localUtils from "../../utils/utils";
+    import * as localUtils from "../../utils/utils";
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
     import {useExecutionsStore} from "../../stores/executions";

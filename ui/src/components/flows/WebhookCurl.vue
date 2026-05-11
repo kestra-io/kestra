@@ -102,7 +102,8 @@
                     id: props.flow.id,
                 });
             } catch (error) {
-                throw new Error(`Failed to load flow: ${error}`, {cause: error});
+                // oxlint-disable-next-line preserve-caught-error
+                throw new Error(`Failed to load flow: ${error}`);
             }
         }
     });

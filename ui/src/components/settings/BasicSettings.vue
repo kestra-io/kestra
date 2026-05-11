@@ -297,7 +297,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";

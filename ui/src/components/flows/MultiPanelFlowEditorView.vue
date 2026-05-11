@@ -51,7 +51,7 @@
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import Close from "vue-material-design-icons/Close.vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
 

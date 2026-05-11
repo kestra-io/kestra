@@ -254,16 +254,16 @@ function registerPebbleLanguage(language: string) {
 }
 
 export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly _autoCompletion: PebbleAutoCompletion;
-    private readonly _completionSource: ComputedRef<string | undefined>;
+    private readonly pebbleAutoCompletion: PebbleAutoCompletion;
+    private readonly pebbleCompletionSource: ComputedRef<string | undefined>;
 
     constructor(language: string, autoCompletion: PebbleAutoCompletion, completionSource: ComputedRef<string | undefined>) {
         if(!language.endsWith("-pebble")) {
             throw new Error("Pebble language must have a '-pebble' suffix");
         }
         super(language);
-        this._autoCompletion = autoCompletion;
-        this._completionSource = completionSource;
+        this.pebbleAutoCompletion = autoCompletion;
+        this.pebbleCompletionSource = completionSource;
     }
 
     configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], ___: monaco.editor.ICodeEditor | undefined) {
@@ -271,8 +271,8 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
 
         const autoCompletionProviders: IDisposable[] = [];
 
-        const autoCompletion = this._autoCompletion;
-        const completionSource = this._completionSource;
+        const autoCompletion = this.pebbleAutoCompletion;
+        const completionSource = this.pebbleCompletionSource;
 
         // Register a new language
         registerPebbleLanguage(this.language);

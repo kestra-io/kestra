@@ -112,7 +112,7 @@
     import Errors from "../../../components/errors/Errors.vue";
     import {KsFilter as KSFilter} from "@kestra-io/design-system";
     import {editorViewTypes} from "../../../utils/constants";
-    import Utils from "../../../utils/utils";
+    import * as Utils from "../../../utils/utils";
     import {usePluginsStore} from "../../../stores/plugins";
     import {useBlueprintsStore} from "../../../stores/blueprints";
     import {useApiStore} from "../../../stores/api";

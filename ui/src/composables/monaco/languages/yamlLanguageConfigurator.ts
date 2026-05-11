@@ -99,11 +99,11 @@ function filterMissingRequiredTaskProperties({
 }
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly _yamlAutoCompletion: YamlAutoCompletion;
+    private readonly yamlAutoCompletionObject: YamlAutoCompletion;
 
     constructor(yamlAutoCompletion: YamlAutoCompletion) {
         super("yaml");
-        this._yamlAutoCompletion = yamlAutoCompletion;
+        this.yamlAutoCompletionObject = yamlAutoCompletion;
     }
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
@@ -125,6 +125,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         const yamlCompletion = (
             StandaloneServices.get(ILanguageFeaturesService).completionProvider
+                // oxlint-disable-next-line no-underscore-dangle
                 ._entries as {
                 selector: string;
                 provider: {
@@ -364,7 +365,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         ___: monaco.editor.ICodeEditor | undefined,
     ) {
         const autoCompletionProviders: IDisposable[] = [];
-        const yamlAutoCompletion = this._yamlAutoCompletion;
+        const yamlAutoCompletion = this.yamlAutoCompletionObject;
 
         // Values autocompletion
         autoCompletionProviders.push(

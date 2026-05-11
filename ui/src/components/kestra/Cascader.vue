@@ -26,7 +26,7 @@
     import {onMounted, ref} from "vue";
 
     import VarValue from "../executions/VarValue.vue";
-    import Utils from "../../utils/utils";
+    import * as Utils from "../../utils/utils";
 
     interface Options {
         label: string;

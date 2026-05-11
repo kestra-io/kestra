@@ -1,7 +1,7 @@
 import {MarkerType, Position, useVueFlow} from "@vue-flow/core";
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core";
 import * as dagre from "dagre";
-import Utils from "./utils";
+import * as Utils from "./utils";
 import {CLUSTER_PREFIX, NODE_SIZES} from "./constants";
 import isEqual from "lodash/isEqual";
 

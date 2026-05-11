@@ -9,7 +9,7 @@
         allowAuthentication="false"
         allowServerSelection="false"
         allowTry="false"
-        regularFont="Public Sans"
+        regularFont="Mona Sans"
         monoFont="Source Code Pro"
     />
 </template>

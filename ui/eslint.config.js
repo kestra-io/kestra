@@ -23,13 +23,6 @@ export default defineConfig([
         files: ["**/*.vue"],
         languageOptions: {parserOptions: {
             parser: tsParser,
-            project: [
-                "./tsconfig.json", 
-                "./packages/design-system/tsconfig.app.json", 
-                "./packages/design-system/tsconfig.node.json", 
-                "./packages/topology/tsconfig.json",
-            ],
-            tsconfigRootDir: process.cwd(),
             extraFileExtensions: [".vue"],
         }},
         rules: {

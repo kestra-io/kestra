@@ -12,7 +12,7 @@
             :type="disabled ? '' : 'textarea'"
             :autosize="{minRows: 1}"
             :inputStyle="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
-            :suffixIcon="disabled ? Lock : undefined"
+            :suffixIcon="SuffixIcon"
         />
     </div>
 </template>
@@ -20,6 +20,14 @@
 <script setup lang="ts">
     import {useId, computed, useTemplateRef} from "vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+
+    const SuffixIcon = computed(() => {
+        if (props.disabled) {
+            return Lock;
+        }
+
+        return undefined;
+    });
 
     defineOptions({inheritAttrs: false});
 

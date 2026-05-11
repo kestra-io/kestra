@@ -1,26 +1,26 @@
-import path from "node:path"
-import {readdirSync} from "node:fs"
-import {defineConfig} from "tsdown"
+import path from "node:path";
+import {readdirSync} from "node:fs";
+import {defineConfig} from "tsdown";
 
 function findVueFiles(dir: string): string[] {
-    const results: string[] = []
+    const results: string[] = [];
     for (const entry of readdirSync(dir, {withFileTypes: true})) {
         if (entry.isDirectory()) {
-            results.push(...findVueFiles(path.join(dir, entry.name)))
+            results.push(...findVueFiles(path.join(dir, entry.name)));
         } else if (entry.name.endsWith(".vue")) {
-            results.push(path.join(dir, entry.name))
+            results.push(path.join(dir, entry.name));
         }
     }
-    return results
+    return results;
 }
 
-const componentsDir = path.resolve(import.meta.dirname, "src/components")
+const componentsDir = path.resolve(import.meta.dirname, "src/components");
 const componentEntries = Object.fromEntries(
     findVueFiles(componentsDir).map(file => {
-        const key = path.relative(path.resolve(import.meta.dirname, "src"), file).replace(/\.vue$/, "")
-        return [key, "./" + path.relative(import.meta.dirname, file).replace(/\\/g, "/")]
+        const key = path.relative(path.resolve(import.meta.dirname, "src"), file).replace(/\.vue$/, "");
+        return [key, "./" + path.relative(import.meta.dirname, file).replace(/\\/g, "/")];
     }),
-)
+);
 
 export default defineConfig({
     platform: "browser",
@@ -31,7 +31,7 @@ export default defineConfig({
             ...componentEntries,
             "index": "./src/index.ts",
             "styleBase": "./src/styleBase.ts",
-        }
+        },
     },
     fromVite: true,
     dts: {vue: true, tsconfig: "./tsconfig.app.json"},
@@ -56,4 +56,4 @@ export default defineConfig({
             },
         },
     },
-})
+});

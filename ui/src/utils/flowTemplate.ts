@@ -6,7 +6,7 @@ export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataT
         return  true;
     }
 
-    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource]
+    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource];
 
     return (
         isEdit && user &&
@@ -26,6 +26,6 @@ export function saveFlowTemplate(self: {
         .then((response: { id: string }) => {
             self.$toast().saved(response.id);
 
-            return response
-        })
+            return response;
+        });
 }

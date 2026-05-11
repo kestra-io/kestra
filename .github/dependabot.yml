@@ -55,7 +55,11 @@ updates:
 
       storybook:
         applies-to: version-updates
-        patterns: ["storybook*", "@storybook/*", "eslint-plugin-storybook"]
+        patterns: ["storybook*", "@storybook/*"]
+
+      linting:
+        applies-to: version-updates
+        patterns: ["oxlint", "eslint-plugin-oxlint"]
 
       vitest:
         applies-to: version-updates
@@ -74,7 +78,8 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
-            "eslint-plugin-storybook",
+            "oxlint",
+            "eslint-plugin-oxlint",
             "vitest",
             "@vitest/*",
           ]
@@ -91,7 +96,8 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
-            "eslint-plugin-storybook",
+            "oxlint",
+            "eslint-plugin-oxlint",
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from minor updates
@@ -111,22 +117,19 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
-            "eslint-plugin-storybook",
+            "oxlint",
+            "eslint-plugin-oxlint",
             "vitest",
             "@vitest/*",
           ]
 
     ignore:
-      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint which requires <6.0.0)
+      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint/parser which requires <6.0.0)
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
 
-      # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
+      # Ignore eslint major updates (eslint@10 currently conflicts with eslint-plugin-vue)
       - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-
-      # Ignore @eslint/js major updates (v10 requires eslint ^10 but project is on eslint ^9)
-      - dependency-name: "@eslint/js"
         update-types: ["version-update:semver-major"]
 
       # Ignore eslint-plugin-vue all updates (v10 requires eslint ^10 but project is on eslint ^9)
@@ -228,19 +231,6 @@ updates:
             "remark-*",
             "unified",
           ]
-
-    ignore:
-      # Ignore eslint major updates (eslint@10 currently conflicts with typescript-eslint + eslint-plugin-vue)
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-
-      # Ignore @eslint/js major updates (v10 requires eslint ^10 but project is on eslint ^9)
-      - dependency-name: "@eslint/js"
-        update-types: ["version-update:semver-major"]
-
-      # Ignore eslint-plugin-vue all updates (v10 requires eslint ^10 but project is on eslint ^9)
-      - dependency-name: "eslint-plugin-vue"
-        versions: ["*"]
 
   # Maintain dependencies for ui/packages/topology
   - package-ecosystem: "npm"

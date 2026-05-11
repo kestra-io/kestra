@@ -420,7 +420,7 @@
             await nextTick();
             const containerWidth = wavesContainer.value?.clientWidth ?? 600;
             barCount = Math.floor(containerWidth / BAR_WIDTH);
-            volumeBuffer.value = new Array(barCount).fill(0);
+            volumeBuffer.value = Array(barCount).fill(0);
 
             stream = await navigator.mediaDevices.getUserMedia({audio: true});
             audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();

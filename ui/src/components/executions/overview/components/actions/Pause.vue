@@ -33,8 +33,8 @@
     const props = defineProps({
         execution: {
             type: Object,
-            required: true
-        }
+            required: true,
+        },
     });
 
     const {t} = useI18n();
@@ -59,7 +59,7 @@
         toast.confirm(t("pause confirm", {id: props.execution.id}), () => {
             return executionsStore
                 .pause({
-                    id: props.execution.id
+                    id: props.execution.id,
                 })
                 .then(() => {
                     isDrawerOpen.value = false;

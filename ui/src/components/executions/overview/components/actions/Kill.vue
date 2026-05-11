@@ -40,8 +40,8 @@
     const props = defineProps({
         execution: {
             type: Object,
-            required: true
-        }
+            required: true,
+        },
     });
 
     const {t} = useI18n();
@@ -64,7 +64,7 @@
             return executionsStore
                 .kill({
                     id: props.execution.id,
-                    isOnKillCascade: isOnKillCascade
+                    isOnKillCascade: isOnKillCascade,
                 })
                 .then(() => {
                     toast.success(t("killed done"));

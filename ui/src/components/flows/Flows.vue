@@ -321,7 +321,7 @@
     const router = useRouter();
 
     const {t} = useI18n();
-    const toast = useToast()
+    const toast = useToast();
 
     const flowFilter = useFlowFilter();
 
@@ -334,47 +334,47 @@
             label: t("labels"),
             prop: "labels",
             default: true,
-            description: t("filter.table_column.flows.labels")
+            description: t("filter.table_column.flows.labels"),
         },
         {
             label: t("namespace"),
             prop: "namespace",
             default: true,
-            description: t("filter.table_column.flows.namespace")
+            description: t("filter.table_column.flows.namespace"),
         },
         {
             label: t("last execution date"),
             prop: "state.startDate",
             default: true,
-            description: t("filter.table_column.flows.last execution date")
+            description: t("filter.table_column.flows.last execution date"),
         },
         {
             label: t("last execution status"),
             prop: "state.current",
             default: true,
-            description: t("filter.table_column.flows.last execution status")
+            description: t("filter.table_column.flows.last execution status"),
         },
         {
             label: t("execution statistics"),
             prop: "state",
             default: true,
-            description: t("filter.table_column.flows.execution statistics")
+            description: t("filter.table_column.flows.execution statistics"),
         },
         {
             label: t("triggers"),
             prop: "triggers",
             default: true,
-            description: t("filter.table_column.flows.triggers")
+            description: t("filter.table_column.flows.triggers"),
         },
     ]);
 
     const {
         visibleColumns: displayColumns,
-        updateVisibleColumns
+        updateVisibleColumns,
     } = useTableColumns({
         columns: optionalColumns.value,
         storageKey: "flows",
-        initialVisibleColumns: []
+        initialVisibleColumns: [],
     });
 
     const user = computed(() => authStore.user);
@@ -402,7 +402,7 @@
                     size,
                     page,
                     sort: sort ?? String(route.query.sort ?? "id:asc"),
-                })
+                }),
             )
             .then((data: any) => {
                 if (user.value?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.LIST)) {
@@ -418,7 +418,7 @@
 
     const onRowDoubleClick = (item: any) => router.push({
         name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant}
+        params: {...item, tenant: route.params.tenant},
     });
 
     const filterQuery = computed(() => {
@@ -513,7 +513,7 @@
         await executionsStore.loadFlowForExecution({
             namespace: flow.namespace,
             flowId: flow.id,
-            store: true
+            store: true,
         });
 
         showRunModal.value = true;
@@ -540,7 +540,7 @@
                         toggleAllUnselected();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -561,7 +561,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -590,7 +590,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -611,7 +611,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -634,7 +634,7 @@
     function getLastExecution(row: any) {
         if (!latestExecutions.value || !row) return null;
         return latestExecutions.value.find(
-            (e: any) => e.flowId === row.id && e.namespace === row.namespace
+            (e: any) => e.flowId === row.id && e.namespace === row.namespace,
         ) ?? null;
     }
 
@@ -665,14 +665,14 @@
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
-            operation: "EQUALS"
+            operation: "EQUALS",
         }];
     }
 
     async function exportFlowsAsStream() {
         await flowStore.exportFlowAsCSV(
-            route.query
-        )
+            route.query,
+        );
     }
 </script>
 

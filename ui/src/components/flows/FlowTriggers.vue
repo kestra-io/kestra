@@ -312,7 +312,7 @@
         start: null as Date | null,
         end: null as Date | null,
         inputs: null as any,
-        labels: [] as any[]
+        labels: [] as any[],
     });
     const isOpen = ref(false);
     const triggers = ref<any[]>([]);
@@ -327,29 +327,29 @@
             label: t("type"),
             prop: "type",
             default: true,
-            description: t("filter.table_column.flow_triggers.type")
+            description: t("filter.table_column.flow_triggers.type"),
         },
         {
             label: t("workerId"),
             prop: "workerId",
             default: false,
-            description: t("filter.table_column.flow_triggers.workerId")
+            description: t("filter.table_column.flow_triggers.workerId"),
         },
         {
             label: t("next evaluation date"),
             prop: "nextEvaluationDate",
             default: true,
-            description: t("filter.table_column.flow_triggers.next execution date")
-        }
+            description: t("filter.table_column.flow_triggers.next execution date"),
+        },
     ]);
 
     const {
         orderedColumns,
         visibleColumns: displayColumns,
-        updateVisibleColumns: updateDisplayColumns
+        updateVisibleColumns: updateDisplayColumns,
     } = useTableColumns({
         columns: localOptionalColumns.value,
-        storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS
+        storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS,
     });
 
     const toast = useToast();
@@ -385,17 +385,17 @@
         if(!flowStore.flow?.triggers) return [];
 
         let flowTriggers = flowStore.flow?.triggers.map((trigger: any) => {
-            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false}
-        })
+            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false};
+        });
         if (flowTriggers) {
             const trigs = flowTriggers.map((flowTrigger: any) => {
-                let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id)
-                return {...flowTrigger, ...pollingTrigger}
-            })
+                let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id);
+                return {...flowTrigger, ...pollingTrigger};
+            });
 
-            return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value))
+            return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value));
         }
-        return triggers.value
+        return triggers.value;
     });
 
     const cleanBackfill = computed(() => {
@@ -405,32 +405,32 @@
 
     const checkBackfill = computed(() => {
         if (!backfill.value.start) {
-            return true
+            return true;
         }
         if (backfill.value.end && backfill.value.start > backfill.value.end) {
-            return true
+            return true;
         }
         if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow?.inputs.map((input: any) => input.required !== false ? input.id : null).filter((i: any) => i !== null)
+            const requiredInputs = flowStore.flow?.inputs.map((input: any) => input.required !== false ? input.id : null).filter((i: any) => i !== null);
 
             if (requiredInputs.length > 0) {
                 if (!backfill.value.inputs) {
-                    return true
+                    return true;
                 }
                 const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined);
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true
+                    return true;
                 }
             }
         }
         if (backfill.value.labels?.length > 0) {
             for (let label of backfill.value.labels) {
                 if ((label.key && !label.value) || (!label.key && label.value)) {
-                    return true
+                    return true;
                 }
             }
         }
-        return false
+        return false;
     });
 
     const userCan = (act: any) => {
@@ -448,8 +448,8 @@
     };
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
-        isBackfillOpen.value = bool
-        selectedTrigger.value = trigger
+        isBackfillOpen.value = bool;
+        selectedTrigger.value = trigger;
     };
 
     const loadDataAfterAction = () => loadData();
@@ -460,7 +460,7 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value
+            backfill: cleanBackfill.value,
         })
             .then(() => {
                 toast.saved(selectedTrigger.value?.triggerId);
@@ -469,10 +469,10 @@
                     start: null,
                     end: null,
                     inputs: null,
-                    labels: []
-                }
+                    labels: [],
+                };
                 loadDataAfterAction();
-            })
+            });
     };
 
     const pauseBackfill = (trigger: any) => {
@@ -480,7 +480,7 @@
             .then(() => {
                 toast.saved(trigger.triggerId);
                 loadDataAfterAction();
-            })
+            });
     };
 
     const unpauseBackfill = (trigger: any) => {
@@ -488,7 +488,7 @@
             .then(() => {
                 toast.saved(trigger.triggerId);
                 loadDataAfterAction();
-            })
+            });
     };
 
     const deleteBackfill = (trigger: any) => {
@@ -496,7 +496,7 @@
             .then(() => {
                 toast.saved(trigger.triggerId);
                 loadDataAfterAction();
-            })
+            });
     };
 
     const setDisabled = (trigger: any, value: boolean) => {
@@ -504,29 +504,29 @@
             .then(() => {
                 toast.saved(trigger.triggerId);
                 loadDataAfterAction();
-            })
+            });
     };
 
     const unlock = (trigger: any) => {
         triggerStore.unlock({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
-            triggerId: trigger.triggerId
+            triggerId: trigger.triggerId,
         }).then(() => {
             toast.saved(trigger.triggerId);
             loadDataAfterAction();
-        })
+        });
     };
 
     const restart = (trigger: any) => {
         triggerStore.restart({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
-            triggerId: trigger.triggerId
+            triggerId: trigger.triggerId,
         }).then(() => {
             toast.saved(trigger.triggerId);
             loadDataAfterAction();
-        })
+        });
     };
 
     const backfillProgression = (backfillObj: any) => {
@@ -555,11 +555,11 @@
                 tenant: route.params?.tenant,
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
-                tab: "edit"
+                tab: "edit",
             },
             query: {
-                createTrigger: "true"
-            }
+                createTrigger: "true",
+            },
         });
     };
 

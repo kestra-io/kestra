@@ -75,7 +75,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const total = ref<number>(0);
     const logs = ref<LogsState>({
         total: 0,
-        results: []
+        results: [],
     });
     const metrics = ref<any[]>([]);
     const metricsTotal = ref<number>(0);
@@ -104,48 +104,48 @@ export const useExecutionsStore = defineStore("executions", () => {
             null,
             {
                 params: {
-                    revision: options.revision
-                }
-            })
-    }
+                    revision: options.revision,
+                },
+            });
+    };
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/restart/by-ids`,
-            options.executionsId
-        )
-    }
+            options.executionsId,
+        );
+    };
 
     const queryRestartExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/restart/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/resume/by-ids`,
-            options.executionsId
-        )
-    }
+            options.executionsId,
+        );
+    };
 
     const queryResumeExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/resume/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/replay/by-ids`,
             options.executionsId,
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
         return axios.post(
@@ -153,27 +153,27 @@ export const useExecutionsStore = defineStore("executions", () => {
             options.executionsId,
             {
                 params: {
-                    newStatus: options.newStatus
-                }
-            }
-        )
-    }
+                    newStatus: options.newStatus,
+                },
+            },
+        );
+    };
 
     const queryReplayExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/replay/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/change-status/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
         return axios.post<Execution>(
@@ -183,10 +183,10 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined
-                }
-            })
-    }
+                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
+                },
+            });
+    };
 
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
@@ -196,13 +196,13 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
-                    breakpoints: options.breakpoints ? options.breakpoints : undefined
+                    breakpoints: options.breakpoints ? options.breakpoints : undefined,
                 },
                 headers: {
-                    "Content-Type": "multipart/form-data"
-                }
-            })
-    }
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+    };
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
         return axios.post(
@@ -210,10 +210,10 @@ export const useExecutionsStore = defineStore("executions", () => {
             null,
             {
                 params: {
-                    status: options.state
-                }
-            })
-    }
+                    status: options.state,
+                },
+            });
+    };
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
         return axios.post(
@@ -221,69 +221,69 @@ export const useExecutionsStore = defineStore("executions", () => {
             {
                 taskRunId: options.taskRunId,
                 state: options.state,
-            })
-    }
+            });
+    };
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution;
         execution.value = updated;
         return updated;
-    }
+    };
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
         return axios.delete(`${apiUrl()}/executions/${options.id}/kill?isOnKillCascade=${options.isOnKillCascade}`);
-    }
+    };
 
     const bulkKill = (options: { executionsId: string[] }) => {
         return axios.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId});
-    }
+    };
 
     const queryKill = (options: Record<string, any>) => {
         return axios.delete(`${apiUrl()}/executions/kill/by-query`, {params: options});
-    }
+    };
 
     const resume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
-                "content-type": "multipart/form-data"
-            }
+                "content-type": "multipart/form-data",
+            },
         });
-    }
+    };
 
     const validateResume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
-                "content-type": "multipart/form-data"
-            }
+                "content-type": "multipart/form-data",
+            },
         });
-    }
+    };
 
     const pause = (options: { id: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/pause`);
-    }
+    };
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/pause/by-ids`,
-            options.executionsId
-        )
-    }
+            options.executionsId,
+        );
+    };
 
     const queryPauseExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/pause/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const loadExecution = (options: { id: string }) => {
         return axios.get(`${apiUrl()}/executions/${options.id}`).then(response => {
             execution.value = response.data;
             return response.data;
-        })
-    }
+        });
+    };
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
@@ -297,21 +297,21 @@ export const useExecutionsStore = defineStore("executions", () => {
             }
 
             return response.data;
-        })
-    }
+        });
+    };
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
-                "content-type": "multipart/form-data"
+                "content-type": "multipart/form-data",
             },
             params: {
                 labels: options.labels ?? [],
-                scheduleDate: options.scheduleDate
-            }
-        })
-    }
+                scheduleDate: options.scheduleDate,
+            },
+        });
+    };
 
     const triggerExecution = (options: {
         namespace: string;
@@ -325,16 +325,16 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.post<Execution>(`${apiUrl()}/executions/${options.namespace}/${options.id}`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
             headers: {
-                "content-type": "multipart/form-data"
+                "content-type": "multipart/form-data",
             },
             params: {
                 labels: options.labels ?? [],
                 scheduleDate: options.scheduleDate,
                 kind: options.kind,
-                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined
-            }
-        })
-    }
+                breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
+            },
+        });
+    };
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {
         const {id, deleteLogs, deleteMetrics, deleteStorage} = options;
@@ -344,16 +344,16 @@ export const useExecutionsStore = defineStore("executions", () => {
 
         return axios.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
             execution.value = undefined;
-        })
-    }
+        });
+    };
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
-    }
+        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}});
+    };
 
     const queryDeleteExecution = (options: Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options})
-    }
+        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options});
+    };
 
     const sse = ref<EventSource | undefined>(undefined);
 
@@ -383,10 +383,10 @@ export const useExecutionsStore = defineStore("executions", () => {
             loadFlowForExecutionByExecutionId(
                 {
                     id: _execution.id,
-                    revision: route.query.revision?.toString()
-                }
+                    revision: route.query.revision?.toString(),
+                },
             ).then(() => {
-                execution.value = _execution
+                execution.value = _execution;
             });
         }
 
@@ -413,7 +413,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 closeSSE();
                 throttledExecutionUpdate.flush();
             }
-        }
+        };
 
         // sse.onerror doesn't return the details of the error
         // but as our emitter can only throw an error on 404
@@ -426,7 +426,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                     title: translate("error"),
                     content: {
                         message: translate("errors.404.flow or execution"),
-                    }
+                    },
                 };
             } else {
                 coreStore.message = {
@@ -434,13 +434,13 @@ export const useExecutionsStore = defineStore("executions", () => {
                     title: translate("something_went_wrong.connection_lost.title"),
                     content: {
                         message: translate("something_went_wrong.connection_lost.message"),
-                    }
+                    },
                 };
             }
-        }
+        };
 
         return Promise.resolve(sse.value);
-    }
+    };
 
     function followExecutionDependencies(options: { id: string; expandAll?: boolean }) {
         return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true});
@@ -448,7 +448,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const followLogs = (options: { id: string }) => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}));
-    }
+    };
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {
         return axios.get(`${apiUrl()}/logs/${options.executionId}`, {
@@ -461,11 +461,11 @@ export const useExecutionsStore = defineStore("executions", () => {
             logs.value = response.data;
             return response.data;
         });
-    }
+    };
 
     const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
         return axios.get(`${apiUrl()}/metrics/${options.executionId}`, {
-            params: options.params
+            params: options.params,
         }).then(response => {
             if (options.store === false) {
                 return response.data;
@@ -474,28 +474,28 @@ export const useExecutionsStore = defineStore("executions", () => {
             total.value = response.data.total;
             return response.data;
         });
-    }
+    };
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return axios.get(`${apiUrl()}/logs/${options.executionId}/download`, {
-            params: options.params
+            params: options.params,
         }).then(response => {
             return response.data;
-        })
-    }
+        });
+    };
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return axios.delete(`${apiUrl()}/logs/${options.executionId}`, {
-            params: options.params
+            params: options.params,
         }).then(response => {
             return response.data;
-        })
-    }
+        });
+    };
 
     const _filePreview = ref<any | undefined>(undefined);
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
-            params: options
+            params: options,
         }).then(response => {
             let data = {...response.data};
 
@@ -511,8 +511,8 @@ export const useExecutionsStore = defineStore("executions", () => {
 
             _filePreview.value = data;
             return data;
-        })
-    }
+        });
+    };
 
     const setLabels = (options: { executionId: string; labels: any }) => {
         return axios.post(
@@ -520,58 +520,58 @@ export const useExecutionsStore = defineStore("executions", () => {
             options.labels,
             {
                 headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-    }
+                    "Content-Type": "application/json",
+                },
+            });
+    };
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
         return axios.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
-            params: options.params
-        })
-    }
+            params: options.params,
+        });
+    };
 
     const bulkSetLabels = (options: any) => {
-        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options)
-    }
+        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options);
+    };
 
     const unqueue = (options: { id: string; state: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/unqueue?state=${options.state}`);
-    }
+    };
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
         return axios.post(
             `${apiUrl()}/executions/unqueue/by-ids?state=${options.newStatus}`,
-            options.executionsId
-        )
-    }
+            options.executionsId,
+        );
+    };
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/unqueue/by-query?state=${options.newStatus}`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const forceRun = (options: { id: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/force-run`);
-    }
+    };
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/force-run/by-ids`,
-            options.executionsId
-        )
-    }
+            options.executionsId,
+        );
+    };
 
     const queryForceRunExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/force-run/by-query`,
             {},
-            {params: options}
-        )
-    }
+            {params: options},
+        );
+    };
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
         const revision = options.revision ? `?revision=${options.revision}` : "";
@@ -582,7 +582,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 }
                 return response.data;
             });
-    }
+    };
 
     const loadFlowForExecutionByExecutionId = (options: { id: string, revision?: string }) => {
         return axios.get(`${apiUrl()}/executions/${options.id}/flow`)
@@ -590,15 +590,15 @@ export const useExecutionsStore = defineStore("executions", () => {
                 flow.value = response.data;
                 return response.data;
             });
-    }
+    };
 
     const fetchGraph = (options: { id: string; params?: Record<string, any> }) => {
         const params = options.params ? options.params : {};
         return axios.get(`${apiUrl()}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
             .then(response => {
                 return response.data;
-            })
-    }
+            });
+    };
 
     function loadGraph(options: { id: string; params?: Record<string, any> }) {
         return fetchGraph(options).then(graph => {
@@ -659,7 +659,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 nodeByUid[node.uid] = node;
 
                 const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
-                    .sort((a, b) => b.length - a.length)?.[0]
+                    .sort((a, b) => b.length - a.length)?.[0];
 
                 if(parentSubflow) {
                     if(parentSubflow in subflowsExecutions.value) {
@@ -687,67 +687,67 @@ export const useExecutionsStore = defineStore("executions", () => {
         flowGraph.value = Object.assign({}, graph);
 
         return graph;
-    }
+    };
 
     const loadNamespaces = () => {
         return axios.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
                 namespaces.value = response.data;
-            })
-    }
+            });
+    };
 
     const loadFlowsExecutable = (options: { namespace: string }) => {
         return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
                 flowsExecutable.value = response.data;
-            })
-    }
+            });
+    };
 
     const loadLatestExecutions = (options: { flowFilters: any }) => {
         return axios.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
             return response.data;
-        })
-    }
+        });
+    };
 
     // mutations
     const addSubflowExecution = (params: { subflow: string; execution: any }) => {
         subflowsExecutions.value[params.subflow] = params.execution;
-    }
+    };
 
     const removeSubflowExecution = (subflow: string) => {
         delete subflowsExecutions.value[subflow];
-    }
+    };
 
     const resetLogs = () => {
         logs.value = {results: [], total: 0};
-    }
+    };
 
     const appendLogs = (logsData: { results: any[] }) => {
         logs.value.results = logs.value.results.concat(logsData.results);
-    }
+    };
 
     const appendFollowedLogs = (logsData: any) => {
         logs.value.results.push(logsData);
         logs.value.total = logs.value.results.length;
-    }
+    };
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
         return axios.get(`${apiUrl()}/executions`, {
             params: {
                 namespace,
                 flowId,
-            }
+            },
         }).then(response => {
             executions.value = response.data.results;
             total.value = response.data.total;
             return response.data;
         });
-    }
+    };
 
     const exportExecutionsAsCSV = async (params: any) => {
         const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,
-            {params, responseType: "blob"}
+            {params, responseType: "blob"},
         );
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
@@ -757,7 +757,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         link.click();
         link.remove();
         window.URL.revokeObjectURL(url);
-    }
+    };
 
     return {
         // State
@@ -834,6 +834,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,
-        exportExecutionsAsCSV
+        exportExecutionsAsCSV,
     };
 });

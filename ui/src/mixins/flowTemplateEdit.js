@@ -19,7 +19,7 @@ export default {
     components: {
         Editor,
         ContentSave,
-        Delete
+        Delete,
     },
     data() {
         return {
@@ -27,7 +27,7 @@ export default {
             previousContent: "",
             readOnlyEditFields: {},
             resource: resource,
-            action: action
+            action: action,
         };
     },
     computed: {
@@ -42,10 +42,10 @@ export default {
             return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.FLOW, action.CREATE, this.item.namespace);
         },
         canExecute() {
-            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.item.namespace);
         },
         routeInfo() {
             let route = {
@@ -55,9 +55,9 @@ export default {
                         label: this.$t(`${this.dataType}s`),
                         link: {
                             name: `${this.dataType}s/list`,
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             };
 
             if (this.isEdit) {
@@ -67,17 +67,17 @@ export default {
                         link: {
                             name: `${this.dataType}s/list`,
                             query: {
-                                namespace: this.$route.params.namespace
-                            }
-                        }
-                    }
-                )
+                                namespace: this.$route.params.namespace,
+                            },
+                        },
+                    },
+                );
             }
 
             return route;
         },
         item() {
-            return this[this.dataType]
+            return this[this.dataType];
         },
         canDelete() {
             return (
@@ -86,7 +86,7 @@ export default {
                 this.authStore.user?.isAllowed(
                     resource[this.dataType.toUpperCase()],
                     action.DELETE,
-                    this.item.namespace
+                    this.item.namespace,
                 )
             );
         },
@@ -94,8 +94,8 @@ export default {
     setup(){
         const $http = useClient();
         return {
-            $http
-        }
+            $http,
+        };
     },
     methods: {
         loadFile() {
@@ -145,11 +145,11 @@ export default {
                             "</ul>\n" +
                             "</p>\n" +
                             "</div>\n" +
-                            "</div>"
+                            "</div>";
                     }
 
                     return this.$t("delete confirm", {name: this.item.id}) + warning;
-                })
+                });
         },
         deleteFile() {
             if (this.item) {
@@ -167,18 +167,18 @@ export default {
 
                                 return deletePromise
                                     ?.then(() => {
-                                        this.content = ""
-                                        this.previousContent = ""
+                                        this.content = "";
+                                        this.previousContent = "";
                                         return this.$router.push({
                                             name: this.dataType + "s/list",
                                             params: {
-                                                tenant: this.$route.params.tenant
-                                            }
+                                                tenant: this.$route.params.tenant,
+                                            },
                                         });
                                     })
                                     .then(() => {
                                         this.$toast().deleted(item.id);
-                                    })
+                                    });
                             });
                     });
             }
@@ -199,7 +199,7 @@ export default {
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {
                         if (item[key] !== this.readOnlyEditFields[key]) {
-                            this.$toast().warning(this.$t("read only fields have changed (id, namespace...)"))
+                            this.$toast().warning(this.$t("read only fields have changed (id, namespace...)"));
 
                             return;
                         }
@@ -244,13 +244,13 @@ export default {
                             params: {
                                 ...item,
                                 tab: "source",
-                                tenant: this.$route.params.tenant
-                            }
+                                tenant: this.$route.params.tenant,
+                            },
                         });
                     })
                     .then(() => {
-                        this.$toast().saved(item.id)
-                    })
+                        this.$toast().saved(item.id);
+                    });
             }
         },
         updatePluginDocumentation(event) {

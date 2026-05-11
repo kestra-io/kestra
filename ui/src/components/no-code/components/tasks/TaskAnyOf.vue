@@ -49,7 +49,7 @@
 
     defineOptions({inheritAttrs: false});
 
-    const model = defineModel<any>()
+    const model = defineModel<any>();
 
     const emit = defineEmits(["update:selectedSchema"]);
 
@@ -72,12 +72,12 @@
                                 ...acc,
                                 required: [
                                     ...acc.required,
-                                    ...(refSchema.required ?? [])
+                                    ...(refSchema.required ?? []),
                                 ],
                                 properties: {
                                     ...acc.properties,
                                     ...refSchema.properties,
-                                }
+                                },
                             };
                         }
                     } else {
@@ -85,12 +85,12 @@
                             ...acc,
                             required: [
                                 ...acc.required,
-                                ...(item.required ?? [])
+                                ...(item.required ?? []),
                             ],
                             properties: {
                                 ...acc.properties,
                                 ...item.properties,
-                            }
+                            },
                         };
                     }
                     return acc;
@@ -101,7 +101,7 @@
                     $language: "",
                 }),
 
-            }
+            };
         }
         return schema;
     }
@@ -152,13 +152,13 @@
     const filteredProperties = computed(() =>
         currentSchema.value?.properties
             ? Object.entries(currentSchema.value.properties).filter(([key, schema]: [string, Schema]) => !(key === "type" && schema?.const))
-            : []
+            : [],
     );
 
     const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, computed<Record<string, Schema>>(() => ({})));
 
     const currentSchema = computed(() => {
-        if(!delayedSelectedSchema.value) return
+        if(!delayedSelectedSchema.value) return undefined;
         const rawSchema = definitions.value[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
         return consolidateAllOfSchemas(rawSchema, definitions.value);
     });
@@ -166,7 +166,7 @@
     const {getBlockComponent} = useBlockComponent();
 
     const currentSchemaType = computed(() =>
-        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined
+        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
     );
 
     const isSelectingPlugins = computed(() => schemas.value.length > 4);
@@ -184,7 +184,7 @@
                     value: makeKey(schema),
                     id: itemsTypeString,
                 };
-            })
+            });
         }
 
         if (!schemas.value?.length || !definitions.value) return [];
@@ -265,7 +265,7 @@
             (typeof model.value === "object" && item.value === "object") ||
             (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
-            (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string")
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
         );
 
         selectedSchema.value = schema?.value;
@@ -338,7 +338,7 @@
 
     // Expose
     defineExpose({
-        resetSelectType
+        resetSelectType,
     });
 </script>
 

@@ -279,7 +279,7 @@
         keyOnly: false,
         paneView: false,
         namespaceColumn: undefined,
-        includeInherited: false
+        includeInherited: false,
     });
 
     const emit = defineEmits<{
@@ -310,7 +310,7 @@
         description: undefined,
         tags: [{key: undefined, value: undefined}],
         update: undefined,
-        updateValue: undefined
+        updateValue: undefined,
     });
 
     const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS;
@@ -321,20 +321,20 @@
                 label: t("namespace"),
                 prop: "namespace",
                 default: true,
-                description: t("filter.table_column.secrets.namespace")
+                description: t("filter.table_column.secrets.namespace"),
             },
             {
                 label: t("description"),
                 prop: "description",
                 default: true,
-                description: t("filter.table_column.secrets.description")
+                description: t("filter.table_column.secrets.description"),
             },
             {
                 label: t("tags"),
                 prop: "tags",
                 default: true,
-                description: t("filter.table_column.secrets.tags")
-            }
+                description: t("filter.table_column.secrets.tags"),
+            },
         ];
 
         return columns.filter(col => {
@@ -347,13 +347,13 @@
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
-        storageKey: storageKey
+        storageKey: storageKey,
     });
 
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
-            ?.filter(Boolean) as any[]
+            ?.filter(Boolean) as any[],
     );
 
     const secretModalTitle = computed(() => {
@@ -368,7 +368,7 @@
         },
         set(newValue: boolean) {
             emit("update:addSecretModalVisible", newValue);
-        }
+        },
     });
 
     const checkSecretValue = (_rule: any, _value: any, callback: any) => {
@@ -403,25 +403,25 @@
 
     const rules = {
         key: [
-            {required: true, trigger: "change"}
+            {required: true, trigger: "change"},
         ],
         value: [
             {
                 validator: checkSecretValue,
                 trigger: ["blur"],
-                required: false
-            }
+                required: false,
+            },
         ],
         secret: [
-            {required: true, trigger: "change"}
+            {required: true, trigger: "change"},
         ],
         tags: [
             {
                 validator: checkSecretTags,
                 trigger: ["blur"],
-                required: false
-            }
-        ]
+                required: false,
+            },
+        ],
     };
 
     const canUpdate = (secret: NamespaceSecret & {namespace?: string}) => {
@@ -451,10 +451,10 @@
             ...(props.namespace === undefined ? {} : {
                 filters: {
                     namespace: {
-                        EQUALS: props.namespace
-                    }
-                }
-            })
+                        EQUALS: props.namespace,
+                    },
+                },
+            }),
         }));
 
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
@@ -468,16 +468,16 @@
                 const parentSecretsResponse = await secretsStore.find(loadQuery({
                     filters: {
                         namespace: {
-                            EQUALS: parentNs
-                        }
-                    }
+                            EQUALS: parentNs,
+                        },
+                    },
                 }));
 
                 const parentSecrets = parentSecretsResponse?.results ?? [];
                 if (parentSecrets.length > 0) {
                     const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
                     const newSecrets = parentSecrets.filter(
-                        (s: any) => s?.key && !currentKeys.has(s.key)
+                        (s: any) => s?.key && !currentKeys.has(s.key),
                     );
                     allSecrets.push(...newSecrets);
                 }
@@ -545,7 +545,7 @@
                 description: secret.value?.description,
                 tags: secret.value?.tags
                     ?.map(item => item.value !== undefined ? item : {key: item.key, value: ""})
-                    ?.filter(item => item.key !== undefined)
+                    ?.filter(item => item.key !== undefined),
             };
 
             if (isSecretValueUpdated()) {
@@ -575,7 +575,7 @@
             description: undefined,
             tags: [{key: undefined, value: undefined}],
             update: undefined,
-            updateValue: undefined
+            updateValue: undefined,
         };
     };
 
@@ -594,7 +594,7 @@
     onMounted(() => {
         updateDisplayColumns(
             localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
-                optionalColumns.value?.filter(col => col.default).map(col => col.prop)
+                optionalColumns.value?.filter(col => col.default).map(col => col.prop),
         );
     });
 </script>

@@ -23,7 +23,7 @@ export function usePeriodicRefresh() {
         set: (value: boolean) => {
             enabledRef.value = value;
             localStorage.setItem(enabledKey.value, String(value));
-        }
+        },
     });
 
     const toggleRefresh = (enabled: boolean, callback: () => void) => {
@@ -36,6 +36,6 @@ export function usePeriodicRefresh() {
     return {
         isEnabled,
         tooltip,
-        toggleRefresh
+        toggleRefresh,
     };
 }

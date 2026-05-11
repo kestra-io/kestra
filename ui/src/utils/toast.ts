@@ -1,6 +1,6 @@
-import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
-import {App, h} from "vue"
-import {useI18n} from "vue-i18n"
+import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system";
+import {App, h} from "vue";
+import {useI18n} from "vue-i18n";
 
 
 export const makeToast = (t: (t:string, options?: Record<string, string>) => string) => ({
@@ -17,15 +17,15 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     size: "small",
                 },
                 [
-                    h(KsTableColumn, {label: "Message", formatter: (row: any) => { return h("span",{innerHTML:row.message})}})
-                ]
-            )
+                    h(KsTableColumn, {label: "Message", formatter: (row: any) => { return h("span",{innerHTML:row.message});}}),
+                ],
+            );
         } else {
             return h(KsMarkdown, {content: message});
         }
     },
     _MarkdownWrap: function(message:string) {
-        return h(KsMarkdown, {content: message})
+        return h(KsMarkdown, {content: message});
     },
     confirm: function(message:string, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
         return KsMessageBox
@@ -46,7 +46,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            ...options
+            ...options,
         });
     },
     deleted: function(name:string, title?:string, options?: Record<string, any>) {
@@ -56,8 +56,8 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 message: this._wrap(t("deleted confirm", {name: name})),
                 position: "bottom-right",
                 type: "success",
-            ...options
-        })
+            ...options,
+        });
     },
     success: function(message:string, title?:string, options?: Record<string, any>) {
         KsNotification({
@@ -66,8 +66,8 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "success",
-            ...options
-        })
+            ...options,
+        });
     },
     warning: function(message:string, title?:string, options?: Record<string, any>) {
         KsNotification({
@@ -76,8 +76,8 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "warning",
-            ...options
-        })
+            ...options,
+        });
     },
     error: function(message:string, title?:string, options?: Record<string, any>) {
         KsNotification({
@@ -88,20 +88,20 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 type: "error",
                 duration: 0,
                 customClass: "kel-notification__large",
-            ...options
-        })
-    }
-})
+            ...options,
+        });
+    },
+});
 
 export default {
     install(app: App) {
         app.config.globalProperties.$toast = () => {
             return makeToast(app.config.globalProperties.$t);
-        }
-    }
-}
+        };
+    },
+};
 
 export function useToast(){
     const {t} = useI18n({useScope: "global"});
-    return makeToast(t)
+    return makeToast(t);
 }

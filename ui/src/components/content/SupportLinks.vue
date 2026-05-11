@@ -18,7 +18,7 @@
 
     defineProps<{
         title: string
-    }>()
+    }>();
 
     const buttons = [{
                          label: "Community Slack",
@@ -37,7 +37,7 @@
                          description: "Contact support for help with your Enterprise account",
                          href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
                          icon: LifebuoyIcon,
-                     }]
+                     }];
 </script>
 
 <style scoped lang="scss">

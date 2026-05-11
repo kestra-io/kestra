@@ -75,16 +75,16 @@
         breadcrumb: [
             {
                 label: t("flows"),
-                link: {name: "flows/list"}
-            }
-        ]
+                link: {name: "flows/list"},
+            },
+        ],
     }));
 
     useRouteContext(routeInfo);
 
     const namespace = computed({
         get: () => route.query?.namespace as [],
-        set: (val) => onNamespaceChange(val)
+        set: (val) => onNamespaceChange(val),
     });
 
     function onNamespaceChange(val: any) {
@@ -111,12 +111,12 @@
     }
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
-    })
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
+    });
     watch(filterQuery, () => {
-        dataTable.value?.resetAndReload()
-    }, {deep: true})
+        dataTable.value?.resetAndReload();
+    }, {deep: true});
 
     function sanitize(content: string) {
         return _escape(content)

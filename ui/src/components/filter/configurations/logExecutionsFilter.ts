@@ -26,9 +26,9 @@ export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
                             ? localStorage.getItem("defaultLogLevel") || "INFO"
                             : "INFO"
                     ),
-                    visibleByDefault: true
-                }
-            ]
+                    visibleByDefault: true,
+                },
+            ],
         };
     });
 };

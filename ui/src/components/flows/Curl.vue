@@ -26,13 +26,13 @@
     }>(),{
         inputs: () => ({}),
         executionLabels: () => [],
-        verbose: true
+        verbose: true,
     });
 
     const exampleFileName = ref("kestra.json");
 
     const exampleFileInputUrl = computed(() =>
-        `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${exampleFileName.value}`
+        `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${exampleFileName.value}`,
     );
 
     function addHeader(command: string[], name: string, value: string) {
@@ -90,7 +90,7 @@
         }
 
         return ret;
-    })
+    });
 
     const prefix = computed(() => {
         return ["curl", "-O", `'${exampleFileInputUrl.value}'`];

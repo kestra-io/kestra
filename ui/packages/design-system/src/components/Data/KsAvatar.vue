@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElAvatar} from "element-plus"
+    import {ElAvatar} from "element-plus";
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         size?: number | "large" | "default" | "small"
@@ -20,13 +20,13 @@
         alt?: string
         fit?: "fill" | "contain" | "cover" | "none" | "scale-down"
         icon?: any
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

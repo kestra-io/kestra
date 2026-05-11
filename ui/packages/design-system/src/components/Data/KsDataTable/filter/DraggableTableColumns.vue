@@ -55,11 +55,11 @@
         orderedColumns,
         isVisible,
         toggleColumn,
-        reorderColumns
+        reorderColumns,
     } = useTableColumns({
         columns: props.columns,
         storageKey: props.storageKey,
-        initialVisibleColumns: props.visibleColumns
+        initialVisibleColumns: props.visibleColumns,
     });
 
     const {
@@ -68,7 +68,7 @@
         handleDragStart,
         handleDragOver,
         handleDrop,
-        handleDragEnd
+        handleDragEnd,
     } = useDragAndDrop();
 
     const handleToggle = (column: ColumnConfig) => {

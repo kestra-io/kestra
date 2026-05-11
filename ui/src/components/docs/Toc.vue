@@ -58,7 +58,7 @@
             "Tutorial",
             "Architecture",
             "Installation Guide",
-            "User Interface"
+            "User Interface",
         ],
         "Build with Kestra": [
             "Concepts",
@@ -66,20 +66,20 @@
             "Expressions",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
-            "How-to Guides"
+            "How-to Guides",
         ],
         "Scale with Kestra": [
             "Enterprise Edition",
             "Task Runners",
-            "Best Practices"
+            "Best Practices",
         ],
         "Manage Kestra": [
             "Administrator Guide",
             "Configuration Guide",
             "Migration Guide",
             "Terraform Provider",
-            "API Reference"
-        ]
+            "API Reference",
+        ],
     };
 
     const rawStructure = ref<any>(undefined);
@@ -94,7 +94,7 @@
             .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
             .map(([url, metadata]: [string, any]) => [url, {
                 ...metadata,
-                path: url
+                path: url,
             } as TocItem]));
         Object.entries(childrenWithMetadata)
             .forEach(([url, metadata]: [string, any]) => {
@@ -116,7 +116,7 @@
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
             section,
-            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
+            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title)),
         ]);
     });
 

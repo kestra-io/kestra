@@ -24,12 +24,12 @@ export const useMetricFilter = (): ComputedRef<FilterConfiguration> => {
                         const taskRuns = executionsStore.execution?.taskRunList ?? [];
                         return taskRuns.map(taskRun => ({
                             label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}` : ""),
-                            value: taskRun.id
+                            value: taskRun.id,
                         }));
                     },
-                    searchable: true
-                }
-            ]
+                    searchable: true,
+                },
+            ],
         };
     });
 };
@@ -53,26 +53,26 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         return (useFlowStore().tasksWithMetrics as string[]).map((value) => ({
                             label: value,
-                            value
+                            value,
                         }));
                     },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "metric",
                     label: t("filter.metric.label"),
                     description: t("filter.metric.description"),
                     comparators: [
-                        Comparators.EQUALS
+                        Comparators.EQUALS,
                     ],
                     valueType: "select",
                     valueProvider: async () => {
                         return (useFlowStore().metrics as string[]).map((value) => ({
                             label: value,
-                            value
+                            value,
                         }));
                     },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "timeRange",
@@ -83,9 +83,9 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("metrics");
                         return VALUES.RELATIVE_DATE;
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         };
     });
 };

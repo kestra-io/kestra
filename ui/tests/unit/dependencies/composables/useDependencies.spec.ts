@@ -3,7 +3,7 @@ import {ref, nextTick} from "vue";
 import {useDependencies, transformResponse} from "../../../../src/components/dependencies/composables/useDependencies";
 import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../../../../src/components/dependencies/utils/types";
 import {setActivePinia, createPinia} from "pinia";
-import {mount} from "@vue/test-utils"
+import {mount} from "@vue/test-utils";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {AxiosResponse} from "axios";
 import {useFlowStore} from "../../../../src/stores/flow";
@@ -125,7 +125,7 @@ const mountComponentWithUseDependencies = (
       setup() {
         const composable = useDependencies(graphRef, subtype, initialNodeID, params, isTesting);
         return {composable};
-      }
+      },
     });
     const composable = wrapper.vm.composable as ReturnType<typeof useDependencies>;
     return {wrapper, graphRef, ...composable};
@@ -133,12 +133,12 @@ const mountComponentWithUseDependencies = (
 
 describe("useDependencies composable", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
+    setActivePinia(createPinia());
   });
 
   describe("onMounted", () => {
     it("should load elements in testing mode", async () => {
-      const {isLoading, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true)
+      const {isLoading, getElements} = mountComponentWithUseDependencies(FLOW, "test-id", {}, true);
 
       await nextTick();
 
@@ -174,7 +174,7 @@ describe("useDependencies composable", () => {
 
       vi.spyOn(flowStore, "loadDependencies").mockResolvedValue({
         data: transformResponse(mockData, FLOW),
-        count: 2
+        count: 2,
       });
 
       const {isLoading, getElements} = mountComponentWithUseDependencies("FLOW", "test-id", {}, false);

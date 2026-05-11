@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsCollapse from "../../../src/components/Data/KsCollapse/KsCollapse.vue"
-import KsCollapseItem from "../../../src/components/Data/KsCollapse/KsCollapseItem.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsCollapse from "../../../src/components/Data/KsCollapse/KsCollapse.vue";
+import KsCollapseItem from "../../../src/components/Data/KsCollapse/KsCollapseItem.vue";
 
 const meta: Meta<typeof KsCollapse> = {
     title: "Components/Data/KsCollapse",
@@ -13,16 +13,16 @@ const meta: Meta<typeof KsCollapse> = {
     parameters: {
         docs: {description: {component: "KsCollapse is the Kestra design-system abstraction over `ElCollapse` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsCollapse>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsCollapse, KsCollapseItem},
         setup() {
-            const active = ref(["1"])
-            return {args, active}
+            const active = ref(["1"]);
+            return {args, active};
         },
         template: `
             <div style="padding:24px;max-width:600px">
@@ -40,13 +40,13 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom title – header content via named slot */
 export const CustomTitle: Story = {
     render: () => ({
         components: {KsCollapse, KsCollapseItem},
-        setup() { return {active: ref(["1"])} },
+        setup() { return {active: ref(["1"])}; },
         template: `
             <div style="padding:24px;max-width:600px">
                 <ks-collapse v-model="active">
@@ -73,13 +73,13 @@ export const CustomTitle: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Disabled item – specific panel cannot be toggled */
 export const DisabledItem: Story = {
     render: () => ({
         components: {KsCollapse, KsCollapseItem},
-        setup() { return {active: ref(["1"])} },
+        setup() { return {active: ref(["1"])}; },
         template: `
             <div style="padding:24px;max-width:600px">
                 <ks-collapse v-model="active">
@@ -96,12 +96,12 @@ export const DisabledItem: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Accordion: Story = {
     render: () => ({
         components: {KsCollapse, KsCollapseItem},
-        setup() { return {active: ref("1")} },
+        setup() { return {active: ref("1")}; },
         template: `
             <div style="padding:24px;max-width:600px">
                 <ks-collapse v-model="active" accordion>
@@ -112,4 +112,4 @@ export const Accordion: Story = {
             </div>
         `,
     }),
-}
+};

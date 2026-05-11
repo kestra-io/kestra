@@ -19,6 +19,6 @@ export default function useRouteContext(routeInfo: Ref<{title: string}>, embed: 
     }
 
     watch(() => route, () => {
-        handleTitle()
-    }, {immediate: true})
+        handleTitle();
+    }, {immediate: true});
 }

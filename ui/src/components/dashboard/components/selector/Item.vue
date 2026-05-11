@@ -22,5 +22,5 @@
         dashboard: {id: string, title: string, isDefault: boolean},
         setAsDefault: (id: string) => void,
         edit: (id: string) => void,
-        remove?: (dashboard: {id: string, title: string}) => void}>()
+        remove?: (dashboard: {id: string, title: string}) => void}>();
 </script>

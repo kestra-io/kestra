@@ -16,13 +16,13 @@ import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
 import {EditorElement} from "../../../utils/multiPanelTypes";
 
-export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
+export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"];
 
 export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
-            label: "Flow Code"
+            label: "Flow Code",
         },
         uid: "code",
         component: () => h(EditorWrapper, {
@@ -36,7 +36,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(MouseRightClickIcon),
-            label: "No-code"
+            label: "No-code",
         },
         uid: "nocode",
         component: markRaw(NoCode),
@@ -44,7 +44,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FileTreeOutlineIcon),
-            label: "Topology"
+            label: "Topology",
         },
         uid: "topology",
         component: markRaw(LowCodeEditorWrapper),
@@ -52,7 +52,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FileDocumentIcon),
-            label: "Documentation"
+            label: "Documentation",
         },
         uid: "doc",
         component: markRaw(PluginListWrapper),
@@ -60,7 +60,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FolderOpenOutline),
-            label: "Namespace Files"
+            label: "Namespace Files",
         },
         uid: "files",
         prepend: true,
@@ -69,11 +69,11 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(ShapePlusOutline),
-            label: "Blueprints"
+            label: "Blueprints",
         },
         uid: "blueprints",
         component: markRaw(BlueprintsWrapper),
-    }
+    },
 ].map((e): EditorElement => ({
     // add a default deserializer
     deserialize: (value: string) => {

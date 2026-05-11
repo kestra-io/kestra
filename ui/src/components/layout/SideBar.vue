@@ -50,12 +50,12 @@
         logoTo?: object
     }>(), {
         showLink: true,
-        logoTo: () => ({name: "welcome"})
-    })
+        logoTo: () => ({name: "welcome"}),
+    });
 
-    const $emit = defineEmits(["menu-collapse"])
+    const $emit = defineEmits(["menu-collapse"]);
 
-    const $route = useRoute()
+    const $route = useRoute();
     const {t} = useI18n({useScope: "global"});
 
     const layoutStore = useLayoutStore();
@@ -86,20 +86,20 @@
                 }
 
                 return r;
-            })
+            });
     }
 
 
     function expandParentIfNeeded() {
         document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-            (e as HTMLElement).click()
+            (e as HTMLElement).click();
         });
     }
 
     onUpdated(() => {
         // Required here because in mounted() the menu is not yet rendered
         expandParentIfNeeded();
-    })
+    });
 
     const bookmarksStore = useBookmarksStore();
 
@@ -115,24 +115,24 @@
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
-                }]
+                }],
             }] : []),
-            ...(props.menu ? disabledCurrentRoute(props.menu) : [])
+            ...(props.menu ? disabledCurrentRoute(props.menu) : []),
         ];
     });
 
     const collapsed = computed({
         get: () => layoutStore.sideMenuCollapsed,
         set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
-    })
+    });
 
-    const isSmallScreen = useMediaQuery("(max-width: 768px)")
+    const isSmallScreen = useMediaQuery("(max-width: 768px)");
 
     watch(() => $route.name, (newRoute, oldRoute) => {
         if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
-            onToggleCollapse(true)
+            onToggleCollapse(true);
         }
-    })
+    });
 </script>
 
 <style scoped lang="scss">

@@ -14,9 +14,9 @@ const deserializeDates = (filter: SavedFilter): SavedFilter => ({
             ? {startDate: new Date(f.value.startDate), endDate: new Date(f.value.endDate)}
             : isDateString(f.value)
                 ? new Date(f.value)
-                : f.value
+                : f.value,
     })),
-    createdAt: new Date(filter.createdAt)
+    createdAt: new Date(filter.createdAt),
 });
 
 export function useSavedFilters(prefix: string) {
@@ -30,8 +30,8 @@ export function useSavedFilters(prefix: string) {
     const savedFilters = useStorage<SavedFilter[]>(storageKey.value, [], localStorage, {
         serializer: {
             read: (v: string) => JSON.parse(v).map(deserializeDates),
-            write: (v: SavedFilter[]) => JSON.stringify(v)
-        }
+            write: (v: SavedFilter[]) => JSON.stringify(v),
+        },
     });
 
     const saveFilter = (name: string, description: string, filters: any[]) => {
@@ -50,7 +50,7 @@ export function useSavedFilters(prefix: string) {
             savedFilters.value[index] = {
                 ...savedFilters.value[index],
                 name,
-                description
+                description,
             };
         }
     };

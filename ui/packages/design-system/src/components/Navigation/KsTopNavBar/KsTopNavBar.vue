@@ -68,15 +68,15 @@
 </template>
 
 <script setup lang="ts">
-    import {resolveComponent} from "vue"
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
-    import StarIcon from "vue-material-design-icons/Star.vue"
-    import Information from "vue-material-design-icons/Information.vue"
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
-    import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
-    import KsBreadcrumbItem from "../KsBreadcrumb/KsBreadcrumbItem.vue"
-    import KsButton from "../../Basic/KsButton/KsButton.vue"
-    import KsTooltip from "../../Feedback/KsTooltip.vue"
+    import {resolveComponent} from "vue";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+    import Information from "vue-material-design-icons/Information.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue";
+    import KsBreadcrumbItem from "../KsBreadcrumb/KsBreadcrumbItem.vue";
+    import KsButton from "../../Basic/KsButton/KsButton.vue";
+    import KsTooltip from "../../Feedback/KsTooltip.vue";
 
     defineProps<{
         title: string
@@ -89,11 +89,11 @@
         }[]
         beta?: boolean
         isBookmarked?: boolean
-    }>()
+    }>();
 
     defineEmits<{
         "star-click": []
-    }>()
+    }>();
 
     defineSlots<{
         "sidebar-toggle"?(): unknown
@@ -104,9 +104,9 @@
         "pre-action"?(): unknown
         "more-actions"?(): unknown
         "actions"?(): unknown
-    }>()
+    }>();
 
-    const RouterLink = resolveComponent("RouterLink")
+    const RouterLink = resolveComponent("RouterLink");
 </script>
 
 <style scoped lang="scss">

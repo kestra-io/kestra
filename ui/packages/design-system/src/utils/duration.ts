@@ -1,5 +1,5 @@
 import moment from "moment";
-import humanizeDuration, {type Options as HumanizeDurationOptions,} from "humanize-duration";
+import humanizeDuration, {type Options as HumanizeDurationOptions} from "humanize-duration";
 
 const humanizeDurationLanguages = {
     en: {
@@ -31,7 +31,7 @@ const humanizeDurationLanguages = {
         m: () => "分钟",
         s: () => "秒",
         ms: () => "毫秒",
-    }
+    },
 };
 
 export function duration(isoString: string) {
@@ -42,7 +42,7 @@ export function duration(isoString: string) {
 
 export function humanDuration(
     value: number | string,
-    options?: HumanizeDurationOptions & { languages?: any }
+    options?: HumanizeDurationOptions & { languages?: any },
 ) {
     options = options || {maxDecimalPoints: 2};
     options.spacer = "";
@@ -56,6 +56,6 @@ export function humanDuration(
 
     return humanizeDuration(value * 1000, options).replace(
         /\.([0-9])s$/i,
-        ".$10s"
+        ".$10s",
     );
 }

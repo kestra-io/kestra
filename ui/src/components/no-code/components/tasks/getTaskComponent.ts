@@ -21,7 +21,7 @@ export interface Schema{
     $secret?: boolean;
 }
 
-export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
+export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs");
 
 function getType(property: any, definitions: Record<string, any>, key?: string): string {
 
@@ -35,15 +35,15 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
 
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
         if (property.$ref.includes("tasks.Task")) {
-            return "task"
+            return "task";
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
-            return "task"
+            return "task";
         }
 
         if (property.$ref.includes("io.kestra.preload")) {
-            return "list"
+            return "list";
         }
 
         return "complex";
@@ -64,7 +64,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
 
         // for dag tasks
         if (property.anyOf.length > 10 || key === "taskRunner") {
-            return "task"
+            return "task";
         }
         return "any-of";
     }
@@ -105,7 +105,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
     }
 
     if (property.const) {
-        return "constant"
+        return "constant";
     }
 
     if (property.type === "object" && !property.properties) {
@@ -122,5 +122,5 @@ export function getTaskComponent(property: any, definitions: Record<string, any>
     if (component) {
         component.ksTaskName = typeString;
     }
-    return component ?? {}
+    return component ?? {};
 }

@@ -96,7 +96,7 @@
         disabled: false,
         modelValue: () => ({}),
         root: undefined,
-        schema: () => ({type: "object"})
+        schema: () => ({type: "object"}),
     });
 
     const {getBlockComponent} = useBlockComponent();
@@ -104,11 +104,11 @@
     const componentType = computed(() => {
         return props.schema?.additionalProperties ? getBlockComponent.value(
             props.schema.additionalProperties,
-            props.root
+            props.root,
         ) : undefined;
     });
 
-    const currentValue = ref<[string, any][]>([])
+    const currentValue = ref<[string, any][]>([]);
     const keyInputRefs: Record<number, any> = {};
 
     // this flag will avoid updating the modelValue when the
@@ -130,14 +130,14 @@
         },
         {
             immediate: true,
-            deep: true
+            deep: true,
         },
     );
 
     const duplicatedKeys = computed(() => {
         return currentValue.value.map(pair => pair[0])
             .filter((key, index, self) =>
-                self.indexOf(key) !== index
+                self.indexOf(key) !== index,
             );
     });
 
@@ -161,17 +161,17 @@
 
     function onKey(key: number, val: string) {
         currentValue.value[key][0] = val;
-        emitUpdate()
+        emitUpdate();
     }
 
     function onValueChange(key: number, val: any) {
         currentValue.value[key][1] = val;
-        emitUpdate()
+        emitUpdate();
     }
 
     function removeItem(index: number) {
         currentValue.value.splice(index, 1);
-        emitUpdate()
+        emitUpdate();
     }
 
     const toast = useToast();
@@ -183,7 +183,7 @@
         }
         currentValue.value.push(["", undefined]);
         const newIndex = currentValue.value.length - 1;
-        emitUpdate()
+        emitUpdate();
         
         // Focus the key input field after the new row is rendered
         nextTick(() => {

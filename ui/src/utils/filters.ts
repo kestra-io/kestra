@@ -45,7 +45,7 @@ export default {
     humanizeNumber,
     cap,
     lower,
-    date
-}
+    date,
+};
 
 

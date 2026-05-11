@@ -13,7 +13,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import OverviewCard from "../execution/OverviewCard.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
@@ -25,7 +25,7 @@
 
     const props = withDefaults(defineProps<{isNamespace?: boolean}>(), {
         isNamespace: false,
-    })
+    });
 
     const cards = computed(() => {
         const baseCards = [
@@ -57,7 +57,7 @@
                 content: "",
                 link: "https://www.youtube.com/watch?v=6TqWWz9difM",
                 icon: PlayBoxMultiple,
-            }
+            },
         ];
         return baseCards;
     });

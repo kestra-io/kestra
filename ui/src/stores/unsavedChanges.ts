@@ -4,7 +4,7 @@ import {ref} from "vue";
 export const useUnsavedChangesStore = defineStore("unsavedChanges", () => {
     const isDialogVisible = ref(false);
     let resolveCallback: ((value: boolean) => void) | null = null;
-    const unsavedChange = ref(false)
+    const unsavedChange = ref(false);
     
     const showDialog = () => {
         return new Promise((resolve) => {

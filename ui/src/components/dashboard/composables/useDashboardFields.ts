@@ -7,8 +7,8 @@ const FIELD_ORDER = [
     "title",
     "description",
     "timeWindow",
-    "charts"
-]
+    "charts",
+];
 
 const HIDDEN_FIELDS = [
     "deleted",
@@ -26,7 +26,7 @@ export function useDashboardFields() {
         pluginsStore.lazyLoadSchemaType({type: "dashboard"});
     });
 
-    const parsedSource = computed(() => dashboardStore.parsedSource)
+    const parsedSource = computed(() => dashboardStore.parsedSource);
 
     const getFieldFromKey = (key:string) => ({
         modelValue: parsedSource.value?.[key],
@@ -37,7 +37,7 @@ export function useDashboardFields() {
         label: key,
         fieldKey: key,
         task: parsedSource.value,
-    })
+    });
 
     const fieldsFromSchema = computed(() => {
         return Object.keys(dashboardStore.rootProperties ?? {})
@@ -51,11 +51,11 @@ export function useDashboardFields() {
                         if (aIndex === -1) return 1;
                         if (bIndex === -1) return -1;
                         return aIndex - bIndex;
-                    })
-                })
+                    });
+                });
 
     return {
         fieldsFromSchema,
-        parsedSource
-    }
+        parsedSource,
+    };
 }

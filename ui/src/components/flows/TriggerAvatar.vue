@@ -62,7 +62,7 @@
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
             return props.flow.triggers.filter(
-                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id
+                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id,
             );
         } else if (props.execution && props.execution.trigger) {
             return [props.execution.trigger];

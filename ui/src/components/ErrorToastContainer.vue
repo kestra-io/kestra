@@ -48,7 +48,7 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        onClose: null
+        onClose: null,
     });
 
     const route = useRoute();

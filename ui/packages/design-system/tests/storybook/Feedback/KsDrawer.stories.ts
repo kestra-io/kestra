@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
-import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue";
 
 const meta: Meta<typeof KsDrawer> = {
     title: "Components/Feedback/KsDrawer",
@@ -14,8 +14,8 @@ const meta: Meta<typeof KsDrawer> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsDrawer>
 
 /** Default – right side drawer */
@@ -23,8 +23,8 @@ export const Default: Story = {
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
-            const visible = ref(false)
-            return {visible}
+            const visible = ref(false);
+            return {visible};
         },
         template: `
             <div style="padding:24px">
@@ -39,15 +39,15 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Different directions */
 export const Directions: Story = {
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
-            const dir = ref<string | null>(null)
-            return {dir}
+            const dir = ref<string | null>(null);
+            return {dir};
         },
         template: `
             <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap">
@@ -62,15 +62,15 @@ export const Directions: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom size */
 export const CustomSize: Story = {
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
-            const visible = ref(false)
-            return {visible}
+            const visible = ref(false);
+            return {visible};
         },
         template: `
             <div style="padding:24px">
@@ -85,15 +85,15 @@ export const CustomSize: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Without header */
 export const NoHeader: Story = {
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
-            const visible = ref(false)
-            return {visible}
+            const visible = ref(false);
+            return {visible};
         },
         template: `
             <div style="padding:24px">
@@ -107,4 +107,4 @@ export const NoHeader: Story = {
             </div>
         `,
     }),
-}
+};

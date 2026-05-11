@@ -43,8 +43,8 @@
     const props = defineProps({
         pageUrl: {
             type: String,
-            default: undefined
-        }
+            default: undefined,
+        },
     });
 
     const currentPage = computed(() => {
@@ -54,12 +54,12 @@
             const p = docStore.docPath;
             return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs";
         }
-    })
+    });
 
     const resourcesWithMetadata = ref<Record<string, any>>({});
     onMounted(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value);
-    })
+    });
 
     const navigation = computed(() => {
         let parentMetadata: Record<string, any> = {};
@@ -75,8 +75,8 @@
             .map(([path, metadata]) => ({
                 path: path.replace(/^docs\//, ""),
                 ...parentMetadata,
-                ...metadata
-            }))
+                ...metadata,
+            }));
     });
 </script>
 

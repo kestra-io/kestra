@@ -42,8 +42,8 @@
             flowStore.loadGraph({
                 flow: flowStore.flow,
                 params: {
-                    subflows: event
-                }
+                    subflows: event,
+                },
             });
         }
     }

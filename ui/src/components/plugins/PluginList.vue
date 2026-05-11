@@ -130,7 +130,7 @@
             .flatMap(([, elements]) =>
                 Array.isArray(elements)
                     ? elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
-                    : []
+                    : [],
             );
 
     const getPluginDisplayName = (plugin: any): string => {
@@ -157,12 +157,12 @@
         }, {});
 
         const filtered = Object.values(grouped).flatMap(group =>
-            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
+            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup),
         );
 
         return filtered
             .filter((plugin, index, self) =>
-                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
+                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group),
             )
             .filter(isPluginVisible)
             .sort((a, b) => {
@@ -221,7 +221,7 @@
                     currentDocumentationPlugin.value = pluginData ? {cls: targetStep.data.cls, ...pluginData} : null;
                 });
                 currentView.value = "documentation";
-            }
+            },
         };
 
         actions[targetStep.type]?.();
@@ -237,7 +237,7 @@
 
     const getSubgroupTitle = (group: string, subgroup: string): string => {
         const subgroupPlugin = props.plugins.find(p =>
-            p.group === group && (p.subGroup === subgroup || p.subGroup?.endsWith(`.${subgroup}`))
+            p.group === group && (p.subGroup === subgroup || p.subGroup?.endsWith(`.${subgroup}`)),
         );
         return formatPluginTitle(subgroupPlugin?.title) ?? formatPluginTitle(subgroup) ?? subgroup;
     };

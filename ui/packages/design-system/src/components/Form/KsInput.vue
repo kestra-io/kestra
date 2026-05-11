@@ -17,12 +17,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElInput} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElInput} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<string | number>()
+    const model = defineModel<string | number>();
 
     const props = defineProps<{
         type?: string
@@ -36,19 +36,19 @@
         id?: string
         required?: boolean
         rows?: number
-    }>()
+    }>();
 
     const emit = defineEmits<{
         change: [value: string | number]
-    }>()
+    }>();
 
     defineSlots<{
         prepend?(): unknown
         suffix?(): unknown
         default?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

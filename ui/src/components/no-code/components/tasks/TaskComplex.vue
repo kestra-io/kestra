@@ -36,9 +36,9 @@
             const i = resolve$ref(fullSchema.value, item);
             return {
                 ...acc,
-                ...i?.properties
+                ...i?.properties,
             };
 
         }, {});
-    })
+    });
 </script>

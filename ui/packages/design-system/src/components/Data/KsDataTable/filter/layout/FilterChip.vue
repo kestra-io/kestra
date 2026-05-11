@@ -39,7 +39,7 @@
     import {
         type AppliedFilter,
         type FilterKeyConfig,
-        Comparators
+        Comparators,
     } from "../utils/filterTypes";
     import FilterEditPopover from "./FilterEditPopover.vue";
 
@@ -77,10 +77,10 @@
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
 
     const shouldShowComparatorInPopper = computed(
-        () => (props.filterKey?.comparators?.length ?? 0) >= 2
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2,
     );
     const shouldShowComparatorLabel = computed(
-        () => (props.filterKey?.comparators?.length ?? 0) >= 2
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2,
     );
 
     const formatValue = (value: FilterValueType) => {
@@ -124,17 +124,17 @@
             : "in";
 
     const renderValueResult = computed(() =>
-        h("span", {class: "value"}, formatValue(props.filter.value))
+        h("span", {class: "value"}, formatValue(props.filter.value)),
     );
 
     const isNegative = computed(() =>
-        props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN
+        props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN,
     );
 
     const isToggled = computed(() => editPopover.value?.isDialogVisible ?? false);
 
     defineExpose({
-        editPopover
+        editPopover,
     });
 </script>
 

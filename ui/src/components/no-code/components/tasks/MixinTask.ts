@@ -2,35 +2,35 @@ import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import {defineComponent} from "vue";
 
 export function collapseEmptyValues(value: any): any {
-    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value
+    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value;
 }
 
 export default defineComponent({
     props: {
         modelValue: {
             type: [Object, String, Number, Boolean, Array],
-            default: undefined
+            default: undefined,
         },
         schema: {
             type: Object,
-            default: undefined
+            default: undefined,
         },
         required: {
             type: Boolean,
-            default: false
+            default: false,
         },
         task: {
             type: Object,
-            default: undefined
+            default: undefined,
         },
         root: {
             type: String,
-            default: undefined
+            default: undefined,
         },
         definitions: {
             type: Object,
-            default: undefined
-        }
+            default: undefined,
+        },
     },
     emits: ["update:modelValue"],
     methods: {
@@ -42,7 +42,7 @@ export default defineComponent({
         },
         onInput(value:any) {
             this.$emit("update:modelValue", collapseEmptyValues(value));
-        }
+        },
     },
     computed: {
         values() {
@@ -60,10 +60,10 @@ export default defineComponent({
             return YAML_UTILS.stringify(this.values);
         },
         info() {
-            return this.schema?.title ?? this.schema?.type
+            return this.schema?.title ?? this.schema?.type;
         },
         isValid() {
             return true;
-        }
-    }
-})
+        },
+    },
+});

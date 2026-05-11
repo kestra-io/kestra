@@ -27,8 +27,8 @@
     defineProps({
         embed: {
             type:Boolean,
-            default: false
-        }
+            default: false,
+        },
     });
 
     defineOptions({

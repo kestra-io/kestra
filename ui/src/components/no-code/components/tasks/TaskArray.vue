@@ -51,7 +51,7 @@
 
     defineOptions({inheritAttrs: false});
 
-    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
+    const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref());
 
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return [blockSchemaPath.value, "properties", props.root, "items"].join("/");
@@ -82,7 +82,7 @@
             "number",
             "boolean",
             "expression",
-        ].includes(componentType.value.ksTaskName)
+        ].includes(componentType.value.ksTaskName);
     });
 
     const items = computed(() =>
@@ -95,7 +95,7 @@
     );
 
     const handleInput = (value: string, index: number) => {
-        const newVal = [...items.value]
+        const newVal = [...items.value];
         newVal.splice(index, 1, value);
         emits("update:modelValue", newVal);
     };
@@ -105,7 +105,7 @@
             return "";
         }
         return props.schema.items?.default ?? undefined;
-    })
+    });
 
     const addItem = () => {
         emits("update:modelValue", [...items.value, newEmptyValue.value]);
@@ -120,7 +120,7 @@
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {
-        const tempValue = items.value
+        const tempValue = items.value;
         if (direction === "up" && index > 0) {
             [tempValue[index - 1], tempValue[index]] = [
                 tempValue[index],

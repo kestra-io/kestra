@@ -81,7 +81,7 @@
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),
         }).then(() => {
-            emit("delete", savedFilter)
+            emit("delete", savedFilter);
         }).catch(() => {});
     };
 </script>

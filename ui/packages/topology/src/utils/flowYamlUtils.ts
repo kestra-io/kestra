@@ -53,7 +53,7 @@ function preserveCronQuotes(yamlContent: string) {
             }
 
             return `${prefix}"${value}"${suffix ?? ""}`;
-        }
+        },
     );
 }
 
@@ -84,7 +84,7 @@ const SORT_FIELDS = [
     "errors",
     "triggers",
     "listeners",
-    "pluginDefaults"
+    "pluginDefaults",
 ];
 
 function sortPredicate(a: string, b: string) {
@@ -152,7 +152,7 @@ function getSectionFromDocument({yamlDoc, section}:
         section: string
     }) {
     const sectionNode = yamlDoc.contents?.items?.find(
-        (e) => e.key.value === section
+        (e) => e.key.value === section,
     ) as { value: YAMLSeq<YAMLMap<{ value: string }, Node>> } | undefined;
     return sectionNode?.value;
 }
@@ -163,7 +163,7 @@ function getPathFromId({node, id} : {
 }): (string | number)[] | undefined {
     // recursively search for the id in the node
     if (isSeq<{ value: Node }>(node)) {
-        let index = 0
+        let index = 0;
         for (const item of node.items) {
             if (isMap<{ value: string }, Node>(item)) {
                 const itemId = item.get("id") as string | undefined;
@@ -196,7 +196,7 @@ function getPathFromId({node, id} : {
         }
     }
 
-    return undefined
+    return undefined;
 }
 
 export function getPathFromSectionAndId({
@@ -213,7 +213,7 @@ export function getPathFromSectionAndId({
         return undefined;
     }
 
-    const pathArray = getPathFromId({node: sectionNode, id}) ?? []
+    const pathArray = getPathFromId({node: sectionNode, id}) ?? [];
     const path = pathArray.map((e) => {
         if (typeof e === "string") {
             return `.${e}`;
@@ -276,7 +276,7 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
             for (const [key, item] of element.items.entries()) {
                 const result = isMap(item)
                     ? find(item)
-                    : find(item.value ?? undefined)
+                    : find(item.value ?? undefined);
 
                 if (result) {
                     if (callback) {
@@ -313,7 +313,7 @@ export function extractBlockWithPath({source, path}: {
 }) {
     const doc = extractBlockWithPathFromDocument({
         yamlDoc: parseDocumentTyped(source),
-        path
+        path,
     });
     if (!doc) {
         return undefined;
@@ -412,7 +412,7 @@ function getNodeIndexInParent(
     patentNode: YAMLMap<{ value: string }, Node>,
     parentPath: (string|number)[],
     refPath?: string | number,
-    position: "before" | "after" = "after"
+    position: "before" | "after" = "after",
 ) {
     if (refPath === undefined) {
         return position === "before" ? 0 : patentNode.items.length - 1;
@@ -429,7 +429,7 @@ export function parsePath(path: string) {
         // if the path has a number, it will look like this
         // path[0]
 
-        const numberPath = part.match(/\[(\d+)\]$/)
+        const numberPath = part.match(/\[(\d+)\]$/);
         if (numberPath?.[0]) {
             acc.push(part.slice(0, numberPath.index));
             acc.push(parseInt(numberPath[1], 10));
@@ -437,7 +437,7 @@ export function parsePath(path: string) {
             acc.push(part);
         }
         return acc;
-    }, [])
+    }, []);
 }
 
 function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPath: string) {
@@ -456,9 +456,9 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
             // attach it to the parents parent
             const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey);
             parentParentNode?.items.push(newParentNode);
-            return newParentNode.value
+            return newParentNode.value;
         }
-        return parentNode
+        return parentNode;
     }
 }
 
@@ -586,11 +586,11 @@ export function updateMetadata(source: string, metadata: Record<string, any>) {
             yamlDoc.contents.items.find((item: any) => item.key.value === property)
         ) {
             yamlDoc.contents.items.find(
-                (item: any) => item.key.value === property
+                (item: any) => item.key.value === property,
             ).value = metadata[property];
         } else {
             yamlDoc.contents.items.push(
-                new Pair(new Scalar(property), metadata[property])
+                new Pair(new Scalar(property), metadata[property]),
             );
         }
     }
@@ -604,7 +604,7 @@ const FLOW_SECTION_KEYS = [
     "finally",
     "afterExecution",
     "pluginDefaults",
-] as const
+] as const;
 
 const ORDERED_FLOW_ROOT_KEYS = [
     "id",
@@ -621,13 +621,13 @@ const ORDERED_FLOW_ROOT_KEYS = [
     "sla",
     "outputs",
     "disabled",
-] as const
+] as const;
 
 function isItemTruthy(item: Node) {
     if (isSeq(item) || isMap(item)) {
-        return item.items.length > 0
+        return item.items.length > 0;
     } else {
-        return true
+        return true;
     }
 }
 
@@ -638,7 +638,7 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
     const updatedItems: Pair<Scalar<string>, Node>[] = [];
     for (const prop of ORDERED_FLOW_ROOT_KEYS) {
         const item = yamlDoc.contents?.items.find(
-            (e: any) => (e.key.value ?? e.key) === prop
+            (e: any) => (e.key.value ?? e.key) === prop,
         );
         if (item?.value && isItemTruthy(item.value)) {
             updatedItems.push(item);
@@ -649,7 +649,7 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
                 // add whitespace between items
                 item.value.items.forEach((seqItem: any, index: number) => {
                     if(index === 0) {
-                        return
+                        return;
                     }
                     if (seqItem.commentBefore) {
                         seqItem.commentBefore.spaceBefore = true;
@@ -762,7 +762,7 @@ export function extractFieldFromMaps<T extends string>(
                     parent
                         .filter((p) => isPair(p))
                         .map((p: any) => p?.key?.value)
-                        .join(".")
+                        .join("."),
                 ) &&
                 map.items
             ) {
@@ -794,7 +794,7 @@ export function extractFieldFromMaps<T extends string>(
 
 function extractAllTypes(source: string, validTypes: string[] = []){
     return extractFieldFromMaps(source, "type", () => true, (value) =>
-        validTypes.some((t) => t === value)
+        validTypes.some((t) => t === value),
     );
 }
 
@@ -806,7 +806,7 @@ function extractAllTypes(source: string, validTypes: string[] = []){
 export function getTypeAtPosition(
     source: string,
     position: { lineNumber: number; column: number },
-    validTypes: any
+    validTypes: any,
 ) {
     const types = extractAllTypes(source, validTypes);
 
@@ -829,7 +829,7 @@ export function getTypeAtPosition(
  */
 export function getVersionAtPosition(
     source: string,
-    position: { lineNumber: number; column: number }
+    position: { lineNumber: number; column: number },
 ) {
     const versions = extractAllVersions(source);
     const lineCounter = new LineCounter();
@@ -855,19 +855,19 @@ const TOSTRING_OPTIONS: ToStringOptions = {
 
 const yamlKeyCapture = "([^:\\n]+): *";
 const indentAndYamlKeyCapture = new RegExp(
-    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`
+    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`,
 );
 
 function getParentKeyByChildIndent(
     stringToSearch: string,
-    indent: number
+    indent: number,
 ): { key: string; valueStartIndex: number } | undefined {
     if (indent < 2) {
         return undefined;
     }
 
     const matches = stringToSearch.matchAll(
-        new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g")
+        new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g"),
     );
     const lastMatch = [...matches].pop();
     if (lastMatch === undefined) {
@@ -922,7 +922,7 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
     if (yamlKey === undefined) {
         const parentKeyExtract = getParentKeyByChildIndent(
             tillCursor,
-            indent
+            indent,
         );
         yamlKey = parentKeyExtract?.key;
         valueStartIndex = parentKeyExtract?.valueStartIndex;
@@ -957,7 +957,7 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
 
     const filter = elements.filter(
         (map: any) =>
-            map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2]
+            map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2],
     );
     return filter.sort((a: any, b: any) => b.range[0] - a.range[0])?.[0];
 }
@@ -1024,7 +1024,7 @@ export function getChartAtPosition(source: string, position: { lineNumber: numbe
  * @returns lines infos for each taskId
  */
 export function getTasksLines(
-    source: string
+    source: string,
 ):Record<string, {start: number, end: number}> {
     // if a task ends on the last line of the YAML,
     // its end range will be one line off.
@@ -1046,8 +1046,8 @@ export function getTasksLines(
                                     const foundChilTasksLines = getTasksAndFlowableLines(lineCounter, task);
                                     tasksLines = {
                                         ...tasksLines,
-                                        ...foundChilTasksLines
-                                    }
+                                        ...foundChilTasksLines,
+                                    };
                                 }
                             }
                         }
@@ -1067,8 +1067,8 @@ function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
         if(task.range) {
             tasksLines[taskId] = {
                 start: lineCounter.linePos(task.range[0]).line,
-                end: lineCounter.linePos(task.range[1]).line - 1
-            }
+                end: lineCounter.linePos(task.range[1]).line - 1,
+            };
         }
         const childTasks = new YAMLSeq<YAMLMap>();
         const tasksChilds = task.get("tasks") as YAMLSeq<YAMLMap> | undefined;
@@ -1089,9 +1089,9 @@ function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
 
         childTasks.items.forEach(childTask => {
             if(isMap(childTask)){
-                tasksLines = {...tasksLines, ...getTasksAndFlowableLines(lineCounter, childTask)}
+                tasksLines = {...tasksLines, ...getTasksAndFlowableLines(lineCounter, childTask)};
             }
-        })
+        });
     } else {
         if (task.get("task")) {
             // io.kestra.plugin.core.flow.Dag special case

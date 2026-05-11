@@ -14,12 +14,12 @@
     import {useMiscStore} from "override/stores/misc";
     const miscStore = useMiscStore();
     
-    const disabled = computed(() => miscStore.configs?.edition === "OSS") 
+    const disabled = computed(() => miscStore.configs?.edition === "OSS"); 
 
-    const modelValue = defineModel<string>({default: ""})
+    const modelValue = defineModel<string>({default: ""});
 
     defineOptions({
         name: "TaskVersion",
         inheritAttrs: false,
-    })
+    });
 </script>

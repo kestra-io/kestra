@@ -72,7 +72,7 @@ export const aiGenerationTypes = {
     FLOW: "flow",
     APP: "app",
     TEST: "test",
-    DASHBOARD: "dashboard"
+    DASHBOARD: "dashboard",
 } as const;
 export type AiGenerationType = typeof aiGenerationTypes[keyof typeof aiGenerationTypes];
 

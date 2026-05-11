@@ -74,14 +74,14 @@
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.uid)
             // when the flow file is dirty all the nocode tabs get splashed
-            || element.uid.startsWith("nocode-")
+            || element.uid.startsWith("nocode-");
     }
 
-    const RawNoCode = markRaw(NoCode)
+    const RawNoCode = markRaw(NoCode);
 
-    const onboardingV2Store = useOnboardingV2Store()
-    const flowStore = useFlowStore()
-    const {showKeyShortcuts} = useKeyShortcuts()
+    const onboardingV2Store = useOnboardingV2Store();
+    const flowStore = useFlowStore();
+    const {showKeyShortcuts} = useKeyShortcuts();
 
     const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`);
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value);
@@ -94,11 +94,11 @@
                 editorView.value?.saveState(alwaysSaveKey.value);
             }
         }
-    })
+    });
 
     const route = useRoute();
     const router = useRouter();
-    const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
+    const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null);
     const showExecuteHint = ref(true);
     const isOnboardingCreate = computed(() =>
         route.name === "flows/create" && route.query.onboardingPreset === "true",
@@ -107,37 +107,37 @@
     onMounted(() => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
-            if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
-            else editorView.value?.focusTab("code")
+            if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code");
+            else editorView.value?.focusTab("code");
         }
 
         if(route.query.createTrigger === "true"){
             if(!editorView.value?.openTabs.includes("nocode")) {
-                editorView.value?.setTabValue("nocode")
+                editorView.value?.setTabValue("nocode");
             } else {
-                editorView.value?.focusTab("nocode")
+                editorView.value?.focusTab("nocode");
             }
 
             const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
             const blockSchemaPath = [
-                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
+                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items",
             ].join("/");
             actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
 
             const {createTrigger: _, ...query} = route.query;
             router.replace({...route, query});
         }
-    })
+    });
 
-    const pluginsStore = usePluginsStore()
-    const playgroundStore = usePlaygroundStore()
+    const pluginsStore = usePluginsStore();
+    const playgroundStore = usePlaygroundStore();
 
-    const playgroundMode = computed(() => playgroundStore.enabled)
+    const playgroundMode = computed(() => playgroundStore.enabled);
 
     onUnmounted(() => {
-        playgroundStore.enabled = false
-        playgroundStore.clearExecutions()
-    })
+        playgroundStore.enabled = false;
+        playgroundStore.clearExecutions();
+    });
 
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
@@ -147,11 +147,11 @@
         }
     }
 
-    useInitialFilesTabs(EDITOR_ELEMENTS)
+    useInitialFilesTabs(EDITOR_ELEMENTS);
 
     function cleanupNoCodeTabKey(key: string): string {
         // remove the number for "nocode-1234-" prefix from the key
-        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
+        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key;
     }
 
     function preSerializePanels(v:Panel[]){
@@ -159,12 +159,12 @@
             tabs: p.tabs.map(t => t.uid),
             activeTab: cleanupNoCodeTabKey(p.activeTab?.uid),
             size: p.size,
-        }))
+        }));
     }
 
     const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
-        panel.tabs.some(tab => tab.dirty)
-    ))
+        panel.tabs.some(tab => tab.dirty),
+    ));
 
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,
@@ -186,24 +186,24 @@
     }, {immediate: true});
     const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS));
 
-    flowStore.creationId = flowStore.creationId ?? Utils.uid()
+    flowStore.creationId = flowStore.creationId ?? Utils.uid();
 
-    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
+    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace));
 
-    useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
+    useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab);
 
     watch(() => flowStore.haveChange, (dirty) => {
         for(const panel of panels.value){
             if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
-                panel.activeTab.dirty = dirty
+                panel.activeTab.dirty = dirty;
             }
             for(const tab of panel.tabs){
                 if(isTabFlowRelated(tab)){
-                    tab.dirty = dirty
+                    tab.dirty = dirty;
                 }
             }
         }
-    })
+    });
 
     // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false;

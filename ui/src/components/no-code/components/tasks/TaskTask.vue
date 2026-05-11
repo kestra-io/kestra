@@ -21,7 +21,7 @@
         REF_PATH_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
-        FULL_SCHEMA_INJECTION_KEY
+        FULL_SCHEMA_INJECTION_KEY,
     } from "../../injectionKeys";
     import Element from "./taskList/Element.vue";
     import {getValueAtJsonPath} from "../../../../utils/utils";
@@ -29,31 +29,31 @@
 
     const model = defineModel({
         type: Object,
-        default: () => ({})
+        default: () => ({}),
     });
 
     const props = defineProps({
         root: {
             type: String,
-            required: true
+            required: true,
         },
     });
 
     defineOptions({
-        inheritAttrs: false
-    })
+        inheritAttrs: false,
+    });
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
-    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}))
+    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref());
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}));
 
     const blockSchemaPath = computed(() => {
-        return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/")
-    })
+        return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/");
+    });
 
-    const localSchema = computed(() => getValueAtJsonPath(fullSchema.value,  blockSchemaPath.value))
+    const localSchema = computed(() => getValueAtJsonPath(fullSchema.value,  blockSchemaPath.value));
 
     const fieldTitle = computed(() => {
         const schema = localSchema.value;
@@ -67,8 +67,8 @@
                 return titles[0];
             }
         }
-        return "Set a task"
-    })
+        return "Set a task";
+    });
 
     const parentPathComplete = computed(() => {
         return `${[

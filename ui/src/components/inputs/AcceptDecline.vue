@@ -22,7 +22,7 @@
     import {computed} from "vue";
     const emit = defineEmits<{ accept: []; reject: [] }>();
     const props = defineProps({
-        visible: {type: Boolean, default: true}
+        visible: {type: Boolean, default: true},
     });
     const visible = computed(() => props.visible);
 </script>

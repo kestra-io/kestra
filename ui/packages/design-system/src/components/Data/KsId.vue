@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, useId, getCurrentInstance} from "vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
+    import {computed, useId, getCurrentInstance} from "vue";
+    import KsTooltip from "../Feedback/KsTooltip.vue";
 
     const props = withDefaults(defineProps<{
         value?: string
@@ -24,34 +24,34 @@
         value: undefined,
         shrink: true,
         size: undefined,
-    })
+    });
 
     const emit = defineEmits<{
         click: []
-    }>()
+    }>();
 
-    const uid = useId()
+    const uid = useId();
 
-    const size = computed(() => props.size ?? 8)
+    const size = computed(() => props.size ?? 8);
 
     const hasTooltip = computed(() => {
-        return props.shrink && props.value && props.value.length > size.value
-    })
+        return props.shrink && props.value && props.value.length > size.value;
+    });
 
-    const hasClickListener = computed(() => Boolean(getCurrentInstance()?.vnode.props?.onClick))
+    const hasClickListener = computed(() => Boolean(getCurrentInstance()?.vnode.props?.onClick));
 
     const transformValue = computed(() => {
         if (!props.value) {
-            return ""
+            return "";
         }
 
         if (!props.shrink) {
-            return props.value
+            return props.value;
         }
 
         return props.value.toString().substring(0, size.value) +
-            (props.value.length > size.value && size.value !== 8 ? "…" : "")
-    })
+            (props.value.length > size.value && size.value !== 8 ? "…" : "");
+    });
 </script>
 
 <style scoped lang="scss">

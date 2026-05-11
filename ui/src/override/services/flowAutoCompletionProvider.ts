@@ -24,7 +24,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
         namespacesStore: ReturnType<typeof useNamespacesStore>,
-        completionSource?: ComputedRef<string | undefined>
+        completionSource?: ComputedRef<string | undefined>,
     ) {
         super();
         this.flowStore = flowStore;
@@ -63,7 +63,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             .flatMap(allTasks => allTasks.tasks);
         const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
+            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? []);
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
             .filter(task => typeof task?.get === "function" && task?.get("id"));
@@ -146,10 +146,10 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 .map(async triggerType => {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.pluginsStore.load({
                         cls: triggerType,
-                        commit: false
+                        commit: false,
                     }) as any;
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {});
-                })
+                }),
         );
         return distinct(fetchTriggerVarsByType.flat());
     }
@@ -163,7 +163,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 return Promise.resolve(
                     parsed?.tasks
                         ?.map((task: {id?: string}) => task.id)
-                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? []
+                        .filter((taskId: string | undefined) => taskId && taskId !== currentTaskId) ?? [],
                 );
             }
             case "labels":
@@ -206,9 +206,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                         revision,
                         source: false,
                         store: false,
-                        deleted: true
-                    }
-                ))
+                        deleted: true,
+                    },
+                ));
                 this.flowsInputsCache[subflowUid] = inputs?.map((input: {id:string}) => `${input.id}`) ?? [];
             } catch {
                 return [];
@@ -236,7 +236,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
-                        .map((flow: {id: string}) => flow.id)
+                        .map((flow: {id: string}) => flow.id);
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id);
                     }

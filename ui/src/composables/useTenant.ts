@@ -19,7 +19,7 @@ export function setupTenantRouter(router: Router, app: App): void {
         const toWithParams = to as RouteLocationNamedRaw;
         return {
             ...toWithParams,
-            params: {tenant: this.$route?.params?.tenant || "main", ...toWithParams.params}
+            params: {tenant: this.$route?.params?.tenant || "main", ...toWithParams.params},
         };
     };
 

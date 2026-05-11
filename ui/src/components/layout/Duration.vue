@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {State, durationUtils} from "@kestra-io/design-system"
+    import {State, durationUtils} from "@kestra-io/design-system";
 
     const ts = date => new Date(date).getTime();
 
@@ -22,24 +22,24 @@
         props: {
             histories: {
                 type: Array,
-                default: undefined
-            }
+                default: undefined,
+            },
         },
         watch: {
             histories(newValue, oldValue) {
                 if (oldValue.length !== newValue.length) {
-                    this.paint()
+                    this.paint();
                 }
             },
         },
         data () {
             return {
                 duration: "",
-                refreshHandler: undefined
-            }
+                refreshHandler: undefined,
+            };
         },
         mounted() {
-            this.paint()
+            this.paint();
         },
         computed: {
             start() {
@@ -47,14 +47,14 @@
             },
 
             lastStep() {
-                return this.histories[this.histories.length - 1]
-            }
+                return this.histories[this.histories.length - 1];
+            },
         },
         methods: {
             paint() {
                 if (!this.refreshHandler) {
                     this.refreshHandler = setInterval(() => {
-                        this.computeDuration()
+                        this.computeDuration();
                         if (this.histories && !State.isRunning(this.lastStep.state)) {
                             this.cancel();
                         }
@@ -64,7 +64,7 @@
             cancel() {
                 if (this.refreshHandler) {
                     clearInterval(this.refreshHandler);
-                    this.refreshHandler = undefined
+                    this.refreshHandler = undefined;
                 }
             },
             delta() {
@@ -74,10 +74,10 @@
                 if (!this.histories || State.isRunning(this.lastStep.state)) {
                     return +new Date();
                 }
-                return ts(this.lastStep.date)
+                return ts(this.lastStep.date);
             },
             computeDuration() {
-                this.duration = durationUtils.humanDuration(this.delta() / 1000)
+                this.duration = durationUtils.humanDuration(this.delta() / 1000);
             },
             squareClass(state) {
                 let statusVarname = state.toLowerCase();
@@ -87,14 +87,14 @@
                 if(statusVarname === "submitted") statusVarname = "created";
 
                 return {
-                    backgroundColor: `var(--ks-chart-${statusVarname})`
+                    backgroundColor: `var(--ks-chart-${statusVarname})`,
                 };
             },
         },
         beforeUnmount() {
             this.cancel();
-        }
-    }
+        },
+    };
 </script>
 
 <style lang="scss">

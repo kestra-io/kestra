@@ -16,12 +16,12 @@
         target?: string;
     }>(), {
         href: "",
-        target: undefined
+        target: undefined,
     });
 
     const {href, isRemote} = useDocsLink(
         toRef(props, "href"),
-        computed(() => route.path)
+        computed(() => route.path),
     );
 
     const linkType = computed(() => {
@@ -32,12 +32,12 @@
         if (isRemote.value) {
             return {
                 href: href.value,
-                target: props.target ?? "_blank"
+                target: props.target ?? "_blank",
             };
         }
 
         return {
-            to: href.value
+            to: href.value,
         };
     });
 </script>

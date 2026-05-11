@@ -158,7 +158,7 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        readRouteLevelFilter
+        readRouteLevelFilter,
     } from "@kestra-io/design-system";
     import {useRouteFilterPolicy} from "@kestra-io/design-system";
     import {useExecutionsStore, type Execution} from "../../stores/executions";
@@ -211,7 +211,7 @@
         embed?: boolean;
     }>(), {
         namespace: undefined,
-        embed: true
+        embed: true,
     });
 
     // Emits
@@ -237,7 +237,7 @@
         "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
         "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit",
         "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs",
-        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"
+        "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable",
     ];
 
     // Reactive state
@@ -325,7 +325,7 @@
 
     const taskTypeByTaskRunId = computed<Record<string, string | undefined>>(() => {
         return Object.fromEntries(
-            taskTypeByTaskRun.value.map(([taskRun, taskTypeVal]) => [taskRun.id, taskTypeVal])
+            taskTypeByTaskRun.value.map(([taskRun, taskTypeVal]) => [taskRun.id, taskTypeVal]),
         );
     });
 
@@ -333,7 +333,7 @@
         return taskTypeByTaskRun.value
             .filter(([, taskTypeVal]) =>
                 taskTypeVal === "io.kestra.plugin.core.flow.ForEachItem" ||
-                taskTypeVal === "io.kestra.core.tasks.flows.ForEachItem"
+                taskTypeVal === "io.kestra.core.tasks.flows.ForEachItem",
             )
             .map(([taskRun]) => taskRun);
     });
@@ -407,7 +407,7 @@
             ...(execution.value.taskRunList as TaskRun[] || []).map(r => {
                 const lastIndex = r.state.histories.length - 1;
                 return ts(r.state.histories[lastIndex].date);
-            })
+            }),
         );
     }
 
@@ -482,7 +482,7 @@
                 executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
-                parentEndPercent
+                parentEndPercent,
             };
 
             taskMap[task.id] = seriesItem;
@@ -545,11 +545,11 @@
             } else if (regularPaintingInterval.value === undefined) {
                 regularPaintingInterval.value = setInterval(
                     compute,
-                    taskRunsCount.value < TASKRUN_THRESHOLD ? 40 : 500
+                    taskRunsCount.value < TASKRUN_THRESHOLD ? 40 : 500,
                 );
             }
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     watch(
@@ -562,7 +562,7 @@
                 }
             }
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     watch(

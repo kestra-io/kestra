@@ -44,12 +44,12 @@
     import {DISABLED_PAGES} from "./docsUtils";
 
     defineOptions({
-        name: "RecursiveToc"
-    })
+        name: "RecursiveToc",
+    });
 
     defineSlots<{
         default: (child: TocChild & {class?: string}) => any
-    }>()
+    }>();
 
 
     interface TocChild {
@@ -67,12 +67,12 @@
         makeIndexNavigable?: boolean
     }>(), {
         makeIndexNavigable: true,
-        depth: 0
-    })
+        depth: 0,
+    });
 
     const filteredChildren = computed(() => {
-        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
-    })
+        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})));
+    });
 
     const openedDocs = ref<string>("");
 </script>

@@ -94,7 +94,7 @@
         return query
             ? props.options.filter(option =>
                 option.label.toLowerCase().includes(query) ||
-                option.value.toLowerCase().includes(query)
+                option.value.toLowerCase().includes(query),
             )
             : props.options;
     });
@@ -102,7 +102,7 @@
     const allSelected = computed(
         () =>
             filteredOptions.value.length > 0 &&
-            filteredOptions.value.every(option => props.modelValue.includes(option.value))
+            filteredOptions.value.every(option => props.modelValue.includes(option.value)),
     );
 
     const isPartiallySelected = computed(() => {
@@ -115,7 +115,7 @@
     const handleSelectAllChange = (checked: boolean) => {
         const values = new Set(props.modelValue);
         filteredOptions.value.forEach(opt =>
-            checked ? values.add(opt.value) : values.delete(opt.value)
+            checked ? values.add(opt.value) : values.delete(opt.value),
         );
         emits("update:modelValue", [...values]);
     };
@@ -131,7 +131,7 @@
     const handleOptionChange = (value: string, checked: boolean) =>
         emits(
             "update:modelValue",
-            checked ? [...props.modelValue, value] : props.modelValue.filter(v => v !== value)
+            checked ? [...props.modelValue, value] : props.modelValue.filter(v => v !== value),
         );
 </script>
 

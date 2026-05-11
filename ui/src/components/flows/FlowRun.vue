@@ -94,7 +94,7 @@
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {executeTask} from "../../utils/submitTask"
+    import {executeTask} from "../../utils/submitTask";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import {normalize} from "../../utils/inputs";
     import Curl from "./Curl.vue";
@@ -107,7 +107,7 @@
             LabelInput,
             InputsForm,
             Curl,
-            WebhookCurl
+            WebhookCurl,
         },
         props: {
             redirect: {type: Boolean, default: true},
@@ -129,17 +129,17 @@
                 collapseName: undefined,
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
                 executeClicked: false,
-                checks: []
+                checks: [],
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
         computed: {
             ...mapStores(useApiStore, useCoreStore, useMiscStore, useExecutionsStore, usePlaygroundStore),
             flow() {
-                return this.executionsStore.flow
+                return this.executionsStore.flow;
             },
             execution() {
-                return this.executionsStore.execution
+                return this.executionsStore.execution;
             },
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
@@ -153,9 +153,9 @@
                 }
                 return this.flow.triggers.some(trigger =>
                     trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
-                    (trigger.disabled === undefined || trigger.disabled === false)
+                    (trigger.disabled === undefined || trigger.disabled === false),
                 );
-            }
+            },
         },
         methods: {
             hasBlockingChecks() {
@@ -220,9 +220,9 @@
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
-                                        .map(label => `${label.key}:${label.value}`)
+                                        .map(label => `${label.key}:${label.value}`),
                                 ), "system.from:ui"],
-                                scheduleDate: this.scheduleDate
+                                scheduleDate: this.scheduleDate,
                             });
                         } else {
                             const shouldShowOnboardingSuccessAnimation = this.$route.query.onboardingPreset === "true";
@@ -235,7 +235,7 @@
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
-                                        .map(label => `${label.key}:${label.value}`)
+                                        .map(label => `${label.key}:${label.value}`),
                                 ), "system.from:ui"],
                                 scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
@@ -269,15 +269,15 @@
                 handler() {
                     this.$emit("updateInputs", this.inputs);
                 },
-                deep: true
+                deep: true,
             },
             executionLabels: {
                 handler() {
                     this.$emit("updateLabels", this.executionLabels);
                 },
-                deep: true
-            }
-        }
+                deep: true,
+            },
+        },
     };
 </script>
 

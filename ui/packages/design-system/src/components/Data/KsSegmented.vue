@@ -8,25 +8,25 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSegmented} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElSegmented} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<string | number | boolean>()
+    const model = defineModel<string | number | boolean>();
 
     const props = defineProps<{
         options?: Array<string | number | {label: string; value: string | number | boolean; disabled?: boolean}>
         size?: "large" | "default" | "small"
         disabled?: boolean
         block?: boolean
-    }>()
+    }>();
 
     const emit = defineEmits<{
         change: [value: string | number | boolean]
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

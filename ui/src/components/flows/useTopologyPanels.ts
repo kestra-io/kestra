@@ -52,8 +52,8 @@ export function useTopologyPanels(
         }
         return {
             panelIndex,
-            tabIndex
-        }
+            tabIndex,
+        };
     }
 
     const flowStore = useFlowStore();
@@ -78,7 +78,7 @@ export function useTopologyPanels(
             source: flowStore.flowYaml ?? "",
             section: params.section,
             id: params.id,
-        })
+        });
 
         if (!path) {
             return;
@@ -94,7 +94,7 @@ export function useTopologyPanels(
 
         if (refPath === undefined) {
             console.warn("No refPath found in topology click params", value);
-            return
+            return;
         }
 
         const blockSchemaPath = [pluginsStore.flowSchema?.$ref, "properties", params.section, "items"].join("/");

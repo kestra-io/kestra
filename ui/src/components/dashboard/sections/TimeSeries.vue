@@ -73,12 +73,12 @@
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
         const query = {
             ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
-            ...route.query
+            ...route.query,
         };
         return date.isValid() ? date.format(KestraUtils.getDateFormat(
             (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
             (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            query["filters[timeRange][EQUALS]"] as string | undefined
+            query["filters[timeRange][EQUALS]"] as string | undefined,
         )) : value;
     };
 
@@ -159,7 +159,7 @@
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
-            (a.label ?? "").localeCompare(b.label ?? "")
+            (a.label ?? "").localeCompare(b.label ?? ""),
         );
 
         const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
@@ -195,13 +195,13 @@
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                                 {
                                     offset: 0,
-                                    color: cssVar("--ks-gray-100")
+                                    color: cssVar("--ks-gray-100"),
                                 },
                                 {
                                     offset: 1,
-                                    color: cssVar("--ks-gray-900")
-                                }
-                            ])
+                                    color: cssVar("--ks-gray-900"),
+                                },
+                            ]),
                         },
                     },
                     ...yDatasetData,
@@ -315,7 +315,7 @@
     }
 
     defineExpose({
-        refresh
+        refresh,
     });
 
     watch(() => route.params.filters, () => {

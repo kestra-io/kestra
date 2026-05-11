@@ -22,9 +22,9 @@ export class FlowsApi extends BaseApi {
             headers: {
                 "Content-Type": "application/x-yaml",
                 "Accept": "application/json",
-                "Authorization": FlowsApi.AUTH
+                "Authorization": FlowsApi.AUTH,
             },
-            data: this.getFlowYaml(fileName, fileFlowId, flowId)
+            data: this.getFlowYaml(fileName, fileFlowId, flowId),
         });
 
         const status = (await response).status();
@@ -42,8 +42,8 @@ export class FlowsApi extends BaseApi {
         for(const flowId of this.flowIds) {
             const status = (await this.request.delete(`${this.apiUrl}/flows/${shared.namespace}/${flowId}`, {
                 headers: {
-                    "Authorization": FlowsApi.AUTH
-                }
+                    "Authorization": FlowsApi.AUTH,
+                },
             })).status();
 
             if (status !== 204) {
@@ -57,7 +57,7 @@ export class FlowsApi extends BaseApi {
         const __dirname = dirname(__filename);
         const flowYaml = fs.readFileSync(
             path.resolve(__dirname, `../fixtures/flows/${fileName}`),
-            "utf-8"
+            "utf-8",
         );
 
         return flowYaml.replace(fileFlowId, desiredFlowId);

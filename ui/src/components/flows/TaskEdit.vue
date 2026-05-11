@@ -120,7 +120,7 @@
         emitTaskOnly: false,
         isHidden: false,
         readOnly: false,
-        flowSource: undefined
+        flowSource: undefined,
     });
 
     const emit = defineEmits<{
@@ -174,7 +174,7 @@
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
-                    store: false
+                    store: false,
                 });
             }
         }
@@ -215,7 +215,7 @@
                 lastValidatedValue.value = taskYaml.value;
                 flowStore.validateTask({
                     task: taskYaml.value,
-                    section: props.section
+                    section: props.section,
                 });
             }
         }, 500) as any;

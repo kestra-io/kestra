@@ -37,11 +37,11 @@ export function useFilters(prefix: string) {
 
                     const comparator = (operation: LegacyFilter["operation"]) => getComparator(operation);
                     stringValue = (value as LegacyFilter[]).map(f =>
-                        `${f.field}${comparator(f.operation)}${f.value.includes(" ") ? `"${f.value}"` : f.value}`
-                    ).join(" ")
+                        `${f.field}${comparator(f.operation)}${f.value.includes(" ") ? `"${f.value}"` : f.value}`,
+                    ).join(" ");
                 }
 
-                return {name, value: stringValue}
+                return {name, value: stringValue};
             });
 
             if (hasLegacyFilter) {
@@ -54,6 +54,6 @@ export function useFilters(prefix: string) {
         removeSavedItem: (element: object) => {
             const filtered = filterItems(getItem(keys.saved), element);
             return setItem(keys.saved, filtered);
-        }
+        },
     };
 }

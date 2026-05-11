@@ -115,9 +115,9 @@
     import {KsIconButton} from "@kestra-io/design-system";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
-    import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
+    import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
     import Collapse from "../layout/Collapse.vue";
-    import {State} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system";
 
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
@@ -131,7 +131,7 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        readRouteLevelFilter
+        readRouteLevelFilter,
     } from "@kestra-io/design-system";
     import {useRouteFilterPolicy} from "@kestra-io/design-system";
 
@@ -152,12 +152,12 @@
             DynamicScroller,
             DynamicScrollerItem,
             Refresh,
-            KSFilter
+            KSFilter,
         },
         setup() {
             const logExecutionsFilter = useLogExecutionsFilter();
             const defaultLogLevel = computed(
-                () => localStorage.getItem("defaultLogLevel") || "INFO"
+                () => localStorage.getItem("defaultLogLevel") || "INFO",
             );
 
             const {
@@ -175,7 +175,7 @@
             return {
                 logExecutionsFilter,
                 routeLevel,
-                effectiveLevel
+                effectiveLevel,
             };
         },
         data() {
@@ -185,7 +185,7 @@
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
+                logCursor: undefined,
             };
         },
         created() {
@@ -197,17 +197,17 @@
                     if (this.raw_view) {
                         this.loadLogs();
                     }
-                }
+                },
             },
             logCursor(newValue) {
                 if (newValue !== undefined && this.raw_view) {
                     this.scrollToLog(newValue);
                 }
-            }
+            },
         },
         computed: {
             State() {
-                return State
+                return State;
             },
             temporalLogs() {
                 const logResults = this.executionsStore.logs ?? [];
@@ -232,10 +232,10 @@
                 return this.executionsStore.execution.id;
             },
             downloadName() {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.executionId}.log`
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.executionId}.log`;
             },
             logDisplayButtonText() {
-                return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
+                return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all");
             },
             logDisplayButtonIcon() {
                 return this.openedTaskrunsCount === 0 ? UnfoldMoreHorizontal : UnfoldLessHorizontal;
@@ -269,7 +269,7 @@
                     }
                 });
 
-                return temporalViewLogIndicesByLevel
+                return temporalViewLogIndicesByLevel;
             },
             viewTypeAwareLogIndicesByLevel() {
                 return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
@@ -280,16 +280,16 @@
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.effectiveLevel
-                    }
-                })
+                        minLevel: this.effectiveLevel,
+                    },
+                });
             },
             downloadContent() {
                 this.executionsStore.downloadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.effectiveLevel
-                    }
+                        minLevel: this.effectiveLevel,
+                    },
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName);
                 });
@@ -299,7 +299,7 @@
                     executionId: this.executionId,
                     params: {
                         minLevel: this.effectiveLevel,
-                    }
+                    },
                 }).then((response) => {
                     Utils.copy(response);
                 });
@@ -359,8 +359,8 @@
             },
             scrollToLog(index) {
                 this.$refs.logScroller.scrollToItem(index);
-            }
-        }
+            },
+        },
     };
 </script>
 

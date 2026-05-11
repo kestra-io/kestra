@@ -78,15 +78,15 @@
         warnings: string[] | undefined;
         isNamespace: boolean;
         showSaveAndExecute?: boolean;
-    }>()
+    }>();
 
     const forwardEvent = defineEmits([
         "delete-flow",
         "copy",
         "save",
         "save-and-execute",
-        "export"
-    ])
+        "export",
+    ]);
 
     const hasErrors = computed(() => props.errors && props.errors.length > 0);
 

@@ -36,7 +36,7 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
             return {
                 activeTab: t,
                 tabs: [t],
-                size: 100 / defaultPanels.length
+                size: 100 / defaultPanels.length,
             };
         });
 
@@ -62,14 +62,14 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
                             return {
                                 activeTab,
                                 tabs: tabsConverted,
-                                size: p.size
+                                size: p.size,
                             };
                         });
 
-                    return convertedPanels
-                }
+                    return convertedPanels;
+                },
             },
-        }
+        },
     ) : ref(initialPanels);
 
     function saveState(altKey: string | undefined) {

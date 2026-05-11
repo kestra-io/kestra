@@ -1,25 +1,25 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref, defineComponent} from "vue"
-import type {RouterTab} from "../../../src"
-import {KsTag, KsRouterTab} from "../../../src"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref, defineComponent} from "vue";
+import type {RouterTab} from "../../../src";
+import {KsTag, KsRouterTab} from "../../../src";
 
 
 // Simple content components for stories
 const OverviewPanel = defineComponent({
     template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Overview content</div>",
-})
+});
 const LogsPanel = defineComponent({
     template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Logs content</div>",
-})
+});
 const MetricsPanel = defineComponent({
     template: "<div style=\"padding:16px;background:var(--ks-background-card);border-radius:4px\">Metrics content</div>",
-})
+});
 
 const baseTabs: RouterTab[] = [
     {name: "overview", title: "Overview"},
     {name: "logs", title: "Logs"},
     {name: "metrics", title: "Metrics"},
-]
+];
 
 const meta: Meta<typeof KsRouterTab> = {
     title: "Components/Navigation/KsRouterTab",
@@ -38,8 +38,8 @@ const meta: Meta<typeof KsRouterTab> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsRouterTab>
 
 /** Embedded mode — parent manages the active tab state. No router required. */
@@ -47,9 +47,9 @@ export const Default: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref(baseTabs[0].name!)
-            const tabs = baseTabs
-            return {activeTab, tabs}
+            const activeTab = ref(baseTabs[0].name!);
+            const tabs = baseTabs;
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -64,20 +64,20 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Tabs with count badges — pass `count` on the tab definition. */
 export const WithCount: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref("executions")
+            const activeTab = ref("executions");
             const tabs: RouterTab[] = [
                 {name: "flows", title: "Flows", count: 12},
                 {name: "executions", title: "Executions", count: 0},
                 {name: "triggers", title: "Triggers", count: 3},
-            ]
-            return {activeTab, tabs}
+            ];
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -89,20 +89,20 @@ export const WithCount: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Disabled tab — disabled tabs show as plain text and cannot be clicked. */
 export const WithDisabledTab: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref("overview")
+            const activeTab = ref("overview");
             const tabs: RouterTab[] = [
                 {name: "overview", title: "Overview"},
                 {name: "topology", title: "Topology", disabled: true},
                 {name: "metrics", title: "Metrics"},
-            ]
-            return {activeTab, tabs}
+            ];
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -114,20 +114,20 @@ export const WithDisabledTab: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Hidden tab — hidden tabs are not rendered. */
 export const WithHiddenTab: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref("overview")
+            const activeTab = ref("overview");
             const tabs: RouterTab[] = [
                 {name: "overview", title: "Overview"},
                 {name: "internal", title: "Internal", hidden: true},
                 {name: "metrics", title: "Metrics"},
-            ]
-            return {activeTab, tabs}
+            ];
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -140,20 +140,20 @@ export const WithHiddenTab: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom tab-label slot — inject badges, icons, or any markup into each label. */
 export const CustomLabel: Story = {
     render: () => ({
         components: {KsRouterTab, KsTag},
         setup() {
-            const activeTab = ref("overview")
+            const activeTab = ref("overview");
             const tabs: RouterTab[] = [
                 {name: "overview", title: "Overview"},
                 {name: "beta", title: "Beta Feature"},
                 {name: "metrics", title: "Metrics"},
-            ]
-            return {activeTab, tabs}
+            ];
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -172,25 +172,25 @@ export const CustomLabel: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Content slot — render the active tab body via the scoped `content` slot. */
 export const WithContentSlot: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref("overview")
+            const activeTab = ref("overview");
             const tabs: RouterTab[] = [
                 {name: "overview", title: "Overview"},
                 {name: "logs", title: "Logs"},
                 {name: "metrics", title: "Metrics"},
-            ]
+            ];
             const contentMap: Record<string, string> = {
                 overview: "This is the overview panel.",
                 logs: "Execution logs appear here.",
                 metrics: "Performance metrics are displayed here.",
-            }
-            return {activeTab, tabs, contentMap}
+            };
+            return {activeTab, tabs, contentMap};
         },
         template: `
             <div style="padding:24px">
@@ -209,20 +209,20 @@ export const WithContentSlot: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Component prop — tabs can declare a `component` to render as content without a slot. */
 export const WithComponentProp: Story = {
     render: () => ({
         components: {KsRouterTab},
         setup() {
-            const activeTab = ref("overview")
+            const activeTab = ref("overview");
             const tabs: RouterTab[] = [
                 {name: "overview", title: "Overview", component: OverviewPanel},
                 {name: "logs", title: "Logs", component: LogsPanel},
                 {name: "metrics", title: "Metrics", component: MetricsPanel},
-            ]
-            return {activeTab, tabs}
+            ];
+            return {activeTab, tabs};
         },
         template: `
             <div style="padding:24px">
@@ -235,4 +235,4 @@ export const WithComponentProp: Story = {
             </div>
         `,
     }),
-}
+};

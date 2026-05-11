@@ -25,7 +25,7 @@
     const props = defineProps<{
         directory: string
         title: string
-    }>()
+    }>();
 
     let navigation = await docStore.children(props.directory) as Record<string, any>;
 
@@ -37,8 +37,8 @@
                 path: a[0],
                 title: a[1].title,
                 description: a[1].description,
-            }))
-    })
+            }));
+    });
 </script>
 
 <style scoped lang="scss">

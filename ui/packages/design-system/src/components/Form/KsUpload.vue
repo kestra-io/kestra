@@ -14,10 +14,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElUpload} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElUpload} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = withDefaults(defineProps<{
         accept?: string
@@ -35,19 +35,19 @@
         action: undefined,
         showFileList: undefined,
         fileList: undefined,
-    })
+    });
 
     const emit = defineEmits<{
         change: [file: any, fileList: any[]]
         exceed: [files: any[], fileList: any[]]
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
         tip?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

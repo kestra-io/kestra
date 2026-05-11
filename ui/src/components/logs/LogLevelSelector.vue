@@ -16,15 +16,15 @@
     </KsSelect>
 </template>
 <script setup lang="ts">
-    const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()
+    const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>();
 
     withDefaults(defineProps<{
         value?: string,
         router?: boolean
     }>(), {
         value: "INFO",
-        router: true
-    })
+        router: true,
+    });
 
     const LEVELS = [
         "TRACE",

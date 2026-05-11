@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSplitterPanel} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElSplitterPanel} from "element-plus";
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = withDefaults(defineProps<{
         size?: string | number
@@ -23,13 +23,13 @@
         min: undefined,
         max: undefined,
         resizable: undefined,
-    })
+    });
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

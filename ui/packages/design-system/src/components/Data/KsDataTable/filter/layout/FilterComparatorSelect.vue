@@ -33,7 +33,7 @@
     import {
         COMPARATOR_DESCRIPTIONS,
         COMPARATOR_LABELS,
-        Comparators
+        Comparators,
     } from "../utils/filterTypes";
 
     const {t} = useI18n();
@@ -50,7 +50,7 @@
 
     const comparatorModel = computed({
         get: () => props.selectedComparator,
-        set: (value: Comparators) => emits("update:selectedComparator", value)
+        set: (value: Comparators) => emits("update:selectedComparator", value),
     });
 
     const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator];

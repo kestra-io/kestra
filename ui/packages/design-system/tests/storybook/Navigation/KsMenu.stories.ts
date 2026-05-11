@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsMenu from "../../../src/components/Navigation/KsMenu/KsMenu.vue"
-import KsMenuItem from "../../../src/components/Navigation/KsMenu/KsMenuItem.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsMenu from "../../../src/components/Navigation/KsMenu/KsMenu.vue";
+import KsMenuItem from "../../../src/components/Navigation/KsMenu/KsMenuItem.vue";
 
 const meta: Meta<typeof KsMenu> = {
     title: "Components/Navigation/KsMenu",
@@ -13,14 +13,14 @@ const meta: Meta<typeof KsMenu> = {
     parameters: {
         docs: {description: {component: "KsMenu is the Kestra design-system abstraction over `ElMenu` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsMenu>
 
 export const Vertical: Story = {
     render: (args) => ({
         components: {KsMenu, KsMenuItem},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: `
             <div style="padding:24px;width:200px">
                 <ks-menu default-active="flows" v-bind="args">
@@ -32,15 +32,15 @@ export const Vertical: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Collapse – vertically collapsible sidebar */
 export const Collapse: Story = {
     render: () => ({
         components: {KsMenu, KsMenuItem},
         setup() {
-            const collapsed = ref(false)
-            return {collapsed}
+            const collapsed = ref(false);
+            return {collapsed};
         },
         template: `
             <div style="padding:24px;display:flex;gap:16px;align-items:flex-start">
@@ -56,7 +56,7 @@ export const Collapse: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Horizontal: Story = {
     render: () => ({
@@ -71,4 +71,4 @@ export const Horizontal: Story = {
             </div>
         `,
     }),
-}
+};

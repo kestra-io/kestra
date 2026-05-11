@@ -69,7 +69,7 @@
 
     const search = ref("");
     const filtered = computed(() =>
-        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()))
+        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase())),
     );
 </script>
 

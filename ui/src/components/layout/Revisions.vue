@@ -144,7 +144,7 @@
     const isLoadingRevisions = ref(false);
     const displayTypes = [
         {value: true, text: t("side-by-side")},
-        {value: false, text: t("line-by-line")}
+        {value: false, text: t("line-by-line")},
     ];
 
     const emit = defineEmits<{
@@ -172,7 +172,7 @@
 
         if (route.query.revisionRight) {
             revisionRightIndex.value = revisionIndex(
-                route.query.revisionRight.toString()
+                route.query.revisionRight.toString(),
             );
             if (
                 !route.query.revisionLeft &&
@@ -187,7 +187,7 @@
 
         if (route.query.revisionLeft) {
             revisionLeftIndex.value = revisionIndex(
-                route.query.revisionLeft.toString()
+                route.query.revisionLeft.toString(),
             );
         } else if (revisionRightIndex.value !== undefined && revisionRightIndex.value > 0) {
             revisionLeftIndex.value = revisionRightIndex.value - 1;
@@ -221,8 +221,8 @@
                 query: {
                     ...route.query,
                     revisionLeft: sortedRevisions.value[revisionLeftIndex.value].revision,
-                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision
-                }
+                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision,
+                },
             });
         }
     }
@@ -253,7 +253,7 @@
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
-                    text: formatRevisionText(revision)
+                    text: formatRevisionText(revision),
                 };
             });
     }
@@ -267,8 +267,8 @@
     });
 
     const currentRevision = computed(() => {
-        return currentRevisionWithSource.value?.revision ?? 1
-    })
+        return currentRevisionWithSource.value?.revision ?? 1;
+    });
 
     async function loadRevisionContent(index: number | undefined) {
         if (index === undefined) {
@@ -293,7 +293,7 @@
                 await flowStore.deleteRevision({
                     namespace: route.params.namespace?.toString() || "",
                     id: route.params.id?.toString() || "",
-                    revision: revisionToDelete.toString()
+                    revision: revisionToDelete.toString(),
                 });
                 toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
                 emit("deleted", revisionToDelete);

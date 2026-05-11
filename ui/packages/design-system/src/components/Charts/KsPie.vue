@@ -15,23 +15,23 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed} from "vue";
 
-    import {use} from "echarts/core"
-    import {PieChart} from "echarts/charts"
+    import {use} from "echarts/core";
+    import {PieChart} from "echarts/charts";
 
-    import KsEchart from "./KsEchart.vue"
-    import type {KsChartSeriesItem} from "./KsEchart.vue"
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import KsEchart from "./KsEchart.vue";
+    import type {KsChartSeriesItem} from "./KsEchart.vue";
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils";
 
-    use([PieChart])
+    use([PieChart]);
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
-    }>()
+    }>();
 
     const props = withDefaults(
         defineProps<{
@@ -59,18 +59,18 @@
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
         },
-    )
+    );
 
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null);
 
     const isLoading = computed(() => {
-        if (props.loading !== undefined) return props.loading
-        return props.data === null || props.data === undefined
-    })
+        if (props.loading !== undefined) return props.loading;
+        return props.data === null || props.data === undefined;
+    });
 
     const mergedOption = computed(() => {
         const legendHidden = (props.options.legend as {show?: boolean})?.show === false
-            || props.disableFeatures.includes(ChartFeature.LEGEND)
+            || props.disableFeatures.includes(ChartFeature.LEGEND);
         const base: Record<string, unknown> = {
             tooltip: {trigger: "item", formatter: "{b}: {c} ({d}%)"},
             legend: {orient: "vertical", right: "5%", top: "center"},
@@ -83,12 +83,12 @@
                     emphasis: {scale: false},
                 },
             ],
-        }
+        };
 
-        return deepMerge(base, props.options ?? {})
-    })
+        return deepMerge(base, props.options ?? {});
+    });
 
     defineExpose({
         getEchartsInstance: () => ksEchartRef.value?.getEchartsInstance() ?? null,
-    })
+    });
 </script>

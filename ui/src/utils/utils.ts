@@ -30,7 +30,7 @@ export default class Utils {
                 .keys(child)
                 .map(key => typeof child[key] === "object" ?
                     _flatten(child[key], path.concat([key])) :
-                    ({[path.concat([key]).join(".")]: child[key]})
+                    ({[path.concat([key]).join(".")]: child[key]}),
                 );
         }(object));
     }
@@ -61,7 +61,7 @@ export default class Utils {
 
             return {key, value: rawValue};
 
-        })
+        });
     }
 
     /**
@@ -173,7 +173,7 @@ export default class Utils {
                 if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
                     htmlClass.remove(cls);
                 }
-            })
+            });
         }
         removeClasses();
 
@@ -229,7 +229,7 @@ export default class Utils {
         node.style.left = "-9999px";
         node.textContent = text;
         document.body.appendChild(node).value = text;
-        node.select()
+        node.select();
 
         document.execCommand("copy");
 
@@ -286,9 +286,9 @@ export default class Utils {
 export const useTheme = () => {
     const miscStore = useMiscStore();
     return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark");
-}
+};
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>,) {
+export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {
     if (obj === undefined || obj === null) {
         return obj;
     }

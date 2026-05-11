@@ -537,7 +537,7 @@
                         ...it.input,
                         errors: it.errors,
                         value: it.value || it.input.prefill,
-                        isDefault: it.isDefault
+                        isDefault: it.isDefault,
                     });
                 }
                 return acc;
@@ -561,7 +561,7 @@
                 inputsMetaData: inputsMetaData.value,
                 callback: (response: ValidationResponse) => {
                     metadataCallback(response);
-                }
+                },
             });
         }
     }
@@ -618,7 +618,7 @@
     function addNewArrayItem(input: InputMetaData): void {
         if (!editableItems[input.id]) {
             editableItems[input.id] = parseArrayValue(input.id).map(item =>
-                item?.toString() || ""
+                item?.toString() || "",
             );
         }
         editableItems[input.id].push("");
@@ -708,7 +708,7 @@
                 }
                 previousInputsValues.value = JSON.parse(JSON.stringify(val));
             },
-            {deep: true}
+            {deep: true},
         );
 
         // on first load default values need to be sent to the parent

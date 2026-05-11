@@ -12,10 +12,10 @@
                  {
                      // remove "docs/" from the path
                      href: link.path.slice(5),
-                     useRaw: true
+                     useRaw: true,
                  },
                  () => link.title);
-    }
+    };
 
     defineProps<{
         pageUrl?: string,

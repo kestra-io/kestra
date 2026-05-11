@@ -36,7 +36,7 @@
     }>(), {
         href: undefined,
         useRaw: false,
-        class: undefined
+        class: undefined,
     });
 
     const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));

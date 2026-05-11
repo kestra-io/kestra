@@ -5,7 +5,7 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import moment from "moment";
-    import {storageKeys} from "../../../../../utils/constants"
+    import {storageKeys} from "../../../../../utils/constants";
 
     const props = defineProps({
         field: {
@@ -23,6 +23,6 @@
         } else {
             return undefined;
         }
-    }
+    };
     const date = computed(() => formatDateIfPresent(props.field));
 </script>

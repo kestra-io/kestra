@@ -1,5 +1,5 @@
-import {ElNotification} from "element-plus"
-import type {NotificationHandle, NotificationOptions, NotificationParams} from "element-plus"
+import {ElNotification} from "element-plus";
+import type {NotificationHandle, NotificationOptions, NotificationParams} from "element-plus";
 
 // KsNotification is the Kestra design-system abstraction over ElNotification from Element Plus.
 // It mirrors the ElNotification API exactly so existing call sites can do a drop-in import replacement.
@@ -26,6 +26,6 @@ export const KsNotification: KsNotificationType = Object.assign(
             ElNotification.error(options as NotificationOptions),
         closeAll: (): void => ElNotification.closeAll(),
     },
-)
+);
 
-export default KsNotification
+export default KsNotification;

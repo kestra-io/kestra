@@ -11,7 +11,7 @@
     withDefaults(defineProps<{
         link?: boolean
     }>(), {
-        link: false
+        link: false,
     });
 </script>
 

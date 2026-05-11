@@ -15,26 +15,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapseItem} from "element-plus"
+    import {ElCollapseItem} from "element-plus";
 
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         name?: string | number
         title?: string
         disabled?: boolean
         icon?: any
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
         title?(props: { isActive?: boolean }): unknown
         icon?(props: { isActive?: boolean }): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

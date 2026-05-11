@@ -21,10 +21,10 @@ export class ExecutionsApi extends BaseApi {
         const response = this.request.post(`${this.apiUrl}/executions/${shared.namespace}/${this.flowId}`, {
             headers: {
                 "Accept": "application/json",
-                "Authorization": ExecutionsApi.AUTH
+                "Authorization": ExecutionsApi.AUTH,
             },
             params,
-            multipart: formData
+            multipart: formData,
         });
 
         const status = (await response).status();
@@ -47,9 +47,9 @@ export class ExecutionsApi extends BaseApi {
 
             const status = (await this.request.delete(`${this.apiUrl}/executions/${executionId}`, {
                 headers: {
-                    "Authorization": ExecutionsApi.AUTH
+                    "Authorization": ExecutionsApi.AUTH,
                 },
-                params
+                params,
             })).status();
 
             if (status !== 204) {

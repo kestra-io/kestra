@@ -65,8 +65,8 @@
                     ...result.data,
                     chartOptions: {
                         ...result.data?.chartOptions,
-                        width: 12
-                    }
+                        width: 12,
+                    },
                 } as any
                 : undefined;
             dashboardStore.chartErrors = [result.error].filter(e => e !== null);
@@ -105,7 +105,7 @@
             } else {
                 dashboardStore.sourceCode = value;
             }
-        }
+        },
     });
 
     const hasDraft = computed(() => draftSource.value !== undefined);

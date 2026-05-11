@@ -68,7 +68,7 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 
     const mergeData = {
         ...data,
-        ...additionalData
+        ...additionalData,
     };
 
     const backendData: Partial<EventData> = cloneDeep(mergeData);
@@ -97,8 +97,8 @@ export const useApiStore = defineStore("api", {
                 params: {
                     iid: options.iid,
                     uid: options.uid,
-                    version: options.version
-                }
+                    version: options.version,
+                },
             });
 
             this.feeds = response.data.feeds;
@@ -109,7 +109,7 @@ export const useApiStore = defineStore("api", {
 
         async loadConfig() {
             const response = await axios.get(`${API_URL}/v1/config`, {
-                withCredentials: true
+                withCredentials: true,
             });
 
             this.apiConfig = response.data;
@@ -175,7 +175,7 @@ export const useApiStore = defineStore("api", {
             }
 
             return axios.post(`${API_URL}/v1/reports/events`, backendData, {
-                withCredentials: true
+                withCredentials: true,
             });
         },
 
@@ -220,8 +220,8 @@ export const useApiStore = defineStore("api", {
 
         async pluginIcons() {
             return axios.get(`${API_URL}/v1/plugins/icons`, {
-                withCredentials: true
+                withCredentials: true,
             });
-        }
-    }
+        },
+    },
 });

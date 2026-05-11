@@ -12,23 +12,23 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTabPane} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElTabPane} from "element-plus";
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         label?: string
         name?: string
         disabled?: boolean
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
         label?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

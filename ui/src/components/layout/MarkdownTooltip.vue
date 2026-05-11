@@ -25,16 +25,16 @@
     defineProps({
         id: {
             type: String,
-            required: true
+            required: true,
         },
         title: {
             type: String,
-            default: ""
+            default: "",
         },
         description: {
             type: String,
-            default: ""
-        }
+            default: "",
+        },
     });
 
     const isOpen = ref(false);

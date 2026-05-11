@@ -13,23 +13,23 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCard} from "element-plus"
+    import {ElCard} from "element-plus";
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         shadow?: "always" | "hover" | "never"
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
         header?(): unknown
         footer?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

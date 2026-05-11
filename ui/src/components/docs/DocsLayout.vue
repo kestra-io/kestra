@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue"
+    import {ref, computed, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import Menu from "vue-material-design-icons/Menu.vue";

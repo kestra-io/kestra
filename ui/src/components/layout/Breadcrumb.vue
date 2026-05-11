@@ -56,11 +56,11 @@
     const visibleItems = computed<VisibleItem[]>(() =>
         shouldCollapse.value
             ? [items[0], {label: "...", ellipsis: true}, items[items.length - 1]]
-            : items
+            : items,
     );
 
     const collapsedItems = computed<BreadcrumbItem[]>(() =>
-        shouldCollapse.value ? items.slice(1, items.length - 1) : []
+        shouldCollapse.value ? items.slice(1, items.length - 1) : [],
     );
 </script>
 

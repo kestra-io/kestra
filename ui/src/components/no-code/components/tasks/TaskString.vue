@@ -96,7 +96,7 @@
         }
 
         return props.modelValue;
-    })
+    });
 
     onMounted(() => {
         const schema = props.schema;
@@ -113,7 +113,7 @@
 
     // FIXME: hardcoded condition only show days input for timeWindow durations
     const showDurationDays = computed(() => {
-        return props.schema?.format === "duration" && props.root?.startsWith("timeWindow")
+        return props.schema?.format === "duration" && props.root?.startsWith("timeWindow");
     });
 
     const daysDurationValue = computed<number | undefined>(() => {
@@ -175,7 +175,7 @@
                         minutes: currentTimeDuration.getMinutes(),
                         seconds: currentTimeDuration.getSeconds(),
                     })
-                    .toString()
+                    .toString();
         emit("update:modelValue", emitted);
     }
 

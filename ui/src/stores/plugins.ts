@@ -1,10 +1,10 @@
-import {defineStore} from "pinia"
+import {defineStore} from "pinia";
 import {ref, computed, toRaw, nextTick} from "vue";
 import {trackPluginDocumentationView} from "../utils/tabTracking";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
 import {useApiStore} from "./api";
-import InitialFlowSchema from "./flow-schema.json"
+import InitialFlowSchema from "./flow-schema.json";
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils";
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils";
 import {useClient} from "@kestra-io/kestra-sdk";
@@ -50,27 +50,27 @@ interface PluginIconData {
 function usePluginsIcons() {
     const apiStore = useApiStore();
 
-    const iconsLoaded = ref(false)
+    const iconsLoaded = ref(false);
 
     const apiIcons = ref<Record<string, PluginIconData>>({});
     const pluginsIcons = ref<Record<string, PluginIconData>>({});
-    const _iconsPromise = ref<Promise<Record<string, PluginIconData>>>();
+    const iconsPromiseLocal = ref<Promise<Record<string, PluginIconData>>>();
     const axios = useClient();
 
     const icons = computed(() => {
         return {
             ...pluginsIcons.value,
-            ...apiIcons.value
-        }
-    })
+            ...apiIcons.value,
+        };
+    });
 
     function fetchIcons() {
         if (iconsLoaded.value) {
             return Promise.resolve(icons.value);
         }
 
-        if (_iconsPromise.value) {
-            return _iconsPromise.value;
+        if (iconsPromiseLocal.value) {
+            return iconsPromiseLocal.value;
         }
 
         const apiPromise = apiStore.pluginIcons().then(async response => {
@@ -84,19 +84,19 @@ function usePluginsIcons() {
                 return pluginsIcons.value;
             });
 
-        _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
+        iconsPromiseLocal.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
             iconsLoaded.value = true;
             return icons.value;
-        })
+        });
 
-        return _iconsPromise.value;
+        return iconsPromiseLocal.value;
     }
 
     return {
         icons,
         iconsLoaded,
         fetchIcons,
-    }
+    };
 }
 
 export const usePluginsStore = defineStore("plugins", () => {
@@ -138,7 +138,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             ?.flatMap(([, value]) => (value as PluginElement[]).filter(({deprecated}) => deprecated === true).map(({cls}) => cls)) ?? [];
         return [
             ...deprecatedPlugins,
-            ...(plugins.value?.flatMap(({aliases}) => aliases ?? [])) ?? []
+            ...(plugins.value?.flatMap(({aliases}) => aliases ?? [])) ?? [],
         ];
     });
 
@@ -153,19 +153,19 @@ export const usePluginsStore = defineStore("plugins", () => {
                     if (ref?.type === "object" && ref?.properties) {
                         acc.properties = {
                             ...acc.properties,
-                            ...ref.properties
+                            ...ref.properties,
                         };
                     }
                 }
                 if (item.type === "object" && item.properties) {
                     acc.properties = {
                         ...acc.properties,
-                        ...item.properties
+                        ...item.properties,
                     };
                 }
                 return acc;
             }, {});
-            return def
+            return def;
         }
         return obj;
     }
@@ -177,10 +177,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
         return plugins.value.map(p => ({
             ...p,
-            ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
+            ...Object.fromEntries(excludedElements.map(e => [e, undefined])),
         })).filter(p => Object.entries(p)
                 .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                .some(([, value]) => (value as PluginElement[]).length !== 0))
+                .some(([, value]) => (value as PluginElement[]).length !== 0));
     }
 
     async function list() {
@@ -191,7 +191,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function listWithSubgroup(options: Record<string, any>) {
         const response = await axios.get<Plugin[]>(`${apiUrlWithoutTenants()}/plugins/groups/subgroups`, {
-            params: options
+            params: options,
         });
         plugins.value = response.data;
         return response.data;
@@ -208,7 +208,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (!options.all && cachedPluginDoc) {
             nextTick(() => {
                 plugin.value = cachedPluginDoc;
-            })
+            });
             return cachedPluginDoc;
         }
 
@@ -220,7 +220,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             params: {
                 all: options.all,
                 hash: options.hash,
-            }
+            },
         } : {});
 
         if (options.commit !== false) {
@@ -240,7 +240,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
         const response = await axios.get(
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`
+            `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions`,
         );
         if (options.commit !== false) {
             versions.value = response.data.versions;
@@ -293,7 +293,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (currentlyLoading?.cls === cls &&
             currentlyLoading?.version === version &&
             !forceRefresh) {
-            return
+            return;
         }
 
         if (!forceRefresh &&
@@ -302,7 +302,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return;
         }
 
-        let payload: LoadOptions = {cls, version, hash}
+        let payload: LoadOptions = {cls, version, hash};
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -311,7 +311,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             ) {
                 payload = {
                     ...payload,
-                    version
+                    version,
                 };
             }
         }
@@ -334,7 +334,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "cls" && k !== "version" && k !== "forceRefresh");
     }
 
-    const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
+    const {icons, iconsLoaded, fetchIcons} = usePluginsIcons();
 
     function groupIcons() {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})

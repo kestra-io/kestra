@@ -23,7 +23,7 @@
     withDefaults(defineProps<{
         showLink?: boolean
     }>(), {
-        showLink: true
+        showLink: true,
     });
 
     const emit = defineEmits<{

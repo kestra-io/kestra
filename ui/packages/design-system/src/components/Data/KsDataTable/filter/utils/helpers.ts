@@ -29,14 +29,14 @@ export const decodeSearchParams = (query: LocationQuery) =>
                 return {
                     field,
                     value: `${subKey}:${decodeURIComponentSafely(value)}`,
-                    operation
+                    operation,
                 };
             }
 
             return {
                 field,
                 value: decodeURIComponentSafely(value),
-                operation
+                operation,
             };
         })
         .filter(v => v !== null);
@@ -94,7 +94,7 @@ export const isValidFilter = (filter: Filter): boolean => {
 
 export const getUniqueFilters = <T extends { key: string }>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
-        index === self.findLastIndex(f => f.key === filter.key)
+        index === self.findLastIndex(f => f.key === filter.key),
     );
 
 export const clearFilterQueryParams = (query: Record<string, any>): void => {

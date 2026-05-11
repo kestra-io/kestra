@@ -17,13 +17,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElAutocomplete} from "element-plus"
+    import {ElAutocomplete} from "element-plus";
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<any>()
+    const model = defineModel<any>();
 
     const props = withDefaults(defineProps<{
         placeholder?: string
@@ -37,19 +37,19 @@
         fetchSuggestions: undefined,
         triggerOnFocus: undefined,
         valueKey: undefined,
-    })
+    });
 
     const emit = defineEmits<{
         select: [item: any]
-    }>()
+    }>();
 
     defineSlots<{
         default?: (scope: {item: any}) => unknown
         prepend?(): unknown
         suffix?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

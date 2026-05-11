@@ -18,7 +18,7 @@
     const contentRef = ref<HTMLDivElement | null>(null);
 
     defineExpose({
-        contentRef
+        contentRef,
     });
 </script>
 

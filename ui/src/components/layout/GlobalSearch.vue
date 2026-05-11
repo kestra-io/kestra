@@ -88,7 +88,7 @@
     import Close from "vue-material-design-icons/Close.vue";
 
     const router = useRouter();
-    const {menu} = useLeftMenu()
+    const {menu} = useLeftMenu();
 
     type SearchItem = {
         kind: "link" | "scope";
@@ -164,7 +164,7 @@
         }
 
         return entries;
-    }
+    };
 
     const navItems = computed(() => {
         if (!isOpen.value) {
@@ -207,14 +207,14 @@
         nextTick(() => {
             searchInput.value?.focus?.();
         });
-    }
+    };
 
     const closeSearch = () => {
         isOpen.value = false;
         query.value = "";
         activeIndex.value = 0;
         scopeStack.value = [];
-    }
+    };
 
     const clearSearch = () => {
         query.value = "";
@@ -222,7 +222,7 @@
         nextTick(() => {
             searchInput.value?.focus?.();
         });
-    }
+    };
 
     const itemKey = (item: SearchItem, index: number): string => {
         const href = item.href;
@@ -239,7 +239,7 @@
         }
 
         return `${item.kind}:${item.parentTitle ?? ""}:${item.title}:${index}`;
-    }
+    };
 
     const enterScope = (item: SearchItem) => {
         if (!item.children || item.children.length === 0) {
@@ -250,7 +250,7 @@
         query.value = "";
         activeIndex.value = 0;
         nextTick(() => searchInput.value?.focus?.());
-    }
+    };
 
     const onItemClick = (item: SearchItem) => {
         if (item.kind === "scope") {
@@ -259,14 +259,14 @@
         }
 
         closeSearch();
-    }
+    };
 
     const scrollActiveOptionIntoView = () => {
         nextTick(() => {
             const el = document.getElementById(`global-search-option-${activeIndex.value}`);
             el?.scrollIntoView({block: "nearest"});
         });
-    }
+    };
 
     const onInputKeydown = (e: KeyboardEvent) => {
         if (e.key === "Backspace" && query.value.length === 0 && scopeStack.value.length > 0) {
@@ -309,7 +309,7 @@
                 }
             }
         }
-    }
+    };
 
 
     onMounted(() => {

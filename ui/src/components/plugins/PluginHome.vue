@@ -83,7 +83,7 @@
         plugins: any[],
         embed?: boolean
     }>(), {
-        embed: false
+        embed: false,
     });
 
     const {saveRestoreUrl} = useRestoreUrl();
@@ -105,12 +105,12 @@
         }, {});
 
         const filtered = Object.values(grouped).flatMap(group =>
-            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
+            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup),
         );
 
         return filtered
             .filter((plugin, index, self) =>
-                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
+                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group),
             )
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
@@ -145,9 +145,9 @@
             name: "plugins/view",
             params: {
                 ...route.params,
-                cls: cls
-            }
-        })
+                cls: cls,
+            },
+        });
     };
 
     const isVisible = (plugin: any) => {
@@ -162,7 +162,7 @@
         return Object.entries(plugin).filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
             .map(([elementType, elements]) => [
                 elementType,
-                (elements as any[]).filter(({deprecated}: any) => !deprecated).map(({cls}: any) => cls)
+                (elements as any[]).filter(({deprecated}: any) => !deprecated).map(({cls}: any) => cls),
             ]);
     };
 

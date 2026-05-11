@@ -100,7 +100,7 @@
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false);
 
     const getData = async () => (data.value = await generate(
-        isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : undefined
+        isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : undefined,
     ));
 
     const pageNumber = ref(1);
@@ -125,7 +125,7 @@
     }
 
     defineExpose({
-        refresh
+        refresh,
     });
 
     watch(() => route.params.filters, () => {

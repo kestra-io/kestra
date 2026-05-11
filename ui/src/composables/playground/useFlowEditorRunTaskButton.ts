@@ -6,10 +6,10 @@ import Editor from "../../components/inputs/Editor.vue";
 
 export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof Editor> | undefined>, source: Ref<string>) {
     const taskLineMap = computed(() => {
-        return isCurrentTabFlow.value ? YAML_UTILS.getTasksLines(source.value) : {}
-    })
+        return isCurrentTabFlow.value ? YAML_UTILS.getTasksLines(source.value) : {};
+    });
 
-    const playgroundStore = usePlaygroundStore()
+    const playgroundStore = usePlaygroundStore();
 
     const highlightedLines = ref<{
         taskId: string,
@@ -22,7 +22,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
     const ln = ref<number>(-1);
 
     const hoveredTaskProperties = computed(() => {
-        const lineNumber = ln.value
+        const lineNumber = ln.value;
         const hoveredTaskIds = Object.keys(taskLineMap.value).filter(taskId => {
             const {start, end} = taskLineMap.value[taskId];
             return start <= lineNumber && end >= lineNumber;
@@ -31,7 +31,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             const b = taskLineMap.value[bId];
             // make the longest distance between start and end appear last
             return (a.end - a.start) - (b.end - b.start);
-        })
+        });
 
         // take the shortest task that matches the line number
         // in case of task nesting
@@ -41,7 +41,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return undefined;
         }
 
-        const {start, end} = taskLineMap.value[taskId]
+        const {start, end} = taskLineMap.value[taskId];
 
         // get this hovered tasks code, find the longest line
         const taskCodeLines = source.value.split("\n").slice(start - 1, end);
@@ -54,9 +54,9 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             start,
             end,
             longestLineLength,
-            firstLineLength: taskCodeLines[0].length
+            firstLineLength: taskCodeLines[0].length,
         };
-    })
+    });
 
     function highlightLines(range?: {start: number, end: number}) {
         if(!range) {
@@ -69,7 +69,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
     function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
         if(!taskCode || playgroundStore.dropdownOpened) {
-            return
+            return;
         }
 
         editorRefElement.value?.removeContentWidget(`task-hovered-${taskCode.taskId}`);
@@ -80,7 +80,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             id: `task-hovered-${taskCode.taskId}`,
             position: {
                 lineNumber: taskCode.start,
-                column: 0
+                column: 0,
             },
             height: Math.max(taskCode.end - taskCode.start + 1, 1),
             right: "1rem",
@@ -111,7 +111,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
 
         highlightedTaskId.value = res.taskId;
 
-        highlightLines(res)
+        highlightLines(res);
         addButtonToHoveredTask(res);
 
         highlightedLines.value = res;
@@ -123,7 +123,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             ln.value = -1;
             return;
         }
-        if(lineNumber === undefined) return
+        if(lineNumber === undefined) return;
         ln.value = lineNumber;
     }
 
@@ -131,5 +131,5 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         highlightHoveredTask,
         playgroundStore,
         highlightedLines,
-    }
+    };
 }

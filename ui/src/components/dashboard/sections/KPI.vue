@@ -33,7 +33,7 @@
     }
 
     defineExpose({
-        refresh
+        refresh,
     });
 
     watch(() => route.params.filters, () => {

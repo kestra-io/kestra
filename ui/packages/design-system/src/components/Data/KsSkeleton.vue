@@ -10,10 +10,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSkeleton} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElSkeleton} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = withDefaults(defineProps<{
         animated?: boolean
@@ -27,14 +27,14 @@
         loading: undefined,
         rows: undefined,
         throttle: undefined,
-    })
+    });
 
     defineSlots<{
         default?(): unknown
         template?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

@@ -3,7 +3,7 @@ import type {StorybookConfig} from "@storybook/vue3-vite";
 
 const config: StorybookConfig = {
     stories: [
-        "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)"
+        "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     ],
     addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
     framework: {
@@ -11,7 +11,7 @@ const config: StorybookConfig = {
         options: {},
     },
     async viteFinal(config) {
-        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
+        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx");
         config.plugins = [
             ...(config.plugins ?? []),
             viteJSXPlugin(),
@@ -19,7 +19,7 @@ const config: StorybookConfig = {
 
         if (config.resolve) {
             config.resolve.alias = {
-                ...config.resolve?.alias
+                ...config.resolve?.alias,
             };
         }
 

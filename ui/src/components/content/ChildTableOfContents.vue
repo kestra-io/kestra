@@ -10,18 +10,18 @@
         props: {
             pageUrl: {
                 type: String,
-                default: undefined
+                default: undefined,
             },
             max: {
                 type: Number,
-                default: undefined
+                default: undefined,
             },
             renderLink: {
                 type: Function,
                 default: (link:{
                     path:string,
                     title:string
-                }) => h(RouterLink, {to: {path: "/" + link.path}}, () => link.title)
+                }) => h(RouterLink, {to: {path: "/" + link.path}}, () => link.title),
             },
         },
         async setup(props, ctx) {
@@ -64,7 +64,7 @@
                         }
 
                         return h("li", null, props.renderLink(link));
-                    })
+                    }),
                 );
             };
 

@@ -116,15 +116,15 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         fileName: string, 
         children?: TreeNode[]
     }, creation?: boolean) {
-        if(!namespaceId.value) return
-        const {fileName, parentPath = ""} = folder
+        if(!namespaceId.value) return;
+        const {fileName, parentPath = ""} = folder;
         const NEW = folderNode(fileName, folder?.children ?? []);
         const path = parentPath ? `${parentPath}/${fileName}` : fileName;
         if (creation) {
             try {
                 await namespacesStore.readDirectory({
                     namespace: namespaceId.value, 
-                    path
+                    path,
                 });
                 toast.error(t("namespace files.create.folder_already_exists"));
                 return;
@@ -181,14 +181,14 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 addFile({
                     fileName: fileFileName,
                     extension, 
-                    leaf: true
+                    leaf: true,
                 });
             }
         }
     }
 
     async function addFile(file: Omit<TreeNodeFile, "id" | "type">, parentPath?: string, creation: boolean = false): Promise<{ path?: string; file?: TreeNodeFile; }> {
-        if(!namespaceId.value) return {}
+        if(!namespaceId.value) return {};
         const {fileName, extension, content = "", leaf} = file;
         const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
 
@@ -244,7 +244,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
 
     async function loadNodes(
         node: ElTreeNode | {level: 0} = {level: 0},
-        resolve?: (children: TreeNode[]) => void
+        resolve?: (children: TreeNode[]) => void,
     ) {
         if (namespaceId.value === undefined) return;
         if (node.level === 0) {
@@ -264,7 +264,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                     ...item,
                     id: Utils.uid(),
                     leaf: item.type === "File",
-                } as TreeNode))
+                } as TreeNode)),
             );
             const updateChildren = (itemsArr: TreeNode[], path: string, newChildren: TreeNode[]) => {
                 for(const item of itemsArr){
@@ -315,7 +315,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }
 
     async function importFiles(importedFiles: FileList) {
-        if(!namespaceId.value) return
+        if(!namespaceId.value) return;
         for (const file of Array.from(importedFiles)) {
             if ((file as any).webkitRelativePath) {
                 const filePath: string = (file as any).webkitRelativePath;
@@ -325,7 +325,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 for (let i = 0; i < pathParts.length - 1; i++) {
                     const folderName = pathParts[i];
                     folderPath.push(folderName);
-                    if(!currentFolder) continue
+                    if(!currentFolder) continue;
                     const folderIndex = currentFolder.findIndex(
                         (item: any) => typeof item === "object" && item.fileName === folderName,
                     );
@@ -392,5 +392,5 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         namespaceId,
         searchResults,
     };
-})
+});
   

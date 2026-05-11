@@ -9,9 +9,9 @@
 
     defineOptions({
         name: "AddTaskButton",
-    })
+    });
 
-    defineProps<{addTask?: boolean}>()
+    defineProps<{addTask?: boolean}>();
 </script>
 
 <style scoped lang="scss">

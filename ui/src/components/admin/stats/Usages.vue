@@ -53,7 +53,7 @@
             usages.value = newVal ?? await miscStore.loadAllUsages();
             emit("loaded");
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     function aggregateValues(object: any) {
@@ -85,11 +85,11 @@
     });
 
     const executionsPerDay = computed(() =>
-        (usages.value?.executions?.dailyExecutionsCount ?? []).filter((item: any) => item.groupBy === "day")
+        (usages.value?.executions?.dailyExecutionsCount ?? []).filter((item: any) => item.groupBy === "day"),
     );
 
     const executionsOverTwoDays = computed(() =>
-        aggregateValuesFromListWithGetter(executionsPerDay.value, (item: any) => item.duration.count ?? 0)
+        aggregateValuesFromListWithGetter(executionsPerDay.value, (item: any) => item.duration.count ?? 0),
     );
 
     const executionsDurationOverTwoDays = computed(() => {
@@ -99,7 +99,7 @@
         const sum = aggregateValuesFromListWithGetterAndAggFunction(
             executionsPerDay.value,
             (item: any) => item.duration.sum ?? moment.duration("PT0S"),
-            (list: any[]) => list.reduce((a, b) => moment.duration(a).add(moment.duration(b)), moment.duration("PT0S"))
+            (list: any[]) => list.reduce((a, b) => moment.duration(a).add(moment.duration(b)), moment.duration("PT0S")),
         );
         return sum.minutes();
     });

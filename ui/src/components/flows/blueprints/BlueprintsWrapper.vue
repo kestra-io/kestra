@@ -6,5 +6,5 @@
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     defineOptions({
         inheritAttrs: false,
-    })
+    });
 </script>

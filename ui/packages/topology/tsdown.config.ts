@@ -1,5 +1,5 @@
-import path from "path"
-import {defineConfig} from "tsdown"
+import path from "path";
+import {defineConfig} from "tsdown";
 
 export default defineConfig({
     entry: {
@@ -20,4 +20,4 @@ export default defineConfig({
             },
         },
     },
-})
+});

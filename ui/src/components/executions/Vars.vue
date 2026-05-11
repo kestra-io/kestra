@@ -27,7 +27,7 @@
     import {computed} from "vue";
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue.vue";
-    import SubFlowLink from "../flows/SubFlowLink.vue"
+    import SubFlowLink from "../flows/SubFlowLink.vue";
     import {useExecutionsStore} from "../../stores/executions";
 
 
@@ -45,7 +45,7 @@
         }>(),
         {
             keyLabelTranslationKey: "name",
-        }
+        },
     );
 
     const executionsStore = useExecutionsStore();

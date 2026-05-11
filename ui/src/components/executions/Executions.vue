@@ -780,8 +780,8 @@
                 options = {...options, ...params};
             }
 
-            const action = actionMap[queryAction]();
-            return action(options)
+            const ac = actionMap[queryAction]();
+            return ac(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();
@@ -794,8 +794,8 @@
                 options = {...options, ...params};
             }
 
-            const action = actionMap[byIdAction]();
-            return action(options)
+            const ac = actionMap[byIdAction]();
+            return ac(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
                     toggleAllUnselected();

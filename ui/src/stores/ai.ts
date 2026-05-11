@@ -19,8 +19,8 @@ export const useAiStore = defineStore("ai", {
                 ...(yaml !== undefined ? {yaml} : {}),
             }, {
                 headers: {
-                    "X-Kestra-User-Id": getUid()
-                }
+                    "X-Kestra-User-Id": getUid(),
+                },
             });
 
             const remainingQuota = response.headers["x-kestra-ai-quota"];
@@ -37,13 +37,13 @@ export const useAiStore = defineStore("ai", {
                 ...(yaml !== undefined ? {yaml} : {}),
             }, {
                 headers: {
-                    "X-Kestra-User-Id": getUid()
-                }
+                    "X-Kestra-User-Id": getUid(),
+                },
             });
 
             const remainingQuota = response.headers["x-kestra-ai-quota"];
             return {data: response.data, remainingQuota: remainingQuota ?? undefined};
-        }
+        },
 
-    }
+    },
 });

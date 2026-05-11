@@ -126,7 +126,7 @@
         const unique = new Set<string>(
             props.elements
                 ?.filter((e): e is {data: Node} => isNodeElement(e) && !!e.data.namespace)
-                .map(e => e.data.namespace)
+                .map(e => e.data.namespace),
         );
 
         return [
@@ -137,7 +137,7 @@
             ...(props.subtype === ASSET ?  [{
                 label: t("dependency.search.namespace.no_namespace"),
                 value: NO_NAMESPACE_VALUE,
-            }] : [])
+            }] : []),
         ];
     });
 

@@ -23,9 +23,9 @@
 
     const showEditor = computed(() => dashboardStore.isCreating || dashboardStore.parsedSource?.id);
 
-    const saveKeyAlways = computed(() => `ks-dashboard-${dashboardStore.parsedSource?.id}`)
+    const saveKeyAlways = computed(() => `ks-dashboard-${dashboardStore.parsedSource?.id}`);
     const saveKey = computed(() => 
-        dashboardStore.isCreating ? undefined : saveKeyAlways.value
+        dashboardStore.isCreating ? undefined : saveKeyAlways.value,
     );
 
     const dashboardStore = useDashboardStore();

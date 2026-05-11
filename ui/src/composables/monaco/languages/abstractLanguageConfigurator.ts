@@ -28,6 +28,6 @@ export default abstract class AbstractLanguageConfigurator {
             return this.configureAutoCompletion(t, editorInstance);
         }
 
-        return []
+        return [];
     }
 }

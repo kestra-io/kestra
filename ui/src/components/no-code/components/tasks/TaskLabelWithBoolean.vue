@@ -17,6 +17,6 @@
     withDefaults(defineProps<Props>(), {
         type: "",
         isBoolean: false,
-        componentProps: () => ({})
-    })
+        componentProps: () => ({}),
+    });
 </script>

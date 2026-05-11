@@ -22,7 +22,7 @@ export function formatPluginTitle(title: string | undefined): string | undefined
 
 String.prototype.capitalize = function () {
     return capitalize(this.toString());
-}
+};
 
 export function hashCode(str: string) {
     let hash = 0;
@@ -37,4 +37,4 @@ export function hashCode(str: string) {
 
 String.prototype.hashCode = function () {
     return hashCode(this.toString());
-}
+};

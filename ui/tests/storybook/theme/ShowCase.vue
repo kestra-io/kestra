@@ -223,24 +223,24 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue"
-    import {KsMessage} from "@kestra-io/design-system"
-    import Search from "vue-material-design-icons/SearchWeb.vue"
-    import Edit from "vue-material-design-icons/Pencil.vue"
-    import Check from "vue-material-design-icons/Check.vue"
-    import Message from "vue-material-design-icons/Message.vue"
-    import Star from "vue-material-design-icons/Star.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
+    import {onMounted, ref} from "vue";
+    import {KsMessage} from "@kestra-io/design-system";
+    import Search from "vue-material-design-icons/SearchWeb.vue";
+    import Edit from "vue-material-design-icons/Pencil.vue";
+    import Check from "vue-material-design-icons/Check.vue";
+    import Message from "vue-material-design-icons/Message.vue";
+    import Star from "vue-material-design-icons/Star.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
-    import Tabs from "../../../src/components/Tabs.vue"
+    import Tabs from "../../../src/components/Tabs.vue";
 
-    const input = ref("")
-    const curDate = ref(new Date())
-    const value1 = ref(false)
+    const input = ref("");
+    const curDate = ref(new Date());
+    const value1 = ref(false);
 
 
     function toast() {
-        KsMessage.success("Hello")
+        KsMessage.success("Hello");
     }
 
     const tableData = [
@@ -264,10 +264,10 @@
             name: "Tom",
             address: "No. 189, Grove St, Los Angeles",
         },
-    ]
+    ];
 
-    const valueSelect = ref("")
-    const valueMultiple = ref([])
+    const valueSelect = ref("");
+    const valueMultiple = ref([]);
 
     const options = [
         {
@@ -290,7 +290,7 @@
             value: "Option5",
             label: "Option5",
         },
-    ]
+    ];
 
     const tabs = [
         {
@@ -305,12 +305,12 @@
             title: "Tab 3",
             name: "third",
         },
-    ]
+    ];
 
-    const activeTab = ref(tabs[0].name)
+    const activeTab = ref(tabs[0].name);
 
     function tabChanged(tab: {name:string}) {
-        activeTab.value = tab.name
+        activeTab.value = tab.name;
     }
 
     interface RestaurantItem {
@@ -318,24 +318,24 @@
         link: string
     }
 
-    const state1 = ref("")
+    const state1 = ref("");
 
-    const restaurants = ref<RestaurantItem[]>([])
+    const restaurants = ref<RestaurantItem[]>([]);
     const querySearch = (queryString: string, cb: any) => {
         const results = queryString
             ? restaurants.value.filter(createFilter(queryString))
-            : restaurants.value
+            : restaurants.value;
         // call callback function to return suggestions
-        cb(results)
-    }
+        cb(results);
+    };
 
     const createFilter = (queryString: string) => {
         return (restaurant: RestaurantItem) => {
             return (
                 restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
-            )
-        }
-    }
+            );
+        };
+    };
 
     const loadAll = () => {
         return [
@@ -346,12 +346,12 @@
             {value: "vuex", link: "https://github.com/vuejs/vuex"},
             {value: "vue-router", link: "https://github.com/vuejs/vue-router"},
             {value: "babel", link: "https://github.com/babel/babel"},
-        ]
-    }
+        ];
+    };
 
     onMounted(() => {
-        restaurants.value = loadAll()
-    })
+        restaurants.value = loadAll();
+    });
 </script>
 
 <style scoped>

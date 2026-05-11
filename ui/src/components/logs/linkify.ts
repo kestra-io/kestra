@@ -43,7 +43,7 @@ function gotoRoute(event: MouseEvent, route: any, router: Router) {
  */
 export default function linkify(element?: HTMLElement, router?: Router) {
   if (!element || !router) {
-    return
+    return;
   }
   const links = element?.getElementsByTagName("router-md") ?? [];
 
@@ -56,10 +56,10 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     const namespace = link.getAttribute("namespace");
     const flowId = link.getAttribute("flowId");
 
-    const executionRoute = {name: "executions/update", params: {id: execution, namespace: namespace, flowId: flowId}}
-    const executionUrl = router.resolve(executionRoute)
-    const flowRoute = {name: "flows/update", params: {namespace: namespace, id: flowId}}
-    const flowUrl = router.resolve(flowRoute)
+    const executionRoute = {name: "executions/update", params: {id: execution, namespace: namespace, flowId: flowId}};
+    const executionUrl = router.resolve(executionRoute);
+    const flowRoute = {name: "flows/update", params: {namespace: namespace, id: flowId}};
+    const flowUrl = router.resolve(flowRoute);
 
     // we create the anchor nodes
     const anchorNodeExection = document.createElement("a");
@@ -67,14 +67,14 @@ export default function linkify(element?: HTMLElement, router?: Router) {
     anchorNodeExection.textContent = execution;
     anchorNodeExection.onclick = (event: MouseEvent) => {
         gotoRoute(event, executionRoute, router);
-    }
+    };
 
     const anchorNodeFlow = document.createElement("a");
     anchorNodeFlow.href = flowUrl.href;
     anchorNodeFlow.textContent = `${namespace}.${flowId}`;
     anchorNodeFlow.onclick = (event: MouseEvent) => {
       gotoRoute(event, flowRoute, router);
-    }
+    };
 
     // finally we rebuild the router-md component with the new links
     link.replaceWith(anchorNodeExection);

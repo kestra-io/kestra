@@ -33,7 +33,7 @@
     export default {
         emits: ["follow"],
         components: {
-            LowCodeEditor
+            LowCodeEditor,
         },
         computed: {
             ...mapStores(useExecutionsStore, useFlowStore),
@@ -42,7 +42,7 @@
             },
             flowGraph() {
                 return this.executionsStore.flowGraph;
-            }
+            },
         },
         data() {
             return {
@@ -55,20 +55,20 @@
                     const previousExecution = this.executionsStore.subflowsExecutions[subflow];
                     this.executionsStore.addSubflowExecution({
                         subflow,
-                        execution: JSON.parse(executionEvent.data)
+                        execution: JSON.parse(executionEvent.data),
                     });
 
                     // add subflow execution id to graph
                     if(previousExecution === undefined) {
                         this.loadGraph(true);
                     }
-                }, 500)
+                }, 500),
             };
         },
         watch: {
             execution() {
                 this.loadData();
-            }
+            },
         },
         mounted() {
             this.loadData();
@@ -80,7 +80,7 @@
             closeSSE(subflow) {
                 this.sseBySubflow[subflow].close();
                 delete this.sseBySubflow[subflow];
-                this.executionsStore.removeSubflowExecution(subflow)
+                this.executionsStore.removeSubflowExecution(subflow);
             },
             loadData() {
                 this.loadGraph();
@@ -93,8 +93,8 @@
                     this.executionsStore.loadAugmentedGraph({
                         id: this.execution.id,
                         params: {
-                            subflows: this.expandedSubflows
-                        }
+                            subflows: this.expandedSubflows,
+                        },
                     }).catch(() => {
                         this.expandedSubflows = this.previousExpandedSubflows;
 
@@ -185,8 +185,8 @@
                     sse.close();
                     delete this.sseBySubflow[subflow];
                 }
-            }
-        }
+            },
+        },
     };
 </script>
 <style scoped lang="scss">

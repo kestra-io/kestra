@@ -48,7 +48,7 @@
     import type {
         FilterConfiguration,
         FilterKeyConfig,
-        AppliedFilter
+        AppliedFilter,
     } from "../utils/filterTypes";
 
     const props = defineProps<{
@@ -90,7 +90,7 @@
                 comparator: key.comparators?.[0],
                 comparatorLabel: key.comparators?.[0],
                 value: [],
-                valueLabel: ""
+                valueLabel: "",
             };
             emits("add-filter", newFilter);
         }

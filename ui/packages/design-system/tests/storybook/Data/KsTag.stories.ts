@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsTag from "../../../src/components/Data/KsTag/KsTag.vue";
 
 const meta: Meta<typeof KsTag> = {
     title: "Components/Data/KsTag",
@@ -16,18 +16,18 @@ const meta: Meta<typeof KsTag> = {
     parameters: {
         docs: {description: {component: "KsTag is the Kestra design-system abstraction over `ElTag` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsTag>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsTag},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px\"><ks-tag v-bind=\"args\">My Tag <a href=\"#\">with link</a></ks-tag></div>",
     }),
     args: {type: "primary"},
-}
+};
 
 export const Types: Story = {
     render: () => ({
@@ -66,7 +66,7 @@ export const Types: Story = {
             </table>
         `,
     }),
-}
+};
 
 export const Effects: Story = {
     render: () => ({
@@ -79,7 +79,7 @@ export const Effects: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** With icon slot */
 export const WithIcon: Story = {
@@ -95,19 +95,19 @@ export const WithIcon: Story = {
             </div>
         `,
     }),
-}
+};
 
 
 export const Closable: Story = {
     render: () => ({
         components: {KsTag},
         setup() {
-            const tags = ["Tag 1", "Tag 2", "Tag 3"]
-            const visibleTags = {value: [...tags]}
+            const tags = ["Tag 1", "Tag 2", "Tag 3"];
+            const visibleTags = {value: [...tags]};
             function removeTag(tag: string) {
-                visibleTags.value = visibleTags.value.filter(t => t !== tag)
+                visibleTags.value = visibleTags.value.filter(t => t !== tag);
             }
-            return {visibleTags, removeTag}
+            return {visibleTags, removeTag};
         },
         template: `
             <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap">
@@ -121,7 +121,7 @@ export const Closable: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Rounded tags */
 export const Rounded: Story = {
@@ -137,27 +137,27 @@ export const Rounded: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Edit dynamically – add and remove tags */
 export const EditDynamically: Story = {
     render: () => ({
         components: {KsTag},
         setup() {
-            const tags = ref(["Tag 1", "Tag 2", "Tag 3"])
-            const inputVisible = ref(false)
-            const inputValue = ref("")
+            const tags = ref(["Tag 1", "Tag 2", "Tag 3"]);
+            const inputVisible = ref(false);
+            const inputValue = ref("");
             function handleClose(tag: string) {
-                tags.value = tags.value.filter(t => t !== tag)
+                tags.value = tags.value.filter(t => t !== tag);
             }
             function addTag() {
                 if (inputValue.value && !tags.value.includes(inputValue.value)) {
-                    tags.value.push(inputValue.value)
+                    tags.value.push(inputValue.value);
                 }
-                inputValue.value = ""
-                inputVisible.value = false
+                inputValue.value = "";
+                inputVisible.value = false;
             }
-            return {tags, inputVisible, inputValue, handleClose, addTag}
+            return {tags, inputVisible, inputValue, handleClose, addTag};
         },
         template: `
             <div style="padding:24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -182,7 +182,7 @@ export const EditDynamically: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Sizes: Story = {
     render: () => ({
@@ -195,4 +195,4 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};

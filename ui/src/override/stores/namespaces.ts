@@ -6,5 +6,5 @@ export const useNamespacesStore = defineStore("namespaces", () => {
 
     return {
         ...ossStore,
-    }
+    };
 });

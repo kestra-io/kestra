@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsDivider from "../../../src/components/Others/KsDivider.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsDivider from "../../../src/components/Others/KsDivider.vue";
 
 const meta: Meta<typeof KsDivider> = {
     title: "Components/Others/KsDivider",
@@ -12,8 +12,8 @@ const meta: Meta<typeof KsDivider> = {
     parameters: {
         docs: {description: {component: "KsDivider is the Kestra design-system abstraction over `ElDivider` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsDivider>
 
 export const Default: Story = {
@@ -27,7 +27,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithText: Story = {
     render: () => ({
@@ -44,7 +44,7 @@ export const WithText: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Dashed border style */
 export const Dashed: Story = {
@@ -60,7 +60,7 @@ export const Dashed: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Vertical: Story = {
     render: () => ({
@@ -75,4 +75,4 @@ export const Vertical: Story = {
             </div>
         `,
     }),
-}
+};

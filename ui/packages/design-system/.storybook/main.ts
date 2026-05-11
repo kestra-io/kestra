@@ -1,8 +1,8 @@
-import {mergeConfig} from "vite"
-import {resolve} from "path"
-import type {StorybookConfig} from "@storybook/vue3-vite"
+import {mergeConfig} from "vite";
+import {resolve} from "path";
+import type {StorybookConfig} from "@storybook/vue3-vite";
 
-const srcDir = resolve(import.meta.dirname, "../src")
+const srcDir = resolve(import.meta.dirname, "../src");
 
 const config: StorybookConfig = {
     stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
@@ -10,7 +10,7 @@ const config: StorybookConfig = {
         "@storybook/addon-themes",
         "@storybook/addon-vitest",
         "@storybook/addon-a11y",
-        "@storybook/addon-docs"
+        "@storybook/addon-docs",
     ],
     framework: {
         name: "@storybook/vue3-vite",
@@ -27,8 +27,8 @@ const config: StorybookConfig = {
                     },
                 },
             },
-        })
+        });
     },
-}
+};
 
-export default config
+export default config;

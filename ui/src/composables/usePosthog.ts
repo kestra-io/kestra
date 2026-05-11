@@ -1,6 +1,6 @@
-import {useApiStore} from "../stores/api"
-import {useMiscStore} from "override/stores/misc"
-import {ensureUid, getUid} from "../utils/uid"
+import {useApiStore} from "../stores/api";
+import {useMiscStore} from "override/stores/misc";
+import {ensureUid, getUid} from "../utils/uid";
 
 export interface SetupEventData {
     type: string
@@ -30,51 +30,51 @@ function statsGlobalData(config: Config, uid: string): any {
         uid: uid,
         app: {
             version: config.version,
-            type: config.edition
-        }
-    }
+            type: config.edition,
+        },
+    };
 }
 
-const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed"
+const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed";
 
 function installSurveyHooksOnce() {
-    if ((window as any)[SURVEY_HOOKS_FLAG]) return
-    (window as any)[SURVEY_HOOKS_FLAG] = true
+    if ((window as any)[SURVEY_HOOKS_FLAG]) return;
+    (window as any)[SURVEY_HOOKS_FLAG] = true;
 
-    let surveyVisible = false
+    let surveyVisible = false;
     window.addEventListener("PHSurveyShown", () => {
-        surveyVisible = true
-    })
+        surveyVisible = true;
+    });
 
     window.addEventListener("PHSurveyClosed", () => {
-        surveyVisible = false
-    })
+        surveyVisible = false;
+    });
 
     window.addEventListener("KestraRouterAfterEach", () => {
         if (surveyVisible) {
-            window.dispatchEvent(new Event("PHSurveyClosed"))
-            surveyVisible = false
+            window.dispatchEvent(new Event("PHSurveyClosed"));
+            surveyVisible = false;
         }
-    })
+    });
 }
 
 export async function initPostHogForSetup(config: Config): Promise<void> {
     try {
-        const uid = ensureUid()
+        const uid = ensureUid();
 
-        const {default: posthog} = await import("posthog-js")
+        const {default: posthog} = await import("posthog-js");
 
         // PostHog can already be initialized (e.g. user logs out then logs back in without a full page refresh).
         // In that case we don't need to init again.
         if ((posthog as any)?.__loaded) {
-            installSurveyHooksOnce()
-            return
+            installSurveyHooksOnce();
+            return;
         }
 
-        const apiStore = useApiStore()
-        const apiConfig = await apiStore.loadConfig()
+        const apiStore = useApiStore();
+        const apiConfig = await apiStore.loadConfig();
 
-        if (!apiConfig?.posthog?.token) return
+        if (!apiConfig?.posthog?.token) return;
 
         posthog.init(apiConfig.posthog.token, {
             api_host: apiConfig.posthog.apiHost,
@@ -82,43 +82,43 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             capture_pageview: false,
             capture_pageleave: true,
             autocapture: false,
-        })
+        });
 
         posthog.register_for_session(statsGlobalData(config, uid));
 
         if (!posthog.get_property("__alias")) {
-            posthog.alias(apiConfig.id)
+            posthog.alias(apiConfig.id);
         }
 
-        installSurveyHooksOnce()
+        installSurveyHooksOnce();
     } catch (error) {
-        console.error("Failed to initialize PostHog:", error)
+        console.error("Failed to initialize PostHog:", error);
     }
 }
 
 export function trackSetupEvent(
     eventName: string,
     additionalData: Record<string, any>,
-    userFormData: UserFormData
+    userFormData: UserFormData,
 ): void {
-    const miscStore = useMiscStore()
-    const uid = getUid()
+    const miscStore = useMiscStore();
+    const uid = getUid();
 
-    if (!miscStore.configs?.isAnonymousUsageEnabled || !uid) return
+    if (!miscStore.configs?.isAnonymousUsageEnabled || !uid) return;
 
     const userInfo = userFormData.firstName ? {
         user_firstname: userFormData.firstName,
         user_lastname: userFormData.lastName,
-        user_email: userFormData.username
-    } : {}
+        user_email: userFormData.username,
+    } : {};
 
     const eventData: SetupEventData = {
         type: eventName,
         instance_id: miscStore.configs?.uuid,
         user_id: uid,
         ...userInfo,
-        ...additionalData
-    }
+        ...additionalData,
+    };
 
-    useApiStore().posthogEvents(eventData)
+    useApiStore().posthogEvents(eventData);
 }

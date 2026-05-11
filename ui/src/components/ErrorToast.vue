@@ -49,7 +49,7 @@
         message: Message;
         noAutoHide: boolean;
     }>(), {
-        noAutoHide: false
+        noAutoHide: false,
     });
 
     const route = useRoute();
@@ -94,7 +94,7 @@
                 message: title.value,
                 errors: items.value,
             },
-            page: pageFromRoute(route)
+            page: pageFromRoute(route),
         };
 
         if (props.message.response) {
@@ -116,17 +116,17 @@
             message: h(ErrorToastContainer, {
                 message: {
                     content:{
-                        message: props.message?.content?.message ?? ""
-                    }
+                        message: props.message?.content?.message ?? "",
+                    },
                 },
                 items: items.value,
-                onClose: () => close()
+                onClose: () => close(),
             }),
             position: "bottom-right",
             type: props.message.variant || "error",
             duration: 0,
             dangerouslyUseHTMLString: true,
-            customClass: "error-notification kel-notification__large"
+            customClass: "error-notification kel-notification__large",
         });
     });
 </script>

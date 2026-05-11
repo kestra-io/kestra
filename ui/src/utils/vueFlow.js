@@ -1,4 +1,4 @@
-import {useVueFlow} from "@vue-flow/core"
+import {useVueFlow} from "@vue-flow/core";
 
 
 export const predecessorsEdge = (vueFlowId, nodeUid) => {
@@ -8,7 +8,7 @@ export const predecessorsEdge = (vueFlowId, nodeUid) => {
 
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
-            nodes.push(edge)
+            nodes.push(edge);
             let recursiveEdge = predecessorsEdge(vueFlowId, edge.source);
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge);
@@ -17,7 +17,7 @@ export const predecessorsEdge = (vueFlowId, nodeUid) => {
     }
 
     return nodes;
-}
+};
 
 export const successorsEdge = (vueFlowId, nodeUid) => {
     const {getEdges} = useVueFlow(vueFlowId);
@@ -26,7 +26,7 @@ export const successorsEdge = (vueFlowId, nodeUid) => {
 
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
-            nodes.push(edge)
+            nodes.push(edge);
             let recursiveEdge = successorsEdge(vueFlowId, edge.target);
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge);
@@ -35,7 +35,7 @@ export const successorsEdge = (vueFlowId, nodeUid) => {
     }
 
     return nodes;
-}
+};
 
 export const predecessorsNode = (vueFlowId, nodeUid) => {
     const {getEdges, findNode} = useVueFlow(vueFlowId);
@@ -44,7 +44,7 @@ export const predecessorsNode = (vueFlowId, nodeUid) => {
 
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
-            nodes.push(edge.sourceNode)
+            nodes.push(edge.sourceNode);
             let recursiveEdge = predecessorsNode(vueFlowId, edge.source);
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge);
@@ -53,7 +53,7 @@ export const predecessorsNode = (vueFlowId, nodeUid) => {
     }
 
     return nodes;
-}
+};
 
 export const successorsNode = (vueFlowId, nodeUid) => {
     const {getEdges, findNode} = useVueFlow(vueFlowId);
@@ -62,7 +62,7 @@ export const successorsNode = (vueFlowId, nodeUid) => {
 
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
-            nodes.push(edge.targetNode)
+            nodes.push(edge.targetNode);
             let recursiveEdge = successorsNode(vueFlowId, edge.target);
             if (recursiveEdge.length > 0) {
                 nodes.push(...recursiveEdge);
@@ -71,7 +71,7 @@ export const successorsNode = (vueFlowId, nodeUid) => {
     }
 
     return nodes;
-}
+};
 
 export const linkedElements = (vueFlowId, nodeUid) => {
     return ([
@@ -79,5 +79,5 @@ export const linkedElements = (vueFlowId, nodeUid) => {
         ...predecessorsNode(vueFlowId, nodeUid),
         ...successorsEdge(vueFlowId, nodeUid),
         ...successorsNode(vueFlowId, nodeUid),
-    ])
-}
+    ]);
+};

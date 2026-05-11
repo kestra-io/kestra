@@ -85,27 +85,27 @@ export function useDefaultFilter(
     const router = useRouter();
 
     onMounted(async () => {
-        await nextTick()
-        await nextTick()
+        await nextTick();
+        await nextTick();
         // Apply defaults against (saved ∪ current URL) so we only fill keys
         // that neither the URL nor the pending restore covers — letting newly
         // changed defaults (e.g. defaultNamespace from settings) take effect
         // without clobbering keys the user already chose.
         const merged = {...readSavedRestoreState(route), ...route.query};
-        const {query, change} = applyDefaultFilters(merged, defaultOptions)
+        const {query, change} = applyDefaultFilters(merged, defaultOptions);
         if(change) {
-            router.replace({...route, query})
+            router.replace({...route, query});
         }
     });
 
     function resetDefaultFilter(){
         router.replace({
             ...route,
-            query: applyDefaultFilters({}, defaultOptions).query
+            query: applyDefaultFilters({}, defaultOptions).query,
         });
     }
 
     return {
-        resetDefaultFilter
-    }
+        resetDefaultFilter,
+    };
 }

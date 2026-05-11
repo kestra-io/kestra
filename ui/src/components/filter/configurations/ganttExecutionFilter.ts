@@ -27,7 +27,7 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                             ? localStorage.getItem("defaultLogLevel") || "INFO"
                             : "INFO"
                     ),
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "state",
@@ -40,7 +40,7 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES;
                     },
                     showComparatorSelection: true,
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "task",
@@ -52,12 +52,12 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const taskRuns = useExecutionsStore().execution?.taskRunList ?? [];
                         return taskRuns.map((taskRun) => ({
                             label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}` : ""),
-                            value: taskRun.id
+                            value: taskRun.id,
                         }));
                     },
-                    searchable: true
-                }
-            ]
+                    searchable: true,
+                },
+            ],
         };
     });
 };

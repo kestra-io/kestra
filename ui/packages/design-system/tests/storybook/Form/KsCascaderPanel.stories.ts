@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import {within, expect} from "storybook/test"
-import KsCascaderPanel from "../../../src/components/Form/KsCascaderPanel.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {within, expect} from "storybook/test";
+import KsCascaderPanel from "../../../src/components/Form/KsCascaderPanel.vue";
 
 const baseOptions = [
     {
@@ -29,7 +29,7 @@ const baseOptions = [
             {value: "sketch", label: "Sketch Templates"},
         ],
     },
-]
+];
 
 const meta: Meta<typeof KsCascaderPanel> = {
     title: "Components/Form/KsCascaderPanel",
@@ -44,8 +44,8 @@ const meta: Meta<typeof KsCascaderPanel> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsCascaderPanel>
 
 /** Default panel with two-level options */
@@ -53,8 +53,8 @@ export const Default: Story = {
     render: () => ({
         components: {KsCascaderPanel},
         setup() {
-            const value = ref<string[]>([])
-            return {value, options: baseOptions}
+            const value = ref<string[]>([]);
+            return {value, options: baseOptions};
         },
         template: `
             <div style="padding:24px">
@@ -66,19 +66,19 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        await expect(canvas.getByText("Guide")).toBeTruthy()
-        await expect(canvas.getByText("Component")).toBeTruthy()
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText("Guide")).toBeTruthy();
+        await expect(canvas.getByText("Component")).toBeTruthy();
     },
-}
+};
 
 /** Pre-selected value */
 export const PreSelected: Story = {
     render: () => ({
         components: {KsCascaderPanel},
         setup() {
-            const value = ref(["component", "form"])
-            return {value, options: baseOptions}
+            const value = ref(["component", "form"]);
+            return {value, options: baseOptions};
         },
         template: `
             <div style="padding:24px">
@@ -89,14 +89,14 @@ export const PreSelected: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Three-level deep options */
 export const ThreeLevels: Story = {
     render: () => ({
         components: {KsCascaderPanel},
         setup() {
-            const value = ref<string[]>([])
+            const value = ref<string[]>([]);
             const options = [
                 {
                     value: "eu",
@@ -134,8 +134,8 @@ export const ThreeLevels: Story = {
                         },
                     ],
                 },
-            ]
-            return {value, options}
+            ];
+            return {value, options};
         },
         template: `
             <div style="padding:24px">
@@ -146,4 +146,4 @@ export const ThreeLevels: Story = {
             </div>
         `,
     }),
-}
+};

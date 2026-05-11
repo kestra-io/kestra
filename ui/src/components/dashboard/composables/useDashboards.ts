@@ -51,7 +51,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         let result;
         if (!props.showDefault) {
             if(!dashboardId){
-                throw new Error("to generate charts from backend we need a dashboard id")
+                throw new Error("to generate charts from backend we need a dashboard id");
             }
             result = await dashboardStore.generate(dashboardId, props.chart.id, parameters);
         } else {

@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref} from "vue"
+    import {nextTick, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
@@ -48,7 +48,7 @@
     const props = defineProps<{
         href: string
         title: string
-    }>()
+    }>();
     const bookmarksStore = useBookmarksStore();
 
     const editing = ref(false);
@@ -75,9 +75,9 @@
     function renameBookmark() {
         bookmarksStore.rename({
             path: props.href,
-            label: updatedTitle.value
-        })
-        editing.value = false
+            label: updatedTitle.value,
+        });
+        editing.value = false;
     }
 </script>
 

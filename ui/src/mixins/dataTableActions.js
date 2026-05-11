@@ -19,21 +19,21 @@ export default {
             ready: false,
             internalPageSize: 25,
             internalPageNumber: 1,
-            internalSort: undefined
+            internalSort: undefined,
         };
     },
     props: {
         filters: {
             type: Object,
             default: () => {
-            }
+            },
         },
         pageSize: {
-            type: Number
+            type: Number,
         },
         pageNumber: {
-            type: Number
-        }
+            type: Number,
+        },
     },
     watch: {
         $route(newValue, oldValue) {
@@ -41,7 +41,7 @@ export default {
                 this.refreshPaging();
                 this.load(this.onDataLoaded);
             }
-        }
+        },
     },
     methods: {
         sortString(sortItem, sortKeyMapper) {
@@ -55,7 +55,7 @@ export default {
             if (this.internalSort) {
                 const sort = this.internalSort;
                 this.$router.push({
-                    query: {...this.$route.query, sort}
+                    query: {...this.$route.query, sort},
                 });
             } else {
                 this.load(this.onDataLoaded);
@@ -66,8 +66,8 @@ export default {
                 name: this.dblClickRouteName || this.$route.name.replace("/list", "/update"),
                 params: {
                     ...item,
-                    tenant: this.$route.params.tenant
-                }
+                    tenant: this.$route.params.tenant,
+                },
             });
         },
         onDataTableValue(keyOrObject, value) {
@@ -97,8 +97,8 @@ export default {
                     query: {
                         ...this.$route.query,
                         size: item.size,
-                        page: item.page
-                    }
+                        page: item.page,
+                    },
                 });
             } else {
                 this.load(this.onDataLoaded);
@@ -111,20 +111,20 @@ export default {
                 query = Object.fromEntries(
                     Object.entries(query)
                         .filter(([key]) => key.startsWith(`${namespace}[`))
-                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value])
+                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value]),
                 );
             }
 
             if (excludedKeys.length > 0) {
                 const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`);
                 query = Object.fromEntries(
-                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null)
+                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null),
                 );
             }
 
             return _merge(_cloneDeep(
                 query,
-                this.filters || {}
+                this.filters || {},
             ));
         },
         load(callback) {
@@ -149,6 +149,6 @@ export default {
         refreshPaging() {
             this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25;
             this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
-        }
-    }
+        },
+    },
 };

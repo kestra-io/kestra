@@ -75,9 +75,9 @@
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
     const onboardingStore = useOnboardingV2Store();
-    const router = useRouter()
-    const route = useRoute()
-    const routeParams = computed(() => route.params)
+    const router = useRouter();
+    const route = useRoute();
+    const routeParams = computed(() => route.params);
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
@@ -90,7 +90,7 @@
 
         const deprecationWarnings =
             flowStore.flowValidation?.deprecationPaths?.map(
-                (f: string) => `${f} ${t("is deprecated")}.`
+                (f: string) => `${f} ${t("is deprecated")}.`,
             ) ?? [];
 
         const otherWarnings = flowStore.flowValidation?.warnings ?? [];

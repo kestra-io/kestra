@@ -14,6 +14,6 @@ export function useKeyShortcuts() {
     return {
         isKeyShortcutsDialogShown,
         showKeyShortcuts,
-        hideKeyShortcuts
+        hideKeyShortcuts,
     };
 }

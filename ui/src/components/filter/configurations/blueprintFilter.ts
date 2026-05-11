@@ -10,7 +10,7 @@ export const useBlueprintFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.blueprint_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_blueprints"),
             keys: [
-            ]
+            ],
         };
     });
 };

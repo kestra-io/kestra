@@ -1,17 +1,17 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
-import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
-import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
-import KsInput from "../../../src/components/Form/KsInput.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue";
+import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue";
+import KsTag from "../../../src/components/Data/KsTag/KsTag.vue";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import KsInput from "../../../src/components/Form/KsInput.vue";
 
 const SAMPLE_DATA = Array.from({length: 30}, (_, i) => ({
     id: `flow-${String(i + 1).padStart(3, "0")}`,
     namespace: ["company.team", "company.data", "company.infra"][i % 3],
     status: ["SUCCESS", "RUNNING", "FAILED"][i % 3],
     duration: `${(Math.random() * 5 + 0.5).toFixed(1)}s`,
-}))
+}));
 
 const meta: Meta<typeof KsDataTable> = {
     title: "Components/Data/KsDataTable",
@@ -24,23 +24,23 @@ const meta: Meta<typeof KsDataTable> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsDataTable>
 
 export const Default: Story = {
     render: () => ({
         components: {KsDataTable, KsTableColumn, KsTag},
         setup() {
-            const page = ref(1)
-            const size = ref(10)
-            const pagedData = ref(SAMPLE_DATA.slice(0, 10))
+            const page = ref(1);
+            const size = ref(10);
+            const pagedData = ref(SAMPLE_DATA.slice(0, 10));
             const onPageChanged = ({page: p, size: s}: {page: number; size: number}) => {
-                page.value = p
-                size.value = s
-                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s)
-            }
-            return {pagedData, page, size, total: SAMPLE_DATA.length, onPageChanged}
+                page.value = p;
+                size.value = s;
+                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s);
+            };
+            return {pagedData, page, size, total: SAMPLE_DATA.length, onPageChanged};
         },
         template: `
             <div style="padding: 24px">
@@ -65,37 +65,37 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithNavbar: Story = {
     render: () => ({
         components: {KsDataTable, KsTableColumn, KsTag, KsInput},
         setup() {
-            const search = ref("")
-            const page = ref(1)
-            const size = ref(10)
-            const filteredData = ref(SAMPLE_DATA.slice(0, 10))
-            const total = ref(SAMPLE_DATA.length)
+            const search = ref("");
+            const page = ref(1);
+            const size = ref(10);
+            const filteredData = ref(SAMPLE_DATA.slice(0, 10));
+            const total = ref(SAMPLE_DATA.length);
 
             const onFilter = () => {
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
-                )
-                total.value = filtered.length
-                filteredData.value = filtered.slice(0, size.value)
-                page.value = 1
-            }
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
+                );
+                total.value = filtered.length;
+                filteredData.value = filtered.slice(0, size.value);
+                page.value = 1;
+            };
 
             const onPageChanged = ({page: p, size: s}: {page: number; size: number}) => {
-                page.value = p
-                size.value = s
+                page.value = p;
+                size.value = s;
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
-                )
-                filteredData.value = filtered.slice((p - 1) * s, p * s)
-            }
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
+                );
+                filteredData.value = filtered.slice((p - 1) * s, p * s);
+            };
 
-            return {search, filteredData, total, page, size, onFilter, onPageChanged}
+            return {search, filteredData, total, page, size, onFilter, onPageChanged};
         },
         template: `
             <div style="padding: 24px">
@@ -124,28 +124,28 @@ export const WithNavbar: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithSelection: Story = {
     render: () => ({
         components: {KsDataTable, KsTableColumn, KsTag, KsButton},
         setup() {
-            const page = ref(1)
-            const size = ref(10)
-            const pagedData = ref(SAMPLE_DATA.slice(0, 10))
-            const selection = ref<typeof SAMPLE_DATA>([])
+            const page = ref(1);
+            const size = ref(10);
+            const pagedData = ref(SAMPLE_DATA.slice(0, 10));
+            const selection = ref<typeof SAMPLE_DATA>([]);
 
             const onPageChanged = ({page: p, size: s}: {page: number; size: number}) => {
-                page.value = p
-                size.value = s
-                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s)
-            }
+                page.value = p;
+                size.value = s;
+                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s);
+            };
 
             const onSelectionChange = (rows: typeof SAMPLE_DATA) => {
-                selection.value = rows
-            }
+                selection.value = rows;
+            };
 
-            return {pagedData, page, size, total: SAMPLE_DATA.length, selection, onPageChanged, onSelectionChange}
+            return {pagedData, page, size, total: SAMPLE_DATA.length, selection, onPageChanged, onSelectionChange};
         },
         template: `
             <div style="padding: 24px">
@@ -180,15 +180,15 @@ export const WithSelection: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Loading: Story = {
     render: () => ({
         components: {KsDataTable, KsTableColumn},
         setup() {
-            const isLoading = ref(true)
-            setTimeout(() => { isLoading.value = false }, 2000)
-            return {isLoading, SAMPLE_DATA: SAMPLE_DATA.slice(0, 5), total: SAMPLE_DATA.length}
+            const isLoading = ref(true);
+            setTimeout(() => { isLoading.value = false; }, 2000);
+            return {isLoading, SAMPLE_DATA: SAMPLE_DATA.slice(0, 5), total: SAMPLE_DATA.length};
         },
         template: `
             <div style="padding: 24px">
@@ -204,7 +204,7 @@ export const Loading: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Empty: Story = {
     render: () => ({
@@ -219,22 +219,22 @@ export const Empty: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const CustomContent: Story = {
     name: "Custom #table Slot",
     render: () => ({
         components: {KsDataTable, KsTag},
         setup() {
-            const page = ref(1)
-            const size = ref(9)
-            const pagedData = ref(SAMPLE_DATA.slice(0, 9))
+            const page = ref(1);
+            const size = ref(9);
+            const pagedData = ref(SAMPLE_DATA.slice(0, 9));
             const onPageChanged = ({page: p, size: s}: {page: number; size: number}) => {
-                page.value = p
-                size.value = s
-                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s)
-            }
-            return {pagedData, total: SAMPLE_DATA.length, page, size, onPageChanged}
+                page.value = p;
+                size.value = s;
+                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s);
+            };
+            return {pagedData, total: SAMPLE_DATA.length, page, size, onPageChanged};
         },
         template: `
             <div style="padding: 24px">
@@ -258,4 +258,4 @@ export const CustomContent: Story = {
             </div>
         `,
     }),
-}
+};

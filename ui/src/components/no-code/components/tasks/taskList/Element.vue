@@ -77,7 +77,7 @@
         editTask(
             props.parentPathComplete,
             props.blockSchemaPath,
-            props.elementIndex
+            props.elementIndex,
         );
     };
 </script>

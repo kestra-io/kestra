@@ -79,27 +79,27 @@
             }
 
             return expandedSubflow;
-        }))
+        }));
     };
 
     const onEdit = async (source: string, currentIsFlow = false) => {
-        flowStore.flowYaml = source
+        flowStore.flowYaml = source;
         const result = await flowStore.onEdit({
             source,
             editorViewType: "YAML",
             topologyVisible: true,
-        })
+        });
 
         if (currentIsFlow && source) {
             await flowStore.loadGraphFromSource({
                 flow: source,
             }).catch((error) => {
                 console.error("Error loading graph:", error);
-            })
+            });
         }
 
-        return result
-    }
+        return result;
+    };
 </script>
 
 <style scoped>

@@ -25,8 +25,8 @@
         mixins: [Task],
         data() {
             return {
-                flowIds: []
-            }
+                flowIds: [],
+            };
         },
         watch: {
             namespace: {
@@ -36,16 +36,16 @@
                         .map(flow => flow.id);
 
                     if (this.namespace === this.flowStore.flow.namespace) {
-                        this.flowIds = this.flowIds.filter(id => id !== this.flowStore.flow.id)
+                        this.flowIds = this.flowIds.filter(id => id !== this.flowStore.flow.id);
                     }
-                }
-            }
+                },
+            },
         },
         computed: {
             ...mapStores(useFlowStore),
             namespace() {
                 return this.task?.namespace ?? this.flowStore.flow?.namespace;
             },
-        }
+        },
     };
 </script>

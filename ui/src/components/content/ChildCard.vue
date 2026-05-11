@@ -66,8 +66,8 @@
             .map(([path, metadata]) => ({
                 path,
                 ...parentMetadata.value,
-                ...metadata
-            }))
+                ...metadata,
+            })),
     );
 
     (async () => {

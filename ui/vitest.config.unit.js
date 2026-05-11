@@ -15,7 +15,7 @@ export default defineProject({
         environment: "jsdom",
         reporters: [
             ["default"],
-            ["junit"]
+            ["junit"],
         ],
         outputFile: {
             junit: "./test-report.junit.xml",
@@ -35,10 +35,10 @@ export default defineProject({
                 "**/.storybook/**",
                 "**/*.stories.*",
                 "**/*.d.ts",
-            ]
+            ],
         },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",
     },
-})
+});

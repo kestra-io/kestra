@@ -492,7 +492,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         });
     };
 
-    const _filePreview = ref<any | undefined>(undefined);
+    const filePreviewB = ref<any | undefined>(undefined);
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
@@ -509,7 +509,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 }
             }
 
-            _filePreview.value = data;
+            filePreviewB.value = data;
             return data;
         });
     };

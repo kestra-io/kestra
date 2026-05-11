@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsSwitch from "../../../src/components/Form/KsSwitch.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsSwitch from "../../../src/components/Form/KsSwitch.vue";
 
 const meta: Meta<typeof KsSwitch> = {
     title: "Components/Form/KsSwitch",
@@ -13,16 +13,16 @@ const meta: Meta<typeof KsSwitch> = {
     parameters: {
         docs: {description: {component: "KsSwitch is the Kestra design-system abstraction over `ElSwitch` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsSwitch>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsSwitch},
         setup() {
-            const value = ref(false)
-            return {args, value}
+            const value = ref(false);
+            return {args, value};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -31,24 +31,24 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithLabels: Story = {
     render: () => ({
         components: {KsSwitch},
-        setup() { return {value: ref(false)} },
+        setup() { return {value: ref(false)}; },
         template: `
             <div style="padding:24px">
                 <ks-switch v-model="value" active-text="Enabled" inactive-text="Disabled" />
             </div>
         `,
     }),
-}
+};
 
 export const Sizes: Story = {
     render: () => ({
         components: {KsSwitch},
-        setup() { return {v1: ref(true), v2: ref(true), v3: ref(true)} },
+        setup() { return {v1: ref(true), v2: ref(true), v3: ref(true)}; },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
                 <ks-switch v-model="v1" size="large" />
@@ -57,16 +57,16 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Extended value types – string/number active/inactive values */
 export const ExtendedValues: Story = {
     render: () => ({
         components: {KsSwitch},
         setup() {
-            const env = ref("production")
-            const priority = ref(1)
-            return {env, priority}
+            const env = ref("production");
+            const priority = ref(1);
+            return {env, priority};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
@@ -81,12 +81,12 @@ export const ExtendedValues: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Disabled: Story = {
     render: () => ({
         components: {KsSwitch},
-        setup() { return {value: ref(true)} },
+        setup() { return {value: ref(true)}; },
         template: "<div style=\"padding:24px\"><ks-switch v-model=\"value\" disabled /></div>",
     }),
-}
+};

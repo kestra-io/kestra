@@ -1,27 +1,27 @@
-import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "../../../src/index"
-import KsSteps from "../../../src/components/Navigation/KsSteps/KsSteps.vue"
-import KsStep from "../../../src/components/Navigation/KsSteps/KsStep.vue"
+import {describe, test, expect} from "vitest";
+import {mount} from "@vue/test-utils";
+import KestraDesignSystem from "../../../src/index";
+import KsSteps from "../../../src/components/Navigation/KsSteps/KsSteps.vue";
+import KsStep from "../../../src/components/Navigation/KsSteps/KsStep.vue";
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const globalConfig = {plugins: [KestraDesignSystem]};
 
 describe("KsSteps", () => {
     test("renders steps element", () => {
         const wrapper = mount(KsSteps, {
             props: {active: 0},
             global: globalConfig,
-        })
-        expect(wrapper.find(".kel-steps").exists()).toBe(true)
-    })
+        });
+        expect(wrapper.find(".kel-steps").exists()).toBe(true);
+    });
 
     test("vertical direction applies correct class", () => {
         const wrapper = mount(KsSteps, {
             props: {active: 0, direction: "vertical"},
             global: globalConfig,
-        })
-        expect(wrapper.find(".kel-steps--vertical").exists()).toBe(true)
-    })
+        });
+        expect(wrapper.find(".kel-steps--vertical").exists()).toBe(true);
+    });
 
     test("renders step items", () => {
         const wrapper = mount({
@@ -33,7 +33,7 @@ describe("KsSteps", () => {
                     <ks-step title="Step 3" />
                 </ks-steps>
             `,
-        }, {global: globalConfig})
-        expect(wrapper.findAll(".kel-step").length).toBe(3)
-    })
-})
+        }, {global: globalConfig});
+        expect(wrapper.findAll(".kel-step").length).toBe(3);
+    });
+});

@@ -107,7 +107,7 @@
 
     const attrsWithoutClass = computed(() => {
         return Object.fromEntries(
-            Object.entries(attrs).filter(([key]) => key !== "class")
+            Object.entries(attrs).filter(([key]) => key !== "class"),
         );
     });
 

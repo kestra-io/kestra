@@ -86,7 +86,7 @@
     import ExecutionMetric from "../executions/ExecutionMetric.vue";
     import PlaygroundLog from "./playground/PlaygroundLog.vue";
     import {usePlaygroundStore} from "../../stores/playground";
-    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
+    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg";
     import {useExecutionsStore} from "../../stores/executions";
     import Kill from "../executions/overview/components/actions/Kill.vue";
 
@@ -112,7 +112,7 @@
             name: "metrics",
             title: t("metrics"),
             component: markRaw(ExecutionMetric),
-        }
+        },
     ]));
 
     const playgroundStore = usePlaygroundStore();

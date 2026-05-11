@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-    import {useNetwork} from "@vueuse/core"
-    const {isOnline} = useNetwork()
+    import {useNetwork} from "@vueuse/core";
+    const {isOnline} = useNetwork();
 
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import DemoButtons from "./DemoButtons.vue";

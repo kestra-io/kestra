@@ -44,8 +44,8 @@
     const props = defineProps({
         value: {
             type: Array as () => Record<string, any>[],
-            required: true
-        }
+            required: true,
+        },
     });
 
     const expandedCells = ref(new Set<string>());

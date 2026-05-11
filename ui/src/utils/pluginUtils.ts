@@ -31,7 +31,7 @@ export function extractPluginElements(plugin: Plugin): Record<string, string[]> 
     return Object.fromEntries(
         Object.entries(plugin)
             .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-            .map(([key, value]) => [key.replace(/[A-Z]/g, match => ` ${match}`), (value as PluginElement[]).filter(({deprecated}) => !deprecated).map(({cls}) => cls)])
+            .map(([key, value]) => [key.replace(/[A-Z]/g, match => ` ${match}`), (value as PluginElement[]).filter(({deprecated}) => !deprecated).map(({cls}) => cls)]),
     );
 }
 

@@ -33,5 +33,5 @@ export {
     PencilOutline,
     Plus,
     Refresh,
-    Restore
+    Restore,
 };

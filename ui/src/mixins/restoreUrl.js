@@ -4,7 +4,7 @@ export default {
     props: {
         restoreUrl: {
             type: Boolean,
-            default: true
+            default: true,
         },
     },
     created() {
@@ -16,12 +16,12 @@ export default {
     computed: {
         localStorageName() {
             const tenant = this.$route.params.tenant;
-            return `${this.$route.name?.replace("/", "_")}${this.$route.params.tab ? "_" + this.$route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
+            return `${this.$route.name?.replace("/", "_")}${this.$route.params.tab ? "_" + this.$route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`;
         },
 
         localStorageValue() {
             if (window.sessionStorage.getItem(this.localStorageName)) {
-                return JSON.parse(window.sessionStorage.getItem(this.localStorageName))
+                return JSON.parse(window.sessionStorage.getItem(this.localStorageName));
             } else {
                 return null;
             }
@@ -40,7 +40,7 @@ export default {
                 } else {
                     window.sessionStorage.setItem(
                         this.localStorageName,
-                        JSON.stringify(this.$route.query)
+                        JSON.stringify(this.$route.query),
                     );
                 }
             }
@@ -52,10 +52,10 @@ export default {
 
             const localExist = this.localStorageValue !== null;
 
-            const query = {...this.$route.query}
+            const query = {...this.$route.query};
             const local = this.localStorageValue === null ? {} : {...this.localStorageValue};
 
-            let change = false
+            let change = false;
 
             if (!localExist && this.isDefaultNamespaceAllow && defaultNamespace()) {
                 local["namespace"] = defaultNamespace();
@@ -68,8 +68,8 @@ export default {
                         continue;
                     }
 
-                    query[key] = local[key]
-                    change = true
+                    query[key] = local[key];
+                    change = true;
                 }
             }
 
@@ -81,6 +81,6 @@ export default {
             } else {
                 this.loadInit = true;
             }
-        }
-    }
-}
+        },
+    },
+};

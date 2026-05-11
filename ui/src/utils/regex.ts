@@ -8,7 +8,7 @@ const paramValue = "(?:(?:(?:\"[^\"]*\"?)|(?:'[^']*'?)|[^,)}]))*";
 const maybeParams = "(" +
     "(?:[\\n ]*" + paramKey + "[\\n ]*=[\\n ]*" + paramValue + "(?:[\\n ]*,[\\n ]*)?)+)?" +
     "([^\\n ()~+},:=]*)?";
-const functionWithMaybeParams = "([^\\n()},:~ ]+)\\(" + maybeParams
+const functionWithMaybeParams = "([^\\n()},:~ ]+)\\(" + maybeParams;
 
 export default {
     beforeSeparator: (additionalSeparators: string[] = []) => `([^\\}:\\n ${additionalSeparators.join("")}]*)`,
@@ -18,5 +18,5 @@ export default {
     capturePebbleVarParent: `${pebbleStart}${maybeTextFollowedBySeparator}${dotAccessedFieldWithParentCapture}`,
     /** [fullMatch, functionName, textBetweenParenthesis, maybeTypedWordStart] */
     capturePebbleFunction: `${pebbleStart}${maybeTextFollowedBySeparator}${functionWithMaybeParams}`,
-    captureStringValue: "^[\"']([^\"']+)[\"']$"
-}
+    captureStringValue: "^[\"']([^\"']+)[\"']$",
+};

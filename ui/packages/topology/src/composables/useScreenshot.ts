@@ -50,7 +50,7 @@ export function useScreenshot(): UseScreenshot {
         stroke-width: ${computed.strokeWidth};
         stroke-dasharray: ${computed.strokeDasharray};
         fill: none;
-        `
+        `,
       );
 
       return {element, original};
@@ -65,7 +65,7 @@ export function useScreenshot(): UseScreenshot {
       return data;
     } finally {
       originalStyles.forEach(({element, original}) =>
-        original ? element.setAttribute("style", original) : element.removeAttribute("style")
+        original ? element.setAttribute("style", original) : element.removeAttribute("style"),
       );
       el.classList.remove("is-exporting");
     }
@@ -73,7 +73,7 @@ export function useScreenshot(): UseScreenshot {
 
   function toJpeg(
     el: HTMLElement,
-    options: HTMLToImageOptions = {quality: 0.95}
+    options: HTMLToImageOptions = {quality: 0.95},
   ) {
     error.value = null;
 
@@ -91,7 +91,7 @@ export function useScreenshot(): UseScreenshot {
 
   function toPng(
     el: HTMLElement,
-    options: HTMLToImageOptions = {quality: 0.95}
+    options: HTMLToImageOptions = {quality: 0.95},
   ) {
     error.value = null;
 

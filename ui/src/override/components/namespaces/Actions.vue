@@ -40,7 +40,7 @@
 
     const onSelectDashboard = (value: any) => {
         router.replace({
-            params: {...route.params, dashboard: value}
+            params: {...route.params, dashboard: value},
         });
     };
 

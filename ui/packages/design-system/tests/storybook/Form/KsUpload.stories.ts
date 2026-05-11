@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import {within, expect} from "storybook/test"
-import KsUpload from "../../../src/components/Form/KsUpload.vue"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {within, expect} from "storybook/test";
+import KsUpload from "../../../src/components/Form/KsUpload.vue";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
 
 const meta: Meta<typeof KsUpload> = {
     title: "Components/Form/KsUpload",
@@ -25,8 +25,8 @@ const meta: Meta<typeof KsUpload> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsUpload>
 
 /** Default upload button */
@@ -42,11 +42,11 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const btn = canvas.getAllByRole("button")[0]
-        await expect(btn).toBeTruthy()
+        const canvas = within(canvasElement);
+        const btn = canvas.getAllByRole("button")[0];
+        await expect(btn).toBeTruthy();
     },
-}
+};
 
 /** Drag and drop upload area */
 export const DragAndDrop: Story = {
@@ -67,9 +67,9 @@ export const DragAndDrop: Story = {
         `,
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".kel-upload-dragger")).toBeTruthy()
+        await expect(canvasElement.querySelector(".kel-upload-dragger")).toBeTruthy();
     },
-}
+};
 
 /** With file list and limit */
 export const WithFileList: Story = {
@@ -79,8 +79,8 @@ export const WithFileList: Story = {
             const fileList = ref([
                 {name: "report.pdf", url: ""},
                 {name: "photo.png", url: ""},
-            ])
-            return {fileList}
+            ]);
+            return {fileList};
         },
         template: `
             <div style="padding:24px;width:400px">
@@ -93,7 +93,7 @@ export const WithFileList: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Without file list display */
 export const NoFileList: Story = {
@@ -107,7 +107,7 @@ export const NoFileList: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Accept specific file types */
 export const AcceptTypes: Story = {
@@ -124,4 +124,4 @@ export const AcceptTypes: Story = {
             </div>
         `,
     }),
-}
+};

@@ -23,7 +23,7 @@
         raw: any;
     }
 
-    const charts = ref<Result[]>([])
+    const charts = ref<Result[]>([]);
 
     const dashboardStore = useDashboardStore();
 
@@ -41,7 +41,7 @@
         () => {
             validateAndLoadAllChartsThrottled();
         }
-        , {immediate: true}
+        , {immediate: true},
     );
 
 
@@ -51,7 +51,7 @@
         const result: Result = {
             error: null,
             data: null,
-            raw: {}
+            raw: {},
         };
         const errors = await dashboardStore.validateChart(yamlChart);
         if (errors.constraints) {

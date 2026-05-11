@@ -2,7 +2,7 @@ export type FetchResult<T> = { total: number, results: T[] };
 
 export abstract class EntityIterator<T> {
     readonly fetchSize: number;
-    private _total: number | undefined;
+    private privateTotal: number | undefined;
     private page = 0;
     private alreadyFetched: T[] = [];
     private buffered: T[] = [];
@@ -17,7 +17,7 @@ export abstract class EntityIterator<T> {
     }
 
     get total(): number | undefined {
-        return this._total;
+        return this.privateTotal;
     }
 
     fetchOptions() {
@@ -26,8 +26,8 @@ export abstract class EntityIterator<T> {
             sort: "id:asc",
             page: ++this.page,
             size: this.fetchSize,
-            ...this.options
-        }
+            ...this.options,
+        };
     }
 
     abstract fetchCall(): Promise<FetchResult<T>>;
@@ -60,7 +60,7 @@ export abstract class EntityIterator<T> {
         }
 
         const entityFetch = await this.fetchCall();
-        this._total = entityFetch.total;
+        this.privateTotal = entityFetch.total;
         this.alreadyFetched = [...this.alreadyFetched, ...entityFetch.results];
         return entityFetch.results;
     }

@@ -35,7 +35,7 @@
 
     const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"});
 
-    let tries = 0
+    let tries = 0;
     function loadNodeTypes(){
         if(monaco.languages.typescript) {
             for(const path in NodeTypesRaw){
@@ -43,12 +43,12 @@
                 // We add every .d.ts file to Monaco
                 monaco.languages.typescript.typescriptDefaults.addExtraLib(
                     NodeTypesRawContent,
-                    `file://${path}`
+                    `file://${path}`,
                 );
             }
         } else if(tries <= 15) {
             // Retry loading types up to 15 times with increasing delay
-            setTimeout(loadNodeTypes, ++tries * 100)
+            setTimeout(loadNodeTypes, ++tries * 100);
         }
     }
 
@@ -109,7 +109,7 @@
         render,
         shallowRef,
         VNode,
-        watch
+        watch,
     } from "vue";
 
     import "monaco-editor/esm/vs/editor/editor.all";
@@ -148,7 +148,7 @@
         },
         set(value) {
             emit("change", value);
-        }
+        },
     });
 
     const route = useRoute();
@@ -173,11 +173,11 @@
             }
         }
 
-        const endLineCharacter = editor?.getModel()!.getLineMaxColumn(lineNumber) ?? 0
+        const endLineCharacter = editor?.getModel()!.getLineMaxColumn(lineNumber) ?? 0;
 
         editor.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter));
         editor.revealLineInCenter(lineNumber);
-    }
+    };
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     const isInFlowEditor = inject(EDITOR_WRAPPER_INJECTION_KEY, false);
@@ -191,7 +191,7 @@
 
         editor.focus();
 
-        const end = editor?.getModel()?.getLineMaxColumn(line) ?? 0
+        const end = editor?.getModel()?.getLineMaxColumn(line) ?? 0;
         editor.setSelection(new monaco.Range(line, 0, line, end));
     });
 
@@ -205,7 +205,7 @@
             colors: {
                 "minimap.background": "#161822",
                 "diffEditor.insertedLineBackground": "#029E734D",
-            }
+            },
         },
         light: {
             base: "vs",
@@ -221,8 +221,8 @@
                 "editor.selectionBackground": "#E8E5FF",
                 "editor.wordHighlightBackground": "#E8E5FF",
                 "diffEditor.insertedLineBackground": "#029E734D",
-            }
-        }
+            },
+        },
     };
 
     // avoid using browser libs in ts worker added by default
@@ -230,7 +230,7 @@
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.ES2020,
             lib: ["es2020"], // Exclude 'dom' to remove browser types
-            allowNonTsExtensions: true
+            allowNonTsExtensions: true,
         });
     }
 
@@ -264,7 +264,7 @@
         suggestionsOnFocus: false,
         largeSuggestions: true,
         placeholder: undefined,
-    })
+    });
 
     Object.entries(themes).forEach(([themeKey, themeData]) => {
         monaco.editor.defineTheme(themeKey, themeData);
@@ -277,7 +277,7 @@
                 ...kestraBaseTheme,
                 ...theme,
                 rules: [...(kestraBaseTheme.rules ?? []), ...(theme.rules ?? [])],
-                base: kestraBaseTheme.base
+                base: kestraBaseTheme.base,
             }
             : theme as Partial<editor.IStandaloneThemeData> & { base: editor.BuiltinTheme };
 
@@ -286,7 +286,7 @@
             inherit: true,
             rules: [],
             colors: {},
-            ...base
+            ...base,
         });
 
         return themeId;
@@ -303,27 +303,27 @@
     let localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>();
     let localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>();
 
-    const suggestWidgetResizeObserver = ref<MutationObserver>()
-    const suggestWidgetObserver = ref<MutationObserver>()
-    const suggestWidget = ref<HTMLElement>()
-    const resizeObserver = ref<ResizeObserver>()
+    const suggestWidgetResizeObserver = ref<MutationObserver>();
+    const suggestWidgetObserver = ref<MutationObserver>();
+    const suggestWidget = ref<HTMLElement>();
+    const resizeObserver = ref<ResizeObserver>();
 
     defineExpose({
         focus,
         destroy,
         monaco,
-    })
+    });
 
     const editorResolved = computed(() => {
         return props.diffEditor ? localDiffEditor.value : localEditor.value;
-    })
+    });
 
     const emit = defineEmits<{
         (e:"editorDidMount", editor?: typeof editorResolved.value): void,
         (e:"change", value: string, event?: editor.IModelContentChangedEvent): void,
         (e: "mouseMove", event: monaco.editor.IEditorMouseEvent): void;
         (e: "mouseLeave", event: monaco.editor.IPartialEditorMouseEvent): void;
-    }>()
+    }>();
 
     const editorRef = ref<HTMLDivElement | null>(null);
 
@@ -413,9 +413,9 @@
             class: `${KESTRA_ICON_WRAPPER_CLASS} d-flex align-items-center me-1`,
         }, iconVNode), tempContainer);
 
-        vsCodeIcon.after(tempContainer.firstElementChild!)
+        vsCodeIcon.after(tempContainer.firstElementChild!);
         tempContainer.remove();
-    }
+    };
 
     const replaceRowsIcons = (nodes: HTMLElement[]) => {
         nodes = uniqBy(nodes, node => node.id);
@@ -469,15 +469,15 @@
                     startLineNumber: position?.lineNumber,
                     startColumn: position?.column,
                     endLineNumber: position?.lineNumber,
-                    endColumn: wordAtPosition?.endColumn ?? position?.column
+                    endColumn: wordAtPosition?.endColumn ?? position?.column,
                 },
                 // We don't use the selectedDate directly because if user modifies the input value directly it doesn't work otherwise
                 text: `${moment(
-                    datePicker.value!.$el.nextElementSibling.querySelector("input").value
+                    datePicker.value!.$el.nextElementSibling.querySelector("input").value,
                 ).toISOString(true)} `,
-                forceMoveMarkers: true
+                forceMoveMarkers: true,
             }],
-            () => null
+            () => null,
         );
 
         selectedDate.value = nowMoment.toDate();
@@ -485,7 +485,7 @@
         if (props.suggestionsOnFocus) {
             asCodeEditor.trigger("datePickerCallback", "editor.action.triggerSuggest", {});
         }
-    }
+    };
 
     function removeDatePicker(codeEditor: ICodeEditor) {
         if (
@@ -516,18 +516,18 @@
                             removeDatePicker(asCodeEditor);
                         }
                     }
-                })
+                });
 
                 const addedRows = addedSuggestRows(mutations);
                 replaceRowsIcons(
-                    addedRows.filter(row => row.ariaLabel !== "_DATE_PICKER_")
+                    addedRows.filter(row => row.ariaLabel !== "_DATE_PICKER_"),
                 );
 
                 addedRows.forEach(async row => {
                     if (asCodeEditor !== undefined && row.ariaLabel === "_DATE_PICKER_") {
                         (asCodeEditor.getContribution("editor.contrib.suggestController") as unknown as {
                             cancelSuggestWidget: () => void
-                        }).cancelSuggestWidget()
+                        }).cancelSuggestWidget();
 
                         if (!datePickerShown.value) {
                             datePickerShown.value = true;
@@ -543,7 +543,7 @@
                                     getPosition() {
                                         return {
                                             position: asCodeEditor.getPosition(),
-                                            preference: [editor.ContentWidgetPositionPreference.BELOW, editor.ContentWidgetPositionPreference.ABOVE]
+                                            preference: [editor.ContentWidgetPositionPreference.BELOW, editor.ContentWidgetPositionPreference.ABOVE],
                                         };
                                     },
                                 };
@@ -556,14 +556,14 @@
                             });
                         }
                     }
-                })
+                });
             });
 
             suggestWidgetObserver.value.observe(newVal, {childList: true, subtree: true});
 
             asCodeEditor?.onDidChangeCursorPosition(() => {
                 removeDatePicker(asCodeEditor);
-            })
+            });
         }
     });
 
@@ -586,7 +586,7 @@
                 t,
                 props.diffEditor ? undefined : editorResolved.value as ICodeEditor,
                 props.language,
-                props.schemaType
+                props.schemaType,
             );
         }
 
@@ -594,11 +594,11 @@
         (window as any).pasteToEditor = (textToPaste: string) => {
             localEditor.value?.executeEdits("", [{
                 range: localEditor.value?.getSelection() ?? new monaco.Range(0, 0, 0, 0),
-                text: textToPaste
-            }])
+                text: textToPaste,
+            }]);
         };
         (window as any).clearEditor = () => {
-            localEditor.value?.getModel()?.setValue("")
+            localEditor.value?.getModel()?.setValue("");
         };
         (window as any).acceptSuggestion = () => {
             localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {});
@@ -606,14 +606,14 @@
         (window as any).nextSuggestion = () => {
             localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {});
         };
-    })
+    });
 
     onBeforeUnmount(function () {
         destroy();
-    })
+    });
 
     function disposeObservers() {
-        const swio = suggestWidgetResizeObserver.value
+        const swio = suggestWidgetResizeObserver.value;
         if (swio !== undefined) {
             swio!.disconnect();
             suggestWidgetResizeObserver.value = undefined;
@@ -640,7 +640,7 @@
 
         suggestWidgetResizeObserver.value = new MutationObserver(([{
             target,
-            addedNodes
+            addedNodes,
         }]) => {
             const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
                 // If the prop value is passed as false, we don't want to resize the suggest widget
@@ -651,45 +651,45 @@
 
                 const resizerInitialCoordinates = {
                     x: resizer.getBoundingClientRect().left,
-                    y: resizer.getBoundingClientRect().top
+                    y: resizer.getBoundingClientRect().top,
                 };
 
                 resizer.dispatchEvent(new MouseEvent("mouseenter", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mouseover", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mousedown", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mousemove", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x + 80,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mouseup", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x + 80,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mouseout", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x + 80,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
                 resizer.dispatchEvent(new MouseEvent("mouseleave", {
                     bubbles: true,
                     clientX: resizerInitialCoordinates.x + 80,
-                    clientY: resizerInitialCoordinates.y
+                    clientY: resizerInitialCoordinates.y,
                 }));
-            }
+            };
 
             const targetHtmlElement = target as HTMLElement;
             if (targetHtmlElement.classList.contains("monaco-sash")) {
@@ -707,19 +707,19 @@
 
                 if (resizer.classList.contains("disabled")) {
                     suggestWidgetResizeObserver.value!.disconnect();
-                    suggestWidgetResizeObserver.value?.observe(resizer, {attributeFilter: ["class"]})
+                    suggestWidgetResizeObserver.value?.observe(resizer, {attributeFilter: ["class"]});
                 } else {
                     simulateResizeOnSashAndDisconnect(resizer);
                 }
             }
         });
 
-        const $el = editorRef.value
+        const $el = editorRef.value;
         if ($el !== null) {
             const modifiedEditorWidgets = $el.querySelector(".editor.modified .overflowingContentWidgets");
-            const el = modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets")
+            const el = modifiedEditorWidgets ?? $el.querySelector(".overflowingContentWidgets");
             if(el){
-                suggestWidgetResizeObserver.value.observe(el, {childList: true})
+                suggestWidgetResizeObserver.value.observe(el, {childList: true});
             }
         }
     }
@@ -731,7 +731,7 @@
             language: props.language,
             suggest: {
                 showClasses: false,
-                showWords: false
+                showWords: false,
             },
             ...(isFlowYamlEditor.value ? {
                 inlineSuggest: {
@@ -740,31 +740,31 @@
             } : {}),
             ...(isInFlowEditor ? {
                 padding: {
-                    top: 16
-                }
+                    top: 16,
+                },
             } : {}),
-            ...props.options
+            ...props.options,
         };
 
         if (props.diffEditor) {
             if (editorRef.value) {
                 localDiffEditor.value = monaco.editor.createDiffEditor(editorRef.value, {
                     ...options,
-                    ignoreTrimWhitespace: false
+                    ignoreTrimWhitespace: false,
                 });
                 let originalModel = monaco.editor.createModel(
                     props.original,
                     props.language,
-                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : "")),
                 );
                 let modifiedModel = monaco.editor.createModel(
                     props.value,
                     props.language,
-                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                    monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : "")),
                 );
                 localDiffEditor.value.setModel({
                     original: originalModel,
-                    modified: modifiedModel
+                    modified: modifiedModel,
                 });
                 let modifiedBackspaceTimeout: number | null = null;
 
@@ -786,30 +786,30 @@
         } else {
             monaco.editor.addKeybindingRule({
                 keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
-                command: "editor.action.triggerSuggest"
-            })
+                command: "editor.action.triggerSuggest",
+            });
 
             monaco.editor.addKeybindingRule({
                 keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
-                command: "editor.action.quickCommand"
-            })
+                command: "editor.action.quickCommand",
+            });
 
             monaco.editor.addKeybindingRule({
                 keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow,
                 command: "editor.action.fontZoomOut",
-                when: "editorFocus"
-            })
+                when: "editorFocus",
+            });
 
             monaco.editor.addKeybindingRule({
                 keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
                 command: "editor.action.fontZoomIn",
-                when: "editorFocus"
-            })
+                when: "editorFocus",
+            });
 
             monaco.editor.addKeybindingRule({
                 keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0,
                 command: "editor.action.fontZoomReset",
-                when: "editorFocus"
+                when: "editorFocus",
             });
 
             if (editorRef.value) {
@@ -830,7 +830,7 @@
                             ed.setPosition({lineNumber: args.lineNumber, column: args.column});
                             ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
                             ed.focus();
-                        }
+                        },
                     );
                 }
 
@@ -937,7 +937,7 @@
                         localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {});
                     }
                     wasInPebbleBlock = inPebble;
-                }, 300))
+                }, 300));
 
                 localEditor.value.onMouseMove((e) => {
                     emit("mouseMove", e);
@@ -953,9 +953,9 @@
             }
         }
 
-        let _editor = getModifiedEditor();
-        _editor?.onDidChangeModelContent(function (event) {
-            let value = _editor.getValue();
+        let editorLocal = getModifiedEditor();
+        editorLocal?.onDidChangeModelContent(function (event) {
+            let value = editorLocal.getValue();
 
             if (props.value !== value) {
                 emit("change", value, event);
@@ -964,7 +964,7 @@
 
         observeAndResizeSuggestWidget();
 
-        setTimeout(() => monaco.editor.remeasureFonts(), 1)
+        setTimeout(() => monaco.editor.remeasureFonts(), 1);
         emit("editorDidMount", editorResolved.value);
 
         /* Handle resizing. */
@@ -990,7 +990,7 @@
             model = monaco.editor.createModel(
                 await valueSupplier(),
                 props.language,
-                monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : "")),
             );
         } else {
             if (!pathOrName.includes(".") && props.language) {
@@ -1002,7 +1002,7 @@
                 model = monaco.editor.createModel(
                     await valueSupplier(),
                     props.language,
-                    fileUri
+                    fileUri,
                 );
             } else if (!useModelCache) {
                 model.setValue(await valueSupplier());
@@ -1010,7 +1010,7 @@
         }
         localEditor.value?.setModel(model);
 
-        return model
+        return model;
     }
 
     function getModifiedEditor() {
@@ -1049,7 +1049,7 @@
         if (localEditor.value !== undefined) {
             localEditor.value?.dispose();
             localEditor.value?.getModel()?.dispose();
-            localEditor.value = undefined
+            localEditor.value = undefined;
 
             moveCursorCmdDisposable?.dispose();
             moveCursorCmdDisposable = undefined;

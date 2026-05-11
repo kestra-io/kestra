@@ -26,7 +26,7 @@
     withDefaults(defineProps<Props>(), {
         icon: undefined,
         icons: undefined,
-        clickable: true
+        clickable: true,
     });
 
     defineEmits<{

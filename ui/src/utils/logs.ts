@@ -1,5 +1,5 @@
 import {LOG_LEVELS} from "@kestra-io/design-system";
-import {cssVar} from "@kestra-io/design-system"
+import {cssVar} from "@kestra-io/design-system";
 
 export type LevelKey = typeof LOG_LEVELS[number];
 
@@ -40,7 +40,7 @@ export function sort(value: Record<string, any>) {
                 obj[key] = value[key];
                 return obj;
             },
-            {} as Record<string, any>
+            {} as Record<string, any>,
         );
 }
 

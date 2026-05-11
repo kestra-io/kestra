@@ -23,7 +23,7 @@
         tabExecution: "topology",
         executionId: undefined,
         namespace: undefined,
-        flowId: undefined
+        flowId: undefined,
     });
 
     const router = useRouter();
@@ -31,11 +31,11 @@
     const executionsStore = useExecutionsStore();
 
     const routeName = computed(() => {
-        return props.executionId ? "executions/update" : "flows/update"
+        return props.executionId ? "executions/update" : "flows/update";
     });
 
     const tab = computed(() => {
-        return props.executionId ? props.tabExecution : props.tabFlow
+        return props.executionId ? props.tabExecution : props.tabFlow;
     });
 
     interface Execution {
@@ -50,16 +50,16 @@
                 namespace: execution.namespace, 
                 flowId: execution.flowId, 
                 id: execution.id, 
-                tab: tab.value
-            }
+                tab: tab.value,
+            };
         } else {
             return {
                 namespace: props.namespace, 
                 id: props.flowId, 
-                tab: tab.value
-            }
+                tab: tab.value,
+            };
         }
-    }
+    };
 
     const click = () => {
         if (props.executionId && props.namespace && props.flowId) {
@@ -70,7 +70,7 @@
                     flowId: props.flowId,
                     id: props.executionId,
                     tab: tab.value,
-                    tenant: route.params.tenant
+                    tenant: route.params.tenant,
                 },
             });
         } else if (props.executionId) {
@@ -78,11 +78,11 @@
                 .loadExecution({id: props.executionId})
                 .then(value => {
                     executionsStore.execution = value;
-                    router.push({name: routeName.value, params: params(value)})
-                })
+                    router.push({name: routeName.value, params: params(value)});
+                });
         } else {
-            router.push({name: routeName.value, params: params()})
+            router.push({name: routeName.value, params: params()});
         }
-    }
+    };
 
 </script>

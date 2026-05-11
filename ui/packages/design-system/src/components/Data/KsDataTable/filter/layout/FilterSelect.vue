@@ -77,7 +77,7 @@
         value: modelValue.value,
         endDateValue: endDateValue.value ?? null,
         startDateValue: startDateValue.value ?? null,
-        timeRangeMode: timeRangeMode.value ?? "predefined"
+        timeRangeMode: timeRangeMode.value ?? "predefined",
     });
 
     watchEffect(() => {

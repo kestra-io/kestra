@@ -18,7 +18,7 @@ export async function refreshMonacoFilter(canvas: ReturnType<typeof within>) {
 }
 
 export async function clearMonacoInput(user: ReturnType<typeof userEvent.setup>, canvas: ReturnType<typeof within>): Promise<void> {
-    return user.clear(await getMonacoFilterInput(canvas))
+    return user.clear(await getMonacoFilterInput(canvas));
 }
 
 export function isColoredAsError(element: HTMLElement): boolean {

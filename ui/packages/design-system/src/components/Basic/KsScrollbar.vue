@@ -7,24 +7,24 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
-    import {ElScrollbar} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ref} from "vue";
+    import {ElScrollbar} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         maxHeight?: string | number
         height?: string | number
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 
-    const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
+    const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineExpose({
         scrollTo: (...args: any[]) => (scrollbarRef.value?.scrollTo as any)?.(...args),
@@ -32,7 +32,7 @@
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),
         update: () => scrollbarRef.value?.update(),
         wrapRef: scrollbarRef,
-    })
+    });
 </script>
 
 <style lang="scss">

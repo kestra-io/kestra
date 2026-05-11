@@ -15,7 +15,7 @@ export default async function configure(
     t: ReturnType<typeof useI18n>["t"],
     editorInstance: editor.ICodeEditor | undefined,
     language: string,
-    domain?: string
+    domain?: string,
 ): Promise<void> {
     const namespacesStore = useNamespacesStore();
     let yamlAutocompletion;

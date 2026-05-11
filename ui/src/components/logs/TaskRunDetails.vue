@@ -292,7 +292,7 @@
             showProgressBar: {
                 type: Boolean,
                 default: true,
-            }
+            },
         },
         data() {
             return {
@@ -425,8 +425,8 @@
         setup(){
             const $http = useClient();
             return {
-                $http
-            }
+                $http,
+            };
         },
         computed: {
             ...mapStores(useCoreStore, useExecutionsStore),

@@ -33,7 +33,7 @@ export const test = base.extend<ExecutionsFixtures>({
         const executionsPage = new ExecutionsPage(page);
 
         await use(executionsPage);
-    }
+    },
 });
 
 export {expect} from "@playwright/test";

@@ -29,21 +29,21 @@
     </EmptyTemplate>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed} from "vue";
     import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import noexecutionimg from "../../assets/onboarding/noexecution.svg"
-    import {useFlowStore} from "../../stores/flow"
+    import noexecutionimg from "../../assets/onboarding/noexecution.svg";
+    import {useFlowStore} from "../../stores/flow";
     //@ts-expect-error no declaration file
-    import TriggerFlow from "../flows/TriggerFlow.vue"
+    import TriggerFlow from "../flows/TriggerFlow.vue";
 
     withDefaults(defineProps<{topbar?: boolean; isNamespace?: boolean}>(), {
         topbar: true,
         isNamespace: false,
-    })
+    });
 
     const flowStore = useFlowStore();
-    const flow = computed(() => flowStore.flow)
+    const flow = computed(() => flowStore.flow);
 </script>
 
 <style scoped lang="scss">

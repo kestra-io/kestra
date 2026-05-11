@@ -17,7 +17,7 @@ describe("extractBlock", () => {
         const result = YamlUtils.extractBlock({
             source: yamlString,
             section: "triggers",
-            key: "plugin1"
+            key: "plugin1",
         });
 
         expect(result).toMatchInlineSnapshot(`
@@ -26,7 +26,7 @@ describe("extractBlock", () => {
           name: Plugin 1
           "
         `);
-    })
+    });
 
     test("extracting a task", () => {
         const yamlString = `
@@ -42,7 +42,7 @@ describe("extractBlock", () => {
         const result = YamlUtils.extractBlock({
             source: yamlString,
             section: "tasks",
-            key: "plugin1"
+            key: "plugin1",
         });
 
         expect(result).toMatchInlineSnapshot(`
@@ -51,7 +51,7 @@ describe("extractBlock", () => {
           name: Plugin 1
           "
         `);
-    })
+    });
 
     test("extracting a pluginDefaults", () => {
         const yamlString = `
@@ -81,7 +81,7 @@ describe("extractBlock", () => {
           name: Plugin Default 1
           "
         `);
-    })
+    });
 });
 
 describe("swapPluginProperties", () => {
@@ -103,7 +103,7 @@ describe("swapPluginProperties", () => {
             source: yamlString,
             section: "triggers",
             key1: "plugin1",
-            key2: "plugin2"
+            key2: "plugin2",
         });
 
         expect(result).toMatchInlineSnapshot(`
@@ -119,8 +119,8 @@ describe("swapPluginProperties", () => {
               name: Plugin 1
           "
         `);
-    })
-})
+    });
+});
 
 describe("deleteBlock", () => {
     test("deleting a trigger", () => {
@@ -136,10 +136,10 @@ describe("deleteBlock", () => {
         const result = YamlUtils.deleteBlock({
             source: yamlString,
             section: "triggers",
-            key: "plugin1"
+            key: "plugin1",
         });
         expect(result).not.toContain("- id: plugin1");
-    })
+    });
 
     test("deleting a task", () => {
         const yamlString = `
@@ -154,10 +154,10 @@ describe("deleteBlock", () => {
         const result = YamlUtils.deleteBlock({
             source: yamlString,
             section: "tasks",
-            key: "plugin1"
+            key: "plugin1",
         });
         expect(result).not.toContain("- id: plugin1");
-    })
+    });
 
     test("deleting a task with subtask", () => {
         const yamlString = `
@@ -176,10 +176,10 @@ describe("deleteBlock", () => {
         const result = YamlUtils.deleteBlock({
             source: yamlString,
             section: "tasks",
-            key: "plugin1"
+            key: "plugin1",
         });
         expect(result).not.toContain("- id: plugin1");
-    })
+    });
 
     test("deleting a pluginDefaults", () => {
         const yamlString = `
@@ -193,10 +193,10 @@ describe("deleteBlock", () => {
             source: yamlString,
             section: "pluginDefaults",
             key: "type1",
-            keyName: "type"
+            keyName: "type",
         });
         expect(result).not.toContain("- type: type1");
-    })
+    });
 
     test("deleting a pluginDefaults", () => {
         const yamlString = `
@@ -213,11 +213,11 @@ describe("deleteBlock", () => {
             source: yamlString,
             section: "pluginDefaults",
             key: "type1",
-            keyName: "type"
+            keyName: "type",
         });
         expect(result).not.toContain("- type: type1");
-    })
-})
+    });
+});
 
 describe("extractFieldFromMaps", () => {
     test("extracts field from maps", () => {
@@ -269,7 +269,7 @@ describe("extractFieldFromMaps", () => {
                 },
               ]
             `);
-            })
+            });
 
     test("returns empty object if field not found", () => {
         const yaml = `
@@ -338,8 +338,8 @@ describe("extractFieldFromMaps", () => {
               },
             ]
         `);
-    })
-})
+    });
+});
 
 describe("insertBlockWithPath", () => {
     const srcWithTasks = `
@@ -364,7 +364,7 @@ describe("insertBlockWithPath", () => {
             parentPath: "tasks",
             newBlock: newValue,
             refPath: 0,
-            position: "after"
+            position: "after",
         });
         expect(result).toMatchInlineSnapshot(`
           "tasks:
@@ -378,8 +378,8 @@ describe("insertBlockWithPath", () => {
               type: type2
               name: Plugin 2
           "
-        `)
-    })
+        `);
+    });
 
     test("inserting a task when no tasks section is present", () => {
         const srcWithTriggers = `
@@ -410,8 +410,8 @@ describe("insertBlockWithPath", () => {
               type: type3
               name: Plugin 3
           "
-        `)
-    })
+        `);
+    });
 
     test("inserting a task as a subBlock of another task", () => {
         const srcWithSubTasks = `
@@ -440,7 +440,7 @@ describe("insertBlockWithPath", () => {
             newBlock: newValue,
             parentPath: "tasks[0].tasks",
             refPath: 0,
-            position: "before"
+            position: "before",
         });
         expect(result).toMatchInlineSnapshot(`
           "tasks:
@@ -461,8 +461,8 @@ describe("insertBlockWithPath", () => {
               type: type3
               name: Plugin 3
           "
-        `)
-    })
+        `);
+    });
 
     test("inserting a condition on a trigger", () => {
         const srcWithTriggers = `
@@ -493,8 +493,8 @@ describe("insertBlockWithPath", () => {
               type: type2
               name: Plugin 2
           "
-        `)
-    })
+        `);
+    });
 
     test("insert parent when double missing", () => {
         const srcWithTriggers = `
@@ -530,9 +530,9 @@ describe("insertBlockWithPath", () => {
                           type: type3
                           name: Plugin 3
           "
-        `)
-    })
-})
+        `);
+    });
+});
 
 describe("extractBlockWithPath", () => {
     test("extracting a trigger", () => {
@@ -549,14 +549,14 @@ describe("extractBlockWithPath", () => {
         const result = YamlUtils.extractBlockWithPath({
             source: yamlString,
             path: "triggers[1]",
-        })
+        });
         expect(result).toMatchInlineSnapshot(`
           "id: plugin2
           type: type2
           name: Plugin 2
           "
         `);
-    })
+    });
     test("extracting a sub-subtask", () => {
         const yamlString = `
         tasks:
@@ -582,15 +582,15 @@ describe("extractBlockWithPath", () => {
         const result = YamlUtils.extractBlockWithPath({
             source: yamlString,
             path: "tasks[0].tasks[1].tasks[0]",
-        })
+        });
         expect(result).toMatchInlineSnapshot(`
           "id: plugin4
           type: type4
           name: Plugin 4
           "
-          `)
-    })
-})
+          `);
+    });
+});
 
 describe("replaceBlockWithPath", () => {
     test("replacing a trigger", () => {
@@ -613,8 +613,8 @@ describe("replaceBlockWithPath", () => {
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "triggers[1]",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
         expect(result).toMatchInlineSnapshot(`
           "triggers:
             - id: plugin1
@@ -625,7 +625,7 @@ describe("replaceBlockWithPath", () => {
               name: Plugin 3
           "
         `);
-    })
+    });
 
     test("replacing a task", () => {
         const yamlString = `
@@ -647,8 +647,8 @@ describe("replaceBlockWithPath", () => {
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "tasks[1]",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
         expect(result).toMatchInlineSnapshot(`
           "tasks:
             - id: plugin1
@@ -658,8 +658,8 @@ describe("replaceBlockWithPath", () => {
               type: type3
               name: Plugin 3
           "
-        `)
-    })
+        `);
+    });
 
     test("replacing a task with subtask", () => {
         const yamlString = `
@@ -685,8 +685,8 @@ describe("replaceBlockWithPath", () => {
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "tasks[0].tasks[1]",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
         expect(result).toMatchInlineSnapshot(`
           "tasks:
             - id: plugin1
@@ -700,8 +700,8 @@ describe("replaceBlockWithPath", () => {
                   type: type4
                   name: Plugin 4
           "
-        `)
-    })
+        `);
+    });
 
     test("replace a condition in a trigger", () => {
         const yamlString = `
@@ -727,8 +727,8 @@ describe("replaceBlockWithPath", () => {
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "triggers[0].conditions[1]",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
         expect(result).toMatchInlineSnapshot(`
           "triggers:
             - id: plugin1
@@ -742,8 +742,8 @@ describe("replaceBlockWithPath", () => {
                   type: type4
                   name: Plugin 4
           "
-        `)
-    })
+        `);
+    });
 
     test("replace a subtask with subtask", () => {
         const yamlString = `
@@ -772,8 +772,8 @@ tasks:
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "tasks[0].tasks[2].task",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
 
         expect(result).toMatchInlineSnapshot(`
           "tasks:
@@ -795,8 +795,8 @@ tasks:
                     type: type4
                     name: Plugin 4
           "
-        `)
-    })
+        `);
+    });
 
     test("insert the key at the right location", () => {
         const yamlString = `
@@ -819,8 +819,8 @@ tasks:
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "description",
-            newContent: newValue
-        })
+            newContent: newValue,
+        });
         expect(result).toMatchInlineSnapshot(`
           "id: my-flow
           namespace: my.namespace
@@ -834,8 +834,8 @@ tasks:
               type: type2
               name: Plugin 2
           "
-        `)
-    })
+        `);
+    });
 
     test("replace with empty content should remove the item at path", () => {
         const yamlString = `
@@ -851,8 +851,8 @@ tasks:
         const result = YamlUtils.replaceBlockWithPath({
             source: yamlString,
             path: "tasks[1]",
-            newContent: YamlUtils.stringify(undefined)
-        })
+            newContent: YamlUtils.stringify(undefined),
+        });
 
         expect(result).toMatchInlineSnapshot(`
           "tasks:
@@ -860,9 +860,9 @@ tasks:
               type: type1
               name: Plugin 1
           "
-        `)
-    })
-})
+        `);
+    });
+});
 
 describe("getPathFromSectionAndId", () => {
     test("get path from id", () => {
@@ -878,10 +878,10 @@ describe("getPathFromSectionAndId", () => {
         const result = YamlUtils.getPathFromSectionAndId({
             source: yamlString,
             section: "tasks",
-            id: "plugin2"
+            id: "plugin2",
         });
         expect(result).toBe("tasks[1]");
-    })
+    });
 
     test("get path from id with subtask", () => {
         const yamlString = `
@@ -900,10 +900,10 @@ describe("getPathFromSectionAndId", () => {
         const result = YamlUtils.getPathFromSectionAndId({
             source: yamlString,
             section: "tasks",
-            id: "plugin3"
+            id: "plugin3",
         });
         expect(result).toBe("tasks[0].tasks[1]");
-    })
+    });
 
     test("get path from id with subCondition", () => {
         const yamlString = `
@@ -926,10 +926,10 @@ describe("getPathFromSectionAndId", () => {
         const result = YamlUtils.getPathFromSectionAndId({
             source: yamlString,
             section: "triggers",
-            id: "plugin3"
+            id: "plugin3",
         });
         expect(result).toBe("triggers[0].conditions[1]");
-    })
+    });
 
     test("get path from dag", () => {
         const yamlString = `
@@ -948,11 +948,11 @@ describe("getPathFromSectionAndId", () => {
         const result = YamlUtils.getPathFromSectionAndId({
             source: yamlString,
             section: "tasks",
-            id: "t2"
+            id: "t2",
         });
         expect(result).toBe("tasks[0].task");
-    })
-})
+    });
+});
 
 describe("replaceIdAndNamespace", () => {
     test("replaces id and namespace in yaml", () => {
@@ -1020,7 +1020,7 @@ describe("getMetadata", () => {
         expect(metadata).toEqual({
             id: "test",
             namespace: "test.ns",
-            description: "Test flow"
+            description: "Test flow",
         });
     });
 
@@ -1038,11 +1038,11 @@ describe("getMetadata", () => {
             id: "test",
             labels: {
                 env: "prod",
-                team: "dev"
+                team: "dev",
             },
             variables: {
-                var1: "value1"
-            }
+                var1: "value1",
+            },
         });
     });
 
@@ -1050,7 +1050,7 @@ describe("getMetadata", () => {
         const yaml = "";
         const metadata = YamlUtils.getMetadata(yaml);
         expect(metadata).toEqual({});
-    })
+    });
 });
 
 describe("get lines infos", () => {
@@ -1069,7 +1069,7 @@ describe("get lines infos", () => {
         const tasksLines = YamlUtils.getTasksLines(yamlString);
         expect(tasksLines).to.containSubset({plugin1: {start: 3, end: 6}});
         expect(tasksLines).to.containSubset({plugin2: {start: 7, end: 9}});
-    })
+    });
     test("get tasks lines including comments and line breaks", () => {
         const yamlString = `# this count as an empty line
         # second comment
@@ -1086,7 +1086,7 @@ describe("get lines infos", () => {
 
         const tasksLines = YamlUtils.getTasksLines(yamlString);
         expect(tasksLines).to.containSubset({plugin1: {start: 5, end: 8}});
-    })
+    });
     test("get tasks lines including multiline field", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1102,7 +1102,7 @@ describe("get lines infos", () => {
 
         const tasksLines = YamlUtils.getTasksLines(yamlString);
         expect(tasksLines).to.containSubset({plugin1: {start: 3, end: 9}});
-    })
+    });
     test("get tasks lines for 'Dag' tasks", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1126,7 +1126,7 @@ describe("get lines infos", () => {
         expect(tasksLines).to.containSubset({dag_task: {start: 6, end: 16}});
         expect(tasksLines).to.containSubset({nested_task_1_inside_dag: {start: 10, end: 12}});
         expect(tasksLines).to.containSubset({nested_task_2_inside_dag: {start: 14, end: 16}});
-    })
+    });
     test("get tasks lines for 'Foreach' tasks", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1143,7 +1143,7 @@ describe("get lines infos", () => {
         const tasksLines = YamlUtils.getTasksLines(yamlString);
         expect(tasksLines).to.containSubset({for_each_task: {start: 3, end: 10}});
         expect(tasksLines).to.containSubset({for_each_task_1: {start: 8, end: 10}});
-    })
+    });
     test("get tasks lines for nested 'Foreach' tasks", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1170,7 +1170,7 @@ describe("get lines infos", () => {
         expect(tasksLines).to.containSubset({for_each_task_1: {start: 8, end: 10}});
         expect(tasksLines).to.containSubset({nested_foreach: {start: 11, end: 18}});
         expect(tasksLines).to.containSubset({nested_foreach_task1: {start: 16, end: 18}});
-    })
+    });
     test("get tasks lines for 'Condition' task", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1191,7 +1191,7 @@ describe("get lines infos", () => {
         expect(tasksLines).to.containSubset({if_task: {start: 3, end: 13}});
         expect(tasksLines).to.containSubset({when_true: {start: 7, end: 9}});
         expect(tasksLines).to.containSubset({when_false: {start: 11, end: 13}});
-    })
+    });
     test("if a task ends on the last line, it should be included", () => {
         const yamlString = `# this count as an empty line
         tasks:
@@ -1202,7 +1202,7 @@ describe("get lines infos", () => {
 
         const tasksLines = YamlUtils.getTasksLines(yamlString);
         expect(tasksLines).to.containSubset({plugin1: {start: 3, end: 6}});
-    })
+    });
 });
 
 describe("getTypeAtPosition", () => {
@@ -1222,10 +1222,10 @@ describe("getTypeAtPosition", () => {
         `;
         const result = YamlUtils.getTypeAtPosition(yamlString, {
             lineNumber:9,
-            column: 15
+            column: 15,
         }, [
             "io.kestra.plugin.jdbc.sqlserver.Query",
-            "io.kestra.plugin.core.log.Log"
+            "io.kestra.plugin.core.log.Log",
         ]); // line 9, column 15 corresponds to io.kestra.plugin.jdbc.sqlserver.Query
         expect(result).toBe("io.kestra.plugin.jdbc.sqlserver.Query");
     });
@@ -1240,7 +1240,7 @@ describe("getTypeAtPosition", () => {
         const result = YamlUtils.getTypeAtPosition(yamlString, {lineNumber: 2, column:5}, ["type1"]); // line 2, column 5 is 'tasks' field
         expect(result).toBeNull();
     });
-})
+});
 
 describe("stringify with preserveCronQuotes", () => {
     test("adds quotes to unquoted cron values", () => {
@@ -1249,9 +1249,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "0 0 * * *"
-                }
-            ]
+                    cron: "0 0 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         expect(result).toContain("cron: \"0 0 * * *\"");
@@ -1263,9 +1263,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "\"0 0 * * *\""
-                }
-            ]
+                    cron: "\"0 0 * * *\"",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // When input already has quotes, preserveCronQuotes should skip adding quotes
@@ -1282,9 +1282,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "'0 0 * * *'"
-                }
-            ]
+                    cron: "'0 0 * * *'",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // Single quotes are preserved in the output
@@ -1298,9 +1298,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "|\n  0 0 * * *"
-                }
-            ]
+                    cron: "|\n  0 0 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         expect(result).toContain("cron: |");
@@ -1313,9 +1313,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: ">\n  0 0 * * *"
-                }
-            ]
+                    cron: ">\n  0 0 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // Multiline strings with > are preserved as multiline (not quoted)
@@ -1332,9 +1332,9 @@ describe("stringify with preserveCronQuotes", () => {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
                     // include an inline comment marker in the value to ensure it is preserved
-                    cron: "0 0 * * * # daily"
-                }
-            ]
+                    cron: "0 0 * * * # daily",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         expect(result).toContain("cron: \"0 0 * * * # daily\"");
@@ -1346,14 +1346,14 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "0 0 * * *"
+                    cron: "0 0 * * *",
                 },
                 {
                     id: "trigger2",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "0 12 * * *"
-                }
-            ]
+                    cron: "0 12 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         expect(result).toContain("cron: \"0 0 * * *\"");
@@ -1366,9 +1366,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "0 0 * * *"
-                }
-            ]
+                    cron: "0 0 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // Should handle indented cron lines (two spaces before dash, four before cron)
@@ -1381,9 +1381,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: ""
-                }
-            ]
+                    cron: "",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // Empty values should not be quoted
@@ -1397,9 +1397,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    cron: "   "
-                }
-            ]
+                    cron: "   ",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // Whitespace-only values should be quoted
@@ -1414,9 +1414,9 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "task1",
                     type: "io.kestra.plugin.core.log.Log",
-                    message: "0 0 * * *"
-                }
-            ]
+                    message: "0 0 * * *",
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         // The message field should not have quotes added (it's not a cron field)
@@ -1438,13 +1438,13 @@ describe("stringify with preserveCronQuotes", () => {
                         {
                             id: "condition1",
                             type: "io.kestra.plugin.core.condition.Expression",
-                            expression: "{{ true }}"
-                        }
-                    ]
-                }
-            ]
+                            expression: "{{ true }}",
+                        },
+                    ],
+                },
+            ],
         };
         const result = YamlUtils.stringify(yaml);
         expect(result).toContain("cron: \"0 0 * * *\"");
     });
-})
+});

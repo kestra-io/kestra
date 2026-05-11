@@ -479,10 +479,10 @@ export const useFlowStore = defineStore("flow", () => {
 
                 return response.data;
             })
-            .then(flow => {
-                loadGraph({flow});
+            .then(f => {
+                loadGraph({flow: f});
 
-                return flow;
+                return f;
             });
     }
 
@@ -510,7 +510,7 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
-        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${onlyCount ? false : true}`).then(response => {
+        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${!onlyCount}`).then(response => {
             return {
                 ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
                 count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0,
@@ -519,11 +519,11 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
 function deleteFlowAndDependencies() {
-    const metadata = flowYamlMetadata.value;
+    const metadataForDelete = flowYamlMetadata.value;
 
     return axios
         .get(
-            `${apiUrl()}/flows/${metadata.namespace}/${metadata.id}/dependencies`,
+            `${apiUrl()}/flows/${metadataForDelete.namespace}/${metadataForDelete.id}/dependencies`,
             {params: {destinationOnly: true}},
         )
         .then((response) => {
@@ -533,8 +533,8 @@ function deleteFlowAndDependencies() {
                     .filter(
                         (n: any) =>
                             !(
-                                n.namespace === metadata.namespace &&
-                                n.id === metadata.id
+                                n.namespace === metadataForDelete.namespace &&
+                                n.id === metadataForDelete.id
                             ),
                     )
                     .map(
@@ -561,12 +561,12 @@ function deleteFlowAndDependencies() {
                         "</div>";
                 }
             }
-            return t("delete confirm", {name: metadata.id}) + warning;
+            return t("delete confirm", {name: metadataForDelete.id}) + warning;
         })
         .then((message) => {
             return new Promise((resolve, reject) => {
                 toast.confirm(message, () => {
-                    return deleteFlow({namespace: metadata.namespace, id: metadata.id}).then(resolve).catch(reject);
+                    return deleteFlow({namespace: metadataForDelete.namespace, id: metadataForDelete.id}).then(resolve).catch(reject);
                 }, "warning");
             });
         })

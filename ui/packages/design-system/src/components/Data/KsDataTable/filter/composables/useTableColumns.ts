@@ -35,19 +35,19 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
                         return defaultOrder;
                     }
                 },
-                write: (v: string[]) => JSON.stringify(v)
-            }
-        }
+                write: (v: string[]) => JSON.stringify(v),
+            },
+        },
     );
 
     const visibleColumns = ref<string[]>([]);
 
     const orderedColumns = computed(() =>
-        columnOrder.value.map(p => columns.find(c => c.prop === p)).filter(Boolean) as ColumnConfig[]
+        columnOrder.value.map(p => columns.find(c => c.prop === p)).filter(Boolean) as ColumnConfig[],
     );
 
     const orderedVisibleColumns = computed(() =>
-        columnOrder.value.filter(p => visibleColumns.value.includes(p))
+        columnOrder.value.filter(p => visibleColumns.value.includes(p)),
     );
 
     const visibleCount = computed(() => visibleColumns.value.length);
@@ -81,13 +81,13 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
             const currentOrdered = orderedVisibleColumns.value;
             const propIndex = columnOrder.value.indexOf(prop);
             const visibleBefore = currentOrdered.filter(p =>
-                columnOrder.value.indexOf(p) < propIndex
+                columnOrder.value.indexOf(p) < propIndex,
             ).length;
             const insertIndex = visibleBefore;
             visibleColumns.value = [
                 ...currentOrdered.slice(0, insertIndex),
                 prop,
-                ...currentOrdered.slice(insertIndex)
+                ...currentOrdered.slice(insertIndex),
             ];
         }
         localStorage.setItem(visibilityStorageKey, visibleColumns.value.join(","));

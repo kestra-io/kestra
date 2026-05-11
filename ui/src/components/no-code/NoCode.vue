@@ -94,7 +94,7 @@
 
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
-        return !complexObject
+        return !complexObject;
     }
 
     function onTaskUpdateField(key: string, val: any) {
@@ -122,15 +122,15 @@
             } catch {
                 return oldValue ?? "";
             }
-        }
+        },
     );
 
     const {
         fieldsFromSchemaTop,
         fieldsFromSchemaRest,
-    } = useFlowFields(lastValidFlowYaml)
+    } = useFlowFields(lastValidFlowYaml);
 
-    useKeyboardSave()
+    useKeyboardSave();
 
     const flowStore = useFlowStore();
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
@@ -142,7 +142,7 @@
     const timeout = ref();
 
     const editorUpdate = (source: string) => {
-        let parsedSource: any = {}
+        let parsedSource: any = {};
         try {
             parsedSource = YAML_UTILS.parse(source);
         } catch {
@@ -178,16 +178,16 @@
             if (newVal !== oldVal) {
                 editorUpdate(newVal);
             }
-        }
+        },
     );
 
-    const panel = ref()
+    const panel = ref();
     const pluginsStore = usePluginsStore();
 
     provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value));
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "");
     provide(REF_PATH_INJECTION_KEY, props.refPath);
-    provide(PANEL_INJECTION_KEY, panel)
+    provide(PANEL_INJECTION_KEY, panel);
     provide(POSITION_INJECTION_KEY, props.position ?? "after");
     provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false);
     provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"));
@@ -206,28 +206,28 @@
     }>();
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
-        emit("closeTask")
-    })
+        emit("closeTask");
+    });
 
     provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
-        editorUpdate(yaml)
-    })
+        editorUpdate(yaml);
+    });
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
-        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
-    })
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after");
+    });
 
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
-        emit("editTask", parentPath, blockSchemaPath, refPath)
-    })
+        emit("editTask", parentPath, blockSchemaPath, refPath);
+    });
 
     // Scroll position persistence for No-code editor
     const scrollContainer = ref<HTMLDivElement | null>(null);
 
     const flowIdentity = computed(() => {
-        const namespace = flowStore.flow?.namespace ?? "";
+        const ns = flowStore.flow?.namespace ?? "";
         const flowId = flowStore.flow?.id ?? "";
-        return `${namespace}/${flowId}`;
+        return `${ns}/${flowId}`;
     });
 
     const scrollKey = computed(() => {

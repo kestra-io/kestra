@@ -2,16 +2,16 @@ export default {
     props: {
         embed: {
             type: Boolean,
-            default: false
-        }
+            default: false,
+        },
     },
     mounted() {
-        this.handleTitle()
+        this.handleTitle();
     },
     watch: {
         $route() {
-            this.handleTitle()
-        }
+            this.handleTitle();
+        },
     },
     methods: {
         handleTitle() {
@@ -26,6 +26,6 @@ export default {
 
                 document.title = this.routeInfo.title + " | " + baseTitle;
             }
-        }
-    }
-}
+        },
+    },
+};

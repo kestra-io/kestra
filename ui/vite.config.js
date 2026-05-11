@@ -12,7 +12,7 @@ logger.warnOnce = (msg, options) => {
     loggerWarnOnce(msg, options);
 };
 
-import {commit} from "./plugins/commit"
+import {commit} from "./plugins/commit";
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
 export default defineConfig(({mode}) => {
@@ -35,24 +35,24 @@ export default defineConfig(({mode}) => {
                                 name: "flows",
                             },
                         ],
-                    }
-                }
-            }
+                    },
+                },
+            },
         },
         server: {
             watch: {
                 ignored: [
                     "!**/node_modules/@kestra-io/design-system/src/**",
                     "!**/node_modules/@kestra-io/topology/src/**",
-                ]
+                ],
             },
             proxy: {
                 "^/api": {
                     target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
                     ws: true,
-                    changeOrigin: true
-                }
-            }
+                    changeOrigin: true,
+                },
+            },
         },
         resolve: {
             preserveSymlinks: true,
@@ -81,16 +81,16 @@ export default defineConfig(({mode}) => {
                     compilerOptions: {
                         isCustomElement: (tag) => {
                             return tag === "rapi-doc";
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             }),
             commit(),
             codecovVitePlugin({
                 enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
                 bundleName: "ui",
                 uploadToken: process.env.CODECOV_TOKEN,
-                telemetry: false
+                telemetry: false,
             }),
         ],
         assetsInclude: ["**/*.md"],
@@ -100,14 +100,14 @@ export default defineConfig(({mode}) => {
             preprocessorOptions: {
                 scss: {
                     silenceDeprecations: ["color-functions", "global-builtin", "if-function", "import"],
-                    loadPaths: [path.resolve(__dirname, "node_modules")]
+                    loadPaths: [path.resolve(__dirname, "node_modules")],
                 },
-            }
+            },
         },
         optimizeDeps: {
             entries: [
                 "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
-                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}"
+                "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [
                 "lodash",
@@ -127,13 +127,13 @@ export default defineConfig(({mode}) => {
                 "dagre",
                 "@vue-flow/background",
                 "@vue-flow/controls",
-                "html-to-image"
+                "html-to-image",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",
                 "@kestra-io/design-system",
-                "@kestra-io/topology"
-            ]
+                "@kestra-io/topology",
+            ],
         },
     };
 });

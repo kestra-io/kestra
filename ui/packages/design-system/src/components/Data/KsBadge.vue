@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElBadge} from "element-plus"
+    import {ElBadge} from "element-plus";
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         value?: string | number
@@ -20,13 +20,13 @@
         isDot?: boolean
         hidden?: boolean
         showZero?: boolean
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

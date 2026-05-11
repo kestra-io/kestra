@@ -15,7 +15,7 @@
     import {computed} from "vue";
     import {KsTooltip as Tooltip, cssVar} from "@kestra-io/design-system";
 
-    defineOptions({name: "TaskIcon"})
+    defineOptions({name: "TaskIcon"});
 
     const props = defineProps<{
         customIcon?: {icon: string};

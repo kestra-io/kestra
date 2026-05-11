@@ -66,7 +66,7 @@
 
         return sourceFlow.triggers.filter((trigger: Trigger) =>
             trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
-            (trigger.disabled === undefined || trigger.disabled === false)
+            (trigger.disabled === undefined || trigger.disabled === false),
         );
     });
 
@@ -99,10 +99,10 @@
             try {
                 await flowStore.loadFlow({
                     namespace: props.flow.namespace,
-                    id: props.flow.id
+                    id: props.flow.id,
                 });
             } catch (error) {
-                throw new Error(`Failed to load flow: ${error}`);
+                throw new Error(`Failed to load flow: ${error}`, {cause: error});
             }
         }
     });

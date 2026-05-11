@@ -24,7 +24,7 @@
     });
 
     watch(constValue, (val) => {
-        model.value = val
+        model.value = val;
     }, {immediate: true});
 </script>
 

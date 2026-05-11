@@ -26,6 +26,6 @@
     const layoutStore = useLayoutStore();
 
     onMounted(() => {
-        onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
+        onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed));
     });
 </script>

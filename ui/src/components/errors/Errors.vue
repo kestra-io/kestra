@@ -45,7 +45,7 @@
         () => route.fullPath,
         () => {
             coreStore.error = undefined;
-        }
+        },
     );
 </script>
 

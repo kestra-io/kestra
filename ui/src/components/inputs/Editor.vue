@@ -92,8 +92,8 @@
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {useScrollMemory} from "../../composables/useScrollMemory";
-    import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts"
-    const {t} = useI18n()
+    import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts";
+    const {t} = useI18n();
 
     const props = defineProps({
         modelValue: {type: String, default: ""},
@@ -121,11 +121,11 @@
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
         scrollKey: {type: String, default: undefined},
-    })
+    });
 
     defineOptions({
         name: "Editor",
-    })
+    });
 
     const emit = defineEmits<{
         (e: "save", value?: string): void;
@@ -139,22 +139,22 @@
     }>();
 
 
-    let editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined = undefined
+    let editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined = undefined;
 
-    const focus = ref(false)
+    const focus = ref(false);
     const icon = {
         UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
         UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
         Help: shallowRef(Help),
         BookMultipleOutline: shallowRef(BookMultipleOutline),
         Close: shallowRef(Close),
-    } as const
-    const editorDocumentation = ref()
-    const preventCursorChange = ref(false)
+    } as const;
+    const editorDocumentation = ref();
+    const preventCursorChange = ref(false);
 
     onMounted(() => {
         useDocStore().docId = "flowEditor";
-    })
+    });
 
     watch(
         () => [props.modelValue, props.lang],
@@ -180,7 +180,7 @@
             } catch (e) {
                 console.warn("Failed to set model language", e);
             }
-        }
+        },
     );
 
     watch(
@@ -206,15 +206,15 @@
                     endColumn: m.endColumn,
                     message: m.message,
                     severity: monacoEditor.value!.monaco.MarkerSeverity.Error,
-                }))
+                })),
             );
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
-    })
+    });
 
     const containerClass = computed(() => {
         return [
@@ -222,7 +222,7 @@
             "theme-" + themeComputed.value,
             themeComputed.value === "dark" ? "custom-dark-vs-theme" : "",
         ];
-    })
+    });
 
     const showPlaceholder = computed(() => {
         return (
@@ -231,7 +231,7 @@
             (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
             !focus.value
         );
-    })
+    });
 
     const options = computed(() => {
         const options: monaco.editor.IStandaloneEditorConstructionOptions & {
@@ -297,7 +297,7 @@
         options.wordWrap = props.wordWrap ? "on" : "off";
         options.automaticLayout = true;
 
-        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
+        const settingsEditorFontSize = localStorage.getItem("editorFontSize");
 
         return {
 
@@ -317,29 +317,29 @@
             useInlineViewWhenSpaceIsLimited?:boolean
             renderOverviewRuler?:boolean
         };
-    })
+    });
 
     editorDocumentation.value =
         localStorage.getItem("editorDocumentation") !== "false" &&
         props.navbar;
 
-    const monacoEditor = ref<InstanceType<typeof MonacoEditor>>()
+    const monacoEditor = ref<InstanceType<typeof MonacoEditor>>();
     const container = ref<HTMLDivElement>();
 
-    let lastTimeout: number | undefined = undefined
-    let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
+    let lastTimeout: number | undefined = undefined;
+    let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined;
 
     const isDiff = computed(() => props.original !== undefined);
 
     function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
-        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
+        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor;
     }
 
     const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
 
     function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
 
-        const monacoRef = monacoEditor.value
+        const monacoRef = monacoEditor.value;
 
         editor = monacoMounted;
 
@@ -355,7 +355,7 @@
         decorations = editor.createDecorationsCollection();
 
         if(!isCodeEditor(editor)){
-            return
+            return;
         }
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
@@ -457,14 +457,14 @@
                 id: "prevent-ctrl-h",
                 label: "Prevent CTRL + H",
                 keybindings: [KeyMod.CtrlCmd | KeyCode.KeyH],
-                run: () => {}
+                run: () => {},
             });
 
             editor.addAction({
                 id: "prevent-f1",
                 label: "Prevent F1",
                 keybindings: [KeyCode.F1],
-                run: () => {}
+                run: () => {},
             });
 
             if (!props.readOnly) {
@@ -472,7 +472,7 @@
                     id: "prevent-ctrl-f",
                     label: "Prevent CTRL + F",
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyF],
-                    run: () => {}
+                    run: () => {},
                 });
             }
         }
@@ -533,12 +533,12 @@
 
             editor.onDidChangeCursorPosition?.(() => {
                 clearTimeout(lastTimeout);
-                if(!editor) return
+                if(!editor) return;
                 if(preventCursorChange.value) {
                     preventCursorChange.value = false;
                     return;
                 }
-                if(!isCodeEditor(editor))return
+                if(!isCodeEditor(editor))return;
                 let position = editor.getPosition();
                 let model = editor.getModel();
                 lastTimeout = setTimeout(() => {
@@ -559,7 +559,7 @@
         // attach an imperative method to the element so tests can programmatically update
         // the value of the editor without dealing with how Monaco handles the exact keystrokes
         monacoRef.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value: string) => {
-            if(!isCodeEditor(editor))return
+            if(!isCodeEditor(editor))return;
             editor?.setValue(value);
         };
     }
@@ -586,7 +586,7 @@
     const decorationsLists: {
         pebble?: monaco.editor.IModelDeltaDecoration[],
         lines?: monaco.editor.IModelDeltaDecoration[]
-    } = {}
+    } = {};
 
     function getHighlightDecoration(range: {start: number, end: number}) {
         if (!monacoEditor.value) return ;
@@ -616,10 +616,10 @@
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
-    })
+    });
 
     function setDecorations() {
-        decorations?.clear()
+        decorations?.clear();
         if(decorationsLists.lines){
             decorations?.append(decorationsLists.lines);
         }
@@ -629,7 +629,7 @@
     }
 
     function highlightPebble() {
-        if(!isCodeEditor(editor))return
+        if(!isCodeEditor(editor))return;
         // Highlight code that match pebble content
         let model = editor?.getModel?.();
         let text = model?.getValue?.();
@@ -659,13 +659,13 @@
     const widgetNode = (() => {
         const node = document.createElement("div");
         node.className = "editor-content-widget";
-        const content = document.createElement("div")
+        const content = document.createElement("div");
         content.className = "editor-content-widget-content";
-        node.appendChild(content)
+        node.appendChild(content);
         return node;
-    })()
+    })();
 
-    const showWidgetContent = ref(false)
+    const showWidgetContent = ref(false);
 
     async function addContentWidget(widget: {
         id: string;
@@ -673,12 +673,12 @@
         height: number
         right: string
     }) {
-        if(!isCodeEditor(editor)) return
-        if(!monacoEditor.value) return
-        const monacoRefTypes = monacoEditor.value.monaco
+        if(!isCodeEditor(editor)) return;
+        if(!monacoEditor.value) return;
+        const monacoRefTypes = monacoEditor.value.monaco;
         editor?.addContentWidget({
             getId(){
-                return widget.id
+                return widget.id;
             },
             getPosition(){
                 return {
@@ -686,7 +686,7 @@
                     preference: [
                         monacoRefTypes.editor.ContentWidgetPositionPreference.EXACT,
                     ],
-                }
+                };
             },
             getDomNode: () => {
                 const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement;
@@ -699,12 +699,12 @@
                 const boundingClientRect = monacoEditor.value!.$el.querySelector(".ks-monaco-editor .monaco-scrollable-element").getBoundingClientRect();
                 // Since we must position the widget on the right side but our anchor is from the left, we add the width of the editor minus the right offset (150px is a rough estimate of the widget's width)
                 widgetNode.style.left = `calc(${boundingClientRect.width}px - 150px - ${widget.right})`;
-            }
+            },
         });
 
-        await waitForWidgetContentNode()
+        await waitForWidgetContentNode();
 
-        showWidgetContent.value = true
+        showWidgetContent.value = true;
     }
 
     async function wait(time: number){
@@ -720,14 +720,14 @@
 
     function removeContentWidget(id: string) {
         showWidgetContent.value = false;
-        if(!isCodeEditor(editor)) return
+        if(!isCodeEditor(editor)) return;
         editor?.removeContentWidget({
             getId: () => id,
             getPosition(){
                 return {
                     position: {lineNumber: 0, column: 0},
                     preference: [],
-                }
+                };
             },
             getDomNode: () => {
                 return widgetNode;

@@ -18,7 +18,7 @@
 
     defineOptions({
         name: "KsTaskIcon",
-    })
+    });
 
     const props = defineProps<{
         customIcon?: {icon: string};
@@ -27,23 +27,23 @@
         icons?: Record<string, {icon: string; flowable: boolean}>;
         onlyIcon?: boolean;
         variable?: string;
-    }>()
+    }>();
 
     const backgroundImage = computed(() => {
-        return `data:image/svg+xml;base64,${imageBase64.value}`
-    })
+        return `data:image/svg+xml;base64,${imageBase64.value}`;
+    });
 
     const classes = computed(() => {
         return {
             "ks-task-icon--flowable": icon.value && "flowable" in icon.value ? icon.value.flowable : false,
-        }
-    })
+        };
+    });
 
     const styles = computed(() => {
         return {
-            backgroundImage: `url(${backgroundImage.value})`
-        }
-    })
+            backgroundImage: `url(${backgroundImage.value})`,
+        };
+    });
 
     const imageBase64 = computed(() => {
         let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : undefined;
@@ -71,11 +71,11 @@
         localIcon = localIcon.replace(/currentColor/g, color);
 
         return window.btoa(localIcon);
-    })
+    });
 
     const icon = computed(() => {
         return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon;
-    })
+    });
 
     function innerClassToParent(cls: string) {
         return cls.includes("$") ? cls.substring(0, cls.indexOf("$")) : cls;

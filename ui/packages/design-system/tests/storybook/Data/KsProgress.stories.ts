@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsProgress from "../../../src/components/Data/KsProgress.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsProgress from "../../../src/components/Data/KsProgress.vue";
 
 const meta: Meta<typeof KsProgress> = {
     title: "Components/Data/KsProgress",
@@ -16,18 +16,18 @@ const meta: Meta<typeof KsProgress> = {
     parameters: {
         docs: {description: {component: "KsProgress is the Kestra design-system abstraction over `ElProgress` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsProgress>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsProgress},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px;width:300px\"><ks-progress v-bind=\"args\" /></div>",
     }),
     args: {percentage: 70},
-}
+};
 
 export const Statuses: Story = {
     render: () => ({
@@ -41,7 +41,7 @@ export const Statuses: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Text inside – percentage label inside the bar */
 export const TextInside: Story = {
@@ -55,7 +55,7 @@ export const TextInside: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom color – string, function, or color steps */
 export const CustomColor: Story = {
@@ -63,16 +63,16 @@ export const CustomColor: Story = {
         components: {KsProgress},
         setup() {
             const colorFn = (pct: number) => {
-                if (pct < 30) return "#f56c6c"
-                if (pct < 70) return "#e6a23c"
-                return "#67c23a"
-            }
+                if (pct < 30) return "#f56c6c";
+                if (pct < 70) return "#e6a23c";
+                return "#67c23a";
+            };
             const colorSteps = [
                 {color: "#f56c6c", percentage: 30},
                 {color: "#e6a23c", percentage: 70},
                 {color: "#67c23a", percentage: 100},
-            ]
-            return {colorFn, colorSteps}
+            ];
+            return {colorFn, colorSteps};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:350px">
@@ -87,7 +87,7 @@ export const CustomColor: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Striped progress */
 export const Striped: Story = {
@@ -100,7 +100,7 @@ export const Striped: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Dashboard progress bar */
 export const Dashboard: Story = {
@@ -114,7 +114,7 @@ export const Dashboard: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Circle: Story = {
     render: () => ({
@@ -127,4 +127,4 @@ export const Circle: Story = {
             </div>
         `,
     }),
-}
+};

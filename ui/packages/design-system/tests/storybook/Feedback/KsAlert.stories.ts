@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsAlert from "../../../src/components/Feedback/KsAlert.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsAlert from "../../../src/components/Feedback/KsAlert.vue";
 
 const meta: Meta<typeof KsAlert> = {
     title: "Components/Feedback/KsAlert",
@@ -15,18 +15,18 @@ const meta: Meta<typeof KsAlert> = {
     parameters: {
         docs: {description: {component: "KsAlert is the Kestra design-system abstraction over `ElAlert` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsAlert>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsAlert},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px\"><ks-alert v-bind=\"args\" /></div>",
     }),
     args: {type: "info", title: "This is an info alert", showIcon: true},
-}
+};
 
 export const Types: Story = {
     render: () => ({
@@ -40,7 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithDescription: Story = {
     render: () => ({
@@ -57,7 +57,7 @@ export const WithDescription: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** With icon and description – all types */
 export const WithIconAndDescription: Story = {
@@ -72,7 +72,7 @@ export const WithIconAndDescription: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Centered text */
 export const Centered: Story = {
@@ -85,7 +85,7 @@ export const Centered: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Closable with custom close text */
 export const CustomClosable: Story = {
@@ -98,7 +98,7 @@ export const CustomClosable: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const DarkEffect: Story = {
     render: () => ({
@@ -112,4 +112,4 @@ export const DarkEffect: Story = {
             </div>
         `,
     }),
-}
+};

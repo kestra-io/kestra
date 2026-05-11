@@ -28,14 +28,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
-    import {ElDrawer} from "element-plus"
-    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ref} from "vue";
+    import {ElDrawer} from "element-plus";
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<boolean>()
+    const model = defineModel<boolean>();
 
     const props = withDefaults(defineProps<{
         title?: string
@@ -45,25 +45,25 @@
         title: undefined,
         isFullScreen: false,
         withHeader: true,
-    })
+    });
 
     const emit = defineEmits<{
         "before-close": [done: () => void]
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
         header?(): unknown
         footer?(): unknown
-    }>()
+    }>();
 
-    const fullScreen = ref(props.isFullScreen)
+    const fullScreen = ref(props.isFullScreen);
 
     const toggleFullScreen = () => {
-        fullScreen.value = !fullScreen.value
-    }
+        fullScreen.value = !fullScreen.value;
+    };
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

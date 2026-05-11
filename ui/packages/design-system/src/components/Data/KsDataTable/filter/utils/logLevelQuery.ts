@@ -2,7 +2,7 @@ import type {
     LocationQuery,
     LocationQueryRaw,
     LocationQueryValue,
-    LocationQueryValueRaw
+    LocationQueryValueRaw,
 } from "vue-router";
 import type {AppliedFilter} from "./filterTypes";
 
@@ -15,7 +15,7 @@ const firstStringValue = (
         | LocationQueryValue
         | LocationQueryValueRaw
         | (LocationQueryValue | LocationQueryValueRaw)[]
-        | undefined
+        | undefined,
 ) => {
     if (Array.isArray(value)) {
         return typeof value[0] === "string" ? value[0] : undefined;
@@ -36,7 +36,7 @@ export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | Locati
     Object.keys(query).some(
         (key) =>
             key === LEGACY_LEVEL_FILTER_KEY ||
-            (key.startsWith(LEVEL_FILTER_PREFIX) && key !== LEVEL_EQUALS_FILTER_KEY)
+            (key.startsWith(LEVEL_FILTER_PREFIX) && key !== LEVEL_EQUALS_FILTER_KEY),
     );
 
 export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
@@ -57,7 +57,7 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
 
 export const normalizeRouteLevelFilter = (
     query: Record<string, any>,
-    level: string | undefined
+    level: string | undefined,
 ) => {
     const normalized = {...query};
 

@@ -383,7 +383,7 @@
         isDirectory,
         TreeNode,
         TreeNodeFile,
-        useFileExplorerStore
+        useFileExplorerStore,
     } from "../../stores/fileExplorer";
     import Revisions, {Revision} from "../layout/Revisions.vue";
     import Crud from "override/components/auth/Crud.vue";
@@ -418,14 +418,14 @@
         () => props.currentNS,
         (newNS) => {
             if(newNS){
-                filesStore.namespaceId = newNS
+                filesStore.namespaceId = newNS;
                 filesStore.loadNodes();
             }
         },
     );
 
     if(props.currentNS){
-        filesStore.namespaceId = props.currentNS
+        filesStore.namespaceId = props.currentNS;
     }
 
     interface Dialog{
@@ -584,7 +584,7 @@
 
             const flatList = flatTree.value;
             lastClickedIndex.value = flatList.findIndex(
-                i => i.id === node.data.id
+                i => i.id === node.data.id,
             );
 
             syncTreeCurrentKey();
@@ -644,14 +644,14 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
+        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? "";
     }
 
     async function restore(source: string) {
         await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
             path: revisionsHistory.value.path,
-            content: source
+            content: source,
         });
 
         toast.success(t("namespace files.revisions.restore.success"));
@@ -662,13 +662,13 @@
             path: revisionsHistory.value.path,
             extension: revisionsHistory.value.path.split(".").pop()!,
             flow: false,
-            dirty: false
-        })
+            dirty: false,
+        });
 
         const newRevision = revisionsHistory.value.revisions.map(r => r.revision).sort((a, b) => a - b).reverse()[0] + 1;
         revisionsHistory.value.revisions = [...revisionsHistory.value.revisions, {
             revision: newRevision,
-            source: source
+            source: source,
         }];
     }
 
@@ -683,14 +683,14 @@
     }
 
     function chooseSearchResults(item: string) {
-        const name = item.split("/").pop()
+        const name = item.split("/").pop();
         if(!name) return;
         openTab?.({
             name,
             extension: item.split(".").pop()!,
             path: item,
             flow: false,
-            dirty: false
+            dirty: false,
         });
         filter.value = "";
     }
@@ -731,7 +731,7 @@
                     folder = filesStore.getPath(selectedNode.id);
                 }
             }
-            if(!type) return
+            if(!type) return;
             dialog.value.visible = true;
             dialog.value.type = type;
             dialog.value.folder = folder;
@@ -827,7 +827,7 @@
             FILE = file;
         }
 
-        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
+        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation);
         if (creation) {
             if(path === undefined || createdFile === undefined) return;
             openTab?.({
@@ -835,7 +835,7 @@
                 path,
                 extension: createdFile.extension ?? "",
                 flow: false,
-                dirty: false
+                dirty: false,
             });
             dialog.value.folder = path.substring(0, path.lastIndexOf("/"));
         }
@@ -882,7 +882,7 @@
             fileName: dialog.value.name ?? "unknown",
             parentPath,
             ...folder,
-        }, creation)
+        }, creation);
         dialog.value = {...DIALOG_DEFAULTS};
     }
 
@@ -890,7 +890,7 @@
         revisionsHistory.value.path = filesStore.getPath(data.id) ?? "";
         revisionsHistory.value.revisions = (await namespacesStore.fileRevisions({
             namespace: namespaceId.value,
-            path: revisionsHistory.value.path
+            path: revisionsHistory.value.path,
         }));
         revisionsHistory.value.visible = true;
     }

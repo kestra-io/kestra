@@ -39,7 +39,7 @@
         Object.keys(getCurrentInstance()?.appContext.components ?? {})
             .filter(name => name.startsWith("Prose"))
             .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-            .map(name => [name, "prose-" + name])
+            .map(name => [name, "prose-" + name]),
     );
 
     const path = computed(() => {
@@ -63,6 +63,6 @@
             const parse = await getMDCParser();
             ast.value = await parse(content);
         },
-        {immediate: true}
+        {immediate: true},
     );
 </script>

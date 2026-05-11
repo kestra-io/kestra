@@ -1,15 +1,15 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {markRaw} from "vue"
-import {within, expect} from "storybook/test"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
-import KsButtonGroup from "../../../src/components/Basic/KsButton/KsButtonGroup.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {markRaw} from "vue";
+import {within, expect} from "storybook/test";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import KsButtonGroup from "../../../src/components/Basic/KsButton/KsButtonGroup.vue";
 
 const PrevIcon = markRaw({
     template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"15 18 9 12 15 6\"/></svg>",
-})
+});
 const NextIcon = markRaw({
     template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"9 18 15 12 9 6\"/></svg>",
-})
+});
 
 const meta: Meta<typeof KsButtonGroup> = {
     title: "Components/Basic/KsButtonGroup",
@@ -28,8 +28,8 @@ const meta: Meta<typeof KsButtonGroup> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsButtonGroup>
 
 /** Default horizontal group */
@@ -37,7 +37,7 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsButton, KsButtonGroup},
         setup() {
-            return {args, PrevIcon, NextIcon}
+            return {args, PrevIcon, NextIcon};
         },
         template: `
             <div style="padding:24px">
@@ -49,11 +49,11 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const buttons = canvas.getAllByRole("button")
-        await expect(buttons.length).toBe(2)
+        const canvas = within(canvasElement);
+        const buttons = canvas.getAllByRole("button");
+        await expect(buttons.length).toBe(2);
     },
-}
+};
 
 /** All types */
 export const Types: Story = {
@@ -82,7 +82,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Sizes */
 export const Sizes: Story = {
@@ -105,7 +105,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Vertical direction */
 export const Vertical: Story = {
@@ -122,20 +122,20 @@ export const Vertical: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const group = canvasElement.querySelector(".kel-button-group--vertical")
-        await expect(group).toBeTruthy()
-        const buttons = canvas.getAllByRole("button")
-        await expect(buttons.length).toBe(3)
+        const canvas = within(canvasElement);
+        const group = canvasElement.querySelector(".kel-button-group--vertical");
+        await expect(group).toBeTruthy();
+        const buttons = canvas.getAllByRole("button");
+        await expect(buttons.length).toBe(3);
     },
-}
+};
 
 /** Icon-only group – as used in PrevNext navigation */
 export const IconOnly: Story = {
     render: () => ({
         components: {KsButton, KsButtonGroup},
         setup() {
-            return {PrevIcon, NextIcon}
+            return {PrevIcon, NextIcon};
         },
         template: `
             <div style="padding:24px">
@@ -146,4 +146,4 @@ export const IconOnly: Story = {
             </div>
         `,
     }),
-}
+};

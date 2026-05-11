@@ -16,12 +16,12 @@ export const getHighlighterCore = async () => {
     }
     const highlighterCore = await shikiCreateHighlighterCore({
         themes: [
-            githubDark, githubLight
+            githubDark, githubLight,
         ],
         langs: [
             yaml,
             python,
-            javascript
+            javascript,
         ],
         engine: createJavaScriptRegexEngine(),
     });

@@ -27,7 +27,7 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
                 if (!isMap(task)) continue;
 
                 const idPair = (task as YAMLMap).items.find(
-                    (pair) => (pair.key as Scalar)?.value === "id"
+                    (pair) => (pair.key as Scalar)?.value === "id",
                 );
 
                 if (idPair && idPair.value) {
@@ -47,7 +47,7 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
                                 startColumn: pos.col,
                                 endLineNumber: endPos.line,
                                 endColumn: endPos.col,
-                                severity: "error"
+                                severity: "error",
                             });
                         } else {
                             seenIds.set(idValue, pos);

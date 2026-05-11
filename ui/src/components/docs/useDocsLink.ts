@@ -16,7 +16,7 @@ function normalizeDocsPath(inputPath:string)  {
  * @returns cleaned href
  */
 function isRemoteLink(href:string) {
-    return href.startsWith("/") || /https?:\/\/.*/.test(href)
+    return href.startsWith("/") || /https?:\/\/.*/.test(href);
 }
 
 /**
@@ -25,7 +25,7 @@ function isRemoteLink(href:string) {
  * @returns normalized href
  */
 function normalizeRemoteHref(href: string) {
-    return href.startsWith("/") ? "https://kestra.io" + href  + "?utm_source=app&utm_medium=referral&utm_campaign=embed-docs" : href
+    return href.startsWith("/") ? "https://kestra.io" + href  + "?utm_source=app&utm_medium=referral&utm_campaign=embed-docs" : href;
 }
 
 export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
@@ -35,7 +35,7 @@ export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
     const isRemote = computed(() => isRemoteLink(hrefInput.value));
     const href = computed(() => {
         if(isRemote.value) {
-            return normalizeRemoteHref(hrefInput.value)
+            return normalizeRemoteHref(hrefInput.value);
         }
         let relativeLink = normalizeDocsPath(hrefInput.value);
         if (pageMetadata.value?.isIndex === false) {
@@ -46,6 +46,6 @@ export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
 
     return {
         href,
-        isRemote
-    }
+        isRemote,
+    };
 }

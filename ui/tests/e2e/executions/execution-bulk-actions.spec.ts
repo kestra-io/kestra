@@ -24,7 +24,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByFlowId(executionsApi.flowId);
             await executionsPage.setFilterByLabel("foo", "bar");
 
-            await executionsPage.expectCountOfExecutionsToBe(25)
+            await executionsPage.expectCountOfExecutionsToBe(25);
             await executionsPage.expectTotalExecutionsCountToBe(26);
         });
 
@@ -35,14 +35,14 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.clickOnSetLabels();
             await executionsPage.setLabelOnSelectedExecutions();
 
-            await executionsPage.expectCountOfExecutionsToBe(0)
+            await executionsPage.expectCountOfExecutionsToBe(0);
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the label change", async () => {
             await executionsPage.removeFilterByLabelKey("foo");
             await executionsPage.setFilterByLabel("a", "b");
 
-            await executionsPage.expectCountOfExecutionsToBe(1)
+            await executionsPage.expectCountOfExecutionsToBe(1);
         });
     });
 
@@ -64,7 +64,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("foo", "bar");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            await executionsPage.expectCountOfExecutionsToBe(25)
+            await executionsPage.expectCountOfExecutionsToBe(25);
             expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
         });
 
@@ -80,7 +80,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByState(ExecutionState.SUCCESS);
             await executionsPage.setPaginationTo(Pagination.ITEMS_50);
 
-            await executionsPage.expectCountOfExecutionsToBe(26)
+            await executionsPage.expectCountOfExecutionsToBe(26);
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {
@@ -88,7 +88,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("a", "b");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            await executionsPage.expectCountOfExecutionsToBe(1)
+            await executionsPage.expectCountOfExecutionsToBe(1);
         });
     });
 
@@ -110,7 +110,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("foo", "bar");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            await executionsPage.expectCountOfExecutionsToBe(25)
+            await executionsPage.expectCountOfExecutionsToBe(25);
             expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
         });
 
@@ -133,7 +133,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("a", "b");
             await executionsPage.setFilterByState(ExecutionState.FAILED);
 
-            await executionsPage.expectCountOfExecutionsToBe(1)
+            await executionsPage.expectCountOfExecutionsToBe(1);
         });
     });
 });

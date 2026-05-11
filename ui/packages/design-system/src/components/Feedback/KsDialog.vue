@@ -17,12 +17,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDialog} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElDialog} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<boolean>()
+    const model = defineModel<boolean>();
 
     const props = withDefaults(defineProps<{
         title?: string
@@ -42,19 +42,19 @@
         showClose: undefined,
         width: undefined,
         top: undefined,
-    })
+    });
 
     const emit = defineEmits<{
         close: []
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
         header?(): unknown
         footer?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

@@ -137,7 +137,7 @@
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
+        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag])),
     });
 
     const emit = defineEmits(["goToDetail", "loaded"]);
@@ -188,7 +188,7 @@
     const processedTags = (blueprintTags: string[]) => {
         return blueprintTags.map(tag => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
+            display: tags.value?.[tag]?.name ?? tag,
         }));
     };
 
@@ -198,7 +198,7 @@
                 type: props.blueprintType,
                 kind: props.blueprintKind,
                 id,
-            })
+            }),
         );
     };
 
@@ -227,8 +227,8 @@
                     tenant: route.params.tenant,
                     kind: props.blueprintKind,
                     tab: props.blueprintType,
-                    blueprintId: blueprintId
-                }
+                    blueprintId: blueprintId,
+                },
             });
         }
     };
@@ -282,7 +282,7 @@
         try {
             await Promise.all([
                 loadTags(beforeLoadBlueprintType),
-                loadBlueprints(beforeLoadBlueprintType, page, size)
+                loadBlueprints(beforeLoadBlueprintType, page, size),
             ]);
             emit("loaded");
         } catch {
@@ -328,7 +328,7 @@
         () => {
             syncFromRoute();
             dataTable.value?.resetAndReload();
-        }
+        },
     );
 
     watch(searchText, () => {
@@ -351,12 +351,12 @@
 
     watch(tags, (val) => {
         const validTags = selectedTags.value.filter(tagId =>
-            Object.prototype.hasOwnProperty.call(val, tagId)
+            Object.prototype.hasOwnProperty.call(val, tagId),
         );
         if (validTags.length !== selectedTags.value.length) {
             selectedTags.value = validTags;
         }
-    })
+    });
 
     watch([() => props.blueprintType, () => props.blueprintKind], () => {
         dataTable.value?.resetAndReload();

@@ -26,8 +26,8 @@
     defineProps({
         topbar: {
             type: Boolean,
-            default: true
-        }
+            default: true,
+        },
     });
 
     import Layout from "./Layout.vue";

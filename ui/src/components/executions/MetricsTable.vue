@@ -105,7 +105,7 @@
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
-        optionalColumns: () => []
+        optionalColumns: () => [],
     });
 
     const localOptionalColumns = ref([
@@ -117,7 +117,7 @@
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: localOptionalColumns.value,
-        storageKey: "execution-metrics"
+        storageKey: "execution-metrics",
     });
 
     const executionsStore = useExecutionsStore();
@@ -147,7 +147,7 @@
         const response: any = await executionsStore.loadMetrics({
             executionId: props.execution?.id ?? "",
             params: params,
-            store: false
+            store: false,
         });
         metrics.value = response.results;
         metricsTotal.value = response.total;
@@ -159,7 +159,7 @@
 
     defineExpose({
         loadData,
-        updateDisplayColumns
+        updateDisplayColumns,
     });
 </script>
 

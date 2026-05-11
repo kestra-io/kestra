@@ -82,13 +82,13 @@
     });
 
     const isPlugin = computed(() => {
-        return parentPath !== "inputs"
+        return parentPath !== "inputs";
     });
 
-    const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
+    const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value));
     const isTaskDefinitionBasedOnType = computed(() => {
         if(isPluginDefaults.value){
-            return true
+            return true;
         }
         const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined;
         if (!firstAnyOf) return false;
@@ -101,7 +101,7 @@
                     .properties?.type !== undefined;
             });
         }
-        return true
+        return true;
     });
 
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => selectedTaskType.value ? `#/definitions/${resolvedType.value}` : blockSchemaPath.value));
@@ -111,7 +111,7 @@
             taskModel.value = {};
             selectedTaskType.value = undefined;
         } else {
-            setup()
+            setup();
         }
     }, {immediate: true});
 
@@ -135,10 +135,10 @@
         }
 
         if(isPluginDefaults.value){
-            updatedProperties["id"] = undefined
+            updatedProperties["id"] = undefined;
             updatedProperties["forced"] = {
                 type: "boolean",
-                $required: true
+                $required: true,
             };
 
             return updatedProperties;
@@ -149,11 +149,11 @@
             || parentPath.endsWith("triggers"))){
             updatedProperties["id"] = {
                 type: "string",
-                $required: true
+                $required: true,
             };
         }
 
-        return updatedProperties
+        return updatedProperties;
     });
 
     function setup() {
@@ -197,7 +197,7 @@
                                 type = subItem.properties.type.const;
                             }
                             if (subItem.$ref) {
-                                ref = removeRefPrefix(subItem.$ref)
+                                ref = removeRefPrefix(subItem.$ref);
                             }
                         }
                         if (type && ref) {
@@ -206,7 +206,7 @@
                         }
                     }
 
-                    const typeField = resolvedItem?.properties?.type
+                    const typeField = resolvedItem?.properties?.type;
                     if(!typeField){
                         return acc;
                     }
@@ -218,7 +218,7 @@
                         }
                     }
 
-                    const typeAsConst = typeField?.const
+                    const typeAsConst = typeField?.const;
 
                     if (typeAsConst) {
                         acc[typeAsConst] = acc[typeAsConst] || [];
@@ -232,7 +232,7 @@
             return f;
         }
 
-        return {}
+        return {};
     });
 
     const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
@@ -241,8 +241,8 @@
         return typeMap.value[selectedTaskType.value ?? ""] || [];
     });
 
-    const versionedSchema = ref<Schemas|undefined>()
-    const isPluginSchemaLoading = ref(false)
+    const versionedSchema = ref<Schemas|undefined>();
+    const isPluginSchemaLoading = ref(false);
 
     watch([selectedTaskType, resolvedTypes], async ([val, types]) => {
         if(types.length > 1 && val){
@@ -251,8 +251,8 @@
                 const {schema} = await pluginsStore.load({
                     cls: val,
                     version: taskModel.value?.version,
-                })
-                versionedSchema.value = schema?.properties
+                });
+                versionedSchema.value = schema?.properties;
             } finally {
                 isPluginSchemaLoading.value = false;
             }
@@ -269,7 +269,7 @@
                     const dataResolved = schema.properties?.data?.$ref
                         ? getValueAtJsonPath(fullSchema.value, schema.properties?.data.$ref)
                         : schema.properties?.data;
-                    const typeConst = dataResolved?.properties?.type?.const
+                    const typeConst = dataResolved?.properties?.type?.const;
                     if(typeConst === dataType){
                         return typeLocal;
                     }
@@ -306,14 +306,14 @@
     const resolvedLocalSchema = computed(() => {
         return versionedSchema.value ?? (isTaskDefinitionBasedOnType.value
             ? definitions.value?.[resolvedType.value] ?? {}
-            : schemaAtBlockPath.value)
+            : schemaAtBlockPath.value);
     });
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
         // try to resolve the type from local schema
         // IE: when only one schema is available take it and run with it
         if (resolvedLocalSchema.value?.properties) {
-            return resolvedLocalSchema.value.properties
+            return resolvedLocalSchema.value.properties;
         }
 
         // if there is more than one schema valid, try to find common properties
@@ -327,7 +327,7 @@
             }).reduce((acc, key) => {
                 // check if the properties are the same when they are serialized
                 if (schemas.every((schema) => {
-                    return isEqual(schemas[0].properties[key], schema.properties[key])
+                    return isEqual(schemas[0].properties[key], schema.properties[key]);
                 })) {
                     // if they are we can safely display them
                     acc[key] = schemas[0].properties[key];
@@ -342,7 +342,7 @@
                     // and TaskComplex and therefore make the data type
                     // appear without a border
                     $ref: "#/definitions/",
-                }
+                };
             }
 
             return properties;
@@ -357,7 +357,7 @@
             const dataResolved = schema.properties?.data?.$ref
                 ? getValueAtJsonPath(fullSchema.value, schema.properties?.data?.$ref)
                 : schema.properties?.data;
-            const typeConst = dataResolved?.properties?.type?.const
+            const typeConst = dataResolved?.properties?.type?.const;
             if(typeConst){
                 types.add(typeConst);
             }
@@ -366,10 +366,10 @@
     });
 
     const dataTypesMap = computed(() => dataTypes.value.length > 1 ? {
-        data: dataTypes.value
+        data: dataTypes.value,
     } : {});
 
-    provide(DATA_TYPES_MAP_INJECTION_KEY, dataTypesMap)
+    provide(DATA_TYPES_MAP_INJECTION_KEY, dataTypesMap);
 
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
@@ -413,7 +413,7 @@
 
     function onTaskTypeSelect() {
         const value: PartialNoCodeElement = {
-            type: selectedTaskType.value ?? ""
+            type: selectedTaskType.value ?? "",
         };
 
         onTaskInput(value);

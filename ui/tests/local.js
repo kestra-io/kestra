@@ -1,11 +1,11 @@
-import {mount} from "@vue/test-utils"
+import {mount} from "@vue/test-utils";
 import {createI18n} from "vue-i18n";
 import moment from "moment/moment";
 import {extendMoment} from "moment-range";
 import ElementPlus from "element-plus";
 import filters from "../src/utils/filters";
 import translations from "../src/translations.json";
-import "../src/utils/global"
+import "../src/utils/global";
 
 
 let i18n = createI18n({
@@ -28,13 +28,13 @@ export default (component, options) => {
                     config: {
                         globalProperties: {
                             $filters: filters,
-                            $moment: extendMoment(moment)
-                        }
-                    }
+                            $moment: extendMoment(moment),
+                        },
+                    },
                 },
-            ...options
-        }
-    )
+            ...options,
+        },
+    );
 
     return app;
-}
+};

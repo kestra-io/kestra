@@ -33,8 +33,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted} from "vue"
-    import {useNamespacesStore} from "override/stores/namespaces"
+    import {computed, onMounted} from "vue";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import {defaultNamespace} from "../../../composables/useNamespaces";
@@ -48,29 +48,29 @@
     }>(), {
         multiple: false,
         clearable: true,
-        placeholder: undefined
+        placeholder: undefined,
     });
 
     const suffixIcon = computed(() => props.readOnly ? Lock : undefined);
 
     defineOptions({
-        inheritAttrs: false
-    })
+        inheritAttrs: false,
+    });
 
     const modelValue = defineModel<string | string[]>();
 
     const namespacesStore = useNamespacesStore();
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean)
-    )
+        [modelValue.value].flat().filter(Boolean),
+    );
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
             .map((value: any) => {
-                return {id: value, label: value}
-            })
-    })
+                return {id: value, label: value};
+            });
+    });
 
     onMounted(() => {
         namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []});
@@ -85,7 +85,7 @@
                 modelValue.value = defaultNamespaceVal ?? modelValue.value;
             }
         }
-    })
+    });
 </script>
 
 <style scoped lang="scss">

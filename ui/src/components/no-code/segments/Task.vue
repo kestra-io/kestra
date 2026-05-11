@@ -37,7 +37,7 @@
 
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
-    const updateTask = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
+    const updateTask = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {});
 
     const closeTaskAddition = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -57,8 +57,13 @@
 
     const yaml = ref("");
 
-    function getPath(parentPath: string, refPath: number | undefined): string {
-        return refPath !== undefined && refPath !== null ? `${parentPath}[${refPath}]` : parentPath;
+    /**
+     * build the path to extract or replace the task in the flow yaml, depending on the parentPath and refPath
+     * @param pp parentPath
+     * @param r refPath
+     */
+    function getPath(pp: string, r: number | undefined): string {
+        return r !== undefined && r !== null ? `${pp}[${r}]` : pp;
     }
 
     watch(flow, (source) => {
@@ -67,7 +72,7 @@
             const taskYaml = YAML_UTILS.extractBlockWithPath({
                 source,
                 path,
-            }) ?? ""
+            }) ?? "";
 
             if(taskYaml === yaml.value){
                 return;
@@ -81,8 +86,8 @@
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
 
     const validationSection = computed(() =>
-        section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
-    )
+        section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS,
+    );
 
     const flowStore = useFlowStore();
     const validateTask = (task?: string) => {
@@ -93,7 +98,7 @@
                     lastValidatedValue.value = task;
                     flowStore.validateTask({
                         task,
-                        section: validationSection.value
+                        section: validationSection.value,
                     });
                 }
             }, 500) as any;
@@ -142,7 +147,7 @@
             editTask(
                 fieldName ? `${parentPath}[${currentRefPath}].${fieldName}` : parentPath,
                 blockSchemaPath.value,
-                fieldName ? undefined : currentRefPath
+                fieldName ? undefined : currentRefPath,
             );
             hasMovedToEdit.value = true;
             nextTick(() => {

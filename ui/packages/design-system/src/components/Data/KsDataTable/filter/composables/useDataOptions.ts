@@ -13,7 +13,7 @@ export function useDataOptions(options: TableOptions) {
     const toggleOptions = () => {
         showOptions.value = !showOptions.value;
         localStorage.setItem("filterDataOptions", String(showOptions.value));
-    }
+    };
 
     const updateChart = (val: boolean) => {
         chartVisible.value = val;

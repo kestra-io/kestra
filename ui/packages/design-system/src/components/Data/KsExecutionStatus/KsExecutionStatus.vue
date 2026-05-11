@@ -36,7 +36,7 @@
 
     defineSlots<{
         title?: unknown
-    }>()
+    }>();
 
     const statusIcon = computed(() => {
         return EXECUTION_STATUSES[props.status]?.icon;
@@ -49,7 +49,7 @@
     const classes = computed(() => [
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
-        props.size !== "default" && `ks-execution-status--${props.size}`
+        props.size !== "default" && `ks-execution-status--${props.size}`,
     ].filter(Boolean));
 </script>
 

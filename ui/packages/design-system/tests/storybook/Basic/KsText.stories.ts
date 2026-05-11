@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsText from "../../../src/components/Basic/KsText.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsText from "../../../src/components/Basic/KsText.vue";
 
 const meta: Meta<typeof KsText> = {
     title: "Components/Basic/KsText",
@@ -13,18 +13,18 @@ const meta: Meta<typeof KsText> = {
     parameters: {
         docs: {description: {component: "KsText is the Kestra design-system abstraction over `ElText` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsText>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsText},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px\"><ks-text v-bind=\"args\">Sample text content</ks-text></div>",
     }),
     args: {type: ""},
-}
+};
 
 export const Types: Story = {
     render: () => ({
@@ -40,7 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Sizes: Story = {
     render: () => ({
@@ -53,7 +53,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Line clamp – multiline truncation */
 export const LineClamp: Story = {
@@ -67,7 +67,7 @@ export const LineClamp: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Override – render as different HTML elements */
 export const Override: Story = {
@@ -83,7 +83,7 @@ export const Override: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Truncated: Story = {
     render: () => ({
@@ -94,4 +94,4 @@ export const Truncated: Story = {
             </div>
         `,
     }),
-}
+};

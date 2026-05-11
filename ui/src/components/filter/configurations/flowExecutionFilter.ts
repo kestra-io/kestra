@@ -22,7 +22,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES;
                     },
                     searchable: true,
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "scope",
@@ -34,7 +34,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "childFilter",
@@ -45,7 +45,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.CHILDS;
-                    }
+                    },
                 },
                 {
                     key: "kind",
@@ -56,7 +56,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.KINDS;
-                    }
+                    },
                 },
                 {
                     key: "timeRange",
@@ -67,7 +67,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "labels",
@@ -85,10 +85,10 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -99,9 +99,9 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true
-                }
-            ]
+                    searchable: true,
+                },
+            ],
         };
     });
 };

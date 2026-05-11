@@ -119,7 +119,7 @@
         embed: false,
         blueprintType: "community",
         kind: "flow",
-        combinedView: false
+        combinedView: false,
     });
 
     const emit = defineEmits<{
@@ -145,14 +145,14 @@
     const parsedFlow = computed(() => {
         return blueprint.value?.source ? {
             ...YAML_UTILS.parse(blueprint.value.source),
-            source: blueprint.value.source
+            source: blueprint.value.source,
         } : {};
     });
 
     const processedTags = computed(() => {
         return blueprint.value?.tags?.map((tag: string) => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
+            display: tags.value?.[tag]?.name ?? tag,
         }));
     });
 
@@ -163,10 +163,10 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: route.params?.tab || tab.value
-                }
-            }
-        }
+                    tab: route.params?.tab || tab.value,
+                },
+            },
+        },
     ]);
 
     const editorRoute = computed(() => {
@@ -193,8 +193,8 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: tab.value
-                }
+                    tab: tab.value,
+                },
             });
         }
     };
@@ -215,7 +215,7 @@
     const loadTags = async () => {
         const data = await blueprintsStore.getBlueprintTags({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any
+            kind: props.kind as any,
         });
         tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? []);
     };
@@ -224,7 +224,7 @@
         const blueprintData = await blueprintsStore.getBlueprint({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
             kind: props.kind as any,
-            id: props.blueprintId
+            id: props.blueprintId,
         });
         blueprint.value = blueprintData;
 
@@ -236,10 +236,10 @@
                 ? await blueprintsStore.getBlueprintGraph({
                     type: blueprintTab as any,
                     kind: props.kind as any,
-                    id: props.blueprintId
+                    id: props.blueprintId,
                 })
                 : await flowStore.getGraphFromSourceResponse({
-                    flow: blueprint.value?.source
+                    flow: blueprint.value?.source,
                 });
         }
     });

@@ -12,7 +12,7 @@
 </template>
 
 <script>
-    import Task from "./MixinTask"
+    import Task from "./MixinTask";
     export default {
         mixins: [Task],
         computed: {
@@ -22,14 +22,14 @@
                 }
 
                 if (this.modelValue !== undefined) {
-                    return !isNaN(this.modelValue)
+                    return !isNaN(this.modelValue);
                 }
 
                 return true;
             },
             val(){
                 return this.values ? parseInt(this.values.toString(), 10) : undefined;
-            }
-        }
+            },
+        },
     };
 </script>

@@ -185,8 +185,8 @@
 
     import Empty from "./layout/empty/Empty.vue";
 
-    import CloseIcon from "vue-material-design-icons/Close.vue"
-    import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
+    import CloseIcon from "vue-material-design-icons/Close.vue";
+    import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue";
     import DragVertical from "vue-material-design-icons/DragVertical.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import DockLeft from "vue-material-design-icons/DockLeft.vue";
@@ -209,7 +209,7 @@
                     waiting = false;
                 }, limit);
             }
-        }
+        };
     }
 
     const ComponentCache = new Map<string, any>();
@@ -223,13 +223,13 @@
                 name: makeNoCodeComponentName(key),
                 inheritAttrs: true,
                 render() {
-                    return h(component)
-                }
-            })
-        )
+                    return h(component);
+                },
+            }),
+        );
         ComponentCache.set(key, uniqueComponent);
         return uniqueComponent;
-    }
+    };
 
     function makeNoCodeComponentName(key: string){
         return `KsNoCode-${key}`;
@@ -237,7 +237,7 @@
 
     const accessibleTabsKeys = computed<string[]>(() => {
         return panels.value.flatMap(panel => panel.tabs.map(tab => makeNoCodeComponentName(tab.uid)));
-    })
+    });
 
     interface TabInfo {
         panelIndex: number,
@@ -248,13 +248,13 @@
 
     const panels = defineModel<Panel<TabLive>[]>({
         required: true,
-    })
+    });
 
     provide(VISIBLE_PANELS_INJECTION_KEY, panels);
 
     const emit = defineEmits<{
         removeTab: [tab: string]
-    }>()
+    }>();
 
     const mouseXRef = ref(-1);
     const movedTabInfo = ref<TabInfo | null>(null);
@@ -268,7 +268,7 @@
     const handleTabClick = (panelIndex: number, panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
 
-        panel.activeTab = tab
+        panel.activeTab = tab;
 
         nextTick(() => ensureActiveTabVisible(panelIndex, tab.uid));
     };
@@ -276,7 +276,7 @@
     const showDropZones = computed(() =>
         realDragging.value &&
         movedTabInfo.value &&
-        !draggingPanel.value
+        !draggingPanel.value,
     );
 
     function onResize(_index: number, sizes: number[]) {
@@ -292,7 +292,7 @@
     // by the prop
     const panelSizes = computed<number[]>((prevValue) => {
         if(prevValue?.length === panels.value.length){
-            return prevValue
+            return prevValue;
         }
         return panels.value.map(panel => panel.size);
     });
@@ -300,7 +300,7 @@
     function dragstart(panelIndex: number, tabId: string) {
         dragging.value = true;
         const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.uid === tabId);
-        movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
+        movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]};
     }
 
     function cleanUp(){
@@ -310,22 +310,22 @@
         leftPanelDragover.value = false;
         rightPanelDragover.value = false;
         nextTick(() => {
-            movedTabInfo.value = null
+            movedTabInfo.value = null;
             for(const panel of panels.value) {
                 panel.dragover = false;
-                panel.tabs = panel.tabs.filter((tab) => !tab.potential)
+                panel.tabs = panel.tabs.filter((tab) => !tab.potential);
             }
-        })
+        });
     }
 
     function getPanelIndex(e: DragEvent): number {
         const target = e.currentTarget as HTMLElement;
-        return parseInt(target.dataset.panelIndex ?? "-1")
+        return parseInt(target.dataset.panelIndex ?? "-1");
     }
 
     function removeAllPotentialTabs(){
         for(const panel of panels.value){
-            panel.tabs = panel.tabs.filter((tab) => !tab.potential)
+            panel.tabs = panel.tabs.filter((tab) => !tab.potential);
         }
     }
 
@@ -339,26 +339,26 @@
         // if mouse has not moved vertically, stop the processing
         // this will be triggered every few ms so perf and readability will be paramount
         if(mouseXRef.value === e.clientX){
-            return
+            return;
         }
 
-        mouseXRef.value = e.clientX
+        mouseXRef.value = e.clientX;
 
         if(!movedTabInfo.value){
-            return
+            return;
         }
 
         const panelIndex = getPanelIndex(e);
         if(panelIndex === -1) {
-            return
+            return;
         }
 
-        const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
+        const activePanel = tabContainerRefs.value.find((r) => r.dataset.panelIndex === panelIndex.toString());
         const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
 
-        let insertTabAfterIndex = -1
+        let insertTabAfterIndex = -1;
         let i = 0;
-        const mouseX = e.clientX
+        const mouseX = e.clientX;
         for(const tab of tabsInPanel){
             const br = tab.getBoundingClientRect();
             // get the X position of the middle of the tab
@@ -387,22 +387,22 @@
 
         // if the potential tab is already inserted in the right place
         if(panels.value[panelIndex].tabs[insertTabAfterIndex + 1]?.potential){
-            return
+            return;
         }
 
-        removeAllPotentialTabs()
+        removeAllPotentialTabs();
 
         // then insert the potential tab in the right place
         panels.value[panelIndex].tabs.splice(insertTabAfterIndex + 1, 0, {
             ...movedTabInfo.value.tab,
             uid: `potential-${movedTabInfo.value.tab.uid}`,
             potential: true,
-            fromPanel: panelIndex === movedTabInfo.value.panelIndex
+            fromPanel: panelIndex === movedTabInfo.value.panelIndex,
         });
     }
 
     function getTargetTabIndex(targetPanelIndex: number, targetTabId?: string): number {
-        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.uid === targetTabId)
+        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.uid === targetTabId);
         if(targetTabIndex === -1){
             return panels.value[targetPanelIndex].tabs.length;
         }
@@ -411,7 +411,7 @@
 
     function drop(){
         if(!movedTabInfo.value){
-            return
+            return;
         }
 
         // find potential tab in panels.value tabs
@@ -425,8 +425,8 @@
         cleanUp();
     }
 
-    function moveTab(movedTabInfo: TabInfo, targetPanelIndex: number, targetTabId?: string){
-        const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfo
+    function moveTab(movedTabInfoOpt: TabInfo, targetPanelIndex: number, targetTabId?: string){
+        const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfoOpt;
 
         const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId);
 
@@ -435,7 +435,7 @@
         // They will take a slot in the list
         if(targetPanelIndex === originalPanelIndex){
             if (targetTabIndex === tabIndex || panels.value[targetPanelIndex].tabs.length <= 1) {
-                return
+                return;
             }
 
             if (targetTabIndex < tabIndex){
@@ -483,7 +483,7 @@
         const newPanel = {
             tabs: [movedTab],
             activeTab: movedTab,
-            size: defaultSize.value
+            size: defaultSize.value,
         };
 
         // Add the new panel based on the drop direction, not relative to original panel
@@ -540,7 +540,7 @@
         if (panel.activeTab.uid === tab.uid) {
             panel.activeTab = panel.tabs[tabIndex - 1] ?? panel.tabs[0];
         }
-        emit("removeTab", tab.uid)
+        emit("removeTab", tab.uid);
     }
 
     watch(panels, () => {
@@ -551,25 +551,25 @@
             }
             index++;
         }
-    }, {deep: true})
+    }, {deep: true});
 
     function splitPanel(panelIndex: number){
         const panel = panels.value[panelIndex];
         const newPanel = {
             tabs: [panel.activeTab],
             activeTab: panel.activeTab,
-            size: defaultSize.value
-        }
-        panels.value.splice(panelIndex + 1, 0, newPanel)
+            size: defaultSize.value,
+        };
+        panels.value.splice(panelIndex + 1, 0, newPanel);
 
         // get index of active tab in the original panel
-        const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
+        const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid);
 
         // set the active tab to the previous tab in the original panel
-        panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]
+        panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1];
 
         // remove the tab from the original panel
-        panel.tabs.splice(activeTabIndex, 1)
+        panel.tabs.splice(activeTabIndex, 1);
     }
 
     function panelDragStart(e: DragEvent, panelIndex: number) {

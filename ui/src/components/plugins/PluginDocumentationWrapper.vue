@@ -4,11 +4,11 @@
     </div>
 </template>
 <script setup lang="ts">
-    import PluginDocumentation from "./PluginDocumentation.vue"
+    import PluginDocumentation from "./PluginDocumentation.vue";
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";
 
-    const pluginsStore = usePluginsStore()
+    const pluginsStore = usePluginsStore();
     const miscStore = useMiscStore();
 </script>
 

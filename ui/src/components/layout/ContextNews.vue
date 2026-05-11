@@ -47,8 +47,8 @@
 
 <script setup lang="ts">
     import {computed, onMounted, reactive, ref} from "vue";
-    import {useStorage} from "@vueuse/core"
-    import {useScrollMemory} from "../../composables/useScrollMemory"
+    import {useStorage} from "@vueuse/core";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
@@ -65,13 +65,13 @@
 
     const expanded = reactive<Record<string, boolean>>({});
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>("feeds", null);
     onMounted(() => {
         lastNewsReadDate.value = feeds.value[0].publicationDate;
     });
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
-    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null);
+    useScrollMemory(ref("context-panel-news"), scrollableElement as any);
 </script>
 
 <style scoped lang="scss">

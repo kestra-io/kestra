@@ -10,27 +10,27 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckboxButton} from "element-plus"
+    import {ElCheckboxButton} from "element-plus";
 
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         value?: boolean | string | number
         disabled?: boolean
         checked?: boolean
-    }>()
+    }>();
 
     const emit = defineEmits<{
         change: [value: any]
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

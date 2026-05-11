@@ -1,4 +1,4 @@
-import {describe, expect, it, vi, beforeEach} from "vitest"
+import {describe, expect, it, vi, beforeEach} from "vitest";
 import {PebbleAutoCompletion, resetExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider";
 
 const axiosGet = vi.fn();

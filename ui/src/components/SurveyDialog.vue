@@ -66,17 +66,17 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import {useApiStore} from "../stores/api"
-    import {useMiscStore} from "override/stores/misc"
+    import {computed, ref} from "vue";
+    import {useApiStore} from "../stores/api";
+    import {useMiscStore} from "override/stores/misc";
 
     interface Props {
         visible?: boolean
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        visible: false
-    })
+        visible: false,
+    });
 
     const emit = defineEmits<{
         close: []
@@ -86,79 +86,79 @@
             useCases: string[]
             subscribeNewsletter: boolean
         }]
-    }>()
+    }>();
 
-    const apiStore = useApiStore()
-    const miscStore = useMiscStore()
+    const apiStore = useApiStore();
+    const miscStore = useMiscStore();
 
-    const companySize = ref("")
-    const useCases = ref<string[]>([])
-    const subscribeNewsletter = ref(false)
+    const companySize = ref("");
+    const useCases = ref<string[]>([]);
+    const subscribeNewsletter = ref(false);
 
     const companySizeOptions = [
         {value: "1-10", labelKey: "setup.survey.company_1_10"},
         {value: "11-50", labelKey: "setup.survey.company_11_50"},
         {value: "50-250", labelKey: "setup.survey.company_50_250"},
         {value: "250+", labelKey: "setup.survey.company_250_plus"},
-        {value: "personal", labelKey: "setup.survey.company_personal"}
-    ]
+        {value: "personal", labelKey: "setup.survey.company_personal"},
+    ];
 
     const useCaseOptions = [
         {value: "infrastructure", labelKey: "setup.survey.use_case_infrastructure"},
         {value: "business", labelKey: "setup.survey.use_case_business"},
         {value: "data", labelKey: "setup.survey.use_case_data"},
         {value: "ml", labelKey: "setup.survey.use_case_ml"},
-        {value: "other", labelKey: "setup.survey.use_case_other"}
-    ]
+        {value: "other", labelKey: "setup.survey.use_case_other"},
+    ];
 
     const isVisible = computed({
         get: () => props.visible,
         set: (value: boolean) => {
-            if (!value) emit("close")
-        }
-    })
+            if (!value) emit("close");
+        },
+    });
 
     const handleClose = () => {
-        emit("close")
-    }
+        emit("close");
+    };
 
     const handleSkip = () => {
         trackSurveyEvent("survey_skipped", {
             company_size: companySize.value || undefined,
             use_cases: useCases.value.length > 0 ? useCases.value : undefined,
-            newsletter_subscribed: subscribeNewsletter.value
-        })
-        emit("skip")
-        emit("close")
-    }
+            newsletter_subscribed: subscribeNewsletter.value,
+        });
+        emit("skip");
+        emit("close");
+    };
 
     const handleSubmit = () => {
         const surveyData = {
             companySize: companySize.value,
             useCases: useCases.value,
-            subscribeNewsletter: subscribeNewsletter.value
-        }
+            subscribeNewsletter: subscribeNewsletter.value,
+        };
 
         trackSurveyEvent("survey_submitted", {
             company_size: surveyData.companySize,
             use_cases: surveyData.useCases,
-            newsletter_subscribed: surveyData.subscribeNewsletter
-        })
+            newsletter_subscribed: surveyData.subscribeNewsletter,
+        });
 
-        emit("submit", surveyData)
-        emit("close")
-    }
+        emit("submit", surveyData);
+        emit("close");
+    };
 
     const trackSurveyEvent = (eventName: string, additionalData: Record<string, any> = {}) => {
-        const configs = miscStore.configs
+        const configs = miscStore.configs;
 
         apiStore.posthogEvents({
             type: eventName,
             instance_id: configs?.uuid,
             survey_context: "standalone_dialog",
-            ...additionalData
-        })
-    }
+            ...additionalData,
+        });
+    };
 </script>
 
 <style scoped lang="scss">

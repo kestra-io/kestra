@@ -43,20 +43,20 @@
         disabled: {type: Boolean, default: false},
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
-        haveError: {type: Boolean, default: false}
+        haveError: {type: Boolean, default: false},
     });
 
     const input = computed({
         get: () => props.modelValue,
         set: (value) => {
             emits("update:modelValue", value);
-        }
+        },
     });
 
     defineExpose({
         focus: () => {
             (elInputRef.value as any)?.focus?.();
-        }
+        },
     });
 </script>
 

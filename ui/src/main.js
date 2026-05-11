@@ -1,4 +1,4 @@
-import {createApp} from "vue"
+import {createApp} from "vue";
 
 import App from "./App.vue";
 import initApp from "./utils/init";
@@ -14,16 +14,16 @@ import {useAuthStore} from "override/stores/auth";
 import {useMiscStore} from "override/stores/misc";
 
 
-const app = createApp(App)
+const app = createApp(App);
 
 const handleAuthError = (error, to) => {
     if (error.message?.includes("401")) {
-        BasicAuth.logout()
-        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-        return {name: "login", query: fromPath ? {from: fromPath} : {}}
+        BasicAuth.logout();
+        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined;
+        return {name: "login", query: fromPath ? {from: fromPath} : {}};
     }
-    return {name: "setup"}
-}
+    return {name: "setup"};
+};
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
     router.beforeEach(async (to, from) => {
@@ -38,7 +38,7 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
             if(!configs.isBasicAuthInitialized) {
                 // Since, Configs takes preference
                 // we need to check if any regex validation error in BE.
-                const validationErrors = await miscStore.loadBasicAuthValidationErrors()
+                const validationErrors = await miscStore.loadBasicAuthValidationErrors();
 
                 if (validationErrors?.length > 0) {
                     // Creds exist in config but failed validation
@@ -47,14 +47,14 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                         return;
                     }
 
-                    return {name: "login"}
+                    return {name: "login"};
                 } else {
                     // No creds in config - redirect to set it up
                     if (to.name === "setup") {
                         return;
                     }
 
-                    return {name: "setup"}
+                    return {name: "setup"};
                 }
             }
 
@@ -65,21 +65,21 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                 return;
             }
 
-            const hasCredentials = BasicAuth.isLoggedIn()
+            const hasCredentials = BasicAuth.isLoggedIn();
 
             if (!hasCredentials) {
-                const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-                return {name: "login", query: fromPath ? {from: fromPath} : {}}
+                const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined;
+                return {name: "login", query: fromPath ? {from: fromPath} : {}};
             }
 
             // Check if basic auth setup is still in progress
-            const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
+            const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress");
             if (isSetupInProgress === "true") {
-                return {name: "setup"}
+                return {name: "setup"};
             }
         } catch (error) {
             console.error("Error during authentication check:", error);
-            return handleAuthError(error, to)
+            return handleAuthError(error, to);
         }
     });
 
@@ -116,5 +116,5 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
     
     // mount
-    router.isReady().then(() => app.mount("#app"))
+    router.isReady().then(() => app.mount("#app"));
 });

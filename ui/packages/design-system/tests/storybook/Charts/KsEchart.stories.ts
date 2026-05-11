@@ -1,12 +1,12 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {use} from "echarts/core"
-import {BarChart, LineChart} from "echarts/charts"
-import KsEchart from "../../../src/components/Charts/KsEchart.vue"
-import {TooltipType} from "../../../src/components/Charts/ksChartUtils"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {use} from "echarts/core";
+import {BarChart, LineChart} from "echarts/charts";
+import KsEchart from "../../../src/components/Charts/KsEchart.vue";
+import {TooltipType} from "../../../src/components/Charts/ksChartUtils";
 
-use([BarChart, LineChart])
+use([BarChart, LineChart]);
 
-const CATEGORIES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
+const CATEGORIES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
 
 const meta: Meta<typeof KsEchart> = {
     title: "Components/Charts/KsEchart",
@@ -31,8 +31,8 @@ const meta: Meta<typeof KsEchart> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsEchart>
 
 // ─── Basic line chart ─────────────────────────────────────────────────────────
@@ -53,12 +53,12 @@ export const Default: Story = {
                         {name: "Failures", type: "line", smooth: true, data: [120, 82, 91, 34, 90, 130, 110]},
                     ],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:320px\"><ks-echart v-bind=\"{...args, options}\" /></div>",
     }),
     args: {loading: false, tooltipType: TooltipType.NATIVE},
-}
+};
 
 // ─── Bar chart ────────────────────────────────────────────────────────────────
 
@@ -78,11 +78,11 @@ export const SimpleBarChart: Story = {
                         {name: "Killed", type: "bar", stack: "total", data: [10, 20, 15, 25, 18, 22, 12]},
                     ],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" /></div>",
     }),
-}
+};
 
 // ─── Mixed bar + area with multiple Y axes ────────────────────────────────────
 
@@ -116,7 +116,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
                         },
                     ],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:320px\"><ks-echart :options=\"options\" tooltip-type=\"external\" /></div>",
     }),
@@ -129,7 +129,7 @@ export const MixedBarAndAreaMultipleYAxes: Story = {
             },
         },
     },
-}
+};
 
 // ─── Mixed bar + area — three Y axes ─────────────────────────────────────────
 
@@ -171,7 +171,7 @@ export const TripleYAxis: Story = {
                         },
                     ],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:360px\"><ks-echart :options=\"options\" /></div>",
     }),
@@ -182,7 +182,7 @@ export const TripleYAxis: Story = {
             },
         },
     },
-}
+};
 
 // ─── External tooltip ─────────────────────────────────────────────────────────
 
@@ -193,7 +193,7 @@ export const ExternalTooltip: Story = {
             const seriesData = [
                 {name: "Succeeded", data: [820, 932, 901, 934, 1290, 1330, 1320]},
                 {name: "Failed", data: [120, 82, 91, 34, 90, 130, 110]},
-            ]
+            ];
             return {
                 options: {
                     xAxis: {type: "category", data: CATEGORIES, boundaryGap: false},
@@ -202,7 +202,7 @@ export const ExternalTooltip: Story = {
                     tooltip: {trigger: "axis"},
                     series: seriesData.map((s) => ({...s, type: "line", smooth: true})),
                 },
-            }
+            };
         },
         template: `
             <div style="padding:24px;height:280px">
@@ -222,7 +222,7 @@ export const ExternalTooltip: Story = {
             },
         },
     },
-}
+};
 
 // ─── Loading state ────────────────────────────────────────────────────────────
 
@@ -236,11 +236,11 @@ export const Loading: Story = {
                     yAxis: {type: "value"},
                     series: [],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" :loading=\"true\" /></div>",
     }),
-}
+};
 
 // ─── Disabled features ────────────────────────────────────────────────────────
 
@@ -256,7 +256,7 @@ export const DisabledAxis: Story = {
                         {name: "Executions", type: "line", smooth: true, areaStyle: {opacity: 0.15}, data: [820, 932, 901, 934, 1290, 1330, 1320]},
                     ],
                 },
-            }
+            };
         },
         template: `
             <div style="padding:24px;height:120px">
@@ -274,7 +274,7 @@ export const DisabledAxis: Story = {
             },
         },
     },
-}
+};
 
 // ─── SVG renderer ─────────────────────────────────────────────────────────────
 
@@ -291,8 +291,8 @@ export const SvgRenderer: Story = {
                         {name: "Executions", type: "line", data: [820, 932, 901, 934, 1290, 1330, 1320]},
                     ],
                 },
-            }
+            };
         },
         template: "<div style=\"padding:24px;height:280px\"><ks-echart :options=\"options\" renderer=\"svg\" /></div>",
     }),
-}
+};

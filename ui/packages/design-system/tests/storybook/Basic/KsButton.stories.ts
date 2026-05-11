@@ -1,15 +1,15 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {within, userEvent, expect} from "storybook/test"
-import {markRaw, ref} from "vue"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {within, userEvent, expect} from "storybook/test";
+import {markRaw, ref} from "vue";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
 
 // Inline SVG icons as components to avoid external dependencies
 const DownloadIcon = markRaw({
     template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg>",
-})
+});
 const PlusIcon = markRaw({
     template: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/></svg>",
-})
+});
 
 const meta: Meta<typeof KsButton> = {
     title: "Components/Basic/KsButton",
@@ -36,8 +36,8 @@ const meta: Meta<typeof KsButton> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsButton>
 
 /** Default button */
@@ -45,18 +45,18 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsButton},
         setup() {
-            return {args}
+            return {args};
         },
         template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\">Button</ks-button></div>",
     }),
     args: {type: "default"},
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const btn = canvas.getByRole("button")
-        await expect(btn).toBeTruthy()
-        await userEvent.click(btn)
+        const canvas = within(canvasElement);
+        const btn = canvas.getByRole("button");
+        await expect(btn).toBeTruthy();
+        await userEvent.click(btn);
     },
-}
+};
 
 /** All types side by side */
 export const Types: Story = {
@@ -74,7 +74,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** All sizes */
 export const Sizes: Story = {
@@ -88,7 +88,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Plain variant */
 export const Plain: Story = {
@@ -104,14 +104,14 @@ export const Plain: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Round and circle variants */
 export const RoundAndCircle: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            return {PlusIcon}
+            return {PlusIcon};
         },
         template: `
             <div style="padding:24px;display:flex;gap:12px;align-items:center">
@@ -121,7 +121,7 @@ export const RoundAndCircle: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Disabled state */
 export const Disabled: Story = {
@@ -136,49 +136,49 @@ export const Disabled: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const buttons = canvas.getAllByRole("button")
+        const canvas = within(canvasElement);
+        const buttons = canvas.getAllByRole("button");
         for (const btn of buttons) {
-            await expect(btn).toBeDisabled()
+            await expect(btn).toBeDisabled();
         }
     },
-}
+};
 
 /** Loading state – spinner shown while an async action is in progress */
 export const Loading: Story = {
     render: (args) => ({
         components: {KsButton},
         setup() {
-            return {args}
+            return {args};
         },
         template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\">Saving…</ks-button></div>",
     }),
     args: {type: "primary", loading: true},
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const btn = canvas.getByRole("button")
-        await expect(btn).toBeDisabled()
-        await expect(canvasElement.querySelector(".kel-button.is-loading")).toBeTruthy()
+        const canvas = within(canvasElement);
+        const btn = canvas.getByRole("button");
+        await expect(btn).toBeDisabled();
+        await expect(canvasElement.querySelector(".kel-button.is-loading")).toBeTruthy();
     },
-}
+};
 
 /** With icon – icon rendered to the left of the label */
 export const WithIcon: Story = {
     render: (args) => ({
         components: {KsButton},
         setup() {
-            return {args, DownloadIcon}
+            return {args, DownloadIcon};
         },
         template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\" :icon=\"DownloadIcon\">Download</ks-button></div>",
     }),
     args: {type: "primary"},
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const btn = canvas.getByRole("button")
-        await expect(btn).toBeTruthy()
-        await expect(canvasElement.querySelector(".kel-icon")).toBeTruthy()
+        const canvas = within(canvasElement);
+        const btn = canvas.getByRole("button");
+        await expect(btn).toBeTruthy();
+        await expect(canvasElement.querySelector(".kel-icon")).toBeTruthy();
     },
-}
+};
 
 /** Text and link variants */
 export const TextAndLink: Story = {
@@ -193,7 +193,7 @@ export const TextAndLink: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom tag – render as anchor or div instead of button */
 export const CustomTag: Story = {
@@ -206,7 +206,7 @@ export const CustomTag: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom color – auto-calculates hover and active states */
 export const CustomColor: Story = {
@@ -220,18 +220,18 @@ export const CustomColor: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Click event emission */
 export const ClickEvent: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const clicks = ref(0)
+            const clicks = ref(0);
             function handleClick() {
-                clicks.value++
+                clicks.value++;
             }
-            return {clicks, handleClick}
+            return {clicks, handleClick};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -241,10 +241,10 @@ export const ClickEvent: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const btn = canvas.getByRole("button")
-        await userEvent.click(btn)
-        await userEvent.click(btn)
-        await expect(canvas.getByText(/Clicks: 2/)).toBeTruthy()
+        const canvas = within(canvasElement);
+        const btn = canvas.getByRole("button");
+        await userEvent.click(btn);
+        await userEvent.click(btn);
+        await expect(canvas.getByText(/Clicks: 2/)).toBeTruthy();
     },
-}
+};

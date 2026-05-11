@@ -117,7 +117,7 @@ export function disablePosthog() {
 export function capturePosthogEvent(
     configs: Record<string, any> | undefined,
     eventName: string,
-    properties: Record<string, any>
+    properties: Record<string, any>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog();
@@ -153,7 +153,7 @@ export function capturePosthogEvent(
 
 export async function identifyPosthogUser(
     configs: Record<string, any> | undefined,
-    properties: Record<string, any>
+    properties: Record<string, any>,
 ) {
     if (isPosthogDisabled(configs)) {
         disablePosthog();

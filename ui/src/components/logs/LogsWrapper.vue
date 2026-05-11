@@ -70,14 +70,14 @@
         encodeFiltersToQuery,
         getUniqueFilters,
         isValidFilter,
-        keyOfComparator
+        keyOfComparator,
     } from "@kestra-io/design-system";
     import type {AppliedFilter} from "@kestra-io/design-system";
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
-        readRouteLevelFilter
+        readRouteLevelFilter,
     } from "@kestra-io/design-system";
     import {useRouteFilterPolicy} from "@kestra-io/design-system";
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
@@ -100,7 +100,7 @@
         logLevel: undefined,
         reloadLogs: undefined,
         namespace: undefined,
-        restoreurl: undefined
+        restoreurl: undefined,
     });
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"]);
 
@@ -128,11 +128,11 @@
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
             ? localStorage.getItem("defaultLogLevel") || "INFO"
-            : "INFO"
+            : "INFO",
     );
     const {
         effectiveValue: effectiveLogLevel,
-        syncFromAppliedFilters: syncLevelFromAppliedFilters
+        syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<string>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel,
@@ -146,15 +146,15 @@
         shouldSyncFromAppliedFilters: (filters, routeQuery) => {
             const encodedFilters = encodeFiltersToQuery(
                 getUniqueFilters(filters.filter(isValidFilter)),
-                keyOfComparator
+                keyOfComparator,
             );
 
             return !Object.entries(encodedFilters).some(
                 ([key, value]) =>
                     !key.startsWith("filters[level][") &&
-                    routeQuery[key] !== value
+                    routeQuery[key] !== value,
             );
-        }
+        },
     });
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
@@ -197,7 +197,7 @@
     const flowId = computed(() => route.params.id);
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id);
     const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ]);
 
     const loadQuery = (base: any) => {
@@ -234,7 +234,7 @@
             page,
             size,
             minLevel: props.filters ? null : effectiveLogLevel.value,
-            sort: "timestamp:desc"
+            sort: "timestamp:desc",
         }))
             .finally(() => {
                 isLoading.value = false;
@@ -250,12 +250,12 @@
     };
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return filters
-    })
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
+        return filters;
+    });
     watch(filterQuery, () => {
-        dataTable.value?.resetAndReload()
-    }, {deep: true})
+        dataTable.value?.resetAndReload();
+    }, {deep: true});
 
     const showStatChart = () => showChart.value;
 

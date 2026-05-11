@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsAutocomplete from "../../../src/components/Form/KsAutocomplete.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsAutocomplete from "../../../src/components/Form/KsAutocomplete.vue";
 
 const SUGGESTIONS = [
     "company.team.payments",
@@ -9,7 +9,7 @@ const SUGGESTIONS = [
     "company.data.raw",
     "company.data.curated",
     "company.infra.monitoring",
-]
+];
 
 const meta: Meta<typeof KsAutocomplete> = {
     title: "Components/Form/KsAutocomplete",
@@ -23,22 +23,22 @@ const meta: Meta<typeof KsAutocomplete> = {
     parameters: {
         docs: {description: {component: "KsAutocomplete is the Kestra design-system abstraction over `ElAutocomplete` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsAutocomplete>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsAutocomplete},
         setup() {
-            const value = ref("")
+            const value = ref("");
             function fetchSuggestions(query: string, callback: (results: {value: string}[]) => void) {
                 const results = SUGGESTIONS
                     .filter(s => s.includes(query))
-                    .map(s => ({value: s}))
-                callback(results)
+                    .map(s => ({value: s}));
+                callback(results);
             }
-            return {args, value, fetchSuggestions}
+            return {args, value, fetchSuggestions};
         },
         template: `
             <div style="padding:24px;width:360px">
@@ -52,15 +52,15 @@ export const Default: Story = {
         `,
     }),
     args: {placeholder: "Search namespaces...", triggerOnFocus: true, clearable: true},
-}
+};
 
 /** Disabled state */
 export const Disabled: Story = {
     render: () => ({
         components: {KsAutocomplete},
         setup() {
-            const fetchSuggestions = (_q: string, cb: (r: {value: string}[]) => void) => cb([])
-            return {fetchSuggestions}
+            const fetchSuggestions = (_q: string, cb: (r: {value: string}[]) => void) => cb([]);
+            return {fetchSuggestions};
         },
         template: `
             <div style="padding:24px;width:360px">
@@ -68,24 +68,24 @@ export const Disabled: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Remote search – suggestions fetched asynchronously */
 export const RemoteSearch: Story = {
     render: () => ({
         components: {KsAutocomplete},
         setup() {
-            const value = ref("")
-            const databases = ["PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "ClickHouse", "BigQuery"]
+            const value = ref("");
+            const databases = ["PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "ClickHouse", "BigQuery"];
             function fetchSuggestions(query: string, callback: (results: {value: string}[]) => void) {
                 setTimeout(() => {
                     const results = databases
                         .filter(d => d.toLowerCase().includes(query.toLowerCase()))
-                        .map(d => ({value: d}))
-                    callback(results)
-                }, 200)
+                        .map(d => ({value: d}));
+                    callback(results);
+                }, 200);
             }
-            return {value, fetchSuggestions}
+            return {value, fetchSuggestions};
         },
         template: `
             <div style="padding:24px;width:360px;min-height:280px">
@@ -101,22 +101,22 @@ export const RemoteSearch: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithCustomTemplate: Story = {
     render: () => ({
         components: {KsAutocomplete},
         setup() {
-            const value = ref("")
+            const value = ref("");
             function fetchSuggestions(query: string, callback: (results: {value: string; count: number}[]) => void) {
                 const data = [
                     {value: "my-flow", count: 42},
                     {value: "etl-pipeline", count: 18},
                     {value: "daily-report", count: 7},
-                ].filter(item => item.value.includes(query))
-                callback(data)
+                ].filter(item => item.value.includes(query));
+                callback(data);
             }
-            return {value, fetchSuggestions}
+            return {value, fetchSuggestions};
         },
         template: `
             <div style="padding:24px;width:360px;min-height:300px">
@@ -136,4 +136,4 @@ export const WithCustomTemplate: Story = {
             </div>
         `,
     }),
-}
+};

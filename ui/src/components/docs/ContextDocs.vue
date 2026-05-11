@@ -56,9 +56,9 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {useNetwork} from "@vueuse/core"
-    import {useScrollMemory} from "../../composables/useScrollMemory"
-    const {isOnline} = useNetwork()
+    import {useNetwork} from "@vueuse/core";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
+    const {isOnline} = useNetwork();
 
     import {KsButton, KsMarkdown} from "@kestra-io/design-system";
     import PluginCount from "./PluginCount.vue";
@@ -205,7 +205,7 @@
         }
         return {
             content: lines.filter((_, i) => !linesToRemove.includes(i)).join("\n"),
-            removedComponents: removedComponents
+            removedComponents: removedComponents,
         };
     }
 
@@ -234,7 +234,7 @@
 
         try {
             if(!docStore.docId) {
-                refreshPage()
+                refreshPage();
                 return;
             }
             const response = await docStore.fetchDocId(docStore.docId);
@@ -283,8 +283,8 @@
         refreshPage(val);
     }, {immediate: true});
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
-    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null);
+    useScrollMemory(ref("context-panel-docs"), scrollableElement as any);
 </script>
 
 <style scoped lang="scss">

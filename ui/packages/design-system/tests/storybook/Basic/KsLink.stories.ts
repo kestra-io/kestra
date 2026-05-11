@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsLink from "../../../src/components/Basic/KsLink.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsLink from "../../../src/components/Basic/KsLink.vue";
 
 const meta: Meta<typeof KsLink> = {
     title: "Components/Basic/KsLink",
@@ -13,18 +13,18 @@ const meta: Meta<typeof KsLink> = {
     parameters: {
         docs: {description: {component: "KsLink is the Kestra design-system abstraction over `ElLink` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsLink>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsLink},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px\"><ks-link v-bind=\"args\">Click me</ks-link></div>",
     }),
     args: {type: "primary", href: "#"},
-}
+};
 
 export const Types: Story = {
     render: () => ({
@@ -40,7 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Underline control */
 export const Underline: Story = {
@@ -54,7 +54,7 @@ export const Underline: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** With icon slot */
 export const WithIcon: Story = {
@@ -71,7 +71,7 @@ export const WithIcon: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Disabled: Story = {
     render: () => ({
@@ -82,4 +82,4 @@ export const Disabled: Story = {
             </div>
         `,
     }),
-}
+};

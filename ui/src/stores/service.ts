@@ -11,7 +11,7 @@ interface State {
 
 export const useServiceStore = defineStore("service", {
     state: (): State => ({
-        service: undefined
+        service: undefined,
     }),
 
     actions: {
@@ -19,6 +19,6 @@ export const useServiceStore = defineStore("service", {
             const response = await this.$http.get<Service>(`${apiUrlWithoutTenants()}/instance/services/${options.id}`);
             this.service = response.data;
             return response.data;
-        }
-    }
+        },
+    },
 });

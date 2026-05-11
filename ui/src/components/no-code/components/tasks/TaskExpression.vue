@@ -19,12 +19,12 @@
     const props = defineProps({
         modelValue: {
             type: [String, Object],
-            default: undefined
+            default: undefined,
         },
         root: {
             type: String,
-            default: undefined
-        }
+            default: undefined,
+        },
     });
 
     function editorInput(value: string) {
@@ -45,9 +45,9 @@
         return props.modelValue !== undefined && props.modelValue !== null
             ? YAML_UTILS.stringify(props.modelValue)
             : "";
-    })
+    });
 
-    const localEditorValue = ref(editorValue.value)
+    const localEditorValue = ref(editorValue.value);
 
     function parseValue(value: string) {
         if(value.match(/^\s*{{/)) {

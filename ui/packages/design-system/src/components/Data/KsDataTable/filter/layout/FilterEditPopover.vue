@@ -63,7 +63,7 @@
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`
+            width: `${popupWidth}px`,
         };
     };
 

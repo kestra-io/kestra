@@ -84,7 +84,7 @@
             "index",
             "attemptNumber",
             "executionKind",
-            ...(props.excludeMetas ?? [])
+            ...(props.excludeMetas ?? []),
         ];
         for (const keyString in props.log) {
             const key = keyString as keyof Log;
@@ -125,7 +125,7 @@
     });
 
     const filtered = computed(() =>
-        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? ""))
+        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? "")),
     );
 
     const iconColor = computed(() => {
@@ -139,11 +139,11 @@
             : convert.toHtml(
                 xss(props.log.message, {
                     allowList: {span: ["style"]},
-                })
+                }),
             );
         logMessage = logMessage.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-            "$1<a href='$2' target='_blank'>$2</a>$3"
+            "$1<a href='$2' target='_blank'>$2</a>$3",
         );
         logMessage = processLinkTags(logMessage);
         return logMessage;

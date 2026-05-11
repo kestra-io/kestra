@@ -34,7 +34,7 @@
     import {
         useDashboardFilter,
         useNamespaceDashboardFilter,
-        useFlowDashboardFilter
+        useFlowDashboardFilter,
     } from "../filter/configurations";
     import useRestoreUrl from "../../composables/useRestoreUrl";
 
@@ -75,13 +75,13 @@
 
     const dashboardLocation = computed(() => {
         if(props.isFlow){
-            return "flow_overview"
+            return "flow_overview";
         } else if (props.isNamespace){
-            return "namespace_overview"
+            return "namespace_overview";
         } else {
-            return "home"
+            return "home";
         }
-    })
+    });
 
     const padding = computed(() => dashboardLocation.value === "home");
 
@@ -104,17 +104,17 @@
     };
     const getDefaultDashboardBundledInUI = () => {
         if(props.isFlow){
-            return processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string)
+            return processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string);
         } else if(props.isNamespace){
             return YAML_NAMESPACE;
         } else {
-            return YAML_MAIN
+            return YAML_MAIN;
         }
-    }
+    };
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")};
         isDashboardBundledWithUI.value = true;
-    }
+    };
 
     const load = async (id = "default") => {
         if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
@@ -127,9 +127,9 @@
             await router.push({
                 name: route.name,
                 query: route.query,
-                params: {...route.params, dashboard: id}
-            })
-            return
+                params: {...route.params, dashboard: id},
+            });
+            return;
         }
 
         if (dashboardLocation.value === "home") {
@@ -159,10 +159,10 @@
             const maybeDashboard = await dashboardStore.load(id);
 
             if(maybeDashboard){
-                dashboardStore.activeDashboard = maybeDashboard
+                dashboardStore.activeDashboard = maybeDashboard;
             } else {
 
-                console.warn(`default dashboard ${id} configured in the DB was not found`)
+                console.warn(`default dashboard ${id} configured in the DB was not found`);
                 const err = `Dashboard with id '${id}' could not be found`;
                 coreStore.message = {
                     variant: "error",

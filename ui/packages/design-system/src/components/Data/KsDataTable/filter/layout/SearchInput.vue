@@ -53,7 +53,7 @@
         () => props.modelValue,
         newVal => {
             internalValue.value = newVal;
-        }
+        },
     );
 </script>
 

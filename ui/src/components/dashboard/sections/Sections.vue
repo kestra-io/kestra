@@ -94,7 +94,7 @@
     }
 
     defineExpose({
-        refreshCharts
+        refreshCharts,
     });
 
     const props = defineProps<{

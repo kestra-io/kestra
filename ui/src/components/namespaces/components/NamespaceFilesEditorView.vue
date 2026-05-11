@@ -29,7 +29,7 @@
     import {useFlowStore} from "../../../stores/flow";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
 
-    const mounted = useMounted()
+    const mounted = useMounted();
 
     const props = defineProps<{
         namespace: string
@@ -43,16 +43,16 @@
             id: "",
             revision: 0,
             source: `namespace: ${newVal}\n`,
-            errors: []
-        }
-    }, {immediate: true})
+            errors: [],
+        };
+    }, {immediate: true});
 
-    const sideBarSize = useStorage("namespace-files-editor-view-sidebar-size", 1)
-    const editorSize = useStorage("namespace-files-editor-view-editor-size", 4)
+    const sideBarSize = useStorage("namespace-files-editor-view-sidebar-size", 1);
+    const editorSize = useStorage("namespace-files-editor-view-editor-size", 4);
 
     function onResize(_index: number, sizes: number[]) {
-        sideBarSize.value = sizes[0]
-        editorSize.value = sizes[1]
+        sideBarSize.value = sizes[0];
+        editorSize.value = sizes[1];
     }
 
     const {panels} = useStoredPanels(
@@ -60,19 +60,19 @@
         [{
             deserialize: (value: string) => {
                 if(value.startsWith(`${CODE_PREFIX}-`)){
-                    value = value.slice(5)
+                    value = value.slice(5);
                 } else {
                     // not a file tab
-                    return
+                    return;
                 }
                 const tabProps = getTabPropsFromFilePath(value, false);
-                if(!tabProps) return
+                if(!tabProps) return;
 
-                return getTabFromFilesTab(tabProps)
-            }
-        }]
+                return getTabFromFilesTab(tabProps);
+            },
+        }],
 
     );
 
-    useFilesPanels(panels, computed(() => props.namespace))
+    useFilesPanels(panels, computed(() => props.namespace));
 </script>

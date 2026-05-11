@@ -11,13 +11,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckbox} from "element-plus"
+    import {ElCheckbox} from "element-plus";
 
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<any>()
+    const model = defineModel<any>();
 
     const props = withDefaults(defineProps<{
         value?: boolean | string | number
@@ -26,17 +26,17 @@
         indeterminate?: boolean
     }>(), {
         value: undefined,
-    })
+    });
 
     const emit = defineEmits<{
         change: [value: any]
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

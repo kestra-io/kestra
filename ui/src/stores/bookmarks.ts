@@ -1,8 +1,8 @@
-import {defineStore} from "pinia"
+import {defineStore} from "pinia";
 
-const LOCAL_STORAGE_KEY = "starred.bookmarks"
+const LOCAL_STORAGE_KEY = "starred.bookmarks";
 
-const initialPages = localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]"
+const initialPages = localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]";
 interface Page {
     path: string;
     label?: string;
@@ -19,35 +19,35 @@ export const useBookmarksStore = defineStore("bookmarks", {
 
     actions: {
         add(page: Page ) {
-            const pages = this.pages
+            const pages = this.pages;
             if (!pages.find(p => p.path === page.path)) {
-                pages.push(page)
-                this.updateAll(pages)
+                pages.push(page);
+                this.updateAll(pages);
             }
         },
         remove(page: Page) {
-            const pages = this.pages
-            const index = pages.findIndex(p => p.path === page.path)
+            const pages = this.pages;
+            const index = pages.findIndex(p => p.path === page.path);
             if (index > -1) {
-                pages.splice(index, 1)
-                this.updateAll(pages)
+                pages.splice(index, 1);
+                this.updateAll(pages);
             }
         },
         rename(page: Page) {
-            const pages = this.pages
-            const index = pages.findIndex(p => p.path === page.path)
+            const pages = this.pages;
+            const index = pages.findIndex(p => p.path === page.path);
             if (index > -1) {
                 pages.splice(index, 1, {
                     ...pages[index],
-                    label: page.label
-                })
-                this.updateAll(pages)
+                    label: page.label,
+                });
+                this.updateAll(pages);
             }
 
         },
         updateAll(pages: Array<Page>) {
-            this.pages = pages
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pages))
-        }
+            this.pages = pages;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pages));
+        },
     },
-})
+});

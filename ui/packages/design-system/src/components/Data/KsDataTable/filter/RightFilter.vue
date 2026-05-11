@@ -96,7 +96,7 @@
         filter.saveFilter(
             name,
             description,
-            filter.appliedFilters.value
+            filter.appliedFilters.value,
         );
     };
 

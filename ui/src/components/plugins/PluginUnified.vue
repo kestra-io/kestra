@@ -91,7 +91,7 @@
     const displayTitle = computed(() =>
         props.subgroup
             ? formatPluginTitle(subgroupTitles.value[getShortName(props.subgroup)]) ?? formatPluginTitle(getShortName(props.subgroup))
-            : formatPluginTitle(plugin.value?.title)
+            : formatPluginTitle(plugin.value?.title),
     );
 
     const currentIcon = computed(() => props.subgroup ? getSubGroupIcon(props.subgroup) : props.group);
@@ -140,7 +140,7 @@
     const loadSubgroupData = async (matchingPlugin: any, plugins: any[]) => {
         const subgroupPlugin = plugins.find(p =>
             p.group === props.group &&
-            (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`))
+            (p.subGroup === props.subgroup || p.subGroup?.endsWith(`.${props.subgroup}`)),
         );
         if (subgroupPlugin?.title) subgroupTitles.value[getShortName(props.subgroup!)] = subgroupPlugin.title;
         const result = Object.entries(matchingPlugin).reduce((acc, [elementType, elements]) => {

@@ -84,7 +84,7 @@
             .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             .flatMap(([_, value]) => (value as PluginElement[])
                 .filter(({deprecated}) => !deprecated)
-                .map(({cls}) => cls)
+                .map(({cls}) => cls),
             );
     };
 
@@ -136,9 +136,9 @@
                             .map(([elementType, elements]) => [
                                 elementType,
                                 (elements as PluginElement[]).filter(({deprecated}) => !deprecated)
-                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase()))
-                            ])
-                    )
+                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase())),
+                            ]),
+                    ),
                 };
             });
     });
@@ -189,7 +189,7 @@
                         return {
                             type,
                             namespace: namespace,
-                            cls: cls.substring(cls.lastIndexOf(".") + 1)
+                            cls: cls.substring(cls.lastIndexOf(".") + 1),
                         };
                     });
             })

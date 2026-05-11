@@ -57,7 +57,7 @@
                         tabs: [deserializedTab],
                         size: defaultPanelSize.value,
                     },
-                    prepend: element.prepend ?? false
+                    prepend: element.prepend ?? false,
                 };
             }
         }
@@ -98,11 +98,11 @@
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)));
 
     function onRemoveTab(tabValue: string) {
-        const panel = panels.value.find(p => p.tabs.some(t => t.uid === tabValue))
+        const panel = panels.value.find(p => p.tabs.some(t => t.uid === tabValue));
         if (panel) {
-            panel.tabs = panel.tabs.filter(t => t.uid !== tabValue)
+            panel.tabs = panel.tabs.filter(t => t.uid !== tabValue);
             if (panel.activeTab.uid === tabValue) {
-                panel.activeTab = panel.tabs[0]
+                panel.activeTab = panel.tabs[0];
             }
         }
         emit("remove-tab", tabValue);

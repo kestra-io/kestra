@@ -55,7 +55,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_YAML_FUNCTION_INJECTION_KEY
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../../no-code/injectionKeys";
     import {NoCodeProps} from "../../flows/noCodeTypes";
     import {deepEqual} from "../../../utils/utils";
@@ -70,7 +70,7 @@
 
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
-        return !complexObject
+        return !complexObject;
     }
 
     function onTaskUpdateField(key: string, val: any) {
@@ -83,8 +83,8 @@
     }
 
     provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
-        editorUpdate(yaml)
-    })
+        editorUpdate(yaml);
+    });
 
     function onGeneratedYaml(yaml: string) {
         editorUpdate(yaml);
@@ -107,15 +107,15 @@
     }>();
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
-        emit("closeTask")
-    })
+        emit("closeTask");
+    });
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
-        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after");
     });
 
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (...args) => {
-        emit("editTask", ...args)
+        emit("editTask", ...args);
     });
 
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => dashboardStore.schema ?? {}));
@@ -139,7 +139,7 @@
         }else{
             pluginsStore.updateDocumentation();
         }
-    })
+    });
 
     const pluginsStore = usePluginsStore();
 

@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import {within, expect} from "storybook/test"
-import KsDurationPicker from "../../../src/components/Form/KsDurationPicker.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {within, expect} from "storybook/test";
+import KsDurationPicker from "../../../src/components/Form/KsDurationPicker.vue";
 
 const meta: Meta<typeof KsDurationPicker> = {
     title: "Components/Form/KsDurationPicker",
@@ -16,8 +16,8 @@ const meta: Meta<typeof KsDurationPicker> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsDurationPicker>
 
 /** Default – empty picker, all fields at zero */
@@ -25,8 +25,8 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>(null)
-            return {args, value}
+            const value = ref<string | null>(null);
+            return {args, value};
         },
         template: `
             <div style="padding:24px">
@@ -40,19 +40,19 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const customInput = canvas.getByRole("textbox")
-        await expect(customInput).toBeTruthy()
+        const canvas = within(canvasElement);
+        const customInput = canvas.getByRole("textbox");
+        await expect(customInput).toBeTruthy();
     },
-}
+};
 
 /** Pre-filled with an existing duration */
 export const WithValue: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>("P1Y2M3DT4H30M")
-            return {value}
+            const value = ref<string | null>("P1Y2M3DT4H30M");
+            return {value};
         },
         template: `
             <div style="padding:24px">
@@ -66,19 +66,19 @@ export const WithValue: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const customInput = canvas.getByRole("textbox")
-        await expect(customInput).toBeTruthy()
+        const canvas = within(canvasElement);
+        const customInput = canvas.getByRole("textbox");
+        await expect(customInput).toBeTruthy();
     },
-}
+};
 
 /** Time-only duration (no date parts) */
 export const TimeOnly: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>("PT1H30M")
-            return {value}
+            const value = ref<string | null>("PT1H30M");
+            return {value};
         },
         template: `
             <div style="padding:24px">
@@ -91,15 +91,15 @@ export const TimeOnly: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Date-only duration (no time parts) */
 export const DateOnly: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>("P2Y6M15D")
-            return {value}
+            const value = ref<string | null>("P2Y6M15D");
+            return {value};
         },
         template: `
             <div style="padding:24px">
@@ -112,21 +112,21 @@ export const DateOnly: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Interactive – shows live binding with a form */
 export const InForm: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>(null)
-            const submitted = ref<string | null>(null)
+            const value = ref<string | null>(null);
+            const submitted = ref<string | null>(null);
 
             function submit() {
-                submitted.value = value.value
+                submitted.value = value.value;
             }
 
-            return {value, submitted, submit}
+            return {value, submitted, submit};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px;max-width:600px">
@@ -141,4 +141,4 @@ export const InForm: Story = {
             </div>
         `,
     }),
-}
+};

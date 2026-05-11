@@ -10,8 +10,8 @@ const MAIN_KEYS = [
     "id",
     "namespace",
     "description",
-    "inputs"
-]
+    "inputs",
+];
 
 // ---
 
@@ -24,14 +24,14 @@ export const SECTIONS_IDS = [
     "afterExecution",
     "pluginDefaults",
     "outputs",
-]
+];
 
 // once all those fields are displayed, the rest of the fields are displayed
 // in alphabetical order, except the ones in HIDDEN_FIELDS
 const HIDDEN_FIELDS = [
     "deleted",
     "tenantId",
-    "revision"
+    "revision",
 ];
 
 export function useFlowFields(flowSource: ComputedRef<string>){
@@ -62,9 +62,9 @@ export function useFlowFields(flowSource: ComputedRef<string>){
         label: SECTIONS_IDS.includes(key) ? key : t(`no_code.fields.${translateGroup}.${key}`),
         fieldKey: key,
         task: parsedFlow.value,
-    })
+    });
 
-    const fieldsFromSchemaTop = computed(() => MAIN_KEYS.map(key => getFieldFromKey(key, "main")))
+    const fieldsFromSchemaTop = computed(() => MAIN_KEYS.map(key => getFieldFromKey(key, "main")));
 
     const fieldsFromSchemaRest = computed(() => {
         return Object.keys(pluginsStore.flowRootProperties ?? {})
@@ -83,5 +83,5 @@ export function useFlowFields(flowSource: ComputedRef<string>){
         fieldsFromSchemaTop,
         fieldsFromSchemaRest,
         parsedFlow,
-    }
+    };
 }

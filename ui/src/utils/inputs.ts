@@ -28,13 +28,13 @@ export function normalize(type: InputType | undefined, value: any) {
     if (type === "BOOLEAN" && value === undefined) {
         res = "undefined";
     } else if (type === "BOOL" && value === undefined) {
-        res = false
+        res = false;
     } else if (value === null || value === undefined) {
         res = undefined;
     } else if (type === "DATE" || type === "DATETIME") {
-        res = moment(res).toISOString()
+        res = moment(res).toISOString();
     } else if (type === "TIME") {
-        res = moment().startOf("day").add(res, "seconds").toString()
+        res = moment().startOf("day").add(res, "seconds").toString();
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString();
@@ -55,15 +55,15 @@ export function normalizeForComponents(type: InputType | undefined, value: any) 
     if (value === null) {
         res = undefined;
     } else if (type === "DATE" || type === "DATETIME") {
-        res = moment(res).toISOString()
+        res = moment(res).toISOString();
     } else if (type === "TIME") {
-        res = moment().startOf("day").add(res, "seconds").toString()
+        res = moment().startOf("day").add(res, "seconds").toString();
     } else if (type === "ARRAY") {
         res = JSON.stringify(res).toString();
     } else if (type === "BOOLEAN" && value === undefined) {
         res = "undefined";
     } else if (type === "BOOL" && value === undefined) {
-        res = false
+        res = false;
     } else if (type === "STRING" && Array.isArray(res)) {
         res = res.toString();
     }

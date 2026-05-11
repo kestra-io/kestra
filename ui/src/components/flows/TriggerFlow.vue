@@ -92,29 +92,29 @@
 
     export default {
         components: {
-            FlowRun
+            FlowRun,
         },
         props: {
             flowId: {
                 type: String,
-                default: undefined
+                default: undefined,
             },
             namespace: {
                 type: String,
-                default: undefined
+                default: undefined,
             },
             disabled: {
                 type: Boolean,
-                default: false
+                default: false,
             },
             type: {
                 type: String,
-                default: "primary"
+                default: "primary",
             },
             flowSource: {
                 type: String,
-                default: null
-            }
+                default: null,
+            },
         },
         data() {
             return {
@@ -124,8 +124,8 @@
                 localNamespace: undefined,
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
-                    Play: shallowRef(Play)
-                }
+                    Play: shallowRef(Play),
+                },
             };
         },
         methods: {
@@ -145,7 +145,7 @@
                     this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
-                    this.toggleModal(true)
+                    this.toggleModal(true);
                 }
                 else {
                     this.executionsStore.loadNamespaces();
@@ -172,7 +172,7 @@
                 await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
                     namespace: this.namespace,
-                    store: true
+                    store: true,
                 });
             },
             reset() {
@@ -183,8 +183,8 @@
             },
             beforeClose(done){
                 this.reset();
-                done()
-            }
+                done();
+            },
         },
         computed: {
             ...mapStores(useApiStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
@@ -203,7 +203,7 @@
                     return triggerRegex.test(this.flowSource);
                 }
                 return false;
-            }
+            },
         },
         watch: {
             "flowStore.executeFlow": {
@@ -212,7 +212,7 @@
                         this.flowStore.executeFlow = false;
                         this.onClick();
                     }
-                }
+                },
             },
             flowId: {
                 handler() {
@@ -222,7 +222,7 @@
 
                     this.loadDefinition();
                 },
-                immediate: true
+                immediate: true,
             },
             localNamespace: {
                 handler() {
@@ -230,10 +230,10 @@
                         return;
                     }
                     this.executionsStore.loadFlowsExecutable({
-                        namespace: this.localNamespace
+                        namespace: this.localNamespace,
                     });
                 },
-                immediate: true
+                immediate: true,
             },
             localFlow: {
                 handler() {
@@ -242,9 +242,9 @@
                     }
                     this.executionsStore.flow = this.localFlow;
                 },
-                immediate: true
-            }
-        }
+                immediate: true,
+            },
+        },
     };
 </script>
 

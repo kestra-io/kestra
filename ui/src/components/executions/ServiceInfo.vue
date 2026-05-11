@@ -19,7 +19,7 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        component: "b-button"
+        component: "b-button",
     });
 
     defineEmits<{

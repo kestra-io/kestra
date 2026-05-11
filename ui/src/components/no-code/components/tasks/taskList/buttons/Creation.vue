@@ -15,7 +15,7 @@
         parentPathComplete: string;
         blockSchemaPath: string;
         refPath?: number;
-    }>()
+    }>();
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 

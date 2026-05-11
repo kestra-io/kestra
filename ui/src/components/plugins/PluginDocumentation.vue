@@ -68,7 +68,7 @@
         overrideIntro: null,
         absolute: false,
         fetchPluginDocumentation: true,
-        plugin: null
+        plugin: null,
     });
 
     const miscStore = useMiscStore();

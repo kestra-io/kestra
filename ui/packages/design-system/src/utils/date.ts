@@ -17,4 +17,4 @@ export const dateFilter = (dateString: string, format?: string) => {
     return momentInstance
         .tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? momentTz.tz.guess())
         .format(f);
-}
+};

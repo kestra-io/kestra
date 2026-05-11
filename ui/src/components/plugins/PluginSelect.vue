@@ -45,7 +45,7 @@
     import {
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
-        SCHEMA_DEFINITIONS_INJECTION_KEY
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../no-code/injectionKeys";
     import {getValueAtJsonPath} from "../../utils/utils";
 
@@ -63,13 +63,13 @@
             console.error("Definition key is required for PluginSelect component");
         }
         return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
-    })
+    });
 
     onBeforeMount(() => {
         if (blockType === "pluginDefaults" || isPluginBlock) {
             pluginsStore.listWithSubgroup({includeDeprecated: false});
         }
-    })
+    });
 
     const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
         if (item.allOf) {
@@ -84,7 +84,7 @@
 
     const taskModelsSets = computed(() => {
         return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
-            const def = rootDefinitions.value?.[item]
+            const def = rootDefinitions.value?.[item];
 
             if (!def || def.$deprecated) {
                 return acc;
@@ -103,9 +103,9 @@
 
                 acc.set(val, def.title ?? val);
             }
-            return acc
+            return acc;
         }, new Map<string, string>());
-    })
+    });
 
     const taskModels = computed(() => {
         const entries = blockType === "pluginDefaults"
@@ -133,7 +133,7 @@
 
     const props = defineProps<{
         blockSchemaPath: string,
-    }>()
+    }>();
 </script>
 
 <style scoped lang="scss">

@@ -1,5 +1,5 @@
-import {ElMessage} from "element-plus"
-import type {MessageHandler, MessageOptions, MessageParams, MessageParamsWithType} from "element-plus"
+import {ElMessage} from "element-plus";
+import type {MessageHandler, MessageOptions, MessageParams, MessageParamsWithType} from "element-plus";
 
 // KsMessage is the Kestra design-system abstraction over ElMessage from Element Plus.
 // It mirrors the ElMessage API exactly so existing call sites can do a drop-in import replacement.
@@ -26,6 +26,6 @@ export const KsMessage: KsMessageType = Object.assign(
             ElMessage.error(options as MessageParamsWithType),
         closeAll: (type?: MessageOptions["type"]): void => ElMessage.closeAll(type),
     },
-)
+);
 
-export default KsMessage
+export default KsMessage;

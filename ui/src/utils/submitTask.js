@@ -1,9 +1,9 @@
-import _cloneDeep from "lodash/cloneDeep"
-import {useExecutionsStore} from "../stores/executions"
+import _cloneDeep from "lodash/cloneDeep";
+import {useExecutionsStore} from "../stores/executions";
 import {useOnboardingV2Store} from "../stores/onboardingV2";
 
 export const inputsToFormData = (submitor, inputsList, values) => {
-    let inputValuesCloned = _cloneDeep(values)
+    let inputValuesCloned = _cloneDeep(values);
 
     for (const input of inputsList || []) {
         if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === null || inputValuesCloned[input.id] === "") {
@@ -34,7 +34,7 @@ export const inputsToFormData = (submitor, inputsList, values) => {
     }
 
     return formData;
-}
+};
 
 export const executeTask = (submitor, flow, values, options) => {
     const formData = inputsToFormData(submitor, flow.inputs, values);
@@ -44,7 +44,7 @@ export const executeTask = (submitor, flow, values, options) => {
     executionsStore
         .triggerExecution({
             ...options,
-            formData
+            formData,
         })
         .then(response => {
             executionsStore.execution = response.data;
@@ -58,11 +58,11 @@ export const executeTask = (submitor, flow, values, options) => {
                             flowId: response.data.flowId,
                             id: response.data.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
-                            tenant: submitor.$route.params.tenant
+                            tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,
-                    })
-                    window.open(resolved.href, "_blank")
+                    });
+                    window.open(resolved.href, "_blank");
                 } else {
                     submitor.$router.push({
                         name: "executions/update",
@@ -71,10 +71,10 @@ export const executeTask = (submitor, flow, values, options) => {
                             flowId: response.data.flowId,
                             id: response.data.id,
                             tab: localStorage.getItem("executeDefaultTab") || "gantt",
-                            tenant: submitor.$route.params.tenant
+                            tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,
-                    })
+                    });
                 }
             }
             return response.data;
@@ -83,5 +83,5 @@ export const executeTask = (submitor, flow, values, options) => {
             if(!options.nextStep){
                 submitor.$toast().success(submitor.$t("triggered done", {name: execution.id}));
             }
-        })
-}
+        });
+};

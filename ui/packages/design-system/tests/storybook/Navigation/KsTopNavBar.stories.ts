@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {KsButton, KsDropdownItem, KsDropdownMenu, KsTag, KsTopNavBar} from "../../../src";
 
 const meta: Meta<typeof KsTopNavBar> = {
@@ -22,8 +22,8 @@ const meta: Meta<typeof KsTopNavBar> = {
         beta: {control: "boolean"},
         isBookmarked: {control: "boolean"},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsTopNavBar>
 
 export const Default: Story = {
@@ -33,7 +33,7 @@ export const Default: Story = {
             <ks-top-nav-bar title="Flows" />
         `,
     }),
-}
+};
 
 export const WithBreadcrumb: Story = {
     render: () => ({
@@ -48,7 +48,7 @@ export const WithBreadcrumb: Story = {
             />
         `,
     }),
-}
+};
 
 export const WithDescription: Story = {
     render: () => ({
@@ -61,7 +61,7 @@ export const WithDescription: Story = {
             />
         `,
     }),
-}
+};
 
 export const BetaBadge: Story = {
     render: () => ({
@@ -74,7 +74,7 @@ export const BetaBadge: Story = {
             </ks-top-nav-bar>
         `,
     }),
-}
+};
 
 export const Bookmarked: Story = {
     render: () => ({
@@ -83,7 +83,7 @@ export const Bookmarked: Story = {
             <ks-top-nav-bar title="Flows" :is-bookmarked="true" />
         `,
     }),
-}
+};
 
 export const WithActions: Story = {
     render: () => ({
@@ -101,7 +101,7 @@ export const WithActions: Story = {
             </ks-top-nav-bar>
         `,
     }),
-}
+};
 
 export const CustomTitle: Story = {
     render: () => ({
@@ -114,4 +114,4 @@ export const CustomTitle: Story = {
             </ks-top-nav-bar>
         `,
     }),
-}
+};

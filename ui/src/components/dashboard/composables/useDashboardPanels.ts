@@ -20,7 +20,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
-            label: "Code"
+            label: "Code",
         },
         uid: "code",
         component: markRaw(DashboardCodeEditor),
@@ -28,7 +28,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(DotsSquareIcon),
-            label: "No Code"
+            label: "No Code",
         },
         uid: "nocode",
         component: markRaw(DashboardNoCodeEditor),
@@ -36,7 +36,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(FileDocumentIcon),
-            label: "Documentation"
+            label: "Documentation",
         },
         uid: "doc",
         component: () => h(PluginDocumentationWrapper, {overrideIntro: intro, absolute: true}),
@@ -44,7 +44,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(ChartBarIcon),
-            label: "Charts"
+            label: "Charts",
         },
         uid: "charts",
         component: markRaw(ChartViewWrapper),
@@ -52,11 +52,11 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(ViewDashboardIcon),
-            label: "Preview"
+            label: "Preview",
         },
         uid: "preview",
         component: markRaw(PreviewDashboardWrapper),
-    }
+    },
 ].map((e): EditorElement => ({
     // add a default deserializer
     deserialize: (value: string) => {

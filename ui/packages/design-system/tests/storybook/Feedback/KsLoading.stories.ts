@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import {vKsLoading} from "../../../src/components/Feedback/KsLoading"
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {vKsLoading} from "../../../src/components/Feedback/KsLoading";
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
 
 const meta: Meta = {
     title: "Components/Feedback/KsLoading",
@@ -9,8 +9,8 @@ const meta: Meta = {
     parameters: {
         docs: {description: {component: "KsLoading is the Kestra design-system abstraction over `vLoading` from Element Plus. Use the `v-ks-loading` directive on any element to overlay a loading spinner. Accepts a boolean or a `LoadingOptions` object."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj
 
 export const Default: Story = {
@@ -18,14 +18,14 @@ export const Default: Story = {
         directives: {KsLoading: vKsLoading},
         template: "<div v-ks-loading=\"true\" style=\"height:120px;padding:24px\"><p>Content behind the overlay.</p></div>",
     }),
-}
+};
 
 export const NotLoading: Story = {
     render: () => ({
         directives: {KsLoading: vKsLoading},
         template: "<div v-ks-loading=\"false\" style=\"padding:24px\"><p>Loading is off — content is fully visible.</p></div>",
     }),
-}
+};
 
 export const WithText: Story = {
     render: () => ({
@@ -40,7 +40,7 @@ export const WithText: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithCustomBackground: Story = {
     render: () => ({
@@ -55,15 +55,15 @@ export const WithCustomBackground: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const ToggleLoading: Story = {
     render: () => ({
         directives: {KsLoading: vKsLoading},
         components: {KsButton},
         setup() {
-            const isLoading = ref(true)
-            return {isLoading}
+            const isLoading = ref(true);
+            return {isLoading};
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
@@ -76,4 +76,4 @@ export const ToggleLoading: Story = {
             </div>
         `,
     }),
-}
+};

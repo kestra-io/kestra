@@ -102,8 +102,8 @@
         case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break;
         default: await dashboardStore.saveDefaults({defaultHomeDashboard: id});
         }
-        dashboards.value = []
-        await fetchDashboards()
+        dashboards.value = [];
+        await fetchDashboards();
     };
 
     const edit = (id: string) => {

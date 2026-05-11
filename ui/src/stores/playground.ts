@@ -1,7 +1,7 @@
 import {computed, ref, watch, type Ref} from "vue";
 import {defineStore} from "pinia";
-import {useUrlSearchParams} from "@vueuse/core"
-import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils"
+import {useUrlSearchParams} from "@vueuse/core";
+import * as VueFlowUtils from "@kestra-io/topology/vue-flow-utils";
 import {Execution, useExecutionsStore} from "./executions";
 import {normalize} from "../utils/inputs";
 import {useRoute, useRouter} from "vue-router";
@@ -20,17 +20,17 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const flowStore = useFlowStore();
     const params = useUrlSearchParams("history", {
-        removeFalsyValues: true
-    })
+        removeFalsyValues: true,
+    });
 
     const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem("editorPlayground") === "true");
     watch(enabled, (newValue) => {
         if (newValue) {
-            params.playground = "on"
+            params.playground = "on";
         } else {
-            params.playground = ""
+            params.playground = "";
         }
-    })
+    });
 
     const route = useRoute();
     const router = useRouter();
@@ -49,13 +49,13 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 playground: "on",
                 runUntilTaskId,
                 runDownstreamTasks: runDownstreamTasks ? "true" : undefined,
-            }
+            },
         });
     }
 
-    const executions = ref([]) as Ref<ExecutionWithGraph[]>
+    const executions = ref([]) as Ref<ExecutionWithGraph[]>;
     function addExecution(execution: ExecutionWithGraph, graph: VueFlowUtils.FlowGraph) {
-        execution.graph = graph
+        execution.graph = graph;
         executions.value.unshift(execution);
     }
 
@@ -69,7 +69,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map();
 
     async function triggerExecution(flow: Flow, breakpoints?: string[]) {
-        const defaultInputValues: Record<string, any> = {}
+        const defaultInputValues: Record<string, any> = {};
         for (const input of (flow.inputs || [])) {
             const {type, defaults} = input;
             // for dates, no need to normalize the value
@@ -89,7 +89,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
-        })
+        });
     }
 
     async function replayOrTriggerExecution(taskId?: string, breakpoints?: string[], graph?: any) {
@@ -104,7 +104,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 id: flowStore.flow.id || "",
                 revision: lastExecution.flowRevision.toString(),
                 store: false,
-            })
+            });
 
             if(!isEqual(lastExecutionFlow.inputs, flowStore.flow.inputs)
                 || !isEqual(lastExecutionFlow.labels, flowStore.flow.labels)){
@@ -164,17 +164,17 @@ export const usePlaygroundStore = defineStore("playground", () => {
         State.RUNNING,
         State.RESTARTED,
         State.CREATED,
-    ]
+    ];
 
     const executionState = computed(() => {
         return latestExecution.value?.state.current;
-    })
+    });
 
     const readyToStartPure = computed(()=>{
         const executionReady = !latestExecution.value || !nonFinalStates.includes(executionState.value);
         const flowValid = !(flowStore.haveChange && flowStore.flowErrors);
         return executionReady && flowValid;
-    })
+    });
 
     const readyToStart = ref(readyToStartPure.value);
     watch(readyToStartPure, (newValue) => {
@@ -183,7 +183,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 readyToStart.value = newValue;
             }, 1000);
         } else {
-            readyToStart.value = newValue
+            readyToStart.value = newValue;
         }
     });
 
@@ -218,7 +218,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                     ...route.query,
                     runUntilTaskId: undefined,
                     runDownstreamTasks: undefined,  // remove the query parameter
-                }
+                },
             });
         }
     }
@@ -228,7 +228,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     async function runUntilTask(taskId?: string, runDownstreamTasks = false) {
         if(readyToStart.value === false) {
             console.warn("Playground is not ready to start, latest execution is still in progress");
-            return
+            return;
         }
         if (flowStore.haveChange && flowStore.flowErrors) {
             return;
@@ -241,7 +241,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
                 async () => {
                     await flowStore.saveAll();
                     navigateToEdit(taskId, runDownstreamTasks);
-                }
+                },
             );
             return;
         }
@@ -295,7 +295,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (newValue) {
             updateExecution(newValue);
         }
-    })
+    });
 
     const dropdownOpened = ref<boolean>(false);
 
@@ -308,6 +308,6 @@ export const usePlaygroundStore = defineStore("playground", () => {
         clearExecutions,
         runUntilTask,
         runFromQuery,
-        executionState
-    }
-})
+        executionState,
+    };
+});

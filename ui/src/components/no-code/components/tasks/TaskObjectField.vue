@@ -96,15 +96,15 @@
         task: any;
         required?: string[];
         disabled?: boolean;
-    }>()
+    }>();
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
         return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
-    })
+    });
 
-    const hasSelectedASchema = ref(false)
+    const hasSelectedASchema = ref(false);
 
 
     const componentProps = computed(() => {
@@ -119,13 +119,13 @@
             task: props.task,
             root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
-            required: isRequired.value
-        }
-    })
+            required: isRequired.value,
+        };
+    });
 
     const hasTooltip = computed(() => {
         return props.schema?.title || props.schema?.description;
-    })
+    });
 
     const helpText = computed(() => {
         const schema = props.schema;
@@ -136,25 +136,25 @@
             (schema.title && schema.description ? "\n" : "") +
             (schema.description ? schema.description : "")
         );
-    })
+    });
 
     const isAnyOf = computed(() => {
         return Boolean(props.schema?.anyOf);
-    })
+    });
 
     const isBoolean = computed(() => {
         return type.value === "boolean";
-    })
+    });
 
     const simpleType = computed(() => {
         return type.value.ksTaskName;
-    })
+    });
 
     const {getBlockComponent} = useBlockComponent();
 
     const type = computed(() => {
-        return getBlockComponent.value(props.schema ?? {}, props.fieldKey)
-    })
+        return getBlockComponent.value(props.schema ?? {}, props.fieldKey);
+    });
 
     /** Whether the component is rendered in inline mode (used for Plugin Defaults) */
     const inlineMode = inject(INLINE_TASK_MODE_INJECTION_KEY, false);

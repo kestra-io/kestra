@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsAvatar from "../../../src/components/Data/KsAvatar.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsAvatar from "../../../src/components/Data/KsAvatar.vue";
 
 const meta: Meta<typeof KsAvatar> = {
     title: "Components/Data/KsAvatar",
@@ -13,18 +13,18 @@ const meta: Meta<typeof KsAvatar> = {
     parameters: {
         docs: {description: {component: "KsAvatar is the Kestra design-system abstraction over `ElAvatar` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsAvatar>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsAvatar},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px\"><ks-avatar v-bind=\"args\" /></div>",
     }),
     args: {src: "https://cube.elemecdn.com/3/7c/3ea0eb2965f53f9570b3a1a9891c3png.png"},
-}
+};
 
 export const Shapes: Story = {
     render: () => ({
@@ -36,7 +36,7 @@ export const Shapes: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const Sizes: Story = {
     render: () => ({
@@ -49,7 +49,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Fit container – controls how image fills the avatar area */
 export const FitOptions: Story = {
@@ -69,7 +69,7 @@ export const FitOptions: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Types – icon, image, and text avatars */
 export const Types: Story = {
@@ -83,7 +83,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithFallback: Story = {
     render: () => ({
@@ -94,4 +94,4 @@ export const WithFallback: Story = {
             </div>
         `,
     }),
-}
+};

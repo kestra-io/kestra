@@ -6,7 +6,7 @@ import {
     encodeFiltersToQuery,
     isValidFilter,
     getUniqueFilters,
-    clearFilterQueryParams
+    clearFilterQueryParams,
 } from "../utils/helpers";
 import {
     type AppliedFilter,
@@ -36,7 +36,7 @@ export function useFilters(
     const {
         markAsPreApplied,
         hasPreApplied,
-        getPreApplied
+        getPreApplied,
     } = usePreAppliedFilters();
 
     const isDefaultVisibleKey = (key: string) =>
@@ -66,7 +66,7 @@ export function useFilters(
         dismissedDefaultVisibleKeys.value = new Set(
             configuration.keys
                 ?.filter((key) => key.visibleByDefault)
-                .map((key) => key.key) ?? []
+                .map((key) => key.key) ?? [],
         );
     };
 
@@ -75,7 +75,7 @@ export function useFilters(
     };
 
     const hasDismissedDefaultVisibleKeys = computed(
-        () => dismissedDefaultVisibleKeys.value.size > 0
+        () => dismissedDefaultVisibleKeys.value.size > 0,
     );
 
     const updateSearchQuery = (query: Record<string, any>) => {
@@ -116,7 +116,7 @@ export function useFilters(
         comparator: Comparators,
         value: any,
         valueLabel: string,
-        idSuffix: string
+        idSuffix: string,
     ): AppliedFilter => ({
         id: `${key}-${idSuffix}-${Date.now()}`,
         key,
@@ -124,14 +124,14 @@ export function useFilters(
         comparator,
         comparatorLabel: COMPARATOR_LABELS[comparator],
         value,
-        valueLabel
+        valueLabel,
     });
 
     const createTimeRangeFilter = (
         config: any,
         startDate: Date,
         endDate: Date,
-        comparator = Comparators.EQUALS
+        comparator = Comparators.EQUALS,
     ): AppliedFilter => {
         return {
             ...createAppliedFilter(
@@ -140,9 +140,9 @@ export function useFilters(
                 comparator,
                 {startDate, endDate},
                 `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-                keyOfComparator(comparator)
+                keyOfComparator(comparator),
             ),
-            comparatorLabel: "Is Between"
+            comparatorLabel: "Is Between",
         };
     };
 
@@ -155,17 +155,17 @@ export function useFilters(
                 value: combinedValue,
                 valueLabel: combinedValue.length > 1
                     ? `${combinedValue[0]} +${combinedValue.length - 1}`
-                    : combinedValue[0] ?? ""
+                    : combinedValue[0] ?? "",
             };
         }
 
         if (config?.valueType === "multi-select" && !isTextOp) {
             const combinedValue = params.flatMap(p =>
-                Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? []
+                Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? [],
             );
             return {
                 value: combinedValue,
-                valueLabel: combinedValue.join(", ")
+                valueLabel: combinedValue.join(", "),
             };
         }
 
@@ -179,7 +179,7 @@ export function useFilters(
 
         return {
             value,
-            valueLabel: value instanceof Date ? value.toLocaleDateString() : value
+            valueLabel: value instanceof Date ? value.toLocaleDateString() : value,
         };
     };
 
@@ -193,7 +193,7 @@ export function useFilters(
             if (["startDate", "endDate"].includes(param?.field)) {
                 dateFilters[param.field] = {
                     comparatorKey: param?.operation ?? "",
-                    value: param?.value as string
+                    value: param?.value as string,
                 };
             } else {
                 if (!fieldParams.has(param?.field)) fieldParams.set(param.field, []);
@@ -214,7 +214,7 @@ export function useFilters(
             const {value, valueLabel} = processFieldValue(config, params, field, comparator);
             filtersMap.set(
                 field,
-                createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation)
+                createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation),
             );
         });
 
@@ -230,8 +230,8 @@ export function useFilters(
                         timeRangeConfig,
                         new Date(dateFilters.startDate?.value),
                         new Date(dateFilters.endDate?.value),
-                        comparator
-                    )
+                        comparator,
+                    ),
                 );
             }
         }
@@ -275,13 +275,13 @@ export function useFilters(
 
     const createDefaultVisibleFilters = (
         excludedKeys = new Set<string>(),
-        hiddenDefaultVisibleKeys = dismissedDefaultVisibleKeys.value
+        hiddenDefaultVisibleKeys = dismissedDefaultVisibleKeys.value,
     ) =>
         configuration.keys
             ?.filter(key =>
                 key.visibleByDefault &&
                 !excludedKeys.has(key.key) &&
-                !hiddenDefaultVisibleKeys.has(key.key)
+                !hiddenDefaultVisibleKeys.has(key.key),
             )
             .map(key => {
                 const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
@@ -289,7 +289,7 @@ export function useFilters(
                 const valueLabel = defaultVisibleValueLabel(value);
                 return {
                     ...createAppliedFilter(key.key, key, comparator, value, valueLabel, "default"),
-                    isDefaultVisible: true
+                    isDefaultVisible: true,
                 } as AppliedFilter;
             }) ?? [];
 
@@ -313,7 +313,7 @@ export function useFilters(
 
         appliedFilters.value = [
             ...parsedFilters,
-            ...createDefaultVisibleFilters(parsedFilterKeys, dismissedDefaultVisibleKeys.value)
+            ...createDefaultVisibleFilters(parsedFilterKeys, dismissedDefaultVisibleKeys.value),
         ];
     };
 
@@ -342,7 +342,7 @@ export function useFilters(
         restoreDefaultVisibleKey(updatedFilter.key);
         appliedFilters.value = [
             ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
-            updatedFilter
+            updatedFilter,
         ];
         updateRoute(hasValue(updatedFilter));
     };
@@ -375,8 +375,8 @@ export function useFilters(
         if (defaultFilterOptions.includeTimeRange) {
             const timeRangeConfig = configuration.keys?.find((k) => k.key === "timeRange");
             const timeRangeQueryKey = "filters[timeRange][EQUALS]";
-            const defaultTimeRange = defaultQuery[timeRangeQueryKey];
-            const timeRangeValue = Array.isArray(defaultTimeRange) ? defaultTimeRange[0] : defaultTimeRange;
+            const defaultTimeRangeForReset = defaultQuery[timeRangeQueryKey];
+            const timeRangeValue = Array.isArray(defaultTimeRangeForReset) ? defaultTimeRangeForReset[0] : defaultTimeRangeForReset;
 
             if (timeRangeConfig && typeof timeRangeValue === "string" && timeRangeValue.length > 0) {
                 const comparator = (timeRangeConfig.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
@@ -387,8 +387,8 @@ export function useFilters(
                         comparator,
                         timeRangeValue,
                         timeRangeValue,
-                        "default"
-                    )
+                        "default",
+                    ),
                 );
             }
         }

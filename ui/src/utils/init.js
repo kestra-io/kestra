@@ -2,18 +2,18 @@ import {createRouter, createWebHistory} from "vue-router";
 import {configure} from "vue-gtag";
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
-import "moment/dist/locale/de"
-import "moment/dist/locale/es"
-import "moment/dist/locale/fr"
-import "moment/dist/locale/hi"
-import "moment/dist/locale/it"
-import "moment/dist/locale/ja"
-import "moment/dist/locale/ko"
-import "moment/dist/locale/pl"
-import "moment/dist/locale/pt"
-import "moment/dist/locale/ru"
-import "moment/dist/locale/zh-cn"
-import "moment/dist/locale/pt-br"
+import "moment/dist/locale/de";
+import "moment/dist/locale/es";
+import "moment/dist/locale/fr";
+import "moment/dist/locale/hi";
+import "moment/dist/locale/it";
+import "moment/dist/locale/ja";
+import "moment/dist/locale/ko";
+import "moment/dist/locale/pl";
+import "moment/dist/locale/pt";
+import "moment/dist/locale/ru";
+import "moment/dist/locale/zh-cn";
+import "moment/dist/locale/pt-br";
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import VueVirtualScroller from "vue-virtual-scroller";
@@ -26,7 +26,7 @@ import {setDesignSystemLocale, setMomentInstance, setDateFormatter, registerDesi
 import {date as dateFilter} from "./filters";
 import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
-import "./global"
+import "./global";
 import {useDocStore} from "../stores/doc";
 
 
@@ -40,7 +40,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
     const router = createRouter({
         // make e2e tests pass in dev mode
         history: createWebHistory(import.meta.env.DEV ? "/ui" : window.KESTRA_UI_PATH),
-        routes
+        routes,
     });
 
     const piniaStore = createPinia();
@@ -61,25 +61,25 @@ export default async (app, routes, _stores, translations, additionalTranslations
         // propagate showDocId query param
         // to the next page to facilitate docs binding
         if(to.query["showDocId"] === undefined && from.query["showDocId"] !== undefined){
-            return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
+            return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}};
         }
-    })
+    });
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
-    })
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to));
+    });
 
     // avoid loading router in storybook
     // as it conflicts with storybook's
     if(routes.length){
-        app.use(router)
+        app.use(router);
     }
 
     // Google Analytics
     if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
         configure({
-            tagId: window.KESTRA_GOOGLE_ANALYTICS
-        })
+            tagId: window.KESTRA_GOOGLE_ANALYTICS,
+        });
     }
 
     // l18n
@@ -113,15 +113,15 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // others plugins
     app.use(VueSidebarMenu);
-    app.use(Toast)
-    app.provide("Toast", Toast)
-    app.use(VueVirtualScroller)
+    app.use(Toast);
+    app.provide("Toast", Toast);
+    app.use(VueVirtualScroller);
 
     // filters
     app.config.globalProperties.$filters = filters;
 
     // kestra design system (registers KsSelect, etc. globally)
-    app.use(KestraDesignSystem)
+    app.use(KestraDesignSystem);
 
     // navigation guard
     createUnsavedChanged(app, router);
@@ -140,7 +140,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
     componentsByName.filter(([name], index) => componentsNames.lastIndexOf(name) === index)
         .forEach(([name, component]) => app.component(name, component));
 
-    app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
+    app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend;
 
     return {router, piniaStore};
-}
+};

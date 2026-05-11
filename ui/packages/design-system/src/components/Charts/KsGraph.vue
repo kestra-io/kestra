@@ -10,18 +10,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watchEffect} from "vue"
+    import {computed, ref, watchEffect} from "vue";
 
-    import {use} from "echarts/core"
-    import type {ECharts} from "echarts/core"
-    import {GraphChart} from "echarts/charts"
+    import {use} from "echarts/core";
+    import type {ECharts} from "echarts/core";
+    import {GraphChart} from "echarts/charts";
 
-    import KsEchart from "./KsEchart.vue"
-    import {deepMerge, ChartRenderer} from "./ksChartUtils"
+    import KsEchart from "./KsEchart.vue";
+    import {deepMerge, ChartRenderer} from "./ksChartUtils";
 
-    use([GraphChart])
+    use([GraphChart]);
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     export interface KsGraphNode {
         id: string
@@ -43,7 +43,7 @@
     const emit = defineEmits<{
         "node-click": [node: KsGraphNode]
         "node-hover": [node: KsGraphNode | null]
-    }>()
+    }>();
 
     const props = withDefaults(
         defineProps<{
@@ -71,12 +71,12 @@
             roam: true,
             renderer: ChartRenderer.CANVAS,
         },
-    )
+    );
 
     const isLoading = computed(() => {
-        if (props.loading !== undefined) return props.loading
-        return props.nodes === null || props.nodes === undefined
-    })
+        if (props.loading !== undefined) return props.loading;
+        return props.nodes === null || props.nodes === undefined;
+    });
 
     const mergedOption = computed(() => {
         const base: Record<string, unknown> = {
@@ -100,76 +100,76 @@
                     },
                 },
             ],
-        }
-        const overrides = props.options ?? {}
+        };
+        const overrides = props.options ?? {};
         // Merge series elements individually so partial overrides preserve base fields
         if (Array.isArray(overrides.series) && Array.isArray(base.series)) {
-            const baseSeries = base.series as Record<string, unknown>[]
-            const overrideSeries = overrides.series as Record<string, unknown>[]
+            const baseSeries = base.series as Record<string, unknown>[];
+            const overrideSeries = overrides.series as Record<string, unknown>[];
             const mergedSeries = baseSeries.map((item, i) =>
                 i < overrideSeries.length ? deepMerge(item, overrideSeries[i]) : item,
-            )
-            mergedSeries.push(...overrideSeries.slice(baseSeries.length))
-            const {series: _, ...restOverrides} = overrides
-            return {...deepMerge(base, restOverrides), series: mergedSeries}
+            );
+            mergedSeries.push(...overrideSeries.slice(baseSeries.length));
+            const {series: _, ...restOverrides} = overrides;
+            return {...deepMerge(base, restOverrides), series: mergedSeries};
         }
-        return deepMerge(base, overrides)
-    })
+        return deepMerge(base, overrides);
+    });
 
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null);
 
-    const getChart = (): ECharts | null => ksEchartRef.value?.getEchartsInstance() ?? null
+    const getChart = (): ECharts | null => ksEchartRef.value?.getEchartsInstance() ?? null;
 
     watchEffect(() => {
-        const chart = getChart()
-        if (!chart) return
+        const chart = getChart();
+        if (!chart) return;
 
         chart.on("click", (params: Record<string, unknown>) => {
             if (params.dataType === "node") {
-                emit("node-click", params.data as KsGraphNode)
+                emit("node-click", params.data as KsGraphNode);
             }
-        })
+        });
         chart.on("mouseover", (params: Record<string, unknown>) => {
             if (params.dataType === "node") {
-                emit("node-hover", params.data as KsGraphNode)
+                emit("node-hover", params.data as KsGraphNode);
             }
-        })
+        });
         chart.on("mouseout", (params: Record<string, unknown>) => {
             if (params.dataType === "node") {
-                emit("node-hover", null)
+                emit("node-hover", null);
             }
-        })
-    })
+        });
+    });
 
     const currentZoom = (chart: ECharts): number => {
-        const option = chart.getOption() as Record<string, unknown>
-        const series = option?.series as Record<string, unknown>[]
-        return (series?.[0]?.zoom as number) ?? 1
-    }
+        const option = chart.getOption() as Record<string, unknown>;
+        const series = option?.series as Record<string, unknown>[];
+        return (series?.[0]?.zoom as number) ?? 1;
+    };
 
     defineExpose({
         getEchartsInstance: getChart,
 
         zoomIn() {
-            const chart = getChart()
-            if (!chart) return
-            chart.setOption({series: [{zoom: currentZoom(chart) * 1.2}]})
+            const chart = getChart();
+            if (!chart) return;
+            chart.setOption({series: [{zoom: currentZoom(chart) * 1.2}]});
         },
 
         zoomOut() {
-            const chart = getChart()
-            if (!chart) return
-            chart.setOption({series: [{zoom: Math.max(0.1, currentZoom(chart) / 1.2)}]})
+            const chart = getChart();
+            if (!chart) return;
+            chart.setOption({series: [{zoom: Math.max(0.1, currentZoom(chart) / 1.2)}]});
         },
 
         fit() {
-            const chart = getChart()
-            if (!chart) return
-            chart.resize()
-            chart.setOption({series: [{zoom: 1, center: ["50%", "50%"]}]})
+            const chart = getChart();
+            if (!chart) return;
+            chart.resize();
+            chart.setOption({series: [{zoom: 1, center: ["50%", "50%"]}]});
         },
 
         exportAsImage: (type: "jpeg" | "png", filename?: string) =>
             ksEchartRef.value?.exportAsImage(type, filename),
-    })
+    });
 </script>

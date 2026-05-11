@@ -9,10 +9,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPagination} from "element-plus"
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {ElPagination} from "element-plus";
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         total?: number
@@ -23,16 +23,16 @@
         size?: "small" | "default" | "large"
         background?: boolean
         disabled?: boolean
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     const emit = defineEmits<{
         "update:currentPage": [page: number]
         "update:pageSize": [size: number]
         currentChange: [page: number]
         sizeChange: [size: number]
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

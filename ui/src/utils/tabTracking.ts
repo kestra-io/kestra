@@ -107,8 +107,8 @@ function sendTrackingEvent(eventData: any) {
             editor_tab: {
                 action: eventData.action,
                 tab_type: eventData.tab_type,
-                ...eventData.metadata
-            }
+                ...eventData.metadata,
+            },
         };
 
         delete backendData.action;
@@ -120,7 +120,7 @@ function sendTrackingEvent(eventData: any) {
         // Send to PostHog via API store (handles PostHog initialization internally)
         const posthogData = {
             ...sendingData,
-            type: "EDITOR_TAB_ACTION"
+            type: "EDITOR_TAB_ACTION",
         };
         apiStore.posthogEvents(posthogData);
     } catch {
@@ -132,7 +132,7 @@ function makeEvent(action: string, tab_type: string, metadata?: Record<string, a
     sendTrackingEvent({
         action,
         tab_type,
-        metadata: metadata ?? {}
+        metadata: metadata ?? {},
     });
 }
 

@@ -12,7 +12,7 @@
 
     const props =defineProps<{
         cronExpression:string;
-    }>()
+    }>();
 
     const humanReadableCron = computed(() => {
         return cronstrue.toString(props.cronExpression, {locale: Utils.getLang()});

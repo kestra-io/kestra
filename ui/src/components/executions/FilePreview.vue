@@ -125,13 +125,13 @@
     const props = defineProps({
         value: {
             type: String,
-            required: true
+            required: true,
         },
         executionId: {
             type: String,
             required: false,
-            default: undefined
-        }
+            default: undefined,
+        },
     });
 
     const emits = defineEmits(["preview"]);
@@ -154,7 +154,7 @@
         {value: "Cp1251", label: "Windows 1251"},
         {value: "Cp1252", label: "Windows 1252"},
         {value: "UTF-16", label: "UTF-16"},
-        {value: "Cp500", label: "EBCDIC IBM-500"}
+        {value: "Cp500", label: "EBCDIC IBM-500"},
     ];
 
     const configPreviewInitialRows = (): number => {
@@ -167,7 +167,7 @@
 
     const maxPreviewOptions = computed(() => {
         return [50, 100, 250, 500, 1000, 5000, 10000, 25000, 50000].filter(
-            value => value <= configPreviewMaxRows()
+            value => value <= configPreviewMaxRows(),
         );
     });
 
@@ -202,14 +202,14 @@
         const data = {
             path: props.value,
             maxRows: maxPreview.value,
-            encoding: encoding.value
+            encoding: encoding.value,
         };
         selectedPreview.value = props.value;
         if (props.executionId !== undefined) {
             executionsStore
                 .filePreview({
                     executionId: props.executionId,
-                    ...data
+                    ...data,
                 })
                 .then(response => {
                     preview.value = response;
@@ -221,7 +221,7 @@
                 callback: (response: Preview) => {
                     preview.value = response;
                     isPreviewOpen.value = true;
-                }
+                },
             });
         }
     };

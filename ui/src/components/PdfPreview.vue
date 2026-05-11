@@ -31,8 +31,8 @@
     const props = defineProps({
         source: {
             type: String,
-            required: true
-        }
+            required: true,
+        },
     });
 
     const pdfDoc = shallowRef<pdfjs.PDFDocumentProxy | undefined>(undefined);
@@ -51,7 +51,7 @@
     const getWorkerUrl = (): string => {
         return new URL(
             "pdfjs-dist/build/pdf.worker.min.mjs",
-            import.meta.url
+            import.meta.url,
         ).toString();
     };
 
@@ -68,7 +68,7 @@
                 const renderContext = {
                     canvasContext: context.value,
                     viewport: viewport,
-                    canvas: canvasRef.value
+                    canvas: canvasRef.value,
                 };
                 const renderTask = page.render(renderContext);
 

@@ -150,7 +150,7 @@
             toggleOrientationButton: true,
             expandedSubflows: () => [],
             animated: true,
-        })
+        });
 
     const emit = defineEmits([
         "follow",
@@ -183,7 +183,7 @@
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
-        pluginsStore.fetchIcons()
+        pluginsStore.fetchIcons();
         setMinZoom(0.1);
     });
 
@@ -242,13 +242,13 @@
                     source: props.source ?? "",
                     section,
                     key: event.id,
-                })
+                });
                 emit(
                     "on-edit",
                     updatedYmlSource,
                     true,
                 );
-            }
+            },
         );
     };
 
@@ -259,7 +259,7 @@
                 section: SECTIONS.TASKS.toLowerCase() as any,
                 position: event[1],
                 id: event[0],
-            }
+            },
         };
     };
 
@@ -272,7 +272,7 @@
             params: {
                 section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
                 id: event.task.id,
-            }
+            },
         };
     };
 

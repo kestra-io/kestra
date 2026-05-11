@@ -73,8 +73,8 @@
 </template>
 
 <script setup lang="ts">
-    import {useNetwork} from "@vueuse/core"
-    const {isOnline} = useNetwork()
+    import {useNetwork} from "@vueuse/core";
+    const {isOnline} = useNetwork();
 
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -94,8 +94,8 @@
     const props = defineProps({
         namespace: {
             type: String,
-            default: undefined
-        }
+            default: undefined,
+        },
     });
 
     const addSecretModalVisible = ref(false);

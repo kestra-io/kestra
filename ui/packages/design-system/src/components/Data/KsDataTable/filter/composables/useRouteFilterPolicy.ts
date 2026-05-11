@@ -3,7 +3,7 @@ import {
     type LocationQuery,
     type LocationQueryRaw,
     useRoute,
-    useRouter
+    useRouter,
 } from "vue-router";
 import type {AppliedFilter} from "../utils/filterTypes";
 
@@ -32,7 +32,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     const routeValue = computed(() => options.readFromRoute(route.query));
     const explicitValue = computed(() => options.explicitValue?.());
     const hasUnsupportedRouteValue = computed(
-        () => options.hasUnsupportedRouteValue?.(route.query) ?? false
+        () => options.hasUnsupportedRouteValue?.(route.query) ?? false,
     );
 
     const effectiveValue = computed(() => {
@@ -74,10 +74,10 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             }
 
             router.replace({
-                query: options.writeToRoute(route.query as Record<string, any>, nextValue)
+                query: options.writeToRoute(route.query as Record<string, any>, nextValue),
             });
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     const setRouteValue = (value: T | undefined) => {
@@ -90,7 +90,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         }
 
         router.replace({
-            query: options.writeToRoute(route.query as Record<string, any>, value)
+            query: options.writeToRoute(route.query as Record<string, any>, value),
         });
     };
 
@@ -114,6 +114,6 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         effectiveValue,
         hasUnsupportedRouteValue,
         syncFromAppliedFilters,
-        setRouteValue
+        setRouteValue,
     };
 }

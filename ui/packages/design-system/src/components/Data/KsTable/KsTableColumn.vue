@@ -12,10 +12,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTableColumn} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElTableColumn} from "element-plus";
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -41,14 +41,14 @@
         className: undefined,
         fixed: undefined,
         reserveSelection: undefined,
-    })
+    });
 
     defineSlots<{
         default?: (scope: {row: any; column: any; $index: number}) => unknown
         header?: (scope: {column: any; $index: number}) => unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

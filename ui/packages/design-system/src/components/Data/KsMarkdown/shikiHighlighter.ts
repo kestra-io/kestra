@@ -4,9 +4,9 @@ import {createHighlighter} from "shiki";
  * Module-level singleton for the Shiki highlighter.
  * Created once and shared across all KsMarkdown instances.
  */
-let promise: Promise<any> | null = null
+let promise: Promise<any> | null = null;
 
-import {createJavaScriptRegexEngine} from "shiki/engine/javascript"
+import {createJavaScriptRegexEngine} from "shiki/engine/javascript";
 
 import GithubLight from "shiki/themes/github-light.mjs";
 import GithubDark from "shiki/themes/github-dark.mjs";
@@ -44,7 +44,7 @@ export function getShiki(): Promise<any> {
     if (!promise) {
 
         promise = (async () => {
-            const jsEngine = createJavaScriptRegexEngine()
+            const jsEngine = createJavaScriptRegexEngine();
 
             return createHighlighter({
                 themes: [GithubDark, GithubLight],
@@ -79,9 +79,9 @@ export function getShiki(): Promise<any> {
                     Yaml,
                     Html,
                 ],
-                engine: jsEngine
-            })
-        })()
+                engine: jsEngine,
+            });
+        })();
     }
-    return promise
+    return promise;
 }

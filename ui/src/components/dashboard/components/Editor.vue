@@ -147,7 +147,7 @@
         DOC: "documentation",
         CHART: "chart",
         NONE: "none",
-        DASHBOARD: "dashboard"
+        DASHBOARD: "dashboard",
     };
     const currentView = ref<string>(views.DOC);
     const selectedChart = ref<any[]>([]);
@@ -192,8 +192,8 @@
                         ...result.data,
                         chartOptions: {
                             ...result.data?.chartOptions,
-                            width: 12
-                        }
+                            width: 12,
+                        },
                     }]
                     : [];
                 chartError.value = result.error;
@@ -241,7 +241,7 @@
         }; raw: any } = {
             error: null,
             data: null,
-            raw: {}
+            raw: {},
         };
         const errors = await dashboardStore.validateChart(yamlChart);
         if (errors.constraints) {

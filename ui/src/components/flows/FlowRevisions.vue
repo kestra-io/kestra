@@ -35,7 +35,7 @@
         if (flow.value && (!storeRevisions.value || storeRevisions.value.length === 0)) {
             await flowStore.loadRevisions({
                 namespace: flow.value.namespace,
-                id: flow.value.id
+                id: flow.value.id,
             });
         }
     });
@@ -45,7 +45,7 @@
         if (newFlow && (!storeRevisions.value || storeRevisions.value.length === 0)) {
             await flowStore.loadRevisions({
                 namespace: newFlow.namespace,
-                id: newFlow.id
+                id: newFlow.id,
             });
         }
     });
@@ -63,7 +63,7 @@
         try {
             const loaded = await flowStore.loadRevisions({
                 namespace,
-                id
+                id,
             });
             revisions.value = loaded ?? [];
         } catch (err) {
@@ -85,7 +85,7 @@
             return revisions.value;
         }
         return [...Array(flow.value.revision).keys()].map(idx => ({revision: idx + 1}));
-    })
+    });
 
     async function restoreRevision(revisionSource: string) {
         return flowStore.saveFlow({flow: revisionSource})
@@ -110,7 +110,7 @@
             id: flow.value?.id ?? "",
             revision: revision.toString(),
             allowDeleted: true,
-            store: false
+            store: false,
         })).source;
     }
 

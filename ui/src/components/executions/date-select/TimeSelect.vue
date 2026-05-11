@@ -24,7 +24,7 @@
 
     defineOptions({
         name: "TimeRangePicker",
-    })
+    });
 
     const props = defineProps({
         allowCustom: {type: Boolean, default: false},
@@ -33,8 +33,8 @@
         fromNow: {type: Boolean, default: true},
         allowInfinite: {type: Boolean, default: false},
         clearable: {type: Boolean, default: false},
-        includeNever: {type: Boolean, default: false}
-    })
+        includeNever: {type: Boolean, default: false},
+    });
 
     const timeRangeSelect = ref<string | undefined>(undefined);
 
@@ -51,7 +51,7 @@
             {value: "PT48H", label: label("48hours")},
             {value: "PT168H", label: label("7days")},
             {value: "PT720H", label: label("30days")},
-            {value: "PT8760H", label: label("365days")}
+            {value: "PT8760H", label: label("365days")},
         ];
 
         if (props.includeNever) {
@@ -62,7 +62,7 @@
     });
 
     const presetValues = computed<(string | undefined)[]>(() =>
-        timeFilterPresets.value.map(preset => preset.value)
+        timeFilterPresets.value.map(preset => preset.value),
     );
 
     const {t} = useI18n();
@@ -95,6 +95,6 @@
                 onTimeRangeSelect(newValue);
             }
         },
-        {immediate: true}
+        {immediate: true},
     );
 </script>

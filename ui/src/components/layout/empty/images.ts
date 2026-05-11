@@ -26,5 +26,5 @@ export const images: Record<string, string> = {
     versionPlugin,
     panels,
     assets,
-    pluginDefaults
+    pluginDefaults,
 };

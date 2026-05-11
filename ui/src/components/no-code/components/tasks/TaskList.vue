@@ -59,27 +59,27 @@
     import {useI18n} from "vue-i18n";
 
 
-    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
+    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
 
-    const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
+    const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value));
 
     const blockSchemaPath = computed(() => {
-        const rootParts = props.root ? props.root.split(".") : []
+        const rootParts = props.root ? props.root.split(".") : [];
         if(rootParts.length > 1){
             // if second part is a property not defined in properties,
             // it can only be defined by additionalProperties
-            const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
+            const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]];
             if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){
-                rootParts[1] = "additionalProperties"
+                rootParts[1] = "additionalProperties";
             } else {
-                rootParts.splice(1, 0, "properties")
+                rootParts.splice(1, 0, "properties");
             }
         }
         return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/");
     });
 
     defineOptions({
-        inheritAttrs: false
+        inheritAttrs: false,
     });
 
     interface Task {
@@ -105,10 +105,10 @@
     function removeElement(index: number){
         if(elements.value.length <= 1){
             emits("update:modelValue", undefined);
-            return
+            return;
         }
-        let localItems = [...elements.value]
-        localItems.splice(index, 1)
+        let localItems = [...elements.value];
+        localItems.splice(index, 1);
 
         emits("update:modelValue", localItems);
     };
@@ -141,7 +141,7 @@
                         ? `[${refPath}]`
                         : undefined,
             ].filter(Boolean).join(""),
-            section.value
+            section.value,
         ].filter(p => p.length).join(".")}`;
     });
 
@@ -176,7 +176,7 @@
             key1: elementID,
             key2: items[newIndex][keyName],
             keyName,
-        })
+        });
 
         updateYaml(newYaml);
     };

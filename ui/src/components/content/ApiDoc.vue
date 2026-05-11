@@ -19,14 +19,14 @@
     import {useDocStore} from "../../stores/doc";
     
     const docStore = useDocStore();
-    const ready = ref(false)
+    const ready = ref(false);
     // @ts-expect-error rapidoc is not typed
     import("rapidoc").then(() => {
-        ready.value = true
+        ready.value = true;
     });
 
 
-    const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light")
+    const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light");
 </script>
 
 <style scoped lang="scss">

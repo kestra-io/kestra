@@ -33,8 +33,8 @@ function propertySuggestion (value: string, position: {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
             startColumn: position.startColumn,
-            endColumn: position.endColumn
-        }
+            endColumn: position.endColumn,
+        },
     });
 };
 
@@ -46,7 +46,7 @@ export function endOfWordColumn (position: IPosition, model: IModel): number{
         true,
         false,
         null,
-        true
+        true,
     )?.matches?.[0]?.length ?? 0);
 }
 
@@ -54,7 +54,7 @@ export const NO_SUGGESTIONS = {suggestions: []};
 export function registerPebbleAutocompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[]
+    languages: string[],
 ) {
     // Pebble autocompletion
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
@@ -73,17 +73,17 @@ export function registerPebbleAutocompletion(
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,
-                        endColumn: endOfWordColumn(position, model)
-                    }))
+                        endColumn: endOfWordColumn(position, model),
+                    })),
             };
-        }
+        },
     }));
 }
 
 export function registerFunctionParametersAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[]
+    languages: string[],
 ) {
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
         triggerCharacters: ["("],
@@ -111,7 +111,7 @@ export function registerFunctionParametersAutoCompletion(
                     const suggestion = propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,
-                        endColumn: endColumn
+                        endColumn: endColumn,
                     }, monaco.languages.CompletionItemKind.Value);
 
                     // If the inserted value is a string (surrounded by quotes), we remove them if there is already one
@@ -119,15 +119,15 @@ export function registerFunctionParametersAutoCompletion(
                         const lineContent = model.getLineContent(position.lineNumber);
                         suggestion.insertText = suggestion.insertText.substring(
                             QUOTES.includes(lineContent.charAt(startOfWordColumn - 2)) ? 1 : 0,
-                            suggestion.insertText.length - (QUOTES.includes(lineContent.charAt(endColumn - 1)) ? 1 : 0)
+                            suggestion.insertText.length - (QUOTES.includes(lineContent.charAt(endColumn - 1)) ? 1 : 0),
                         );
                     }
 
                     return suggestion;
-                })
+                }),
             };
-        }
-    }))
+        },
+    }));
 }
 
 export function registerNestedValueAutoCompletion(
@@ -154,17 +154,17 @@ export function registerNestedValueAutoCompletion(
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,
-                        endColumn: endOfWordColumn(position, model)
-                    }))
+                        endColumn: endOfWordColumn(position, model),
+                    })),
             };
-        }
+        },
     }));
 }
 
 export function registerFilterAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[]
+    languages: string[],
 ) {
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
         triggerCharacters: ["|"],
@@ -192,17 +192,17 @@ export function registerFilterAutoCompletion(
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,
-                        endColumn: endColumn
-                    }, monaco.languages.CompletionItemKind.Function))
+                        endColumn: endColumn,
+                    }, monaco.languages.CompletionItemKind.Function)),
             };
-        }
+        },
     }));
 }
 
 const registeredLanguages = new Set<string>();
 
 function registerPebbleLanguage(language: string) {
-    if(registeredLanguages.has(language)) return
+    if(registeredLanguages.has(language)) return;
     registeredLanguages.add(language);
 
     const rootLanguage = language.slice(0, -7); // remove -pebble suffix
@@ -217,7 +217,7 @@ function registerPebbleLanguage(language: string) {
             pebbleInDoubleCurly: [
                 [/-?\}\}/, {token: "delimiter.bracket", next: "@pop"}],
             ],
-        }
+        },
     };
 
     // Get the tokenizer from the root language
@@ -226,7 +226,7 @@ function registerPebbleLanguage(language: string) {
     if (rootLanguageDefinition?.loader) {
         rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {
             const {language: rootLanguageDefsLoaded} = loaded;
-            if(rootLanguageDefsLoaded === undefined) return
+            if(rootLanguageDefsLoaded === undefined) return;
             for (const key in rootLanguageDefsLoaded) {
                 const value = rootLanguageDefsLoaded[key];
                 if (key === "tokenizer") {
@@ -236,7 +236,7 @@ function registerPebbleLanguage(language: string) {
                             customTokenizer.tokenizer[category] = [];
                         }
                         if (Array.isArray(tokenDefs)) {
-                            customTokenizer.tokenizer[category].push(...rootLanguageDefsLoaded.tokenizer[category], ...tokenDefs)
+                            customTokenizer.tokenizer[category].push(...rootLanguageDefsLoaded.tokenizer[category], ...tokenDefs);
                         }
                     }
                 } else if (Array.isArray(value)) {
@@ -244,12 +244,12 @@ function registerPebbleLanguage(language: string) {
                         customTokenizer[key] = [];
                     }
 
-                    customTokenizer[key].push(...rootLanguageDefsLoaded[key], ...value)
+                    customTokenizer[key].push(...rootLanguageDefsLoaded[key], ...value);
                 }
             }
 
             monaco.languages.setMonarchTokensProvider(language, rootLanguageDefsLoaded);
-        })
+        });
     }
 }
 
@@ -272,7 +272,7 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
         const autoCompletionProviders: IDisposable[] = [];
 
         const autoCompletion = this._autoCompletion;
-        const completionSource = this._completionSource
+        const completionSource = this._completionSource;
 
         // Register a new language
         registerPebbleLanguage(this.language);

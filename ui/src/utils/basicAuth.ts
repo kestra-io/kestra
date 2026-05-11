@@ -5,13 +5,13 @@ export function logout() {
 
 export function signIn(username: string, password: string) {
     const trimmedUsername = username.trim();
-    const credentials = btoa(`${trimmedUsername}:${password}`)
+    const credentials = btoa(`${trimmedUsername}:${password}`);
     document.cookie = `BASIC_AUTH=${credentials};path=/;samesite=strict`;
     return true;
 }
 
 export function isLoggedIn() {
-    return Boolean(credentials())
+    return Boolean(credentials());
 }
 
 export function credentials() {

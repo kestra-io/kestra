@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect} from "storybook/test"
-import KsGraph from "../../../src/components/Charts/KsGraph.vue"
-import type {KsGraphNode, KsGraphEdge} from "../../../src/components/Charts/KsGraph.vue"
-import {ChartRenderer} from "../../../src"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {expect} from "storybook/test";
+import KsGraph from "../../../src/components/Charts/KsGraph.vue";
+import type {KsGraphNode, KsGraphEdge} from "../../../src/components/Charts/KsGraph.vue";
+import {ChartRenderer} from "../../../src";
 
 // ─── Fixture helpers ──────────────────────────────────────────────────────────
 
@@ -12,11 +12,11 @@ function makeNode(id: string, name: string, size = 20, color?: string): KsGraphN
         name,
         symbolSize: size,
         ...(color ? {itemStyle: {color}} : {}),
-    }
+    };
 }
 
 function makeEdge(source: string, target: string): KsGraphEdge {
-    return {source, target}
+    return {source, target};
 }
 
 // npm-style dependency graph (mirrors the ECharts example)
@@ -33,7 +33,7 @@ const NPM_NODES: KsGraphNode[] = [
     makeNode("fresh",     "fresh",     15),
     makeNode("range-parser", "range-parser", 15),
     makeNode("etag",      "etag",      15),
-]
+];
 
 const NPM_EDGES: KsGraphEdge[] = [
     makeEdge("express", "qs"),
@@ -49,7 +49,7 @@ const NPM_EDGES: KsGraphEdge[] = [
     makeEdge("send", "etag"),
     makeEdge("serve-static", "send"),
     makeEdge("debug", "utils"),
-]
+];
 
 // Simple dependency graph (Kestra flow-like)
 const FLOW_NODES: KsGraphNode[] = [
@@ -58,14 +58,14 @@ const FLOW_NODES: KsGraphNode[] = [
     makeNode("a::n3", "validate",   25, "#fac858"),
     makeNode("b::n4", "alert",      20, "#ee6666"),
     makeNode("b::n5", "report",     20, "#73c0de"),
-]
+];
 
 const FLOW_EDGES: KsGraphEdge[] = [
     makeEdge("a::n1", "a::n2"),
     makeEdge("a::n2", "a::n3"),
     makeEdge("a::n3", "b::n4"),
     makeEdge("a::n3", "b::n5"),
-]
+];
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
@@ -92,8 +92,8 @@ const meta: Meta<typeof KsGraph> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsGraph>
 
 // ─── Stories ──────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ type Story = StoryObj<typeof KsGraph>
 export const Default: Story = {
     render: (args) => ({
         components: {KsGraph},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: "<div style=\"padding:24px;height:480px\"><ks-graph v-bind=\"args\" /></div>",
     }),
     args: {
@@ -113,16 +113,16 @@ export const Default: Story = {
         roam: true,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
+        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy();
     },
-}
+};
 
 /** Circular layout — evenly-spaced ring */
 export const CircularLayout: Story = {
     render: () => ({
         components: {KsGraph},
         setup() {
-            return {nodes: NPM_NODES, edges: NPM_EDGES}
+            return {nodes: NPM_NODES, edges: NPM_EDGES};
         },
         template: `
             <div style="padding:24px;height:480px">
@@ -135,7 +135,7 @@ export const CircularLayout: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Loading state — shown while data is being fetched */
 export const Loading: Story = {
@@ -144,25 +144,25 @@ export const Loading: Story = {
         template: "<div style=\"padding:24px;height:480px\"><ks-graph :nodes=\"null\" /></div>",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
+        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy();
     },
-}
+};
 
 /** Selected-node visual state — pre-style nodes to show which one is active */
 export const WithSelection: Story = {
     render: () => ({
         components: {KsGraph},
         setup() {
-            const SELECTED_COLOR  = "#5470c6"
-            const NEIGHBOR_COLOR  = "#91cc75"
-            const FADED_OPACITY   = 0.25
+            const SELECTED_COLOR  = "#5470c6";
+            const NEIGHBOR_COLOR  = "#91cc75";
+            const FADED_OPACITY   = 0.25;
 
-            const selectedId = "a::n1"
+            const selectedId = "a::n1";
             const neighborIds = new Set(
                 FLOW_EDGES
                     .filter(e => e.source === selectedId || e.target === selectedId)
                     .flatMap(e => [e.source, e.target]),
-            )
+            );
 
             const nodes: KsGraphNode[] = FLOW_NODES.map(n => ({
                 ...n,
@@ -174,7 +174,7 @@ export const WithSelection: Story = {
                             : "#aaa",
                     opacity: neighborIds.has(n.id) || n.id === selectedId ? 1 : FADED_OPACITY,
                 },
-            }))
+            }));
 
             const edges: KsGraphEdge[] = FLOW_EDGES.map(e => ({
                 ...e,
@@ -187,9 +187,9 @@ export const WithSelection: Story = {
                         : "solid",
                     opacity: e.source === selectedId || e.target === selectedId ? 1 : 0.2,
                 },
-            }))
+            }));
 
-            return {nodes, edges}
+            return {nodes, edges};
         },
         template: `
             <div style="padding:24px;height:400px">
@@ -197,14 +197,14 @@ export const WithSelection: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** SVG renderer — useful for print / high-DPI exports */
 export const SvgRenderer: Story = {
     render: () => ({
         components: {KsGraph},
         setup() {
-            return {nodes: FLOW_NODES, edges: FLOW_EDGES, renderer: ChartRenderer.SVG}
+            return {nodes: FLOW_NODES, edges: FLOW_EDGES, renderer: ChartRenderer.SVG};
         },
         template: `
             <div style="padding:24px;height:480px">
@@ -217,7 +217,7 @@ export const SvgRenderer: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Options override — custom force repulsion and edge curveness */
 export const WithOptionsOverride: Story = {
@@ -229,8 +229,8 @@ export const WithOptionsOverride: Story = {
                     force: {repulsion: 1200, edgeLength: 120},
                     lineStyle: {curveness: 0.4},
                 }],
-            }
-            return {nodes: NPM_NODES, edges: NPM_EDGES, options}
+            };
+            return {nodes: NPM_NODES, edges: NPM_EDGES, options};
         },
         template: `
             <div style="padding:24px;height:480px">
@@ -244,6 +244,6 @@ export const WithOptionsOverride: Story = {
         `,
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
+        await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy();
     },
-}
+};

@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsTimeline from "../../../src/components/Data/KsTimeline/KsTimeline.vue"
-import KsTimelineItem from "../../../src/components/Data/KsTimeline/KsTimelineItem.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsTimeline from "../../../src/components/Data/KsTimeline/KsTimeline.vue";
+import KsTimelineItem from "../../../src/components/Data/KsTimeline/KsTimelineItem.vue";
 
 const meta: Meta<typeof KsTimeline> = {
     title: "Components/Data/KsTimeline",
@@ -9,8 +9,8 @@ const meta: Meta<typeof KsTimeline> = {
     parameters: {
         docs: {description: {component: "KsTimeline is the Kestra design-system abstraction over `ElTimeline` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsTimeline>
 
 export const Default: Story = {
@@ -35,7 +35,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom node – size, icon, hollow */
 export const CustomNode: Story = {
@@ -57,7 +57,7 @@ export const CustomNode: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Custom timestamp placement – above the content */
 export const TimestampPlacement: Story = {
@@ -79,7 +79,7 @@ export const TimestampPlacement: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Hide timestamp */
 export const HideTimestamp: Story = {
@@ -95,7 +95,7 @@ export const HideTimestamp: Story = {
             </div>
         `,
     }),
-}
+};
 
 export const WithColors: Story = {
     render: () => ({
@@ -116,4 +116,4 @@ export const WithColors: Story = {
             </div>
         `,
     }),
-}
+};

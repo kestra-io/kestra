@@ -47,25 +47,25 @@
             label: t("task"),
             prop: "taskId",
             default: true,
-            description: t("filter.table_column.metrics.task")
+            description: t("filter.table_column.metrics.task"),
         },
         {
             label: t("name"),
             prop: "name",
             default: true,
-            description: t("filter.table_column.metrics.name")
+            description: t("filter.table_column.metrics.name"),
         },
         {
             label: t("value"),
             prop: "value",
             default: true,
-            description: t("filter.table_column.metrics.value")
+            description: t("filter.table_column.metrics.value"),
         },
         {
             label: t("tags"),
             prop: "tags",
             default: true,
-            description: t("filter.table_column.metrics.tags")
+            description: t("filter.table_column.metrics.tags"),
         },
     ]);
 

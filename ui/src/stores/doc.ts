@@ -32,7 +32,7 @@ export const useDocStore = defineStore("doc", {
         resourceUrlTemplate: undefined,
         appResourceUrlTemplate: undefined,
         docPath: undefined,
-        docId: undefined
+        docId: undefined,
     }),
 
     getters: {
@@ -48,7 +48,7 @@ export const useDocStore = defineStore("doc", {
                 return state.resourceUrlTemplate.replace(PATH_PLACEHOLDER, domain + resourcePath);
             }
             return undefined;
-        }
+        },
     },
 
     actions: {
@@ -73,7 +73,7 @@ export const useDocStore = defineStore("doc", {
 
             return {
                 content: response.data,
-                metadata
+                metadata,
             };
         },
 
@@ -92,7 +92,7 @@ export const useDocStore = defineStore("doc", {
 
             return {
                 content: response.data,
-                metadata
+                metadata,
             };
         },
 
@@ -104,7 +104,7 @@ export const useDocStore = defineStore("doc", {
                 const response = await axios.get(`${url}?q=${q}&type=DOCS`);
                 return response.data.results.map(({url, title}: {url: string; title: string}): SearchResult => ({
                     parsedUrl: url,
-                    title
+                    title,
                 }));
             }
 
@@ -117,6 +117,6 @@ export const useDocStore = defineStore("doc", {
 
         initResourceUrlTemplate(version: string) {
             this.resourceUrlTemplate = `${API_URL}/v1${PATH_PLACEHOLDER}/versions/${version}`;
-        }
-    }
+        },
+    },
 });

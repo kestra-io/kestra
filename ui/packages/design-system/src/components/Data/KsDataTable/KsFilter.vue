@@ -19,7 +19,7 @@
         FilterConfiguration,
         SavedFilter,
         TableOptions,
-        TableProperties
+        TableProperties,
     } from "./filter/utils/filterTypes";
     import {useFilters} from "./filter/composables/useFilters";
     import {useSavedFilters} from "./filter/composables/useSavedFilters";
@@ -73,7 +73,7 @@
         updateFilter,
         resetToDefaults,
         hasPreApplied,
-        getPreApplied
+        getPreApplied,
     } = useFilters(
         props.configuration,
         props.showSearchInput,
@@ -83,11 +83,11 @@
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
-        props.prefix
+        props.prefix,
     );
 
     const {showOptions, chartVisible, toggleOptions, updateChart, refreshData: tableRefreshData} = useDataOptions(
-        props.tableOptions
+        props.tableOptions,
     );
 
     const editingFilter = ref<SavedFilter | undefined>(undefined);
@@ -148,7 +148,7 @@
         },
         updateProperties: (columns: string[]) => {
             emits("updateProperties", columns);
-        }
+        },
     });
 
     onMounted(() => {

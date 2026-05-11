@@ -31,7 +31,7 @@
     const props = withDefaults(defineProps<{
         pageUrl?: string;
     }>(), {
-        pageUrl: undefined
+        pageUrl: undefined,
     });
 
     const docStore = useDocStore();

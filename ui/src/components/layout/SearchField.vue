@@ -32,7 +32,7 @@
     }>(), {
         router: true,
         placeholder: "search",
-        readonly: false
+        readonly: false,
     });
 
     const emit = defineEmits<{
@@ -56,7 +56,7 @@
                 const query: Record<string, any> = {
                     ...route.query,
                     q: search.value,
-                    page: 1
+                    page: 1,
                 };
                 if (!search.value) {
                     delete query.q;
@@ -82,7 +82,7 @@
         () => route.query.q,
         (newQ) => {
             search.value = newQ ? String(newQ) : "";
-        }
+        },
     );
 </script>
 

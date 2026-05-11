@@ -19,11 +19,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTag} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElTag} from "element-plus";
+    import {useFilteredProps} from "../../../utils/filteredProps";
     import type {Component} from "vue";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         type?: "" | "success" | "info" | "warning" | "danger" | "primary"
@@ -34,18 +34,18 @@
         round?: boolean
         label?: string
         plain?: boolean
-    }>()
+    }>();
 
     const emit = defineEmits<{
         close: []
-    }>()
+    }>();
 
     defineSlots<{
         default?(): unknown
         icon?(): unknown
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props, ["icon", "label", "plain"])
+    const filteredProps = useFilteredProps(props, ["icon", "label", "plain"]);
 </script>
 
 <style lang="scss">

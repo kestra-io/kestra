@@ -98,8 +98,8 @@
         emits("update:modelValue", serializeDetailPairs(detailPairs.value));
     };
 
-    watch(() => props.modelValue, (newValue) => {
-        detailPairs.value = newValue ? parseDetailPairs(newValue) : [];
+    watch(() => props.modelValue, (val) => {
+        detailPairs.value = val ? parseDetailPairs(val) : [];
     }, {immediate: true});
 </script>
 

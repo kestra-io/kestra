@@ -42,8 +42,8 @@ export function useExecutionRoot() {
                 {
                     label: t("executions"),
                     link: {
-                        name: "executions/list"
-                    }
+                        name: "executions/list",
+                    },
                 },
                 {
                     label: `${ns}.${flowId}`,
@@ -51,11 +51,11 @@ export function useExecutionRoot() {
                         name: "flows/update",
                         params: {
                             namespace: ns,
-                            id: flowId
-                        }
-                    }
-                }
-            ]
+                            id: flowId,
+                        },
+                    },
+                },
+            ],
         };
     });
 
@@ -77,34 +77,34 @@ export function useExecutionRoot() {
                 component: Overview,
                 title: t("overview"),
                 maximized: true,
-                noOverflow: true
+                noOverflow: true,
             },
             {
                 name: "gantt",
                 component: Gantt,
-                title: t("gantt")
+                title: t("gantt"),
             },
             {
                 name: "logs",
                 component: Logs,
-                title: t("logs")
+                title: t("logs"),
             },
             {
                 name: "topology",
                 component: Topology,
-                title: t("topology")
+                title: t("topology"),
             },
             {
                 name: "outputs",
                 component: ExecutionOutput,
                 title: t("outputs"),
                 maximized: true,
-                noOverflow: true
+                noOverflow: true,
             },
             {
                 name: "metrics",
                 component: ExecutionMetric,
-                title: t("metrics")
+                title: t("metrics"),
             },
             {
                 name: "dependencies",
@@ -122,7 +122,7 @@ export function useExecutionRoot() {
                 component: DemoAuditLogs,
                 title: t("auditlogs"),
                 maximized: true,
-                locked: true
+                locked: true,
             },
             {
                 name: "assets",
@@ -131,9 +131,9 @@ export function useExecutionRoot() {
                 maximized: true,
                 locked: true,
                 props: {
-                    topbar: false
-                }
-            }
+                    topbar: false,
+                },
+            },
         ];
     };
 
@@ -180,6 +180,6 @@ export function useExecutionRoot() {
         previousExecutionId,
         follow,
         getBaseTabs,
-        setupLifecycle
+        setupLifecycle,
     };
 }

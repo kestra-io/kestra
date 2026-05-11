@@ -96,7 +96,7 @@
         {
             keys: ["⌘ Cmd/Ctrl", "0"],
             description: "editor_shortcuts.reset_fontsize",
-        }
+        },
     ];
 </script>
 

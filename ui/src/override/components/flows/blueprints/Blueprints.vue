@@ -57,7 +57,7 @@
     const props = withDefaults(defineProps<Props>(), {
         tab: "community",
         combinedView: false,
-        embed: false
+        embed: false,
     });
 
     const emit = defineEmits<{loaded: [value: any]}>();
@@ -66,7 +66,7 @@
 
     const routeInfo = computed(() => ({title: props.kind === "flow" ? t("blueprints.flows") :
         props.kind === "dashboard" ? t("blueprints.dashboards") :
-        t("blueprints.title")
+        t("blueprints.title"),
     }));
 
     useRouteContext(routeInfo);

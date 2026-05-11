@@ -136,7 +136,7 @@
     const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
 
     const isPluginList = computed(
-        () => typeof route.name === "string" && route.name === "plugins/list"
+        () => typeof route.name === "string" && route.name === "plugins/list",
     );
 
     function loadToc() {
@@ -206,7 +206,7 @@
                 onRouterChange();
             }
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     watch(
@@ -220,7 +220,7 @@
                 "dataFiltersKPI",
             ]);
         },
-        {immediate: true}
+        {immediate: true},
     );
 
     onMounted(() => {

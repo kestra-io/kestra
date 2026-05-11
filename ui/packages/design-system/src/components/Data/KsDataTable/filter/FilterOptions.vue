@@ -79,21 +79,21 @@
         () => filter.chartVisible.value,
         (newVal) => {
             localChartVisible.value = newVal ?? true;
-        }
+        },
     );
 
     watch(
         localChartVisible,
         (newVal) => {
             filter.updateChart(newVal);
-        }
+        },
     );
 
     watch(
         periodicRefreshEnabled,
         (newVal) => {
             toggleRefresh(newVal, refreshCallback);
-        }, {immediate: true}
+        }, {immediate: true},
     );
 </script>
 

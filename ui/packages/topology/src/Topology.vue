@@ -126,7 +126,7 @@
     import DotNode from "./nodes/DotNode.vue";
     import EdgeNode from "./nodes/EdgeNode.vue";
     import TaskNode from "./nodes/TaskNode.vue";
-    import TriggerNode from "./nodes/TriggerNode.vue"
+    import TriggerNode from "./nodes/TriggerNode.vue";
     import CollapsedClusterNode from "./nodes/CollapsedClusterNode.vue";
     import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue";
     import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue";
@@ -135,8 +135,8 @@
     import {cssVar as cssVariable} from "@kestra-io/design-system";
     import {CLUSTER_PREFIX} from "./utils/constants";
     import * as flowYamlUtils from "./utils/flowYamlUtils";
-    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
-    import Utils from "./utils/utils"
+    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants";
+    import Utils from "./utils/utils";
     import * as VueFlowUtils from "./utils/vueFlowUtils";
     import {useScreenshot} from "./composables/useScreenshot";
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys";
@@ -187,12 +187,12 @@
 
     const dragging = ref(false);
     const showExtraDetails = ref(false);
-    const lastPosition = ref<XYPosition | null>()
+    const lastPosition = ref<XYPosition | null>();
     const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id);
     const edgeReplacer = ref({});
     const hiddenNodes = ref<string[]>([]);
     const collapsed = ref(new Set<string>());
-    const clusterToNode = ref([])
+    const clusterToNode = ref([]);
     const {capture} = useScreenshot();
 
     const effectiveGetNodeDimensions = computed(() => {
@@ -210,7 +210,7 @@
                 const taskType = node?.task?.type as string | undefined;
                 const hasDetailsAction = Boolean(
                     (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType])
+                        (taskType && props.showDetails?.[taskType]),
                 );
                 if (hasDetailsAction) {
                     return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)};
@@ -244,24 +244,24 @@
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
-        ]
-    )
+        ],
+    );
 
     onMounted(() => {
         generateGraph();
-    })
+    });
 
     watch(() => props.flowGraph, () => {
         generateGraph();
-    })
+    });
 
     watch(() => props.isHorizontal, () => {
         generateGraph();
-    })
+    });
 
     watch(showExtraDetails, () => {
         generateGraph();
-    })
+    });
 
     const generateGraph = () => {
         removeEdges(getEdges.value);
@@ -275,7 +275,7 @@
             collapsed.value = new Set<string>();
             hiddenNodes.value = [];
             edgeReplacer.value = {};
-            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false))
+            oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false));
 
             const elements = VueFlowUtils.generateGraph(
                 props.id,
@@ -300,8 +300,8 @@
                 fitView();
                 emit("loading", false);
             }
-        })
-    }
+        });
+    };
 
     const HOVERED_NODE_CLASS = "topology-node-hovered";
     const DROP_TARGET_CLASS = "topology-node-drop-target";
@@ -325,11 +325,11 @@
                 }
             });
         }
-    }
+    };
 
     const onMouseLeave = () => {
         resetNodesStyle();
-    }
+    };
 
     const resetNodesStyle = () => {
         getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
@@ -337,15 +337,15 @@
                 n.style = {...n.style, opacity: "1"};
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, false);
                 setNodeInteractionClass(n, DROP_TARGET_CLASS, false);
-            })
-    }
+            });
+    };
 
     onNodeDragStart((e) => {
         dragging.value = true;
         resetNodesStyle();
-        e.node.style = {...e.node.style, zIndex: 1976}
+        e.node.style = {...e.node.style, zIndex: 1976};
         lastPosition.value = e.node.position;
-    })
+    });
 
     onNodeDragStop((e: any) => {
         dragging.value = false;
@@ -360,16 +360,16 @@
                                 source: props.source,
                                 section: "tasks",
                                 key1: Utils.afterLastDot(taskNode1.id) ?? "",
-                                key2: Utils.afterLastDot(taskNode2.id) ?? ""
+                                key2: Utils.afterLastDot(taskNode2.id) ?? "",
                             }),
-                            swappedTasks: [taskNode1.id, taskNode2.id]
-                        })
+                            swappedTasks: [taskNode1.id, taskNode2.id],
+                        });
                     }
                 } catch (e: any) {
                     emit("message", {
                         variant: "error",
                         title: "cannot swap tasks",
-                        message: `${e.message}, ${e.messageOptions}`
+                        message: `${e.message}, ${e.messageOptions}`,
                     });
                     taskNode1.position = lastPosition.value;
                 }
@@ -380,9 +380,9 @@
             e.node.position = lastPosition.value;
         }
         resetNodesStyle();
-        e.node.style = {...e.node.style, zIndex: 5}
+        e.node.style = {...e.node.style, zIndex: 5};
         lastPosition.value = null;
-    })
+    });
 
     const subflowPrefixes = computed(() => {
         if (!props.flowGraph?.clusters) {
@@ -391,26 +391,26 @@
 
         return props.flowGraph.clusters.filter(cluster => cluster.cluster.type.endsWith("SubflowGraphCluster"))
             .map(cluster => cluster.cluster.taskNode.uid + ".");
-    })
+    });
 
     onNodeDrag((e: any) => {
         resetNodesStyle();
         getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
             if (n.type === "trigger" || (n.type === "task" && (n.id.startsWith(e.node.id + ".") || e.node.id.startsWith(n.id + "."))) || subflowPrefixes?.value?.some(subflowPrefix => n.id.startsWith(subflowPrefix))) {
-                n.style = {...n.style, opacity: "0.5"}
+                n.style = {...n.style, opacity: "0.5"};
             } else {
-                n.style = {...n.style, opacity: "1"}
+                n.style = {...n.style, opacity: "1"};
             }
-        })
+        });
         if (e.intersections && !checkIntersections(e.intersections, e.node) && e.intersections.filter((n: any) => n.type === "task").length === 1) {
             e.intersections.forEach((n: any) => {
                 if (n.type === "task") {
                     setNodeInteractionClass(n, DROP_TARGET_CLASS, true);
                 }
-            })
+            });
             setNodeInteractionClass(e.node, DROP_TARGET_CLASS, true);
         }
-    })
+    });
 
     const checkIntersections = (intersections: any, node: any) => {
         const tasksMeet = intersections.filter((n: any) => n.type === "task").map((n: any) => Utils.afterLastDot(n.id));
@@ -424,7 +424,7 @@
                     sections: ["tasks", "triggers"],
                     key1: Utils.afterLastDot(tasksMeet[0]) ?? "",
                     key2: Utils.afterLastDot(node.id) ?? "",
-                    keyName: "id"
+                    keyName: "id",
                 })
             ) {
                 return "parentchildrenerror";
@@ -436,21 +436,21 @@
             return "triggererror";
         }
         return null;
-    }
+    };
 
     const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
         const cluster: any = props.flowGraph.clusters.find(cluster => cluster.cluster.uid.endsWith(clusterUid));
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "");
-        collapsed.value.add(nodeId)
+        collapsed.value.add(nodeId);
 
         hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive));
-        hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
+        hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[]);
         edgeReplacer.value = {
             ...edgeReplacer.value,
             [cluster.cluster.uid]: nodeId,
             [cluster.start]: nodeId,
-            [cluster.end]: nodeId
-        }
+            [cluster.end]: nodeId,
+        };
 
         for (let child of cluster.nodes) {
             if (props.flowGraph.clusters.map(cluster => cluster.cluster.uid).includes(child)) {
@@ -461,12 +461,12 @@
         if (regenerate) {
             generateGraph();
         }
-    }
+    };
 
     const expand = (expandData: any) => {
         const taskTypesWithSubflows = [
             "io.kestra.core.tasks.flows.Flow", "io.kestra.core.tasks.flows.Subflow", "io.kestra.plugin.core.flow.Subflow",
-            "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable"
+            "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
         ];
         if (taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
             emit("expand-subflow", [...props.expandedSubflows, expandData.id]);
@@ -480,7 +480,7 @@
         collapsed.value.forEach(n => collapseCluster(n, false, false));
 
         generateGraph();
-    }
+    };
 
 
     const controlsShown = ref(true);
@@ -492,7 +492,7 @@
             return;
         }
 
-        controlsShown.value = false
+        controlsShown.value = false;
         capture(vueFlowRef.value, {type, shouldDownload: true})
             .then(() => controlsShown.value = true)
             .finally(() => isDropdownOpen.value = false);

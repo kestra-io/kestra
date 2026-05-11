@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import KsIcon from "../../../src/components/Basic/KsIcon.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import KsIcon from "../../../src/components/Basic/KsIcon.vue";
 
 const meta: Meta<typeof KsIcon> = {
     title: "Components/Basic/KsIcon",
@@ -12,14 +12,14 @@ const meta: Meta<typeof KsIcon> = {
     parameters: {
         docs: {description: {component: "KsIcon is the Kestra design-system abstraction over `ElIcon` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsIcon>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsIcon},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: `
             <div style="padding:24px">
                 <ks-icon v-bind="args">
@@ -29,7 +29,7 @@ export const Default: Story = {
         `,
     }),
     args: {size: "lg"},
-}
+};
 
 /** Loading animation – spinning icon */
 export const Loading: Story = {
@@ -46,7 +46,7 @@ export const Loading: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Colors */
 export const Colors: Story = {
@@ -66,7 +66,7 @@ export const Colors: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Sizes — full token scale (xs / sm / base / lg / xl) */
 export const Sizes: Story = {
@@ -92,13 +92,13 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Tooltip */
 export const Tooltip: Story = {
     render: (args) => ({
         components: {KsIcon},
-        setup() { return {args} },
+        setup() { return {args}; },
         template: `
             <div style="padding:24px">
                 <ks-icon v-bind="args">
@@ -108,4 +108,4 @@ export const Tooltip: Story = {
         `,
     }),
     args: {tooltip: "I'm a tooltip", size: "lg"},
-}
+};

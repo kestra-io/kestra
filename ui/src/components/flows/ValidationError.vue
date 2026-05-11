@@ -96,7 +96,7 @@
 
     defineOptions({
         inheritAttrs: false,
-    })
+    });
 
     defineProps<{
         errors?: string[] | undefined;
@@ -105,9 +105,9 @@
         link?: boolean;
         size?: "default" | "small";
         tooltipPlacement?: string;
-    }>()
+    }>();
 
-    const rootContainer = ref<HTMLSpanElement>()
+    const rootContainer = ref<HTMLSpanElement>();
 
     function onResize(maxWidth: number) {
         if(rootContainer.value === undefined) {
@@ -115,17 +115,17 @@
         }
         const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label");
 
-        buttonLabels.forEach(el => el.classList.remove("d-none"))
+        buttonLabels.forEach(el => el.classList.remove("d-none"));
         nextTick(() => {
             if(rootContainer.value && rootContainer.value.offsetLeft + rootContainer.value.offsetWidth > maxWidth) {
-                buttonLabels.forEach(el => el.classList.add("d-none"))
+                buttonLabels.forEach(el => el.classList.add("d-none"));
             }
         });
     }
 
     defineExpose({
-        onResize
-    })
+        onResize,
+    });
 
 </script>
 

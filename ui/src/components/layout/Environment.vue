@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-    import {cssVar} from "@kestra-io/design-system"
+    import {cssVar} from "@kestra-io/design-system";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
     import {computed} from "vue";
@@ -15,7 +15,7 @@
 
     const name = computed(() => {
         return layoutStore.envName || miscStore.configs?.environment?.name;
-    })
+    });
 
     const color = computed(() => {
         if (layoutStore.envColor) {
@@ -27,7 +27,7 @@
         }
 
         return cssVar("--ks-content-info");
-    })
+    });
 
 </script>
 

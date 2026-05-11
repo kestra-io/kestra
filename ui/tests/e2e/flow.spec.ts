@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 const helloFlowYaml = fs.readFileSync(
     path.resolve(__dirname, "./fixtures/flows/hello.yaml"),
-    "utf-8"
+    "utf-8",
 );
 const helloFlowId = "my-hello-flow-1";
 
@@ -97,7 +97,7 @@ test.describe("Flow Page", () => {
 
             await page.getByText("log_hello_task").click();
             await expect(page.getByText(inputValue)
-                .first()// TODO this is probably a hack, but at least it's fixing the test
+                .first(),// TODO this is probably a hack, but at least it's fixing the test
             ).toBeVisible();
         });
     });

@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest"
+import {describe, expect, it} from "vitest";
 import RegexProvider from "../../../src/utils/regex";
 
 describe("Regex", () => {
@@ -35,7 +35,7 @@ describe("Regex", () => {
         nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a ~ b.c");
         expect(nestedFieldMatcher?.[1]).eq("b");
         expect(nestedFieldMatcher?.[2]).eq("c");
-    })
+    });
 
     it("capture pebble function", () => {
         let functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(") ?? [];
@@ -62,7 +62,7 @@ describe("Regex", () => {
 
         functionMatcher = new RegExp(RegexProvider.capturePebbleFunction + "$").exec("{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to") ?? [];
         expect([...functionMatcher]).toEqual(["{{myFunc(my-param_1='value1')}} {{mySecondFunc(second-func-param_1='secondFuncValue1', 'to", "mySecondFunc", "second-func-param_1='secondFuncValue1', ", "'to"]);
-    })
+    });
 
     it("capture string value", () => {
         let stringMatcher: RegExpExecArray | [] | null = new RegExp(RegexProvider.captureStringValue).exec("'a'") ?? [];
@@ -73,7 +73,7 @@ describe("Regex", () => {
 
         stringMatcher = new RegExp(RegexProvider.captureStringValue).exec("a");
         expect(stringMatcher).toBeNull();
-    })
+    });
 
     it("multiline function, avoid crashing", () => {
         const complexMultilineFunctionButClosedPebbleExpression = `id: breaking-ui
@@ -90,7 +90,7 @@ tasks:
           inputs.selector +
           "\\")) | (.key + \\"->\\" + .value)"
         }}
-`
+`;
         const regex = new RegExp(RegexProvider.capturePebbleFunction + "$");
         expect(regex.exec(complexMultilineFunctionButClosedPebbleExpression)).eq(null);
 
@@ -107,7 +107,7 @@ tasks:
           "to_entries[] | select(.key | startswith(\\"" +
           inputs.selector +
           "\\")) | (.key + \\"->\\" + .value)"
-        }} {{myFunc(my-param_1='value1', my-param_2="value2", myK`
+        }} {{myFunc(my-param_1='value1', my-param_2="value2", myK`;
         expect([...(regex.exec(shouldMatchLastFunction) ?? [])]).toEqual([
             `{{
           "to_entries[] | select(.key | startswith(\\"" +
@@ -118,5 +118,5 @@ tasks:
         "my-param_1='value1', my-param_2=\"value2\", ",
             "myK",
         ]);
-    })
-})
+    });
+});

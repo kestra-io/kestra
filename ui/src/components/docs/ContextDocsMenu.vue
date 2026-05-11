@@ -105,10 +105,10 @@
 
                 acc[cleanUrl] = {
                     ...metadata,
-                    path: cleanUrl
+                    path: cleanUrl,
                 };
 
-                return acc
+                return acc;
             }, {});
 
         for(const url in childrenWithMetadata){
@@ -122,7 +122,7 @@
         }
 
         return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[];
-    })
+    });
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
         .map(([section, childrenTitles]) =>({
@@ -130,11 +130,11 @@
             section,
             children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
-                    path.split("/").length === 2 && (sidebarTitle === name || title === name)
+                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
                 ))
-                .filter((item): item is NonNullable<typeof item> => !!item)
-        }))
-    )
+                .filter((item): item is NonNullable<typeof item> => !!item),
+        })),
+    );
 </script>
 
 <style scoped lang="scss">

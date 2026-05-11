@@ -32,7 +32,7 @@ describe("posthog queue", () => {
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: true},
             "test_event",
-            {foo: "bar"}
+            {foo: "bar"},
         );
 
         expect(posthogMock.capture).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe("posthog queue", () => {
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: true},
             "test_event",
-            {foo: "bar"}
+            {foo: "bar"},
         );
 
         await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true});
@@ -57,7 +57,7 @@ describe("posthog queue", () => {
         capturePosthogEvent(
             {isUiAnonymousUsageEnabled: false},
             "test_event_2",
-            {foo: "baz"}
+            {foo: "baz"},
         );
 
         expect(posthogMock.opt_out_capturing).toHaveBeenCalled();

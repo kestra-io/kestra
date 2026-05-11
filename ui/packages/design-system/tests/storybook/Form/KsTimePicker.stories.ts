@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import {within, expect} from "storybook/test"
-import KsTimePicker from "../../../src/components/Form/KsTimePicker.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import {within, expect} from "storybook/test";
+import KsTimePicker from "../../../src/components/Form/KsTimePicker.vue";
 
 const meta: Meta<typeof KsTimePicker> = {
     title: "Components/Form/KsTimePicker",
@@ -24,8 +24,8 @@ const meta: Meta<typeof KsTimePicker> = {
             },
         },
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsTimePicker>
 
 /** Default time picker */
@@ -33,8 +33,8 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsTimePicker},
         setup() {
-            const value = ref<Date | null>(null)
-            return {args, value}
+            const value = ref<Date | null>(null);
+            return {args, value};
         },
         template: `
             <div style="padding:24px;width:240px">
@@ -44,11 +44,11 @@ export const Default: Story = {
     }),
     args: {placeholder: "Select time", clearable: true},
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const input = canvas.getByRole("combobox")
-        await expect(input).toBeTruthy()
+        const canvas = within(canvasElement);
+        const input = canvas.getByRole("combobox");
+        await expect(input).toBeTruthy();
     },
-}
+};
 
 /** Disabled state */
 export const Disabled: Story = {
@@ -61,11 +61,11 @@ export const Disabled: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const input = canvas.getByRole("combobox")
-        await expect(input).toBeDisabled()
+        const canvas = within(canvasElement);
+        const input = canvas.getByRole("combobox");
+        await expect(input).toBeDisabled();
     },
-}
+};
 
 /** All sizes */
 export const Sizes: Story = {
@@ -79,15 +79,15 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** With value format – emits ISO string instead of Date */
 export const ValueFormat: Story = {
     render: () => ({
         components: {KsTimePicker},
         setup() {
-            const value = ref<string>("")
-            return {value}
+            const value = ref<string>("");
+            return {value};
         },
         template: `
             <div style="padding:24px;width:240px">
@@ -104,4 +104,4 @@ export const ValueFormat: Story = {
             </div>
         `,
     }),
-}
+};

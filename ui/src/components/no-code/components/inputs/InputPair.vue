@@ -66,7 +66,7 @@
         required?: boolean
     }>();
 
-    const internalPairs = ref<[string, string | undefined][]>([])
+    const internalPairs = ref<[string, string | undefined][]>([]);
 
     // this flag will avoid updating the modelValue when the
     // change was initiated in the component itself
@@ -75,7 +75,7 @@
     const duplicatedKeys = computed(() => {
         return internalPairs.value.map(pair => pair[0])
             .filter((key, index, self) =>
-                self.indexOf(key) !== index
+                self.indexOf(key) !== index,
             );
     });
 
@@ -84,7 +84,7 @@
             return {
                 visible: true,
                 message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedKeys.value[0]}),
-            }
+            };
         }
         return {
             visible: false,
@@ -102,14 +102,14 @@
         internalPairs.value = Object.entries(newValue || {});
     }, {
         deep: true,
-        immediate: true
+        immediate: true,
     });
 
 
 
     function updateModel() {
         localEdit.value = true;
-        const newVal = Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined))
+        const newVal = Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined));
 
         emit("update:modelValue", newVal);
     }
@@ -117,24 +117,24 @@
     function handleKeyInput(index: number, newValue: string) {
 
         internalPairs.value[index][0] = newValue.toString();
-        updateModel()
+        updateModel();
     };
 
     function addPair() {
 
-        internalPairs.value.push(["", undefined])
-        updateModel()
+        internalPairs.value.push(["", undefined]);
+        updateModel();
     };
 
     function removePair (pairId: number) {
         internalPairs.value.splice(pairId, 1);
-        updateModel()
+        updateModel();
     };
 
     function updateValue (pairId: number, newValue: string){
 
         internalPairs.value[pairId][1] = newValue;
-        updateModel()
+        updateModel();
     };
 </script>
 

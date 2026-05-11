@@ -33,6 +33,6 @@ export function usePreAppliedFilters() {
         hasPreApplied,
         getPreApplied,
         isPreApplied,
-        getAllPreApplied
+        getAllPreApplied,
     };
 }

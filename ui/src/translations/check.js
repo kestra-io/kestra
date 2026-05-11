@@ -24,7 +24,7 @@ const content = getNestedKeys(readJSON(getPath("en"))["en"]);
 const languages = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"];
 const paths = languages.map((lang) => getPath(lang));
 
-const globalMissing = {}
+const globalMissing = {};
 const globalExtra = {};
 
 languages.forEach((lang, i) => {
@@ -42,13 +42,13 @@ languages.forEach((lang, i) => {
     if(extra.length) globalExtra[lang] = extra;
 });
 
-let errorString = ""
+let errorString = "";
 if(Object.keys(globalMissing).length) {
-    errorString += "\nMissing keys in translations"
+    errorString += "\nMissing keys in translations";
 }
 
 if(Object.keys(globalExtra).length) {
-    errorString += "\nExtra keys in translations"
+    errorString += "\nExtra keys in translations";
 }
 
 if(errorString.length){

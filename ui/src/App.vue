@@ -9,8 +9,8 @@
 </template>
 
 <script lang="ts" setup>
-    import "./styles/vendor.scss"
-    import "./styles/app.scss"
+    import "./styles/vendor.scss";
+    import "./styles/app.scss";
 
     import {ref, computed, watch, onMounted} from "vue";
     import {useRoute} from "vue-router";

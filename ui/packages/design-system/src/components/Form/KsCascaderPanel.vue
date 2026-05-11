@@ -12,34 +12,34 @@
 </template>
 
 <script setup lang="ts">
-    import {useTemplateRef} from "vue"
-    import {ElCascaderPanel} from "element-plus"
+    import {useTemplateRef} from "vue";
+    import {ElCascaderPanel} from "element-plus";
 
-    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useFilteredProps} from "../../utils/filteredProps";
 
-    const cascader = useTemplateRef("cascaderPanelRef")
+    const cascader = useTemplateRef("cascaderPanelRef");
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
-    const model = defineModel<any>()
+    const model = defineModel<any>();
 
     const props = defineProps<{
         options?: any[]
-    }>()
+    }>();
 
     const emit = defineEmits<{
         change: [value: any]
-    }>()
+    }>();
 
     defineSlots<{
         default?: (scope: {data: any; node: any}) => unknown
-    }>()
+    }>();
 
     defineExpose({
         cascader,
-    })
+    });
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 </script>
 
 <style lang="scss">

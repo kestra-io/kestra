@@ -21,7 +21,7 @@
     }
 
     withDefaults(defineProps<Props>(), {
-        buttons: () => []
+        buttons: () => [],
     });
 </script>
 

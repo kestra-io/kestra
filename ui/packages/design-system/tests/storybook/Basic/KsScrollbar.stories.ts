@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
-import KsScrollbar from "../../../src/components/Basic/KsScrollbar.vue"
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
+import KsScrollbar from "../../../src/components/Basic/KsScrollbar.vue";
 
 const meta: Meta<typeof KsScrollbar> = {
     title: "Components/Basic/KsScrollbar",
@@ -9,8 +9,8 @@ const meta: Meta<typeof KsScrollbar> = {
     parameters: {
         docs: {description: {component: "KsScrollbar is the Kestra design-system abstraction over `ElScrollbar` from Element Plus."}},
     },
-}
-export default meta
+};
+export default meta;
 type Story = StoryObj<typeof KsScrollbar>
 
 /** Basic usage – fixed height with vertical overflow */
@@ -27,7 +27,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Horizontal scroll – content wider than container */
 export const HorizontalScroll: Story = {
@@ -47,15 +47,15 @@ export const HorizontalScroll: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Max height – scrollbar only appears when content exceeds threshold */
 export const MaxHeight: Story = {
     render: () => ({
         components: {KsScrollbar},
         setup() {
-            const count = ref(3)
-            return {count}
+            const count = ref(3);
+            return {count};
         },
         template: `
             <div style="padding:24px;width:400px">
@@ -72,17 +72,17 @@ export const MaxHeight: Story = {
             </div>
         `,
     }),
-}
+};
 
 /** Manual scroll – programmatic scrollTo control */
 export const ManualScroll: Story = {
     render: () => ({
         components: {KsScrollbar},
         setup() {
-            const scrollbarRef = ref<any>(null)
-            function scrollToTop() { scrollbarRef.value?.setScrollTop(0) }
-            function scrollToBottom() { scrollbarRef.value?.setScrollTop(9999) }
-            return {scrollbarRef, scrollToTop, scrollToBottom}
+            const scrollbarRef = ref<any>(null);
+            function scrollToTop() { scrollbarRef.value?.setScrollTop(0); }
+            function scrollToBottom() { scrollbarRef.value?.setScrollTop(9999); }
+            return {scrollbarRef, scrollToTop, scrollToBottom};
         },
         template: `
             <div style="padding:24px;width:400px">
@@ -98,4 +98,4 @@ export const ManualScroll: Story = {
             </div>
         `,
     }),
-}
+};

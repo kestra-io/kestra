@@ -9,21 +9,21 @@
 </template>
 
 <script setup lang="ts">
-    import {ElBreadcrumbItem} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {ElBreadcrumbItem} from "element-plus";
+    import {useFilteredProps} from "../../../utils/filteredProps";
 
-    defineOptions({inheritAttrs: false})
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps<{
         to?: string | object
         replace?: boolean
-    }>()
+    }>();
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props);
 
     defineSlots<{
         default?(): unknown
-    }>()
+    }>();
 </script>
 
 <style lang="scss">

@@ -14,7 +14,7 @@ export function removeNullAndUndefined(obj: any): any {
         const newObj: any = {};
         let hasValue = false;
         for (const key in obj) {
-            const rawValue = obj[key]
+            const rawValue = obj[key];
             if(isNullOrUndefined(rawValue)) {
                 continue;
             }

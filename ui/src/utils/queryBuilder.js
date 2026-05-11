@@ -12,7 +12,7 @@ export default class QueryBuilder {
         let query = "(*" + split.join("*") + "*)^3 OR (*" + split.join("* AND *") + "*)";
 
         if (split.length === 1 ) {
-            query = `(${q})^5 OR ${query}`
+            query = `(${q})^5 OR ${query}`;
         }
 
         return `(${query})`;

@@ -322,8 +322,8 @@
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns";
     import useRestoreUrl from "../../../composables/useRestoreUrl";
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
+    import action from "../../../models/action";
+    import resource from "../../../models/resource";
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";

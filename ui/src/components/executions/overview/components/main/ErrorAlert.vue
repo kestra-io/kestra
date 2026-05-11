@@ -57,15 +57,20 @@
     const logs = ref<Log[]>([]);
 
     onMounted(async () => {
-        const response = await store.loadLogs({
-            store: false,
-            executionId: props.execution.id,
-            params: {minLevel: "ERROR"},
-        });
+        try {
+            const response = await store.loadLogs({
+                store: false,
+                executionId: props.execution.id,
+                params: {minLevel: "ERROR"},
+                showMessageOnError: false,
+            });
 
-        if (!response.length) return;
+            if (!response.length) return;
 
-        logs.value = response;
+            logs.value = response;
+        } catch {
+            // User may not have ACCESS_LOGS permission — silently skip
+        }
     });
 </script>
 <style scoped lang="scss">

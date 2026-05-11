@@ -22,7 +22,6 @@ import java.util.stream.IntStream;
 
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,6 +37,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -285,7 +285,7 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(result.getTaskRunList().size()).isEqualTo(13);
 
-        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result);
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result.getTenantId(), result.getId());
         assertThat(subExecutions).hasSize(3);
     }
 
@@ -500,7 +500,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be terminated or paused to be restarted, current state is 'SUCCESS'");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Cannot restart execution: current state is 'SUCCESS', expected terminated or paused.");
     }
 
     @Test
@@ -661,7 +661,6 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-loop.yaml"})
-    @Disabled("This feature is not yet implemented")
     void restartExecutionFromTaskIdWithSequential() throws Exception {
         final String flowId = "restart-loop";
         final String referenceTaskId = "2_end";
@@ -675,7 +674,7 @@ class ExecutionControllerRunnerTest {
         Optional<Flow> flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, flowId);
         assertThat(flow.isPresent()).isTrue();
 
-        // Run child execution starting from a specific task and wait until it finishes
+        // Replay from 2_end (which is in the parent execution's task run list)
         Thread.sleep(100);
 
         Execution createdChildExec = client.toBlocking().retrieve(
@@ -689,17 +688,26 @@ class ExecutionControllerRunnerTest {
 
         assertThat(createdChildExec).isNotNull();
 
-        Execution restarted = runnerUtils.awaitChildExecution(
-            flow.get(),
-            parentExecution,
+        // Wait for the replayed child execution to complete.
+        // We filter by kind != LOOP to distinguish the replayed child from loop sub-executions.
+        Execution restarted = runnerUtils.awaitFlowExecution(
+            e -> parentExecution.getId().equals(e.getParentId())
+                && e.getKind() != ExecutionKind.LOOP
+                && e.getState().isTerminated(),
+            TENANT_ID, TESTS_FLOW_NS, flowId,
             Duration.ofSeconds(30)
         );
 
         assertThat(restarted.getState().getCurrent()).isEqualTo(Type.SUCCESS);
-        assertThat(restarted.getState().getHistories()).hasSize(3);
+        // Parent history [CREATED, RUNNING, SUCCESS] + RESTARTED + RUNNING + SUCCESS = 6
+        assertThat(restarted.getState().getHistories()).hasSize(6);
         assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
-        assertThat(restarted.getTaskRunList()).hasSize(20);
+        assertThat(restarted.getTaskRunList()).hasSize(2);
         assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
+
+        // 1_each (Loop) is kept as SUCCESS and not re-run, so no new sub-executions are created for the restarted execution
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(restarted.getTenantId(), restarted.getId());
+        assertThat(subExecutions).hasSize(0);
     }
 
     @Test
@@ -1343,8 +1351,8 @@ class ExecutionControllerRunnerTest {
             )
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getMessage()).contains("Illegal argument: You can only change the state of a terminated non killed execution.");
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Conflict: Cannot change execution state: execution must be terminated and not killed.");
 
         e = assertThrows(
             HttpClientResponseException.class,
@@ -1389,10 +1397,10 @@ class ExecutionControllerRunnerTest {
             )
         );
 
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
-        assertThat(bulkErrorResponse.get()).contains("You can only change the state of a task run for a terminated non killed execution.");
+        assertThat(bulkErrorResponse.get()).contains("Cannot change task run state: execution must be terminated and not killed.");
     }
 
     @Test
@@ -1916,7 +1924,7 @@ class ExecutionControllerRunnerTest {
         Execution completed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
 
         var notRunning = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + completed.getId() + "/pause", null)));
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2021,7 +2029,7 @@ class ExecutionControllerRunnerTest {
         var notRunning = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + completed.getId() + "/unqueue", null))
         );
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2108,7 +2116,7 @@ class ExecutionControllerRunnerTest {
         var notRunning = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/%s/executions/".formatted(tenantId) + completed.getId() + "/force-run", null))
         );
-        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRunning.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -2639,7 +2647,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).contains("Execution must be terminated or paused to be restarted, current state is 'KILLED'");
+        assertThat(e.getMessage()).contains("Cannot restart execution: current state is 'KILLED', expected terminated or paused.");
 
         e = assertThrows(
             HttpClientResponseException.class,

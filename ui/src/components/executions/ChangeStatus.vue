@@ -65,7 +65,7 @@
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {State} from "@kestra-io/design-system"
     import {shallowRef, ref} from "vue";
@@ -156,7 +156,7 @@
                     })
             },
             enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 

@@ -274,31 +274,36 @@ public class RestartCaseTest {
     }
 
     public void restartSubflowWithLoop() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent-loop");
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent-loop", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList()).hasSize(2); // hello + each
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        // here we must have 1 failed subflows
+        // here we must have 1 failed subflow
         runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().isFailed(), MAIN_TENANT, "io.kestra.tests", "restart-child");
 
-        // there is 3 values so we must restart it 3 times to end the 3 subflows
+        // there are 3 values so we must restart 3 times: each restart retries the failed sub-execution
         Flow flow = flowRepository.findByExecution(execution);
         Execution restarted1 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop") && e.getTaskRunList().size() == 4,
-            restarted1
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop")
+                && e.getMetadata().getAttemptNumber() == 2,
+            restarted1,
+            Duration.ofSeconds(60)
         );
         Execution restarted2 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop") && e.getTaskRunList().size() == 5,
-            restarted2
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop")
+                && e.getMetadata().getAttemptNumber() == 3,
+            restarted2,
+            Duration.ofSeconds(60)
         );
         Execution restarted3 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-parent-loop"),
-            restarted3
+            restarted3,
+            Duration.ofSeconds(60)
         );
-        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getTaskRunList()).hasSize(3);
 
         List<Execution> childExecutions = runnerUtils.awaitFlowExecutionNumber(3, MAIN_TENANT, "io.kestra.tests", "restart-child");
         List<Execution> successfulRestart = childExecutions.stream()

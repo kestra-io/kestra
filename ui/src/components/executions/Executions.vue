@@ -415,7 +415,7 @@
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import useRouteContext from "../../composables/useRouteContext";
     import {useTableColumns} from "../../composables/useTableColumns";
@@ -642,23 +642,23 @@
     });
 
     const canCreate = computed(() => {
-        return authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, props.namespace);
+        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.namespace);
     });
 
     const canUpdate = computed(() => {
-        return authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.namespace);
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.namespace);
     });
 
     const canDelete = computed(() => {
-        return authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, props.namespace);
+        return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace);
     });
 
     const isAllowedEdit = computed(() => {
-        return authStore.user?.isAllowed(permission.FLOW, action.UPDATE, flowStore.flow?.namespace);
+        return authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace);
     });
 
     const hasAnyExecute = computed(() => {
-        return authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
+        return authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.CREATE);
     });
 
     const isDisplayedTop = computed(() => {

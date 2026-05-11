@@ -72,7 +72,7 @@
     import Resume from "./overview/components/actions/Resume.vue";
     import Restart from "./overview/components/actions/Restart.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth"
@@ -97,10 +97,10 @@
                 return this.executionsStore.execution;
             },
             isAllowedEdit() {
-                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(resource.FLOW, action.UPDATE, this.execution.namespace);
             },
             isAllowedTrigger() {
-                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+                return this.execution && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.execution.namespace);
             },
             hasVisibleActions() {
                 return this.isAllowedEdit || this.primaryAction || this.fallbackToExecute;

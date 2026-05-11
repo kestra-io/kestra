@@ -1,6 +1,6 @@
 import {computed, h, ref, watch} from "vue";
 import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
-import permission from "../models/permission";
+import resource from "../models/resource";
 import action from "../models/action";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import Utils from "../utils/utils";
@@ -716,17 +716,13 @@ function deleteFlowAndDependencies() {
     function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
-            try {
-                const {namespace} = YAML_UTILS.getMetadata(options.flow);
-                if(authStore.user && !authStore.user?.isAllowed(
-                    permission.FLOW,
-                    action.CREATE,
-                    namespace,
-                )) {
-                    flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
-                }
-            } catch {
-                // YAML may be temporarily invalid during editing
+            const {namespace} = YAML_UTILS.getMetadata(options.flow);
+            if(authStore.user && !authStore.user?.isAllowed(
+                resource.FLOW,
+                action.CREATE,
+                namespace,
+            )) {
+                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
 
@@ -847,9 +843,9 @@ function deleteFlowAndDependencies() {
             return false;
         }
 
-        return (isCreating.value && authStore.user?.hasAnyAction(permission.FLOW, action.UPDATE))
+        return (isCreating.value && authStore.user?.hasAnyAction(resource.FLOW, action.UPDATE))
          || authStore.user?.isAllowed(
-            permission.FLOW,
+            resource.FLOW,
             action.UPDATE,
             flow.value?.namespace,
         );

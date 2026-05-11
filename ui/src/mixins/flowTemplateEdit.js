@@ -6,7 +6,7 @@ import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import action from "../models/action";
-import permission from "../models/permission";
+import resource from "../models/resource";
 import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
 import {usePluginsStore} from "../stores/plugins";
@@ -26,7 +26,7 @@ export default {
             content: "",
             previousContent: "",
             readOnlyEditFields: {},
-            permission: permission,
+            resource: resource,
             action: action
         };
     },
@@ -42,10 +42,10 @@ export default {
             return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.authStore.user?.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -84,7 +84,7 @@ export default {
                 this.item &&
                 this.isEdit &&
                 this.authStore.user?.isAllowed(
-                    permission[this.dataType.toUpperCase()],
+                    resource[this.dataType.toUpperCase()],
                     action.DELETE,
                     this.item.namespace
                 )

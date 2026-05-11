@@ -174,7 +174,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-parent-loop.yaml", "flows/valids/restart-child.yaml" })
-    @Disabled("This is not implemented yet for loops")
+    @Disabled
     protected void restartSubflowWithLoop() throws Exception {
         restartCaseTest.restartSubflowWithLoop();
     }
@@ -602,6 +602,13 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/loop-switch.yaml")
     public void loopSwitch(Execution execution) throws InternalException {
         loopCaseTest.loopSwitch(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopWithSubflow(Execution execution) {
+        loopCaseTest.loopWithSubflow(execution);
     }
 
     @Test

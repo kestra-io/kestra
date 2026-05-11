@@ -95,7 +95,7 @@
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
-    import permission from "../../models/permission"
+    import resource from "../../models/resource"
     import action from "../../models/action"
     import AcceptDecline from "./AcceptDecline.vue";
 
@@ -142,7 +142,7 @@
     // Overrides the wrapper's broader hasAnyActionOnAnyNamespace check with a
     // namespace-scoped permission check and onboarding guard.
     const aiCopilotAllowed = computed(() => {
-        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(permission.AI_COPILOT, action.READ, namespace.value);
+        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(resource.COPILOT, action.USE, namespace.value);
     });
 
     async function loadFile() {

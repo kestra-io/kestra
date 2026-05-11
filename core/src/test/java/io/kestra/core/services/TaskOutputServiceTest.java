@@ -41,7 +41,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(2);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
@@ -66,7 +66,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
@@ -88,7 +88,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());

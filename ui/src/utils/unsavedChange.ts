@@ -31,18 +31,15 @@ export default (app: any, router: Router) => {
         return JSON.stringify(filteredRouteForEquals(route1)) === JSON.stringify(filteredRouteForEquals(route2))
     }
 
-    router.beforeEach(async (to, from, next) => {
+    router.beforeEach(async (to, from) => {
         if (unsavedChangesStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
             const shouldLeave = await unsavedChangesStore.showDialog();
             if (shouldLeave) {
                 unsavedChangesStore.unsavedChange = false;
-                next()
-                return;
+                return true;
             } else {
-                next(false);
-                return;
+                return false;
             }
         }
-        next();
     });
 }

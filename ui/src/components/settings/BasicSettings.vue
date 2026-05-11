@@ -301,7 +301,7 @@
     import {mapStores} from "pinia";
     import {useLayoutStore} from "../../stores/layout";
     import {useMiscStore} from "override/stores/misc";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
 
@@ -793,7 +793,7 @@
                 ]
             },
             canReadFlows() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW);
             },
             logDisplayOptions() {
                 return  [

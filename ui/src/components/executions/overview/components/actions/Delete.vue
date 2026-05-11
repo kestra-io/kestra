@@ -20,7 +20,7 @@
     const store = useExecutionsStore();
     import {useAuthStore} from "override/stores/auth";
 
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
 
     import {State} from "@kestra-io/design-system";
@@ -43,7 +43,7 @@
         return (
             props.execution &&
             useAuthStore().user?.isAllowed(
-                permission.EXECUTION,
+                resource.EXECUTION,
                 action.DELETE,
                 props.execution.namespace,
             )

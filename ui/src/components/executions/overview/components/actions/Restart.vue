@@ -182,7 +182,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
-    import permission from "../../../../../models/permission"
+    import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -252,8 +252,8 @@
         if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, props.execution.namespace)
-            : authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)
+            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
+            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
         if (!hasPermission) return false
 

@@ -6,11 +6,11 @@ export function split(q) {
 }
 
 export function toLucene(q) {
-    const splitted = split(q)
+    const splitQuery = split(q)
 
-    let query = "(*" + splitted.join("*") + "*)^3 OR (*" + splitted.join("* AND *") + "*)"
+    let query = "(*" + splitQuery.join("*") + "*)^3 OR (*" + splitQuery.join("* AND *") + "*)"
 
-    if (splitted.length === 1 ) {
+    if (splitQuery.length === 1 ) {
         query = `(${q})^5 OR ${query}`
     }
 
@@ -18,9 +18,9 @@ export function toLucene(q) {
 }
 
 export function toTextLucene(q) {
-    const splitted = split(q)
+    const splitQuery = split(q)
 
-    return `(${splitted.join(" AND ") })`
+    return `(${splitQuery.join(" AND ") })`
 }
 
 export function iso(date) {

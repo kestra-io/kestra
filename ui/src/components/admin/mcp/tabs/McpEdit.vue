@@ -76,7 +76,7 @@
                         class="mcp-edit__auth-option"
                         :class="{
                             'mcp-edit__auth-option--selected': form.authType === opt.value,
-                            'mcp-edit__auth-option--disabled': readOnly || (opt.ee && isOss),
+                            'mcp-edit__auth-option--disabled': isOptionDisabled(opt),
                         }"
                     >
                         <input
@@ -84,11 +84,13 @@
                             :value="opt.value"
                             v-model="form.authType"
                             class="me-2"
-                            :disabled="readOnly || (opt.ee && isOss)"
+                            :disabled="isOptionDisabled(opt)"
                         >
                         <span class="mcp-edit__auth-name">{{ t(opt.labelKey) }}</span>
                         <LockOutline v-if="opt.ee && isOss" class="ms-2" :size="14" />
-                        <span class="mcp-edit__auth-hint ms-auto">{{ t(opt.hintKey) }}</span>
+                        <span class="mcp-edit__auth-hint ms-auto">
+                            {{ opt.value === "OAUTH" && noOauthProviders ? t("mcp.no_oauth_providers") : t(opt.hintKey) }}
+                        </span>
                     </label>
                 </div>
             </el-form-item>
@@ -162,6 +164,15 @@
     const authStore = useAuthStore()
     const isOss = computed(() => useMiscStore().configs?.edition === "OSS")
     const oauthProviders = computed<string[]>(() => authStore.auths?.oauths ?? [])
+    const noOauthProviders = computed(() => oauthProviders.value.length === 0)
+
+    type AuthOption = {value: "BASIC" | "API_TOKEN" | "OAUTH"; labelKey: string; hintKey: string; ee: boolean}
+    function isOptionDisabled(opt: AuthOption) {
+        if (readOnly.value) return true
+        if (opt.ee && isOss.value) return true
+        if (opt.value === "OAUTH" && noOauthProviders.value) return true
+        return false
+    }
 
     const isUpdate = computed(() => !!route.params.id)
 

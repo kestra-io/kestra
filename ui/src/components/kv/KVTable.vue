@@ -555,14 +555,14 @@
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(
-            t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, kvs) => count + kvs.length, 0)}) +
+            t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, group) => count + group.length, 0)}) +
                 (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning")),
             async () => {
-                Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, kvs]) => {
+                Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, group]) => {
                     namespacesStore
-                        .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
+                        .deleteKvs({namespace, request: {keys: group.map(item => item.key)}})
                         .then(() => {
-                            toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
+                            toast.deleted(`${group.length} KV(s) from ${namespace} namespace`);
                             toggleAllUnselected();
                             dataTable.value?.reload();
                         });

@@ -216,7 +216,7 @@
             return [];
         }
         const {data, status} = await axios.get(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
-            validateStatus: (status) => status === 200 || status === 404,
+            validateStatus: (s) => s === 200 || s === 404,
         });
         if(status === 200) {
             return transform(data, true, path);
@@ -309,6 +309,7 @@
 
     function isValidURL(url: string) {
         try {
+             
             new URL(url);
             return true;
         } catch {
@@ -464,15 +465,15 @@
     });
 
     watch(outputs, (o) => {
-        if(o?.some(t => t.leaf === false)) {
-            const task = o?.filter(t => t.leaf === false)[0];
+        if(o?.some(item => item.leaf === false)) {
+            const task = o?.filter(item => item.leaf === false)[0];
             if (!task) return;
 
             const selectedLocal = [task.value];
             let expandedValueLocal = task.path;
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
-                let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
+                let child: TransformedTask | undefined = children.filter(item => item.leaf === false)[0];
 
                 do {
                     selectedLocal.push(child.value);
@@ -480,7 +481,7 @@
                         expandedValueLocal = child.path;
                     }
 
-                    child = child.children?.filter(t => !t.heading)[0];
+                    child = child.children?.filter(item => !item.heading)[0];
                 } while(child?.path);
 
                 selected.value = selectedLocal;

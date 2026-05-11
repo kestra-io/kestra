@@ -16,8 +16,8 @@ const config: StorybookConfig = {
         name: "@storybook/vue3-vite",
         options: {},
     },
-    async viteFinal(config) {
-        return mergeConfig(config, {
+    async viteFinal(viteConfig) {
+        return mergeConfig(viteConfig, {
             define: {"process.env": {}},
             css: {
                 preprocessorOptions: {

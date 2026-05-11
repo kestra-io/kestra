@@ -83,9 +83,9 @@ export function useScreenshot(): UseScreenshot {
         imgType.value = "jpeg";
         return data;
       })
-      .catch((error) => {
-        error.value = error;
-        throw new Error(error);
+      .catch((err) => {
+        error.value = err;
+        throw new Error(err);
       });
   }
 
@@ -101,9 +101,9 @@ export function useScreenshot(): UseScreenshot {
         imgType.value = "png";
         return data;
       })
-      .catch((error) => {
-        error.value = error;
-        throw new Error(error);
+      .catch((err) => {
+        error.value = err;
+        throw new Error(err);
       });
   }
 

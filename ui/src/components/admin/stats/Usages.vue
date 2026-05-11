@@ -63,7 +63,7 @@
         return aggregateValuesFromListWithGetter(list, (item: any) => item);
     }
     function aggregateValuesFromListWithGetter(list: any, valueGetter: (item: any) => any) {
-        return aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, (list: any[]) => list.reduce((a, b) => a + b, 0));
+        return aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, (values: any[]) => values.reduce((a, b) => a + b, 0));
     }
     function aggregateValuesFromListWithGetterAndAggFunction(list: any, valueGetter: (item: any) => any, aggFunction: (list: any[]) => any) {
         if (!list) return 0;

@@ -430,14 +430,14 @@ describe("insertBlockWithPath", () => {
             type: type3
             name: Plugin 3
         `;
-        const newValue = `
+        const subTaskValue = `
             id: plugin4
             type: type4
             name: Plugin 4
         `;
         const result = YamlUtils.insertBlockWithPath({
             source: srcWithSubTasks,
-            newBlock: newValue,
+            newBlock: subTaskValue,
             parentPath: "tasks[0].tasks",
             refPath: 0,
             position: "before",

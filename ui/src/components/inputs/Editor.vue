@@ -234,29 +234,29 @@
     });
 
     const options = computed(() => {
-        const options: monaco.editor.IStandaloneEditorConstructionOptions & {
+        const opts: monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean
             useInlineViewWhenSpaceIsLimited?:boolean
             renderOverviewRuler?:boolean
         } = {};
 
         if (props.input && !props.lineNumbers) {
-            options.lineNumbers = "off";
-            options.folding = false;
-            options.renderLineHighlight = "none";
-            options.wordBasedSuggestions = "off";
-            options.occurrencesHighlight = "off";
-            options.hideCursorInOverviewRuler = true;
-            options.overviewRulerBorder = false;
-            options.overviewRulerLanes = 0;
-            options.lineNumbersMinChars = 0;
-            options.fontSize = 13;
-            options.minimap = {
+            opts.lineNumbers = "off";
+            opts.folding = false;
+            opts.renderLineHighlight = "none";
+            opts.wordBasedSuggestions = "off";
+            opts.occurrencesHighlight = "off";
+            opts.hideCursorInOverviewRuler = true;
+            opts.overviewRulerBorder = false;
+            opts.overviewRulerLanes = 0;
+            opts.lineNumbersMinChars = 0;
+            opts.fontSize = 13;
+            opts.minimap = {
                 enabled: false,
             };
-            options.scrollBeyondLastColumn = 0;
-            options.overviewRulerLanes = 0;
-            options.scrollbar = {
+            opts.scrollBeyondLastColumn = 0;
+            opts.overviewRulerLanes = 0;
+            opts.scrollbar = {
                 vertical: !props.showScroll ? "hidden" : "visible",
                 horizontal: "hidden",
                 alwaysConsumeMouseWheel: false,
@@ -265,37 +265,37 @@
                 verticalScrollbarSize: !props.showScroll ? 0 : 5,
                 useShadows: false,
             };
-            options.stickyScroll = {
+            opts.stickyScroll = {
                 enabled: false,
             };
-            options.find = {
+            opts.find = {
                 addExtraSpaceOnTop: false,
                 autoFindInSelection: "never",
                 seedSearchStringFromSelection: "never",
             };
-            options.contextmenu = false;
-            options.lineDecorationsWidth = 0;
+            opts.contextmenu = false;
+            opts.lineDecorationsWidth = 0;
 
         } else {
-            options.scrollbar = {
+            opts.scrollbar = {
                 vertical: isDiff.value ? "hidden" : "auto",
                 verticalScrollbarSize: isDiff.value ? 0 : 10,
                 alwaysConsumeMouseWheel: false,
             };
-            options.renderSideBySide = props.diffSideBySide;
-            options.useInlineViewWhenSpaceIsLimited = false;
-            options.renderOverviewRuler = props.diffOverviewBar;
+            opts.renderSideBySide = props.diffSideBySide;
+            opts.useInlineViewWhenSpaceIsLimited = false;
+            opts.renderOverviewRuler = props.diffOverviewBar;
         }
 
 
-        options.minimap = props.minimap ? undefined : {
+        opts.minimap = props.minimap ? undefined : {
             enabled: false,
         };
 
-        options.readOnly = props.readOnly;
+        opts.readOnly = props.readOnly;
 
-        options.wordWrap = props.wordWrap ? "on" : "off";
-        options.automaticLayout = true;
+        opts.wordWrap = props.wordWrap ? "on" : "off";
+        opts.automaticLayout = true;
 
         const settingsEditorFontSize = localStorage.getItem("editorFontSize");
 
@@ -311,7 +311,7 @@
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
-            ...options,
+            ...opts,
         } as monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean
             useInlineViewWhenSpaceIsLimited?:boolean
@@ -331,8 +331,8 @@
 
     const isDiff = computed(() => props.original !== undefined);
 
-    function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
-        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor;
+    function isCodeEditor(ed?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): ed is monaco.editor.IStandaloneCodeEditor{
+        return ed?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor;
     }
 
     const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
@@ -564,8 +564,8 @@
         };
     }
 
-    function autoFold(autoFold?: boolean) {
-        if (autoFold && editor) {
+    function autoFold(shouldFold?: boolean) {
+        if (shouldFold && editor) {
             editor.trigger("fold", "fold-multiline", {});
         }
     }
@@ -636,7 +636,7 @@
         let regex = new RegExp("\\{\\{(.+?)}}", "g");
         let match;
         const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = [];
-        while (text && model && (match = regex.exec(text)) !== null) {
+        if (text && model) while ((match = regex.exec(text)) !== null) {
             let startPos = model.getPositionAt(match.index);
             let endPos = model.getPositionAt(match.index + match[0].length);
             decorationsToAdd.push({

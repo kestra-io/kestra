@@ -20,6 +20,7 @@ export function formatPluginTitle(title: string | undefined): string | undefined
     return capitalize(title);
 }
 
+// oxlint-disable-next-line no-extend-native
 String.prototype.capitalize = function () {
     return capitalize(this.toString());
 };
@@ -35,6 +36,7 @@ export function hashCode(str: string) {
     return hash;
 }
 
+// oxlint-disable-next-line no-extend-native
 String.prototype.hashCode = function () {
     return hashCode(this.toString());
 };

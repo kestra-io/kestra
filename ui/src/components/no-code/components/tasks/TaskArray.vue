@@ -59,7 +59,7 @@
 
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema?: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
         root?: string;

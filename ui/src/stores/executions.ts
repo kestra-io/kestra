@@ -626,13 +626,13 @@ export const useExecutionsStore = defineStore("executions", () => {
             }
 
             const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
-                : Object.values(subflowsExecutions.value).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
+                : Object.values(subflowsExecutions.value).filter(exec => exec.id === nodeToCheck.executionId)?.[0];
 
             if (!nodeExecution) {
                 return true;
             }
 
-            return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
+            return !nodeExecution.taskRunList?.some((tr: { taskId: string }) => tr.taskId === nodeToCheck.task?.id);
 
         }
 

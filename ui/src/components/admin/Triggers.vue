@@ -582,15 +582,15 @@
         triggerStore.setDisabled({...trigger, disabled: !value})
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId);
-                triggers.value = triggers.value?.map((t: any) => {
-                    const triggerContextMatches = t.triggerContext &&
-                        t.triggerContext.flowId === updatedTrigger.flowId &&
-                        t.triggerContext.triggerId === updatedTrigger.triggerId;
+                triggers.value = triggers.value?.map((trig: any) => {
+                    const triggerContextMatches = trig.triggerContext &&
+                        trig.triggerContext.flowId === updatedTrigger.flowId &&
+                        trig.triggerContext.triggerId === updatedTrigger.triggerId;
 
                     if (triggerContextMatches) {
-                        return {triggerContext: updatedTrigger, abstractTrigger: t.abstractTrigger};
+                        return {triggerContext: updatedTrigger, abstractTrigger: trig.abstractTrigger};
                     }
-                    return t;
+                    return trig;
                 });
             });
     };
@@ -658,8 +658,8 @@
             const options = {...query, ...data};
             const actions = actionMap[queryAction]();
             return actions(options)
-                .then((data: any) => {
-                    toast.success(t(success, {count: data?.count}));
+                .then((res: any) => {
+                    toast.success(t(success, {count: res?.count}));
                     toggleAllUnselected();
                     triggerLoadDataAfterBulkEditAction();
                 });
@@ -668,8 +668,8 @@
             const options = {triggers: selectionData, ...data};
             const actions = actionMap[byIdAction]();
             return actions(byIdAction.includes("setDisabled") ? options : selectionData)
-                .then((data: any) => {
-                    toast.success(t(success, {count: data?.count}));
+                .then((res: any) => {
+                    toast.success(t(success, {count: res?.count}));
                     toggleAllUnselected();
                     triggerLoadDataAfterBulkEditAction();
                 }).catch((e: any) => {
@@ -772,12 +772,12 @@
     });
 
     const triggersMerged = computed(() => {
-        const all = triggers.value?.map((t: any) => {
+        const all = triggers.value?.map((trig: any) => {
             return {
-                ...t?.trigger,
-                ...t?.state,
-                codeDisabled: t?.trigger?.disabled,
-                missingSource: !t?.trigger,
+                ...trig?.trigger,
+                ...trig?.state,
+                codeDisabled: trig?.trigger?.disabled,
+                missingSource: !trig?.trigger,
             };
         }) ?? [];
 

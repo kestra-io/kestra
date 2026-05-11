@@ -74,11 +74,11 @@ export default {
             const values = typeof (keyOrObject) === "string" ? {[keyOrObject]: value} : keyOrObject;
             let query = {...this.$route.query};
 
-            for (const [key, value] of Object.entries(values)) {
-                if (value === undefined || value === "" || value === null || value.length === 0) {
+            for (const [key, entryValue] of Object.entries(values)) {
+                if (entryValue === undefined || entryValue === "" || entryValue === null || entryValue.length === 0) {
                     delete query[key];
                 } else {
-                    query[key] = value;
+                    query[key] = entryValue;
                 }
             }
 

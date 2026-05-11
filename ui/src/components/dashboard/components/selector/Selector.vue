@@ -126,10 +126,10 @@
     onBeforeMount(fetchDashboards);
 
     const tenant = ref();
-    watch(() => route.params.tenant, (t) => {
-        if (tenant.value !== t) {
+    watch(() => route.params.tenant, (newTenant) => {
+        if (tenant.value !== newTenant) {
             fetchDashboards();
-            tenant.value = t;
+            tenant.value = newTenant;
         }
     }, {immediate: true});
 

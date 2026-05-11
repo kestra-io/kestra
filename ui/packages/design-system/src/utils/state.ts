@@ -165,6 +165,7 @@ export const STATES:Record<string, StateModel> = Object.freeze({
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
 
+// oxlint-disable-next-line typescript/no-extraneous-class
 export class State {
     static readonly CREATED = "CREATED" as const;
     static readonly RESTARTED = "RESTARTED" as const;

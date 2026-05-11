@@ -54,10 +54,10 @@ export const NO_SUGGESTIONS = {suggestions: []};
 export function registerPebbleAutocompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[],
+    langIds: string[],
 ) {
     // Pebble autocompletion
-    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
+    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
         triggerCharacters: ["{"],
         async provideCompletionItems(model, position) {
             // Not a subfield access
@@ -83,9 +83,9 @@ export function registerPebbleAutocompletion(
 export function registerFunctionParametersAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[],
+    langIds: string[],
 ) {
-    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
+    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
         triggerCharacters: ["("],
         async provideCompletionItems(model, position) {
             const source = model.getValue();
@@ -133,10 +133,10 @@ export function registerFunctionParametersAutoCompletion(
 export function registerNestedValueAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[],
+    langIds: string[],
     completionSource?: ComputedRef<string | undefined>,
 ) {
-    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
+    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
         triggerCharacters: ["."],
         async provideCompletionItems(model, position) {
             const source = model.getValue();
@@ -164,9 +164,9 @@ export function registerNestedValueAutoCompletion(
 export function registerFilterAutoCompletion(
     autoCompletionProviders: IDisposable[],
     autoCompletion: PebbleAutoCompletion,
-    languages: string[],
+    langIds: string[],
 ) {
-    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(languages, {
+    autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
         triggerCharacters: ["|"],
         async provideCompletionItems(model, position) {
             const lineContent = model.getLineContent(position.lineNumber);

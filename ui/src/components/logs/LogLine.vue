@@ -74,7 +74,7 @@
     }));
 
     const metaWithValue = computed(() => {
-        const metaWithValue: any[] = [];
+        const result: any[] = [];
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -109,10 +109,10 @@
                         params: {namespace: props.log["namespace"], id: props.log[key]},
                     };
                 }
-                metaWithValue.push(meta);
+                result.push(meta);
             }
         }
-        return metaWithValue;
+        return result;
     });
 
     const levelStyle = computed(() => {

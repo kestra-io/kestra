@@ -48,8 +48,8 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
     ];
 
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
-        return item ? item.label : value;
+        const found = RELATIVE_DATE.find((item) => item.value === value);
+        return found ? found.label : value;
     };
 
     const VALUES = {

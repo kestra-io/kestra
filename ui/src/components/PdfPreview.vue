@@ -55,10 +55,10 @@
         ).toString();
     };
 
-    const renderPage = (pageNum: number): void => {
+    const renderPage = (num: number): void => {
         pageRendering.value = true;
 
-        pdfDoc.value?.getPage(pageNum).then((page) => {
+        pdfDoc.value?.getPage(num).then((page) => {
             const viewport = page.getViewport({scale: scale.value});
             
             if (canvasRef.value) {
@@ -101,11 +101,11 @@
         });
     };
 
-    const queueRenderPage = (pageNum: number): void => {
+    const queueRenderPage = (num: number): void => {
         if (pageRendering.value) {
-            pageNumPending.value = pageNum;
+            pageNumPending.value = num;
         } else {
-            renderPage(pageNum);
+            renderPage(num);
         }
     };
 

@@ -58,8 +58,8 @@
     ];
 
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
-        return item ? item.label : value;
+        const found = RELATIVE_DATE.find((item) => item.value === value);
+        return found ? found.label : value;
     };
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};

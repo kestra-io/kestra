@@ -50,8 +50,8 @@
         isLoading.value = loading;
     }
 
-    const onExpandSubflow = (expandedSubflows: string[]) => {
-        flowStore.expandedSubflows = expandedSubflows;
+    const onExpandSubflow = (subflows: string[]) => {
+        flowStore.expandedSubflows = subflows;
     };
 
     const onSwappedTask = (swappedTasks: [string, string]) => {

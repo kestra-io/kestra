@@ -191,18 +191,18 @@
                 if (item.$ref) {
                     const resolvedItem = getValueAtJsonPath(fullSchema.value, item.$ref);
                     if (resolvedItem?.allOf) {
-                        let type = "", ref;
+                        let type = "", refValue;
                         for (const subItem of resolvedItem.allOf) {
                             if (subItem.properties?.type?.const) {
                                 type = subItem.properties.type.const;
                             }
                             if (subItem.$ref) {
-                                ref = removeRefPrefix(subItem.$ref);
+                                refValue = removeRefPrefix(subItem.$ref);
                             }
                         }
-                        if (type && ref) {
+                        if (type && refValue) {
                             acc[type] = acc[type] || [];
-                            acc[type].push(ref);
+                            acc[type].push(refValue);
                         }
                     }
 
@@ -322,12 +322,12 @@
             const schemas = resolvedSchemas.value;
 
             // find properties with the same key and list their keys
-            const properties = Object.keys(schemas[0].properties).filter((key) => {
-                return schemas.every((schema) => schema.properties[key] !== undefined);
+            const commonProps = Object.keys(schemas[0].properties).filter((key) => {
+                return schemas.every((s) => s.properties[key] !== undefined);
             }).reduce((acc, key) => {
                 // check if the properties are the same when they are serialized
-                if (schemas.every((schema) => {
-                    return isEqual(schemas[0].properties[key], schema.properties[key]);
+                if (schemas.every((s) => {
+                    return isEqual(schemas[0].properties[key], s.properties[key]);
                 })) {
                     // if they are we can safely display them
                     acc[key] = schemas[0].properties[key];
@@ -336,7 +336,7 @@
             }, {} as Record<string, any>);
 
             if(dataTypes.value.length > 1){
-                properties["data"] = {
+                commonProps["data"] = {
                     type: "object",
                     // this is to force the data field to be visible
                     // and TaskComplex and therefore make the data type
@@ -345,7 +345,7 @@
                 };
             }
 
-            return properties;
+            return commonProps;
         }
 
         return undefined;
@@ -353,10 +353,10 @@
 
     const dataTypes = computed(() => {
         const types = new Set<string>();
-        for(const schema of resolvedSchemas.value){
-            const dataResolved = schema.properties?.data?.$ref
-                ? getValueAtJsonPath(fullSchema.value, schema.properties?.data?.$ref)
-                : schema.properties?.data;
+        for(const s of resolvedSchemas.value){
+            const dataResolved = s.properties?.data?.$ref
+                ? getValueAtJsonPath(fullSchema.value, s.properties?.data?.$ref)
+                : s.properties?.data;
             const typeConst = dataResolved?.properties?.type?.const;
             if(typeConst){
                 types.add(typeConst);

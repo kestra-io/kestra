@@ -43,10 +43,10 @@ export const decodeSearchParams = (query: LocationQuery) =>
 
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 
-export const encodeFiltersToQuery = (filters: Filter[], keyOfComparator: (comparator: any) => string) =>
+export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: (comparator: any) => string) =>
     filters.reduce((query, filter) => {
         const {key, comparator, value} = filter;
-        const comparatorKey = keyOfComparator(comparator);
+        const comparatorKey = getComparatorKey(comparator);
 
         switch (key) {
             case "timeRange":

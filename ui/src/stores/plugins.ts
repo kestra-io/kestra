@@ -38,8 +38,8 @@ interface JsonSchemaDef {
     properties?: Record<string, any>,
 }
 
-export function removeRefPrefix(ref?: string): string {
-    return ref?.replace(/^#\/definitions\//, "") ?? "";
+export function removeRefPrefix(refStr?: string): string {
+    return refStr?.replace(/^#\/definitions\//, "") ?? "";
 }
 
 interface PluginIconData {
@@ -128,12 +128,12 @@ export const usePluginsStore = defineStore("plugins", () => {
         return flowRootSchema.value?.properties;
     });
     const allTypes = computed(() => {
-        return plugins.value?.flatMap(plugin => Object.entries(plugin))
+        return plugins.value?.flatMap(p => Object.entries(p))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).map(({cls}) => cls)) ?? [];
     });
     const deprecatedTypes = computed(() => {
-        const deprecatedPlugins = plugins.value?.flatMap(plugin => Object.entries(plugin))
+        const deprecatedPlugins = plugins.value?.flatMap(p => Object.entries(p))
             ?.filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             ?.flatMap(([, value]) => (value as PluginElement[]).filter(({deprecated}) => deprecated === true).map(({cls}) => cls)) ?? [];
         return [
@@ -149,11 +149,11 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (obj?.allOf) {
             const def = obj.allOf.reduce((acc: any, item) => {
                 if (item.$ref) {
-                    const ref = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)]);
-                    if (ref?.type === "object" && ref?.properties) {
+                    const resolved = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)]);
+                    if (resolved?.type === "object" && resolved?.properties) {
                         acc.properties = {
                             ...acc.properties,
-                            ...ref.properties,
+                            ...resolved.properties,
                         };
                     }
                 }

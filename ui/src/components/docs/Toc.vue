@@ -124,8 +124,8 @@
         rawStructure.value = await docStore.children();
     });
 
-    const search = async (query: string, cb: (results: SearchResult[]) => void) => {
-        cb(await docStore.search({q: query}));
+    const search = async (q: string, cb: (results: SearchResult[]) => void) => {
+        cb(await docStore.search({q}));
     };
 </script>
 

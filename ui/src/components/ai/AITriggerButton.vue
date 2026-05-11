@@ -15,8 +15,8 @@
     import AiIcon from "./AiIcon.vue";
 
     interface AITriggerButtonProps {
-        show: boolean;
-        opened: boolean;
+        show?: boolean;
+        opened?: boolean;
     }
 
     interface AITriggerButtonEmits {

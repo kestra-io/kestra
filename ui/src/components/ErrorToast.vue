@@ -47,7 +47,7 @@
 
     const props = withDefaults(defineProps<{
         message: Message;
-        noAutoHide: boolean;
+        noAutoHide?: boolean;
     }>(), {
         noAutoHide: false,
     });

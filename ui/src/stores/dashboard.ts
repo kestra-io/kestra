@@ -6,8 +6,8 @@ import type {AxiosRequestConfig, AxiosResponse} from "axios";
 const header: AxiosRequestConfig = {headers: {"Content-Type": "application/x-yaml"}};
 const response: AxiosRequestConfig = {responseType: "blob" as const};
 const validateStatus = (status: number) => status === 200 || status === 404;
-const downloadHandler = (response: AxiosResponse, filename: string) => {
-    const blob = new Blob([response.data], {type: "application/octet-stream"});
+const downloadHandler = (res: AxiosResponse, filename: string) => {
+    const blob = new Blob([res.data], {type: "application/octet-stream"});
     const url = window.URL.createObjectURL(blob);
 
     Utils.downloadUrl(url, `${filename}.csv`);
@@ -61,8 +61,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options;
-        const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
-        const res = response.data as { results: { id: string; title: string }[]};
+        const apiResponse = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
+        const res = apiResponse.data as { results: { id: string; title: string }[]};
         await loadDefaults();
         let isThereADefault = false;
         dashboardList.value = res.results.map(dashboard => {
@@ -80,8 +80,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function loadDefaults() {
-        const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
-        defaultDashboards.value = response.data;
+        const res = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
+        defaultDashboards.value = res.data;
         return defaultDashboards.value;
     }
 
@@ -175,60 +175,60 @@ export const useDashboardStore = defineStore("dashboard", () => {
     };
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
-        let response;
+        let res;
         try{
-            response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
+            res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
         } catch {
             return undefined;
         }
 
-        if (response.status === 404){
+        if (res.status === 404){
             return undefined;
         }
 
-        activeDashboard.value = response.data;
-        sourceCode.value = response.data.sourceCode ?? "";
+        activeDashboard.value = res.data;
+        sourceCode.value = res.data.sourceCode ?? "";
         sourceCodeOrigin.value = sourceCode.value;
 
         return activeDashboard.value;
     }
 
     async function create(source: Dashboard["sourceCode"]) {
-        const response = await axios.post(`${apiUrl()}/dashboards`, source, header);
+        const res = await axios.post(`${apiUrl()}/dashboards`, source, header);
         sourceCodeOrigin.value = source ?? "";
-        return response.data;
+        return res.data;
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const response = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header);
+        const res = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header);
         sourceCodeOrigin.value = source ?? "";
-        return response.data;
+        return res.data;
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const response = await axios.delete(`${apiUrl()}/dashboards/${id}`);
-        return response.data;
+        const res = await axios.delete(`${apiUrl()}/dashboards/${id}`);
+        return res.data;
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const response = await axios.post(`${apiUrl()}/dashboards/validate`, source, header);
-        return response.data;
+        const res = await axios.post(`${apiUrl()}/dashboards/validate`, source, header);
+        return res.data;
     }
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
-        const response = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
-        return response.data;
+        const res = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
+        return res.data;
     }
 
     async function validateChart(source: string) {
-        const response = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header);
-        chartErrors.value = response.data;
-        return response.data;
+        const res = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header);
+        chartErrors.value = res.data;
+        return res.data;
     }
 
     async function chartPreview(request: Request) {
-        const response = await axios.post(`${apiUrl()}/dashboards/charts/preview`, request);
-        return response.data;
+        const res = await axios.post(`${apiUrl()}/dashboards/charts/preview`, request);
+        return res.data;
     }
 
     async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
@@ -259,10 +259,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return schema.value.definitions ?? {};
     });
 
-    function recursivelyLoopUpSchemaRef(a: any, definitions: Record<string, any>): any {
+    function recursivelyLoopUpSchemaRef(a: any, defs: Record<string, any>): any {
         if (a.$ref) {
-            const ref = removeRefPrefix(a.$ref);
-            return recursivelyLoopUpSchemaRef(definitions[ref], definitions);
+            const refKey = removeRefPrefix(a.$ref);
+            return recursivelyLoopUpSchemaRef(defs[refKey], defs);
         }
         return a;
     }

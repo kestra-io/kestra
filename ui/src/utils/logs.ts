@@ -45,9 +45,9 @@ export function sort(value: Record<string, any>) {
 }
 
 export function index(based: readonly string[], value: string) {
-    const index = based.indexOf(value);
+    const idx = based.indexOf(value);
 
-    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
 }
 
 export function levelOrLower(level: LevelKey) {

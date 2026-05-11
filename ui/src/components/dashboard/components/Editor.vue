@@ -212,9 +212,9 @@
     async function loadPlugins() {
         const data = await pluginsStore.list();
         plugins.value = data.map((plugin: any) => {
-            const charts = plugin.charts || [];
+            const pluginCharts = plugin.charts || [];
             const dataFilters = plugin.dataFilters || [];
-            return charts.concat(dataFilters);
+            return pluginCharts.concat(dataFilters);
         }).flat()
             .filter(({deprecated}: any) => !deprecated)
             .map(({cls}: any) => cls);
@@ -243,9 +243,9 @@
             data: null,
             raw: {},
         };
-        const errors = await dashboardStore.validateChart(yamlChart);
-        if (errors.constraints) {
-            result.error = errors.constraints;
+        const validationErrors = await dashboardStore.validateChart(yamlChart);
+        if (validationErrors.constraints) {
+            result.error = validationErrors.constraints;
         } else {
             result.data = {...chart, content: yamlChart, raw: chart};
         }

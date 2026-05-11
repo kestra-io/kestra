@@ -1,4 +1,3 @@
-import {APIRequestContext} from "playwright/test";
 import {BaseApi} from "./base.api";
 import {shared} from "../fixtures/shared";
 import {v4 as uuid} from "uuid";
@@ -9,10 +8,6 @@ import path from "path";
 
 export class FlowsApi extends BaseApi {
     private readonly flowIds: string[] = [];
-
-    constructor(public readonly requests: APIRequestContext, protected readonly baseURL: string | undefined) {
-        super(requests, baseURL);
-    }
 
     async generateFlowViaApi(fileName: string, fileFlowId: string) {
         const flowId = `test-flow-${uuid()}`;

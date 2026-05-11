@@ -1,5 +1,6 @@
 import moment from "moment";
 
+// oxlint-disable-next-line typescript/no-extraneous-class
 export default class QueryBuilder {
     static split(q) {
         return q.split(/[^a-zA-Z0-9_.-]+/g)

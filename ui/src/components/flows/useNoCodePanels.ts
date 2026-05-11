@@ -68,7 +68,7 @@ interface NoCodeTabWithAction extends NoCodeProps {
 let keepAliveCacheBuster = 0;
 
 function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, te: (key: string) => boolean): Tab {
-    function getTabValues(tab: NoCodeTabWithAction) {
+    function getTabValues(_innerTab: NoCodeTabWithAction) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
         // maybe we could have a function in the YAML_UTILS that returns the parsed value.
         const parentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line typescript/no-extraneous-class
 export default class FlowUtils {
     static findTaskById(flow, taskId) {
         let result = this.loopOver(flow, (value) => {
@@ -23,7 +24,7 @@ export default class FlowUtils {
         }
 
         if (Array.isArray(item)) {
-            item.flatMap(item => this.loopOver(item, predicate, result));
+            item.flatMap(child => this.loopOver(child, predicate, result));
         } else if (item instanceof Object) {
             Object.entries(item).flatMap(([_key, value]) => {
                 this.loopOver(value, predicate, result);

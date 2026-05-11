@@ -102,8 +102,8 @@ export const useDocStore = defineStore("doc", {
                 if (!url) throw new Error("Resource URL template not initialized");
 
                 const response = await axios.get(`${url}?q=${q}&type=DOCS`);
-                return response.data.results.map(({url, title}: {url: string; title: string}): SearchResult => ({
-                    parsedUrl: url,
+                return response.data.results.map(({url: itemUrl, title}: {url: string; title: string}): SearchResult => ({
+                    parsedUrl: itemUrl,
                     title,
                 }));
             }

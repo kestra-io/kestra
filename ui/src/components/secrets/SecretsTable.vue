@@ -424,15 +424,15 @@
         ],
     };
 
-    const canUpdate = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, secret.namespace) &&
+    const canUpdate = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, item.namespace) &&
             !areNamespaceSecretsReadOnly.value;
     };
 
-    const canDelete = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(resource.SECRET, action.DELETE, secret.namespace) &&
+    const canDelete = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.DELETE, item.namespace) &&
             !areNamespaceSecretsReadOnly.value;
     };
 

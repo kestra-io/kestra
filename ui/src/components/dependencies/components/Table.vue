@@ -130,9 +130,9 @@
         );
 
         return [
-            ...Array.from(unique).map((namespace) => ({
-                label: namespace,
-                value: namespace,
+            ...Array.from(unique).map((ns) => ({
+                label: ns,
+                value: ns,
             })),
             ...(props.subtype === ASSET ?  [{
                 label: t("dependency.search.namespace.no_namespace"),
@@ -144,7 +144,7 @@
     const results = computed(() => {
         const query = search.value.trim().toLowerCase();
 
-        const results = props.elements
+        const filtered = props.elements
             .filter(isNodeElement)
             .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
             .filter(({data}) => {
@@ -166,10 +166,10 @@
             });
 
         // Pass the IDs of the currently shown nodes to the parent component for highlighting in the graph.
-        const IDs = results.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []));
+        const IDs = filtered.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []));
         props.highlightShown?.(IDs);
 
-        return results;
+        return filtered;
     });
 </script>
 

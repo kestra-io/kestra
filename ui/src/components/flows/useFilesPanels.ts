@@ -48,14 +48,14 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
     const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!;
     codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement);
 
-    function setupInitialCodeTab(tab: string, codeElement: EditorElement){
+    function setupInitialCodeTab(tab: string, element: EditorElement){
         const flow = CODE_PREFIX === tab;
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return;
         }
         const filePath = flow ? "Flow.yaml" : tab.substring(5);
         const editorTab = getTabPropsFromFilePath(filePath, flow);
-        return flow ? codeElement : getTabFromFilesTab(editorTab);
+        return flow ? element : getTabFromFilesTab(editorTab);
     }
 
     return {setupInitialCodeTab};

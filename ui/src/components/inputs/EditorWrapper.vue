@@ -323,10 +323,10 @@
         const editorRef = editorRefElement.value;
         if(!editorRef?.$refs.monacoEditor) return;
 
-        const isCreating = flowStore.isCreating;
+        const creating = flowStore.isCreating;
 
         // Use saveAll() for consistency with the Save button behavior
-        const result = isCreating
+        const result = creating
             ? await flowStore.save()
             : await flowStore.saveAll();
 
@@ -373,10 +373,10 @@
         flowStore.executeFlow = true;
     };
 
-    function trackAiCopilotAction(action: string) {
+    function trackAiCopilotAction(actionName: string) {
         apiStore.posthogEvents({
             type: "AI_COPILOT",
-            action,
+            action: actionName,
             ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
         });
     }

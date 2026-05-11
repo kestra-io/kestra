@@ -273,7 +273,7 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
         }
         if (isSeq<{ value: Node }>(element)
             || isMap<{ value: string }, Node>(element)) {
-            for (const [key, item] of element.items.entries()) {
+            for (const [itemIndex, item] of element.items.entries()) {
                 const result = isMap(item)
                     ? find(item)
                     : find(item.value ?? undefined);
@@ -284,7 +284,7 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
                             // replace value in the map
                             element.set(item.key, result);
                         } else {
-                            element.items[key] = result as any;
+                            element.items[itemIndex] = result as any;
                         }
                     } else if (result) {
                         return result;
@@ -530,7 +530,7 @@ export function deleteBlock({source, section, key, keyName}: {
         Pair(_, pair: any) {
             if (pair.key.value === section) {
                 visit(pair.value, {
-                    Map(_, map) {
+                    Map(__, map) {
                         if (map.get(keyName) === key) {
                             return visit.REMOVE;
                         }

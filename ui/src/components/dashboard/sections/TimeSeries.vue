@@ -72,7 +72,7 @@
     const parseValue = (value: unknown): unknown => {
         const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
         const query = {
-            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
+            ...Object.fromEntries(props.filters.map(({field, value: filterValue, operation}) => [`filters[${field}][${operation}]`, filterValue])),
             ...route.query,
         };
         return date.isValid() ? date.format(KestraUtils.getDateFormat(
@@ -107,7 +107,7 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = fields.map((field) => params[field]).join(", ");
+                const stack = fields.map((f) => params[f]).join(", ");
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -146,12 +146,12 @@
 
         const getData = (_field: string, object: Record<string, any> = {}) => {
             return Object.values(object).map((dataset: any) => {
-                const data = xAxis.map((xAxisLabel) => {
+                const datasetData = xAxis.map((xAxisLabel) => {
                     const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel);
                     return temp ? temp.y : 0;
                 });
 
-                return {...dataset, data};
+                return {...dataset, data: datasetData};
             });
         };
 

@@ -156,13 +156,13 @@
     const highlightLine = () => {
         if(!route?.query.highlight) return;
 
-        const editor = getModifiedEditor();
+        const ed = getModifiedEditor();
 
-        if (!editor) return;
+        if (!ed) return;
 
-        editor.focus();
+        ed.focus();
 
-        const lines = editor.getModel()!.getLinesContent();
+        const lines = ed.getModel()!.getLinesContent();
 
         let lineNumber = 0;
 
@@ -173,10 +173,10 @@
             }
         }
 
-        const endLineCharacter = editor?.getModel()!.getLineMaxColumn(lineNumber) ?? 0;
+        const endLineCharacter = ed?.getModel()!.getLineMaxColumn(lineNumber) ?? 0;
 
-        editor.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter));
-        editor.revealLineInCenter(lineNumber);
+        ed.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter));
+        ed.revealLineInCenter(lineNumber);
     };
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
@@ -185,14 +185,14 @@
     watch(highlight, (line) => {
         if (!line) return;
 
-        const editor = getModifiedEditor();
+        const ed = getModifiedEditor();
 
-        if (!editor) return;
+        if (!ed) return;
 
-        editor.focus();
+        ed.focus();
 
-        const end = editor?.getModel()?.getLineMaxColumn(line) ?? 0;
-        editor.setSelection(new monaco.Range(line, 0, line, end));
+        const end = ed?.getModel()?.getLineMaxColumn(line) ?? 0;
+        ed.setSelection(new monaco.Range(line, 0, line, end));
     });
 
     const themes: Record<string, editor.IStandaloneThemeData> = {
@@ -850,23 +850,23 @@
                         if (isTypeLine(currentLine)) {
                             // Let suggestion acceptance happen first, then move to next line and trigger ghost suggestion.
                             setTimeout(() => {
-                                const editor = localEditor.value;
-                                if (!editor) {
+                                const ed = localEditor.value;
+                                if (!ed) {
                                     return;
                                 }
 
-                                const position = editor.getPosition();
+                                const position = ed.getPosition();
                                 if (!position) {
                                     return;
                                 }
 
-                                const acceptedLine = editor.getModel()?.getLineContent(position.lineNumber) ?? "";
+                                const acceptedLine = ed.getModel()?.getLineContent(position.lineNumber) ?? "";
                                 if (!isTypeLine(acceptedLine)) {
                                     return;
                                 }
 
-                                editor.trigger("typeAcceptedInsertLine", "editor.action.insertLineAfter", {});
-                                editor.trigger("typeAcceptedInlineSuggest", "editor.action.inlineSuggest.trigger", {});
+                                ed.trigger("typeAcceptedInsertLine", "editor.action.insertLineAfter", {});
+                                ed.trigger("typeAcceptedInlineSuggest", "editor.action.inlineSuggest.trigger", {});
                             }, 0);
                         }
                     }
@@ -911,6 +911,7 @@
                 }
 
                 if (props.placeholder !== undefined) {
+                     
                     new PlaceholderContentWidget(props.placeholder, localEditor.value);
                 }
 

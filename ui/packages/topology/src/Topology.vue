@@ -365,11 +365,11 @@
                             swappedTasks: [taskNode1.id, taskNode2.id],
                         });
                     }
-                } catch (e: any) {
+                } catch (err: any) {
                     emit("message", {
                         variant: "error",
                         title: "cannot swap tasks",
-                        message: `${e.message}, ${e.messageOptions}`,
+                        message: `${err.message}, ${err.messageOptions}`,
                     });
                     taskNode1.position = lastPosition.value;
                 }
@@ -439,7 +439,7 @@
     };
 
     const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
-        const cluster: any = props.flowGraph.clusters.find(cluster => cluster.cluster.uid.endsWith(clusterUid));
+        const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid));
         const nodeId = clusterUid.replace(CLUSTER_PREFIX, "");
         collapsed.value.add(nodeId);
 
@@ -453,7 +453,7 @@
         };
 
         for (let child of cluster.nodes) {
-            if (props.flowGraph.clusters.map(cluster => cluster.cluster.uid).includes(child)) {
+            if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
                 collapseCluster(child, false, true);
             }
         }

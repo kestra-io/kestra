@@ -79,7 +79,7 @@
     const route = useRoute();
     const routeParams = computed(() => route.params);
     // If playground is not defined, enable it by default
-    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
+    const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") !== "false");
 
     const toast = useToast();
     const flowWarnings = computed(() => {

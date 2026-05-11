@@ -1,14 +1,8 @@
-import type {Page} from "@playwright/test";
 import {expect} from "@playwright/test";
 
 import {BasePage, ExecutionState, Pagination} from "./base.page";
 
 export class ExecutionsPage extends BasePage {
-
-    constructor(public readonly page: Page) {
-        super(page);
-    }
-
     async goto() {
         await this.login();
         await this.page.goto("/ui/executions");

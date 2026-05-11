@@ -20,7 +20,32 @@
     ],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-this-alias": "off",
-    "no-underscore-dangle": ["warn", { "allow": ["__dirname"] }]
+    "no-underscore-dangle": ["warn", {
+      "allow": [
+        "__dirname",
+        "__filename",
+        "__VUE_I18N_SYMBOL__",
+        "__setValueInTests",
+        "__loaded",
+        "_embedded",
+        "_entries",
+        "_execution",
+        "_flow",
+        "_links",
+        "_context",
+        "_idx",
+        "_warn",
+        "_momentInstance",
+        "_dateFormatter",
+        "_deduplicateLogs",
+        "_language",
+        "_autoCompletion",
+        "_yamlAutoCompletion",
+        "_completionSource",
+        "_MarkdownWrap",
+        "_wrap"
+      ]
+    }]
   },
   "overrides": [
     {

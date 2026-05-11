@@ -2,6 +2,7 @@ import {computed} from "vue";
 import moment from "moment";
 import {useMiscStore} from "override/stores/misc";
 
+// oxlint-disable-next-line typescript/no-extraneous-class
 export default class Utils {
     static uid() {
         return String.fromCharCode(Math.floor(Math.random() * 26) + 97) +

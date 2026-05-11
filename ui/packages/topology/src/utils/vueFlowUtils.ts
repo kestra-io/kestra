@@ -136,11 +136,11 @@ export function generateDagreGraph(
     clusterToNode: MinimalNode[],
     getNodeDimensions: (
         node: MinimalNode,
-        getNodeWidth: (node: MinimalNode) => number,
-        getNodeHeight: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, getNodeWidth, getNodeHeight) => ({
-        width: getNodeWidth(node),
-        height: getNodeHeight(node),
+        widthFn: (node: MinimalNode) => number,
+        heightFn: (node: MinimalNode) => number,
+    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+        width: widthFn(node),
+        height: heightFn(node),
     }),
 ) {
     const dagreGraph = new dagre.graphlib.Graph({compound: true});
@@ -363,11 +363,11 @@ export function generateGraph(
     enableSubflowInteraction: boolean,
     getNodeDimensions: (
         node: MinimalNode,
-        getNodeWidth: (node: MinimalNode) => number,
-        getNodeHeight: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, getNodeWidth, getNodeHeight) => ({
-        width: getNodeWidth(node),
-        height: getNodeHeight(node),
+        widthFn: (node: MinimalNode) => number,
+        heightFn: (node: MinimalNode) => number,
+    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+        width: widthFn(node),
+        height: heightFn(node),
     }),
     animated: boolean = true,
 ): Elements | undefined {

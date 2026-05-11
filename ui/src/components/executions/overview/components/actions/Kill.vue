@@ -35,13 +35,13 @@
     import {useAuthStore} from "override/stores/auth";
     import {useToast} from "../../../../../utils/toast";
     import action from "../../../../../models/action";
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
 
     const props = defineProps({
         execution: {
             type: Object,
-            required: true
-        }
+            required: true,
+        },
     });
 
     const {t} = useI18n();
@@ -52,7 +52,7 @@
     const user = computed(() => authStore.user);
 
     const enabled = computed(() => {
-        if (!(user.value && user.value.isAllowed(permission.EXECUTION, action.DELETE, props.execution.namespace))) {
+        if (!(user.value && user.value.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace))) {
             return false;
         }
 
@@ -64,7 +64,7 @@
             return executionsStore
                 .kill({
                     id: props.execution.id,
-                    isOnKillCascade: isOnKillCascade
+                    isOnKillCascade: isOnKillCascade,
                 })
                 .then(() => {
                     toast.success(t("killed done"));

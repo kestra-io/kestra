@@ -107,6 +107,15 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
                     }
                 })
                 .blockLast();
+
+            // Also kill loop sub-executions created by a Loop task within this execution.
+            for (ExecutionKilledExecution executionKilled : executionService.killLoopSubExecutions(message.getTenantId(), message.getExecutionId())) {
+                try {
+                    killQueue.emit(executionKilled);
+                } catch (QueueException e) {
+                    log.error("Unable to kill the loop sub-execution {}", executionKilled.getExecutionId(), e);
+                }
+            }
         }
 
         return maybeExecutor;

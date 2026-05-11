@@ -1873,6 +1873,42 @@
             "prompt": "Create a weekly scheduled flow that calculates sales KPIs with DuckDB and posts the summary to Slack."
           }
         }
-      }
+      },
+    "mcp": {
+        "servers": "MCP Servers",
+        "server": "MCP Server",
+        "page_description": "Expose your Kestra flows as tools for MCP-compatible AI agents",
+        "create": "Create Server",
+        "save": "Save Changes",
+        "connect": "Connect",
+        "copy_url": "Copy URL",
+        "url_copied": "URL copied!",
+        "instructions": "Instructions",
+        "server_type": "Server Type",
+        "auth_type": "Authentication",
+        "private": "Private",
+        "public": "Public",
+        "basic_auth": "Basic Auth",
+        "api_token": "API Token",
+        "username_password": "Username & password",
+        "bearer_token": "Bearer token authentication",
+        "delete_confirm": "Are you sure you want to delete this MCP server?",
+        "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
+        "connect_modal": {
+            "title": "Connect to {name}",
+            "server_url": "Server URL",
+            "claude_desktop": "Claude Desktop",
+            "claude_desktop_hint": "Add the following to your claude_desktop_config.json file:",
+            "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+            "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+            "claude_code": "Claude Code",
+            "claude_code_hint": "Run the following command in your terminal:",
+            "cursor": "Cursor",
+            "cursor_hint": "Add the following to ~/.cursor/mcp.json:",
+            "codex": "Codex (OpenAI)",
+            "codex_hint": "Add the following to your codex.json MCP configuration:",
+            "done": "Done"
+        }
+    }
   }
 }

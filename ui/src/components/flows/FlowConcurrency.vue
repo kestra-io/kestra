@@ -46,7 +46,7 @@
     import Empty from "../layout/empty/Empty.vue";
     import {KsExecutionStatus} from "@kestra-io/design-system";
     import {useFlowStore} from "../../stores/flow";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
     import {apiUrl} from "override/utils/route";
     import Loading from "vue-material-design-icons/Loading.vue";
 
@@ -82,7 +82,7 @@
             const currentFlowLimit = limits.find(
                 (limit: any) =>
                     limit.namespace === flowStore.flow?.namespace &&
-                    limit.flowId === flowStore.flow?.id
+                    limit.flowId === flowStore.flow?.id,
             );
 
             if (currentFlowLimit) {
@@ -107,7 +107,7 @@
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id],
         loadConcurrencyLimit,
-        {immediate: true}
+        {immediate: true},
     );
 
     onMounted(loadConcurrencyLimit);

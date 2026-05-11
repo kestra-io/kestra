@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 interface TriggerSearchOptions {
     sort?: string;
@@ -62,7 +62,7 @@ export const useTriggerStore = defineStore("trigger", () => {
         const sortString = options.sort ? `?sort=${options.sort}` : "";
         delete options.sort;
         const response = await axios.get(`${apiUrl()}/triggers/search${sortString}`, {
-            params: options
+            params: options,
         });
         return response.data;
     }
@@ -207,6 +207,6 @@ export const useTriggerStore = defineStore("trigger", () => {
         delete: deleteTrigger,
         deleteByQuery,
         deleteByTriggers,
-        exportTriggersAsCSV
-    }
+        exportTriggersAsCSV,
+    };
 });

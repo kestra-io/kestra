@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -132,7 +131,6 @@ public abstract class AbstractRunnerRetryTest {
 
     @Test
     @ExecuteFlow("flows/valids/retry-flowable-parallel.yaml")
-    @Disabled("this feature is not yet implemented")
     void retryFlowableParallel(Execution execution) {
         retryCaseTest.retryFlowableParallel(execution);
     }

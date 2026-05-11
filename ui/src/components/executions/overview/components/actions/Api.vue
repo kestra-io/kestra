@@ -19,7 +19,7 @@
     import {Execution} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
 
-    import permission from "../../../../../models/permission";
+    import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
 
     import Api from "vue-material-design-icons/Api.vue";
@@ -30,7 +30,7 @@
         return (
             props.execution &&
             useAuthStore().user?.isAllowed(
-                permission.FLOW,
+                resource.FLOW,
                 action.UPDATE,
                 props.execution.namespace,
             )

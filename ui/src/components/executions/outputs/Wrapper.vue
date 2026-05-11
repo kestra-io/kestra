@@ -172,7 +172,7 @@
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
 
@@ -217,7 +217,7 @@
         }
         const {data, status} = await axios.get(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
             validateStatus: (status) => status === 200 || status === 404,
-        })
+        });
         if(status === 200) {
             return transform(data, true, path);
         } else {
@@ -256,7 +256,7 @@
 
             resolve([]);
         },
-    }
+    };
 
     const axios = useClient();
     const onDebugExpression = (expression?: string) => {
@@ -264,7 +264,7 @@
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/actions/eval/${taskRun.id}`;
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
@@ -448,7 +448,7 @@
         });
 
         if(!tasks?.length) {
-            return undefined
+            return undefined;
         };
 
         const HEADING = {
@@ -468,7 +468,7 @@
             const task = o?.filter(t => t.leaf === false)[0];
             if (!task) return;
 
-            const selectedLocal = [task.value]
+            const selectedLocal = [task.value];
             let expandedValueLocal = task.path;
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
@@ -481,15 +481,15 @@
                     }
 
                     child = child.children?.filter(t => !t.heading)[0];
-                } while(child?.path)
+                } while(child?.path);
 
                 selected.value = selectedLocal;
                 if(expandedValueLocal){
                     expandedValue.value = expandedValueLocal;
                 }
-            })
+            });
         }
-    })
+    });
 
     const pluginsStore = usePluginsStore();
 

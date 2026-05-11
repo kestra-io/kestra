@@ -5,7 +5,7 @@ import {FilterValue} from "@kestra-io/design-system";
 
 import {State} from "@kestra-io/design-system";
 import {auditLogTypes} from "../../../models/auditLogTypes";
-import permission from "../../../models/permission";
+import resource from "../../../models/resource";
 import action from "../../../models/action";
 
 const capitalize = (str: string): string => {
@@ -29,7 +29,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         t = useI18n({useScope: "global"}).t;
     }
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
 
     // Override for the scope labels on the dashboard
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
@@ -98,7 +98,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
             color: `var(--ks-log-border-${level.toLowerCase()})`,
         })),
         TYPES: auditLogTypes,
-        PERMISSIONS: buildFromObject(permission),
+        PERMISSIONS: buildFromObject(resource),
         ACTIONS: buildFromObject({
             ...action,
             LOGIN: "LOGIN",
@@ -109,8 +109,8 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         RELATIVE_DATE,
         TRIGGER_STATES:[
         {label: t("filter.triggerState.enabled"), value: "enabled"},
-        {label: t("filter.triggerState.disabled"), value: "disabled"}
-    ]
+        {label: t("filter.triggerState.disabled"), value: "disabled"},
+    ],
     };
 
     return {VALUES, getRelativeDateLabel};

@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 
@@ -25,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RestartCaseTest {
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private TestRunnerUtils runnerUtils;
@@ -197,7 +201,7 @@ public class RestartCaseTest {
     }
 
     public void replayLoop() throws Exception {
-        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart-loop").orElseThrow();
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "replay-loop").orElseThrow();
 
         Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
@@ -225,6 +229,95 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getId()).isNotEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void restartLoop() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart-loop").orElseThrow();
+
+        Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+
+        assertThat(firstExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+        var subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        assertThat(subExecutions).hasSize(1);
+
+        // first restart: index=0 sub-execution is restarted and succeeds, then index=1 is created and fails
+        Execution restarted1 = executionService.restart(firstExecution, flow, null);
+        assertThat(restarted1.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        // History size: first run adds CREATED+RUNNING+FAILED (3), restart adds RESTARTED (1) = 4.
+        // Each subsequent restart adds RUNNING+FAILED+RESTARTED (3) = 7, 10, ...
+        assertThat(restarted1.getState().getHistories()).hasSize(4);
+        assertThat(restarted1.getTaskRunList()).hasSize(1);
+        assertThat(restarted1.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted1.getId()).isEqualTo(firstExecution.getId());
+        assertThat(restarted1.getTaskRunList().getFirst().getId()).isEqualTo(firstExecution.getTaskRunList().getFirst().getId());
+
+        // wait for the first restart to fail on the next iteration
+        // use attemptNumber to distinguish this run from previous ones (same execution ID is reused)
+        int attempt1 = restarted1.getMetadata().getAttemptNumber();
+        Execution finishedRestarted1 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(firstExecution.getId())
+                && e.getMetadata().getAttemptNumber() == attempt1
+                && executionService.isTerminated(flow, e),
+            restarted1.withTenantId(MAIN_TENANT),
+            Duration.ofSeconds(60)
+        );
+        assertThat(finishedRestarted1).isNotNull();
+        assertThat(finishedRestarted1.getId()).isEqualTo(firstExecution.getId());
+        assertThat(finishedRestarted1.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        assertThat(subExecutions).hasSize(2);
+
+        // second restart: index=1 sub-execution is restarted and succeeds, then index=2 is created and fails
+        Execution restarted2 = executionService.restart(finishedRestarted1, flow, null);
+        assertThat(restarted2.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted2.getState().getHistories()).hasSize(7);
+        assertThat(restarted2.getTaskRunList()).hasSize(1);
+        assertThat(restarted2.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted2.getId()).isEqualTo(firstExecution.getId());
+        assertThat(restarted2.getTaskRunList().getFirst().getId()).isEqualTo(firstExecution.getTaskRunList().getFirst().getId());
+
+        // wait for the second restart to fail on the next iteration
+        int attempt2 = restarted2.getMetadata().getAttemptNumber();
+        Execution finishedRestarted2 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(firstExecution.getId())
+                && e.getMetadata().getAttemptNumber() == attempt2
+                && executionService.isTerminated(flow, e),
+            restarted2.withTenantId(MAIN_TENANT),
+            Duration.ofSeconds(60)
+        );
+        assertThat(finishedRestarted2).isNotNull();
+        assertThat(finishedRestarted2.getId()).isEqualTo(firstExecution.getId());
+        assertThat(finishedRestarted2.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        assertThat(subExecutions).hasSize(3);
+
+        // third restart: index=2 sub-execution is restarted and succeeds; all 3 iterations done
+        Execution restarted3 = executionService.restart(finishedRestarted2, flow, null);
+        assertThat(restarted3.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted3.getState().getHistories()).hasSize(10);
+        assertThat(restarted3.getTaskRunList()).hasSize(1);
+        assertThat(restarted3.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(restarted3.getId()).isEqualTo(firstExecution.getId());
+        assertThat(restarted3.getTaskRunList().getFirst().getId()).isEqualTo(firstExecution.getTaskRunList().getFirst().getId());
+
+        // wait for the third restart to succeed
+        int attempt3 = restarted3.getMetadata().getAttemptNumber();
+        Execution finishedRestarted3 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(firstExecution.getId())
+                && e.getMetadata().getAttemptNumber() == attempt3
+                && executionService.isTerminated(flow, e),
+            restarted3.withTenantId(MAIN_TENANT),
+            Duration.ofSeconds(60)
+        );
+        assertThat(finishedRestarted3).isNotNull();
+        assertThat(finishedRestarted3.getId()).isEqualTo(firstExecution.getId());
+        assertThat(finishedRestarted3.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+
+        // we must have 3 loop sub-executions at the end — one per iteration, each restarted in place
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        assertThat(subExecutions).hasSize(3);
     }
 
     public void restartMultiple() throws Exception {
@@ -274,31 +367,36 @@ public class RestartCaseTest {
     }
 
     public void restartSubflowWithLoop() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent-loop");
-        assertThat(execution.getTaskRunList()).hasSize(3);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-parent-loop", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList()).hasSize(2); // hello + each
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        // here we must have 1 failed subflows
+        // here we must have 1 failed subflow
         runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().isFailed(), MAIN_TENANT, "io.kestra.tests", "restart-child");
 
-        // there is 3 values so we must restart it 3 times to end the 3 subflows
+        // there are 3 values so we must restart 3 times: each restart retries the failed sub-execution
         Flow flow = flowRepository.findByExecution(execution);
         Execution restarted1 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop") && e.getTaskRunList().size() == 4,
-            restarted1
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop")
+                && e.getMetadata().getAttemptNumber() == 2,
+            restarted1,
+            Duration.ofSeconds(60)
         );
         Execution restarted2 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
-            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop") && e.getTaskRunList().size() == 5,
-            restarted2
+            e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent-loop")
+                && e.getMetadata().getAttemptNumber() == 3,
+            restarted2,
+            Duration.ofSeconds(60)
         );
         Execution restarted3 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-parent-loop"),
-            restarted3
+            restarted3,
+            Duration.ofSeconds(60)
         );
-        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getTaskRunList()).hasSize(3);
 
         List<Execution> childExecutions = runnerUtils.awaitFlowExecutionNumber(3, MAIN_TENANT, "io.kestra.tests", "restart-child");
         List<Execution> successfulRestart = childExecutions.stream()

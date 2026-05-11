@@ -259,7 +259,7 @@
     const {loadInit} = useRestoreUrl();
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
@@ -286,7 +286,7 @@
     }>(), {
         namespace: undefined,
         paneView: false,
-        includeInherited: false
+        includeInherited: false,
     });
 
     const kvFilter = useKvFilter();
@@ -304,10 +304,10 @@
             ...(props.namespace === undefined ? {} : {
                 filters: {
                     namespace: {
-                        EQUALS: props.namespace
-                    }
-                }
-            })
+                        EQUALS: props.namespace,
+                    },
+                },
+            }),
         }));
 
         let allKvs = kvsResponse.results ?? [];
@@ -319,16 +319,16 @@
                 const parentKvsResponse = await kvStore.find(loadQuery({
                     filters: {
                         namespace: {
-                            EQUALS: parentNs
-                        }
-                    }
+                            EQUALS: parentNs,
+                        },
+                    },
                 }));
 
                 const parentKvs = parentKvsResponse?.results ?? [];
                 if (parentKvs.length > 0) {
                     const currentKeys = new Set(allKvs.map((kv: any) => kv?.key).filter(Boolean));
                     const newKvs = parentKvs.filter(
-                        (kv: any) => kv?.key && !currentKeys.has(kv.key)
+                        (kv: any) => kv?.key && !currentKeys.has(kv.key),
                     );
                     allKvs.push(...newKvs);
                 }
@@ -337,7 +337,7 @@
 
         kvs.value = allKvs;
         total.value = kvsResponse.total ?? 0;
-    }
+    };
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query;
@@ -370,7 +370,7 @@
         value: undefined,
         ttl: undefined,
         update: undefined,
-        description: undefined
+        description: undefined,
     });
 
     const {t} = useI18n();
@@ -379,10 +379,10 @@
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
 
-    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const TIMEZONE = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const convertToUserTimezone = (date: string | Date) => {
-        return moment.utc(date).tz(TIMEZONE).toDate()
-    }
+        return moment.utc(date).tz(TIMEZONE).toDate();
+    };
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -390,32 +390,32 @@
                 label: t("namespace"),
                 prop: "namespace",
                 default: true,
-                description: t("filter.table_column.kv.namespace")
+                description: t("filter.table_column.kv.namespace"),
             },
             {
                 label: t("key"),
                 prop: "key",
                 default: true,
-                description: t("filter.table_column.kv.key")
+                description: t("filter.table_column.kv.key"),
             },
             {
                 label: t("description"),
                 prop: "description",
                 default: true,
-                description: t("filter.table_column.kv.description")
+                description: t("filter.table_column.kv.description"),
             },
             {
                 label: t("last modified"),
                 prop: "updateDate",
                 default: true,
-                description: t("filter.table_column.kv.last modified")
+                description: t("filter.table_column.kv.last modified"),
             },
             {
                 label: t("expiration date"),
                 prop: "expirationDate",
                 default: true,
-                description: t("filter.table_column.kv.expiration date")
-            }
+                description: t("filter.table_column.kv.expiration date"),
+            },
         ];
 
         return columns.filter(col => {
@@ -428,7 +428,7 @@
 
     const {visibleColumns, orderedVisibleColumns, updateVisibleColumns} = useTableColumns({
         columns: optionalColumns.value,
-        storageKey: storageKey
+        storageKey: storageKey,
     });
 
     const selection = computed(() => dataTable.value?.selection ?? []);
@@ -447,7 +447,7 @@
         },
         set(newValue: boolean) {
             namespacesStore.addKvModalVisible = newValue;
-        }
+        },
     });
 
     const rules = ref({
@@ -467,20 +467,20 @@
                         callback();
                     }
                 },
-                trigger: "change"
-            }
+                trigger: "change",
+            },
         ],
         ttl: [
-            {validator: durationValidator, trigger: "change"}
-        ]
+            {validator: durationValidator, trigger: "change"},
+        ],
     });
 
     function canUpdate(kvItem: {namespace: string}) {
-        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.UPDATE, kvItem.namespace);
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.UPDATE, kvItem.namespace);
     }
 
     function canDelete(kvItem: {namespace: string}) {
-        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kvItem.namespace);
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, kvItem.namespace);
     }
 
     function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
@@ -551,7 +551,7 @@
 
     function removeKvs() {
         const groupedByNamespace = _groupBy(selection.value, "namespace");
-        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)));
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(
@@ -623,7 +623,7 @@
     function resetKv() {
         kv.value = {
             namespace: props.namespace,
-            type: "STRING"
+            type: "STRING",
         };
     }
 
@@ -645,6 +645,6 @@
     });
 
     defineExpose({
-        updateVisibleColumns
+        updateVisibleColumns,
     });
 </script>

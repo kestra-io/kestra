@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.executions.TerminatedLoopExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
@@ -29,9 +29,9 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
-class TerminatedLoopExecutionMessageHandlerTest {
+class LoopExecutionEventMessageHandlerTest {
     @Inject
-    private TerminatedLoopExecutionMessageHandler handler;
+    private LoopExecutionEventMessageHandler handler;
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
@@ -47,7 +47,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
         // Given
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null);
-        var message = new TerminatedLoopExecution(loopRun, "nonExistingExecution", State.Type.SUCCESS, null);
+        var message = new LoopExecutionEvent(loopRun, "nonExistingExecution", State.Type.SUCCESS, null);
 
         // When
         var maybeExecutor = handler.handle(message);
@@ -73,7 +73,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId,  2, null, "c", null);
-        var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.SUCCESS, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -93,7 +93,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
 
         // When — one iteration fails, loop should terminate immediately
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
-        var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.FAILED, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -119,7 +119,7 @@ class TerminatedLoopExecutionMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
-        var message = new TerminatedLoopExecution(loopRun, execution.getId(), State.Type.SUCCESS, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — handler emits next loop execution and returns empty (null from inner lambda)

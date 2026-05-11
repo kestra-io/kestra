@@ -2,7 +2,7 @@ import {ref} from "vue";
 import {useRouter} from "vue-router";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`;
@@ -73,8 +73,8 @@ export const useBaseNamespacesStore = () => {
         const {data} = await axios.get(`${apiUrl()}/kv`, {
             ...VALIDATE,
             params: {
-                filters: {namespace: {EQUALS: item.id}}
-            }
+                filters: {namespace: {EQUALS: item.id}},
+            },
         });
         return kvs.value = data?.results;
     }
@@ -106,9 +106,9 @@ export const useBaseNamespacesStore = () => {
                 headers: {
                     "Content-Type": payload.contentType,
                     "description": payload.description,
-                    "ttl": payload.ttl
-                }
-            }
+                    "ttl": payload.ttl,
+                },
+            },
         );
     }
 
@@ -118,20 +118,20 @@ export const useBaseNamespacesStore = () => {
 
     async function deleteKvs(this: any, payload: {namespace: string; request: any}) {
         await axios.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv`, {
-            data: payload.request
+            data: payload.request,
         });
     }
 
     async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
         const response = await axios.get(`${apiUrl()}/namespaces/${id}/inherited-secrets`, {
             ...VALIDATE,
-            params
+            params,
         });
         if (shouldCommit !== false) {
             inheritedSecrets.value = response.data;
         }
         if (response.status === 404) {
-            return {[id]: []}
+            return {[id]: []};
         }
         return response.data;
     }
@@ -143,9 +143,9 @@ export const useBaseNamespacesStore = () => {
                 ...params,
                 filters: {
                     namespace: {EQUALS: id},
-                    ...params.filters
-                }
-            }
+                    ...params.filters,
+                },
+            },
         });
         if (response.status === 200 && shouldCommit !== false) {
             secrets.value = response.data.results;
@@ -159,7 +159,7 @@ export const useBaseNamespacesStore = () => {
     async function usableSecrets(this: ReturnType<typeof useBaseNamespacesStore>, id: string): Promise<string[]> {
         return [
             ...Object.values((await this.loadInheritedSecrets({id, commit: false})) ?? {}).flat(),
-            ...(await this.listSecrets({id, commit: false})).results.map(({key}) => key)
+            ...(await this.listSecrets({id, commit: false})).results.map(({key}) => key),
         ];
     }
 
@@ -217,7 +217,7 @@ export const useBaseNamespacesStore = () => {
 
         const URL = `${base(payload.namespace)}/files/revisions?path=${slashPrefix(safePath(payload.path))}`;
         const request = await axios.get(URL, {
-            ...VALIDATE
+            ...VALIDATE,
         });
 
         if(request.status === 404) {
@@ -236,7 +236,7 @@ export const useBaseNamespacesStore = () => {
         const request = await axios.get<string>(URL, {
             ...VALIDATE,
             transformResponse: (response: any) => response,
-            responseType: "json"
+            responseType: "json",
         });
 
         if(request.status === 404) {
@@ -328,4 +328,4 @@ export const useBaseNamespacesStore = () => {
         deleteFileDirectory,
         exportFileDirectory,
     };
-}
+};

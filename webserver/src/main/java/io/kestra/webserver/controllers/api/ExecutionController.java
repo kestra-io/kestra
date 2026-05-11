@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -133,8 +134,6 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-// FIXME for all update on the execution (resume, pause, force run, ...) we validate the state and if validation fail we throws
-//  sometimes an IllegalStateException sometimes an IllegalArgumentException: this would be great to always throw the same exception.
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
@@ -284,7 +283,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/eval", consumes = MediaType.TEXT_PLAIN)
+    @Post(uri = "/{executionId}/actions/eval", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this execution")
     public EvalResult evalExpression(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -309,7 +308,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
+    @Post(uri = "/{executionId}/actions/eval/{taskRunId}", consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Executions" }, summary = "Evaluate a variable expression for this taskrun")
     public EvalResult evalTaskRunExpression(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -539,10 +538,10 @@ public class ExecutionController {
 
         var flow = maybeFlow.get();
         if (flow.isDisabled()) {
-            throw new IllegalStateException("Cannot execute a disabled flow");
+            throw new ConflictException("Cannot execute flow: flow is disabled.");
         }
         if (flow instanceof FlowWithException fwe) {
-            throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
         }
 
         Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
@@ -947,7 +946,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/restart")
+    @Post(uri = "/{executionId}/actions/restart")
     @Operation(tags = { "Executions" }, summary = "Restart a new execution from an old one")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be restarted")
@@ -958,9 +957,8 @@ public class ExecutionController {
         this.controlRevision(execution, revision);
 
         if (!(execution.getState().canBeRestarted())) {
-            throw new IllegalStateException(
-                "Execution must be terminated or paused to be restarted, " +
-                    "current state is '" + execution.getState().getCurrent() + "' !"
+            throw new ConflictException(
+                "Cannot restart execution: current state is '" + execution.getState().getCurrent() + "', expected terminated or paused."
             );
         }
 
@@ -1038,7 +1036,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay")
+    @Post(uri = "/{executionId}/actions/replay")
     @Operation(tags = { "Executions" }, summary = "Create a new execution from an old one and start it from a specified task run id")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
@@ -1057,7 +1055,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         tags = { "Executions" },
         summary = "Create a new execution from an old one and start it from a specified task run id",
@@ -1180,7 +1178,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/state")
+    @Post(uri = "/{executionId}/actions/state")
     @Operation(tags = { "Executions" }, summary = "Change state for a taskrun in an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the task run state cannot be changed")
@@ -1190,7 +1188,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {
-            throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
+            throw new ConflictException("Cannot change task run state: execution must be terminated and not killed.");
         }
 
         return awaitBlockingAction(
@@ -1205,7 +1203,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/change-status")
+    @Post(uri = "/{executionId}/actions/change-status")
     @Operation(tags = { "Executions" }, summary = "Change the state of an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution state cannot be changed")
@@ -1219,7 +1217,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
+            throw new ConflictException("Cannot change execution state: execution must be terminated and not killed.");
         }
 
         return awaitBlockingAction(
@@ -1303,7 +1301,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/{executionId}/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is already finished")
@@ -1326,7 +1324,7 @@ public class ExecutionController {
     protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new IllegalStateException("Cannot kill execution '%s'. Reason: Execution already terminated.".formatted(execution.getId()));
+            throw new ConflictException("Cannot kill execution: execution is already terminated.");
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1420,7 +1418,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume/validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/resume/validate", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = { "Executions" }, summary = "Validate inputs to resume a paused execution.")
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
@@ -1438,7 +1436,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "/{executionId}/actions/resume", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(
         tags = { "Executions" }, summary = "Resume a paused execution.",
         extensions = @Extension(
@@ -1477,7 +1475,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/resume-from-breakpoint")
+    @Post(uri = "/{executionId}/actions/resume-from-breakpoint")
     @Operation(tags = { "Executions" }, summary = "Resume an execution from a breakpoint (in the 'BREAKPOINT' state).")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "If the executions is not in the 'BREAKPOINT' state or has no breakpoint")
@@ -1486,10 +1484,10 @@ public class ExecutionController {
         @Parameter(description = "\"Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints) throws Exception {
         Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
         if (!execution.getState().isBreakpoint()) {
-            throw new IllegalStateException("Execution is not suspended");
+            throw new ConflictException("Cannot resume execution: execution is not suspended.");
         }
         if (ListUtils.isEmpty(execution.getBreakpoints())) {
-            throw new IllegalStateException("Execution has no breakpoint");
+            throw new ConflictException("Cannot resume execution: no breakpoint defined.");
         }
 
         return awaitBlockingAction(
@@ -1576,7 +1574,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/pause")
+    @Post(uri = "/{executionId}/actions/pause")
     @Operation(tags = { "Executions" }, summary = "Pause a running execution.")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the executions is not running")
@@ -1584,7 +1582,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         if (!execution.getState().isRunning()) {
-            throw new IllegalArgumentException("The execution is not running");
+            throw new ConflictException("Cannot pause execution: execution is not running.");
         }
 
         return awaitBlockingAction(
@@ -1872,7 +1870,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/labels")
+    @Post(uri = "/{executionId}/actions/labels")
     @Operation(tags = { "Executions" }, summary = "Add or update labels of a terminated execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "404", description = "If the execution cannot be found")
@@ -1998,7 +1996,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/unqueue")
+    @Post(uri = "/{executionId}/actions/unqueue")
     @Operation(tags = { "Executions" }, summary = "Unqueue an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be unqueued")
@@ -2008,7 +2006,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (execution.getState().getCurrent() != State.Type.QUEUED) {
-            throw new IllegalArgumentException("Only QUEUED execution can be unqueued");
+            throw new ConflictException("Cannot unqueue execution: only QUEUED executions can be unqueued.");
         }
 
         return awaitBlockingAction(
@@ -2088,7 +2086,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/{executionId}/force-run")
+    @Post(uri = "/{executionId}/actions/force-run")
     @Operation(tags = { "Executions" }, summary = "Force run an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be force-run")
@@ -2097,7 +2095,7 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (execution.getState().isTerminated()) {
-            throw new IllegalArgumentException("Only non terminated executions can be forced run.");
+            throw new ConflictException("Cannot force run execution: only non-terminated executions can be force run.");
         }
 
         return awaitBlockingAction(
@@ -2358,7 +2356,6 @@ public class ExecutionController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Executions" }, summary = "Export all executions as a streamed CSV file")
-    @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportExecutions(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",

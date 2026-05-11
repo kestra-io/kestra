@@ -27,19 +27,6 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
-    public static List<String> RESERVED_FLOW_IDS = List.of(
-        "pause",
-        "resume",
-        "force-run",
-        "change-status",
-        "kill",
-        "executions",
-        "search",
-        "source",
-        "disable",
-        "enable"
-    );
-
     @Inject
     private NamespaceService namespaceService;
 
@@ -53,10 +40,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         List<String> violations = new ArrayList<>();
-
-        if (value.getId() != null && RESERVED_FLOW_IDS.contains(value.getId())) {
-            violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
-        }
 
         if (namespaceService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
             violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");

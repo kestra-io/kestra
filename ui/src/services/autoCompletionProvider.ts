@@ -1,6 +1,6 @@
 import {YamlElement} from "@kestra-io/design-system";
 import {apiUrlWithoutTenants} from "../override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export const QUOTE = "'";
 
@@ -73,7 +73,7 @@ export class PebbleAutoCompletion {
     }
 
     nestedFieldAutoCompletion(_source: string, _parsed: any | undefined, _parentField: string, _cursorIndex?: number): Promise<string[]> {
-        return Promise.resolve([])
+        return Promise.resolve([]);
     }
 
     functionAutoCompletion(_parsed: any | undefined, _functionName: string, _args: Record<string, string>): Promise<string[]> {

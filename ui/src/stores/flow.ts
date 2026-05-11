@@ -1,6 +1,6 @@
 import {computed, h, ref, watch} from "vue";
 import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
-import permission from "../models/permission";
+import resource from "../models/resource";
 import action from "../models/action";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import Utils from "../utils/utils";
@@ -15,15 +15,15 @@ import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
 
 const textYamlHeader = {
     headers: {
-        "Content-Type": "application/x-yaml"
-    }
-}
+        "Content-Type": "application/x-yaml",
+    },
+};
 
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
 
@@ -88,29 +88,29 @@ export function isSuccessfulFlowSaveOutcome(
 }
 
 export const useFlowStore = defineStore("flow", () => {
-    const flows = ref<Flow[]>()
-    const flow = ref<Flow>()
-    const task = ref<Task>()
-    const search = ref<any[]>()
-    const total = ref<number>(0)
-    const overallTotal = ref<number>()
-    const flowGraph = ref<FlowGraph>()
-    const invalidGraph = ref<boolean>(false)
-    const revisions = ref<any[]>()
-    const flowValidation = ref<FlowValidations>()
-    const taskError = ref<string>()
-    const metrics = ref<any[]>()
-    const aggregatedMetrics = ref<any>()
-    const tasksWithMetrics = ref<any[]>()
-    const executeFlow = ref<boolean>(false)
-    const openAiCopilot = ref<boolean>(false)
-    const lastSaveFlow = ref<string>()
-    const isCreating = ref<boolean>(false)
-    const flowYaml = ref<string>("")
-    const flowYamlOrigin = ref<string>("")
-    const confirmOutdatedSaveDialog = ref<boolean>(false)
-    const expandedSubflows = ref<string[]>([])
-    const metadata = ref<Record<string, any>>()
+    const flows = ref<Flow[]>();
+    const flow = ref<Flow>();
+    const task = ref<Task>();
+    const search = ref<any[]>();
+    const total = ref<number>(0);
+    const overallTotal = ref<number>();
+    const flowGraph = ref<FlowGraph>();
+    const invalidGraph = ref<boolean>(false);
+    const revisions = ref<any[]>();
+    const flowValidation = ref<FlowValidations>();
+    const taskError = ref<string>();
+    const metrics = ref<any[]>();
+    const aggregatedMetrics = ref<any>();
+    const tasksWithMetrics = ref<any[]>();
+    const executeFlow = ref<boolean>(false);
+    const openAiCopilot = ref<boolean>(false);
+    const lastSaveFlow = ref<string>();
+    const isCreating = ref<boolean>(false);
+    const flowYaml = ref<string>("");
+    const flowYamlOrigin = ref<string>("");
+    const confirmOutdatedSaveDialog = ref<boolean>(false);
+    const expandedSubflows = ref<string[]>([]);
+    const metadata = ref<Record<string, any>>();
     const creationId = ref<string>();
 
     const axios = useClient();
@@ -154,7 +154,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     const getNamespace = () => {
         return route.query.namespace || defaultNamespace();
-    }
+    };
 
     async function save(): Promise<FlowSaveOutcome> {
         if (flowErrors.value?.length) {
@@ -189,9 +189,9 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!source.trim()?.length) {
             flowValidation.value = {
-                constraints: t("flow must not be empty")
+                constraints: t("flow must not be empty"),
             };
-            return
+            return;
         }
         if (!isCreating.value) {
             try{
@@ -207,7 +207,7 @@ export const useFlowStore = defineStore("flow", () => {
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
                         flowBeforeEdit.id,
-                        flowBeforeEdit.namespace
+                        flowBeforeEdit.namespace,
                     );
                 }
             } catch{
@@ -216,7 +216,7 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         return validateFlow({
-            flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
+            flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? "",
         })
             .then((value: FlowValidations) => {
                 if (
@@ -292,7 +292,7 @@ export const useFlowStore = defineStore("flow", () => {
                         toast.saved(response.id);
                         isCreating.value = false;
                         return true;
-                    })
+                    });
 
                     return shouldRedirect ? "redirect_to_update" : "blocked";
                 }
@@ -301,8 +301,8 @@ export const useFlowStore = defineStore("flow", () => {
                     coreStore.message = {
                         variant: "error",
                         response: error.response,
-                        content: error.response.data
-                    }
+                        content: error.response.data,
+                    };
                 }
 
                 throw error;
@@ -319,7 +319,7 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         await validateFlow({
-            flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? ""
+            flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? "",
         });
 
         return "saved";
@@ -350,79 +350,79 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         // validate flow on first load
-        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
+        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value});
     }
 
     function findFlows(options: { [key: string]: any }) {
-        const sortString = options.sort ? `?sort=${options.sort}` : ""
-        delete options.sort
+        const sortString = options.sort ? `?sort=${options.sort}` : "";
+        delete options.sort;
         return axios.get(`${apiUrl()}/flows/search${sortString}`, {
-            params: options
+            params: options,
         }).then(response => {
             if (options.onlyTotal) {
                 return response.data.total;
             }
 
             else {
-                flows.value = response.data.results
-                total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                flows.value = response.data.results;
+                total.value = response.data.total;
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length;
 
                 return response.data;
             }
-        })
+        });
     }
     function searchFlows(options: { [key: string]: any }) {
-        const sortString = options.sort ? `?sort=${options.sort}` : ""
-        delete options.sort
+        const sortString = options.sort ? `?sort=${options.sort}` : "";
+        delete options.sort;
         return axios.get(`${apiUrl()}/flows/source${sortString}`, {
-            params: options
+            params: options,
         }).then(response => {
-            search.value = response.data.results
-            total.value = response.data.total
+            search.value = response.data.results;
+            total.value = response.data.total;
 
             return response.data;
-        })
+        });
     }
 
     function flowsByNamespace(namespace: string) {
         return axios.get(`${apiUrl()}/flows/${namespace}`).then(response => {
             return response.data;
-        })
+        });
     }
 
     async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
-        const httpClient = options.httpClient ?? axios
+        const httpClient = options.httpClient ?? axios;
         const response: {data:Flow & {exception?: string}} = await httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
             {
                 params: {
                     revision: options.revision,
                     allowDeleted: options.allowDeleted,
-                    source: options.source === undefined ? true : undefined
+                    source: options.source === undefined ? true : undefined,
                 },
                 validateStatus: (status: number) => {
                     return options.deleted ? status === 200 || status === 404 : status === 200;
-                }
-            })
+                },
+            });
 
         if (response.data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
                 message: response.data.exception,
-                variant: "error"
+                variant: "error",
             };
 
             // add this error to the list of errors
             flowValidation.value = {
                 constraints: response.data.exception,
                 outdated: false,
-                infos: []
+                infos: [],
             };
             delete response.data.exception;
         }
 
         validateFlow({
-            flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`
+            flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
         });
 
         if (options.store === false) {
@@ -443,8 +443,8 @@ export const useFlowStore = defineStore("flow", () => {
             {
                 validateStatus: (status: number) => {
                     return status === 200 || status === 404;
-                }
-            }
+                },
+            },
         )
             .then(response => {
                 if (response.status === 200) {
@@ -454,23 +454,23 @@ export const useFlowStore = defineStore("flow", () => {
                 } else {
                     return null;
                 }
-            })
+            });
     }
     function saveFlow(options: { flow: string }) {
-        const flowData = YAML_UTILS.parse(options.flow)
+        const flowData = YAML_UTILS.parse(options.flow);
         return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, {
             ...textYamlHeader,
-            ...VALIDATE
+            ...VALIDATE,
         })
             .then(response => {
                 if (response.status >= 300) {
-                    return Promise.reject(response)
+                    return Promise.reject(response);
                 } else {
                     flow.value = response.data;
 
                     return response.data;
                 }
-            })
+            });
     }
     function updateFlowTask(options: { flow: Flow, task: Task }) {
         return axios
@@ -483,17 +483,17 @@ export const useFlowStore = defineStore("flow", () => {
                 loadGraph({flow});
 
                 return flow;
-            })
+            });
     }
 
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
             ...VALIDATE,
-            showMessageOnError: false
+            showMessageOnError: false,
         }).then(response => {
             if (response.status >= 300) {
-                return Promise.reject(response)
+                return Promise.reject(response);
             }
 
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([]);
@@ -506,16 +506,16 @@ export const useFlowStore = defineStore("flow", () => {
             creationId.value = undefined;
 
             return response.data;
-        })
+        });
     }
 
     function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${onlyCount ? false : true}`).then(response => {
             return {
                 ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
-                count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0
+                count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0,
             };
-        })
+        });
     }
 
 function deleteFlowAndDependencies() {
@@ -524,7 +524,7 @@ function deleteFlowAndDependencies() {
     return axios
         .get(
             `${apiUrl()}/flows/${metadata.namespace}/${metadata.id}/dependencies`,
-            {params: {destinationOnly: true}}
+            {params: {destinationOnly: true}},
         )
         .then((response) => {
             let warning = "";
@@ -535,7 +535,7 @@ function deleteFlowAndDependencies() {
                             !(
                                 n.namespace === metadata.namespace &&
                                 n.id === metadata.id
-                            )
+                            ),
                     )
                     .map(
                         (n: any) =>
@@ -543,7 +543,7 @@ function deleteFlowAndDependencies() {
                             n.namespace +
                             ".<code>" +
                             n.id +
-                            "</code></li>"
+                            "</code></li>",
                     )
                     .join("\n");
 
@@ -578,7 +578,7 @@ function deleteFlowAndDependencies() {
     function deleteFlow(options: { namespace: string, id: string }) {
         return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}`).then(() => {
             flow.value = undefined;
-        })
+        });
     }
 
     function loadGraph(options: { flow: Flow, params?: any }) {
@@ -598,13 +598,13 @@ function deleteFlowAndDependencies() {
     function loadGraphFromSource(options: { flow: string, config?: any }) {
         const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
         const flowParsed = YAML_UTILS.parse(options.flow);
-        let flowSource = options.flow
+        let flowSource = options.flow;
         if (!flowParsed.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"});
         }
         return axios.post(`${apiUrl()}/flows/graph`, flowSource, {...config, withCredentials: true})
             .then(response => {
-                flowGraph.value = response.data
+                flowGraph.value = response.data;
 
                 const flowVar = YAML_UTILS.parse(options.flow);
                 flowVar.id = flow.value?.id ?? flowVar.id;
@@ -624,39 +624,39 @@ function deleteFlowAndDependencies() {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         message: error.response.data.message,
-                        variant: "error"
+                        variant: "error",
                     };
                 }
 
                 return Promise.reject(error);
-            })
+            });
     }
 
     function getGraphFromSourceResponse(options: { flow: string, config?: any }) {
         const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
         const flowParsed = YAML_UTILS.parse(options.flow);
-        let flowSource = options.flow
+        let flowSource = options.flow;
         if (!flowParsed.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"});
         }
         return axios.post(`${apiUrl()}/flows/graph`, flowSource, {...config})
-            .then(response => response.data)
+            .then(response => response.data);
     }
 
     function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
             if (options.store !== false) {
-                revisions.value = response.data
+                revisions.value = response.data;
             }
             return response.data;
-        })
+        });
     }
 
     function exportFlowByIds(options: { ids: string[] }) {
         return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
             .then(response => {
                 const blob = new Blob([response.data], {type: "application/octet-stream"});
-                const url = window.URL.createObjectURL(blob)
+                const url = window.URL.createObjectURL(blob);
                 Utils.downloadUrl(url, "flows.zip");
             });
     }
@@ -671,7 +671,7 @@ function deleteFlowAndDependencies() {
     async function exportFlowAsCSV(params: any) {
         const response = await axios.get(
             `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "blob"}
+            {params, responseType: "blob"},
         );
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
@@ -687,46 +687,42 @@ function deleteFlowAndDependencies() {
          const {file, failOnError} = options;
         return axios.post(`${apiUrl()}/flows/import`, file, {
             headers: {"Content-Type": "multipart/form-data"},
-            params: {failOnError}
+            params: {failOnError},
         }).then(response => {
             return response;
         });
     }
     function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.post(`${apiUrl()}/flows/disable/by-ids`, options.ids)
+        return axios.post(`${apiUrl()}/flows/disable/by-ids`, options.ids);
     }
     function disableFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.post(`${apiUrl()}/flows/disable/by-query`, options, {params: options})
+        return axios.post(`${apiUrl()}/flows/disable/by-query`, options, {params: options});
     }
     function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.post(`${apiUrl()}/flows/enable/by-ids`, options.ids)
+        return axios.post(`${apiUrl()}/flows/enable/by-ids`, options.ids);
     }
     function enableFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
+        return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options});
     }
 
     function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
+        return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids});
     }
 
     function deleteFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
+        return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options});
     }
 
     function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
-            try {
-                const {namespace} = YAML_UTILS.getMetadata(options.flow);
-                if(authStore.user && !authStore.user?.isAllowed(
-                    permission.FLOW,
-                    action.CREATE,
-                    namespace,
-                )) {
-                    flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
-                }
-            } catch {
-                // YAML may be temporarily invalid during editing
+            const {namespace} = YAML_UTILS.getMetadata(options.flow);
+            if(authStore.user && !authStore.user?.isAllowed(
+                resource.FLOW,
+                action.CREATE,
+                namespace,
+            )) {
+                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
             }
         }
 
@@ -734,7 +730,7 @@ function deleteFlowAndDependencies() {
             .then(response => {
                 const validResults = response.data[0] ?? {};
 
-                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
+                const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean);
 
                 if (constraintsArray.length) {
                     validResults.constraints = constraintsArray.join(", ");
@@ -744,70 +740,70 @@ function deleteFlowAndDependencies() {
 
                 flowValidation.value = validResults;
 
-                return validResults
-            })
+                return validResults;
+            });
     }
 
     function validateTask(options: { task: string, section: string }) {
         return axios.post(`${apiUrl()}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
             .then(response => {
                 taskError.value = response.data.constraints;
-                return response.data
-            })
+                return response.data;
+            });
     }
     function loadFlowMetrics(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/metrics/names/${options.namespace}/${options.id}`)
             .then(response => {
-                metrics.value = response.data
-                return response.data
-            })
+                metrics.value = response.data;
+                return response.data;
+            });
     }
     function loadTaskMetrics(options: { namespace: string, id: string, taskId: string }) {
         return axios.get(`${apiUrl()}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
             .then(response => {
-                metrics.value = response.data
-                return response.data
-            })
+                metrics.value = response.data;
+                return response.data;
+            });
     }
     function loadTasksWithMetrics(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/metrics/tasks/${options.namespace}/${options.id}`)
             .then(response => {
-                tasksWithMetrics.value = response.data
-                return response.data
-            })
+                tasksWithMetrics.value = response.data;
+                return response.data;
+            });
     }
     function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
             .then(response => {
-                aggregatedMetrics.value = response.data
-                return response.data
-            })
+                aggregatedMetrics.value = response.data;
+                return response.data;
+            });
     }
     function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
             .then(response => {
-                aggregatedMetrics.value = response.data
-                return response.data
-            })
+                aggregatedMetrics.value = response.data;
+                return response.data;
+            });
     }
 
     function setTrigger({index, trigger}: { index: number, trigger: Trigger }) {
         const flowVar = flow.value ?? {} as Flow;
 
         if (flowVar.triggers === undefined) {
-            flowVar.triggers = []
+            flowVar.triggers = [];
         }
 
         flowVar.triggers[index] = trigger;
 
-        flow.value = {...flowVar}
+        flow.value = {...flowVar};
     }
 
     function removeTrigger(index: number) {
         const flowVar = flow.value ?? {} as Flow;
         flowVar.triggers?.splice(index, 1);
 
-        flow.value = {...flowVar}
+        flow.value = {...flowVar};
     }
 
     function setExecuteFlow(value: boolean) {
@@ -823,37 +819,37 @@ function deleteFlowAndDependencies() {
 
         if (trigger.backfill === undefined) {
             trigger.backfill = {
-                start: undefined
-            }
+                start: undefined,
+            };
         }
 
         if (flowVar.triggers === undefined) {
-            flowVar.triggers = []
+            flowVar.triggers = [];
         }
 
-        flowVar.triggers.push(trigger)
+        flowVar.triggers.push(trigger);
 
-        flow.value = {...flowVar}
+        flow.value = {...flowVar};
     }
 
     function deleteRevision(options: { namespace: string, id: string, revision: string }) {
         return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions?revisions=${options.revision}`);
     }
 
-    const authStore = useAuthStore()
+    const authStore = useAuthStore();
 
     const isAllowedEdit = computed((): boolean => {
         if (!flow.value || !authStore.user) {
             return false;
         }
 
-        return (isCreating.value && authStore.user?.hasAnyAction(permission.FLOW, action.UPDATE))
+        return (isCreating.value && authStore.user?.hasAnyAction(resource.FLOW, action.UPDATE))
          || authStore.user?.isAllowed(
-            permission.FLOW,
+            resource.FLOW,
             action.UPDATE,
             flow.value?.namespace,
         );
-    })
+    });
 
     const readOnlySystemLabel = computed(() => {
         if (!flow.value || !flow.value.labels) {
@@ -861,16 +857,16 @@ function deleteFlowAndDependencies() {
         }
 
         return (flow.value.labels?.["system.readOnly"] === "true") || (flow.value.labels?.["system.readOnly"] === true);
-    })
+    });
 
     const isReadOnly = computed(() => {
         return flow.value?.deleted || !isAllowedEdit.value || readOnlySystemLabel.value;
-    })
+    });
 
     const baseOutdatedTranslationKey = computed(() => {
         const createOrUpdateKey = isCreating.value ? "create" : "update";
         return "outdated revision save confirmation." + createOrUpdateKey;
-    })
+    });
 
     const flowErrors = computed((): string[] | undefined => {
         const key = baseOutdatedTranslationKey.value;
@@ -885,38 +881,38 @@ function deleteFlowAndDependencies() {
         const errors = [...flowExistsError, ...constraintsError];
 
         return errors.length === 0 ? undefined : errors;
-    })
+    });
 
     const flowInfos = computed(() => {
         const infos = flowValidation.value?.infos ?? [];
 
         return infos.length === 0 ? undefined : infos;
-    })
+    });
 
     const flowHaveTasks = computed((): boolean => {
         const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
         return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
-    })
+    });
 
     const nextRevision = computed((): number => {
         return (flow.value?.revision ?? 0) + 1;
-    })
+    });
 
     const yamlWithNextRevision = computed((): string => {
         if (!flowYaml.value) return "";
         return `revision: ${nextRevision.value}\n${flowYaml.value}`;
-    })
+    });
 
     const flowParsed = computed(() => {
         try {
-            return YAML_UTILS.parse(flowYaml.value)
+            return YAML_UTILS.parse(flowYaml.value);
         } catch {
-            return undefined
+            return undefined;
         }
-    })
+    });
     const flowYamlMetadata = computed(() => {
         return YAML_UTILS.getMetadata(flowYaml.value ?? "");
-    })
+    });
 
     return {
         creationId,
@@ -998,6 +994,6 @@ function deleteFlowAndDependencies() {
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
         getNamespace,
-        deleteRevision
-    }
-})
+        deleteRevision,
+    };
+});

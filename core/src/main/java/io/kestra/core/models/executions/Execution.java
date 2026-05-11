@@ -394,6 +394,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return withLabels(existingLabel);
     }
 
+    /**
+     * Creates a child execution with the given parameters.
+     * Child executions derived from the original execution, to restart or replay it.
+     * When restarting, set the <code>childExecutionId</code> to the original execution ID, when replaying, set it to null.
+     */
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList,
         State state) {
         return new Execution(
@@ -408,7 +413,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.labels,
             this.variables,
             state,
-            childExecutionId != null ? this.getId() : null,
+            // preserve the parentId when restarting, this is needed for loop sub-executions
+            childExecutionId != null ? this.getId() : this.parentId,
             this.originalId,
             this.trigger,
             this.deleted,

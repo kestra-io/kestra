@@ -1,7 +1,7 @@
 import {ref} from "vue";
 import {defineStore} from "pinia";
 
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 import {apiUrl} from "override/utils/route";
 
 import {useMiscStore} from "override/stores/misc";
@@ -132,8 +132,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const createFlowBlueprint = async (toCreate: {source: string, title: string, description: string, tags: string[]}): Promise<FlowBlueprint> => {
         const url = `${apiUrl()}/blueprints/flows`;
         const body = {
-            ...toCreate
-        }
+            ...toCreate,
+        };
         const response = await axios.post(url, body);
 
         return response.data;
@@ -142,8 +142,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const updateFlowBlueprint = async (id: string, toUpdate: {source: string, title: string, description: string, tags: string[]}) :Promise<FlowBlueprint> => {
         const url = `${apiUrl()}/blueprints/flows/${id}`;
         const body = {
-            ...toUpdate
-        }
+            ...toUpdate,
+        };
         const response = await axios.put(url, body);
 
         return response.data;
@@ -157,12 +157,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, object>): Promise<{generatedFlowSource: string}> => {
         const url = `${apiUrl()}/blueprints/flows/${id}/use-template`;
         const body = {
-            templateArgumentsInputs: inputs
-        }
+            templateArgumentsInputs: inputs,
+        };
         const response = await axios.post(url, body);
 
         return response.data;
-    }
+    };
 
     return {
         blueprint,

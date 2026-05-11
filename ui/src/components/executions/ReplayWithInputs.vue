@@ -22,7 +22,7 @@
     // @ts-expect-error no types yet
     import FlowRun from "../../components/flows/FlowRun.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
 
     const {t} = useI18n();
     const toast = useToast();
@@ -32,7 +32,7 @@
     const props = defineProps({
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
-        revision: {type: Number, required: false, default: undefined}
+        revision: {type: Number, required: false, default: undefined},
     });
 
     const emit = defineEmits(["executionTrigger"]);
@@ -41,7 +41,7 @@
 
     const flow = computed(() => executionsStore.flow);
 
-    const axios = useClient()
+    const axios = useClient();
 
     const handleReplaySubmit = async ({inputs}: any) => {
 
@@ -50,7 +50,7 @@
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,
             revision: props.revision,
-            formData
+            formData,
         });
 
         if (response.data.id === props.execution.id) {
@@ -66,8 +66,8 @@
                 flowId: execution.flowId,
                 id: execution.id,
                 tab: "gantt",
-                tenant: route.params.tenant
-            }
+                tenant: route.params.tenant,
+            },
         });
 
         toast.success(t("replayed"));

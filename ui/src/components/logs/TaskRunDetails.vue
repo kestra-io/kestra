@@ -228,7 +228,7 @@
     import Utils from "../../utils/utils";
     import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
 
     export default {
         name: "TaskRunDetails",
@@ -292,7 +292,7 @@
             showProgressBar: {
                 type: Boolean,
                 default: true,
-            }
+            },
         },
         data() {
             return {
@@ -425,8 +425,8 @@
         setup(){
             const $http = useClient();
             return {
-                $http
-            }
+                $http,
+            };
         },
         computed: {
             ...mapStores(useCoreStore, useExecutionsStore),

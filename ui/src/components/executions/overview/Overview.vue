@@ -278,11 +278,9 @@
                         value: execution.value.trigger.id,
                         to: {
                             name: "admin/triggers",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                            },
+                            params: execution.value.tenantId
+                                ? {tenant: execution.value.tenantId}
+                                : {},
                             query: {
                                 "filters[q][EQUALS]": execution.value.trigger.id,
                             },
@@ -487,7 +485,7 @@
             if (!chartRef.value || !execution.value) return;
             chartRef.value?.refresh(filters.value as any);
         },
-        {debounce: 500, maxWait: 1000}
+        {debounce: 500, maxWait: 1000},
     );
 
     defineOptions({inheritAttrs: false});

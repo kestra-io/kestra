@@ -137,7 +137,7 @@
                     />
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state.startDate' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
                         prop="state.startDate"
                         :label="$t('last execution date')"
                     >
@@ -161,7 +161,7 @@
                     </KsTableColumn>
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state.current' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state.current' && user?.hasAny(resource.EXECUTION)"
                         prop="state.current"
                         :label="$t('last execution status')"
                     >
@@ -188,7 +188,7 @@
                     </KsTableColumn>
 
                     <KsTableColumn
-                        v-else-if="colProp === 'state' && user?.hasAny(permission.EXECUTION)"
+                        v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
                         prop="state"
                         :label="$t('execution statistics')"
                         className="row-graph"
@@ -286,7 +286,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 
     import action from "../../models/action";
-    import permission from "../../models/permission";
+    import resource from "../../models/resource";
 
     import {useToast} from "../../utils/toast";
 
@@ -321,7 +321,7 @@
     const router = useRouter();
 
     const {t} = useI18n();
-    const toast = useToast()
+    const toast = useToast();
 
     const flowFilter = useFlowFilter();
 
@@ -334,57 +334,57 @@
             label: t("labels"),
             prop: "labels",
             default: true,
-            description: t("filter.table_column.flows.labels")
+            description: t("filter.table_column.flows.labels"),
         },
         {
             label: t("namespace"),
             prop: "namespace",
             default: true,
-            description: t("filter.table_column.flows.namespace")
+            description: t("filter.table_column.flows.namespace"),
         },
         {
             label: t("last execution date"),
             prop: "state.startDate",
             default: true,
-            description: t("filter.table_column.flows.last execution date")
+            description: t("filter.table_column.flows.last execution date"),
         },
         {
             label: t("last execution status"),
             prop: "state.current",
             default: true,
-            description: t("filter.table_column.flows.last execution status")
+            description: t("filter.table_column.flows.last execution status"),
         },
         {
             label: t("execution statistics"),
             prop: "state",
             default: true,
-            description: t("filter.table_column.flows.execution statistics")
+            description: t("filter.table_column.flows.execution statistics"),
         },
         {
             label: t("triggers"),
             prop: "triggers",
             default: true,
-            description: t("filter.table_column.flows.triggers")
+            description: t("filter.table_column.flows.triggers"),
         },
     ]);
 
     const {
         visibleColumns: displayColumns,
-        updateVisibleColumns
+        updateVisibleColumns,
     } = useTableColumns({
         columns: optionalColumns.value,
         storageKey: "flows",
-        initialVisibleColumns: []
+        initialVisibleColumns: [],
     });
 
     const user = computed(() => authStore.user);
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
-    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
+    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE));
     const routeNamespace = computed(() => route.query.namespace as string | undefined);
-    const canRead = computed(() => user?.value?.isAllowed(permission.FLOW, action.READ, routeNamespace.value));
-    const canDelete = computed(() => user?.value?.isAllowed(permission.FLOW, action.DELETE, routeNamespace.value));
-    const canUpdate = computed(() => user?.value?.isAllowed(permission.FLOW, action.UPDATE, routeNamespace.value));
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.namespace);
+    const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value));
+    const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value));
+    const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value));
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -402,10 +402,10 @@
                     size,
                     page,
                     sort: sort ?? String(route.query.sort ?? "id:asc"),
-                })
+                }),
             )
             .then((data: any) => {
-                if (user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
+                if (user.value?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.LIST)) {
                     executionsStore.loadLatestExecutions({
                         flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
                     }).then((latestExecs: any) => {
@@ -418,7 +418,7 @@
 
     const onRowDoubleClick = (item: any) => router.push({
         name: route.name?.toString().replace("/list", "/update"),
-        params: {...item, tenant: route.params.tenant}
+        params: {...item, tenant: route.params.tenant},
     });
 
     const filterQuery = computed(() => {
@@ -513,7 +513,7 @@
         await executionsStore.loadFlowForExecution({
             namespace: flow.namespace,
             flowId: flow.id,
-            store: true
+            store: true,
         });
 
         showRunModal.value = true;
@@ -540,7 +540,7 @@
                         toggleAllUnselected();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -561,7 +561,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -590,7 +590,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -611,7 +611,7 @@
                         dataTable.value?.reload();
                     });
                 }
-            }
+            },
         );
     }
 
@@ -634,7 +634,7 @@
     function getLastExecution(row: any) {
         if (!latestExecutions.value || !row) return null;
         return latestExecutions.value.find(
-            (e: any) => e.flowId === row.id && e.namespace === row.namespace
+            (e: any) => e.flowId === row.id && e.namespace === row.namespace,
         ) ?? null;
     }
 
@@ -665,14 +665,14 @@
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
-            operation: "EQUALS"
+            operation: "EQUALS",
         }];
     }
 
     async function exportFlowsAsStream() {
         await flowStore.exportFlowAsCSV(
-            route.query
-        )
+            route.query,
+        );
     }
 </script>
 

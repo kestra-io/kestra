@@ -1,6 +1,6 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from "vue";
 import {apiUrlWithoutTenants} from "override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
 
 function wrapWithErrorBoundary(inner: any) {
@@ -63,7 +63,7 @@ export function useFederatedModule(slotName: string) {
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
+                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo;
                     }
                 }
             }
@@ -75,7 +75,7 @@ export function useFederatedModule(slotName: string) {
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
                     const remoteName = `remote--${taskTypeKey}`;
-                    const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`
+                    const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`;
 
                     if(manifest.styles){
                         manifest.styles.forEach((style) => addCSSLinkIfNotAlreadyPresent(`${basePath}${style}`));
@@ -102,7 +102,7 @@ export function useFederatedModule(slotName: string) {
                     });
 
                     const taskRoot = taskTypeKey.slice(manifest.group.length + 1);
-                    const module = await loadRemote<{default: any}>(`${remoteName}/${taskRoot}/${slotName}`)
+                    const module = await loadRemote<{default: any}>(`${remoteName}/${taskRoot}/${slotName}`);
 
                     if(!module){
                         console.error(`Remote module ${remoteName} did not load correctly`);
@@ -119,6 +119,6 @@ export function useFederatedModule(slotName: string) {
         RemoteComponents,
         taskAdditionalInfoRemote,
         manifestReady,
-        resolveRemoteComponent
-    }
+        resolveRemoteComponent,
+    };
 }

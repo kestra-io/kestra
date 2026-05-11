@@ -92,13 +92,13 @@ export default defineConfig(({mode}) => {
                     vue: { 
                         singleton: true, 
                         eager: true,
-                        requiredVersion: "^3"
+                        requiredVersion: "^3",
                     },
                     "@kestra-io/kestra-sdk": {
                         singleton: true,
                         eager: true,
-                    }
-                }
+                    },
+                },
             }),
             commit(),
             codecovVitePlugin({

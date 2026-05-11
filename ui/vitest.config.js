@@ -41,7 +41,7 @@ export default defineConfig({
         alias: [
             ...resolvedViteConfig.resolve.alias,
             {find: "module-federation/runtime", replacement: MF_RUNTIME_STUB},
-        ]
+        ],
     },
     coverage: {
         exclude: ["**/*.json"],

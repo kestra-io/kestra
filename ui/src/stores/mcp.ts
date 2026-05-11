@@ -22,6 +22,26 @@ export interface McpServerPayload {
     disabled: boolean;
 }
 
+export interface McpToolAnnotations {
+    readOnly: boolean;
+    openWorld: boolean;
+    destructive: boolean;
+    idempotent: boolean;
+    returnDirect: boolean;
+}
+
+export interface McpTool {
+    toolName: string;
+    triggerId: string;
+    title: string;
+    description: string;
+    annotations: McpToolAnnotations;
+    namespace: string;
+    flowId: string;
+    flowRevision: number;
+    disabled: boolean;
+}
+
 export const useMcpStore = defineStore("mcp", () => {
     const server = ref<McpServer | null>(null)
 
@@ -58,5 +78,10 @@ export const useMcpStore = defineStore("mcp", () => {
         return data
     }
 
-    return {server, list, load, create, update, remove, toggle}
-})
+    const listTools = async (id: string): Promise<McpTool[]> => {
+        const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`, {withCredentials: true})
+        return data
+    };
+
+    return {server, list, load, create, update, remove, toggle, listTools}
+});

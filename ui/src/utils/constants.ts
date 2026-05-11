@@ -20,6 +20,7 @@ export const storageKeys = {
     DISPLAY_KV_COLUMNS: "displayKvColumns",
     DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
     DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
+    DISPLAY_MCP_TOOLS_COLUMNS: "displayMcpToolsColumns",
     DISPLAY_ASSETS_COLUMNS: "displayAssetsColumns",
     DISPLAY_ASSET_EXECUTIONS_COLUMNS: "displayAssetExecutionsColumns",
     SELECTED_TENANT: "selectedTenant",

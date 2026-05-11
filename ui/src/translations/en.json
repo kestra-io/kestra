@@ -1969,6 +1969,22 @@
         "tab_connect": "Connect",
         "tab_tool_flows": "Tool Flows",
         "tab_tool_flows_placeholder": "Tool flows management is coming soon.",
+        "tools": {
+            "no_tools": "No tool flows are registered on this server yet. Add an `McpToolTrigger` to a flow to expose it here.",
+            "tool_name": "Tool Name",
+            "trigger_id": "Trigger ID",
+            "title": "Title",
+            "description": "Description",
+            "annotations": "Annotations",
+            "flow": "Flow",
+            "state": "State",
+            "read_only": "Read-only",
+            "open_world": "Open world",
+            "destructive": "Destructive",
+            "idempotent": "Idempotent",
+            "return_direct": "Return direct",
+            "view_flow": "Open flow"
+        },
         "connect_tab": {
               "server_url": "Server URL",
               "client_picker_label": "Choose your AI client",

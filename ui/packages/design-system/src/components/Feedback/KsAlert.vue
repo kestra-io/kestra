@@ -57,7 +57,6 @@
 
 <style lang="scss">
     @use '../../assets/styles/el-ns' as *;
-    @use '../../assets/styles/variables' as *;
     @use 'element-plus/theme-chalk/src/alert' as *;
     @use "element-plus/theme-chalk/src/common/var" as *;
 
@@ -73,12 +72,12 @@
 
         .kel-alert__title {
             font-weight: 600;
-            line-height: var(--ks-font-size-sm);
+            line-height: 1;
         }
 
         .kel-alert__description {
             font-weight: 500;
-            line-height: var(--ks-font-size-sm);
+            line-height: 1.25;
         }
 
         .kel-alert__icon {
@@ -93,22 +92,9 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--ks-icon-muted);
-
-            svg { display: none; }
-
-            &::before {
-                content: '';
-                display: block;
-                width: 1rem;
-                height: 1rem;
-                background-color: currentColor;
-                mask-image: $close-icon-svg;
-                mask-size: contain;
-                mask-repeat: no-repeat;
-            }
         }
 
-        @each $type in $types {
+        @each $type in (success, info, warning, error) {
             &.kel-alert--#{$type}.is-light {
                 border: 1px solid var(--ks-border-#{$type});
                 background-color: var(--ks-bg-#{$type});

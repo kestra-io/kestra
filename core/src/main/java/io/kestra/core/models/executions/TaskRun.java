@@ -164,6 +164,9 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    /**
+     * Derive a TaskRun for a child execution when restarting or replaying.
+     */
     public TaskRun forChildExecution(Map<String, String> remapTaskRunId, String executionId, State state) {
         return TaskRun.builder()
             .tenantId(this.getTenantId())
@@ -172,7 +175,7 @@ public class TaskRun implements TenantInterface {
             .namespace(this.getNamespace())
             .flowId(this.getFlowId())
             .taskId(this.getTaskId())
-            .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
+            .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
             .assets(this.getAssets())

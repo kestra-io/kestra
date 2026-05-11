@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -149,9 +148,15 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    @LoadFlows({"flows/valids/replay-loop.yaml"})
     void replayLoop() throws Exception {
         restartCaseTest.replayLoop();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    void restartLoop() throws Exception {
+        restartCaseTest.restartLoop();
     }
 
     @Test
@@ -174,7 +179,6 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-parent-loop.yaml", "flows/valids/restart-child.yaml" })
-    @Disabled
     protected void restartSubflowWithLoop() throws Exception {
         restartCaseTest.restartSubflowWithLoop();
     }

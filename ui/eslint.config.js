@@ -47,6 +47,16 @@ export default defineConfig([
         },
     },
     {
+        // The design system intentionally ships unscoped overrides for
+        // element-plus (kel-*) classes so every consumer gets the same look.
+        // The rule still applies everywhere else, where unscoped styles
+        // would leak globally by accident.
+        files: ["packages/design-system/src/components/**/*.vue"],
+        rules: {
+            "vue/enforce-style-attribute": "off",
+        },
+    },
+    {
         files: [components("filter"), components("code")],
         ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},

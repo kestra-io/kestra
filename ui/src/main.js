@@ -1,6 +1,6 @@
 import {createApp} from "vue"
 
-import App from "./App.vue"
+import App from "./App.vue";
 import initApp from "./utils/init";
 import {configureAxios} from "@kestra-io/kestra-sdk";
 import routes from "./routes/routes";

@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 interface TriggerSearchOptions {
     sort?: string;

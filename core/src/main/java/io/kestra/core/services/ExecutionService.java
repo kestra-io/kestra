@@ -854,6 +854,22 @@ public class ExecutionService {
     }
 
     /**
+     * Finds the last failing loop sub-execution associated with the given loop task run.
+     * Used when restarting an execution to identify which sub-execution needs to be restarted.
+     *
+     * @param execution   the parent execution
+     * @param loopTaskRun the Loop task run in the parent execution
+     * @return the last restartable sub-execution for that loop task run, if any
+     */
+    public Optional<Execution> findLastFailingLoopSubExecution(Execution execution, TaskRun loopTaskRun) {
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId())
+            .stream()
+            .filter(sub -> sub.getLoopRun() != null && sub.getLoopRun().taskRunId().equals(loopTaskRun.getId()))
+            .filter(sub -> sub.getState().canBeRestarted())
+            .max(Comparator.comparingInt(sub -> sub.getLoopRun().index()));
+    }
+
+    /**
      * Kill an execution.
      *
      * @return the execution in a KILLING state if not already terminated

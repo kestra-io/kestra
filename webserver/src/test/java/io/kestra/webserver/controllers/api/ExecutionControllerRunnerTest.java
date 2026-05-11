@@ -660,9 +660,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    @LoadFlows({"flows/valids/replay-loop.yaml"})
     void restartExecutionFromTaskIdWithSequential() throws Exception {
-        final String flowId = "restart-loop";
+        final String flowId = "replay-loop";
         final String referenceTaskId = "2_end";
 
         // Run execution until it ends

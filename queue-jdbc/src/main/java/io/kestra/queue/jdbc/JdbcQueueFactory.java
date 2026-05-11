@@ -200,9 +200,9 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
 
     @QueueBean
     @Override
-    public DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(JdbcDependencies dependencies) {
+    public DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue(JdbcDependencies dependencies) {
         return new JdbcDispatchQueue<>(
-            TerminatedLoopExecution.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            LoopExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

@@ -22,9 +22,9 @@ const handleAuthError = (error, to) => {
 }
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
-    router.beforeEach(async (to, from, next) => {
+    router.beforeEach(async (to, from) => {
         if(to.path === from.path && to.query === from.query) {
-            return next(); // Prevent navigation if the path and query are the same
+            return; // Prevent navigation if the path and query are the same
         }
 
         try {
@@ -40,44 +40,42 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                     // Creds exist in config but failed validation
                     // Route to login to show errors
                     if (to.name === "login") {
-                        return next();
+                        return;
                     }
 
-                    return next({name: "login"})
+                    return {name: "login"}
                 } else {
                     // No creds in config - redirect to set it up
                     if (to.name === "setup") {
-                        return next();
+                        return;
                     }
 
-                    return next({name: "setup"})
+                    return {name: "setup"}
                 }
             }
 
             if (to.meta?.anonymous === true) {
                 if (to.name === "setup") {
-                    return next({name: "login"});
+                    return {name: "login"};
                 }
-                return next();
+                return;
             }
 
             const hasCredentials = BasicAuth.isLoggedIn()
 
             if (!hasCredentials) {
                 const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-                return next({name: "login", query: fromPath ? {from: fromPath} : {}})
+                return {name: "login", query: fromPath ? {from: fromPath} : {}}
             }
 
             // Check if basic auth setup is still in progress
             const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress")
             if (isSetupInProgress === "true") {
-                return next({name: "setup"})
+                return {name: "setup"}
             }
-
-            return next();
         } catch (error) {
             console.error("Error during authentication check:", error);
-            return next(handleAuthError(error, to))
+            return handleAuthError(error, to)
         }
     });
 

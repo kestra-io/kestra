@@ -3,7 +3,7 @@
  * incompatible with the Vitest/Storybook test environment.
  */
 export function loadRemote() {
-    return Promise.resolve(null);
+    return Promise.resolve(null)
 }
 
 export function registerRemotes() {}

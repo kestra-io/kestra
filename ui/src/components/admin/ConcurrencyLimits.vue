@@ -52,7 +52,7 @@
     import {useI18n} from "vue-i18n";
     import TopNavBar from "../layout/TopNavBar.vue";
     import useRouteContext from "../../composables/useRouteContext";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 

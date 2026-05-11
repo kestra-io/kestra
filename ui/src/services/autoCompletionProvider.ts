@@ -1,6 +1,6 @@
 import {YamlElement} from "@kestra-io/design-system";
 import {apiUrlWithoutTenants} from "../override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export const QUOTE = "'";
 

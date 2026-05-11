@@ -12,7 +12,7 @@ import {mapStores} from "pinia";
 import {usePluginsStore} from "../stores/plugins";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export default {
     mixins: [RouteContext],

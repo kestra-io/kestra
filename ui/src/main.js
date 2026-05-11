@@ -1,7 +1,7 @@
 import {createApp} from "vue"
 
 import App from "./App.vue"
-import initApp from "./utils/init"
+import initApp from "./utils/init";
 import {configureAxios} from "@kestra-io/kestra-sdk";
 import routes from "./routes/routes";
 import en from "./translations/en.json";
@@ -92,10 +92,10 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
     const layoutStore = useLayoutStore();
 
     function beforeLogout() {
-        document.body.classList.add("login")
-        unsavedChangesStore.unsavedChange = false
-        layoutStore.setTopNavbar(undefined)
-        BasicAuth.logout()
+        document.body.classList.add("login");
+        unsavedChangesStore.unsavedChange = false;
+        layoutStore.setTopNavbar(undefined);
+        BasicAuth.logout();
     }
 
 
@@ -108,7 +108,7 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
         beforeLogout,
         onAuthTimeout: beforeLogout,
         isImpersonating: () => window.sessionStorage.getItem("impersonate"),
-    }) 
+    }); 
 
     piniaStore.use(({store: piniaStoreLocal}) => {
         piniaStoreLocal.$http = axiosInstance;

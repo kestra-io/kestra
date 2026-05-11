@@ -7,7 +7,7 @@ import {useApiStore} from "./api";
 import InitialFlowSchema from "./flow-schema.json"
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils";
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export interface PluginComponent {
     icon?: string;

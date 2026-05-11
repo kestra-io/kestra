@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import {useApiStore} from "../../stores/api";
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue";
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient} from "@kestra-io/kestra-sdk";
 import {initPosthogIfEnabled} from "../../utils/posthog";
 import {ensureUid} from "../../utils/uid";
 

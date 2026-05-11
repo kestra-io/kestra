@@ -46,7 +46,7 @@
     import Empty from "../layout/empty/Empty.vue";
     import {KsExecutionStatus} from "@kestra-io/design-system";
     import {useFlowStore} from "../../stores/flow";
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient} from "@kestra-io/kestra-sdk";
     import {apiUrl} from "override/utils/route";
     import Loading from "vue-material-design-icons/Loading.vue";
 

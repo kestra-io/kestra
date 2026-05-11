@@ -2,6 +2,7 @@
     <ElButton
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @click="emit('click', $event)"
+        plain
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -31,7 +32,6 @@
         icon?: string | Component
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
-        plain?: boolean
         text?: boolean
         link?: boolean
         bg?: boolean
@@ -56,66 +56,103 @@
 </script>
 
 <style lang="scss">
+    @use "sass:map";
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/button';
     @use '../../../assets/styles/color-palette' as palette;
 
-    //.kel-button {
-    //    &:not(.kel-button--primary):not(.kel-button--success):not(.kel-button--warning):not(.kel-button--danger):not(.kel-button--error):not(.kel-button--info):not(.kel-button--playground), &--default {
-    //        --kel-button-hover-text-color: var(--ks-text-primary);
-    //        --kel-button-hover-border-color: var(--ks-border-default);
-    //        --kel-button-bg-color: var(--ks-btn-secondary-bg-default);
-    //        --kel-button-hover-bg-color: var(--ks-btn-secondary-bg-hover);
-    //        --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-    //    }
-    //
-    //    &.kel-button--primary {
-    //        --kel-button-text-color: var(--ks-btn-primary-text);
-    //        --kel-button-hover-text-color: var(--ks-btn-primary-text);
-    //        --kel-button-bg-color: var(--ks-btn-primary-bg-default);
-    //        --kel-button-border-color: var(--ks-btn-primary-bg-default);
-    //        --kel-button-hover-bg-color: var(--ks-btn-primary-bg-hover);
-    //        --kel-button-active-bg-color: var(--ks-btn-primary-bg-active);
-    //        --kel-button-disabled-text-color: var(--ks-text-inactive);
-    //        --kel-button-disabled-bg-color: var(--ks-btn-primary-bg-inactive);
-    //        --kel-button-disabled-border-color: var(--ks-btn-primary-bg-inactive);
-    //    }
-    //
-    //    &.kel-button--playground {
-    //        #{--kel-button-disabled-text-color}: #{palette.$base-blue-50};
-    //        #{--kel-button-text-color}: var(--ks-btn-primary-text);
-    //        #{--kel-button-hover-text-color}: var(--ks-btn-primary-text);
-    //        #{--kel-button-bg-color}: var(--ks-btn-primary-bg-default);
-    //        #{--kel-button-hover-bg-color}: #{palette.$base-blue-400};
-    //        #{--kel-button-active-bg-color}: #{palette.$base-blue-600};
-    //        #{--kel-button-active-border-color}: #{palette.$base-blue-700};
-    //        #{--kel-button-outline-color}: #{palette.$base-blue-700};
-    //    }
-    //
-    //    .kel-input-group--append & [class*=kel-icon] + span {
-    //        position: relative;
-    //        top: -3px;
-    //    }
-    //
-    //    [class*=kel-icon] + span:empty {
-    //        margin-left: 0;
-    //    }
-    //
-    //    &.kel-button--large {
-    //        font-size: var(--ks-font-size-base);
-    //        line-height: var(--ks-font-size-base);
-    //    }
-    //
-    //    &.wh-15 {
-    //        padding: 0;
-    //        border: 0;
-    //        width: 1.5rem;
-    //        height: 1.5rem;
-    //
-    //        * {
-    //            width: 1.5rem;
-    //            height: 1.5rem;
-    //        }
-    //    }
-    //}
+    $tag-color-map: (
+        primary: (
+            border: var(--ks-btn-primary-bg-default),
+            text: var(--ks-btn-primary-text),
+        ),
+        success: (
+            border: var(--ks-border-success),
+            text: var(--ks-text-success),
+        ),
+        warning: (
+            border: var(--ks-border-warning),
+            text: var(--ks-text-warning),
+        ),
+        danger: (
+            border: var(--ks-border-error),
+            text: var(--ks-text-error),
+        ),
+        error: (
+            border: var(--ks-border-error),
+            text: var(--ks-text-error),
+        ),
+        info: (
+            border: var(--ks-border-info),
+            text: var(--ks-text-info),
+        ),
+    );
+
+    .kel-button {
+        --kel-button-font-weight: 600;
+        --kel-button-border-color: var(--ks-btn-secondary-border-default);
+        --kel-button-disabled-text-color: var(--ks-text-inactive);
+
+        &.kel-button--small {
+            border-radius: var(--kel-border-radius-small);
+        }
+
+        &.is-plain:not(.is-text) {
+            --kel-button-border-color: var(--ks-btn-secondary-border-default);
+            --kel-button-bg-color: var(--ks-btn-secondary-bg-default);
+
+            --kel-button-hover-text-color: var(--ks-text-primary);
+            --kel-button-hover-bg-color: var(--ks-btn-secondary-bg-hover);
+            --kel-button-hover-border-color: var(--ks-btn-secondary-border-hover);
+
+            --kel-button-active-text-color: var(--ks-text-primary);
+            --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
+            --kel-button-active-border-color: var(--ks-btn-secondary-border-active);
+
+            @each $i, $colors in $tag-color-map {
+                &.kel-button--#{$i} {
+                    --kel-button-text-color: #{map.get($colors, text)};
+
+                    --kel-button-hover-text-color: #{map.get($colors, text)};
+                    --kel-button-hover-border-color: #{map.get($colors, border)};
+
+                    --kel-button-active-text-color: #{map.get($colors, text)};
+                    --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
+                    --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
+                }
+            }
+
+            &.is-disabled {
+                background-color: var(--ks-btn-secondary-bg-inactive);
+                border: var(--ks-btn-secondary-border-inactive);
+                color: var(--ks-text-inactive);
+            }
+
+
+            &.kel-button--primary {
+                --kel-button-bg-color: var(--ks-btn-primary-bg-default);
+                --kel-button-border-color: var(--ks-btn-primary-bg-default);
+
+                --kel-button-hover-text-color: var(--ks-btn-primary-text);
+                --kel-button-hover-bg-color: var(--ks-btn-primary-bg-hover);
+                --kel-button-hover-border-color: var(--ks-btn-primary-bg-hover);
+
+                --kel-button-active-text-color: var(--ks-btn-primary-text);
+                --kel-button-active-bg-color: var(--ks-btn-primary-bg-active);
+                --kel-button-active-border-color: var(--ks-btn-primary-bg-active);
+            }
+        }
+
+        &.is-text {
+            &:hover {
+                background-color: var(--ks-bg-hover);
+                border: 1px solid var(--ks-btn-secondary-border-hover);
+            }
+
+            &:active {
+                background-color: var(--ks-btn-secondary-bg-active);
+                border: 0;
+            }
+        }
+    }
 </style>

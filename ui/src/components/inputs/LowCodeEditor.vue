@@ -116,8 +116,8 @@
                     class="mt-3"
                 />
                 <component
-                    v-if="TopologyDetailsRemotes[selectedTask?.type]"
-                    :is="TopologyDetailsRemotes[selectedTask?.type]"
+                    v-if="TaskDrawerRemotes[selectedTask?.type]"
+                    :is="TaskDrawerRemotes[selectedTask?.type]"
                     :task="selectedTask"
                     :execution="executionsStore.execution"
                     :namespace="props.namespace"
@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, watch} from "vue"
+    import {nextTick, onMounted, ref, inject, watch, computed} from "vue"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -155,11 +155,11 @@
     import {useCoreStore} from "../../stores/core"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"
+    import {usePlaygroundStore} from "../../stores/playground"    
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../utils/useFederatedModule"
-
+    
     const router = useRouter()
 
     const vueflowId = ref(Math.random().toString())
@@ -173,6 +173,8 @@
 
 
     const {RemoteComponents:TopologyDetailsRemotes, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponents:TaskDrawerRemotes} = useFederatedModule("topology-task-drawer")
+
 
     const customActions = computed(() => {
         const result: Record<string, { label: string; taskProp: string; lang: string }> = {}
@@ -464,6 +466,9 @@
         isShowConditionOpen.value = true
         isDrawerOpen.value = true
     }
+
+    const customActionMeta = ref<{ label: string; taskProp: string; lang: string }>()
+    const isShowCustomActionOpen = ref(false)
 
     const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
         const parsed = flowStore.flowParsed

@@ -16,7 +16,7 @@
 <script>
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
-    import LogsWrapper from "../logs/LogsWrapper.vue"
+    import LogsWrapper from "../logs/LogsWrapper.vue";
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapStores} from "pinia";
@@ -67,7 +67,7 @@
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }
                     }
-                }
+                },
             },
             "flowStore.flow": {
                 deep: true,
@@ -81,7 +81,7 @@
                         }, 1000);
                     }
                 },
-            }
+            },
         },
         created() {
             if(!this.$route.params.tab) {
@@ -89,7 +89,7 @@
                 this.$router.replace({
                     name: "flows/update",
                     params: {...this.$route.params, tab},
-                    query: {...this.$route.query}
+                    query: {...this.$route.query},
                 });
             }
             // since this component is only used in edition
@@ -120,7 +120,7 @@
                                     flow: this.flowStore.flow,
                                 });
                             }
-                        })
+                        });
                 }
             },
             flowKey() {
@@ -236,7 +236,7 @@
                             showFilters: true,
                             restoreurl: false,
                         },
-                        containerClass: "container"
+                        containerClass: "container",
                     });
                 }
 
@@ -270,15 +270,15 @@
                         title: this.$t("dependencies"),
                         count: (this.dependenciesCount ?? 0) > 0 ? this.dependenciesCount : undefined,
                         disabled: !this.dependenciesCount,
-                        maximized: true
+                        maximized: true,
                     });
                 }
 
                 tabs.push({
                     name: "concurrency",
                     title: this.$t("concurrency"),
-                    component: FlowConcurrency
-                })
+                    component: FlowConcurrency,
+                });
 
                 tabs.push(                    {
                     name: "auditlogs",
@@ -286,9 +286,9 @@
                     component: DemoAuditLogs,
                     maximize: true,
                     props:{
-                        embed: true
+                        embed: true,
                     },
-                    locked: true
+                    locked: true,
                 });
 
                 return tabs;
@@ -298,7 +298,7 @@
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
-            }
+            },
         },
         computed: {
             ...mapStores(useFlowStore, useAuthStore, useMiscStore),
@@ -318,9 +318,9 @@
                                 name: "namespaces/update",
                                 params: {
                                     id: this.$route.params.namespace,
-                                    tab: "flows"
-                                }
-                            }
+                                    tab: "flows",
+                                },
+                            },
                         },
                     ],
                     beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,
@@ -334,7 +334,7 @@
             },
             user() {
                 return this.authStore.user;
-            }
+            },
         },
         unmounted() {
             this.flowStore.flow = undefined;

@@ -39,12 +39,12 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                                     }, []);
                                 }))].map(namespace => ({
                                     label: namespace,
-                                    value: namespace
+                                    value: namespace,
                                 }));
                         }
                         return [];
                     },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "timeRange",
@@ -55,7 +55,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "state",
@@ -68,7 +68,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES;
                     },
                     searchable: true,
-                    showComparatorSelection: true
+                    showComparatorSelection: true,
                 },
                 {
                     key: "scope",
@@ -88,8 +88,8 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.labels.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "key-value",
-                }
-            ]
+                },
+            ],
         };
     });
 };
@@ -121,7 +121,7 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     //     const flowIds = await flowStore.loadDistinctFlowIds();
                     //     return flowIds.map((flowId: string) => ({label: flowId, value: flowId}));
                     // },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "timeRange",
@@ -132,7 +132,7 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "labels",
@@ -140,8 +140,8 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     description: "Filter by labels",
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "text",
-                }
-            ]
+                },
+            ],
         };
     });
 };
@@ -164,7 +164,7 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "labels",
@@ -172,8 +172,8 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.labels.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "text",
-                }
-            ]
+                },
+            ],
         };
     });
 };

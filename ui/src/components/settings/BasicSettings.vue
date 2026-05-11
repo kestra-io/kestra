@@ -305,12 +305,12 @@
     import action from "../../models/action";
     import {logDisplayTypes, storageKeys} from "../../utils/constants";
 
-    import Wrapper from "./components/Wrapper.vue"
-    import Block from "./components/block/Block.vue"
-    import Row from "./components/block/Row.vue"
-    import Column from "./components/block/Column.vue"
-    import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow"
+    import Wrapper from "./components/Wrapper.vue";
+    import Block from "./components/block/Block.vue";
+    import Row from "./components/block/Row.vue";
+    import Column from "./components/block/Column.vue";
+    import {useAuthStore} from "override/stores/auth";
+    import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
 
 
@@ -323,13 +323,13 @@
             Wrapper,
             Block,
             Row,
-            Column
+            Column,
         },
         props: {
             allowDefaultNamespace: {
                 type: Boolean,
-                default: true
-            }
+                default: true,
+            },
         },
         data() {
             return {
@@ -346,7 +346,7 @@
                     executeDefaultTab: "gantt",
                     flowDefaultTab: "overview",
                     editorPlayground: true,
-                    autoRefreshInterval: 10
+                    autoRefreshInterval: 10,
                 },
                 defaultPreferences: {
                     theme: "syncWithSystem",
@@ -356,12 +356,12 @@
                     autofoldTextEditor: false,
                     hoverTextEditor: false,
                     envName: undefined,
-                    envColor: undefined
+                    envColor: undefined,
                 },
                 defaultLocalization:{
                     lang: "en",
                     timezone: this.$moment.tz.guess(),
-                    dateFormat: "llll"
+                    dateFormat: "llll",
                 },
                 originalSettings: {},
                 pendingSettings: {
@@ -383,7 +383,7 @@
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
                     editorPlayground: undefined,
-                    logsFontSize: undefined
+                    logsFontSize: undefined,
                 },
                 settingsKeyMapping: {
                     dateFormat: storageKeys.DATE_FORMAT_STORAGE_KEY,
@@ -395,7 +395,7 @@
                     return {
                         zone,
                         offset: timezoneMoment.utcOffset(),
-                        formattedOffset: timezoneMoment.format("Z")
+                        formattedOffset: timezoneMoment.format("Z"),
                     };
                 }).sort((a, b) => a.offset - b.offset),
                 now: this.$moment(),
@@ -446,8 +446,8 @@
                             type: "warning",
                             showClose: false,
                             closeOnClickModal: false,
-                            closeOnPressEscape: false
-                        }
+                            closeOnPressEscape: false,
+                        },
                     );
                     await this.saveAllSettings();
                     return true;
@@ -472,19 +472,19 @@
                 this.hasDefaultMainConfig = this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultMainConfig,
-                    Object.keys(this.defaultMainConfig)
+                    Object.keys(this.defaultMainConfig),
                 );
 
                 this.hasDefaultPreferences = this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultPreferences,
-                    Object.keys(this.defaultPreferences)
+                    Object.keys(this.defaultPreferences),
                 );
 
                 this.hasDefaultLocalization=this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultLocalization,
-                    Object.keys(this.defaultLocalization)
+                    Object.keys(this.defaultLocalization),
                 );
             },
             restoreDefaultLocalization(){
@@ -582,7 +582,7 @@
                                 this.$toast().success(
                                     this.$t("flows exported", {
                                         count: flowCount,
-                                    })
+                                    }),
                                 );
                             });
                     });
@@ -632,36 +632,36 @@
                 this.checkForChanges();
             },
             async saveAllSettings() {
-                let refreshWhenSaved = false
-                const previousDefaultNamespace = localStorage.getItem("defaultNamespace")
+                let refreshWhenSaved = false;
+                const previousDefaultNamespace = localStorage.getItem("defaultNamespace");
                 for (const key in this.pendingSettings){
-                    const storedKey = this.settingsKeyMapping[key]
+                    const storedKey = this.settingsKeyMapping[key];
                     switch(key) {
                     case "defaultNamespace":
                     case "defaultLogLevel":
                         if(this.pendingSettings[key])
-                            localStorage.setItem(key, this.pendingSettings[key])
+                            localStorage.setItem(key, this.pendingSettings[key]);
                         else
-                            localStorage.removeItem(key)
-                        break
+                            localStorage.removeItem(key);
+                        break;
                     case "envName":
                         if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.name) {
                             this.layoutStore.setEnvName(this.pendingSettings[key]);
                         }
-                        break
+                        break;
                     case "envColor":
                         if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.color) {
                             this.layoutStore.setEnvColor(this.pendingSettings[key]);
                         }
-                        break
+                        break;
                     case "theme":
                         Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
-                        localStorage.setItem(key, Utils.getTheme())
-                        break
+                        localStorage.setItem(key, Utils.getTheme());
+                        break;
                     case "lang":
                     {
                         if(this.pendingSettings[key]) {
-                            localStorage.setItem(key, this.pendingSettings[key])
+                            localStorage.setItem(key, this.pendingSettings[key]);
                         }
 
                         // For language change, we have to load a json file into i18n.
@@ -674,17 +674,17 @@
                         // NOTE2: We have to wait until all values are saved
                         // before refreshing. If we don't, some values will be saved
                         // but the page will refresh before all is saved.
-                        refreshWhenSaved = true
+                        refreshWhenSaved = true;
                         break;
                     }
                     default:
                         if (storedKey) {
                             if(this.pendingSettings[key])
-                                localStorage.setItem(storedKey, this.pendingSettings[key])
+                                localStorage.setItem(storedKey, this.pendingSettings[key]);
                         }
                         else {
                             if(this.pendingSettings[key] !== undefined)
-                                localStorage.setItem(key, this.pendingSettings[key])
+                                localStorage.setItem(key, this.pendingSettings[key]);
                         }
                     }
                 }
@@ -699,7 +699,7 @@
                 }
 
                 if(refreshWhenSaved){
-                    document.location.assign(document.location.href)
+                    document.location.assign(document.location.href);
                 }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             },
@@ -712,7 +712,7 @@
 
                         const filters = JSON.parse(value);
                         const updated = Object.fromEntries(
-                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]"))
+                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]")),
                         );
 
                         if (Object.keys(updated).length) {
@@ -746,7 +746,7 @@
             },
             routeInfo() {
                 return {
-                    title: this.$t("settings.label")
+                    title: this.$t("settings.label"),
                 };
             },
             langOptions() {
@@ -763,15 +763,15 @@
                     {value: "zh_CN", text: "Chinese"},
                     {value: "ja", text: "Japanese"},
                     {value: "ko", text: "Korean"},
-                    {value: "hi", text: "Hindi"}
+                    {value: "hi", text: "Hindi"},
                 ];
             },
             themesOptions() {
                 return [
                     {value: "light", text: "Light"},
                     {value: "dark", text: "Dark"},
-                    {value: "syncWithSystem", text: "Sync With System"}
-                ]
+                    {value: "syncWithSystem", text: "Sync With System"},
+                ];
             },
             dateFormats() {
                 return [
@@ -789,8 +789,8 @@
                     {value: "lll"},
                     {value: "llll"},
                     {value: "LLL"},
-                    {value: "LLLL"}
-                ]
+                    {value: "LLLL"},
+                ];
             },
             canReadFlows() {
                 return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW);
@@ -799,117 +799,117 @@
                 return  [
                     {value: logDisplayTypes.ERROR, text: this.$t("expand error")},
                     {value: logDisplayTypes.ALL, text: this.$t("expand all")},
-                    {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")}
-                ]
+                    {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")},
+                ];
             },
             fontFamilyOptions() {
                 // Array of font family that contains arabic language and japanese, chinese, korean languages compatible font family
                 return [
                     {
                         value: "'Source Code Pro', monospace",
-                        text: "Source Code Pro"
+                        text: "Source Code Pro",
                     },
                     {
                         value: "'Courier New', monospace",
-                        text: "Courier"
+                        text: "Courier",
                     },
                     {
                         value: "'Times New Roman', serif",
-                        text: "Times New Roman"
+                        text: "Times New Roman",
                     },
                     {
                         value: "'Book Antiqua', serif",
-                        text: "Book Antiqua"
+                        text: "Book Antiqua",
                     },
                     {
                         value: "'Times New Roman Arabic', serif",
-                        text: "Times New Roman Arabic"
+                        text: "Times New Roman Arabic",
                     },
                     {
                         value: "'SimSun', sans-serif",
-                        text: "SimSun"
-                    }
-                ]
+                        text: "SimSun",
+                    },
+                ];
             },
             executeDefaultTabOptions() {
                 return [
                     {
                         value : "overview",
-                        label: this.$t("overview")
+                        label: this.$t("overview"),
                     },
                     {
                         value : "gantt",
-                        label: this.$t("gantt")
+                        label: this.$t("gantt"),
                     },
                     {
                         value : "logs",
-                        label: this.$t("logs")
+                        label: this.$t("logs"),
                     },
                     {
                         value : "topology",
-                        label: this.$t("topology")
+                        label: this.$t("topology"),
                     },
                     {
                         value: "outputs",
-                        label: this.$t("outputs")
+                        label: this.$t("outputs"),
                     },
                     {
                         value : "metrics",
-                        label: this.$t("metrics")
-                    }
-                ]
+                        label: this.$t("metrics"),
+                    },
+                ];
             },
             flowDefaultTabOptions() {
                 return [
                     {
                         value : "overview",
-                        label: this.$t("overview")
+                        label: this.$t("overview"),
                     },
                     {
                         value : "topology",
-                        label: this.$t("topology")
+                        label: this.$t("topology"),
                     },
                     {
                         value : "executions",
-                        label: this.$t("executions")
+                        label: this.$t("executions"),
                     },
                     {
                         value : "edit",
-                        label: this.$t("edit")
+                        label: this.$t("edit"),
                     },
                     {
                         value : "revisions",
-                        label: this.$t("revisions")
+                        label: this.$t("revisions"),
                     },
                     {
                         value : "triggers",
-                        label: this.$t("triggers")
+                        label: this.$t("triggers"),
                     },
                     {
                         value : "logs",
-                        label: this.$t("logs")
+                        label: this.$t("logs"),
                     },
                     {
                         value : "metrics",
-                        label: this.$t("metrics")
+                        label: this.$t("metrics"),
                     },
                     {
                         value : "dependencies",
-                        label: this.$t("dependencies")
+                        label: this.$t("dependencies"),
                     },
                     {
                         value : "concurrency",
-                        label: this.$t("concurrency")
+                        label: this.$t("concurrency"),
                     },
                     {
                         value : "auditlogs",
-                        label: this.$t("auditlogs")
+                        label: this.$t("auditlogs"),
                     },
-                ]
+                ];
             },
             isEnvNameFromConfig() {
                 return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
-            }
+            },
         },
         watch: {
             mappedTheme: {

@@ -1,12 +1,16 @@
 import {createApp} from "vue"
 
-import App from "./App.vue"
-import initApp from "./utils/init"
-import configureAxios from "./utils/axios"
+import App from "./App.vue";
+import initApp from "./utils/init";
+import {configureAxios} from "@kestra-io/kestra-sdk";
 import routes from "./routes/routes";
 import en from "./translations/en.json";
 import {setupTenantRouter} from "./composables/useTenant";
 import * as BasicAuth from "./utils/basicAuth";
+import {useCoreStore} from "./stores/core";
+import {useLayoutStore} from "./stores/layout";
+import {useUnsavedChangesStore} from "./stores/unsavedChanges";
+import {useAuthStore} from "override/stores/auth";
 import {useMiscStore} from "override/stores/misc";
 
 
@@ -82,13 +86,35 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
     // Setup tenant router
     setupTenantRouter(router, app);
 
-    // axios
-    configureAxios((instance) => {
-        piniaStore.use(({store: piniaStoreLocal}) => {
-            piniaStoreLocal.$http = instance;
-        });
-    }, null, router, true);
+    const coreStore = useCoreStore();
+    const authStore = useAuthStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
+    const layoutStore = useLayoutStore();
 
+    function beforeLogout() {
+        document.body.classList.add("login");
+        unsavedChangesStore.unsavedChange = false;
+        layoutStore.setTopNavbar(undefined);
+        BasicAuth.logout();
+    }
+
+
+    // axios
+    const axiosInstance = configureAxios({}, {
+        authStore,
+        coreStore,
+        oss: true,
+        router,
+        beforeLogout,
+        onAuthTimeout: beforeLogout,
+        isImpersonating: () => window.sessionStorage.getItem("impersonate"),
+    }); 
+
+    piniaStore.use(({store: piniaStoreLocal}) => {
+        piniaStoreLocal.$http = axiosInstance;
+    });
+
+    
     // mount
     router.isReady().then(() => app.mount("#app"))
 });

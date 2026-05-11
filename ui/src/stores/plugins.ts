@@ -7,7 +7,7 @@ import {useApiStore} from "./api";
 import InitialFlowSchema from "./flow-schema.json"
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils";
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export interface PluginComponent {
     icon?: string;
@@ -55,7 +55,7 @@ function usePluginsIcons() {
     const apiIcons = ref<Record<string, PluginIconData>>({});
     const pluginsIcons = ref<Record<string, PluginIconData>>({});
     const _iconsPromise = ref<Promise<Record<string, PluginIconData>>>();
-    const axios = useAxios();
+    const axios = useClient();
 
     const icons = computed(() => {
         return {
@@ -113,7 +113,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     const schemaType = ref<Record<string, any>>();
     const forceIncludeProperties = ref<string[]>();
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const flowSchema = computed(() => {
         return schemaType.value?.flow ?? InitialFlowSchema;

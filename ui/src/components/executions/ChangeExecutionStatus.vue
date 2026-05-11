@@ -104,7 +104,7 @@
                 return {
                     code: value,
                     label: t("mark as", {status: value}),
-                    disabled: value === props.execution.state.current
+                    disabled: value === props.execution.state.current,
                 };
             });
     });
@@ -125,7 +125,7 @@
 
         await executionsStore.changeExecutionStatus({
             executionId: props.execution.id,
-            state: selectedStatus.value!
+            state: selectedStatus.value!,
         });
 
         const execution = await executionsStore.waitForStateChange(props.execution) as Execution;

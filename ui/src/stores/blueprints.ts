@@ -1,7 +1,7 @@
 import {ref} from "vue";
 import {defineStore} from "pinia";
 
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 import {apiUrl} from "override/utils/route";
 
 import {useMiscStore} from "override/stores/misc";
@@ -47,7 +47,7 @@ const API_URL = "https://api.kestra.io/v1";
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
 
 export const useBlueprintsStore = defineStore("blueprints", () => {
-    const axios = useAxios();
+    const axios = useClient();
 
     const miscStore = useMiscStore();
     const {edition, version} = miscStore.configs || {};

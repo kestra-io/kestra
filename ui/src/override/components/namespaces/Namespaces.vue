@@ -127,7 +127,7 @@
     watch(
         () => route.query["filters[q][EQUALS]"],
         () => loadData(),
-        {immediate: true}
+        {immediate: true},
     );
 
     const miscStore = useMiscStore();
@@ -135,7 +135,7 @@
         () => miscStore.configs?.systemNamespace || "system",
     );
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {

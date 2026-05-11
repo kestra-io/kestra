@@ -22,7 +22,7 @@
     // @ts-expect-error no types yet
     import FlowRun from "../../components/flows/FlowRun.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import {useAxios} from "../../utils/axios";
+    import {useClient} from "@kestra-io/kestra-sdk";
 
     const {t} = useI18n();
     const toast = useToast();
@@ -41,7 +41,7 @@
 
     const flow = computed(() => executionsStore.flow);
 
-    const axios = useAxios()
+    const axios = useClient();
 
     const handleReplaySubmit = async ({inputs}: any) => {
 

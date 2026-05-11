@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {ref} from "vue";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 import {Message} from "../components/ErrorToast.vue";
 import {TUTORIAL_NAMESPACE} from "../utils/constants";
 import {Flow} from "./flow";
@@ -12,7 +12,7 @@ export const useCoreStore = defineStore("core", () => {
     const monacoYamlConfigured = ref(false)
     const tutorialFlows = ref<Flow[]>([])
 
-    const axios = useAxios();
+    const axios = useClient();
 
     async function readTutorialFlows() {
         const response = await axios.get(`${apiUrl()}/flows/${TUTORIAL_NAMESPACE}`);

@@ -78,20 +78,20 @@
         const key = dashboardStore.getUserDashboardStorageKey(route);
         localStorage.setItem(key, value);
         router.replace({
-            params: {...route.params, dashboard: value}
+            params: {...route.params, dashboard: value},
         });
     };
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name))
+        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
     );
 
     const canExecute = computed(() =>
-        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace)
+        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
     );
 
     const canEdit = computed(() =>
-        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace)
+        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),
     );
 
     const editFlow = () => {
@@ -107,7 +107,7 @@
     };
 
     const hasLogs = computed(() =>
-        logsStore.logs !== undefined && logsStore.logs.length > 0
+        logsStore.logs !== undefined && logsStore.logs.length > 0,
     );
 
     const deleteLogs = () => {

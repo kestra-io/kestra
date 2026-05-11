@@ -125,10 +125,10 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    @LoadFlows({"flows/valids/replay-loop.yaml"})
     void restartLoop() throws Exception {
         // Given: with the Loop task, parent has only 1_each; loop sub-executions have the child task runs
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1); // only 1_each in parent; 2_end never reached
 
@@ -206,7 +206,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/restart-loop.yaml")
+    @ExecuteFlow("flows/valids/replay-loop.yaml")
     void replayFlowable(Execution execution) throws Exception {
         // Given: with the Loop task, parent has only 2 task runs (1_each + 2_end); loop iterations are sub-executions
         assertThat(execution.getTaskRunList()).hasSize(2);

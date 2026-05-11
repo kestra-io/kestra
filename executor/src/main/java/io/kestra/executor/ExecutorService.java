@@ -638,7 +638,7 @@ public class ExecutorService {
                 onPauses.add(new ExecutorContext.ExecutorWorkerTask(pauseWorkerTask, runContext));
             } else if (task instanceof Loop loop) {
                 if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
-                    if (taskRun.getState().isCreated()) {
+                    if (taskRun.getState().getCurrent() == State.Type.CREATED) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                         try {
                             var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
@@ -701,6 +701,39 @@ public class ExecutorService {
                             executor.withExecution(executor.getExecution()
                                 .withTaskRun(taskRun.withState(State.Type.FAILED)), "handleLoop");
                             // replace existing CREATED WorkerTask to FAILED to prevent it from transitioning to RUNNING
+                            executor.getWorkerTasks().replaceAll(ewt ->
+                                ewt.workerTask().getTaskRun().getId().equals(taskRun.getId()) ?
+                                new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext()) :
+                                ewt
+                            );
+                        }
+                    } else if (taskRun.getState().getCurrent() == State.Type.RESTARTED) {
+                        // On restart, find the last failing sub-execution and restart it instead of
+                        // re-initializing from scratch.
+                        try {
+                            Optional<Execution> failingSubExecution = executionService.findLastFailingLoopSubExecution(executor.getExecution(), taskRun);
+                            if (failingSubExecution.isPresent()) {
+                                Execution restarted = executionService.restart(failingSubExecution.get(), executor.getFlow(), null);
+                                executor.withLoopExecution(restarted, "restartLoopExecution");
+                                executor.withExecution(executor.getExecution()
+                                    .withTaskRun(taskRun.withState(State.Type.RUNNING)), "handleLoop");
+                            } else {
+                                // No restartable sub-execution found — fail the loop task to avoid stalling.
+                                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
+                                runContext.logger().error("No restartable loop sub-execution found for task run {} — marking loop as FAILED", taskRun.getId());
+                                executor.withExecution(executor.getExecution()
+                                    .withTaskRun(taskRun.withState(State.Type.FAILED)), "handleLoop");
+                                executor.getWorkerTasks().replaceAll(ewt ->
+                                    ewt.workerTask().getTaskRun().getId().equals(taskRun.getId()) ?
+                                    new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext()) :
+                                    ewt
+                                );
+                            }
+                        } catch (Exception e) {
+                            log.error("Failed to restart loop sub-execution for task run {}: {}", taskRun.getId(), e.getMessage(), e);
+                            executor.withExecution(executor.getExecution()
+                                .withTaskRun(taskRun.withState(State.Type.FAILED)), "handleLoop");
+                            // replace existing RESTARTED WorkerTask to FAILED to prevent it from transitioning to RUNNING
                             executor.getWorkerTasks().replaceAll(ewt ->
                                 ewt.workerTask().getTaskRun().getId().equals(taskRun.getId()) ?
                                 new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext()) :

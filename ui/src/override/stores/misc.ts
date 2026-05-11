@@ -3,7 +3,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import {useApiStore} from "../../stores/api";
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue";
-import {useAxios} from "../../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 import {initPosthogIfEnabled} from "../../utils/posthog";
 import {ensureUid} from "../../utils/uid";
 
@@ -15,7 +15,7 @@ export const useMiscStore = defineStore("misc", () => {
     const contextInfoBarOpenTab = ref("")
     const theme = ref<"light" | "dark">("light")
 
-    const axios = useAxios();
+    const axios = useClient();
 
 
     async function loadConfigs() {

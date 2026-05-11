@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 
 interface TriggerSearchOptions {
     sort?: string;
@@ -56,7 +56,7 @@ interface TriggerDisabledOptions {
 
 export const useTriggerStore = defineStore("trigger", () => {
 
-    const axios = useAxios();
+    const axios = useClient();
 
     async function search(options: TriggerSearchOptions) {
         const sortString = options.sort ? `?sort=${options.sort}` : "";

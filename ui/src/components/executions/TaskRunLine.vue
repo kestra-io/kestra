@@ -202,7 +202,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useExecutionsStore} from "../../stores/executions";
     import {mapStores} from "pinia";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
 
     export default {
         components: {
@@ -220,24 +220,24 @@
             ChevronDown,
             DotsVertical,
             WorkerInfo,
-            AiIcon
+            AiIcon,
         },
         props: {
             currentTaskRun: {
                 type: Object,
-                required: true
+                required: true,
             },
             followedExecution: {
                 type: Object,
-                required: true
+                required: true,
             },
             flow: {
                 type: Object,
-                default: undefined
+                default: undefined,
             },
             forcedAttemptNumber: {
                 type: Number,
-                default: undefined
+                default: undefined,
             },
             taskRunId: {
                 type: String,
@@ -257,13 +257,13 @@
             },
             filter: {
                 type: String,
-                default: ""
-            }
+                default: "",
+            },
         },
         computed: {
             ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore, useAuthStore),
             SECTIONS() {
-                return SECTIONS
+                return SECTIONS;
             },
             currentTaskRuns() {
                 return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? [];
@@ -277,12 +277,12 @@
                     .map((logLine, index) => ({...logLine, index}));
 
                 // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
-                indexedLogs = Array.from(new Set(indexedLogs))
+                indexedLogs = Array.from(new Set(indexedLogs));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
             },
             canReadFlow() {
-                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW, this.$route.params.namespace)
+                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW, this.$route.params.namespace);
             },
             Copy() {
                 return Copy;
@@ -292,7 +292,7 @@
             },
             Download() {
                 return Download;
-            }
+            },
         },
         methods: {
             attempts(taskRun) {
@@ -306,7 +306,7 @@
                 return taskRun.outputs?.executionId;
             },
             downloadName(currentTaskRunId) {
-                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
+                return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`;
             },
             selectedAttempt(taskRun) {
                 return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
@@ -317,24 +317,24 @@
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
                 const parentTaskRunId = taskRun.parentTaskRunId;
                 if (task === undefined && parentTaskRunId) {
-                    return this.taskType(this.taskRunById[parentTaskRunId])
+                    return this.taskType(this.taskRunById[parentTaskRunId]);
                 }
                 return task ? task.type : undefined;
             },
             downloadContent(currentTaskRunId) {
-                const params = this.params
+                const params = this.params;
                 this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
+                    params: {...params, taskRunId: currentTaskRunId},
                 }).then((response) => {
                     Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
                 });
             },
             copyContent(currentTaskRunId) {
-                const params = this.params
+                const params = this.params;
                 this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
+                    params: {...params, taskRunId: currentTaskRunId},
                 }).then((response) => {
                     Utils.copy(response).then(() =>{
                         this.coreStore.message = {
@@ -343,35 +343,35 @@
                             message: this.$t("copied_logs_to_clipboard"),
                         };
                     });
-                })
+                });
             },
             deleteLogs(currentTaskRunId) {
-                const params = this.params
+                const params = this.params;
                 this.$toast().confirm(
                     this.$t("delete_log"),
                     () => {
                         this.executionsStore.deleteLogs({
                             executionId: this.followedExecution.id,
-                            params: {...params, taskRunId: currentTaskRunId}
+                            params: {...params, taskRunId: currentTaskRunId},
                         }).then((_) => {
-                            this.$emit("update-logs", this.followedExecution.id)
+                            this.$emit("update-logs", this.followedExecution.id);
                         });
                     },
-                    () => {}
-                )
+                    () => {},
+                );
 
             },
             hasWorkerId(currentTaskRun) {
                 return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null;
             },
             attemptUid(taskRunId, attemptNumber) {
-                return `${taskRunId}-${attemptNumber}`
+                return `${taskRunId}-${attemptNumber}`;
             },
             shouldDisplayChevron(taskRun) {
-                return this.shouldDisplayLogs(taskRun.id)
+                return this.shouldDisplayLogs(taskRun.id);
             },
             shouldDisplayLogs(taskRunId) {
-                return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
+                return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])];
             },
             fixErrorWithAi(taskRun) {
                 const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0;
@@ -398,12 +398,12 @@
                         tab: "edit",
                         tenant: this.$route.params?.tenant,
                     },
-                    query: {ai: "open"}
+                    query: {ai: "open"},
                 });
-            }
+            },
         },
-        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"]
-    }
+        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"],
+    };
 </script>
 <style scoped lang="scss">
 

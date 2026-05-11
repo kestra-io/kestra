@@ -379,7 +379,7 @@
         start: null,
         end: null,
         inputs: null,
-        labels: []
+        labels: [],
     });
 
     const optionalColumns = computed(() => [
@@ -387,38 +387,38 @@
             label: t("flow"),
             prop: "flowId",
             default: true,
-            description: t("filter.table_column.triggers.flow")
+            description: t("filter.table_column.triggers.flow"),
         },
         {
             label: t("namespace"),
             prop: "namespace",
             default: true,
-            description: t("filter.table_column.triggers.namespace")
+            description: t("filter.table_column.triggers.namespace"),
         },
         {
             label: t("workerId"),
             prop: "workerId",
             default: false,
-            description: t("filter.table_column.triggers.workerId")
+            description: t("filter.table_column.triggers.workerId"),
         },
         {
             label: t("last trigger date"),
             prop: "lastTriggeredDate",
             default: true,
-            description: t("filter.table_column.triggers.last trigger date")
+            description: t("filter.table_column.triggers.last trigger date"),
         },
         {
             label: t("state updated date"),
             prop: "updatedAt",
             default: false,
-            description: t("filter.table_column.triggers.context updated date")
+            description: t("filter.table_column.triggers.context updated date"),
         },
         {
             label: t("next evaluation date"),
             prop: "nextEvaluationDate",
             default: false,
-            description: t("filter.table_column.triggers.next evaluation date")
-        }
+            description: t("filter.table_column.triggers.next evaluation date"),
+        },
     ]);
 
     const storageKey = storageKeys.DISPLAY_TRIGGERS_COLUMNS;
@@ -426,13 +426,13 @@
     const {visibleColumns: displayColumns, updateVisibleColumns} = useTableColumns({
         columns: optionalColumns.value,
         storageKey,
-        initialVisibleColumns: optionalColumns.value.filter(col => col.default).map(col => col.prop)
+        initialVisibleColumns: optionalColumns.value.filter(col => col.default).map(col => col.prop),
     });
 
     const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
-            .filter(Boolean) as ColumnConfig[]
+            .filter(Boolean) as ColumnConfig[],
     );
 
     const ready = ref(false);
@@ -442,7 +442,7 @@
         const query = loadQuery({
             size,
             page,
-            sort: sort ?? String(route.query.sort ?? "triggerId:asc")
+            sort: sort ?? String(route.query.sort ?? "triggerId:asc"),
         });
 
         const previousSelection = selection.value;
@@ -471,7 +471,7 @@
 
 
     const routeInfo = computed(() => ({
-        title: t("triggers")
+        title: t("triggers"),
     }));
 
     useRouteContext(routeInfo);
@@ -490,7 +490,7 @@
         executionsStore.loadFlowForExecution({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
-            store: true
+            store: true,
         }).then(() => {
             isBackfillOpen.value = bool;
             selectedTrigger.value = trigger;
@@ -508,7 +508,7 @@
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value
+            backfill: cleanBackfill.value,
         })
             .then(() => {
                 toast.saved(trigger?.triggerId);
@@ -517,7 +517,7 @@
                     start: null,
                     end: null,
                     inputs: null,
-                    labels: []
+                    labels: [],
                 };
                 triggerLoadDataAfterBulkEditAction();
             });
@@ -553,12 +553,12 @@
         const unlockedTrigger = await triggerStore.unlock({
             namespace: namespace,
             flowId: flowId,
-            triggerId: triggerId
+            triggerId: triggerId,
         });
 
         KsMessage({
             message: t("unlock trigger.success"),
-            type: "success"
+            type: "success",
         });
 
         const triggerIdx = triggers.value?.findIndex((trigger: any) => trigger.namespace === namespace && trigger.flowId === flowId && trigger.triggerId === triggerId);
@@ -575,7 +575,7 @@
                 message: t("triggerflow disabled"),
                 type: "error",
                 showClose: true,
-                duration: 1500
+                duration: 1500,
             });
             return;
         }
@@ -601,7 +601,7 @@
             () => triggerStore.delete({
                 namespace: trigger.namespace,
                 flowId: trigger.flowId,
-                triggerId: trigger.triggerId
+                triggerId: trigger.triggerId,
             }).then(() => {
                 toast.success(t("delete trigger success", {id: trigger.id}));
                 dataTable.value?.reload();
@@ -609,7 +609,7 @@
                 toast.error(t("delete trigger error", {id: trigger.id}));
                 console.error(error);
             }),
-            "warning"
+            "warning",
         );
     };
 
@@ -620,7 +620,7 @@
             "deleteByTriggers",
             "bulk success delete triggers",
             null,
-            "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows"
+            "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows",
         );
     };
 
@@ -633,7 +633,7 @@
 
         toast.confirm(
             message,
-            () => genericConfirmCallback(queryAction, byIdAction, success, data)
+            () => genericConfirmCallback(queryAction, byIdAction, success, data),
         );
     };
 
@@ -674,7 +674,7 @@
                     triggerLoadDataAfterBulkEditAction();
                 }).catch((e: any) => {
                     toast.error(e?.invalids?.map((exec: any) => {
-                        return {message: t(exec?.message, {triggers: exec?.invalidValue})}
+                        return {message: t(exec?.message, {triggers: exec?.invalidValue})};
                     }), t(e?.message));
                 });
         }
@@ -685,7 +685,7 @@
             "bulk unpause backfills",
             "unpauseBackfillByQuery",
             "unpauseBackfillByTriggers",
-            "bulk success unpause backfills"
+            "bulk success unpause backfills",
         );
     };
 
@@ -694,7 +694,7 @@
             "bulk pause backfills",
             "pauseBackfillByQuery",
             "pauseBackfillByTriggers",
-            "bulk success pause backfills"
+            "bulk success pause backfills",
         );
     };
 
@@ -703,7 +703,7 @@
             "bulk delete backfills",
             "deleteBackfillByQuery",
             "deleteBackfillByTriggers",
-            "bulk success delete backfills"
+            "bulk success delete backfills",
         );
     };
 
@@ -712,7 +712,7 @@
             "bulk unlock",
             "unlockByQuery",
             "unlockByTriggers",
-            "bulk success unlock"
+            "bulk success unlock",
         );
     };
 
@@ -722,7 +722,7 @@
             "setDisabledByQuery",
             "setDisabledByTriggers",
             `bulk success disabled status.${bool}`,
-            {disabled: bool}
+            {disabled: bool},
         );
     };
 
@@ -777,7 +777,7 @@
                 ...t?.trigger,
                 ...t?.state,
                 codeDisabled: t?.trigger?.disabled,
-                missingSource: !t?.trigger
+                missingSource: !t?.trigger,
             };
         }) ?? [];
 

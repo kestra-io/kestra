@@ -52,7 +52,7 @@
     import {useI18n} from "vue-i18n";
     import TopNavBar from "../layout/TopNavBar.vue";
     import useRouteContext from "../../composables/useRouteContext";
-    import {useAxios} from "../../utils/axios";
+    import {useClient} from "@kestra-io/kestra-sdk";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 
@@ -73,7 +73,7 @@
 
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"];
 
-    const axios = useAxios();
+    const axios = useClient();
     const data = ref<{ 
         total: number; 
         results: ConcurrencyLimit[] 

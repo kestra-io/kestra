@@ -42,12 +42,12 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                                         }, []);
                                     }))].map(namespace => ({
                                     label: namespace,
-                                    value: namespace
+                                    value: namespace,
                                 }));
                             }
                             return [];
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 ...(route.name !== "flows/update" ? [{
@@ -72,7 +72,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("triggers");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "scope",
@@ -84,7 +84,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("triggers");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "triggerId",
@@ -97,7 +97,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
                 },
@@ -112,7 +112,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
                     searchable: true,
@@ -123,15 +123,15 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.triggerState.description"),
                     comparators: [
                         Comparators.EQUALS,
-                        Comparators.NOT_EQUALS
+                        Comparators.NOT_EQUALS,
                     ],
                     valueType: "select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("triggers");
                         return VALUES.TRIGGER_STATES;
-                    }
-                }
-            ]
+                    },
+                },
+            ],
         };
     });
 };

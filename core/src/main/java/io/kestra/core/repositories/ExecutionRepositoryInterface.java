@@ -110,7 +110,7 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     @VisibleForTesting
     Execution delete(Execution execution);
 
-    Integer purge(Execution execution);
+    boolean purge(Execution execution);
 
     Integer purge(List<Execution> executions);
 

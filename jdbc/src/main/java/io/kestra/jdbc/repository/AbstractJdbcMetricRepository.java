@@ -175,31 +175,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
 
     @Override
     public Integer purge(Execution execution) {
-        return this.jdbcRepository
-
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).eq(execution.getId()))
-                    .execute();
-            });
+        return purge(DSL.noCondition(), field("execution_id", String.class).eq(execution.getId()));
     }
 
     @Override
     public Integer purge(List<Execution> executions) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                return context.delete(this.jdbcRepository.getTable())
-                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
-                    .execute();
-            });
+        return purge(DSL.noCondition(), field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()));
     }
 
     @Override

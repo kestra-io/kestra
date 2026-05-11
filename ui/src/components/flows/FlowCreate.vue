@@ -18,7 +18,7 @@
     import {defaultNamespace} from "../../composables/useNamespaces";
     import useRouteContext from "../../composables/useRouteContext";
 
-    import type {BlueprintType} from "../../stores/blueprints"
+    import type {BlueprintType} from "../../stores/blueprints";
     import {useAuthStore} from "override/stores/auth";
     import resource from "../../models/resource";
     import action from "../../models/action";
@@ -63,7 +63,7 @@
             flowYaml = await blueprintsStore.getBlueprintSource({
                 type: blueprintSource,
                 kind: "flow",
-                id: blueprintId
+                id: blueprintId,
             });
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
@@ -100,7 +100,7 @@ tasks:
 
     const routeInfo = computed(() => {
         return {
-            title: t("flows")
+            title: t("flows"),
         };
     });
 

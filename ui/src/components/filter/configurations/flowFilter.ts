@@ -42,12 +42,12 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                                         }, []);
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
+                                        value: namespace,
                                     }));
                             }
                             return [];
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 {
@@ -60,7 +60,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("flows");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "labels",
@@ -69,7 +69,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
                     valueType: "key-value",
                 },
-            ]
+            ],
         };
     });
-}
+};

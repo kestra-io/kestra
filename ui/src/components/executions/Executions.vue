@@ -459,7 +459,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: false
+        defaultScopeFilter: false,
     });
 
     const emit = defineEmits<{
@@ -491,97 +491,97 @@
             label: t("start date"),
             prop: "state.startDate",
             default: true,
-            description: t("filter.table_column.executions.start-date")
+            description: t("filter.table_column.executions.start-date"),
         },
         {
             label: t("end date"),
             prop: "state.endDate",
             default: true,
-            description: t("filter.table_column.executions.end-date")
+            description: t("filter.table_column.executions.end-date"),
         },
         {
             label: t("duration"),
             prop: "state.duration",
             default: true,
-            description: t("filter.table_column.executions.duration")
+            description: t("filter.table_column.executions.duration"),
         },
         {
             label: t("namespace"),
             prop: "namespace",
             default: true,
-            description: t("filter.table_column.executions.namespace")
+            description: t("filter.table_column.executions.namespace"),
         },
         {
             label: t("flow"),
             prop: "flowId",
             default: true,
-            description: t("filter.table_column.executions.flow")
+            description: t("filter.table_column.executions.flow"),
         },
         {
             label: t("labels"),
             prop: "labels",
             default: true,
-            description: t("filter.table_column.executions.labels")
+            description: t("filter.table_column.executions.labels"),
         },
         {
             label: t("state"),
             prop: "state.current",
             default: true,
-            description: t("filter.table_column.executions.state")
+            description: t("filter.table_column.executions.state"),
         },
         {
             label: t("revision"),
             prop: "flowRevision",
             default: false,
-            description: t("filter.table_column.executions.revision")
+            description: t("filter.table_column.executions.revision"),
         },
         {
             label: t("inputs"),
             prop: "inputs",
             default: false,
-            description: t("filter.table_column.executions.inputs")
+            description: t("filter.table_column.executions.inputs"),
         },
         {
             label: t("outputs"),
             prop: "outputs",
             default: false,
-            description: t("filter.table_column.executions.outputs")
+            description: t("filter.table_column.executions.outputs"),
         },
         {
             label: t("task id"),
             prop: "taskRunList.taskId",
             default: false,
-            description: t("filter.table_column.executions.task-id")
+            description: t("filter.table_column.executions.task-id"),
         },
         {
             label: t("triggers"),
             prop: "trigger",
             default: true,
-            description: t("filter.table_column.executions.trigger")
+            description: t("filter.table_column.executions.trigger"),
         },
         {
             label: t("parent execution"),
             prop: "trigger.variables.executionId",
             default: false,
-            description: t("filter.table_column.executions.parent-execution")
-        }
+            description: t("filter.table_column.executions.parent-execution"),
+        },
     ]);
 
     const storageKey = computed(() =>
         route.name === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
-            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS
+            : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
     );
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
-        storageKey: storageKey.value
+        storageKey: storageKey.value,
     });
 
     const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
-            .filter(Boolean) as any[]
+            .filter(Boolean) as any[],
     );
 
     const isColumnSortable = (prop: string) => {
@@ -603,7 +603,7 @@
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
-            state: route.query?.state ? [route.query?.state] : props.statuses
+            state: route.query?.state ? [route.query?.state] : props.statuses,
         }));
 
         if (props.isConcurrency) {
@@ -669,7 +669,7 @@
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
             code: value,
-            label: t("mark as", {status: value})
+            label: t("mark as", {status: value}),
         }));
     });
 
@@ -682,7 +682,7 @@
 
     const charts = computed(() => {
         return [
-            {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+            {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
         ];
     });
 
@@ -701,7 +701,7 @@
         return {
             namespace: row?.namespace,
             flowId: row?.flowId,
-            id: row?.id
+            id: row?.id,
         };
     };
 
@@ -744,7 +744,7 @@
             t(message, {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
             () => genericConfirmCallback(queryAction, byIdAction, success),
             "warning",
-            showCancelButton
+            showCancelButton,
         );
     };
 
@@ -814,7 +814,7 @@
             "queryResumeExecution",
             "bulkResumeExecution",
             "executions resumed",
-            false
+            false,
         );
     };
 
@@ -823,7 +823,7 @@
             "bulk pause",
             "queryPauseExecution",
             "bulkPauseExecution",
-            "executions paused"
+            "executions paused",
         );
     };
 
@@ -834,7 +834,7 @@
         genericConfirmCallback(
             "queryUnqueueExecution",
             "bulkUnqueueExecution",
-            "executions unqueue"
+            "executions unqueue",
         );
     };
 
@@ -843,7 +843,7 @@
             "bulk force run",
             "queryForceRunExecution",
             "bulkForceRunExecution",
-            "executions force run"
+            "executions force run",
         );
     };
 
@@ -852,7 +852,7 @@
             "bulk restart",
             "queryRestartExecution",
             "bulkRestartExecution",
-            "executions restarted"
+            "executions restarted",
         );
     };
 
@@ -863,7 +863,7 @@
             "queryReplayExecution",
             "bulkReplayExecution",
             "executions replayed",
-            {latestRevision: latestRevision}
+            {latestRevision: latestRevision},
         );
     };
 
@@ -878,7 +878,7 @@
         await genericConfirmCallback(
             "queryChangeExecutionStatus",
             "bulkChangeExecutionStatus",
-            "executions state changed"
+            "executions state changed",
         );
         window.setTimeout(() => dataTable.value?.reload(), 100);
     };
@@ -896,11 +896,11 @@
         const message = () => h("div", null, [
             h(
                 "p",
-                {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})}
+                {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})},
             ),
             h(KsFormItem, {
                 class: "mt-3",
-                label: t("execution-include-non-terminated")
+                label: t("execution-include-non-terminated"),
             }, [
                 h(KsSwitch, {
                     modelValue: includeNonTerminated.value,
@@ -941,7 +941,7 @@
             genericConfirmCallback(
                 "queryDeleteExecution",
                 "bulkDeleteExecution",
-                "executions deleted"
+                "executions deleted",
             );
         });
     };
@@ -951,7 +951,7 @@
             "bulk kill",
             "queryKill",
             "bulkKill",
-            "executions killed"
+            "executions killed",
         );
     };
 
@@ -966,16 +966,16 @@
         KsMessageBox.confirm(
             t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
             t("confirmation"),
-            {dangerouslyUseHTMLString: true}
+            {dangerouslyUseHTMLString: true},
         ).then(() => {
             if (queryBulkAction.value) {
                 return executionsStore
                     .querySetLabels({
                         params: loadQuery({
                             sort: route.query.sort as string || "state.startDate:desc",
-                            state: route.query.state ? [route.query.state] : props.statuses
+                            state: route.query.state ? [route.query.state] : props.statuses,
                         }),
-                        data: filtered.labels
+                        data: filtered.labels,
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
@@ -986,7 +986,7 @@
                 return executionsStore
                     .bulkSetLabels({
                         executionsId: selection.value,
-                        executionLabels: filtered.labels
+                        executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
@@ -1008,14 +1008,14 @@
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
                 tab: "edit",
-                tenant: route.params?.tenant
-            }
+                tenant: route.params?.tenant,
+            },
         });
     };
 
     const emitStateCount = () => {
         const runningCount = executionsStore.executions?.filter(execution =>
-            execution?.state?.current === State.RUNNING
+            execution?.state?.current === State.RUNNING,
         )?.length ?? 0;
         const totalCount = executionsStore.total;
         emit("state-count", {runningCount, totalCount});
@@ -1029,8 +1029,8 @@
 
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
-            route.query
-        )
+            route.query,
+        );
     }
 </script>
 

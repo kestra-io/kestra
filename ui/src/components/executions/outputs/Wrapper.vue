@@ -172,7 +172,7 @@
     import SubFlowLink from "../../flows/SubFlowLink.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
-    import {useAxios} from "../../../utils/axios";
+    import {useClient} from "@kestra-io/kestra-sdk";
     import {useMediaQuery} from "@vueuse/core";
     import Utils from "../../../utils/utils";
 
@@ -258,13 +258,13 @@
         },
     }
 
-    const axios = useAxios();
+    const axios = useClient();
     const onDebugExpression = (expression?: string) => {
         const taskRun = selectedTask.value;
 
         if (!taskRun) return;
 
-        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/actions/eval/${taskRun.id}`;
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

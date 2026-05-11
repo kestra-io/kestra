@@ -278,11 +278,9 @@
                         value: execution.value.trigger.id,
                         to: {
                             name: "admin/triggers",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                            },
+                            params: execution.value.tenantId
+                                ? {tenant: execution.value.tenantId}
+                                : {},
                             query: {
                                 "filters[q][EQUALS]": execution.value.trigger.id,
                             },

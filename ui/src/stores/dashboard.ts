@@ -18,7 +18,7 @@ import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import Utils from "../utils/utils";
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 import {removeRefPrefix, usePluginsStore} from "./plugins";
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
 import _throttle from "lodash/throttle";
@@ -57,7 +57,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         unsavedChangesStore.unsavedChange = newValue;
     });
 
-    const axios = useAxios();
+    const axios = useClient();
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options;

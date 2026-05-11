@@ -29,25 +29,25 @@
 <script>
     import resource from "../../../../../models/resource";
     import action from "../../../../../models/action";
-    import {State} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system";
     import FlowUtils from "../../../../../utils/flowUtils";
     import * as ExecutionUtils from "../../../../../utils/executionUtils";
     import InputsForm from "../../../../../components/inputs/InputsForm.vue";
     import {inputsToFormData} from "../../../../../utils/submitTask";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../../../../stores/executions";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
 
     export default {
         components: {InputsForm},
         props: {
             execution: {
                 type: Object,
-                required: true
+                required: true,
             },
             component: {
                 type: String,
-                default: "el-button"
+                default: "el-button",
             },
         },
         data() {
@@ -90,7 +90,7 @@
                 this.executionsStore
                     .resume({
                         id: this.execution.id,
-                        formData: formData
+                        formData: formData,
                     })
                     .then(() => {
                         this.isDrawerOpen = false;
@@ -101,7 +101,7 @@
                 this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
                     namespace: this.execution.namespace,
-                    store: true
+                    store: true,
                 });
             },
         },
@@ -126,7 +126,7 @@
             },
             needInputs() {
                 return this.inputsList?.length > 0;
-            }
+            },
         },
     };
 </script>

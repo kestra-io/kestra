@@ -67,9 +67,9 @@
     import {useExecutionsStore} from "../../stores/executions";
     import resource from "../../models/resource";
     import action from "../../models/action";
-    import {State} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system";
     import {shallowRef, ref} from "vue";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
     import {useToast} from "../../utils/toast";
     import {useI18n} from "vue-i18n";
 
@@ -78,22 +78,22 @@
         props: {
             component: {
                 type: String,
-                default: "b-button"
+                default: "b-button",
             },
             execution: {
                 type: Object,
-                required: true
+                required: true,
             },
             taskRun: {
                 type: Object,
                 required: false,
-                default: undefined
+                default: undefined,
             },
             attemptIndex: {
                 type: Number,
                 required: false,
-                default: undefined
-            }
+                default: undefined,
+            },
         },
         emits: ["follow"],
         setup(props, {emit}) {
@@ -112,22 +112,22 @@
                     .changeStatus({
                         executionId: props.execution.id,
                         taskRunId: props.taskRun.id,
-                        state: selectedStatus.value
+                        state: selectedStatus.value,
                     })
                     .then(() => executionsStore.waitForStateChange(props.execution))
                     .then((execution) => {
                         executionsStore.execution = execution;
-                        emit("follow")
+                        emit("follow");
 
                         toast.success(t("change state done"));
-                    })
+                    });
             }
 
             return {
                 visible,
                 selectedStatus,
-                changeStatus
-            }
+                changeStatus,
+            };
         },
         computed: {
             ...mapStores(useAuthStore),
@@ -151,9 +151,9 @@
                         return {
                             code: value,
                             label: this.$t("mark as", {status: value}),
-                            disabled: value === this.taskRun.state.current
+                            disabled: value === this.taskRun.state.current,
                         };
-                    })
+                    });
             },
             enabled() {
                 if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
@@ -173,11 +173,11 @@
                 }
 
                 return true;
-            }
+            },
         },
         data() {
             return {
-                icon: {StateMachine: shallowRef(StateMachine)}
+                icon: {StateMachine: shallowRef(StateMachine)},
             };
         },
     };

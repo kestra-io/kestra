@@ -61,7 +61,7 @@
 
     import Utils from "../../../../../../utils/utils";
     import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../../../../../utils/axios";
+    import {useClient} from "@kestra-io/kestra-sdk";
 
     const flowStore = useFlowStore();
 
@@ -91,7 +91,7 @@
         {immediate: true},
     );
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);
@@ -120,7 +120,7 @@
 
         clearAll();
 
-        const url = `${apiUrl()}/executions/${props.execution.id}/eval`;
+        const url = `${apiUrl()}/executions/${props.execution.id}/actions/eval`;
         axios
             .post(url, expression.value, {headers: {"Content-type": "text/plain"}})
             .then((response) => {

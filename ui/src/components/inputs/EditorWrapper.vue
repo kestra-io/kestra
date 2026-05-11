@@ -80,7 +80,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow";
     import {useApiStore} from "../../stores/api";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
@@ -95,8 +95,8 @@
     import AITriggerButton from "../ai/AITriggerButton.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
-    import resource from "../../models/resource"
-    import action from "../../models/action"
+    import resource from "../../models/resource";
+    import action from "../../models/action";
     import AcceptDecline from "./AcceptDecline.vue";
 
     const route = useRoute();
@@ -133,8 +133,8 @@
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
-    const sourceNS = ref("")
-    const savedSourceNS = ref("")
+    const sourceNS = ref("");
+    const savedSourceNS = ref("");
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
@@ -152,18 +152,18 @@
         if (!fileNamespace) return;
         const result = await namespacesStore.readFile({
             namespace: fileNamespace.toString(),
-            path: props.path ?? ""
+            path: props.path ?? "",
         });
 
         if(result.notFound) {
             console.error(result.error);
             closeCurrentTab();
-            return
+            return;
         }
 
         if(result.error){
             console.error(result.error);
-            return
+            return;
         }
 
         if (result.content) {
@@ -295,7 +295,7 @@
         }
 
         // only validate and update graph for flow files
-        if(!props.flow) return
+        if(!props.flow) return;
 
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
@@ -320,8 +320,8 @@
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);
-        const editorRef = editorRefElement.value
-        if(!editorRef?.$refs.monacoEditor) return
+        const editorRef = editorRefElement.value;
+        if(!editorRef?.$refs.monacoEditor) return;
 
         const isCreating = flowStore.isCreating;
 
@@ -349,14 +349,14 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
-        if(!namespace.value || !props.path || props.flow) return
+        if(!namespace.value || !props.path || props.flow) return;
         await namespacesStore.saveOrCreateFile({
             namespace: namespace.value,
             path: props.path,
             content: editorContent.value || "",
         });
         savedSourceNS.value = source.value;
-    }
+    };
 
     const handleGlobalSave = (event: KeyboardEvent) => {
         if ((event.ctrlKey || event.metaKey) && event.key === "s") {

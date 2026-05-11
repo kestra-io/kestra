@@ -57,7 +57,7 @@
     import FilePreview from "./FilePreview.vue";
     import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../utils/axios";
+    import {useClient} from "@kestra-io/kestra-sdk";
     import Utils from "../../utils/utils";
 
     interface Execution {
@@ -139,7 +139,7 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
     };
 
-    const axios = useAxios();
+    const axios = useClient();
 
     const getFileSize = async (): Promise<void> => {
         if (Utils.isFile(props.value) && props.execution?.id) {

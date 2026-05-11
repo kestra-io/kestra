@@ -41,6 +41,6 @@
 
     const isDeleted = computed(() => flowStore.flow?.deleted || false);
     const isAllowedToEdit = computed(() =>
-        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace)
+        authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace),
     );
 </script>

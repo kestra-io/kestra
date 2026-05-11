@@ -1,6 +1,6 @@
 import {YamlElement} from "@kestra-io/design-system";
 import {apiUrlWithoutTenants} from "../override/utils/route";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 
 export const QUOTE = "'";
 
@@ -30,7 +30,7 @@ export function fillExpressionCache(filters: string[], functions: PebbleFunction
 async function fetchExpressionFilters(): Promise<string[]> {
     if (cachedFilters === null) {
         try {
-            const axios = useAxios();
+            const axios = useClient();
             cachedFilters = (await axios.get<string[]>(`${apiUrlWithoutTenants()}/pebble/filters`)).data;
         } catch {
             return [];
@@ -42,7 +42,7 @@ async function fetchExpressionFilters(): Promise<string[]> {
 async function fetchExpressionFunctions(): Promise<PebbleFunctionDef[]> {
     if (cachedFunctions === null) {
         try {
-            const axios = useAxios();
+            const axios = useClient();
             cachedFunctions = (await axios.get<PebbleFunctionDef[]>(`${apiUrlWithoutTenants()}/pebble/functions`)).data;
         } catch {
             return [];

@@ -42,12 +42,12 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                                         }, []);
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
+                                        value: namespace,
                                     }));
                             }
                             return [];
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 {
@@ -65,7 +65,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                             ? localStorage.getItem("defaultLogLevel") || "INFO"
                             : "INFO"
                     ),
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "timeRange",
@@ -76,7 +76,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "scope",
@@ -88,7 +88,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("logs");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "triggerId",
@@ -101,7 +101,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
                 },
@@ -118,7 +118,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "text",
                 }] : []) as any,
-            ]
+            ],
         };
     });
 };

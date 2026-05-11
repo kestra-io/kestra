@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {ref} from "vue";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 import {LevelKey} from "../utils/logs";
 
 export interface Log{
@@ -25,7 +25,7 @@ export const useLogsStore = defineStore("logs", () => {
     const total = ref(0)
     const level = ref<LevelKey>("INFO")
 
-    const axios = useAxios();
+    const axios = useClient();
 
 
     function findLogs(options: any) {

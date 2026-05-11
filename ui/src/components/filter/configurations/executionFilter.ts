@@ -42,12 +42,12 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                                         }, []);
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
+                                        value: namespace,
                                     }));
                             }
                             return [];
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 ...(route.name !== "flows/update" ? [{
@@ -72,7 +72,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.KINDS;
-                    }
+                    },
                 },
                 {
                     key: "state",
@@ -86,7 +86,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     showComparatorSelection: true,
                     searchable: true,
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "scope",
@@ -98,7 +98,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.SCOPES;
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "childFilter",
@@ -109,7 +109,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.CHILDS;
-                    }
+                    },
                 },
                 {
                     key: "timeRange",
@@ -120,7 +120,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
                         return VALUES.RELATIVE_DATE;
-                    }
+                    },
                 },
                 {
                     key: "labels",
@@ -138,10 +138,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -152,9 +152,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true
-                }
-            ]
+                    searchable: true,
+                },
+            ],
         };
     });
 };

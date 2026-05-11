@@ -2,7 +2,7 @@ import {ref} from "vue";
 import {useRouter} from "vue-router";
 import {apiUrl, apiUrlWithTenant} from "override/utils/route";
 import Utils from "../utils/utils";
-import {useAxios} from "../utils/axios";
+import {useClient} from "@kestra-io/kestra-sdk";
 
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`;
@@ -26,7 +26,7 @@ export const useBaseNamespacesStore = () => {
     const total = ref(0);
     const existing = ref(true);
 
-    const axios = useAxios();
+    const axios = useClient();
     const router = useRouter();
 
     async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {

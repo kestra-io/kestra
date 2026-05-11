@@ -56,9 +56,8 @@
 </script>
 
 <style lang="scss">
-    $window-close-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13.46,12L19,17.54V19H17.54L12,13.46L6.46,19H5V17.54L10.54,12L5,6.46V5H6.46L12,10.54L17.54,5H19V6.46L13.46,12Z'/%3E%3C/svg%3E");
-
     @use '../../assets/styles/el-ns' as *;
+    @use '../../assets/styles/variables' as *;
     @use 'element-plus/theme-chalk/src/alert' as *;
     @use "element-plus/theme-chalk/src/common/var" as *;
 
@@ -69,16 +68,17 @@
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
         --kel-alert-description-font-size: var(--ks-font-size-2xs);
         --kel-alert-padding: 0.75rem 1rem;
-        --kel-alert-close-font-size: 1rem;
+
+        box-shadow: 0 1px 4px 0 var(--ks-shadow-element);
 
         .kel-alert__title {
             font-weight: 600;
-            line-height: 0.875rem;
+            line-height: var(--ks-font-size-sm);
         }
 
         .kel-alert__description {
             font-weight: 500;
-            line-height: 0.875rem;
+            line-height: var(--ks-font-size-sm);
         }
 
         .kel-alert__icon {
@@ -102,7 +102,7 @@
                 width: 1rem;
                 height: 1rem;
                 background-color: currentColor;
-                mask-image: $window-close-svg;
+                mask-image: $close-icon-svg;
                 mask-size: contain;
                 mask-repeat: no-repeat;
             }
@@ -113,6 +113,10 @@
                 border: 1px solid var(--ks-border-#{$type});
                 background-color: var(--ks-bg-#{$type});
                 #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+
+                .kel-alert__icon {
+                    color: var(--ks-icon-#{$type});
+                }
             }
         }
     }

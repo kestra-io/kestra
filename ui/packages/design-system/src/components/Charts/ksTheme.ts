@@ -22,7 +22,7 @@ export default () => {
         },
         axisLabel: {
             show: true,
-            color: cssVar("--ks-text-primary")
+            color: cssVar("--ks-text-primary"),
         },
         splitLine: {
             show: false,
@@ -60,13 +60,13 @@ export default () => {
         ],
         backgroundColor: "transparent",
         textStyle: {
-            fontFamily: "'Public Sans', sans-serif",
+            fontFamily: "'Mona Sans', sans-serif",
             fontSize: 12,
             color: cssVar("--ks-text-primary"),
         },
         title: {
             textStyle: {
-                color: cssVar("--ks-text-primary")
+                color: cssVar("--ks-text-primary"),
             },
             subtextStyle: {
                 color: cssVar("--ks-gray-400"),

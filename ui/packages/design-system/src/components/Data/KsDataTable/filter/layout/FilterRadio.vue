@@ -61,7 +61,7 @@
         transition: background-color 0.2s;
         padding: 0.25rem 0.75rem;
         padding-right: 4px;
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         display: flex;
         align-items: center;

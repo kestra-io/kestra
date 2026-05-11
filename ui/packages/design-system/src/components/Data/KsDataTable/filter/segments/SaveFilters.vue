@@ -160,7 +160,7 @@
     .filter-summary {
         padding: 0.5rem 0.75rem;
         background-color: var(--ks-surface-secondary);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         min-height: 2rem;
     }
@@ -197,7 +197,7 @@
 .no-bg-border {
     margin: 0 !important;
     padding: 0.5rem;
-    border-radius: 0.25rem;
+    border-radius: var(--ks-radius-base);
     font-size: var(--ks-font-size-base);
     color: var(--ks-text-primary) !important;
     box-shadow: 0 2px 4px var(--ks-shadow-surface);

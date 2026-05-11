@@ -146,7 +146,7 @@ html.menu-collapsed {
 
 .user-avatar {
     padding: 0.25rem;
-    border-radius: 0.25rem;
+    border-radius: var(--ks-radius-base);
 
 }
 </style>

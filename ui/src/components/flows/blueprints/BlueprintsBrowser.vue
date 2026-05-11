@@ -421,7 +421,7 @@
     .blueprint-card {
         cursor: pointer;
         border: 1px solid var(--ks-border-default);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         background-color: var(--ks-bg-surface);
         transition: all 0.2s ease;
         display: flex;
@@ -459,7 +459,7 @@
         .tag-item {
             border: 1px solid var(--ks-border-default);
             color: var(--ks-text-primary);
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
             padding: 0.25rem 0.5rem;
             font-size: var(--ks-font-size-xs);
             background: var(--ks-bg-tag-active);

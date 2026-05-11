@@ -154,7 +154,7 @@
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
         color: var(--ks-text-primary) !important;
     }

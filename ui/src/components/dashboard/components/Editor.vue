@@ -302,7 +302,7 @@
                     height: 100%;
                     background: var(--ks-bg-surface);
                     border: 1px solid var(--ks-border-default);
-                    border-radius: 0.25rem;
+                    border-radius: var(--ks-radius-base);
                 }
             }
         }

@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
-    import {useRouter, useRoute} from "vue-router"
+    import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {KsMessage} from "@kestra-io/design-system";
     import type {FormInstance} from "@kestra-io/design-system";

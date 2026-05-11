@@ -15,13 +15,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
 
-    import {images} from "./images";
+    import {images} from "./images"
 
-    const props = defineProps({type: {type: String, required: true}});
+    const props = defineProps({type: {type: String, required: true}})
 
-    const src = computed((): string => images[props.type]);
+    const src = computed((): string => images[props.type])
 </script>
 
 <style scoped lang="scss">

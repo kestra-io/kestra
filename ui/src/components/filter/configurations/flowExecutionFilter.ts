@@ -1,10 +1,10 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
 
 export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -18,8 +18,8 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.EXECUTION_STATES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.EXECUTION_STATES
                     },
                     searchable: true,
                     visibleByDefault: true,
@@ -31,8 +31,8 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.SCOPES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.SCOPES
                     },
                     showComparatorSelection: false,
                 },
@@ -43,8 +43,8 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.CHILDS;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.CHILDS
                     },
                 },
                 {
@@ -54,8 +54,8 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.KINDS;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.KINDS
                     },
                 },
                 {
@@ -65,8 +65,8 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.RELATIVE_DATE;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.RELATIVE_DATE
                     },
                 },
                 {
@@ -102,6 +102,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     searchable: true,
                 },
             ],
-        };
-    });
-};
+        }
+    })
+}

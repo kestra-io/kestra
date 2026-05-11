@@ -7,21 +7,21 @@
 </template>
 
 <script setup lang="ts">
-    import {ElOptionGroup} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ElOptionGroup} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         label?: string
         disabled?: boolean
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

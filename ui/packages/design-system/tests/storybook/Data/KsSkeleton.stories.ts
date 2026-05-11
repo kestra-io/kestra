@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsSkeleton from "../../../src/components/Data/KsSkeleton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsSkeleton from "../../../src/components/Data/KsSkeleton.vue"
 
 const meta: Meta<typeof KsSkeleton> = {
     title: "Components/Data/KsSkeleton",
@@ -14,18 +14,18 @@ const meta: Meta<typeof KsSkeleton> = {
     parameters: {
         docs: {description: {component: "KsSkeleton is the Kestra design-system abstraction over `ElSkeleton` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsSkeleton>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsSkeleton},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px;width:300px\"><ks-skeleton v-bind=\"args\" /></div>",
     }),
     args: {animated: true, rows: 3},
-};
+}
 
 /** Configurable rows */
 export const Rows: Story = {
@@ -44,7 +44,7 @@ export const Rows: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Animated loading state */
 export const Animated: Story = {
@@ -56,15 +56,15 @@ export const Animated: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Loading toggle – switch between skeleton and real content */
 export const LoadingState: Story = {
     render: () => ({
         components: {KsSkeleton},
         setup() {
-            const loading = ref(true);
-            return {loading};
+            const loading = ref(true)
+            return {loading}
         },
         template: `
             <div style="padding:24px;width:360px">
@@ -82,7 +82,7 @@ export const LoadingState: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithContent: Story = {
     render: () => ({
@@ -97,4 +97,4 @@ export const WithContent: Story = {
             </div>
         `,
     }),
-};
+}

@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsEmpty from "../../../src/components/Data/KsEmpty.vue";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsEmpty from "../../../src/components/Data/KsEmpty.vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsEmpty> = {
     title: "Components/Data/KsEmpty",
@@ -9,8 +9,8 @@ const meta: Meta<typeof KsEmpty> = {
     parameters: {
         docs: {description: {component: "KsEmpty is the Kestra design-system abstraction over `ElEmpty` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsEmpty>
 
 export const Default: Story = {
@@ -18,7 +18,7 @@ export const Default: Story = {
         components: {KsEmpty},
         template: "<div style=\"padding:24px\"><ks-empty /></div>",
     }),
-};
+}
 
 export const WithAction: Story = {
     render: () => ({
@@ -31,7 +31,7 @@ export const WithAction: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom image size */
 export const ImageSize: Story = {
@@ -45,7 +45,7 @@ export const ImageSize: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom description slot */
 export const CustomDescription: Story = {
@@ -62,7 +62,7 @@ export const CustomDescription: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const CustomImage: Story = {
     render: () => ({
@@ -80,4 +80,4 @@ export const CustomImage: Story = {
             </div>
         `,
     }),
-};
+}

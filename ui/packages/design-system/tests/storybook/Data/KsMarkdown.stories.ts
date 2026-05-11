@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsMarkdown from "../../../src/components/Data/KsMarkdown/KsMarkdown.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsMarkdown from "../../../src/components/Data/KsMarkdown/KsMarkdown.vue"
 
 const meta: Meta<typeof KsMarkdown> = {
     title: "Components/Data/KsMarkdown",
@@ -24,8 +24,8 @@ const meta: Meta<typeof KsMarkdown> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsMarkdown>
 
 // ─── Shared sample content ────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const HTML_EXAMPLE = `
 <div class="video-container">
   <iframe src="https://www.youtube.com/embed/BeQNI2XRddA?si=nvoIqA1SIrMaKyYs" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
-`;
+`
 const KITCHEN_SINK = `
 ---
 title: Kestra Markdown Component
@@ -139,7 +139,7 @@ graph LR
 
 ## Html raw code
 ${HTML_EXAMPLE}
-`.trim();
+`.trim()
 
 const CODE_BLOCKS = `
 ## Code Blocks with Copy Button
@@ -180,7 +180,7 @@ Block without a language label:
 plain text code block
 no syntax highlighting
 \`\`\`
-`.trim();
+`.trim()
 
 const ALERT_DIRECTIVES = `
 ## Alert Directives
@@ -202,7 +202,7 @@ Use the \`:::alert{type}\` directive to embed a \`KsAlert\` component inline.
 :::alert{type="error"}
 **Error** — Signals a problem that must be resolved.
 :::
-`.trim();
+`.trim()
 
 const GFM_FEATURES = `
 ## GitHub Flavored Markdown
@@ -222,7 +222,7 @@ const GFM_FEATURES = `
 ### Autolinks
 
 Visit https://kestra.io or email support@kestra.io — bare URLs become clickable links.
-`.trim();
+`.trim()
 
 const MERMAID_EXAMPLE = `
 ## Mermaid Diagrams
@@ -252,7 +252,7 @@ sequenceDiagram
     Worker-->>API: job completed
     API-->>Client: 200 OK
 \`\`\`
-`.trim();
+`.trim()
 
 // ─── Stories ──────────────────────────────────────────────────────────────────
 
@@ -260,64 +260,64 @@ sequenceDiagram
 export const Default: Story = {
     render: (args) => ({
         components: {KsMarkdown},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown v-bind=\"args\" /></div>",
     }),
     args: {
         content: "Hello **Kestra**! This is `KsMarkdown` in action.\n\n> Try editing the `content` control above.",
     },
-};
+}
 
 /** All supported features in one story. */
 export const KitchenSink: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: KITCHEN_SINK}; },
+        setup() { return {content: KITCHEN_SINK} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}
 
 /** Fenced code blocks with language labels and the copy-to-clipboard button. */
 export const CodeBlocks: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: CODE_BLOCKS}; },
+        setup() { return {content: CODE_BLOCKS} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}
 
 /** The `:::alert{type}` directive maps to `KsAlert` – all four variants. */
 export const AlertDirectives: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: ALERT_DIRECTIVES}; },
+        setup() { return {content: ALERT_DIRECTIVES} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}
 
 /** GFM extensions: aligned tables, strikethrough, autolinks. */
 export const GFMFeatures: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: GFM_FEATURES}; },
+        setup() { return {content: GFM_FEATURES} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}
 
 /** Mermaid diagrams rendered from fenced ` ```mermaid ` blocks. */
 export const MermaidDiagrams: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: MERMAID_EXAMPLE}; },
+        setup() { return {content: MERMAID_EXAMPLE} },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}
 
 /** Html blocks. */
 export const Html: Story = {
     render: () => ({
         components: {KsMarkdown},
-        setup() { return {content: HTML_EXAMPLE}; },
+        setup() { return {content: HTML_EXAMPLE} },
         template: `<div style="padding:24px;max-width:800px">
             <h1>Html enabled</h1>
             <div style="padding:24px;max-width:800px"><ks-markdown :content="content" /></div>
@@ -326,7 +326,7 @@ export const Html: Story = {
             <div style="padding:24px;max-width:800px"><ks-markdown :content="content" :html="false" /></div>
         </div>`,
     }),
-};
+}
 
 
 /** Headings H1–H6 with hoverable `#` anchor links. */
@@ -345,8 +345,8 @@ export const HeadingLinks: Story = {
                     "",
                     "Hover any heading to reveal the `#` anchor link.",
                 ].join("\n"),
-            };
+            }
         },
         template: "<div style=\"padding:24px;max-width:800px\"><ks-markdown :content=\"content\" /></div>",
     }),
-};
+}

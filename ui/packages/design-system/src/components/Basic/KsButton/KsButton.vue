@@ -16,13 +16,13 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue";
+    import type {Component} from "vue"
 
-    import {ElButton} from "element-plus";
+    import {ElButton} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
@@ -40,19 +40,19 @@
         circle?: boolean
         color?: string
         tag?: string | Component
-    }>();
+    }>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
         loading?(): unknown
         icon?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

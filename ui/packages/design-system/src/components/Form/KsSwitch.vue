@@ -7,12 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSwitch} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ElSwitch} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<boolean | string | number>();
+    const model = defineModel<boolean | string | number>()
 
     const props = withDefaults(defineProps<{
         disabled?: boolean
@@ -31,13 +31,13 @@
         size: undefined,
         activeValue: undefined,
         inactiveValue: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         change: [value: boolean | string | number]
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

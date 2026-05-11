@@ -41,16 +41,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {useExecutionsStore} from "../../../../../stores/executions";
-    import resource from "../../../../../models/resource";
-    import action from "../../../../../models/action";
-    import {State} from "@kestra-io/design-system";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import {useAuthStore} from "override/stores/auth";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../../../../utils/toast";
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import {computed, ref} from "vue"
+    import {useExecutionsStore} from "../../../../../stores/executions"
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
+    import {State} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {useAuthStore} from "override/stores/auth"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../../../../utils/toast"
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     interface Execution {
         id: string;
@@ -62,30 +62,30 @@
 
     const props = defineProps<{
         execution: Execution;
-    }>();
+    }>()
 
-    const {t} = useI18n();
-    const toast = useToast();
-    const executionsStore = useExecutionsStore();
-    const authStore = useAuthStore();
+    const {t} = useI18n()
+    const toast = useToast()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
 
-    const isDrawerOpen = ref(false);
-    const selectedStatus = ref(State.RUNNING);
+    const isDrawerOpen = ref(false)
+    const selectedStatus = ref(State.RUNNING)
 
     const states = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
             label: t("unqueue as", {status: value}),
-        }));
-    });
+        }))
+    })
 
     const enabled = computed(() => {
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
-            return false;
+            return false
         }
 
-        return State.isQueued(props.execution.state.current);
-    });
+        return State.isQueued(props.execution.state.current)
+    })
 
     const unqueue = () => {
         executionsStore
@@ -94,8 +94,8 @@
                 state: selectedStatus.value,
             })
             .then(() => {
-                isDrawerOpen.value = false;
-                toast.success(t("unqueue done"));
-            });
-    };
+                isDrawerOpen.value = false
+                toast.success(t("unqueue done"))
+            })
+    }
 </script>

@@ -66,86 +66,86 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system";
-    import {useFlowStore} from "../../stores/flow";
-    import {useOnboardingV2Store} from "../../stores/onboardingV2";
-    import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide";
-    import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
+    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+    import {useFlowStore} from "../../stores/flow"
+    import {useOnboardingV2Store} from "../../stores/onboardingV2"
+    import {FIRST_FLOW_GUIDE_STEPS, FIRST_FLOW_STEP_IDS} from "./guides/firstFlowGuide"
+    import {useOnboardingAnalytics} from "../../composables/useOnboardingAnalytics"
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
-    const route = useRoute();
-    const router = useRouter();
-    const {t} = useI18n();
-    const flowStore = useFlowStore();
-    const onboardingStore = useOnboardingV2Store();
-    const {trackOnboarding} = useOnboardingAnalytics();
+    const route = useRoute()
+    const router = useRouter()
+    const {t} = useI18n()
+    const flowStore = useFlowStore()
+    const onboardingStore = useOnboardingV2Store()
+    const {trackOnboarding} = useOnboardingAnalytics()
 
-    const steps = FIRST_FLOW_GUIDE_STEPS;
-    const highlightedElement = ref<HTMLElement | null>(null);
-    const guideCardEl = ref<HTMLElement | null>(null);
-    const cardStyle = ref<Record<string, string>>({});
-    const dragOffset = ref({x: 0, y: 0});
-    const userHasDraggedCard = ref(false);
-    const attemptedNext = ref(false);
-    const isCancelConfirmOpen = ref(false);
-    const highlightRetryCount = ref(0);
-    const lastTrackedSaveCount = ref(onboardingStore.state.saveCount);
-    const lastTrackedExecutionCount = ref(onboardingStore.state.executionCount);
-    const maxHighlightRetries = 25;
-    const executeModalTriggerSelector = "#execute-flow-dialog [data-onboarding-target=\"flow-execute-confirm-button\"]";
-    let highlightRetryTimer: number | null = null;
-    let executeStepRecheckTimer: number | null = null;
+    const steps = FIRST_FLOW_GUIDE_STEPS
+    const highlightedElement = ref<HTMLElement | null>(null)
+    const guideCardEl = ref<HTMLElement | null>(null)
+    const cardStyle = ref<Record<string, string>>({})
+    const dragOffset = ref({x: 0, y: 0})
+    const userHasDraggedCard = ref(false)
+    const attemptedNext = ref(false)
+    const isCancelConfirmOpen = ref(false)
+    const highlightRetryCount = ref(0)
+    const lastTrackedSaveCount = ref(onboardingStore.state.saveCount)
+    const lastTrackedExecutionCount = ref(onboardingStore.state.executionCount)
+    const maxHighlightRetries = 25
+    const executeModalTriggerSelector = "#execute-flow-dialog [data-onboarding-target=\"flow-execute-confirm-button\"]"
+    let highlightRetryTimer: number | null = null
+    let executeStepRecheckTimer: number | null = null
     const cardInlineStyle = computed(() => ({
         ...cardStyle.value,
         transform: `translate(${dragOffset.value.x}px, ${dragOffset.value.y}px)`,
-    }));
+    }))
 
     const stepIndex = computed(() => {
-        const index = FIRST_FLOW_STEP_IDS.indexOf(onboardingStore.state.currentStepId || "");
-        return index >= 0 ? index : 0;
-    });
+        const index = FIRST_FLOW_STEP_IDS.indexOf(onboardingStore.state.currentStepId || "")
+        return index >= 0 ? index : 0
+    })
 
-    const currentStep = computed(() => steps[stepIndex.value]);
-    const isFinishStep = computed(() => currentStep.value?.id === "finish");
+    const currentStep = computed(() => steps[stepIndex.value])
+    const isFinishStep = computed(() => currentStep.value?.id === "finish")
     const isExecuteStep = computed(
         () =>
             onboardingStore.state.status === "in_progress" &&
             currentStep.value?.stepType === "action_execute",
-    );
-    const isActionStep = computed(() => currentStep.value?.stepType?.startsWith("action_"));
+    )
+    const isActionStep = computed(() => currentStep.value?.stepType?.startsWith("action_"))
     const translateMaybe = (value?: string) => {
         if (!value) {
-            return "";
+            return ""
         }
-        return value.startsWith("onboarding.") ? t(value) : value;
-    };
-    const stepTitle = computed(() => translateMaybe(currentStep.value?.title));
-    const stepDescription = computed(() => translateMaybe(currentStep.value?.description));
-    const externalActionNote = computed(() => translateMaybe(currentStep.value?.actionNote));
-    const showNextButton = computed(() => !externalActionNote.value);
+        return value.startsWith("onboarding.") ? t(value) : value
+    }
+    const stepTitle = computed(() => translateMaybe(currentStep.value?.title))
+    const stepDescription = computed(() => translateMaybe(currentStep.value?.description))
+    const externalActionNote = computed(() => translateMaybe(currentStep.value?.actionNote))
+    const showNextButton = computed(() => !externalActionNote.value)
     const snippetMarkdown = computed(() => {
-        const snippet = currentStep.value?.snippet;
+        const snippet = currentStep.value?.snippet
         if (!snippet) {
-            return "";
+            return ""
         }
 
-        const flowId = flowStore.flow?.id;
+        const flowId = flowStore.flow?.id
         const resolvedSnippet = snippet
-            .replace(/^id:\s*my_flow$/m, flowId ? `id: ${flowId}` : "id: my_flow");
+            .replace(/^id:\s*my_flow$/m, flowId ? `id: ${flowId}` : "id: my_flow")
 
-        return `\`\`\`yaml\n${resolvedSnippet}\n\`\`\``;
-    });
+        return `\`\`\`yaml\n${resolvedSnippet}\n\`\`\``
+    })
 
     const nextLabel = computed(() => {
         if (isFinishStep.value) {
-            return t("onboarding.actions.finish_tutorial");
+            return t("onboarding.actions.finish_tutorial")
         }
-        return t("onboarding.actions.next");
-    });
+        return t("onboarding.actions.next")
+    })
     const trackCurrentStepAction = (action: string, additional: Record<string, unknown> = {}) => {
         trackOnboarding({
             action,
@@ -153,211 +153,211 @@
             stepId: currentStep.value?.id,
             stepType: currentStep.value?.stepType,
             additional,
-        });
-    };
+        })
+    }
     const appendHintAtBottom = (hint: string) => {
-        const source = flowStore.flowYaml ?? "";
+        const source = flowStore.flowYaml ?? ""
         if (!source || source.includes(hint)) {
-            return;
+            return
         }
 
-        const trimmed = source.replace(/\s+$/, "");
-        flowStore.flowYaml = `${trimmed}\n\n${hint}\n`;
-    };
+        const trimmed = source.replace(/\s+$/, "")
+        flowStore.flowYaml = `${trimmed}\n\n${hint}\n`
+    }
     const stepHintsByStepId: Record<string, string> = {
         add_id: "onboarding.editor_hints.step_1",
         add_cron_trigger: "onboarding.editor_hints.step_5",
-    };
+    }
 
     const clearHighlight = (resetPosition = false) => {
         if (highlightRetryTimer !== null) {
-            window.clearTimeout(highlightRetryTimer);
-            highlightRetryTimer = null;
+            window.clearTimeout(highlightRetryTimer)
+            highlightRetryTimer = null
         }
         if (executeStepRecheckTimer !== null) {
-            window.clearTimeout(executeStepRecheckTimer);
-            executeStepRecheckTimer = null;
+            window.clearTimeout(executeStepRecheckTimer)
+            executeStepRecheckTimer = null
         }
-        highlightedElement.value?.classList.remove("onboarding-v2-highlight");
-        highlightedElement.value?.classList.remove("onboarding-v2-highlight-static");
-        highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse");
-        highlightedElement.value = null;
+        highlightedElement.value?.classList.remove("onboarding-v2-highlight")
+        highlightedElement.value?.classList.remove("onboarding-v2-highlight-static")
+        highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse")
+        highlightedElement.value = null
         if (resetPosition) {
-            cardStyle.value = {};
-            dragOffset.value = {x: 0, y: 0};
+            cardStyle.value = {}
+            dragOffset.value = {x: 0, y: 0}
         }
-    };
+    }
 
     function scheduleExecuteStepRecheck() {
         if (executeStepRecheckTimer !== null) {
-            return;
+            return
         }
         executeStepRecheckTimer = window.setTimeout(() => {
-            executeStepRecheckTimer = null;
+            executeStepRecheckTimer = null
             if (!isExecuteStep.value || onboardingStore.state.status !== "in_progress") {
-                return;
+                return
             }
-            applyHighlight();
-        }, 180);
+            applyHighlight()
+        }, 180)
     }
 
     function queryTargetByPriority(selector: string): HTMLElement | null {
         for (const candidate of selector.split(",").map((value) => value.trim()).filter(Boolean)) {
-            const targets = Array.from(document.querySelectorAll(candidate)) as HTMLElement[];
+            const targets = Array.from(document.querySelectorAll(candidate)) as HTMLElement[]
             const visibleTarget = targets.find((target) => {
-                const style = window.getComputedStyle(target);
+                const style = window.getComputedStyle(target)
                 if (style.display === "none" || style.visibility === "hidden") {
-                    return false;
+                    return false
                 }
 
-                const rect = target.getBoundingClientRect();
-                return rect.width > 0 && rect.height > 0;
-            });
+                const rect = target.getBoundingClientRect()
+                return rect.width > 0 && rect.height > 0
+            })
 
             if (visibleTarget) {
-                return visibleTarget;
+                return visibleTarget
             }
         }
 
-        return null;
+        return null
     }
 
     const onCardMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) {
-            return;
+            return
         }
-        const target = event.target as HTMLElement | null;
+        const target = event.target as HTMLElement | null
         if (
             target?.closest(
                 "button, a, input, textarea, select, label, [role='button'], .kel-button, .kel-input, .kel-select",
             )
         ) {
-            return;
+            return
         }
-        event.preventDefault();
-        const start = {x: event.clientX, y: event.clientY};
-        const startOffset = {...dragOffset.value};
-        let moved = false;
-        const startRect = guideCardEl.value?.getBoundingClientRect();
-        const viewportMargin = 20;
+        event.preventDefault()
+        const start = {x: event.clientX, y: event.clientY}
+        const startOffset = {...dragOffset.value}
+        let moved = false
+        const startRect = guideCardEl.value?.getBoundingClientRect()
+        const viewportMargin = 20
 
         const onMouseMove = (moveEvent: MouseEvent) => {
             if (!startRect) {
-                return;
+                return
             }
-            const dx = moveEvent.clientX - start.x;
-            const dy = moveEvent.clientY - start.y;
-            const proposedLeft = startRect.left + dx;
-            const proposedTop = startRect.top + dy;
-            const minLeft = viewportMargin;
-            const maxLeft = window.innerWidth - startRect.width - viewportMargin;
-            const minTop = viewportMargin;
-            const maxTop = window.innerHeight - startRect.height - viewportMargin;
-            const clampedLeft = Math.max(minLeft, Math.min(proposedLeft, maxLeft));
-            const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop));
+            const dx = moveEvent.clientX - start.x
+            const dy = moveEvent.clientY - start.y
+            const proposedLeft = startRect.left + dx
+            const proposedTop = startRect.top + dy
+            const minLeft = viewportMargin
+            const maxLeft = window.innerWidth - startRect.width - viewportMargin
+            const minTop = viewportMargin
+            const maxTop = window.innerHeight - startRect.height - viewportMargin
+            const clampedLeft = Math.max(minLeft, Math.min(proposedLeft, maxLeft))
+            const clampedTop = Math.max(minTop, Math.min(proposedTop, maxTop))
             dragOffset.value = {
                 x: startOffset.x + (clampedLeft - startRect.left),
                 y: startOffset.y + (clampedTop - startRect.top),
-            };
-            moved = moved || dragOffset.value.x !== startOffset.x || dragOffset.value.y !== startOffset.y;
-        };
+            }
+            moved = moved || dragOffset.value.x !== startOffset.x || dragOffset.value.y !== startOffset.y
+        }
 
         const onMouseUp = () => {
             if (moved) {
-                userHasDraggedCard.value = true;
+                userHasDraggedCard.value = true
             }
-            window.removeEventListener("mousemove", onMouseMove);
-            window.removeEventListener("mouseup", onMouseUp);
-        };
+            window.removeEventListener("mousemove", onMouseMove)
+            window.removeEventListener("mouseup", onMouseUp)
+        }
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-    };
+        window.addEventListener("mousemove", onMouseMove)
+        window.addEventListener("mouseup", onMouseUp)
+    }
 
     function applyHighlight() {
         if (onboardingStore.state.status !== "in_progress") {
-            clearHighlight();
-            return;
+            clearHighlight()
+            return
         }
-        const selector = currentStep.value?.targetSelector;
+        const selector = currentStep.value?.targetSelector
         if (selector) {
-            let target: HTMLElement | null;
+            let target: HTMLElement | null
             if (isExecuteStep.value) {
-                target = queryTargetByPriority(executeModalTriggerSelector);
+                target = queryTargetByPriority(executeModalTriggerSelector)
                 if (!target) {
-                    target = queryTargetByPriority(selector);
-                    scheduleExecuteStepRecheck();
+                    target = queryTargetByPriority(selector)
+                    scheduleExecuteStepRecheck()
                 }
             } else {
-                target = queryTargetByPriority(selector);
+                target = queryTargetByPriority(selector)
             }
             if (!target) {
                 if (highlightRetryCount.value < maxHighlightRetries) {
-                    highlightRetryCount.value += 1;
+                    highlightRetryCount.value += 1
                     highlightRetryTimer = window.setTimeout(() => {
-                        applyHighlight();
-                    }, 120);
+                        applyHighlight()
+                    }, 120)
                 }
-                return;
+                return
             }
-            highlightRetryCount.value = 0;
-            const isEditorWrapperTarget = target.id === "editorWrapper";
+            highlightRetryCount.value = 0
+            const isEditorWrapperTarget = target.id === "editorWrapper"
             if (!isEditorWrapperTarget) {
                 if (highlightedElement.value !== target) {
-                    highlightedElement.value?.classList.remove("onboarding-v2-highlight");
-                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-static");
-                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse");
-                    highlightedElement.value = target;
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight")
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-static")
+                    highlightedElement.value?.classList.remove("onboarding-v2-highlight-pulse")
+                    highlightedElement.value = target
                 }
-                highlightedElement.value.classList.add("onboarding-v2-highlight");
+                highlightedElement.value.classList.add("onboarding-v2-highlight")
                 if (isActionStep.value) {
-                    highlightedElement.value.classList.add("onboarding-v2-highlight-pulse");
-                    highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
+                    highlightedElement.value.classList.add("onboarding-v2-highlight-pulse")
+                    highlightedElement.value.classList.remove("onboarding-v2-highlight-static")
                 } else {
-                    highlightedElement.value.classList.add("onboarding-v2-highlight-static");
-                    highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
+                    highlightedElement.value.classList.add("onboarding-v2-highlight-static")
+                    highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse")
                 }
             } else if (highlightedElement.value) {
-                highlightedElement.value.classList.remove("onboarding-v2-highlight");
-                highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
-                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
-                highlightedElement.value = null;
+                highlightedElement.value.classList.remove("onboarding-v2-highlight")
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-static")
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse")
+                highlightedElement.value = null
             }
         } else {
             if (highlightedElement.value) {
-                highlightedElement.value.classList.remove("onboarding-v2-highlight");
-                highlightedElement.value.classList.remove("onboarding-v2-highlight-static");
-                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse");
-                highlightedElement.value = null;
+                highlightedElement.value.classList.remove("onboarding-v2-highlight")
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-static")
+                highlightedElement.value.classList.remove("onboarding-v2-highlight-pulse")
+                highlightedElement.value = null
             }
-            highlightRetryCount.value = 0;
+            highlightRetryCount.value = 0
         }
 
         if (userHasDraggedCard.value) {
-            return;
+            return
         }
 
         if (currentStep.value?.overlayPosition) {
-            const cardWidth = Math.min(475, window.innerWidth - 96);
-            const minMargin = 32;
-            const rightEdgeMargin = minMargin * 3;
-            const estimatedCardHeight = 320;
+            const cardWidth = Math.min(475, window.innerWidth - 96)
+            const minMargin = 32
+            const rightEdgeMargin = minMargin * 3
+            const estimatedCardHeight = 320
 
-            let left = minMargin;
+            let left = minMargin
             if (currentStep.value.overlayPosition.horizontal === "center") {
-                left = (window.innerWidth - cardWidth) / 2;
+                left = (window.innerWidth - cardWidth) / 2
             } else if (currentStep.value.overlayPosition.horizontal === "right") {
-                left = window.innerWidth - cardWidth - rightEdgeMargin;
+                left = window.innerWidth - cardWidth - rightEdgeMargin
             }
-            left = Math.max(minMargin, Math.min(left, window.innerWidth - cardWidth - minMargin));
+            left = Math.max(minMargin, Math.min(left, window.innerWidth - cardWidth - minMargin))
 
-            let top = minMargin;
+            let top = minMargin
             if (currentStep.value.overlayPosition.vertical === "middle") {
-                top = (window.innerHeight - estimatedCardHeight) / 2;
+                top = (window.innerHeight - estimatedCardHeight) / 2
             } else if (currentStep.value.overlayPosition.vertical === "bottom") {
-                top = window.innerHeight - estimatedCardHeight - minMargin;
+                top = window.innerHeight - estimatedCardHeight - minMargin
             }
-            top = Math.max(minMargin, Math.min(top, window.innerHeight - estimatedCardHeight - minMargin));
+            top = Math.max(minMargin, Math.min(top, window.innerHeight - estimatedCardHeight - minMargin))
 
             cardStyle.value = {
                 top: `${top}px`,
@@ -365,45 +365,45 @@
                 right: "auto",
                 bottom: "auto",
                 width: `${cardWidth}px`,
-            };
-            return;
+            }
+            return
         }
 
         if (isExecuteStep.value) {
-            const dialog = document.querySelector("#execute-flow-dialog .kel-dialog") as HTMLElement | null;
+            const dialog = document.querySelector("#execute-flow-dialog .kel-dialog") as HTMLElement | null
             if (dialog) {
-                const rect = dialog.getBoundingClientRect();
-                const cardWidth = Math.min(475, window.innerWidth - 96);
-                const gap = 24;
-                const minMargin = 32;
+                const rect = dialog.getBoundingClientRect()
+                const cardWidth = Math.min(475, window.innerWidth - 96)
+                const gap = 24
+                const minMargin = 32
                 const left = Math.max(
                     minMargin,
                     Math.min(rect.left + (rect.width - cardWidth) / 2, window.innerWidth - cardWidth - minMargin),
-                );
+                )
                 cardStyle.value = {
                     top: `${Math.min(rect.bottom + gap, window.innerHeight - 320)}px`,
                     left: `${left}px`,
                     right: "auto",
                     bottom: "auto",
                     width: `${cardWidth}px`,
-                };
-                return;
+                }
+                return
             }
         }
 
-        const estimatedCardHeight = 320;
-        const minMargin = 32;
-        const rightEdgeMargin = minMargin * 3;
+        const estimatedCardHeight = 320
+        const minMargin = 32
+        const rightEdgeMargin = minMargin * 3
         const top = Math.max(
             minMargin,
             Math.min((window.innerHeight - estimatedCardHeight) / 2, window.innerHeight - estimatedCardHeight - minMargin),
-        );
+        )
         cardStyle.value = {
             top: `${top}px`,
             left: "auto",
             right: `${rightEdgeMargin}px`,
             bottom: "auto",
-        };
+        }
     }
 
     const validationContext = computed(() => ({
@@ -411,103 +411,103 @@
         routeName: route.name?.toString() ?? null,
         saveCount: onboardingStore.state.saveCount,
         executionCount: onboardingStore.state.executionCount,
-    }));
+    }))
 
-    const validationResult = computed(() => currentStep.value?.validate(validationContext.value));
+    const validationResult = computed(() => currentStep.value?.validate(validationContext.value))
     const canProceed = computed(() => {
         if (!validationResult.value || validationResult.value.ok) {
-            return true;
+            return true
         }
-        return validationResult.value.level === "warn" && Boolean(currentStep.value?.allowNextOnWarning);
-    });
-    const showStepCompleteBadge = computed(() => currentStep.value?.showCompletionBadge !== false);
-    const isStepComplete = computed(() => canProceed.value);
+        return validationResult.value.level === "warn" && Boolean(currentStep.value?.allowNextOnWarning)
+    })
+    const showStepCompleteBadge = computed(() => currentStep.value?.showCompletionBadge !== false)
+    const isStepComplete = computed(() => canProceed.value)
     const validationVisibility = computed(() => {
         if (!currentStep.value) {
-            return "always";
+            return "always"
         }
         if (currentStep.value.validationVisibility) {
-            return currentStep.value.validationVisibility;
+            return currentStep.value.validationVisibility
         }
-        return currentStep.value.stepType === "code_edit" ? "after_input" : "always";
-    });
+        return currentStep.value.stepType === "code_edit" ? "after_input" : "always"
+    })
     const canShowValidation = computed(() => {
         if (!currentStep.value) {
-            return false;
+            return false
         }
 
         if (validationVisibility.value === "after_input") {
-            return Boolean(flowStore.flowYaml?.trim());
+            return Boolean(flowStore.flowYaml?.trim())
         }
 
-        return true;
-    });
+        return true
+    })
     const feedback = computed<{level?: "info" | "warn" | "error"; message: string}>(() => {
         if (!attemptedNext.value || !validationResult.value || canProceed.value || !canShowValidation.value) {
-            return {message: ""};
+            return {message: ""}
         }
         const level =
             validationResult.value.level === "warn"
                 ? "warn"
                 : validationResult.value.level === "info"
                     ? "info"
-                    : "error";
+                    : "error"
         return {
             level,
             message: translateMaybe(validationResult.value.message) || t("onboarding.validation.complete_step"),
-        };
-    });
+        }
+    })
 
     const goToStep = (index: number) => {
-        const nextStep = steps[Math.max(0, Math.min(index, steps.length - 1))];
-        onboardingStore.setStep(nextStep.id);
-        attemptedNext.value = false;
-    };
+        const nextStep = steps[Math.max(0, Math.min(index, steps.length - 1))]
+        onboardingStore.setStep(nextStep.id)
+        attemptedNext.value = false
+    }
 
     const nextStep = () => {
         if (isFinishStep.value) {
-            completeGuide();
-            return;
+            completeGuide()
+            return
         }
 
         if (!canProceed.value) {
-            attemptedNext.value = true;
+            attemptedNext.value = true
             trackOnboarding({
                 action: "step_validation_failed",
                 mode: onboardingStore.state.mode,
                 stepId: currentStep.value?.id,
                 stepType: currentStep.value?.stepType,
                 validationMessage: validationResult.value?.message,
-            });
-            return;
+            })
+            return
         }
 
-        trackCurrentStepAction("step_next_clicked");
+        trackCurrentStepAction("step_next_clicked")
 
         if (currentStep.value?.id === "add_id") {
-            appendHintAtBottom(t("onboarding.editor_hints.step_2"));
+            appendHintAtBottom(t("onboarding.editor_hints.step_2"))
         } else if (currentStep.value?.id === "add_namespace") {
-            appendHintAtBottom(t("onboarding.editor_hints.step_3"));
+            appendHintAtBottom(t("onboarding.editor_hints.step_3"))
         } else if (currentStep.value?.id === "add_input") {
-            appendHintAtBottom(t("onboarding.editor_hints.step_4"));
+            appendHintAtBottom(t("onboarding.editor_hints.step_4"))
         }
 
-        goToStep(stepIndex.value + 1);
-    };
+        goToStep(stepIndex.value + 1)
+    }
 
     const completeGuide = () => {
-        trackCurrentStepAction("tutorial_completed");
-        onboardingStore.complete();
-        onboardingStore.setEditorMode("normal");
-    };
+        trackCurrentStepAction("tutorial_completed")
+        onboardingStore.complete()
+        onboardingStore.setEditorMode("normal")
+    }
 
     const cancelTour = async () => {
-        const shouldRestoreExecuteFocus = isExecuteStep.value;
+        const shouldRestoreExecuteFocus = isExecuteStep.value
         if (shouldRestoreExecuteFocus) {
-            toggleExecuteFocusMode(false);
+            toggleExecuteFocusMode(false)
         }
 
-        isCancelConfirmOpen.value = true;
+        isCancelConfirmOpen.value = true
         try {
             await KsMessageBox.confirm(
                 t("onboarding.cancel_modal.description"),
@@ -517,54 +517,54 @@
                     cancelButtonText: t("onboarding.cancel_modal.keep"),
                     type: "warning",
                 },
-            );
+            )
         } catch {
-            isCancelConfirmOpen.value = false;
+            isCancelConfirmOpen.value = false
             if (shouldRestoreExecuteFocus) {
-                toggleExecuteFocusMode(true);
+                toggleExecuteFocusMode(true)
             }
-            return;
+            return
         }
-        isCancelConfirmOpen.value = false;
-        trackCurrentStepAction("tutorial_canceled");
-        onboardingStore.skip();
-        onboardingStore.setEditorMode("normal");
-        toggleExecuteFocusMode(false);
-        onboardingStore.reset();
-    };
+        isCancelConfirmOpen.value = false
+        trackCurrentStepAction("tutorial_canceled")
+        onboardingStore.skip()
+        onboardingStore.setEditorMode("normal")
+        toggleExecuteFocusMode(false)
+        onboardingStore.reset()
+    }
 
     const goToBlueprints = () => {
-        trackCurrentStepAction("finish_explore_blueprints_clicked");
-        completeGuide();
-        void router.push({name: "blueprints", params: {kind: "flow", tab: "all"}});
-    };
+        trackCurrentStepAction("finish_explore_blueprints_clicked")
+        completeGuide()
+        void router.push({name: "blueprints", params: {kind: "flow", tab: "all"}})
+    }
 
     const goToCreateFlow = () => {
-        trackCurrentStepAction("finish_create_flow_clicked");
-        completeGuide();
-        void router.push({name: "flows/create"});
-    };
+        trackCurrentStepAction("finish_create_flow_clicked")
+        completeGuide()
+        void router.push({name: "flows/create"})
+    }
 
     const toggleExecuteFocusMode = (enabled: boolean) => {
-        document.body.classList.toggle("onboarding-execute-focus", enabled);
-    };
+        document.body.classList.toggle("onboarding-execute-focus", enabled)
+    }
 
     watch(
         () => onboardingStore.state.currentStepId,
         (stepId, previousStepId) => {
             if (stepId && stepId !== previousStepId) {
-                clearHighlight();
-                cardStyle.value = {};
-                dragOffset.value = {x: 0, y: 0};
-                userHasDraggedCard.value = false;
+                clearHighlight()
+                cardStyle.value = {}
+                dragOffset.value = {x: 0, y: 0}
+                userHasDraggedCard.value = false
             }
             if (onboardingStore.state.status !== "in_progress" || !stepId) {
-                return;
+                return
             }
-            trackCurrentStepAction("step_viewed");
+            trackCurrentStepAction("step_viewed")
         },
         {immediate: true},
-    );
+    )
 
     watch(
         () => [
@@ -574,21 +574,21 @@
             flowStore.flowYaml,
         ],
         () => {
-            highlightRetryCount.value = 0;
+            highlightRetryCount.value = 0
             window.requestAnimationFrame(() => {
-                applyHighlight();
-            });
+                applyHighlight()
+            })
         },
         {immediate: true},
-    );
+    )
 
     watch(isExecuteStep, (enabled) => {
-        toggleExecuteFocusMode(enabled);
+        toggleExecuteFocusMode(enabled)
         if (!enabled && executeStepRecheckTimer !== null) {
-            window.clearTimeout(executeStepRecheckTimer);
-            executeStepRecheckTimer = null;
+            window.clearTimeout(executeStepRecheckTimer)
+            executeStepRecheckTimer = null
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     watch(
         () => [
@@ -600,78 +600,78 @@
         ],
         () => {
             if (onboardingStore.state.status !== "in_progress") {
-                return;
+                return
             }
 
             if (currentStep.value?.shouldAutoAdvance?.(validationContext.value)) {
-                trackCurrentStepAction("step_auto_advanced");
-                goToStep(stepIndex.value + 1);
+                trackCurrentStepAction("step_auto_advanced")
+                goToStep(stepIndex.value + 1)
             }
         },
-    );
+    )
 
     watch(
         () => onboardingStore.state.saveCount,
         (newValue, oldValue) => {
             if (onboardingStore.state.status !== "in_progress") {
-                return;
+                return
             }
             if (newValue > (oldValue ?? lastTrackedSaveCount.value)) {
                 trackCurrentStepAction("flow_saved_during_tutorial", {
                     saveCount: newValue,
-                });
+                })
             }
-            lastTrackedSaveCount.value = newValue;
+            lastTrackedSaveCount.value = newValue
         },
         {immediate: true},
-    );
+    )
 
     watch(
         () => onboardingStore.state.executionCount,
         (newValue, oldValue) => {
             if (onboardingStore.state.status !== "in_progress") {
-                return;
+                return
             }
             if (newValue > (oldValue ?? lastTrackedExecutionCount.value)) {
                 trackCurrentStepAction("flow_executed_during_tutorial", {
                     executionCount: newValue,
-                });
+                })
             }
-            lastTrackedExecutionCount.value = newValue;
+            lastTrackedExecutionCount.value = newValue
         },
         {immediate: true},
-    );
+    )
 
     watch(
         () => [onboardingStore.state.currentStepId, flowStore.flowYaml],
         () => {
-            const stepId = onboardingStore.state.currentStepId ?? "";
-            const hintKey = stepHintsByStepId[stepId];
-            const hint = hintKey ? t(hintKey) : "";
+            const stepId = onboardingStore.state.currentStepId ?? ""
+            const hintKey = stepHintsByStepId[stepId]
+            const hint = hintKey ? t(hintKey) : ""
             if (!hint) {
-                return;
+                return
             }
-            appendHintAtBottom(hint);
+            appendHintAtBottom(hint)
         },
         {immediate: true},
-    );
+    )
 
     onMounted(() => {
-        applyHighlight();
-    });
+        applyHighlight()
+    })
 
     onBeforeUnmount(() => {
-        toggleExecuteFocusMode(false);
-        clearHighlight(true);
+        toggleExecuteFocusMode(false)
+        clearHighlight(true)
         if (highlightRetryTimer !== null) {
-            window.clearTimeout(highlightRetryTimer);
-            highlightRetryTimer = null;
+            window.clearTimeout(highlightRetryTimer)
+            highlightRetryTimer = null
         }
         if (executeStepRecheckTimer !== null) {
-            window.clearTimeout(executeStepRecheckTimer);
-            executeStepRecheckTimer = null;
+            window.clearTimeout(executeStepRecheckTimer)
+            executeStepRecheckTimer = null
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">

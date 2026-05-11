@@ -18,26 +18,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ElStep} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElStep} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         title?: string
         description?: string
         icon?: any
         status?: string
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
         icon?(): unknown
         title?(): unknown
         description?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

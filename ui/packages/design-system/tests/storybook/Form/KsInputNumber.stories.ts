@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsInputNumber from "../../../src/components/Form/KsInputNumber.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsInputNumber from "../../../src/components/Form/KsInputNumber.vue"
 
 const meta: Meta<typeof KsInputNumber> = {
     title: "Components/Form/KsInputNumber",
@@ -15,16 +15,16 @@ const meta: Meta<typeof KsInputNumber> = {
     parameters: {
         docs: {description: {component: "KsInputNumber is the Kestra design-system abstraction over `ElInputNumber` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsInputNumber>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsInputNumber},
         setup() {
-            const value = ref(1);
-            return {args, value};
+            const value = ref(1)
+            return {args, value}
         },
         template: `
             <div style="padding:24px">
@@ -34,29 +34,29 @@ export const Default: Story = {
         `,
     }),
     args: {min: 0, max: 100},
-};
+}
 
 export const WithStep: Story = {
     render: () => ({
         components: {KsInputNumber},
-        setup() { return {value: ref(0)}; },
+        setup() { return {value: ref(0)} },
         template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" :step=\"5\" :min=\"0\" :max=\"100\" /></div>",
     }),
-};
+}
 
 export const ControlsRight: Story = {
     render: () => ({
         components: {KsInputNumber},
-        setup() { return {value: ref(10)}; },
+        setup() { return {value: ref(10)} },
         template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" controls-position=\"right\" :min=\"0\" :max=\"999\" /></div>",
     }),
-};
+}
 
 /** Step strictly – only multiples of step are valid */
 export const StepStrictly: Story = {
     render: () => ({
         components: {KsInputNumber},
-        setup() { return {value: ref(0)}; },
+        setup() { return {value: ref(0)} },
         template: `
             <div style="padding:24px">
                 <ks-input-number v-model="value" :step="5" step-strictly :min="0" :max="100" />
@@ -64,13 +64,13 @@ export const StepStrictly: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Precision – fixed decimal places */
 export const Precision: Story = {
     render: () => ({
         components: {KsInputNumber},
-        setup() { return {value: ref(3.14)}; },
+        setup() { return {value: ref(3.14)} },
         template: `
             <div style="padding:24px">
                 <ks-input-number v-model="value" :precision="2" :step="0.1" />
@@ -78,12 +78,12 @@ export const Precision: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Disabled: Story = {
     render: () => ({
         components: {KsInputNumber},
-        setup() { return {value: ref(42)}; },
+        setup() { return {value: ref(42)} },
         template: "<div style=\"padding:24px\"><ks-input-number v-model=\"value\" disabled /></div>",
     }),
-};
+}

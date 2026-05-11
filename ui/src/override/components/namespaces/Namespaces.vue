@@ -74,26 +74,26 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, Ref, ref, watch} from "vue";
+    import {computed, Ref, ref, watch} from "vue"
 
-    import {useRoute} from "vue-router";
-    import useRouteContext from "../../../composables/useRouteContext";
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
-    import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "override/stores/misc";
+    import {useRoute} from "vue-router"
+    import useRouteContext from "../../../composables/useRouteContext"
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces"
+    import {useI18n} from "vue-i18n"
+    import {useMiscStore} from "override/stores/misc"
 
-    import Navbar from "../../../components/layout/TopNavBar.vue";
-    import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import {useNamespacesFilter} from "../../../components/filter/configurations";
-    import resource from "../../../models/resource";
-    import action from "../../../models/action";
+    import Navbar from "../../../components/layout/TopNavBar.vue"
+    import Action from "../../../components/namespaces/components/buttons/Action.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {useNamespacesFilter} from "../../../components/filter/configurations"
+    import resource from "../../../models/resource"
+    import action from "../../../models/action"
 
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import {useAuthStore} from "override/stores/auth";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import TextSearch from "vue-material-design-icons/TextSearch.vue"
+    import {useAuthStore} from "override/stores/auth"
 
-    const namespacesFilter = useNamespacesFilter();
+    const namespacesFilter = useNamespacesFilter()
 
     interface Node {
         id: string;
@@ -104,53 +104,53 @@
         system?: boolean;
     }
 
-    const route = useRoute();
+    const route = useRoute()
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
-    const routeInfo = computed(() => ({title: t("namespaces")}));
-    useRouteContext(routeInfo);
+    const routeInfo = computed(() => ({title: t("namespaces")}))
+    useRouteContext(routeInfo)
 
-    const authStore = useAuthStore();
+    const authStore = useAuthStore()
     const canCreate = computed(() => {
-        return authStore.user?.hasAnyAction(resource.NAMESPACE, action.CREATE);
-    });
+        return authStore.user?.hasAnyAction(resource.NAMESPACE, action.CREATE)
+    })
 
-    const namespaces = ref([]) as Ref<Namespace[]>;
+    const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
         namespaces.value = await useNamespaces(
             1000,
             route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
-        ).all();
-    };
+        ).all()
+    }
 
     watch(
         () => route.query["filters[q][EQUALS]"],
         () => loadData(),
         {immediate: true},
-    );
+    )
 
-    const miscStore = useMiscStore();
+    const miscStore = useMiscStore()
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
-    );
+    )
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {
-            return [];
+            return []
         }
 
-        const map = {} as Node[];
+        const map = {} as Node[]
 
         namespaces.value.forEach((item) => {
-            const parts = item.id.split(".");
-            let currentLevel = map as any;
+            const parts = item.id.split(".")
+            let currentLevel = map as any
 
             parts.forEach((_part, index) => {
-                const label = parts.slice(0, index + 1).join(".");
-                const isLeaf = index === parts.length - 1;
+                const label = parts.slice(0, index + 1).join(".")
+                const isLeaf = index === parts.length - 1
 
                 if (!currentLevel[label])
                     currentLevel[label] = {
@@ -158,10 +158,10 @@
                         label,
                         description: isLeaf ? item.description : undefined,
                         children: [],
-                    };
-                currentLevel = currentLevel[label].children;
-            });
-        });
+                    }
+                currentLevel = currentLevel[label].children
+            })
+        })
 
         const build = (nodes: Node[]): Node[] => {
             return Object.values(nodes).map((node) => {
@@ -170,29 +170,29 @@
                     label: node.label,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
-                };
-                return result;
-            });
-        };
+                }
+                return result
+            })
+        }
 
-        const result = build(map);
+        const result = build(map)
 
         const system = result.findIndex(
             (namespace) => namespace.id === systemNamespace.value,
-        );
+        )
 
         if (system !== -1) {
-            const [systemItem] = result.splice(system, 1);
-            result.unshift({...systemItem, system: true});
+            const [systemItem] = result.splice(system, 1)
+            result.unshift({...systemItem, system: true})
         }
 
-        return result;
-    });
+        return result
+    })
 
     const namespaceLabel = (path: string) => {
-        const segments = path.split(".");
-        return segments.length > 1 ? segments[segments.length - 1] : path;
-    };
+        const segments = path.split(".")
+        return segments.length > 1 ? segments[segments.length - 1] : path
+    }
 </script>
 
 <style scoped lang="scss">

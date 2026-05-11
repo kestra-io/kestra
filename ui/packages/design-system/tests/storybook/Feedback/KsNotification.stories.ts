@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {within, userEvent, expect} from "storybook/test";
-import {KsNotification} from "../../../src/components/Feedback/KsNotification";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {within, userEvent, expect} from "storybook/test"
+import {KsNotification} from "../../../src/components/Feedback/KsNotification"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta = {
     title: "Components/Feedback/KsNotification",
@@ -16,8 +16,8 @@ const meta: Meta = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj
 
 export const Success: Story = {
@@ -30,8 +30,8 @@ export const Success: Story = {
                     message: "Flow 'my-flow' was saved successfully.",
                     type: "success",
                     position: "bottom-right",
-                });
-            return {show};
+                })
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -40,12 +40,12 @@ export const Success: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const btn = canvas.getByRole("button");
-        await expect(btn).toBeTruthy();
-        await userEvent.click(btn);
+        const canvas = within(canvasElement)
+        const btn = canvas.getByRole("button")
+        await expect(btn).toBeTruthy()
+        await userEvent.click(btn)
     },
-};
+}
 
 export const Warning: Story = {
     render: () => ({
@@ -56,8 +56,8 @@ export const Warning: Story = {
                     title: "Warning",
                     message: "CPU usage is at 85% of the allocated quota.",
                     position: "bottom-right",
-                });
-            return {show};
+                })
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -65,7 +65,7 @@ export const Warning: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const PersistentError: Story = {
     name: "Persistent error (no auto-close)",
@@ -78,8 +78,8 @@ export const PersistentError: Story = {
                     message: "Task 'fetch-data' failed with exit code 1. Check the logs for details.",
                     position: "bottom-right",
                     duration: 0,
-                });
-            return {show};
+                })
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -88,7 +88,7 @@ export const PersistentError: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Info: Story = {
     render: () => ({
@@ -99,8 +99,8 @@ export const Info: Story = {
                     title: "Scheduled run",
                     message: "Next execution is scheduled for today at 03:00 UTC.",
                     position: "bottom-right",
-                });
-            return {show};
+                })
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -108,19 +108,19 @@ export const Info: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const AllTypes: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
             const showAll = () => {
-                KsNotification.success({title: "Success", message: "Flow saved", position: "bottom-right"});
-                setTimeout(() => KsNotification.warning({title: "Warning", message: "Quota at 85%", position: "bottom-right"}), 400);
-                setTimeout(() => KsNotification.info({title: "Info", message: "Scheduled", position: "bottom-right"}), 800);
-                setTimeout(() => KsNotification.error({title: "Error", message: "Task failed", position: "bottom-right", duration: 0}), 1200);
-            };
-            return {showAll};
+                KsNotification.success({title: "Success", message: "Flow saved", position: "bottom-right"})
+                setTimeout(() => KsNotification.warning({title: "Warning", message: "Quota at 85%", position: "bottom-right"}), 400)
+                setTimeout(() => KsNotification.info({title: "Info", message: "Scheduled", position: "bottom-right"}), 800)
+                setTimeout(() => KsNotification.error({title: "Error", message: "Task failed", position: "bottom-right", duration: 0}), 1200)
+            }
+            return {showAll}
         },
         template: `
             <div style="padding:24px">
@@ -128,7 +128,7 @@ export const AllTypes: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const CloseAll: Story = {
     render: () => ({
@@ -136,11 +136,11 @@ export const CloseAll: Story = {
         setup() {
             const show = () => {
                 for (let i = 0; i < 3; i++) {
-                    KsNotification.info({title: `Notification ${i + 1}`, message: "Click close all to dismiss", position: "bottom-right", duration: 0});
+                    KsNotification.info({title: `Notification ${i + 1}`, message: "Click close all to dismiss", position: "bottom-right", duration: 0})
                 }
-            };
-            const closeAll = () => KsNotification.closeAll();
-            return {show, closeAll};
+            }
+            const closeAll = () => KsNotification.closeAll()
+            return {show, closeAll}
         },
         template: `
             <div style="padding:24px;display:flex;gap:12px">
@@ -149,4 +149,4 @@ export const CloseAll: Story = {
             </div>
         `,
     }),
-};
+}

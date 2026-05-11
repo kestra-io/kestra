@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import {ElOption, ElTag} from "element-plus";
-import {within, userEvent, expect} from "storybook/test";
-import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import {ElOption, ElTag} from "element-plus"
+import {within, userEvent, expect} from "storybook/test"
+import KsSelect from "../../../src/components/Form/KsSelect/KsSelect.vue"
 
 const meta: Meta<typeof KsSelect> = {
     title: "Components/Form/KsSelect",
@@ -28,8 +28,8 @@ const meta: Meta<typeof KsSelect> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsSelect>
 
 // ─── Shared setup helpers ─────────────────────────────────────────────────────
@@ -43,15 +43,15 @@ const STATUS_OPTIONS = [
     {value: "FAILED", label: "Failed"},
     {value: "KILLED", label: "Killed"},
     {value: "CANCELLED", label: "Cancelled", disabled: true},
-];
+]
 
-const LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"];
+const LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
 const TIMEZONE_OPTIONS = [
     "UTC", "America/New_York", "America/Los_Angeles",
     "Europe/Paris", "Europe/London", "Asia/Tokyo",
     "Asia/Shanghai", "Australia/Sydney",
-];
+]
 
 // ─── Stories ─────────────────────────────────────────────────────────────────
 
@@ -60,8 +60,8 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("");
-            return {args, value, STATUS_OPTIONS};
+            const value = ref("")
+            return {args, value, STATUS_OPTIONS}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -80,28 +80,28 @@ export const Default: Story = {
     }),
     args: {placeholder: "Select a status"},
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const trigger = canvas.getByRole("combobox");
-        await userEvent.click(trigger);
-        const dropdown = document.querySelector(".kel-select-dropdown");
-        await expect(dropdown).toBeTruthy();
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
+        await userEvent.click(trigger)
+        const dropdown = document.querySelector(".kel-select-dropdown")
+        await expect(dropdown).toBeTruthy()
         const runningOption = Array.from(document.querySelectorAll(".kel-select-dropdown__item")).find(
             (el) => el.textContent?.trim() === "Running",
-        ) as HTMLElement | undefined;
+        ) as HTMLElement | undefined
         if (runningOption) {
-            await userEvent.click(runningOption);
+            await userEvent.click(runningOption)
         }
-        await expect(trigger).toBeTruthy();
+        await expect(trigger).toBeTruthy()
     },
-};
+}
 
 /** Filterable – type to narrow options */
 export const Filterable: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("");
-            return {args, value, TIMEZONE_OPTIONS};
+            const value = ref("")
+            return {args, value, TIMEZONE_OPTIONS}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -114,21 +114,21 @@ export const Filterable: Story = {
     }),
     args: {placeholder: "Select timezone", filterable: true, clearable: true},
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const trigger = canvas.getByRole("combobox");
-        await userEvent.click(trigger);
-        const dropdown = document.querySelector(".kel-select-dropdown");
-        await expect(dropdown).toBeTruthy();
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
+        await userEvent.click(trigger)
+        const dropdown = document.querySelector(".kel-select-dropdown")
+        await expect(dropdown).toBeTruthy()
     },
-};
+}
 
 /** Multiple selection with collapseTags */
 export const Multiple: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref<string[]>([]);
-            return {args, value, STATUS_OPTIONS};
+            const value = ref<string[]>([])
+            return {args, value, STATUS_OPTIONS}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -141,32 +141,32 @@ export const Multiple: Story = {
     }),
     args: {multiple: true, collapseTags: true, filterable: true, clearable: true, placeholder: "Select statuses"},
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const trigger = canvas.getByRole("combobox");
-        await userEvent.click(trigger);
-        const options = document.querySelectorAll(".kel-select-dropdown__item");
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
+        await userEvent.click(trigger)
+        const options = document.querySelectorAll(".kel-select-dropdown__item")
         if (options.length >= 2) {
-            await userEvent.click(options[0] as HTMLElement);
-            await userEvent.click(options[1] as HTMLElement);
+            await userEvent.click(options[0] as HTMLElement)
+            await userEvent.click(options[1] as HTMLElement)
         }
-        const tags = canvasElement.querySelectorAll(".kel-tag");
-        await expect(tags.length).toBeGreaterThan(0);
+        const tags = canvasElement.querySelectorAll(".kel-tag")
+        await expect(tags.length).toBeGreaterThan(0)
     },
-};
+}
 
 /** Small size – as used in Pagination */
 export const SmallSize: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("25");
+            const value = ref("25")
             const options = [
                 {value: "10", label: "10 / page"},
                 {value: "25", label: "25 / page"},
                 {value: "50", label: "50 / page"},
                 {value: "100", label: "100 / page"},
-            ];
-            return {args, value, options};
+            ]
+            return {args, value, options}
         },
         template: `
             <div style="padding:24px;min-height:200px">
@@ -177,15 +177,15 @@ export const SmallSize: Story = {
         `,
     }),
     args: {size: "small"},
-};
+}
 
 /** Disabled state */
 export const Disabled: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("INFO");
-            return {args, value, LOG_LEVELS};
+            const value = ref("INFO")
+            return {args, value, LOG_LEVELS}
         },
         template: `
             <div style="padding:24px;min-height:200px">
@@ -197,20 +197,20 @@ export const Disabled: Story = {
     }),
     args: {disabled: true, placeholder: "Log level"},
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const trigger = canvas.getByRole("combobox");
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
         await expect(
             trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true",
-        ).toBe(true);
+        ).toBe(true)
     },
-};
+}
 
 /** Custom option content with coloured status dots */
 export const CustomOptionContent: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("");
+            const value = ref("")
             const statuses = [
                 {value: "CREATED",  color: "#6c757d"},
                 {value: "RUNNING",  color: "#0d6efd"},
@@ -218,8 +218,8 @@ export const CustomOptionContent: Story = {
                 {value: "WARNING",  color: "#ffc107"},
                 {value: "FAILED",   color: "#dc3545"},
                 {value: "KILLED",   color: "#6610f2"},
-            ];
-            return {args, value, statuses};
+            ]
+            return {args, value, statuses}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -236,22 +236,22 @@ export const CustomOptionContent: Story = {
         `,
     }),
     args: {filterable: true, clearable: true, placeholder: "Select status"},
-};
+}
 
 /** Prefix slot – as used in DateSelect */
 export const WithPrefixSlot: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("");
+            const value = ref("")
             const presets = [
                 {value: "5m",  label: "Last 5 minutes"},
                 {value: "1h",  label: "Last 1 hour"},
                 {value: "24h", label: "Last 24 hours"},
                 {value: "7d",  label: "Last 7 days"},
                 {value: "30d", label: "Last 30 days"},
-            ];
-            return {args, value, presets};
+            ]
+            return {args, value, presets}
         },
         template: `
             <div style="padding:24px;min-height:280px">
@@ -269,16 +269,16 @@ export const WithPrefixSlot: Story = {
         `,
     }),
     args: {clearable: true, placeholder: "Select time range"},
-};
+}
 
 /** allowCreate – type custom values – as used in TaskSubflowId */
 export const AllowCreate: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref<string | null>(null);
-            const flows = ["my-flow", "etl-pipeline", "daily-report", "sync-users"];
-            return {args, value, flows};
+            const value = ref<string | null>(null)
+            const flows = ["my-flow", "etl-pipeline", "daily-report", "sync-users"]
+            return {args, value, flows}
         },
         template: `
             <div style="padding:24px;min-height:280px;display:flex;flex-direction:column;gap:12px">
@@ -290,29 +290,29 @@ export const AllowCreate: Story = {
         `,
     }),
     args: {filterable: true, clearable: true, allowCreate: true, placeholder: "Select or type a flow id"},
-};
+}
 
 /** Remote search – as used in NamespaceSelect */
 export const RemoteSearch: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("");
-            const results = ref<string[]>([]);
-            const loading = ref(false);
+            const value = ref("")
+            const results = ref<string[]>([])
+            const loading = ref(false)
             const ALL_NS = [
                 "company.team.payments", "company.team.logistics",
                 "company.team.analytics", "company.data.raw",
                 "company.data.curated", "company.infra.monitoring",
-            ];
+            ]
             function remoteMethod(query: string) {
-                loading.value = true;
+                loading.value = true
                 setTimeout(() => {
-                    results.value = query ? ALL_NS.filter(ns => ns.includes(query)) : [];
-                    loading.value = false;
-                }, 300);
+                    results.value = query ? ALL_NS.filter(ns => ns.includes(query)) : []
+                    loading.value = false
+                }, 300)
             }
-            return {args, value, results, loading, remoteMethod};
+            return {args, value, results, loading, remoteMethod}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -324,22 +324,22 @@ export const RemoteSearch: Story = {
         `,
     }),
     args: {remote: true, filterable: true, clearable: true, remoteShowSuffix: true, placeholder: "Type to search namespaces…"},
-};
+}
 
 /** Custom tag slot – as used in NamespaceSelect */
 export const CustomTagSlot: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption, ElTag},
         setup() {
-            const value = ref<string[]>([]);
+            const value = ref<string[]>([])
             const namespaces = [
                 "company.team.payments", "company.team.logistics",
                 "company.team.analytics", "company.data.raw", "company.data.curated",
-            ];
+            ]
             function remove(ns: string) {
-                value.value = value.value.filter(v => v !== ns);
+                value.value = value.value.filter(v => v !== ns)
             }
-            return {args, value, namespaces, remove};
+            return {args, value, namespaces, remove}
         },
         template: `
             <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:12px">
@@ -359,16 +359,16 @@ export const CustomTagSlot: Story = {
         `,
     }),
     args: {multiple: true, filterable: true, clearable: true, placeholder: "Select namespaces"},
-};
+}
 
 /** Label slot – as used in Plugin.vue for version display */
 export const WithLabelSlot: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
         setup() {
-            const value = ref("0.22.0");
-            const versions = ["0.22.0", "0.21.3", "0.21.0", "0.20.5", "0.19.0"];
-            return {args, value, versions};
+            const value = ref("0.22.0")
+            const versions = ["0.22.0", "0.21.3", "0.21.0", "0.20.5", "0.19.0"]
+            return {args, value, versions}
         },
         template: `
             <div style="padding:24px;min-height:260px">
@@ -382,4 +382,4 @@ export const WithLabelSlot: Story = {
         `,
     }),
     args: {size: "small", placeholder: "Version"},
-};
+}

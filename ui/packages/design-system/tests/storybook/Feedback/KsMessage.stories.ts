@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {within, userEvent, expect} from "storybook/test";
-import {KsMessage} from "../../../src/components/Feedback/KsMessage";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {within, userEvent, expect} from "storybook/test"
+import {KsMessage} from "../../../src/components/Feedback/KsMessage"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta = {
     title: "Components/Feedback/KsMessage",
@@ -16,16 +16,16 @@ const meta: Meta = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj
 
 export const Success: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const show = () => KsMessage.success("Flow saved successfully");
-            return {show};
+            const show = () => KsMessage.success("Flow saved successfully")
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -34,19 +34,19 @@ export const Success: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const btn = canvas.getByRole("button");
-        await expect(btn).toBeTruthy();
-        await userEvent.click(btn);
+        const canvas = within(canvasElement)
+        const btn = canvas.getByRole("button")
+        await expect(btn).toBeTruthy()
+        await userEvent.click(btn)
     },
-};
+}
 
 export const Warning: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const show = () => KsMessage.warning("Resource quota approaching limit");
-            return {show};
+            const show = () => KsMessage.warning("Resource quota approaching limit")
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -54,14 +54,14 @@ export const Warning: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Error: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const show = () => KsMessage.error("File type not allowed");
-            return {show};
+            const show = () => KsMessage.error("File type not allowed")
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -69,14 +69,14 @@ export const Error: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Info: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const show = () => KsMessage.info("Next run is scheduled for 03:00 UTC");
-            return {show};
+            const show = () => KsMessage.info("Next run is scheduled for 03:00 UTC")
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -84,7 +84,7 @@ export const Info: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithOptions: Story = {
     name: "With options object",
@@ -97,8 +97,8 @@ export const WithOptions: Story = {
                     type: "error",
                     duration: 5000,
                     showClose: true,
-                });
-            return {show};
+                })
+            return {show}
         },
         template: `
             <div style="padding:24px">
@@ -106,19 +106,19 @@ export const WithOptions: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const AllTypes: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
             const showAll = () => {
-                KsMessage.success("Success!");
-                setTimeout(() => KsMessage.warning("Warning!"), 400);
-                setTimeout(() => KsMessage.info("Info!"), 800);
-                setTimeout(() => KsMessage.error("Error!"), 1200);
-            };
-            return {showAll};
+                KsMessage.success("Success!")
+                setTimeout(() => KsMessage.warning("Warning!"), 400)
+                setTimeout(() => KsMessage.info("Info!"), 800)
+                setTimeout(() => KsMessage.error("Error!"), 1200)
+            }
+            return {showAll}
         },
         template: `
             <div style="padding:24px">
@@ -126,4 +126,4 @@ export const AllTypes: Story = {
             </div>
         `,
     }),
-};
+}

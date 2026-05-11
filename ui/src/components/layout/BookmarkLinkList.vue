@@ -3,9 +3,9 @@
 </template>
 
 <script setup lang="ts">
-    import BookmarkLink from "./BookmarkLink.vue";
+    import BookmarkLink from "./BookmarkLink.vue"
 
     defineProps<{
         pages: {label?:string, path:string}[]
-    }>();
+    }>()
 </script>

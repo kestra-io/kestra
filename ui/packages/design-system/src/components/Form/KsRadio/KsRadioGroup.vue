@@ -12,27 +12,27 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRadioGroup} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElRadioGroup} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | number | boolean>();
+    const model = defineModel<string | number | boolean>()
 
     const props = defineProps<{
         disabled?: boolean
         size?: "large" | "default" | "small"
-    }>();
+    }>()
 
     const emit = defineEmits<{
         change: [value: any]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

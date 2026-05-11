@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsCard from "../../../src/components/Data/KsCard.vue";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsCard from "../../../src/components/Data/KsCard.vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsCard> = {
     title: "Components/Data/KsCard",
@@ -12,14 +12,14 @@ const meta: Meta<typeof KsCard> = {
     parameters: {
         docs: {description: {component: "KsCard is the Kestra design-system abstraction over `ElCard` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsCard>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsCard},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: `
             <div style="padding:24px;max-width:400px">
                 <ks-card v-bind="args">
@@ -30,7 +30,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const NoShadow: Story = {
     render: () => ({
@@ -43,7 +43,7 @@ export const NoShadow: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Shadow variants – always, hover, never */
 export const Shadow: Story = {
@@ -66,7 +66,7 @@ export const Shadow: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Simple card – no header */
 export const Simple: Story = {
@@ -80,7 +80,7 @@ export const Simple: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithFooter: Story = {
     render: () => ({
@@ -100,4 +100,4 @@ export const WithFooter: Story = {
             </div>
         `,
     }),
-};
+}

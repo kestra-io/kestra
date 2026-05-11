@@ -6,13 +6,13 @@
 </template>
 
 <script setup lang="ts">
-    import LockIcon from "vue-material-design-icons/LockOutline.vue";
+    import LockIcon from "vue-material-design-icons/LockOutline.vue"
     defineProps({
         enable: {
             type: Boolean,
             default: false,
         },
-    });
+    })
 </script>
 
 <style scoped lang="scss">

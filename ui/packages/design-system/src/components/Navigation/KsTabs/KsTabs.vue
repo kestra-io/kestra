@@ -12,27 +12,27 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {ElTabs} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {computed} from "vue"
+    import {ElTabs} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string>();
+    const model = defineModel<string>()
 
     const props = defineProps<{
         type?: "" | "card" | "border-card" | "box"
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
     const type = computed(() =>
         (props.type === "box" ? "" : props.type),
-    );
+    )
 
-    const filteredProps = useFilteredProps(props, ["type"]);
+    const filteredProps = useFilteredProps(props, ["type"])
 </script>
 
 <style lang="scss">

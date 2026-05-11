@@ -13,14 +13,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdown} from "element-plus";
+    import {ElDropdown} from "element-plus"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     defineSlots<{
         default?(): unknown
         dropdown?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

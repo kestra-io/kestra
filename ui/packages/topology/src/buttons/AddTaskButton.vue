@@ -5,13 +5,13 @@
 </template>
 
 <script setup lang="ts">
-    import Plus from "vue-material-design-icons/Plus.vue";
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     defineOptions({
         name: "AddTaskButton",
-    });
+    })
 
-    defineProps<{addTask?: boolean}>();
+    defineProps<{addTask?: boolean}>()
 </script>
 
 <style scoped lang="scss">

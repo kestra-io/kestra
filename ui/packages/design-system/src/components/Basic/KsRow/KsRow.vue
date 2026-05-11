@@ -7,22 +7,22 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRow} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElRow} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         gutter?: number
         justify?: "start" | "end" | "center" | "space-around" | "space-between" | "space-evenly"
         align?: "top" | "middle" | "bottom"
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

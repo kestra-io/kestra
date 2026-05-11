@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsSegmented from "../../../src/components/Data/KsSegmented.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsSegmented from "../../../src/components/Data/KsSegmented.vue"
 
 const meta: Meta<typeof KsSegmented> = {
     title: "Components/Data/KsSegmented",
@@ -14,17 +14,17 @@ const meta: Meta<typeof KsSegmented> = {
     parameters: {
         docs: {description: {component: "KsSegmented is the Kestra design-system abstraction over `ElSegmented` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsSegmented>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsSegmented},
         setup() {
-            const value = ref("daily");
-            const options = ["daily", "weekly", "monthly"];
-            return {args, value, options};
+            const value = ref("daily")
+            const options = ["daily", "weekly", "monthly"]
+            return {args, value, options}
         },
         template: `
             <div style="padding:24px">
@@ -33,19 +33,19 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithObjectOptions: Story = {
     render: () => ({
         components: {KsSegmented},
         setup() {
-            const value = ref("list");
+            const value = ref("list")
             const options = [
                 {label: "List View", value: "list"},
                 {label: "Grid View", value: "grid"},
                 {label: "Table View", value: "table", disabled: true},
-            ];
-            return {value, options};
+            ]
+            return {value, options}
         },
         template: `
             <div style="padding:24px">
@@ -54,13 +54,13 @@ export const WithObjectOptions: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Sizes: Story = {
     render: () => ({
         components: {KsSegmented},
         setup() {
-            return {v1: ref("a"), v2: ref("a"), v3: ref("a")};
+            return {v1: ref("a"), v2: ref("a"), v3: ref("a")}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
@@ -70,21 +70,21 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Disabled – entire control or individual options */
 export const Disabled: Story = {
     render: () => ({
         components: {KsSegmented},
         setup() {
-            const v1 = ref("b");
-            const v2 = ref("list");
+            const v1 = ref("b")
+            const v2 = ref("list")
             const partialOptions = [
                 {label: "List", value: "list"},
                 {label: "Grid", value: "grid", disabled: true},
                 {label: "Table", value: "table"},
-            ];
-            return {v1, v2, partialOptions};
+            ]
+            return {v1, v2, partialOptions}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
@@ -99,16 +99,16 @@ export const Disabled: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Block: Story = {
     render: () => ({
         components: {KsSegmented},
-        setup() { return {value: ref("b")}; },
+        setup() { return {value: ref("b")} },
         template: `
             <div style="padding:24px;width:300px">
                 <ks-segmented v-model="value" :options="['a', 'b', 'c']" block />
             </div>
         `,
     }),
-};
+}

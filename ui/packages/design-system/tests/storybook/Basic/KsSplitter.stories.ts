@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {within, expect} from "storybook/test";
-import KsSplitter from "../../../src/components/Basic/KsSplitter/KsSplitter.vue";
-import KsSplitterPanel from "../../../src/components/Basic/KsSplitter/KsSplitterPanel.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {within, expect} from "storybook/test"
+import KsSplitter from "../../../src/components/Basic/KsSplitter/KsSplitter.vue"
+import KsSplitterPanel from "../../../src/components/Basic/KsSplitter/KsSplitterPanel.vue"
 
 const meta: Meta<typeof KsSplitter> = {
     title: "Components/Basic/KsSplitter",
@@ -16,8 +16,8 @@ const meta: Meta<typeof KsSplitter> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsSplitter>
 
 /** Default horizontal splitter */
@@ -44,11 +44,11 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        await expect(canvas.getByText("Left Panel")).toBeTruthy();
-        await expect(canvas.getByText("Right Panel")).toBeTruthy();
+        const canvas = within(canvasElement)
+        await expect(canvas.getByText("Left Panel")).toBeTruthy()
+        await expect(canvas.getByText("Right Panel")).toBeTruthy()
     },
-};
+}
 
 /** Vertical splitter */
 export const Vertical: Story = {
@@ -73,7 +73,7 @@ export const Vertical: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Three-panel layout */
 export const ThreePanels: Story = {
@@ -101,7 +101,7 @@ export const ThreePanels: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Size constraints – panels respect min and max */
 export const SizeConstraints: Story = {
@@ -124,7 +124,7 @@ export const SizeConstraints: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Non-resizable panel */
 export const NonResizable: Story = {
@@ -147,7 +147,7 @@ export const NonResizable: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Nested splitters */
 export const Nested: Story = {
@@ -179,4 +179,4 @@ export const Nested: Story = {
             </div>
         `,
     }),
-};
+}

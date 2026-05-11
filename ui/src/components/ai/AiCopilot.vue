@@ -263,35 +263,35 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
-    import {Loading} from "@element-plus/icons-vue";
-    import AlertBox from "vue-material-design-icons/AlertBox.vue";
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
-    import Close from "vue-material-design-icons/Close.vue";
-    import Check from "vue-material-design-icons/Check.vue";
-    import ArrowUp from "vue-material-design-icons/ArrowUp.vue";
-    import Microphone from "vue-material-design-icons/Microphone.vue";
-    import kestraIcon from "../../assets/icon.svg";
-    import AiIcon from "./AiIcon.vue";
-    import {useAiStore} from "../../stores/ai";
-    import {useApiStore} from "../../stores/api";
-    import type {InputInstance} from "@kestra-io/design-system";
-    import {useMiscStore} from "override/stores/misc";
-    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants";
+    import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
+    import {Loading} from "@element-plus/icons-vue"
+    import AlertBox from "vue-material-design-icons/AlertBox.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Close from "vue-material-design-icons/Close.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import ArrowUp from "vue-material-design-icons/ArrowUp.vue"
+    import Microphone from "vue-material-design-icons/Microphone.vue"
+    import kestraIcon from "../../assets/icon.svg"
+    import AiIcon from "./AiIcon.vue"
+    import {useAiStore} from "../../stores/ai"
+    import {useApiStore} from "../../stores/api"
+    import type {InputInstance} from "@kestra-io/design-system"
+    import {useMiscStore} from "override/stores/misc"
+    import {aiGenerationTypes, AiGenerationType} from "../../utils/constants"
 
-    const aiStore = useAiStore();
-    const apiStore = useApiStore();
+    const aiStore = useAiStore()
+    const apiStore = useApiStore()
 
-    const promptInput = ref<InputInstance>();
-    const initialPromptBeforeListening = ref("");
-    const waitingForReply = ref(false);
+    const promptInput = ref<InputInstance>()
+    const initialPromptBeforeListening = ref("")
+    const waitingForReply = ref(false)
 
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
         createFlowDirectly: [string];
         onboardingPromptDiverged: [];
-    }>();
+    }>()
 
     const props = defineProps<{
         flow: string,
@@ -304,141 +304,141 @@
         onboardingExamples?: {prompt: string; flow: string}[],
         redirectOnUnchangedPrompt?: boolean,
         selectedFromTag?: boolean,
-    }>();
+    }>()
 
     const prompt = ref(
         props.onboarding ? props.initialPrompt ?? "" : sessionStorage.getItem("kestra-ai-prompt") ?? "",
-    );
+    )
 
-    const error = ref<string | undefined>(undefined);
+    const error = ref<string | undefined>(undefined)
 
-    const QUOTA_STORAGE_KEY = "kestra-ai-remaining-quota";
-    const QUOTA_DATE_KEY = "kestra-ai-remaining-quota-date";
-    const todayUTC = new Date().toISOString().slice(0, 10);
+    const QUOTA_STORAGE_KEY = "kestra-ai-remaining-quota"
+    const QUOTA_DATE_KEY = "kestra-ai-remaining-quota-date"
+    const todayUTC = new Date().toISOString().slice(0, 10)
 
     function loadStoredQuota(): string | undefined {
-        const date = sessionStorage.getItem(QUOTA_DATE_KEY);
+        const date = sessionStorage.getItem(QUOTA_DATE_KEY)
         if (date !== todayUTC) {
-            sessionStorage.removeItem(QUOTA_STORAGE_KEY);
-            sessionStorage.removeItem(QUOTA_DATE_KEY);
-            return undefined;
+            sessionStorage.removeItem(QUOTA_STORAGE_KEY)
+            sessionStorage.removeItem(QUOTA_DATE_KEY)
+            return undefined
         }
-        return sessionStorage.getItem(QUOTA_STORAGE_KEY) ?? undefined;
+        return sessionStorage.getItem(QUOTA_STORAGE_KEY) ?? undefined
     }
 
-    const remainingQuota = ref<string | undefined>(loadStoredQuota());
+    const remainingQuota = ref<string | undefined>(loadStoredQuota())
 
     function setRemainingQuota(value: string | undefined) {
-        remainingQuota.value = value;
+        remainingQuota.value = value
         if (value != null) {
-            sessionStorage.setItem(QUOTA_STORAGE_KEY, value);
-            sessionStorage.setItem(QUOTA_DATE_KEY, todayUTC);
+            sessionStorage.setItem(QUOTA_STORAGE_KEY, value)
+            sessionStorage.setItem(QUOTA_DATE_KEY, todayUTC)
         } else {
-            sessionStorage.removeItem(QUOTA_STORAGE_KEY);
-            sessionStorage.removeItem(QUOTA_DATE_KEY);
+            sessionStorage.removeItem(QUOTA_STORAGE_KEY)
+            sessionStorage.removeItem(QUOTA_DATE_KEY)
         }
     }
 
-    const apiFeedback = computed(() => !!error.value || (remainingQuota.value != null && props.onboarding));
-    const onboardingPromptEdited = ref(false);
+    const apiFeedback = computed(() => !!error.value || (remainingQuota.value != null && props.onboarding))
+    const onboardingPromptEdited = ref(false)
 
-    const speechSupported = ref(false);
-    const isListening = ref(false);
-    const speechRecognition = ref<any | null>(null);
-    const basePrompt = ref("");
-    const internalWrite = ref(false);
+    const speechSupported = ref(false)
+    const isListening = ref(false)
+    const speechRecognition = ref<any | null>(null)
+    const basePrompt = ref("")
+    const internalWrite = ref(false)
 
     // Waveform visualizer
-    const wavesContainer = ref<HTMLElement | null>(null);
-    const BAR_WIDTH = 4; // ~2.5px bar + 1.5px gap
-    const volumeBuffer = ref<number[]>([]);
-    let barCount = 0;
-    let audioContext: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    let animationFrame: number | null = null;
-    let stream: MediaStream | null = null;
+    const wavesContainer = ref<HTMLElement | null>(null)
+    const BAR_WIDTH = 4 // ~2.5px bar + 1.5px gap
+    const volumeBuffer = ref<number[]>([])
+    let barCount = 0
+    let audioContext: AudioContext | null = null
+    let analyser: AnalyserNode | null = null
+    let animationFrame: number | null = null
+    let stream: MediaStream | null = null
 
-    const MIN_BAR_H = 2;
-    const MAX_BAR_H = 28;
+    const MIN_BAR_H = 2
+    const MAX_BAR_H = 28
 
     function barHeight(val: number): number {
         // Silent or near-silent: render as a tiny 2px dot (dotted baseline look)
-        if (val < 8) return MIN_BAR_H;
+        if (val < 8) return MIN_BAR_H
         // Active speech: scale quadratically for punchy dynamics
-        const n = (val - 8) / 247; // normalize 8-255 to 0-1
-        return MIN_BAR_H + n * n * (MAX_BAR_H - MIN_BAR_H);
+        const n = (val - 8) / 247 // normalize 8-255 to 0-1
+        return MIN_BAR_H + n * n * (MAX_BAR_H - MIN_BAR_H)
     }
 
-    const miscStore = useMiscStore();
-    const configured = computed(() => miscStore.configs?.isAiEnabled);
-    const highlightedAiConfiguration = "```yaml\nkestra:\n  ai:\n    type: \"gemini\"...\n```";
+    const miscStore = useMiscStore()
+    const configured = computed(() => miscStore.configs?.isAiEnabled)
+    const highlightedAiConfiguration = "```yaml\nkestra:\n  ai:\n    type: \"gemini\"...\n```"
     const effectiveFlowYaml = computed(() => {
         if (!props.onboarding) {
-            return props.flow;
+            return props.flow
         }
 
-        const normalizedPrompt = prompt.value.trim();
+        const normalizedPrompt = prompt.value.trim()
         if (!normalizedPrompt) {
-            return undefined;
+            return undefined
         }
 
         const matchedExample = props.onboardingExamples?.find(
             (example) => example.prompt.trim() === normalizedPrompt,
-        );
+        )
 
-        return matchedExample?.flow;
-    });
+        return matchedExample?.flow
+    })
 
-    const providers = ref<{id: string, displayName: string}[]>([]);
-    const selectedProvider = ref<string | undefined>(undefined);
+    const providers = ref<{id: string, displayName: string}[]>([])
+    const selectedProvider = ref<string | undefined>(undefined)
 
     async function fetchProviders() {
         try {
-            const list = await aiStore.fetchProviders();
-            providers.value = list ?? [];
+            const list = await aiStore.fetchProviders()
+            providers.value = list ?? []
             if (providers.value.length > 0) {
-                selectedProvider.value = providers.value[0].id;
+                selectedProvider.value = providers.value[0].id
             }
         } catch (e: any) {
-            error.value = e.response?.data?.message as string ?? e;
+            error.value = e.response?.data?.message as string ?? e
         }
     }
 
     function onProviderChange(value: string) {
-        selectedProvider.value = value;
+        selectedProvider.value = value
     }
 
     function focusPrompt() {
         nextTick(() => {
-            promptInput.value?.focus?.();
-        });
+            promptInput.value?.focus?.()
+        })
     }
 
     async function startAudioAnalysis() {
         try {
             // Compute how many bars fit in the container
-            await nextTick();
-            const containerWidth = wavesContainer.value?.clientWidth ?? 600;
-            barCount = Math.floor(containerWidth / BAR_WIDTH);
-            volumeBuffer.value = Array(barCount).fill(0);
+            await nextTick()
+            const containerWidth = wavesContainer.value?.clientWidth ?? 600
+            barCount = Math.floor(containerWidth / BAR_WIDTH)
+            volumeBuffer.value = Array(barCount).fill(0)
 
-            stream = await navigator.mediaDevices.getUserMedia({audio: true});
-            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
+            stream = await navigator.mediaDevices.getUserMedia({audio: true})
+            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            analyser = audioContext.createAnalyser()
+            const source = audioContext.createMediaStreamSource(stream)
 
-            analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.3;
-            source.connect(analyser);
+            analyser.fftSize = 256
+            analyser.smoothingTimeConstant = 0.3
+            source.connect(analyser)
 
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            let lastPush = 0;
-            const PUSH_INTERVAL = 50; // ms between new bars — controls scroll speed
-            let peakSincePush = 0;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount)
+            let lastPush = 0
+            const PUSH_INTERVAL = 50 // ms between new bars — controls scroll speed
+            let peakSincePush = 0
 
             const update = (now: number) => {
-                if (!analyser) return;
-                analyser.getByteFrequencyData(dataArray);
+                if (!analyser) return
+                analyser.getByteFrequencyData(dataArray)
 
                 // Sample several speech-relevant frequency bins and take the max
                 const sample = Math.max(
@@ -447,44 +447,44 @@
                     dataArray[5] ?? 0,
                     dataArray[8] ?? 0,
                     dataArray[12] ?? 0,
-                );
+                )
 
                 // Track peak between pushes so we don't miss transients
-                peakSincePush = Math.max(peakSincePush, sample);
+                peakSincePush = Math.max(peakSincePush, sample)
 
                 // Only push a new bar every PUSH_INTERVAL ms
                 if (now - lastPush >= PUSH_INTERVAL) {
-                    const buf = volumeBuffer.value;
-                    buf.push(peakSincePush);
+                    const buf = volumeBuffer.value
+                    buf.push(peakSincePush)
                     if (buf.length > barCount) {
-                        buf.shift();
+                        buf.shift()
                     }
-                    peakSincePush = 0;
-                    lastPush = now;
+                    peakSincePush = 0
+                    lastPush = now
                 }
 
-                animationFrame = requestAnimationFrame(update);
-            };
-            animationFrame = requestAnimationFrame(update);
+                animationFrame = requestAnimationFrame(update)
+            }
+            animationFrame = requestAnimationFrame(update)
         } catch (err) {
-            console.error("Audio analysis failed", err);
+            console.error("Audio analysis failed", err)
         }
     }
 
     function stopAudioAnalysis() {
-        if (animationFrame) cancelAnimationFrame(animationFrame);
-        if (stream) stream.getTracks().forEach(track => track.stop());
-        if (audioContext) audioContext.close();
-        volumeBuffer.value = [];
-        barCount = 0;
+        if (animationFrame) cancelAnimationFrame(animationFrame)
+        if (stream) stream.getTracks().forEach(track => track.stop())
+        if (audioContext) audioContext.close()
+        volumeBuffer.value = []
+        barCount = 0
     }
 
     async function submitPrompt() {
-        if (!prompt.value.trim()) return;
-        error.value = undefined;
+        if (!prompt.value.trim()) return
+        error.value = undefined
         // Blur before disabling to avoid the textarea focus ring flashing on submit.
-        const activeElement = document.activeElement as HTMLElement | null;
-        activeElement?.blur?.();
+        const activeElement = document.activeElement as HTMLElement | null
+        activeElement?.blur?.()
 
         if (
             props.onboarding &&
@@ -492,21 +492,21 @@
             props.redirectOnUnchangedPrompt &&
             !onboardingPromptEdited.value
         ) {
-            waitingForReply.value = true;
-            await nextTick();
-            emit("createFlowDirectly", props.flow);
-            return;
+            waitingForReply.value = true
+            await nextTick()
+            emit("createFlowDirectly", props.flow)
+            return
         }
 
-        waitingForReply.value = true;
+        waitingForReply.value = true
         apiStore.posthogEvents({
             type: "AI_COPILOT",
             action: "prompt_submit",
             ai_copilot_configured: configured.value === true,
-        });
-        let aiResult;
+        })
+        let aiResult
         try {
-            const type = props.generationType ?? aiGenerationTypes.FLOW;
+            const type = props.generationType ?? aiGenerationTypes.FLOW
             if (type === aiGenerationTypes.FLOW) {
                 aiResult = await aiStore.generateFlow({
                     userPrompt: prompt.value,
@@ -515,7 +515,7 @@
                     namespace: props.namespace,
                     type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
-                });
+                })
             } else {
                 aiResult = await aiStore.generate({
                     userPrompt: prompt.value,
@@ -523,126 +523,126 @@
                     providerId: selectedProvider.value,
                     type: type,
                     ...(effectiveFlowYaml.value ? {yaml: effectiveFlowYaml.value} : {}),
-                });
+                })
             }
-            setRemainingQuota(aiResult.remainingQuota);
-            emit("generatedYaml", aiResult.data);
+            setRemainingQuota(aiResult.remainingQuota)
+            emit("generatedYaml", aiResult.data)
         } catch (e: any) {
-            error.value = e.response?.data?.message ?? e.message;
+            error.value = e.response?.data?.message ?? e.message
         } finally {
-            waitingForReply.value = false;
+            waitingForReply.value = false
         }
     }
 
     function stopAndValidateVoice() {
-        speechRecognition.value?.stop();
-        isListening.value = false;
-        stopAudioAnalysis();
-        focusPrompt();
+        speechRecognition.value?.stop()
+        isListening.value = false
+        stopAudioAnalysis()
+        focusPrompt()
     }
 
     function cancelVoice() {
-        speechRecognition.value?.abort();
-        isListening.value = false;
-        stopAudioAnalysis();
-        internalWrite.value = true;
-        prompt.value = initialPromptBeforeListening.value;
-        nextTick(() => (internalWrite.value = false));
-        focusPrompt();
+        speechRecognition.value?.abort()
+        isListening.value = false
+        stopAudioAnalysis()
+        internalWrite.value = true
+        prompt.value = initialPromptBeforeListening.value
+        nextTick(() => (internalWrite.value = false))
+        focusPrompt()
     }
 
     function toggleVoiceInput() {
         if (isListening.value) {
-            stopAndValidateVoice();
+            stopAndValidateVoice()
         } else {
-            initialPromptBeforeListening.value = prompt.value;
-            basePrompt.value = prompt.value.trim();
-            isListening.value = true;
-            volumeBuffer.value = []; // Reset on click
-            startRecognitionSafely();
-            startAudioAnalysis();
+            initialPromptBeforeListening.value = prompt.value
+            basePrompt.value = prompt.value.trim()
+            isListening.value = true
+            volumeBuffer.value = [] // Reset on click
+            startRecognitionSafely()
+            startAudioAnalysis()
         }
     }
 
     function startRecognitionSafely() {
         try {
-            speechRecognition.value?.abort();
+            speechRecognition.value?.abort()
         } catch {
             // intentionally empty: abort may throw if recognition is not started
         }
         setTimeout(() => {
             try {
-                speechRecognition.value?.start();
+                speechRecognition.value?.start()
             } catch {
-                isListening.value = false;
-                stopAudioAnalysis();
+                isListening.value = false
+                stopAudioAnalysis()
             }
-        }, 100);
+        }, 100)
     }
 
     onMounted(() => {
-        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
         if (SR) {
-            speechSupported.value = true;
-            const rec = new SR();
-            rec.continuous = true;
-            rec.interimResults = true;
+            speechSupported.value = true
+            const rec = new SR()
+            rec.continuous = true
+            rec.interimResults = true
 
             rec.onresult = (event: any) => {
-                let interim = "";
+                let interim = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const res = event.results[i];
-                    if (res.isFinal) basePrompt.value += (basePrompt.value ? " " : "") + res[0].transcript;
-                    else interim = res[0].transcript;
+                    const res = event.results[i]
+                    if (res.isFinal) basePrompt.value += (basePrompt.value ? " " : "") + res[0].transcript
+                    else interim = res[0].transcript
                 }
-                internalWrite.value = true;
-                prompt.value = (basePrompt.value + (interim ? " " + interim : "")).trim();
-                nextTick(() => (internalWrite.value = false));
-            };
+                internalWrite.value = true
+                prompt.value = (basePrompt.value + (interim ? " " + interim : "")).trim()
+                nextTick(() => (internalWrite.value = false))
+            }
 
             rec.onend = () => {
-                if (isListening.value) startRecognitionSafely();
-            };
-            speechRecognition.value = rec;
+                if (isListening.value) startRecognitionSafely()
+            }
+            speechRecognition.value = rec
         }
-        focusPrompt();
-    });
+        focusPrompt()
+    })
 
     onMounted(async () => {
-        await fetchProviders();
-    });
+        await fetchProviders()
+    })
 
     onUnmounted(() => {
-        stopAudioAnalysis();
-    });
+        stopAudioAnalysis()
+    })
 
     watch(
         () => [props.onboarding, props.initialPrompt] as const,
         ([onboarding, initialPrompt]) => {
             if (onboarding) {
-                prompt.value = initialPrompt ?? "";
-                onboardingPromptEdited.value = false;
+                prompt.value = initialPrompt ?? ""
+                onboardingPromptEdited.value = false
             }
         },
         {immediate: true},
-    );
+    )
 
     watch(
         prompt,
         (value) => {
             if (!props.onboarding) {
-                sessionStorage.setItem("kestra-ai-prompt", value);
+                sessionStorage.setItem("kestra-ai-prompt", value)
             }
 
             if (props.onboarding) {
-                const hasDiverged = value.trim() !== (props.initialPrompt ?? "").trim();
+                const hasDiverged = value.trim() !== (props.initialPrompt ?? "").trim()
                 if (!onboardingPromptEdited.value && hasDiverged) {
-                    emit("onboardingPromptDiverged");
+                    emit("onboardingPromptDiverged")
                 }
-                onboardingPromptEdited.value = hasDiverged;
+                onboardingPromptEdited.value = hasDiverged
             }
         },
-    );
+    )
 </script>
 
 <style scoped lang="scss">

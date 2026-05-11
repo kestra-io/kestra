@@ -7,13 +7,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdownMenu} from "element-plus";
+    import {ElDropdownMenu} from "element-plus"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

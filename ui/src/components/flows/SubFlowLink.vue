@@ -5,10 +5,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {useRouter, useRoute} from "vue-router";
-    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue";
+    import {computed} from "vue"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {useRouter, useRoute} from "vue-router"
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
     const props = withDefaults(defineProps<{
         component?: string;
@@ -24,19 +24,19 @@
         executionId: undefined,
         namespace: undefined,
         flowId: undefined,
-    });
+    })
 
-    const router = useRouter();
-    const route = useRoute();
-    const executionsStore = useExecutionsStore();
+    const router = useRouter()
+    const route = useRoute()
+    const executionsStore = useExecutionsStore()
 
     const routeName = computed(() => {
-        return props.executionId ? "executions/update" : "flows/update";
-    });
+        return props.executionId ? "executions/update" : "flows/update"
+    })
 
     const tab = computed(() => {
-        return props.executionId ? props.tabExecution : props.tabFlow;
-    });
+        return props.executionId ? props.tabExecution : props.tabFlow
+    })
 
     interface Execution {
         id: string;
@@ -51,15 +51,15 @@
                 flowId: execution.flowId, 
                 id: execution.id, 
                 tab: tab.value,
-            };
+            }
         } else {
             return {
                 namespace: props.namespace, 
                 id: props.flowId, 
                 tab: tab.value,
-            };
+            }
         }
-    };
+    }
 
     const click = () => {
         if (props.executionId && props.namespace && props.flowId) {
@@ -72,17 +72,17 @@
                     tab: tab.value,
                     tenant: route.params.tenant,
                 },
-            });
+            })
         } else if (props.executionId) {
             executionsStore
                 .loadExecution({id: props.executionId})
                 .then(value => {
-                    executionsStore.execution = value;
-                    router.push({name: routeName.value, params: params(value)});
-                });
+                    executionsStore.execution = value
+                    router.push({name: routeName.value, params: params(value)})
+                })
         } else {
-            router.push({name: routeName.value, params: params()});
+            router.push({name: routeName.value, params: params()})
         }
-    };
+    }
 
 </script>

@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsTabs from "../../../src/components/Navigation/KsTabs/KsTabs.vue";
-import KsTabPane from "../../../src/components/Navigation/KsTabs/KsTabPane.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsTabs from "../../../src/components/Navigation/KsTabs/KsTabs.vue"
+import KsTabPane from "../../../src/components/Navigation/KsTabs/KsTabPane.vue"
 
 const meta: Meta<typeof KsTabs> = {
     title: "Components/Navigation/KsTabs",
@@ -13,16 +13,16 @@ const meta: Meta<typeof KsTabs> = {
     parameters: {
         docs: {description: {component: "KsTabs is the Kestra design-system abstraction over `ElTabs` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsTabs>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsTabs, KsTabPane},
         setup() {
-            const active = ref("overview");
-            return {args, active};
+            const active = ref("overview")
+            return {args, active}
         },
         template: `
             <div style="padding:24px">
@@ -35,12 +35,12 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Box: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("tab1")}; },
+        setup() { return {active: ref("tab1")} },
         template: `
             <div style="padding:24px">
                 <ks-tabs v-model="active" type="box">
@@ -56,12 +56,12 @@ export const Box: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Card: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("tab1")}; },
+        setup() { return {active: ref("tab1")} },
         template: `
             <div style="padding:24px">
                 <ks-tabs v-model="active" type="card">
@@ -73,13 +73,13 @@ export const Card: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Tab position – top, right, bottom, left */
 export const TabPosition: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("a"), active2: ref("a"), active3: ref("a"), active4: ref("a")}; },
+        setup() { return {active: ref("a"), active2: ref("a"), active3: ref("a"), active4: ref("a")} },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:32px">
                 <div>
@@ -99,13 +99,13 @@ export const TabPosition: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom tab label via slot */
 export const CustomLabel: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("flows")}; },
+        setup() { return {active: ref("flows")} },
         template: `
             <div style="padding:24px">
                 <ks-tabs v-model="active">
@@ -129,12 +129,12 @@ export const CustomLabel: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const BorderCard: Story = {
     render: () => ({
         components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("tab1")}; },
+        setup() { return {active: ref("tab1")} },
         template: `
             <div style="padding:24px">
                 <ks-tabs v-model="active" type="border-card">
@@ -144,4 +144,4 @@ export const BorderCard: Story = {
             </div>
         `,
     }),
-};
+}

@@ -48,110 +48,110 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import Close from "vue-material-design-icons/Close.vue";
-    import * as Utils from "../../utils/utils";
-    import {usePlaygroundStore} from "../../stores/playground";
-    import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import Close from "vue-material-design-icons/Close.vue"
+    import * as Utils from "../../utils/utils"
+    import {usePlaygroundStore} from "../../stores/playground"
+    import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
-    import FlowPlayground from "./FlowPlayground.vue";
-    import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
-    import KeyShortcuts from "../inputs/KeyShortcuts.vue";
-    import NoCode from "../no-code/NoCode.vue";
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
-    import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
-    import {useTopologyPanels} from "./useTopologyPanels";
-    import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
+    import FlowPlayground from "./FlowPlayground.vue"
+    import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue"
+    import KeyShortcuts from "../inputs/KeyShortcuts.vue"
+    import NoCode from "../no-code/NoCode.vue"
+    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
+    import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
+    import {useTopologyPanels} from "./useTopologyPanels"
+    import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
 
-    import {useNoCodePanelsFull} from "./useNoCodePanels";
-    import {useFlowStore} from "../../stores/flow";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {trackTabOpen} from "../../utils/tabTracking";
-    import {Panel, Tab} from "../../utils/multiPanelTypes";
-    import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
+    import {useNoCodePanelsFull} from "./useNoCodePanels"
+    import {useFlowStore} from "../../stores/flow"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {trackTabOpen} from "../../utils/tabTracking"
+    import {Panel, Tab} from "../../utils/multiPanelTypes"
+    import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue"
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.uid)
             // when the flow file is dirty all the nocode tabs get splashed
-            || element.uid.startsWith("nocode-");
+            || element.uid.startsWith("nocode-")
     }
 
-    const RawNoCode = markRaw(NoCode);
+    const RawNoCode = markRaw(NoCode)
 
-    const onboardingV2Store = useOnboardingV2Store();
-    const flowStore = useFlowStore();
-    const {showKeyShortcuts} = useKeyShortcuts();
+    const onboardingV2Store = useOnboardingV2Store()
+    const flowStore = useFlowStore()
+    const {showKeyShortcuts} = useKeyShortcuts()
 
-    const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`);
-    const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value);
+    const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`)
+    const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value)
 
     watch(() => flowStore.isCreating, (isCreating) => {
         if (!isCreating) {
             if (isGuidedCodeOnly.value && alwaysSaveKey.value) {
-                localStorage.removeItem(alwaysSaveKey.value);
+                localStorage.removeItem(alwaysSaveKey.value)
             } else {
-                editorView.value?.saveState(alwaysSaveKey.value);
+                editorView.value?.saveState(alwaysSaveKey.value)
             }
         }
-    });
+    })
 
-    const route = useRoute();
-    const router = useRouter();
-    const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null);
-    const showExecuteHint = ref(true);
+    const route = useRoute()
+    const router = useRouter()
+    const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
+    const showExecuteHint = ref(true)
     const isOnboardingCreate = computed(() =>
         route.name === "flows/create" && route.query.onboardingPreset === "true",
-    );
+    )
 
     onMounted(() => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
-            if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code");
-            else editorView.value?.focusTab("code");
+            if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
+            else editorView.value?.focusTab("code")
         }
 
         if(route.query.createTrigger === "true"){
             if(!editorView.value?.openTabs.includes("nocode")) {
-                editorView.value?.setTabValue("nocode");
+                editorView.value?.setTabValue("nocode")
             } else {
-                editorView.value?.focusTab("nocode");
+                editorView.value?.focusTab("nocode")
             }
 
-            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
+            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))))
             const blockSchemaPath = [
                 pluginsStore.flowSchema?.$ref, "properties", "triggers", "items",
-            ].join("/");
-            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            ].join("/")
+            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath)
 
-            const {createTrigger: _, ...query} = route.query;
-            router.replace({...route, query});
+            const {createTrigger: _, ...query} = route.query
+            router.replace({...route, query})
         }
-    });
+    })
 
-    const pluginsStore = usePluginsStore();
-    const playgroundStore = usePlaygroundStore();
+    const pluginsStore = usePluginsStore()
+    const playgroundStore = usePlaygroundStore()
 
-    const playgroundMode = computed(() => playgroundStore.enabled);
+    const playgroundMode = computed(() => playgroundStore.enabled)
 
     onUnmounted(() => {
-        playgroundStore.enabled = false;
-        playgroundStore.clearExecutions();
-    });
+        playgroundStore.enabled = false
+        playgroundStore.clearExecutions()
+    })
 
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
-            showKeyShortcuts();
-            return false;
+            showKeyShortcuts()
+            return false
         }
     }
 
-    useInitialFilesTabs(EDITOR_ELEMENTS);
+    useInitialFilesTabs(EDITOR_ELEMENTS)
 
     function cleanupNoCodeTabKey(key: string): string {
         // remove the number for "nocode-1234-" prefix from the key
-        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key;
+        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
     }
 
     function preSerializePanels(v:Panel[]){
@@ -159,61 +159,61 @@
             tabs: p.tabs.map(t => t.uid),
             activeTab: cleanupNoCodeTabKey(p.activeTab?.uid),
             size: p.size,
-        }));
+        }))
     }
 
     const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
         panel.tabs.some(tab => tab.dirty),
-    ));
+    ))
 
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
         editorElements: EDITOR_ELEMENTS,
         source: computed(() => flowStore.flowYaml),
-    });
+    })
 
     const isGuidedCodeOnly = computed(
         () => onboardingV2Store.isGuidedActive && onboardingV2Store.state.editorMode === "code_only",
-    );
+    )
     watch(isGuidedCodeOnly, (guided, wasGuided) => {
         if (guided && playgroundStore.enabled) {
-            playgroundStore.enabled = false;
+            playgroundStore.enabled = false
         }
         if (!guided && wasGuided && alwaysSaveKey.value) {
-            localStorage.removeItem(alwaysSaveKey.value);
+            localStorage.removeItem(alwaysSaveKey.value)
         }
-    }, {immediate: true});
-    const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS));
+    }, {immediate: true})
+    const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS))
 
-    flowStore.creationId = flowStore.creationId ?? Utils.uid();
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
-    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace));
+    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
 
-    useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab);
+    useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 
     watch(() => flowStore.haveChange, (dirty) => {
         for(const panel of panels.value){
             if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
-                panel.activeTab.dirty = dirty;
+                panel.activeTab.dirty = dirty
             }
             for(const tab of panel.tabs){
                 if(isTabFlowRelated(tab)){
-                    tab.dirty = dirty;
+                    tab.dirty = dirty
                 }
             }
         }
-    });
+    })
 
     // Track initial tabs opened while editing or creating flow.
-    let hasTrackedInitialTabs = false;
+    let hasTrackedInitialTabs = false
     watch(panels, (newPanels) => {
         if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {
-            hasTrackedInitialTabs = true;
-            const allTabs = newPanels.flatMap(panel => panel.tabs);
-            allTabs.forEach(tab => trackTabOpen(tab));
+            hasTrackedInitialTabs = true
+            const allTabs = newPanels.flatMap(panel => panel.tabs)
+            allTabs.forEach(tab => trackTabOpen(tab))
         }
-    }, {immediate: true});
+    }, {immediate: true})
 </script>
 
 <style lang="scss" scoped>

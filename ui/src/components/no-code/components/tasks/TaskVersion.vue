@@ -8,18 +8,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import InputText from "../inputs/InputText.vue";
+    import {computed} from "vue"
+    import InputText from "../inputs/InputText.vue"
 
-    import {useMiscStore} from "override/stores/misc";
-    const miscStore = useMiscStore();
+    import {useMiscStore} from "override/stores/misc"
+    const miscStore = useMiscStore()
     
-    const disabled = computed(() => miscStore.configs?.edition === "OSS"); 
+    const disabled = computed(() => miscStore.configs?.edition === "OSS") 
 
-    const modelValue = defineModel<string>({default: ""});
+    const modelValue = defineModel<string>({default: ""})
 
     defineOptions({
         name: "TaskVersion",
         inheritAttrs: false,
-    });
+    })
 </script>

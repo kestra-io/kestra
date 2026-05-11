@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsPagination from "../../../src/components/Data/KsPagination.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsPagination from "../../../src/components/Data/KsPagination.vue"
 
 const meta: Meta<typeof KsPagination> = {
     title: "Components/Data/KsPagination",
@@ -14,17 +14,17 @@ const meta: Meta<typeof KsPagination> = {
     parameters: {
         docs: {description: {component: "KsPagination is the Kestra design-system abstraction over `ElPagination` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsPagination>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsPagination},
         setup() {
-            const currentPage = ref(1);
-            const pageSize = ref(10);
-            return {args, currentPage, pageSize};
+            const currentPage = ref(1)
+            const pageSize = ref(10)
+            return {args, currentPage, pageSize}
         },
         template: `
             <div style="padding:24px">
@@ -39,12 +39,12 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithBackground: Story = {
     render: () => ({
         components: {KsPagination},
-        setup() { return {current: ref(1)}; },
+        setup() { return {current: ref(1)} },
         template: `
             <div style="padding:24px">
                 <ks-pagination
@@ -57,13 +57,13 @@ export const WithBackground: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Number of pagers – controls visible page buttons */
 export const PagerCount: Story = {
     render: () => ({
         components: {KsPagination},
-        setup() { return {current: ref(5)}; },
+        setup() { return {current: ref(5)} },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
                 <div>
@@ -77,16 +77,16 @@ export const PagerCount: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Full layout – sizes, prev, pager, next, jumper, total */
 export const FullLayout: Story = {
     render: () => ({
         components: {KsPagination},
         setup() {
-            const current = ref(1);
-            const pageSize = ref(10);
-            return {current, pageSize};
+            const current = ref(1)
+            const pageSize = ref(10)
+            return {current, pageSize}
         },
         template: `
             <div style="padding:24px">
@@ -103,12 +103,12 @@ export const FullLayout: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const SmallSize: Story = {
     render: () => ({
         components: {KsPagination},
-        setup() { return {current: ref(1)}; },
+        setup() { return {current: ref(1)} },
         template: `
             <div style="padding:24px">
                 <ks-pagination
@@ -121,4 +121,4 @@ export const SmallSize: Story = {
             </div>
         `,
     }),
-};
+}

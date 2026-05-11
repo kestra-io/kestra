@@ -6,4 +6,4 @@ export default {
     DASHBOARD: "DASHBOARD",
     SECRET: "SECRET",
     COPILOT: "COPILOT",
-};
+}

@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import {ElTable} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ref} from "vue"
+    import {ElTable} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -48,7 +48,7 @@
         fit: undefined,
         cellClassName: undefined,
         rowClassName: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         selectionChange: [selection: any[]]
@@ -56,16 +56,16 @@
         sortChange: [sort: {column: any; prop: string; order: string | null}]
         rowClick: [row: any, column: any, event: Event]
         rowDblclick: [row: any, column: any, event: Event]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
         empty?(): unknown
-    }>();
+    }>()
 
-    const tableRef = ref<InstanceType<typeof ElTable>>();
+    const tableRef = ref<InstanceType<typeof ElTable>>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
@@ -76,7 +76,7 @@
         setCurrentRow: (row: any) => tableRef.value?.setCurrentRow(row),
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),
-    });
+    })
 </script>
 
 <style lang="scss">

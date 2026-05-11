@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import {ElForm} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ref} from "vue"
+    import {ElForm} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         model?: object
@@ -20,19 +20,19 @@
         size?: "large" | "default" | "small"
         labelPosition?: "left" | "right" | "top"
         labelWidth?: string | number
-    }>();
+    }>()
 
     const emit = defineEmits<{
         submit: [evt: Event]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const formRef = ref<InstanceType<typeof ElForm>>();
+    const formRef = ref<InstanceType<typeof ElForm>>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineExpose({
         validate: (...args: Parameters<NonNullable<InstanceType<typeof ElForm>>["validate"]>) => formRef.value?.validate(...args),
@@ -40,7 +40,7 @@
         clearValidate: (...args: any[]) => formRef.value?.clearValidate(...args),
         validateField: (...args: any[]) => formRef.value?.validateField(...args),
         scrollToField: (prop: string) => formRef.value?.scrollToField(prop),
-    });
+    })
 </script>
 
 <style lang="scss">

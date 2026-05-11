@@ -259,68 +259,68 @@
 </template>
 
 <script setup lang="ts">
-    import moment from "moment";
-    import {useI18n} from "vue-i18n";
-    import _isEqual from "lodash/isEqual";
-    import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, onMounted} from "vue";
+    import moment from "moment"
+    import {useI18n} from "vue-i18n"
+    import _isEqual from "lodash/isEqual"
+    import {useRoute, useRouter} from "vue-router"
+    import {ref, computed, watch, onMounted} from "vue"
 
-    import Play from "vue-material-design-icons/Play.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Pause from "vue-material-design-icons/Pause.vue";
-    import Check from "vue-material-design-icons/Check.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import LockOff from "vue-material-design-icons/LockOff.vue";
-    import Restart from "vue-material-design-icons/Restart.vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+    import Play from "vue-material-design-icons/Play.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Pause from "vue-material-design-icons/Pause.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import LockOff from "vue-material-design-icons/LockOff.vue"
+    import Restart from "vue-material-design-icons/Restart.vue"
+    import TextSearch from "vue-material-design-icons/TextSearch.vue"
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
-    import {KsId, KsIconButton} from "@kestra-io/design-system";
+    import {KsId, KsIconButton} from "@kestra-io/design-system"
     //@ts-expect-error no declared types
-    import FlowRun from "./FlowRun.vue";
-    import Vars from "../executions/Vars.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import Empty from "../layout/empty/Empty.vue";
-    import TriggerAvatar from "./TriggerAvatar.vue";
-    import LogsWrapper from "../logs/LogsWrapper.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import FlowRun from "./FlowRun.vue"
+    import Vars from "../executions/Vars.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import Empty from "../layout/empty/Empty.vue"
+    import TriggerAvatar from "./TriggerAvatar.vue"
+    import LogsWrapper from "../logs/LogsWrapper.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
 
-    import {useToast} from "../../utils/toast";
-    import {storageKeys} from "../../utils/constants";
+    import {useToast} from "../../utils/toast"
+    import {storageKeys} from "../../utils/constants"
 
-    import {useFlowStore} from "../../stores/flow";
-    import {useAuthStore} from "override/stores/auth";
-    import {useTriggerStore} from "../../stores/trigger";
+    import {useFlowStore} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import {useTriggerStore} from "../../stores/trigger"
 
-    import {useTableColumns} from "../../composables/useTableColumns";
-    import {useTriggerFilter} from "../filter/configurations";
+    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTriggerFilter} from "../filter/configurations"
 
-    const triggerFilter = useTriggerFilter();
+    const triggerFilter = useTriggerFilter()
 
-    const {t} = useI18n();
-    const route = useRoute();
-    const router = useRouter();
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
 
     defineProps<{
         embed: boolean;
-    }>();
+    }>()
 
     const backfill = ref({
         start: null as Date | null,
         end: null as Date | null,
         inputs: null as any,
         labels: [] as any[],
-    });
-    const isOpen = ref(false);
-    const triggers = ref<any[]>([]);
-    const isBackfillOpen = ref(false);
-    const selectedTrigger = ref<any>(null);
-    const triggerId = ref<string | undefined>();
+    })
+    const isOpen = ref(false)
+    const triggers = ref<any[]>([])
+    const isBackfillOpen = ref(false)
+    const selectedTrigger = ref<any>(null)
+    const triggerId = ref<string | undefined>()
 
-    const reloadLogs = ref<number | undefined>();
+    const reloadLogs = ref<number | undefined>()
 
     const localOptionalColumns = ref([
         {
@@ -341,7 +341,7 @@
             default: true,
             description: t("filter.table_column.flow_triggers.next execution date"),
         },
-    ]);
+    ])
 
     const {
         orderedColumns,
@@ -350,112 +350,112 @@
     } = useTableColumns({
         columns: localOptionalColumns.value,
         storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS,
-    });
+    })
 
-    const toast = useToast();
-    const authStore = useAuthStore();
-    const flowStore = useFlowStore();
-    const triggerStore = useTriggerStore();
+    const toast = useToast()
+    const authStore = useAuthStore()
+    const flowStore = useFlowStore()
+    const triggerStore = useTriggerStore()
 
     const query = computed(() => {
-        return Array.isArray(route.query?.["filters[q][EQUALS]"]) ? route.query["filters[q][EQUALS]"][0] : route.query?.["filters[q][EQUALS]"];
-    });
+        return Array.isArray(route.query?.["filters[q][EQUALS]"]) ? route.query["filters[q][EQUALS]"][0] : route.query?.["filters[q][EQUALS]"]
+    })
 
     const modalData = computed(() => {
-        const filtered = triggersWithType.value.filter((trigger: any) => trigger?.triggerId === triggerId.value);
-        if (!filtered.length) return {};
+        const filtered = triggersWithType.value.filter((trigger: any) => trigger?.triggerId === triggerId.value)
+        if (!filtered.length) return {}
         return Object
             .entries(filtered[0])
             .filter(([key]) => !["tenantId", "namespace", "flowId", "flowRevision", "triggerId", "description"].includes(key))
             .reduce(
                 (map, currentValue) => {
-                    map[currentValue[0]] = currentValue[1];
-                    return map;
+                    map[currentValue[0]] = currentValue[1]
+                    return map
                 },
                 {} as any,
-            );
-    });
+            )
+    })
 
     const triggerDefinition = computed(() => {
-        if (!flowStore.flow?.triggers) return undefined;
-        return flowStore.flow.triggers.find((trigger: any) => trigger.id === triggerId.value);
-    });
+        if (!flowStore.flow?.triggers) return undefined
+        return flowStore.flow.triggers.find((trigger: any) => trigger.id === triggerId.value)
+    })
 
     const triggersWithType = computed(() => {
-        if(!flowStore.flow?.triggers) return [];
+        if(!flowStore.flow?.triggers) return []
 
         let flowTriggers = flowStore.flow?.triggers.map((trigger: any) => {
-            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false};
-        });
+            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false}
+        })
         if (flowTriggers) {
             const trigs = flowTriggers.map((flowTrigger: any) => {
-                let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id);
-                return {...flowTrigger, ...pollingTrigger};
-            });
+                let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id)
+                return {...flowTrigger, ...pollingTrigger}
+            })
 
-            return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value));
+            return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value))
         }
-        return triggers.value;
-    });
+        return triggers.value
+    })
 
     const cleanBackfill = computed(() => {
-        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
-        return {...backfill.value, labels: labels?.length ? labels : null};
-    });
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value)
+        return {...backfill.value, labels: labels?.length ? labels : null}
+    })
 
     const checkBackfill = computed(() => {
         if (!backfill.value.start) {
-            return true;
+            return true
         }
         if (backfill.value.end && backfill.value.start > backfill.value.end) {
-            return true;
+            return true
         }
         if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow?.inputs.map((input: any) => input.required !== false ? input.id : null).filter((i: any) => i !== null);
+            const requiredInputs = flowStore.flow?.inputs.map((input: any) => input.required !== false ? input.id : null).filter((i: any) => i !== null)
 
             if (requiredInputs.length > 0) {
                 if (!backfill.value.inputs) {
-                    return true;
+                    return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined);
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined)
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true;
+                    return true
                 }
             }
         }
         if (backfill.value.labels?.length > 0) {
             for (let label of backfill.value.labels) {
                 if ((label.key && !label.value) || (!label.key && label.value)) {
-                    return true;
+                    return true
                 }
             }
         }
-        return false;
-    });
+        return false
+    })
 
     const userCan = (act: any) => {
-        if (!flowStore.flow) return false;
-        return authStore.user?.isAllowed(resource.EXECUTION, act ? act : action.VIEW, flowStore.flow?.namespace);
-    };
+        if (!flowStore.flow) return false
+        return authStore.user?.isAllowed(resource.EXECUTION, act ? act : action.VIEW, flowStore.flow?.namespace)
+    }
 
     const loadData = () => {
-        if(!triggersWithType.value.length || !flowStore.flow) return;
+        if(!triggersWithType.value.length || !flowStore.flow) return
 
         triggerStore
             .find({namespace: flowStore.flow?.namespace, flowId: flowStore.flow?.id, size: triggersWithType.value.length, q: query.value})
             .then((trigs: any) => triggers.value = trigs.results)
-            .then(() => reloadLogs.value = Math.random());
-    };
+            .then(() => reloadLogs.value = Math.random())
+    }
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
-        isBackfillOpen.value = bool;
-        selectedTrigger.value = trigger;
-    };
+        isBackfillOpen.value = bool
+        selectedTrigger.value = trigger
+    }
 
-    const loadDataAfterAction = () => loadData();
+    const loadDataAfterAction = () => loadData()
 
     const postBackfill = () => {
-        const trigger = selectedTrigger.value as any;
+        const trigger = selectedTrigger.value as any
         triggerStore.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
@@ -463,49 +463,49 @@
             backfill: cleanBackfill.value,
         })
             .then(() => {
-                toast.saved(selectedTrigger.value?.triggerId);
-                setBackfillModal(null, false);
+                toast.saved(selectedTrigger.value?.triggerId)
+                setBackfillModal(null, false)
                 backfill.value = {
                     start: null,
                     end: null,
                     inputs: null,
                     labels: [],
-                };
-                loadDataAfterAction();
-            });
-    };
+                }
+                loadDataAfterAction()
+            })
+    }
 
     const pauseBackfill = (trigger: any) => {
         triggerStore.pauseBackfill(trigger)
             .then(() => {
-                toast.saved(trigger.triggerId);
-                loadDataAfterAction();
-            });
-    };
+                toast.saved(trigger.triggerId)
+                loadDataAfterAction()
+            })
+    }
 
     const unpauseBackfill = (trigger: any) => {
         triggerStore.unpauseBackfill(trigger)
             .then(() => {
-                toast.saved(trigger.triggerId);
-                loadDataAfterAction();
-            });
-    };
+                toast.saved(trigger.triggerId)
+                loadDataAfterAction()
+            })
+    }
 
     const deleteBackfill = (trigger: any) => {
         triggerStore.deleteBackfill(trigger)
             .then(() => {
-                toast.saved(trigger.triggerId);
-                loadDataAfterAction();
-            });
-    };
+                toast.saved(trigger.triggerId)
+                loadDataAfterAction()
+            })
+    }
 
     const setDisabled = (trigger: any, value: boolean) => {
         triggerStore.setDisabled({...trigger, disabled: !value})
             .then(() => {
-                toast.saved(trigger.triggerId);
-                loadDataAfterAction();
-            });
-    };
+                toast.saved(trigger.triggerId)
+                loadDataAfterAction()
+            })
+    }
 
     const unlock = (trigger: any) => {
         triggerStore.unlock({
@@ -513,10 +513,10 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
         }).then(() => {
-            toast.saved(trigger.triggerId);
-            loadDataAfterAction();
-        });
-    };
+            toast.saved(trigger.triggerId)
+            loadDataAfterAction()
+        })
+    }
 
     const restart = (trigger: any) => {
         triggerStore.restart({
@@ -524,31 +524,31 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
         }).then(() => {
-            toast.saved(trigger.triggerId);
-            loadDataAfterAction();
-        });
-    };
+            toast.saved(trigger.triggerId)
+            loadDataAfterAction()
+        })
+    }
 
     const backfillProgression = (backfillObj: any) => {
-        const startMoment = moment(backfillObj?.start);
-        const endMoment = moment(backfillObj?.end);
-        const currentMoment = moment(backfillObj?.currentDate);
+        const startMoment = moment(backfillObj?.start)
+        const endMoment = moment(backfillObj?.end)
+        const currentMoment = moment(backfillObj?.currentDate)
 
-        const totalDuration = endMoment.diff(startMoment);
-        const elapsedDuration = currentMoment.diff(startMoment);
-        return Math.round((elapsedDuration / totalDuration) * 100);
-    };
+        const totalDuration = endMoment.diff(startMoment)
+        const elapsedDuration = currentMoment.diff(startMoment)
+        return Math.round((elapsedDuration / totalDuration) * 100)
+    }
 
     const isSchedule = (type: string) => {
-        return type === "io.kestra.plugin.core.trigger.Schedule";
-    };
+        return type === "io.kestra.plugin.core.trigger.Schedule"
+    }
 
     const hasTrigger = (trigger: any) => {
-        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id);
-    };
+        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id)
+    }
 
     const addNewTrigger = () => {
-        if (!flowStore.flow) return;
+        if (!flowStore.flow) return
         router.push({
             name: "flows/update",
             params: {
@@ -560,18 +560,18 @@
             query: {
                 createTrigger: "true",
             },
-        });
-    };
+        })
+    }
 
     onMounted(() => {
-        loadData();
-    });
+        loadData()
+    })
 
     watch(route, (newValue, oldValue) => {
         if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
-            loadData();
+            loadData()
         }
-    });
+    })
 </script>
 
 <style lang="scss" scoped>

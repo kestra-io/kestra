@@ -68,15 +68,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue";
+    import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
-    import {vKsLoading} from "../../Feedback/KsLoading";
-    import KsTable from "../KsTable/KsTable.vue";
-    import KsTableColumn from "../KsTable/KsTableColumn.vue";
-    import KsPagination from "../KsPagination.vue";
-    import KsBulkSelect from "./KsBulkSelect.vue";
+    import {vKsLoading} from "../../Feedback/KsLoading"
+    import KsTable from "../KsTable/KsTable.vue"
+    import KsTableColumn from "../KsTable/KsTableColumn.vue"
+    import KsPagination from "../KsPagination.vue"
+    import KsBulkSelect from "./KsBulkSelect.vue"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -104,7 +104,7 @@
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
         selectionMapper: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
@@ -112,7 +112,7 @@
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
@@ -122,204 +122,204 @@
         empty?(): unknown
         "bulk-actions"?(): unknown
         "select-actions"?(): unknown
-    }>();
+    }>()
 
-    const slots = useSlots();
-    const hasNavBar = computed(() => !!slots["navbar"]);
-    const hasTableSlot = computed(() => !!slots["table"]);
-    const hasBulkActions = computed(() => !!slots["bulk-actions"]);
-    const hasEmpty = computed(() => !!slots["empty"]);
+    const slots = useSlots()
+    const hasNavBar = computed(() => !!slots["navbar"])
+    const hasTableSlot = computed(() => !!slots["table"])
+    const hasBulkActions = computed(() => !!slots["bulk-actions"])
+    const hasEmpty = computed(() => !!slots["empty"])
 
-    const isLoading = ref(props.loading);
-    const isReady = ref(false);
+    const isLoading = ref(props.loading)
+    const isReady = ref(false)
 
-    const internalPage = ref(props.currentPage);
-    const internalSize = ref(props.pageSize);
-    const internalSort = ref<string>();
+    const internalPage = ref(props.currentPage)
+    const internalSize = ref(props.pageSize)
+    const internalSort = ref<string>()
 
-    const tableRef = ref<InstanceType<typeof KsTable>>();
-    const container = ref<HTMLElement | null>(null);
-    const hasSelection = ref(false);
-    const lastCheckedIndex = ref<number | null>(null);
-    const isShiftPressed = ref(false);
-    const queryBulkAction = ref(false);
-    const mappedSelection = ref<any[]>([]);
+    const tableRef = ref<InstanceType<typeof KsTable>>()
+    const container = ref<HTMLElement | null>(null)
+    const hasSelection = ref(false)
+    const lastCheckedIndex = ref<number | null>(null)
+    const isShiftPressed = ref(false)
+    const queryBulkAction = ref(false)
+    const mappedSelection = ref<any[]>([])
 
     const selectionChanged = (rawSelection: any[]) => {
-        hasSelection.value = rawSelection.length > 0;
+        hasSelection.value = rawSelection.length > 0
 
-        const mapper = props.selectionMapper ?? ((e: any) => e);
-        mappedSelection.value = rawSelection.map(mapper);
+        const mapper = props.selectionMapper ?? ((e: any) => e)
+        mappedSelection.value = rawSelection.map(mapper)
 
         if (queryBulkAction.value && props.data && rawSelection.length < props.data.length) {
-            queryBulkAction.value = false;
+            queryBulkAction.value = false
         }
 
-        emit("selection-change", rawSelection);
-    };
+        emit("selection-change", rawSelection)
+    }
 
     const onSelect = async (selection: any[], row: any) => {
-        const data = props.data ?? [];
-        const currentIndex = data.indexOf(row);
-        const rowKey = props.rowKey;
+        const data = props.data ?? []
+        const currentIndex = data.indexOf(row)
+        const rowKey = props.rowKey
 
         const isChecked = selection.some(s =>
             typeof rowKey === "function"
                 ? rowKey(s) === rowKey(row)
                 : s[rowKey as string] === row[rowKey as string],
-        );
+        )
 
         if (isShiftPressed.value && lastCheckedIndex.value !== null) {
-            const start = Math.min(lastCheckedIndex.value, currentIndex);
-            const end = Math.max(lastCheckedIndex.value, currentIndex);
+            const start = Math.min(lastCheckedIndex.value, currentIndex)
+            const end = Math.max(lastCheckedIndex.value, currentIndex)
             for (let i = start; i <= end; i++) {
-                tableRef.value?.toggleRowSelection(data[i], isChecked);
+                tableRef.value?.toggleRowSelection(data[i], isChecked)
             }
-            await nextTick();
-            const finalSelection = tableRef.value?.getSelectionRows() ?? [];
-            selectionChanged(finalSelection);
-            window.getSelection()?.removeAllRanges();
+            await nextTick()
+            const finalSelection = tableRef.value?.getSelectionRows() ?? []
+            selectionChanged(finalSelection)
+            window.getSelection()?.removeAllRanges()
         }
 
-        lastCheckedIndex.value = currentIndex;
-    };
+        lastCheckedIndex.value = currentIndex
+    }
 
     const clearSelection = () => {
-        tableRef.value?.clearSelection();
-        hasSelection.value = false;
-        lastCheckedIndex.value = null;
-        mappedSelection.value = [];
-    };
+        tableRef.value?.clearSelection()
+        hasSelection.value = false
+        lastCheckedIndex.value = null
+        mappedSelection.value = []
+    }
 
     const toggleAllUnselected = () => {
-        clearSelection();
-        queryBulkAction.value = false;
-    };
+        clearSelection()
+        queryBulkAction.value = false
+    }
 
     const setSelection = (selection: any[]) => {
-        tableRef.value?.clearSelection();
+        tableRef.value?.clearSelection()
         if (Array.isArray(selection)) {
-            const isFunction = typeof props.rowKey === "function";
+            const isFunction = typeof props.rowKey === "function"
             selection.forEach(sel => {
                 const row = props.data.find(r => isFunction
                     ? (props.rowKey as (row: any) => any)(r) === (props.rowKey as (row: any) => any)(sel)
-                    : r[props.rowKey as string] === sel[props.rowKey as string]);
-                if (row) tableRef.value?.toggleRowSelection(row, true);
-            });
+                    : r[props.rowKey as string] === sel[props.rowKey as string])
+                if (row) tableRef.value?.toggleRowSelection(row, true)
+            })
         }
-        selectionChanged(selection);
-    };
+        selectionChanged(selection)
+    }
 
     const toggleRowExpansion = (row: any, expand?: boolean) => {
-        tableRef.value?.toggleRowExpansion(row, expand);
-    };
+        tableRef.value?.toggleRowExpansion(row, expand)
+    }
 
-    const getSelectionRows = () => tableRef.value?.getSelectionRows() ?? [];
+    const getSelectionRows = () => tableRef.value?.getSelectionRows() ?? []
 
     const toggleAllSelection = () => {
-        const current = getSelectionRows();
+        const current = getSelectionRows()
         if (current.length < props.data.length) {
-            tableRef.value?.toggleAllSelection();
+            tableRef.value?.toggleAllSelection()
         }
-        queryBulkAction.value = true;
-    };
+        queryBulkAction.value = true
+    }
 
-    const waitTableRender = () => nextTick();
+    const waitTableRender = () => nextTick()
 
     const computeHeaderSize = () => {
-        if (!tableRef.value?.$el || !container.value) return;
-        const tableElement = tableRef.value.$el as HTMLElement;
-        container.value.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
-        const thead = tableElement.querySelector("thead");
+        if (!tableRef.value?.$el || !container.value) return
+        const tableElement = tableRef.value.$el as HTMLElement
+        container.value.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`)
+        const thead = tableElement.querySelector("thead")
         if (thead) {
-            container.value.style.setProperty("--table-header-height", `${thead.clientHeight}px`);
+            container.value.style.setProperty("--table-header-height", `${thead.clientHeight}px`)
         }
-    };
+    }
 
     const callLoad = async () => {
-        if (!props.loadData) return;
-        isLoading.value = true;
+        if (!props.loadData) return
+        isLoading.value = true
         try {
             await props.loadData({
                 page: internalPage.value,
                 size: internalSize.value,
                 sort: internalSort.value,
-            });
+            })
         } finally {
-            isLoading.value = false;
+            isLoading.value = false
             if (!isReady.value) {
-                isReady.value = true;
-                emit("ready");
+                isReady.value = true
+                emit("ready")
             }
         }
-    };
+    }
 
-    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value);
+    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
 
-    const reload = () => callLoad();
+    const reload = () => callLoad()
 
     const resetAndReload = () => {
-        internalPage.value = 1;
-        callLoad();
-    };
+        internalPage.value = 1
+        callLoad()
+    }
 
     onMounted(() => {
-        window.addEventListener("resize", computeHeaderSize);
-        callLoad();
-    });
-    onUnmounted(() => window.removeEventListener("resize", computeHeaderSize));
-    onUpdated(() => computeHeaderSize());
+        window.addEventListener("resize", computeHeaderSize)
+        callLoad()
+    })
+    onUnmounted(() => window.removeEventListener("resize", computeHeaderSize))
+    onUpdated(() => computeHeaderSize())
 
     watch(() => props.data, () => {
         if (!props.data || props.data.length === 0) {
-            hasSelection.value = false;
-            tableRef.value?.clearSelection();
-            lastCheckedIndex.value = null;
+            hasSelection.value = false
+            tableRef.value?.clearSelection()
+            lastCheckedIndex.value = null
         } else {
-            const currentSelection = tableRef.value?.getSelectionRows() ?? [];
-            const rowKey = props.rowKey;
+            const currentSelection = tableRef.value?.getSelectionRows() ?? []
+            const rowKey = props.rowKey
             const validSelection = currentSelection.filter((sel: unknown) => {
-                const isFunction = typeof rowKey === "function";
+                const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string]);
-            });
+                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+            })
             if (validSelection.length !== currentSelection.length) {
-                tableRef.value?.clearSelection();
-                hasSelection.value = false;
-                lastCheckedIndex.value = null;
+                tableRef.value?.clearSelection()
+                hasSelection.value = false
+                lastCheckedIndex.value = null
             } else if (tableRef.value) {
-                selectionChanged(currentSelection);
+                selectionChanged(currentSelection)
             }
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
-    watch(() => props.loading, (val) => { isLoading.value = val; });
-    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1; });
-    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25; });
+    watch(() => props.loading, (val) => { isLoading.value = val })
+    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1 })
+    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25 })
 
     const onPageChange = (page: number) => {
-        internalPage.value = page;
-        emit("page-changed", {page, size: internalSize.value});
-        callLoad();
-    };
+        internalPage.value = page
+        emit("page-changed", {page, size: internalSize.value})
+        callLoad()
+    }
 
     const onSizeChange = (size: number) => {
-        internalPage.value = 1;
-        internalSize.value = size;
-        emit("page-changed", {page: 1, size});
-        callLoad();
-    };
+        internalPage.value = 1
+        internalSize.value = size
+        emit("page-changed", {page: 1, size})
+        callLoad()
+    }
 
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
         if (sort.prop && sort.order) {
-            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`;
+            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
-            internalSort.value = undefined;
+            internalSort.value = undefined
         }
-        emit("sort-change", sort);
-        callLoad();
-    };
+        emit("sort-change", sort)
+        callLoad()
+    }
 
     defineExpose({
         isLoading,
@@ -335,7 +335,7 @@
         toggleAllSelection,
         queryBulkAction,
         selection: mappedSelection,
-    });
+    })
 </script>
 
 <style lang="scss">

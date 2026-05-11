@@ -1,5 +1,5 @@
-import {deepMerge} from "./ksChartUtils.ts";
-import {cssVar} from "../../utils/css.ts";
+import {deepMerge} from "./ksChartUtils.ts"
+import {cssVar} from "../../utils/css.ts"
 
 export default () => {
     const axis = {
@@ -38,7 +38,7 @@ export default () => {
                 shadowBlur: 0,
             },
         },
-    };
+    }
 
     return  {
         animation: false,
@@ -171,5 +171,5 @@ export default () => {
             bottom: 10,
             icon: "circle",
         },
-    };
-};
+    }
+}

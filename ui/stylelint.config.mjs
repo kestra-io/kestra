@@ -18,4 +18,4 @@ export default {
         ],
         "scss/no-global-function-names": null,
     },
-};
+}

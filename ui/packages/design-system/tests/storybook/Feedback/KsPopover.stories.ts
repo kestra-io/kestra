@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
-import KsPopover from "../../../src/components/Feedback/KsPopover.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsPopover from "../../../src/components/Feedback/KsPopover.vue"
 
 const meta: Meta<typeof KsPopover> = {
     title: "Components/Feedback/KsPopover",
@@ -19,8 +19,8 @@ const meta: Meta<typeof KsPopover> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsPopover>
 
 /** Basic usage – click trigger */
@@ -28,8 +28,8 @@ export const Default: Story = {
     render: () => ({
         components: {KsButton, KsPopover},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:48px">
@@ -43,15 +43,15 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Trigger methods – hover, click, focus */
 export const Triggers: Story = {
     render: () => ({
         components: {KsButton, KsPopover},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:48px;display:flex;gap:16px;flex-wrap:wrap">
@@ -116,7 +116,7 @@ export const Triggers: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Theme – dark and light */
 export const Theme: Story = {
@@ -136,7 +136,7 @@ export const Theme: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Placements – all directions */
 export const Placements: Story = {
@@ -155,15 +155,15 @@ export const Placements: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Rich content – nested elements */
 export const RichContent: Story = {
     render: () => ({
         components: {KsButton, KsPopover},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:48px">
@@ -181,4 +181,4 @@ export const RichContent: Story = {
             </div>
         `,
     }),
-};
+}

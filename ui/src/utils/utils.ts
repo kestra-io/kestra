@@ -1,11 +1,11 @@
-import {computed} from "vue";
-import moment from "moment";
-import {useMiscStore} from "override/stores/misc";
+import {computed} from "vue"
+import moment from "moment"
+import {useMiscStore} from "override/stores/misc"
 
 export function uid() {
     return String.fromCharCode(Math.floor(Math.random() * 26) + 97) +
         Math.random().toString(16).slice(2) +
-        Date.now().toString(16).slice(4);
+        Date.now().toString(16).slice(4)
 }
 
 /**
@@ -15,14 +15,14 @@ export function uid() {
  * @returns `true` if the value is a string with a supported file prefix.
  */
 export function isFile(value: unknown): boolean {
-    const PREFIXES = ["kestra:///", "file://", "nsfile://"];
-    return typeof value === "string" && PREFIXES.some(p => value.startsWith(p));
+    const PREFIXES = ["kestra:///", "file://", "nsfile://"]
+    return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
 }
 
 export function flatten(object: Record<string, any>) {
     return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {
         if (child === null) {
-            return {[path.join(".")]: null};
+            return {[path.join(".")]: null}
         }
 
         return Object
@@ -30,37 +30,37 @@ export function flatten(object: Record<string, any>) {
             .map(key => typeof child[key] === "object" ?
                 _flatten(child[key], path.concat([key])) :
                 ({[path.concat([key]).join(".")]: child[key]}),
-            );
-    }(object));
+            )
+    }(object))
 }
 
 export function executionVars(data: Record<string, any>) {
     if (data === undefined) {
-        return [];
+        return []
     }
 
-    const flat = flatten(data);
+    const flat = flatten(data)
 
     return Object.keys(flat).map(key => {
-        const rawValue = flat[key];
+        const rawValue = flat[key]
         if (key === "variables.executionId") {
-            return {key, value: rawValue, subflow: true};
+            return {key, value: rawValue, subflow: true}
         }
 
         if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
-            const date = moment(rawValue, moment.ISO_8601);
+            const date = moment(rawValue, moment.ISO_8601)
             if (date.isValid()) {
-                return {key, value: rawValue, date: true};
+                return {key, value: rawValue, date: true}
             }
         }
 
         if (typeof rawValue === "number") {
-            return {key, value: number(rawValue)};
+            return {key, value: number(rawValue)}
         }
 
-        return {key, value: rawValue};
+        return {key, value: rawValue}
 
-    });
+    })
 }
 
 /**
@@ -76,54 +76,54 @@ export function executionVars(data: Record<string, any>) {
 export function humanFileSize(bytes: number, si = false, dp = 1) {
     if (bytes === undefined) {
         // when the size is 0 it arrives as undefined here!
-        return "0B";
+        return "0B"
     }
-    const thresh = si ? 1000 : 1024;
+    const thresh = si ? 1000 : 1024
 
     if (Math.abs(bytes) < thresh) {
-        return bytes + " B";
+        return bytes + " B"
     }
 
     const units = si ?
         ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"] :
-        ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
-    let u = -1;
-    const r = 10 ** dp;
+        ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+    let u = -1
+    const r = 10 ** dp
 
     do {
-        bytes /= thresh;
-        ++u;
-    } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+        bytes /= thresh
+        ++u
+    } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1)
 
 
-    return bytes.toFixed(dp) + " " + units[u];
+    return bytes.toFixed(dp) + " " + units[u]
 }
 
 export function number(n: number) {
-    return n.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ");
+    return n.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ")
 }
 
 export function hexToRgba(hex: string, opacity: number) {
-    let c: any;
+    let c: any
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split("");
+        c = hex.substring(1).split("")
         if (c.length === 3) {
-            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]]
         }
-        c = "0x" + c.join("");
-        return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")";
+        c = "0x" + c.join("")
+        return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")"
     }
-    throw new Error("Bad Hex");
+    throw new Error("Bad Hex")
 }
 
 export function downloadUrl(url: string, filename: string) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    link.setAttribute("target", "_blank");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", filename)
+    link.setAttribute("target", "_blank")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
 }
 
 /**
@@ -132,193 +132,193 @@ export function downloadUrl(url: string, filename: string) {
  * @param header  the header value
  */
 export function extractFileNameFromContentDisposition(header: string | null | undefined): string | null {
-    if (!header) return null;
+    if (!header) return null
 
-    const filenameRegex = /filename\*=UTF-8''(.+)|filename="(.+?)"|filename=(.+)/;
-    const matches = header.match(filenameRegex);
+    const filenameRegex = /filename\*=UTF-8''(.+)|filename="(.+?)"|filename=(.+)/
+    const matches = header.match(filenameRegex)
 
     // Check for UTF-8 encoded filename first
     if (matches && matches[1]) {
-        return decodeURIComponent(matches[1]);
+        return decodeURIComponent(matches[1])
     }
     // Fallback to quoted or unquoted filename
     if (matches && matches[2]) {
-        return matches[2];
+        return matches[2]
     }
     if (matches && matches[3]) {
-        return matches[3];
+        return matches[3]
     }
 
-    return null; // Return null if no filename is found
+    return null // Return null if no filename is found
 }
 
 export function switchTheme(miscStore: any, theme?: string) {
     // default theme
     if (theme === undefined) {
         if (localStorage.getItem("theme")) {
-            theme = localStorage.getItem("theme")!;
+            theme = localStorage.getItem("theme")!
         } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            theme = "dark";
+            theme = "dark"
         } else {
-            theme = "light";
+            theme = "light"
         }
     }
 
     // class name
-    const htmlClass = document.getElementsByTagName("html")[0].classList;
+    const htmlClass = document.getElementsByTagName("html")[0].classList
 
     function removeClasses() {
         htmlClass.forEach((cls) => {
             if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
-                htmlClass.remove(cls);
+                htmlClass.remove(cls)
             }
-        });
+        })
     }
-    removeClasses();
+    removeClasses()
 
     if (theme === "syncWithSystem") {
-        removeClasses();
-        const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        htmlClass.add(theme, systemTheme);
+        removeClasses()
+        const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        htmlClass.add(theme, systemTheme)
     }
     else {
-        removeClasses();
-        htmlClass.add(theme);
+        removeClasses()
+        htmlClass.add(theme)
     }
 
-    miscStore.theme = theme;
+    miscStore.theme = theme
 
-    localStorage.setItem("theme", theme);
+    localStorage.setItem("theme", theme)
 }
 
 export function getTheme(): "light" | "dark" {
-    let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light";
+    let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light"
 
     if (theme === "syncWithSystem") {
-        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
 
-    return theme;
+    return theme
 }
 
 export function getLang() {
-    return localStorage.getItem("lang") || "en";
+    return localStorage.getItem("lang") || "en"
 }
 
 export function splitFirst(str: string, separator: string) {
-    return str.split(separator).slice(1).join(separator);
+    return str.split(separator).slice(1).join(separator)
 }
 
 export function asArray(objOrArray: any | any[]) {
     if (objOrArray === undefined) {
-        return [];
+        return []
     }
 
-    return Array.isArray(objOrArray) ? objOrArray : [objOrArray];
+    return Array.isArray(objOrArray) ? objOrArray : [objOrArray]
 }
 
 export async function copy(text: string) {
     if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text);
-        return;
+        await navigator.clipboard.writeText(text)
+        return
     }
 
-    const node = document.createElement("textarea");
-    node.style.position = "absolute";
-    node.style.left = "-9999px";
-    node.textContent = text;
-    document.body.appendChild(node).value = text;
-    node.select();
+    const node = document.createElement("textarea")
+    node.style.position = "absolute"
+    node.style.left = "-9999px"
+    node.textContent = text
+    document.body.appendChild(node).value = text
+    node.select()
 
-    document.execCommand("copy");
+    document.execCommand("copy")
 
-    document.body.removeChild(node);
+    document.body.removeChild(node)
 }
 
 export function toFormData(obj: FormData | Record<string, any>) {
     if (!(obj instanceof FormData)) {
-        const formData = new FormData();
+        const formData = new FormData()
         for (const key in obj) {
-            formData.append(key, obj[key]);
+            formData.append(key, obj[key])
         }
-        return formData;
+        return formData
     }
-    return obj;
+    return obj
 }
 
 export function getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined) {
     if ((!startDate || !endDate) && timeRange === undefined) {
-        return "yyyy-MM-DD";
+        return "yyyy-MM-DD"
     }
 
     const duration = timeRange === undefined
         ? moment.duration(moment(endDate).diff(moment(startDate)))
-        : moment.duration(timeRange);
+        : moment.duration(timeRange)
 
     if (duration.asDays() > 365) {
-        return "yyyy-MM";
+        return "yyyy-MM"
     } else if (duration.asDays() > 180) {
-        return "yyyy-'W'ww";
+        return "yyyy-'W'ww"
     } else if (duration.asDays() > 1) {
-        return "yyyy-MM-DD";
+        return "yyyy-MM-DD"
     } else if (duration.asHours() > 1) {
-        return "yyyy-MM-DD:HH:00";
+        return "yyyy-MM-DD:HH:00"
     } else {
-        return "yyyy-MM-DD:HH:mm";
+        return "yyyy-MM-DD:HH:mm"
     }
 }
 
 export function getParentNamespaces(namespace: string): string[] {
-    if (!namespace) return [];
+    if (!namespace) return []
 
-    const parts = namespace.split(".");
-    const parents: string[] = [];
+    const parts = namespace.split(".")
+    const parents: string[] = []
 
     for (let i = 1; i <= parts.length; i++) {
-        parents.push(parts.slice(0, i).join("."));
+        parents.push(parts.slice(0, i).join("."))
     }
 
-    return parents;
+    return parents
 }
 
 export const useTheme = () => {
-    const miscStore = useMiscStore();
-    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark");
-};
+    const miscStore = useMiscStore()
+    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark")
+}
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {
     if (obj === undefined || obj === null) {
-        return obj;
+        return obj
     }
     if (obj.$ref) {
-        return getValueAtJsonPath(fullSchema, obj.$ref);
+        return getValueAtJsonPath(fullSchema, obj.$ref)
     }
-    return obj;
+    return obj
 }
 
 export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
     if (!fullSchema || !path || typeof path !== "string") {
-        return undefined;
+        return undefined
     }
 
-    const keys = path.replace(/^#\//, "").split("/");
-    let current = fullSchema;
+    const keys = path.replace(/^#\//, "").split("/")
+    let current = fullSchema
 
     for (const key of keys) {
         if (current && key in current) {
-            current = resolve$ref(fullSchema, current[key]);
+            current = resolve$ref(fullSchema, current[key])
         } else {
-            return undefined;
+            return undefined
         }
     }
 
-    return current;
+    return current
 }
 
 export function deepEqual(x: any, y: any): boolean {
-    const ok = Object.keys, tx = typeof x, ty = typeof y;
+    const ok = Object.keys, tx = typeof x, ty = typeof y
     return x && y && tx === "object" && tx === ty ? (
         ok(x).length === ok(y).length &&
         ok(x).every(key => deepEqual(x[key], y[key]))
-    ) : (x === y);
+    ) : (x === y)
 }

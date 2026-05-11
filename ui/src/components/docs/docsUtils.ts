@@ -33,11 +33,11 @@ export const SECTIONS = {
         "API Reference",
         "Terraform Provider",
     ],
-};
+}
 
 export const DISABLED_PAGES = [
     "docs/api-reference",
     "docs/terraform/data-sources",
     "docs/terraform/guides",
     "docs/terraform/resources",
-];
+]

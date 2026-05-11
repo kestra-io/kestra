@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import {within, userEvent, expect} from "storybook/test";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
-import KsDialog from "../../../src/components/Feedback/KsDialog.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import {within, userEvent, expect} from "storybook/test"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsDialog from "../../../src/components/Feedback/KsDialog.vue"
 
 const meta: Meta<typeof KsDialog> = {
     title: "Components/Feedback/KsDialog",
@@ -20,16 +20,16 @@ const meta: Meta<typeof KsDialog> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsDialog>
 
 export const Default: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:24px">
@@ -45,21 +45,21 @@ export const Default: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const btn = canvas.getByRole("button", {name: "Open Dialog"});
-        await expect(btn).toBeTruthy();
-        await userEvent.click(btn);
-        await expect(document.querySelector(".kel-dialog")).toBeTruthy();
+        const canvas = within(canvasElement)
+        const btn = canvas.getByRole("button", {name: "Open Dialog"})
+        await expect(btn).toBeTruthy()
+        await userEvent.click(btn)
+        await expect(document.querySelector(".kel-dialog")).toBeTruthy()
     },
-};
+}
 
 /** Custom width */
 export const CustomWidth: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:24px">
@@ -73,16 +73,16 @@ export const CustomWidth: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Destroy on close – remounts content each time */
 export const DestroyOnClose: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
-            const visible = ref(false);
-            const count = ref(0);
-            return {visible, count};
+            const visible = ref(false)
+            const count = ref(0)
+            return {visible, count}
         },
         template: `
             <div style="padding:24px">
@@ -98,15 +98,15 @@ export const DestroyOnClose: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Close on click modal (backdrop) disabled */
 export const NoCloseOnBackdrop: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:24px">
@@ -120,14 +120,14 @@ export const NoCloseOnBackdrop: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithCustomHeader: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
-            const visible = ref(false);
-            return {visible};
+            const visible = ref(false)
+            return {visible}
         },
         template: `
             <div style="padding:24px">
@@ -146,4 +146,4 @@ export const WithCustomHeader: Story = {
             </div>
         `,
     }),
-};
+}

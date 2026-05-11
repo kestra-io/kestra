@@ -32,40 +32,40 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {computed, nextTick} from "vue"
+    import {useRoute, useRouter} from "vue-router"
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
         backdrop?: boolean;
     }>(), {
         backdrop: true,
-    });
+    })
     const emit = defineEmits<{
         "update:modelValue": [boolean];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
         params: {tenant: route.params.tenant},
-    }));
+    }))
     const successRoute = computed(() => ({
         name: "welcome/success",
         params: {tenant: route.params.tenant},
-    }));
+    }))
 
     async function goToTutorial() {
         if (!props.modelValue) {
-            return;
+            return
         }
 
-        emit("update:modelValue", false);
-        await nextTick();
-        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)));
-        window.location.assign(router.resolve(tutorialRoute.value).href);
+        emit("update:modelValue", false)
+        await nextTick()
+        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)))
+        window.location.assign(router.resolve(tutorialRoute.value).href)
     }
 </script>
 

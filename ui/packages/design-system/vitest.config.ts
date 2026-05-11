@@ -1,22 +1,22 @@
-import {defineConfig} from "vitest/config";
-import vue from "@vitejs/plugin-vue";
-import {storybookTest} from "@storybook/addon-vitest/vitest-plugin";
-import {resolve} from "path";
-import {playwright} from "@vitest/browser-playwright";
+import {defineConfig} from "vitest/config"
+import vue from "@vitejs/plugin-vue"
+import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
+import {resolve} from "path"
+import {playwright} from "@vitest/browser-playwright"
 
 // @vue/compiler-dom passes a browser-only `decodeEntities` option to
 // @vue/compiler-core during Vite's Node.js transform phase.  The core
 // compiler warns that the option is ignored in non-browser builds — this
 // is a known false-positive that produces no functional difference.
 // Suppress it so test output stays clean.
-const consoleWarnBak = console.warn.bind(console);
+const consoleWarnBak = console.warn.bind(console)
 console.warn = (...args: unknown[]) => {
-    if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return;
-    consoleWarnBak(...args);
-};
+    if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
+    consoleWarnBak(...args)
+}
 
-const storybookConfigDir = resolve(import.meta.dirname, ".storybook");
-const storybookPlugins = await storybookTest({configDir: storybookConfigDir});
+const storybookConfigDir = resolve(import.meta.dirname, ".storybook")
+const storybookPlugins = await storybookTest({configDir: storybookConfigDir})
 
 export default defineConfig({
     test: {
@@ -66,4 +66,4 @@ export default defineConfig({
             },
         ],
     },
-});
+})

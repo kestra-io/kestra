@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsFilter from "../../../src/components/Data/KsDataTable/KsFilter.vue"
 
 const meta: Meta<typeof KsFilter> = {
     title: "Components/Data/KsFilter",
@@ -12,8 +12,8 @@ const meta: Meta<typeof KsFilter> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsFilter>
 
 const SIMPLE_CONFIGURATION = {
@@ -37,13 +37,13 @@ const SIMPLE_CONFIGURATION = {
             comparators: ["*=", "^="],
         },
     ],
-};
+}
 
 export const Default: Story = {
     render: () => ({
         components: {KsFilter},
         setup() {
-            return {configuration: SIMPLE_CONFIGURATION};
+            return {configuration: SIMPLE_CONFIGURATION}
         },
         template: `
             <div style="padding: 24px">
@@ -51,13 +51,13 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const ReadOnly: Story = {
     render: () => ({
         components: {KsFilter},
         setup() {
-            return {configuration: SIMPLE_CONFIGURATION};
+            return {configuration: SIMPLE_CONFIGURATION}
         },
         template: `
             <div style="padding: 24px">
@@ -65,13 +65,13 @@ export const ReadOnly: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithoutSearch: Story = {
     render: () => ({
         components: {KsFilter},
         setup() {
-            return {configuration: SIMPLE_CONFIGURATION};
+            return {configuration: SIMPLE_CONFIGURATION}
         },
         template: `
             <div style="padding: 24px">
@@ -79,4 +79,4 @@ export const WithoutSearch: Story = {
             </div>
         `,
     }),
-};
+}

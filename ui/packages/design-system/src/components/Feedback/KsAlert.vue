@@ -10,11 +10,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElAlert} from "element-plus";
+    import {ElAlert} from "element-plus"
 
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         type?: "success" | "warning" | "info" | "error"
@@ -24,14 +24,14 @@
         showIcon?: boolean
         center?: boolean
         effect?: "light" | "dark"
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
         title?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

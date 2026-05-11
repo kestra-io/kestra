@@ -26,13 +26,13 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue";
-    import {ElSelect} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import type {Component} from "vue"
+    import {ElSelect} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>();
+    const model = defineModel<any>()
 
     const props = withDefaults(defineProps<{
         placeholder?: string
@@ -63,11 +63,11 @@
         popperOffset: undefined,
         popperClass: undefined,
         suffixIcon: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         change: [value: any]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
@@ -76,9 +76,9 @@
         footer?(): unknown
         label?(props: { value: any; label: string }): any
         tag?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

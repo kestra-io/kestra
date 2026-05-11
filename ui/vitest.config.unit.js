@@ -1,9 +1,9 @@
-import {defineProject} from "vitest/config";
-import vue from "@vitejs/plugin-vue";
+import {defineProject} from "vitest/config"
+import vue from "@vitejs/plugin-vue"
 
-import viteConfig from "./vite.config.js";
+import viteConfig from "./vite.config.js"
 
-const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 export default defineProject({
     plugins: [
@@ -41,4 +41,4 @@ export default defineProject({
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",
     },
-});
+})

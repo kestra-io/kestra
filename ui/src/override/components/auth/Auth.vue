@@ -48,33 +48,33 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {computed} from "vue"
+    import {useRoute, useRouter} from "vue-router"
 
-    import CogOutline from "vue-material-design-icons/CogOutline.vue";
-    import Slack from "vue-material-design-icons/Slack.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import Logout from "vue-material-design-icons/Logout.vue";
-    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
+    import CogOutline from "vue-material-design-icons/CogOutline.vue"
+    import Slack from "vue-material-design-icons/Slack.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import Logout from "vue-material-design-icons/Logout.vue"
+    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
 
-    import * as BasicAuth from "../../../utils/basicAuth";
-    import {useClient} from "@kestra-io/kestra-sdk";
-    const axios = useClient();
+    import * as BasicAuth from "../../../utils/basicAuth"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    const axios = useClient()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
     const startTutorial = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
         params: {tenant: route.params.tenant},
-    }));
+    }))
 
     const logout = () => {
-        BasicAuth.logout();
-        delete axios.defaults.headers.common["Authorization"];
-        router.push({name: "login"});
-    };
+        BasicAuth.logout()
+        delete axios.defaults.headers.common["Authorization"]
+        router.push({name: "login"})
+    }
 </script>
 
 <style scoped lang="scss">

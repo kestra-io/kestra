@@ -11,11 +11,11 @@
 <script setup lang="ts">
     const emit = defineEmits<{
         (e: "add", what: string | undefined): void;
-    }>();
+    }>()
 
     defineProps<{
         what?: string;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

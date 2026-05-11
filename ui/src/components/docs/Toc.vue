@@ -31,11 +31,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {ref, computed, onMounted} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     interface TocItem {
         title: string;
@@ -50,7 +50,7 @@
         title: string;
     }
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const sections = {
         "Get Started with Kestra": [
@@ -80,14 +80,14 @@
             "Terraform Provider",
             "API Reference",
         ],
-    };
+    }
 
-    const rawStructure = ref<any>(undefined);
-    const query = ref<string>("");
+    const rawStructure = ref<any>(undefined)
+    const query = ref<string>("")
 
     const toc = computed((): TocItem[] | undefined => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
@@ -95,38 +95,38 @@
             .map(([url, metadata]: [string, any]) => [url, {
                 ...metadata,
                 path: url,
-            } as TocItem]));
+            } as TocItem]))
         Object.entries(childrenWithMetadata)
             .forEach(([url, metadata]: [string, any]) => {
-                const split = url.split("/");
-                const parentUrl = split.slice(0, split.length - 1).join("/");
-                const parent = childrenWithMetadata[parentUrl];
+                const split = url.split("/")
+                const parentUrl = split.slice(0, split.length - 1).join("/")
+                const parent = childrenWithMetadata[parentUrl]
                 if (parent !== undefined) {
-                    parent.children = [...(parent.children ?? []), metadata];
+                    parent.children = [...(parent.children ?? []), metadata]
                 }
-            });
+            })
 
-        return Object.values(childrenWithMetadata);
-    });
+        return Object.values(childrenWithMetadata)
+    })
 
     const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
         if (toc.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
             section,
             toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title)),
-        ]);
-    });
+        ])
+    })
 
     onMounted(async () => {
-        rawStructure.value = await docStore.children();
-    });
+        rawStructure.value = await docStore.children()
+    })
 
     const search = async (q: string, cb: (results: SearchResult[]) => void) => {
-        cb(await docStore.search({q}));
-    };
+        cb(await docStore.search({q}))
+    }
 </script>
 
 <style lang="scss" scoped>

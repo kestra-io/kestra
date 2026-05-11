@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElPopover} from "element-plus";
-    import {ref, watch} from "vue";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ElPopover} from "element-plus"
+    import {ref, watch} from "vue"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         visible?: boolean
@@ -35,30 +35,30 @@
         disabled?: boolean
         title?: string
         content?: string
-    }>();
+    }>()
 
     const emit = defineEmits<{
         "update:visible": [value: boolean]
         hide: []
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
         reference?(): unknown
-    }>();
+    }>()
 
-    const internalVisible = ref(false);
+    const internalVisible = ref(false)
 
     watch(() => props.visible, (val) => {
-        if (val !== undefined) internalVisible.value = val;
-    }, {immediate: true});
+        if (val !== undefined) internalVisible.value = val
+    }, {immediate: true})
 
     function handleUpdateVisible(v: boolean) {
-        internalVisible.value = v;
-        emit("update:visible", v);
+        internalVisible.value = v
+        emit("update:visible", v)
     }
 
-    const filteredProps = useFilteredProps(props, ["visible"]);
+    const filteredProps = useFilteredProps(props, ["visible"])
 </script>
 
 <style lang="scss">

@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsSteps from "../../../src/components/Navigation/KsSteps/KsSteps.vue";
-import KsStep from "../../../src/components/Navigation/KsSteps/KsStep.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsSteps from "../../../src/components/Navigation/KsSteps/KsSteps.vue"
+import KsStep from "../../../src/components/Navigation/KsSteps/KsStep.vue"
 
 const meta: Meta<typeof KsSteps> = {
     title: "Components/Navigation/KsSteps",
@@ -13,16 +13,16 @@ const meta: Meta<typeof KsSteps> = {
     parameters: {
         docs: {description: {component: "KsSteps is the Kestra design-system abstraction over `ElSteps` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsSteps>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsSteps, KsStep},
         setup() {
-            const active = ref(1);
-            return {args, active};
+            const active = ref(1)
+            return {args, active}
         },
         template: `
             <div style="padding:24px">
@@ -38,7 +38,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** With finish status – shows completion state */
 export const WithStatus: Story = {
@@ -55,7 +55,7 @@ export const WithStatus: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Center aligned titles */
 export const AlignCenter: Story = {
@@ -71,13 +71,13 @@ export const AlignCenter: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Simple step bar */
 export const Simple: Story = {
     render: () => ({
         components: {KsSteps, KsStep},
-        setup() { return {active: ref(1)}; },
+        setup() { return {active: ref(1)} },
         template: `
             <div style="padding:24px">
                 <ks-steps :active="active" simple>
@@ -92,12 +92,12 @@ export const Simple: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Vertical: Story = {
     render: () => ({
         components: {KsSteps, KsStep},
-        setup() { return {active: ref(2)}; },
+        setup() { return {active: ref(2)} },
         template: `
             <div style="padding:24px">
                 <ks-steps :active="active" direction="vertical">
@@ -108,4 +108,4 @@ export const Vertical: Story = {
             </div>
         `,
     }),
-};
+}

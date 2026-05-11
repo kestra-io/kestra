@@ -21,10 +21,10 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, onMounted} from "vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import FlowConcurrency from "../flows/FlowConcurrency.vue";
-    import {useFlowStore} from "../../stores/flow";
+    import {PropType, onMounted} from "vue"
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
+    import FlowConcurrency from "../flows/FlowConcurrency.vue"
+    import {useFlowStore} from "../../stores/flow"
 
     interface ExecutionState {
         current: string;
@@ -41,28 +41,28 @@
             type: Object as PropType<Execution>,
             required: true,
         },
-    });
+    })
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
     onMounted(async () => {
         if (props.execution?.state?.current === "QUEUED") {
             if (!flowStore.flow || flowStore.flow.id !== props.execution.flowId) {
                 await flowStore.loadFlow({
                     namespace: props.execution.namespace, 
                     id: props.execution.flowId,
-                });
+                })
             }
         }
-    });
+    })
 
     const getStyle = (state: string | undefined) => {
-        if (!state) return {};
+        if (!state) return {}
         return {
             color: `var(--ks-content-${state.toLowerCase()})`,
             border: `1px solid var(--ks-border-${state.toLowerCase()})`,
             backgroundColor: `var(--ks-background-${state.toLowerCase()})`,
-        };
-    };
+        }
+    }
 </script>
 
 <style scoped lang="scss">

@@ -1,15 +1,15 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsTable from "../../../src/components/Data/KsTable/KsTable.vue";
-import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue";
-import KsTag from "../../../src/components/Data/KsTag/KsTag.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsTable from "../../../src/components/Data/KsTable/KsTable.vue"
+import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
+import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
 
 const SAMPLE_DATA = [
     {id: "flow-001", namespace: "company.team", status: "SUCCESS", duration: "1.2s"},
     {id: "flow-002", namespace: "company.data", status: "RUNNING", duration: "3.5s"},
     {id: "flow-003", namespace: "company.team", status: "FAILED", duration: "0.8s"},
     {id: "flow-004", namespace: "company.infra", status: "SUCCESS", duration: "2.1s"},
-];
+]
 
 const meta: Meta<typeof KsTable> = {
     title: "Components/Data/KsTable",
@@ -21,8 +21,8 @@ const meta: Meta<typeof KsTable> = {
     parameters: {
         docs: {description: {component: "KsTable is the Kestra design-system abstraction over `ElTable` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsTable>
 
 export const Default: Story = {
@@ -32,7 +32,7 @@ export const Default: Story = {
 
     render: (args) => ({
         components: {KsTable, KsTableColumn, KsTag},
-        setup() { return {args, SAMPLE_DATA}; },
+        setup() { return {args, SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA" v-bind="args">
@@ -50,12 +50,12 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Sortable: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn},
-        setup() { return {SAMPLE_DATA}; },
+        setup() { return {SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA">
@@ -66,13 +66,13 @@ export const Sortable: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Striped rows */
 export const Striped: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn},
-        setup() { return {SAMPLE_DATA}; },
+        setup() { return {SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA" stripe>
@@ -84,13 +84,13 @@ export const Striped: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** With border */
 export const Border: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn},
-        setup() { return {SAMPLE_DATA}; },
+        setup() { return {SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA" border>
@@ -102,7 +102,7 @@ export const Border: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Fixed header – scrollable body */
 export const FixedHeader: Story = {
@@ -114,8 +114,8 @@ export const FixedHeader: Story = {
                 namespace: i % 2 === 0 ? "company.team" : "company.data",
                 status: ["SUCCESS", "RUNNING", "FAILED"][i % 3],
                 duration: `${(Math.random() * 5 + 0.5).toFixed(1)}s`,
-            }));
-            return {data};
+            }))
+            return {data}
         },
         template: `
             <div style="padding:24px">
@@ -128,15 +128,15 @@ export const FixedHeader: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Multiple selection with checkboxes */
 export const MultipleSelect: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn, KsTag},
         setup() {
-            const selected = ref<any[]>([]);
-            return {SAMPLE_DATA, selected};
+            const selected = ref<any[]>([])
+            return {SAMPLE_DATA, selected}
         },
         template: `
             <div style="padding:24px">
@@ -152,13 +152,13 @@ export const MultipleSelect: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom column template via slot */
 export const CustomColumn: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn, KsTag},
-        setup() { return {SAMPLE_DATA}; },
+        setup() { return {SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA">
@@ -181,13 +181,13 @@ export const CustomColumn: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Expandable row */
 export const ExpandableRow: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn},
-        setup() { return {SAMPLE_DATA}; },
+        setup() { return {SAMPLE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-table :data="SAMPLE_DATA">
@@ -208,7 +208,7 @@ export const ExpandableRow: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Empty: Story = {
     render: () => ({
@@ -222,4 +222,4 @@ export const Empty: Story = {
             </div>
         `,
     }),
-};
+}

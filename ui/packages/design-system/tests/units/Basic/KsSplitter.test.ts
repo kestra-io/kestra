@@ -1,11 +1,11 @@
-import {describe, test, expect} from "vitest";
-import {mount} from "@vue/test-utils";
-import {defineComponent} from "vue";
-import KestraDesignSystem from "../../../src/index";
-import KsSplitter from "../../../src/components/Basic/KsSplitter/KsSplitter.vue";
-import KsSplitterPanel from "../../../src/components/Basic/KsSplitter/KsSplitterPanel.vue";
+import {describe, test, expect} from "vitest"
+import {mount} from "@vue/test-utils"
+import {defineComponent} from "vue"
+import KestraDesignSystem from "../../../src/index"
+import KsSplitter from "../../../src/components/Basic/KsSplitter/KsSplitter.vue"
+import KsSplitterPanel from "../../../src/components/Basic/KsSplitter/KsSplitterPanel.vue"
 
-const globalConfig = {plugins: [KestraDesignSystem]};
+const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsSplitter", () => {
     test("renders splitter element", () => {
@@ -17,18 +17,18 @@ describe("KsSplitter", () => {
                 }),
             },
             global: globalConfig,
-        });
-        expect(wrapper.find(".kel-splitter").exists()).toBe(true);
-    });
+        })
+        expect(wrapper.find(".kel-splitter").exists()).toBe(true)
+    })
 
     test("renders slot content", () => {
         const wrapper = mount(KsSplitter, {
             slots: {default: "<div class='panel-content'>Panel Content</div>"},
             global: globalConfig,
-        });
-        expect(wrapper.find(".panel-content").exists()).toBe(true);
-    });
-});
+        })
+        expect(wrapper.find(".panel-content").exists()).toBe(true)
+    })
+})
 
 describe("KsSplitterPanel", () => {
     test("renders splitter panel element", () => {
@@ -40,9 +40,9 @@ describe("KsSplitterPanel", () => {
                 }),
             },
             global: globalConfig,
-        });
-        expect(wrapper.find(".kel-splitter-panel").exists()).toBe(true);
-    });
+        })
+        expect(wrapper.find(".kel-splitter-panel").exists()).toBe(true)
+    })
 
     test("renders slot content", () => {
         const wrapper = mount(KsSplitter, {
@@ -53,7 +53,7 @@ describe("KsSplitterPanel", () => {
                 }),
             },
             global: globalConfig,
-        });
-        expect(wrapper.find(".inner").exists()).toBe(true);
-    });
-});
+        })
+        expect(wrapper.find(".inner").exists()).toBe(true)
+    })
+})

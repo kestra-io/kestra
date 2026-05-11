@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
-import KsTooltip from "../../../src/components/Feedback/KsTooltip.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsTooltip from "../../../src/components/Feedback/KsTooltip.vue"
 
 const meta: Meta<typeof KsTooltip> = {
     title: "Components/Feedback/KsTooltip",
@@ -20,14 +20,14 @@ const meta: Meta<typeof KsTooltip> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsTooltip>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsTooltip, KsButton},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: `
             <div style="padding:48px">
                 <ks-tooltip v-bind="args">
@@ -37,7 +37,7 @@ export const Default: Story = {
         `,
     }),
     args: {content: "This is a tooltip"},
-};
+}
 
 export const Placements: Story = {
     render: () => ({
@@ -51,7 +51,7 @@ export const Placements: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithContentSlot: Story = {
     render: () => ({
@@ -67,7 +67,7 @@ export const WithContentSlot: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Theme – dark and light */
 export const Theme: Story = {
@@ -84,7 +84,7 @@ export const Theme: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** HTML content via rawContent */
 export const HTMLContent: Story = {
@@ -103,7 +103,7 @@ export const HTMLContent: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Disabled: Story = {
     render: () => ({
@@ -116,4 +116,4 @@ export const Disabled: Story = {
             </div>
         `,
     }),
-};
+}

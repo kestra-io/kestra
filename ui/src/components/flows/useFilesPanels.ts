@@ -1,20 +1,20 @@
-import {h, markRaw, provide, Ref} from "vue";
-import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
-import TypeIcon from "../utils/icons/Type.vue";
-import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
-import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
-import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
-import {useFlowStore} from "../../stores/flow";
+import {h, markRaw, provide, Ref} from "vue"
+import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue"
+import TypeIcon from "../utils/icons/Type.vue"
+import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
+import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
+import {useFlowStore} from "../../stores/flow"
 
-export const CODE_PREFIX = "code";
+export const CODE_PREFIX = "code"
 
 function generateUid(tab: Pick<EditorTabProps, "path">){
     if(tab.path === "Flow.yaml"){
-        return CODE_PREFIX;
+        return CODE_PREFIX
     }
-    return `${CODE_PREFIX}-${tab.path}`;
+    return `${CODE_PREFIX}-${tab.path}`
 }
 
 export function getTabFromFilesTab(tab: EditorTabProps): Tab {
@@ -25,7 +25,7 @@ export function getTabFromFilesTab(tab: EditorTabProps): Tab {
             icon: () => h(TypeIcon, {name:tab.name}),
         },
         component: () => h(markRaw(EditorWrapper), tab),
-    } satisfies Tab;
+    } satisfies Tab
 }
 
 export function getTabPropsFromFilePath(filePath: string, flow: boolean = false): EditorTabProps {
@@ -35,7 +35,7 @@ export function getTabPropsFromFilePath(filePath: string, flow: boolean = false)
         extension: filePath.split(".").pop()!,
         flow,
         dirty: false,
-    };
+    }
 }
 
 interface TabLiveWithContent extends TabLive {
@@ -45,99 +45,99 @@ interface TabLiveWithContent extends TabLive {
 }
 
 export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
-    const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!;
-    codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement);
+    const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!
+    codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
     function setupInitialCodeTab(tab: string, element: EditorElement){
-        const flow = CODE_PREFIX === tab;
+        const flow = CODE_PREFIX === tab
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
-            return;
+            return
         }
-        const filePath = flow ? "Flow.yaml" : tab.substring(5);
-        const editorTab = getTabPropsFromFilePath(filePath, flow);
-        return flow ? element : getTabFromFilesTab(editorTab);
+        const filePath = flow ? "Flow.yaml" : tab.substring(5)
+        const editorTab = getTabPropsFromFilePath(filePath, flow)
+        return flow ? element : getTabFromFilesTab(editorTab)
     }
 
-    return {setupInitialCodeTab};
+    return {setupInitialCodeTab}
 }
 
 export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | undefined>) {
     function focusTab(tabValue: string){
         for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.uid === tabValue);
-            if(t) panel.activeTab = t;
+            const t = panel.tabs.find(e => e.uid === tabValue)
+            if(t) panel.activeTab = t
         }
     }
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     provide(FILES_OPEN_TAB_INJECTION_KEY, (tab) => {
         if(!tab.path){
-            return;
+            return
         }
-        const uid = generateUid(tab);
-        const existing = panels.value.some(p => p.tabs.some(t => t.uid === uid));
+        const uid = generateUid(tab)
+        const existing = panels.value.some(p => p.tabs.some(t => t.uid === uid))
         if(!existing){
-            const panelTab = getTabFromFilesTab(tab);
+            const panelTab = getTabFromFilesTab(tab)
             if(flowStore.haveChange && tab.flow){
-                (panelTab as TabLive).dirty = true;
+                (panelTab as TabLive).dirty = true
             }
-            const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.uid.startsWith("code")));
+            const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.uid.startsWith("code")))
             if(firstPanelWithCodeTab){
-                firstPanelWithCodeTab.tabs.push(panelTab);
-                firstPanelWithCodeTab.activeTab = panelTab;
+                firstPanelWithCodeTab.tabs.push(panelTab)
+                firstPanelWithCodeTab.activeTab = panelTab
             }else{
                 panels.value.push({
                     activeTab: panelTab,
                     tabs: [panelTab],
                     size: defaultSize.value,
-                });
+                })
             }
         }
-        focusTab(generateUid(tab));
-    });
+        focusTab(generateUid(tab))
+    })
 
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
-        const uid = generateUid(tab);
+        const uid = generateUid(tab)
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid));
+            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid))
             
             if (tabIndex > -1) {
                 // if the closed tab is the active one, 
                 // we need to set a new active tab
-                panel.tabs.splice(tabIndex, 1);
+                panel.tabs.splice(tabIndex, 1)
                 if (panel.tabs.length === 0) {
                     // if no tabs left, remove the panel
-                    continue;
+                    continue
                 }
                 panel.activeTab = panel.tabs[
                     Math.min(
                         tabIndex, 
                         panel.tabs.length - 1,
                     )
-                ];
+                ]
             }
         }
-    });
+    })
 
     provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {
-        const uid = generateUid({path});
-        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLive;
+        const uid = generateUid({path})
+        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLive
         if(tab){
-            tab.dirty = dirty;
+            tab.dirty = dirty
         }
-    });
+    })
 
     provide(FILES_UPDATE_CONTENT_INJECTION_KEY, ({path, content}) => {
-        const uid = generateUid({path});
-        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLiveWithContent;
+        const uid = generateUid({path})
+        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLiveWithContent
         if(tab){
-            tab.content = content;
-            tab.path = path;
+            tab.content = content
+            tab.path = path
         }
-    });
+    })
 
-    const namespacesStore = useNamespacesStore();
+    const namespacesStore = useNamespacesStore()
 
     // on save all files, save all namespace files
     // and set all tabs as not dirty
@@ -145,14 +145,14 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         const files:{
             file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
             tab: TabLiveWithContent
-        }[] = [];
+        }[] = []
         for(const panel of panels.value){
             for(const tab of panel.tabs as TabLiveWithContent[]){
                 if(!tab.uid.startsWith(`${CODE_PREFIX}-`) || !tab.content || !tab.path || !tab.dirty){
-                    continue;
+                    continue
                 }
                 if(namespace.value === undefined){
-                    throw new Error(`Cannot save file "${tab.path}": namespace is undefined`);
+                    throw new Error(`Cannot save file "${tab.path}": namespace is undefined`)
                 }
                 files.push({
                     file:{
@@ -161,7 +161,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                         content: tab.content,
                     },
                     tab,
-                });
+                })
             }
         }
         if(files.length > 0){
@@ -170,9 +170,9 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                 files.map(file => namespacesStore.saveOrCreateFile(file.file)
                     // only remove the dirty flag once the file was saved
                     .then(() => file.tab.dirty = false)),
-            );
+            )
         }
-    });
+    })
 
-    const defaultSize = usePanelDefaultSize(panels);
+    const defaultSize = usePanelDefaultSize(panels)
 }

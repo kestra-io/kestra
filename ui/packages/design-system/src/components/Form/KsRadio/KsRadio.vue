@@ -11,28 +11,28 @@
 </template>
 
 <script setup lang="ts">
-    import {ElRadio} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElRadio} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | number | boolean>();
+    const model = defineModel<string | number | boolean>()
 
     const props = defineProps<{
         value?: string | number | boolean
         label?: string | number | boolean
         disabled?: boolean
-    }>();
+    }>()
 
     const emit = defineEmits<{
         change: [value: any]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

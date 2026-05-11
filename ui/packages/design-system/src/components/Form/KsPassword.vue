@@ -23,44 +23,44 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
-    import {useFilteredProps} from "../../utils/filteredProps";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
-    import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue";
+    import {ref, watch} from "vue"
+    import {useFilteredProps} from "../../utils/filteredProps"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
+    import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<string | number>();
+    const model = defineModel<string | number>()
 
     const props = defineProps<{
         placeholder?: string
         disabled?: boolean
-    }>();
+    }>()
 
     const emit = defineEmits<{
         change: [value: string | number]
-    }>();
+    }>()
 
     defineSlots<{
         prepend?(): unknown
         suffix?(): unknown
         default?(): unknown
-    }>();
+    }>()
 
-    const hidden = ref(true);
+    const hidden = ref(true)
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     watch(() => props.disabled, newVal => {
         if (newVal) {
-            hidden.value = true;
+            hidden.value = true
         }
-    });
+    })
 
     const toggle = () => {
-        hidden.value = !hidden.value;
-        emit("change", model.value ?? "");
-    };
+        hidden.value = !hidden.value
+        emit("change", model.value ?? "")
+    }
 </script>
 
 <style scoped lang="scss">

@@ -3,11 +3,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElProgress} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
-    import {computed} from "vue";
+    import {ElProgress} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
+    import {computed} from "vue"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         left?: number
@@ -27,11 +27,11 @@
         color: undefined,
         showText: undefined,
         status: undefined,
-    });
+    })
 
-    const left = computed(() => `${props.left ?? 0}%`);
+    const left = computed(() => `${props.left ?? 0}%`)
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

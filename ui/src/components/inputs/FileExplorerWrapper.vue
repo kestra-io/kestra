@@ -6,10 +6,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import FileExplorer from "./FileExplorer.vue";
-    import {useFlowStore} from "../../stores/flow";
+    import {computed} from "vue"
+    import FileExplorer from "./FileExplorer.vue"
+    import {useFlowStore} from "../../stores/flow"
 
-    const flowStore = useFlowStore();
-    const namespace = computed(() => flowStore.flowParsed?.namespace);
+    const flowStore = useFlowStore()
+    const namespace = computed(() => flowStore.flowParsed?.namespace)
 </script>

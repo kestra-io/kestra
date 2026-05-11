@@ -1,5 +1,5 @@
-import {mergeConfig} from "vite";
-import type {StorybookConfig} from "@storybook/vue3-vite";
+import {mergeConfig} from "vite"
+import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const config: StorybookConfig = {
     stories: [
@@ -11,21 +11,21 @@ const config: StorybookConfig = {
         options: {},
     },
     async viteFinal(viteConfig) {
-        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx");
+        const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
         viteConfig.plugins = [
             ...(viteConfig.plugins ?? []),
             viteJSXPlugin(),
-        ];
+        ]
 
         if (viteConfig.resolve) {
             viteConfig.resolve.alias = {
                 ...viteConfig.resolve?.alias,
-            };
+            }
         }
 
         return mergeConfig(viteConfig, {
             define: {"process.env": {}},
-        });
+        })
     },
-};
-export default config;
+}
+export default config

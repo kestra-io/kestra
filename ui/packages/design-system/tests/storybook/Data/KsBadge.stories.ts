@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsBadge from "../../../src/components/Data/KsBadge.vue";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsBadge from "../../../src/components/Data/KsBadge.vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta<typeof KsBadge> = {
     title: "Components/Data/KsBadge",
@@ -15,18 +15,18 @@ const meta: Meta<typeof KsBadge> = {
     parameters: {
         docs: {description: {component: "KsBadge is the Kestra design-system abstraction over `ElBadge` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsBadge>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsBadge, KsButton},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-badge v-bind=\"args\"><ks-button>Messages</ks-button></ks-badge></div>",
     }),
     args: {value: 5},
-};
+}
 
 export const Types: Story = {
     render: () => ({
@@ -40,7 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Red dot – small dot without a number */
 export const RedDot: Story = {
@@ -54,15 +54,15 @@ export const RedDot: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Hidden – badge can be hidden programmatically */
 export const Hidden: Story = {
     render: () => ({
         components: {KsBadge, KsButton},
         setup() {
-            const hidden = ref(false);
-            return {hidden};
+            const hidden = ref(false)
+            return {hidden}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -73,7 +73,7 @@ export const Hidden: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const MaxValue: Story = {
     render: () => ({
@@ -85,4 +85,4 @@ export const MaxValue: Story = {
             </div>
         `,
     }),
-};
+}

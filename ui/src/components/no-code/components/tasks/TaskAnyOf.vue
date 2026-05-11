@@ -36,26 +36,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, nextTick, inject} from "vue";
-    import {Schema} from "./getTaskComponent";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
-    import {useBlockComponent} from "./useBlockComponent";
+    import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
+    import {Schema} from "./getTaskComponent"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
+    import {useBlockComponent} from "./useBlockComponent"
 
     const props = defineProps<{
         schema: Schema,
         required?: boolean
-    }>();
+    }>()
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>();
+    const model = defineModel<any>()
 
-    const emit = defineEmits(["update:selectedSchema"]);
+    const emit = defineEmits(["update:selectedSchema"])
 
-    const selectedSchema = ref<string>();
-    const delayedSelectedSchema = ref<string>();
-    const finishedMounting = ref(false);
+    const selectedSchema = ref<string>()
+    const delayedSelectedSchema = ref<string>()
+    const finishedMounting = ref(false)
 
     function consolidateAllOfSchemas(schema: Schema, definitions: Record<string, Schema>) {
         if (schema?.allOf?.length) {
@@ -63,10 +63,10 @@
                 ...schema,
                 ...schema.allOf.reduce<Schema>((acc, item) => {
                     if(!acc.required){
-                        return acc;
+                        return acc
                     }
                     if (item.$ref) {
-                        const refSchema = definitions[item.$ref.split("/").pop() ?? "---"];
+                        const refSchema = definitions[item.$ref.split("/").pop() ?? "---"]
                         if (refSchema) {
                             return {
                                 ...acc,
@@ -78,7 +78,7 @@
                                     ...acc.properties,
                                     ...refSchema.properties,
                                 },
-                            };
+                            }
                         }
                     } else {
                         return {
@@ -91,9 +91,9 @@
                                 ...acc.properties,
                                 ...item.properties,
                             },
-                        };
+                        }
                     }
-                    return acc;
+                    return acc
                 }, {
                     type: "object",
                     properties: {},
@@ -101,160 +101,160 @@
                     $language: "",
                 }),
 
-            };
+            }
         }
-        return schema;
+        return schema
     }
 
     const schemas = computed(() => {
-        if (!props.schema?.anyOf || !Array.isArray(props.schema.anyOf)) return [];
+        if (!props.schema?.anyOf || !Array.isArray(props.schema.anyOf)) return []
         return props.schema.anyOf.map((schema: Schema) => {
             if (schema.allOf && Array.isArray(schema.allOf)) {
                 if (schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
                     return {
                         ...schema.allOf[1],
                         $ref: schema.allOf[0].$ref,
-                    };
+                    }
                 }
             }
-            return schema;
-        });
-    });
+            return schema
+        })
+    })
 
     const allSchemaSameType = computed(() => {
-        if (schemas.value.length < 2) return false;
-        const firstType = schemas.value[0].type;
+        if (schemas.value.length < 2) return false
+        const firstType = schemas.value[0].type
         if(firstType === undefined){
-            return false;
+            return false
         }
-        return schemas.value.every((schema: Schema) => schema.type === firstType);
-    });
+        return schemas.value.every((schema: Schema) => schema.type === firstType)
+    })
 
     function makeKey(schema: Schema) {
         if(typeof schema.type === "object"){
-            return schema.type.const;
+            return schema.type.const
         }
         if(allSchemaSameType.value && schema.items){
-            return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`;
+            return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`
         }
-        return schema.format ?? schema.type;
+        return schema.format ?? schema.type
     }
 
     const schemaByType = computed(() => {
         return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
-            acc[makeKey(schema)] = schema;
-            return acc;
-        }, {});
-    });
+            acc[makeKey(schema)] = schema
+            return acc
+        }, {})
+    })
 
-    const constantType = computed(() => currentSchema.value?.properties?.type?.const);
+    const constantType = computed(() => currentSchema.value?.properties?.type?.const)
 
     const filteredProperties = computed(() =>
         currentSchema.value?.properties
             ? Object.entries(currentSchema.value.properties).filter(([key, schema]: [string, Schema]) => !(key === "type" && schema?.const))
             : [],
-    );
+    )
 
-    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, computed<Record<string, Schema>>(() => ({})));
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, computed<Record<string, Schema>>(() => ({})))
 
     const currentSchema = computed(() => {
-        if(!delayedSelectedSchema.value) return undefined;
-        const rawSchema = definitions.value[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
-        return consolidateAllOfSchemas(rawSchema, definitions.value);
-    });
+        if(!delayedSelectedSchema.value) return undefined
+        const rawSchema = definitions.value[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value]
+        return consolidateAllOfSchemas(rawSchema, definitions.value)
+    })
 
-    const {getBlockComponent} = useBlockComponent();
+    const {getBlockComponent} = useBlockComponent()
 
     const currentSchemaType = computed(() =>
         delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
-    );
+    )
 
-    const isSelectingPlugins = computed(() => schemas.value.length > 4);
+    const isSelectingPlugins = computed(() => schemas.value.length > 4)
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
         // if all schemas are of type array we have to
         // look at the type of their items to differentiate them
         if(allSchemaSameType.value){
             return schemas.value.map((schema) => {
-                const itemsType = schema.type === "array" ? schema.items?.format ?? schema.items?.type : schema.format ?? schema.type;
-                const itemsTypeString = typeof itemsType === "object" ? itemsType.const : itemsType;
+                const itemsType = schema.type === "array" ? schema.items?.format ?? schema.items?.type : schema.format ?? schema.type
+                const itemsTypeString = typeof itemsType === "object" ? itemsType.const : itemsType
 
                 return {
                     label: itemsTypeString ? itemsTypeString.charAt(0).toUpperCase() + itemsTypeString.slice(1) : "Unknown",
                     value: makeKey(schema),
                     id: itemsTypeString,
-                };
-            });
+                }
+            })
         }
 
-        if (!schemas.value?.length || !definitions.value) return [];
+        if (!schemas.value?.length || !definitions.value) return []
         const schemaRefsArray = (schemas.value as {$ref?: string, type: string}[])
             .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
             .filter((schemaRef) => schemaRef !== undefined)
             .map((schemaRef) => typeof definitions.value[schemaRef]?.type === "object" ? definitions.value[schemaRef]?.type?.const : schemaRef)
-            .map((schemaRef: string) => schemaRef.split("."));
+            .map((schemaRef: string) => schemaRef.split("."))
 
-        let mismatch = false;
+        let mismatch = false
         const commonPart = schemaRefsArray[0]
             ?.filter((schemaRef: string, index: number) => {
                 if (!mismatch && schemaRefsArray.every((item: string[]) => item[index] === schemaRef)) {
-                    return true;
+                    return true
                 } else {
-                    mismatch = true;
-                    return false;
+                    mismatch = true
+                    return false
                 }
             })
             .map((schemaRef: string) => `${schemaRef}.`)
-            .join("");
+            .join("")
 
 
 
         return schemas.value.map((schema: any) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()
-                : schema.type;
+                : schema.type
 
             if (!schemaRef) {
                 return {
                     label: "Unknown Schema",
                     value: "",
                     id: "",
-                };
+                }
             }
 
-            const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
-            const lastPartOfValue = cleanSchemaRef.slice(commonPart.length);
+            const cleanSchemaRef = schemaRef.replace(/-\d+$/, "")
+            const lastPartOfValue = cleanSchemaRef.slice(commonPart.length)
 
             return {
                 label: lastPartOfValue?.charAt(0).toUpperCase() + lastPartOfValue?.slice(1),
                 value: schemaRef,
                 id: cleanSchemaRef,
-            };
-        }).filter((schema: any) => schema.value !== undefined);
-    });
+            }
+        }).filter((schema: any) => schema.value !== undefined)
+    })
 
     watch(() => constantType.value, (val) => {
-        if (!finishedMounting.value) return;
+        if (!finishedMounting.value) return
         if (!val) {
-            onInput(undefined);
-            return;
+            onInput(undefined)
+            return
         }
         if (model.value) {
             for (const key in model.value) {
                 if (key !== "type" && !filteredProperties.value?.some(([k]) => k === key)) {
-                    delete model.value[key];
+                    delete model.value[key]
                 }
             }
         }
-        onAnyOfInput(model.value || {type: val});
-    });
+        onAnyOfInput(model.value || {type: val})
+    })
 
     watch(selectedSchema, (val) => {
-        emit("update:selectedSchema", val);
+        emit("update:selectedSchema", val)
         nextTick(() => {
-            delayedSelectedSchema.value = val;
-        });
-    });
+            delayedSelectedSchema.value = val
+        })
+    })
 
     onMounted(() => {
         const schema = schemaOptions.value?.find((item: any) =>
@@ -266,30 +266,30 @@
             (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
-        );
+        )
 
-        selectedSchema.value = schema?.value;
+        selectedSchema.value = schema?.value
 
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
-            selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type;
+            selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type
         }
 
         if (schema) {
-            onSelectType(schema.value);
+            onSelectType(schema.value)
         }
         nextTick(() => {
-            finishedMounting.value = true;
-        });
-    });
+            finishedMounting.value = true
+        })
+    })
 
     // Methods
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
-            let parsedValue: any = {};
+            let parsedValue: any = {}
             try {
-                parsedValue = YAML_UTILS.parse(model.value) ?? {};
+                parsedValue = YAML_UTILS.parse(model.value) ?? {}
                 if (value === "array" && !Array.isArray(parsedValue)) {
-                    parsedValue = [parsedValue];
+                    parsedValue = [parsedValue]
                 }
             } catch {
                 // ignore invalid yaml
@@ -297,49 +297,49 @@
         }
         if (value === "string") {
             if (Array.isArray(model.value) && model.value.length === 1) {
-                model.value = model.value[0];
+                model.value = model.value[0]
             } else if (typeof model.value !== "string") {
-                model.value = YAML_UTILS.stringify(model.value);
+                model.value = YAML_UTILS.stringify(model.value)
             }
         }
-        selectedSchema.value = value;
+        selectedSchema.value = value
         if (currentSchema.value?.properties && model.value === undefined) {
-            const defaultValues: Record<string, any> = {};
+            const defaultValues: Record<string, any> = {}
             for (let prop in currentSchema.value.properties) {
                 if (
                     currentSchema.value.properties[prop].$required &&
                     currentSchema.value.properties[prop].default
                 ) {
-                    defaultValues[prop] = currentSchema.value.properties[prop].default;
+                    defaultValues[prop] = currentSchema.value.properties[prop].default
                 }
             }
-            onInput(defaultValues);
+            onInput(defaultValues)
         }
-        delayedSelectedSchema.value = value;
+        delayedSelectedSchema.value = value
     }
 
     function onAnyOfInput(value: any) {
         if (constantType.value?.length && typeof value === "object") {
-            value.type = constantType.value;
+            value.type = constantType.value
         }
-        onInput(value);
+        onInput(value)
     }
 
     function onInput(value: any) {
-        model.value = value;
+        model.value = value
     }
 
     function resetSelectType() {
-        selectedSchema.value = undefined;
+        selectedSchema.value = undefined
         nextTick(() => {
-            onInput(undefined);
-        });
+            onInput(undefined)
+        })
     }
 
     // Expose
     defineExpose({
         resetSelectType,
-    });
+    })
 </script>
 
 <style scoped lang="scss">

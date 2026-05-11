@@ -168,4 +168,4 @@ export default {
             "custom duration": "自定义持续时间",
         },
     },
-};
+}

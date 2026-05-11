@@ -12,14 +12,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue";
-    import {useRouter} from "vue-router";
-    import EnterpriseBadge from "./EnterpriseBadge.vue";
+    import {computed, ref, onMounted} from "vue"
+    import {useRouter} from "vue-router"
+    import EnterpriseBadge from "./EnterpriseBadge.vue"
 
     defineOptions({
         name: "LeftMenuLink",
         inheritAttrs: false,
-    });
+    })
 
     interface MenuItem{
         href?: string;
@@ -31,24 +31,24 @@
 
     const props = defineProps<{
         item: MenuItem;
-    }>();
+    }>()
 
-    const router = useRouter();
+    const router = useRouter()
 
     const isHyperLink = computed<boolean>(() => {
-        return !!(!props.item.href || props.item.external || !router);
-    });
+        return !!(!props.item.href || props.item.external || !router)
+    })
 
     const isLocked = computed<boolean>(() => {
-        return props.item?.attributes?.locked || false;
-    });
+        return props.item?.attributes?.locked || false
+    })
 
-    const slotContainer = ref<HTMLAnchorElement | null>(null);
-    const term = ref<string>();
+    const slotContainer = ref<HTMLAnchorElement | null>(null)
+    const term = ref<string>()
 
     onMounted(() => {
         if (slotContainer?.value?.innerText) {
-            term.value = encodeURIComponent(slotContainer.value.innerText.trim().toLowerCase());
+            term.value = encodeURIComponent(slotContainer.value.innerText.trim().toLowerCase())
         }
-    });
+    })
 </script>

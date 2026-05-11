@@ -40,16 +40,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {DISABLED_PAGES} from "./docsUtils";
+    import {computed, ref} from "vue"
+    import {DISABLED_PAGES} from "./docsUtils"
 
     defineOptions({
         name: "RecursiveToc",
-    });
+    })
 
     defineSlots<{
         default: (child: TocChild & {class?: string}) => any
-    }>();
+    }>()
 
 
     interface TocChild {
@@ -68,13 +68,13 @@
     }>(), {
         makeIndexNavigable: true,
         depth: 0,
-    });
+    })
 
     const filteredChildren = computed(() => {
-        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})));
-    });
+        return props.parent.children.map((child => ({...child, title: child.sidebarTitle ?? child.title})))
+    })
 
-    const openedDocs = ref<string>("");
+    const openedDocs = ref<string>("")
 </script>
 
 <style scoped lang="scss">

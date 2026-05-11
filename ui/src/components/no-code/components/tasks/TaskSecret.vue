@@ -9,18 +9,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {Schema} from "./getTaskComponent";
+    import {Schema} from "./getTaskComponent"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     defineProps<{
         disabled?: boolean;
         schema?: Schema;
         root?: string;
         task?: any;
-    }>();
+    }>()
 
-    const modelValue = defineModel<string>({default: ""});
+    const modelValue = defineModel<string>({default: ""})
 </script>
 
 <style scoped lang="scss">

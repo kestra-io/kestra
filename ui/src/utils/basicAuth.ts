@@ -1,19 +1,19 @@
 export function logout() {
-    document.cookie = "BASIC_AUTH=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;samesite=strict";
-    return true;
+    document.cookie = "BASIC_AUTH=;path=/;expires=Thu, 01 Jan 1970 00:00:01 GMT;samesite=strict"
+    return true
 }
 
 export function signIn(username: string, password: string) {
-    const trimmedUsername = username.trim();
-    const encoded = btoa(`${trimmedUsername}:${password}`);
-    document.cookie = `BASIC_AUTH=${encoded};path=/;samesite=strict`;
-    return true;
+    const trimmedUsername = username.trim()
+    const encoded = btoa(`${trimmedUsername}:${password}`)
+    document.cookie = `BASIC_AUTH=${encoded};path=/;samesite=strict`
+    return true
 }
 
 export function isLoggedIn() {
-    return Boolean(credentials());
+    return Boolean(credentials())
 }
 
 export function credentials() {
-    return document.cookie.split("BASIC_AUTH=")?.[1]?.split(";")?.[0];
+    return document.cookie.split("BASIC_AUTH=")?.[1]?.split(";")?.[0]
 }

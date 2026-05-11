@@ -1,19 +1,19 @@
-import {defineConfig} from "vite";
-import vue from "@vitejs/plugin-vue";
+import {defineConfig} from "vite"
+import vue from "@vitejs/plugin-vue"
 
-import {mergeConfig} from "vitest/config";
-import viteConfig from "./vite.config.js";
-import path from "node:path";
-import {fileURLToPath} from "node:url";
-import {storybookTest} from "@storybook/addon-vitest/vitest-plugin";
-import {playwright} from "@vitest/browser-playwright";
+import {mergeConfig} from "vitest/config"
+import viteConfig from "./vite.config.js"
+import path from "node:path"
+import {fileURLToPath} from "node:url"
+import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
+import {playwright} from "@vitest/browser-playwright"
 
 const dirname =
     typeof __dirname !== "undefined"
         ? __dirname
-        : path.dirname(fileURLToPath(import.meta.url));
+        : path.dirname(fileURLToPath(import.meta.url))
 
-const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig;
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
@@ -52,4 +52,4 @@ export default defineConfig({
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",
     },
-});
+})

@@ -1,12 +1,12 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import {expect} from "storybook/test";
-import KsLine from "../../../src/components/Charts/KsLine.vue";
-import KsBar from "../../../src/components/Charts/KsBar.vue";
-import {ChartFeature, TooltipType} from "../../../src/components/Charts/ksChartUtils";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import {expect} from "storybook/test"
+import KsLine from "../../../src/components/Charts/KsLine.vue"
+import KsBar from "../../../src/components/Charts/KsBar.vue"
+import {ChartFeature, TooltipType} from "../../../src/components/Charts/ksChartUtils"
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const ALL_FEATURES: ChartFeature[] = [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE, ChartFeature.TOOLTIP];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const ALL_FEATURES: ChartFeature[] = [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE, ChartFeature.TOOLTIP]
 
 const meta: Meta<typeof KsLine> = {
     title: "Components/Charts/KsLine",
@@ -29,8 +29,8 @@ const meta: Meta<typeof KsLine> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsLine>
 
 // ─── Standard ─────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ type Story = StoryObj<typeof KsLine>
 export const Default: Story = {
     render: (args) => ({
         components: {KsLine},
-        setup() { return {args, MONTHS}; },
+        setup() { return {args, MONTHS} },
         template: "<div style=\"padding:24px;height:300px\"><ks-line v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
@@ -47,15 +47,15 @@ export const Default: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy()
     },
-};
+}
 
 /** Multiple series */
 export const MultipleSeries: Story = {
     render: () => ({
         components: {KsLine},
-        setup() { return {MONTHS}; },
+        setup() { return {MONTHS} },
         template: `
             <div style="padding:24px;height:320px">
                 <ks-line
@@ -71,7 +71,7 @@ export const MultipleSeries: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Loading state — shown while data is being fetched */
 export const Loading: Story = {
@@ -80,32 +80,32 @@ export const Loading: Story = {
         template: "<div style=\"padding:24px;height:300px\"><ks-line :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy()
     },
-};
+}
 
 /** Simulates fetching then populating the chart */
 export const AsyncData: Story = {
     render: () => ({
         components: {KsLine},
         setup() {
-            const data = ref<null | {name: string; data: number[]}[]>(null);
-            const categories = ref<string[]>([]);
+            const data = ref<null | {name: string; data: number[]}[]>(null)
+            const categories = ref<string[]>([])
 
             function load() {
-                data.value = null;
-                categories.value = [];
+                data.value = null
+                categories.value = []
                 setTimeout(() => {
-                    categories.value = MONTHS;
+                    categories.value = MONTHS
                     data.value = [
                         {name: "2024", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]},
                         {name: "2023", data: [90, 140, 120, 60, 50, 90, 110, 140, 75, 130, 180, 150]},
-                    ];
-                }, 1500);
+                    ]
+                }, 1500)
             }
 
-            load();
-            return {data, categories, load};
+            load()
+            return {data, categories, load}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -117,13 +117,13 @@ export const AsyncData: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom colors via options override */
 export const WithOptionsOverride: Story = {
     render: () => ({
         components: {KsLine},
-        setup() { return {MONTHS}; },
+        setup() { return {MONTHS} },
         template: `
             <div style="padding:24px;height:300px">
                 <ks-line
@@ -138,7 +138,7 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
-};
+}
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────
 
@@ -146,7 +146,7 @@ export const WithOptionsOverride: Story = {
 export const MiniLine: Story = {
     render: (args) => ({
         components: {KsLine},
-        setup() { return {args, MONTHS}; },
+        setup() { return {args, MONTHS} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-line v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
@@ -156,15 +156,15 @@ export const MiniLine: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart-wrapper")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart-wrapper")).toBeTruthy()
     },
-};
+}
 
 /** Compact sparkline — multiple series */
 export const MiniMultipleSeries: Story = {
     render: () => ({
         components: {KsLine},
-        setup() { return {MONTHS, ALL_FEATURES}; },
+        setup() { return {MONTHS, ALL_FEATURES} },
         template: `
             <div style="padding:24px;width:240px;height:80px">
                 <ks-line
@@ -180,13 +180,13 @@ export const MiniMultipleSeries: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Taller sparkline */
 export const MiniTall: Story = {
     render: () => ({
         components: {KsLine},
-        setup() { return {MONTHS, ALL_FEATURES}; },
+        setup() { return {MONTHS, ALL_FEATURES} },
         template: `
             <div style="padding:24px;width:320px;height:120px">
                 <ks-line
@@ -199,36 +199,36 @@ export const MiniTall: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Mini loading state */
 export const MiniLoading: Story = {
     render: () => ({
         components: {KsLine},
-        setup() { return {ALL_FEATURES}; },
+        setup() { return {ALL_FEATURES} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-line :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
-};
+}
 
 /** Mini async data */
 export const MiniAsyncData: Story = {
     render: () => ({
         components: {KsLine},
         setup() {
-            const data = ref<null | {name: string; data: number[]}[]>(null);
-            const categories = ref<string[]>([]);
+            const data = ref<null | {name: string; data: number[]}[]>(null)
+            const categories = ref<string[]>([])
 
             function load() {
-                data.value = null;
-                categories.value = [];
+                data.value = null
+                categories.value = []
                 setTimeout(() => {
-                    categories.value = MONTHS;
-                    data.value = [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}];
-                }, 1500);
+                    categories.value = MONTHS
+                    data.value = [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}]
+                }, 1500)
             }
 
-            load();
-            return {data, categories, load, ALL_FEATURES};
+            load()
+            return {data, categories, load, ALL_FEATURES}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:240px">
@@ -242,13 +242,13 @@ export const MiniAsyncData: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Mini line and bar charts embedded in dashboard cards */
 export const MiniInCard: Story = {
     render: () => ({
         components: {KsLine, KsBar},
-        setup() { return {MONTHS, ALL_FEATURES}; },
+        setup() { return {MONTHS, ALL_FEATURES} },
         template: `
             <div style="padding:24px;display:flex;gap:16px">
                 <div style="border:1px solid #e1e3e5;border-radius:8px;padding:16px;width:200px">
@@ -280,4 +280,4 @@ export const MiniInCard: Story = {
             </div>
         `,
     }),
-};
+}

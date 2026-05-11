@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-    import CheckBold from "vue-material-design-icons/CheckBold.vue";
+    import CheckBold from "vue-material-design-icons/CheckBold.vue"
 
     interface ButtonConfig {
         text: string
@@ -53,7 +53,7 @@
         button?: ButtonConfig
     }
 
-    defineProps<Props>();
+    defineProps<Props>()
 </script>
 
 <style scoped lang="scss">

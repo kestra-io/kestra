@@ -1,11 +1,11 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import {expect} from "storybook/test";
-import KsBar from "../../../src/components/Charts/KsBar.vue";
-import {ChartFeature, TooltipType} from "../../../src";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import {expect} from "storybook/test"
+import KsBar from "../../../src/components/Charts/KsBar.vue"
+import {ChartFeature, TooltipType} from "../../../src"
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const ALL_FEATURES = ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"] as const;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const ALL_FEATURES = ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"] as const
 
 const meta: Meta<typeof KsBar> = {
     title: "Components/Charts/KsBar",
@@ -29,8 +29,8 @@ const meta: Meta<typeof KsBar> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsBar>
 
 // ─── Standard ─────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ type Story = StoryObj<typeof KsBar>
 export const Default: Story = {
     render: (args) => ({
         components: {KsBar},
-        setup() { return {args, MONTHS}; },
+        setup() { return {args, MONTHS} },
         template: "<div style=\"padding:24px;height:300px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
@@ -47,15 +47,15 @@ export const Default: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
     },
-};
+}
 
 /** Stacked bar chart */
 export const StackedExternalTooltip: Story = {
     render: () => ({
         components: {KsBar},
-        setup() { return {MONTHS}; },
+        setup() { return {MONTHS} },
         template: `
             <div style="padding:24px;height:320px">
                 <ks-bar
@@ -72,13 +72,13 @@ export const StackedExternalTooltip: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Single series bar chart */
 export const SplitArea: Story = {
     render: (args) => ({
         components: {KsBar},
-        setup() { return {args, MONTHS}; },
+        setup() { return {args, MONTHS} },
         template: "<div style=\"padding:24px;height:300px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
@@ -106,9 +106,9 @@ export const SplitArea: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
     },
-};
+}
 
 /** Loading state — shown while data is being fetched */
 export const Loading: Story = {
@@ -117,32 +117,32 @@ export const Loading: Story = {
         template: "<div style=\"padding:24px;height:300px\"><ks-bar :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--bar")).toBeTruthy()
     },
-};
+}
 
 /** Simulates fetching then populating the chart */
 export const AsyncData: Story = {
     render: () => ({
         components: {KsBar},
         setup() {
-            const data = ref<null | {name: string; data: number[]}[]>(null);
-            const categories = ref<string[]>([]);
+            const data = ref<null | {name: string; data: number[]}[]>(null)
+            const categories = ref<string[]>([])
 
             function load() {
-                data.value = null;
-                categories.value = [];
+                data.value = null
+                categories.value = []
                 setTimeout(() => {
-                    categories.value = MONTHS;
+                    categories.value = MONTHS
                     data.value = [
                         {name: "2024", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]},
                         {name: "2023", data: [90, 140, 120, 60, 50, 90, 110, 140, 75, 130, 180, 150]},
-                    ];
-                }, 1500);
+                    ]
+                }, 1500)
             }
 
-            load();
-            return {data, categories, load};
+            load()
+            return {data, categories, load}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -154,7 +154,7 @@ export const AsyncData: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Custom colors via options override */
 export const WithOptionsOverride: Story = {
@@ -166,7 +166,7 @@ export const WithOptionsOverride: Story = {
 
     render: () => ({
         components: {KsBar},
-        setup() { return {MONTHS}; },
+        setup() { return {MONTHS} },
         template: `
             <div style="padding:24px;height:300px">
                 <ks-bar
@@ -182,7 +182,7 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
-};
+}
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────
 
@@ -190,7 +190,7 @@ export const WithOptionsOverride: Story = {
 export const MiniBar: Story = {
     render: (args) => ({
         components: {KsBar},
-        setup() { return {args, MONTHS}; },
+        setup() { return {args, MONTHS} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-bar v-bind=\"args\" :categories=\"MONTHS\" /></div>",
     }),
     args: {
@@ -200,15 +200,15 @@ export const MiniBar: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart-wrapper")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart-wrapper")).toBeTruthy()
     },
-};
+}
 
 /** Compact stacked sparkline */
 export const MiniStacked: Story = {
     render: () => ({
         components: {KsBar},
-        setup() { return {MONTHS, ALL_FEATURES}; },
+        setup() { return {MONTHS, ALL_FEATURES} },
         template: `
             <div style="padding:24px;width:240px;height:80px">
                 <ks-bar
@@ -225,13 +225,13 @@ export const MiniStacked: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Mini loading state */
 export const MiniLoading: Story = {
     render: () => ({
         components: {KsBar},
-        setup() { return {ALL_FEATURES}; },
+        setup() { return {ALL_FEATURES} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-bar :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
-};
+}

@@ -1,7 +1,7 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import {within, userEvent, expect} from "storybook/test";
-import KsCheckTag from "../../../src/components/Data/KsTag/KsCheckTag.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import {within, userEvent, expect} from "storybook/test"
+import KsCheckTag from "../../../src/components/Data/KsTag/KsCheckTag.vue"
 
 const meta: Meta<typeof KsCheckTag> = {
     title: "Components/Data/KsCheckTag",
@@ -20,8 +20,8 @@ const meta: Meta<typeof KsCheckTag> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsCheckTag>
 
 /** Default check tag */
@@ -29,8 +29,8 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsCheckTag},
         setup() {
-            const checked = ref(args.checked ?? false);
-            return {args, checked};
+            const checked = ref(args.checked ?? false)
+            return {args, checked}
         },
         template: `
             <div style="padding:24px">
@@ -40,12 +40,12 @@ export const Default: Story = {
     }),
     args: {checked: false},
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const tag = canvas.getByText("Option");
-        await expect(tag).toBeTruthy();
-        await userEvent.click(tag);
+        const canvas = within(canvasElement)
+        const tag = canvas.getByText("Option")
+        await expect(tag).toBeTruthy()
+        await userEvent.click(tag)
     },
-};
+}
 
 /** Pre-checked state */
 export const Checked: Story = {
@@ -59,9 +59,9 @@ export const Checked: Story = {
         `,
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".kel-check-tag.is-checked")).toBeTruthy();
+        await expect(canvasElement.querySelector(".kel-check-tag.is-checked")).toBeTruthy()
     },
-};
+}
 
 /** Disabled state */
 export const Disabled: Story = {
@@ -75,24 +75,24 @@ export const Disabled: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const disabled = canvasElement.querySelectorAll(".kel-check-tag.is-disabled");
-        await expect(disabled.length).toBe(2);
+        const disabled = canvasElement.querySelectorAll(".kel-check-tag.is-disabled")
+        await expect(disabled.length).toBe(2)
     },
-};
+}
 
 /** Multi-select group */
 export const MultiSelectGroup: Story = {
     render: () => ({
         components: {KsCheckTag},
         setup() {
-            const selected = ref<string[]>(["flows"]);
-            const tags = ["flows", "executions", "namespaces", "triggers", "logs"];
+            const selected = ref<string[]>(["flows"])
+            const tags = ["flows", "executions", "namespaces", "triggers", "logs"]
             function toggle(tag: string) {
-                const idx = selected.value.indexOf(tag);
-                if (idx >= 0) selected.value.splice(idx, 1);
-                else selected.value.push(tag);
+                const idx = selected.value.indexOf(tag)
+                if (idx >= 0) selected.value.splice(idx, 1)
+                else selected.value.push(tag)
             }
-            return {tags, selected, toggle};
+            return {tags, selected, toggle}
         },
         template: `
             <div style="padding:24px">
@@ -110,4 +110,4 @@ export const MultiSelectGroup: Story = {
             </div>
         `,
     }),
-};
+}

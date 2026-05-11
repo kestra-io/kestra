@@ -7,12 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElInputNumber} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ElInputNumber} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<number>();
+    const model = defineModel<number>()
 
     const props = withDefaults(defineProps<{
         min?: number
@@ -34,13 +34,13 @@
         placeholder: undefined,
         controls: undefined,
         controlsPosition: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         change: [currentValue: number | undefined, oldValue: number | undefined]
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

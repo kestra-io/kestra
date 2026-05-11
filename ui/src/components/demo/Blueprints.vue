@@ -16,20 +16,20 @@
 </template>
 
 <script setup lang="ts">
-    import Layout from "./Layout.vue";
-    import {computed} from "vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import Layout from "./Layout.vue"
+    import {computed} from "vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
 
-    import sourceImg from "../../assets/demo/blueprints.png";
+    import sourceImg from "../../assets/demo/blueprints.png"
 
-    import {useI18n} from "vue-i18n";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {useI18n} from "vue-i18n"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.blueprints.title")}));
+    const routeInfo = computed(() => ({title: t("demos.blueprints.title")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
-    const props = defineProps({embed: {type: Boolean, default: false}});
+    const props = defineProps({embed: {type: Boolean, default: false}})
 </script>

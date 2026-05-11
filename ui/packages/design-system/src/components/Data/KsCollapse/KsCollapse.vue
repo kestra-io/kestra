@@ -11,27 +11,27 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapse} from "element-plus";
+    import {ElCollapse} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>();
+    const model = defineModel<any>()
 
     const props = defineProps<{
         accordion?: boolean
-    }>();
+    }>()
 
     const emit = defineEmits<{
         change: [value: string | string[]]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

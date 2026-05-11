@@ -1,11 +1,11 @@
-import {mount} from "@vue/test-utils";
-import {createI18n} from "vue-i18n";
-import moment from "moment/moment";
-import {extendMoment} from "moment-range";
-import ElementPlus from "element-plus";
-import filters from "../src/utils/filters";
-import translations from "../src/translations.json";
-import "../src/utils/global";
+import {mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
+import moment from "moment/moment"
+import {extendMoment} from "moment-range"
+import ElementPlus from "element-plus"
+import filters from "../src/utils/filters"
+import translations from "../src/translations.json"
+import "../src/utils/global"
 
 
 let i18n = createI18n({
@@ -14,9 +14,9 @@ let i18n = createI18n({
     allowComposition: true,
     legacy: false,
     warnHtmlMessage: false,
-});
+})
 
-moment.locale("en");
+moment.locale("en")
 
 export default (component, options) => {
     const app =  mount(
@@ -34,7 +34,7 @@ export default (component, options) => {
                 },
             ...options,
         },
-    );
+    )
 
-    return app;
-};
+    return app
+}

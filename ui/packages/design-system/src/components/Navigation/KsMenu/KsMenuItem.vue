@@ -13,27 +13,27 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenuItem} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElMenuItem} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         index?: string
         disabled?: boolean
         route?: string | object
-    }>();
+    }>()
 
     const emit = defineEmits<{
         click: [item: any]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
         title?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

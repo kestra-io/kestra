@@ -6,70 +6,70 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount} from "vue";
-    import {useRoute} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
-    import {useBlueprintsStore} from "../../stores/blueprints";
-    import {getRandomID} from "../../../scripts/id";
-    import {useFlowStore} from "../../stores/flow";
-    import {defaultNamespace} from "../../composables/useNamespaces";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed, onBeforeUnmount} from "vue"
+    import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
+    import {useBlueprintsStore} from "../../stores/blueprints"
+    import {getRandomID} from "../../../scripts/id"
+    import {useFlowStore} from "../../stores/flow"
+    import {defaultNamespace} from "../../composables/useNamespaces"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    import type {BlueprintType} from "../../stores/blueprints";
-    import {useAuthStore} from "override/stores/auth";
-    import resource from "../../models/resource";
-    import action from "../../models/action";
-    import {useOnboardingV2Store} from "../../stores/onboardingV2";
+    import type {BlueprintType} from "../../stores/blueprints"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
-    const route = useRoute();
-    const {t} = useI18n();
+    const route = useRoute()
+    const {t} = useI18n()
 
-    const blueprintsStore = useBlueprintsStore();
-    const flowStore = useFlowStore();
-    const authStore = useAuthStore();
-    const onboardingV2Store = useOnboardingV2Store();
-    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset";
+    const blueprintsStore = useBlueprintsStore()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
+    const onboardingV2Store = useOnboardingV2Store()
+    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
 
     const setupFlow = async () => {
-        const blueprintId = route.query.blueprintId as string;
-        const blueprintSource = route.query.blueprintSource as BlueprintType;
-        const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
-        const isGuidedOnboarding = route.query.onboarding === "guided";
+        const blueprintId = route.query.blueprintId as string
+        const blueprintSource = route.query.blueprintSource as BlueprintType
+        const blueprintSourceYaml = route.query.blueprintSourceYaml as string
+        const isGuidedOnboarding = route.query.onboarding === "guided"
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
-            : "";
+            : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
             action.CREATE,
-        )[0];
-        let flowYaml = "";
-        const id = getRandomID();
+        )[0]
+        let flowYaml = ""
+        const id = getRandomID()
         const selectedNamespace = (route.query.namespace as string)
             ?? defaultNamespace()
             ?? implicitDefaultNamespace
-            ?? "company.team";
+            ?? "company.team"
 
         if (route.query.copy && flowStore.flow) {
-            flowYaml = flowStore.flow.source;
+            flowYaml = flowStore.flow.source
         } else if (onboardingPresetFlow) {
-            flowYaml = onboardingPresetFlow;
-            sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY);
+            flowYaml = onboardingPresetFlow
+            sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
         } else if (blueprintId && blueprintSourceYaml) {
-            flowYaml = blueprintSourceYaml;
+            flowYaml = blueprintSourceYaml
         } else if(blueprintId && blueprintSource === "community"){
             flowYaml = await blueprintsStore.getBlueprintSource({
                 type: blueprintSource,
                 kind: "flow",
                 id: blueprintId,
-            });
+            })
         } else if (blueprintId) {
-            const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
-            flowYaml = flowBlueprint.source;
+            const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId)
+            flowYaml = flowBlueprint.source
         } else if (isGuidedOnboarding) {
-            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`;
+            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`
         } else {
             flowYaml = `
 id: ${id}
@@ -78,14 +78,14 @@ namespace: ${selectedNamespace}
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`.trim();
+    message: Hello World! 🚀`.trim()
         }
 
-        let parsedFlow = {};
+        let parsedFlow = {}
         try {
-            parsedFlow = YAML_UTILS.parse(flowYaml) ?? {};
+            parsedFlow = YAML_UTILS.parse(flowYaml) ?? {}
         } catch {
-            parsedFlow = {};
+            parsedFlow = {}
         }
 
         flowStore.flow = {
@@ -93,27 +93,27 @@ tasks:
             namespace: selectedNamespace,
             ...parsedFlow,
             source: flowYaml,
-        };
+        }
 
-        flowStore.initYamlSource();
-    };
+        flowStore.initYamlSource()
+    }
 
     const routeInfo = computed(() => {
         return {
             title: t("flows"),
-        };
-    });
+        }
+    })
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
-    flowStore.isCreating = true;
+    flowStore.isCreating = true
     if (route.query.reset || route.query.onboarding === "guided") {
-        onboardingV2Store.startGuided();
+        onboardingV2Store.startGuided()
     }
-    setupFlow();
+    setupFlow()
 
     onBeforeUnmount(() => {
-        flowStore.flowValidation = undefined;
-        flowStore.flow = undefined;
-    });
+        flowStore.flowValidation = undefined
+        flowStore.flow = undefined
+    })
 </script>

@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsRadio from "../../../src/components/Form/KsRadio/KsRadio.vue";
-import KsRadioGroup from "../../../src/components/Form/KsRadio/KsRadioGroup.vue";
-import KsRadioButton from "../../../src/components/Form/KsRadio/KsRadioButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsRadio from "../../../src/components/Form/KsRadio/KsRadio.vue"
+import KsRadioGroup from "../../../src/components/Form/KsRadio/KsRadioGroup.vue"
+import KsRadioButton from "../../../src/components/Form/KsRadio/KsRadioButton.vue"
 
 const meta: Meta<typeof KsRadio> = {
     title: "Components/Form/KsRadio",
@@ -14,16 +14,16 @@ const meta: Meta<typeof KsRadio> = {
     parameters: {
         docs: {description: {component: "KsRadio is the Kestra design-system abstraction over `ElRadio` from Element Plus."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsRadio>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsRadio},
         setup() {
-            const value = ref("A");
-            return {args, value};
+            const value = ref("A")
+            return {args, value}
         },
         template: `
             <div style="padding:24px;display:flex;gap:16px">
@@ -33,14 +33,14 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Group: Story = {
     render: () => ({
         components: {KsRadioGroup, KsRadio},
         setup() {
-            const value = ref("daily");
-            return {value};
+            const value = ref("daily")
+            return {value}
         },
         template: `
             <div style="padding:24px">
@@ -53,14 +53,14 @@ export const Group: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const ButtonGroup: Story = {
     render: () => ({
         components: {KsRadioGroup, KsRadioButton},
         setup() {
-            const value = ref("left");
-            return {value};
+            const value = ref("left")
+            return {value}
         },
         template: `
             <div style="padding:24px">
@@ -73,13 +73,13 @@ export const ButtonGroup: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Sizes: Story = {
     render: () => ({
         components: {KsRadioGroup, KsRadioButton},
         setup() {
-            return {v1: ref("a"), v2: ref("a"), v3: ref("a")};
+            return {v1: ref("a"), v2: ref("a"), v3: ref("a")}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
@@ -98,12 +98,12 @@ export const Sizes: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Disabled: Story = {
     render: () => ({
         components: {KsRadioGroup, KsRadio},
-        setup() { return {value: ref("B")}; },
+        setup() { return {value: ref("B")} },
         template: `
             <div style="padding:24px">
                 <ks-radio-group v-model="value" disabled>
@@ -113,4 +113,4 @@ export const Disabled: Story = {
             </div>
         `,
     }),
-};
+}

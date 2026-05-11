@@ -16,11 +16,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import {ElTree} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ref} from "vue"
+    import {ElTree} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         data?: any[]
@@ -33,22 +33,22 @@
         defaultExpandAll?: boolean
         defaultExpandedKeys?: any[]
         defaultCheckedKeys?: any[]
-    }>();
+    }>()
 
     const emit = defineEmits<{
         nodeDragStart: [node: any, event: DragEvent]
         nodeDrop: [draggingNode: any, dropNode: any, dropType: string, event: DragEvent]
         nodeClick: [data: any, node: any, el: any, event: MouseEvent]
-    }>();
+    }>()
 
     defineSlots<{
         default?: (scope: {node: any; data: any}) => unknown
         empty?(): unknown
-    }>();
+    }>()
 
-    const treeRef = ref<InstanceType<typeof ElTree>>();
+    const treeRef = ref<InstanceType<typeof ElTree>>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineExpose({
         getNode: (data: any) => treeRef.value?.getNode(data),
@@ -58,7 +58,7 @@
         setCheckedKeys: (...args: any[]) => (treeRef.value?.setCheckedKeys as any)?.(...args),
         getCurrentKey: () => treeRef.value?.getCurrentKey(),
         setCurrentKey: (key: any) => treeRef.value?.setCurrentKey(key),
-    });
+    })
 </script>
 
 <style lang="scss">

@@ -285,32 +285,32 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import type {FormInstance} from "element-plus";
-    import {useMiscStore} from "override/stores/misc";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import Modal from "../Modal.vue";
-    import LockOutline from "vue-material-design-icons/LockOutline.vue";
-    import useRouteContext from "../../composables/useRouteContext";
-    import {useMcpStore, type McpServer} from "../../stores/mcp";
-    import {baseUrl} from "override/utils/route";
-    import ServerNetwork from "vue-material-design-icons/ServerNetwork.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import Web from "vue-material-design-icons/Web.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Check from "vue-material-design-icons/Check.vue";
-    import Loading from "vue-material-design-icons/Loading.vue";
+    import {computed, onMounted, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import type {FormInstance} from "element-plus"
+    import {useMiscStore} from "override/stores/misc"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import Modal from "../Modal.vue"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
+    import useRouteContext from "../../composables/useRouteContext"
+    import {useMcpStore, type McpServer} from "../../stores/mcp"
+    import {baseUrl} from "override/utils/route"
+    import ServerNetwork from "vue-material-design-icons/ServerNetwork.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import Web from "vue-material-design-icons/Web.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Check from "vue-material-design-icons/Check.vue"
+    import Loading from "vue-material-design-icons/Loading.vue"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
-    const routeInfo = computed(() => ({title: t("mcp.servers")}));
-    useRouteContext(routeInfo);
+    const routeInfo = computed(() => ({title: t("mcp.servers")}))
+    useRouteContext(routeInfo)
 
-    const mcpStore = useMcpStore();
-    const isOss = computed(() => useMiscStore().configs?.edition === "OSS");
+    const mcpStore = useMcpStore()
+    const isOss = computed(() => useMiscStore().configs?.edition === "OSS")
 
     interface McpForm {
         id: string;
@@ -323,95 +323,95 @@
     const AUTH_OPTIONS = [
         {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
         {value: "API_TOKEN" as const, labelKey: "mcp.api_token", hintKey: "mcp.bearer_token", ee: true},
-    ];
+    ]
 
-    const servers = ref<McpServer[]>([]);
-    const loading = ref(false);
+    const servers = ref<McpServer[]>([])
+    const loading = ref(false)
 
-    const showModal = ref(false);
-    const editingServer = ref<McpServer | null>(null);
-    const formRef = ref<FormInstance>();
+    const showModal = ref(false)
+    const editingServer = ref<McpServer | null>(null)
+    const formRef = ref<FormInstance>()
     const form = ref<McpForm>({
         id: "",
         description: "",
         instructions: "",
         serverType: "PRIVATE",
         authType: "BASIC",
-    });
+    })
 
-    const showConnectModal = ref(false);
-    const connectingServer = ref<McpServer | null>(null);
-    const copiedKey = ref<string | null>(null);
+    const showConnectModal = ref(false)
+    const connectingServer = ref<McpServer | null>(null)
+    const copiedKey = ref<string | null>(null)
 
     const loadServers = async (): Promise<void> => {
-        loading.value = true;
+        loading.value = true
         try {
-            const result = await mcpStore.list();
-            servers.value = result?.results ?? [];
+            const result = await mcpStore.list()
+            servers.value = result?.results ?? []
         } finally {
-            loading.value = false;
+            loading.value = false
         }
-    };
+    }
 
     const sseUrl = (server: McpServer): string => {
-        const base = baseUrl.startsWith("http") ? baseUrl : `${window.location.origin}${baseUrl}`;
-        return `${base}/api/v1/main/mcp/${server.id}`;
-    };
+        const base = baseUrl.startsWith("http") ? baseUrl : `${window.location.origin}${baseUrl}`
+        return `${base}/api/v1/main/mcp/${server.id}`
+    }
 
     const authorizationHeader = (server: McpServer): string | null => {
-        if (server.serverType === "PUBLIC") return null;
-        if (server.authType === "BASIC") return "Basic <base64(username:password)>";
-        if (server.authType === "API_TOKEN") return "Bearer <your-api-token>";
-        return null;
-    };
+        if (server.serverType === "PUBLIC") return null
+        if (server.authType === "BASIC") return "Basic <base64(username:password)>"
+        if (server.authType === "API_TOKEN") return "Bearer <your-api-token>"
+        return null
+    }
 
     const claudeDesktopConfig = computed(() => {
-        if (!connectingServer.value) return "";
-        const server = connectingServer.value;
-        const authHeader = authorizationHeader(server);
-        const args: string[] = ["mcp-remote", sseUrl(server)];
-        const entry: Record<string, unknown> = {command: "npx", args};
+        if (!connectingServer.value) return ""
+        const server = connectingServer.value
+        const authHeader = authorizationHeader(server)
+        const args: string[] = ["mcp-remote", sseUrl(server)]
+        const entry: Record<string, unknown> = {command: "npx", args}
         if (authHeader) {
-            args.push("--header", "Authorization: ${AUTH_HEADER}");
-            entry.env = {AUTH_HEADER: authHeader};
+            args.push("--header", "Authorization: ${AUTH_HEADER}")
+            entry.env = {AUTH_HEADER: authHeader}
         }
-        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2);
-    });
+        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2)
+    })
 
     const claudeCodeCommand = computed(() => {
-        if (!connectingServer.value) return "";
-        const server = connectingServer.value;
-        const authHeader = authorizationHeader(server);
-        const lines = ["claude mcp add \\", "  --transport http \\"];
+        if (!connectingServer.value) return ""
+        const server = connectingServer.value
+        const authHeader = authorizationHeader(server)
+        const lines = ["claude mcp add \\", "  --transport http \\"]
         if (authHeader) {
-            lines.push(`  --header "Authorization: ${authHeader}" \\`);
+            lines.push(`  --header "Authorization: ${authHeader}" \\`)
         }
-        lines.push(`  ${server.id} \\`);
-        lines.push(`  ${sseUrl(server)}`);
-        return lines.join("\n");
-    });
+        lines.push(`  ${server.id} \\`)
+        lines.push(`  ${sseUrl(server)}`)
+        return lines.join("\n")
+    })
 
     const cursorConfig = computed(() => {
-        if (!connectingServer.value) return "";
-        const server = connectingServer.value;
-        const entry: Record<string, unknown> = {url: sseUrl(server)};
-        const authHeader = authorizationHeader(server);
+        if (!connectingServer.value) return ""
+        const server = connectingServer.value
+        const entry: Record<string, unknown> = {url: sseUrl(server)}
+        const authHeader = authorizationHeader(server)
         if (authHeader) {
-            entry.headers = {Authorization: authHeader};
+            entry.headers = {Authorization: authHeader}
         }
-        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2);
-    });
+        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2)
+    })
 
     const codexConfig = computed(() => {
-        if (!connectingServer.value) return "";
-        const server = connectingServer.value;
-        const entry: Record<string, unknown> = {url: sseUrl(server)};
-        const authHeader = authorizationHeader(server);
+        if (!connectingServer.value) return ""
+        const server = connectingServer.value
+        const entry: Record<string, unknown> = {url: sseUrl(server)}
+        const authHeader = authorizationHeader(server)
         if (authHeader) {
-            entry.headers = {Authorization: authHeader};
+            entry.headers = {Authorization: authHeader}
         }
-        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2);
-    });
+        return JSON.stringify({mcpServers: {[server.id]: entry}}, null, 2)
+    })
 
     const resetForm = (): void => {
         form.value = {
@@ -420,31 +420,31 @@
             instructions: "",
             serverType: "PRIVATE",
             authType: "BASIC",
-        };
-    };
+        }
+    }
 
     const openCreateModal = (): void => {
-        editingServer.value = null;
-        resetForm();
-        showModal.value = true;
-    };
+        editingServer.value = null
+        resetForm()
+        showModal.value = true
+    }
 
     const openEditModal = (server: McpServer): void => {
-        editingServer.value = server;
+        editingServer.value = server
         form.value = {
             id: server.id,
             description: server.description ?? "",
             instructions: server.instructions ?? "",
             serverType: server.serverType,
             authType: server.authType,
-        };
-        showModal.value = true;
-    };
+        }
+        showModal.value = true
+    }
 
     const saveServer = async (): Promise<void> => {
-        if (!formRef.value) return;
+        if (!formRef.value) return
         await formRef.value.validate(async (valid) => {
-            if (!valid) return;
+            if (!valid) return
             const payload = {
                 id: form.value.id,
                 description: form.value.description || undefined,
@@ -452,50 +452,50 @@
                 serverType: form.value.serverType,
                 authType: form.value.authType,
                 enabled: editingServer.value?.enabled ?? false,
-            };
+            }
             if (editingServer.value) {
-                await mcpStore.update(editingServer.value.id, payload);
+                await mcpStore.update(editingServer.value.id, payload)
             } else {
-                await mcpStore.create(payload);
+                await mcpStore.create(payload)
             }
 
-            showModal.value = false;
-            await loadServers();
-        });
-    };
+            showModal.value = false
+            await loadServers()
+        })
+    }
 
     const toggleServer = async (server: McpServer): Promise<void> => {
-        await mcpStore.toggle(server.id);
-        await loadServers();
-    };
+        await mcpStore.toggle(server.id)
+        await loadServers()
+    }
 
     const confirmDelete = (server: McpServer): void => {
-        if (!confirm(t("mcp.delete_confirm"))) return;
-        deleteServer(server);
-    };
+        if (!confirm(t("mcp.delete_confirm"))) return
+        deleteServer(server)
+    }
 
     const deleteServer = async (server: McpServer): Promise<void> => {
-        await mcpStore.remove(server.id);
-        await loadServers();
-    };
+        await mcpStore.remove(server.id)
+        await loadServers()
+    }
 
     const openConnectModal = (server: McpServer): void => {
-        connectingServer.value = server;
-        copiedKey.value = null;
-        showConnectModal.value = true;
-    };
+        connectingServer.value = server
+        copiedKey.value = null
+        showConnectModal.value = true
+    }
 
     const copyUrl = async (server: McpServer): Promise<void> => {
-        await navigator.clipboard.writeText(sseUrl(server));
-    };
+        await navigator.clipboard.writeText(sseUrl(server))
+    }
 
     const copyToClipboard = async (text: string, key: string): Promise<void> => {
-        await navigator.clipboard.writeText(text);
-        copiedKey.value = key;
-        setTimeout(() => { copiedKey.value = null; }, 2000);
-    };
+        await navigator.clipboard.writeText(text)
+        copiedKey.value = key
+        setTimeout(() => { copiedKey.value = null }, 2000)
+    }
 
-    onMounted(loadServers);
+    onMounted(loadServers)
 </script>
 
 <style lang="scss" scoped>

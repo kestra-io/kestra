@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {expect} from "storybook/test";
-import {KsPie} from "../../../src";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
+import {KsPie} from "../../../src"
 
 const STATUS_DATA = [
     {name: "Success", value: 1204},
@@ -8,7 +8,7 @@ const STATUS_DATA = [
     {name: "Running", value: 34},
     {name: "Killed", value: 12},
     {name: "Paused", value: 5},
-];
+]
 
 const meta: Meta<typeof KsPie> = {
     title: "Components/Charts/KsPie",
@@ -29,8 +29,8 @@ const meta: Meta<typeof KsPie> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsPie>
 
 // ─── Standard ─────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ type Story = StoryObj<typeof KsPie>
 export const Default: Story = {
     render: (args) => ({
         components: {KsPie},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px;height:300px\"><ks-pie v-bind=\"args\" /></div>",
     }),
     args: {
@@ -47,15 +47,15 @@ export const Default: Story = {
         loading: false,
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()
     },
-};
+}
 
 /** Donut chart — ring variant */
 export const Donut: Story = {
     render: (args) => ({
         components: {KsPie},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px;height:300px\"><ks-pie v-bind=\"args\" /></div>",
     }),
     args: {
@@ -69,9 +69,9 @@ export const Donut: Story = {
         },
     },
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()
     },
-};
+}
 
 /** Loading state — shown while data is being fetched */
 export const Loading: Story = {
@@ -80,9 +80,9 @@ export const Loading: Story = {
         template: "<div style=\"padding:24px;height:300px\"><ks-pie :data=\"null\" /></div>",
     }),
     async play({canvasElement}) {
-        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy();
+        await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()
     },
-};
+}
 
 /** Custom colors via options override */
 export const WithOptionsOverride: Story = {
@@ -103,4 +103,4 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
-};
+}

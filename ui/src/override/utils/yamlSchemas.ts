@@ -1,5 +1,5 @@
-import {apiUrlWithoutTenants} from "override/utils/route";
-import {SchemasSettings} from "monaco-yaml";
+import {apiUrlWithoutTenants} from "override/utils/route"
+import {SchemasSettings} from "monaco-yaml"
 
 export const yamlSchemas: () => SchemasSettings[] = () => [
     {
@@ -22,4 +22,4 @@ export const yamlSchemas: () => SchemasSettings[] = () => [
         fileMatch: ["dashboard-*.yaml"],
         uri: `${apiUrlWithoutTenants()}/plugins/schemas/dashboard`,
     },
-];
+]

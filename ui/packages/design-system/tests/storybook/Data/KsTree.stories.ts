@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsTree from "../../../src/components/Data/KsTree.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsTree from "../../../src/components/Data/KsTree.vue"
 
 const TREE_DATA = [
     {
@@ -20,7 +20,7 @@ const TREE_DATA = [
             },
         ],
     },
-];
+]
 
 const meta: Meta<typeof KsTree> = {
     title: "Components/Data/KsTree",
@@ -29,14 +29,14 @@ const meta: Meta<typeof KsTree> = {
     parameters: {
         docs: {description: {component: "KsTree is the Kestra design-system abstraction over `ElTree` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsTree>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsTree},
-        setup() { return {args, TREE_DATA}; },
+        setup() { return {args, TREE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-tree
@@ -48,7 +48,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Default expanded and checked keys */
 export const DefaultExpandedAndChecked: Story = {
@@ -64,8 +64,8 @@ export const DefaultExpandedAndChecked: Story = {
                         {id: 3, label: "data", children: [{id: 6, label: "pipeline-1"}]},
                     ],
                 },
-            ];
-            return {data};
+            ]
+            return {data}
         },
         template: `
             <div style="padding:24px">
@@ -79,13 +79,13 @@ export const DefaultExpandedAndChecked: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Draggable tree */
 export const Draggable: Story = {
     render: () => ({
         components: {KsTree},
-        setup() { return {TREE_DATA}; },
+        setup() { return {TREE_DATA} },
         template: `
             <div style="padding:24px">
                 <p style="font-size:13px;opacity:0.6;margin:0 0 12px">Drag nodes to reorder</p>
@@ -98,7 +98,7 @@ export const Draggable: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Empty slot – custom empty state */
 export const EmptyState: Story = {
@@ -116,12 +116,12 @@ export const EmptyState: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithCustomSlot: Story = {
     render: () => ({
         components: {KsTree},
-        setup() { return {TREE_DATA}; },
+        setup() { return {TREE_DATA} },
         template: `
             <div style="padding:24px">
                 <ks-tree
@@ -137,4 +137,4 @@ export const WithCustomSlot: Story = {
             </div>
         `,
     }),
-};
+}

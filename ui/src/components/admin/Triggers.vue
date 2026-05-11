@@ -310,66 +310,66 @@
     </section>
 </template>
 <script setup lang="ts">
-    import _merge from "lodash/merge";
-    import {ref, computed, watch, useTemplateRef} from "vue";
-    import moment from "moment";
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import {KsMessage} from "@kestra-io/design-system";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
-    import {useAuthStore} from "override/stores/auth";
-    import {invisibleSpace} from "../../utils/filters";
-    import {storageKeys} from "../../utils/constants";
-    import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {useTriggerFilter} from "../filter/configurations";
-    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import _merge from "lodash/merge"
+    import {ref, computed, watch, useTemplateRef} from "vue"
+    import moment from "moment"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import {KsMessage} from "@kestra-io/design-system"
+    import {useToast} from "../../utils/toast"
+    import {useFlowStore} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import {invisibleSpace} from "../../utils/filters"
+    import {storageKeys} from "../../utils/constants"
+    import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {useTriggerFilter} from "../filter/configurations"
+    import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    const {loadInit} = useRestoreUrl();
+    const {loadInit} = useRestoreUrl()
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
-    import LockOff from "vue-material-design-icons/LockOff.vue";
-    import PlayBox from "vue-material-design-icons/PlayBox.vue";
-    import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import Download from "vue-material-design-icons/Download.vue";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import LockOff from "vue-material-design-icons/LockOff.vue"
+    import PlayBox from "vue-material-design-icons/PlayBox.vue"
+    import PauseBox from "vue-material-design-icons/PauseBox.vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
-    import {KsId, KsIconButton} from "@kestra-io/design-system";
+    import {KsId, KsIconButton} from "@kestra-io/design-system"
     //@ts-expect-error No declaration file
-    import FlowRun from "../flows/FlowRun.vue";
-    import TopNavBar from "../layout/TopNavBar.vue";
+    import FlowRun from "../flows/FlowRun.vue"
+    import TopNavBar from "../layout/TopNavBar.vue"
 
-    import LogsWrapper from "../logs/LogsWrapper.vue";
-    import TriggerAvatar from "../flows/TriggerAvatar.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
-    import useRouteContext from "../../composables/useRouteContext";
+    import LogsWrapper from "../logs/LogsWrapper.vue"
+    import TriggerAvatar from "../flows/TriggerAvatar.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const triggerFilter = useTriggerFilter();
+    const triggerFilter = useTriggerFilter()
 
 
-    const route = useRoute();
-    const router = useRouter();
-    const toast = useToast();
-    const {t} = useI18n({useScope: "global"});
+    const route = useRoute()
+    const router = useRouter()
+    const toast = useToast()
+    const {t} = useI18n({useScope: "global"})
 
-    const authStore = useAuthStore();
-    const flowStore = useFlowStore();
-    const triggerStore = useTriggerStore();
-    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore()
+    const flowStore = useFlowStore()
+    const triggerStore = useTriggerStore()
+    const executionsStore = useExecutionsStore()
 
-    const dataTable = useTemplateRef("dataTable");
+    const dataTable = useTemplateRef("dataTable")
 
-    const total = ref();
-    const triggers = ref<any[]>([]);
-    const triggerToUnlock = ref();
-    const isBackfillOpen = ref(false);
-    const selectedTrigger = ref(null);
+    const total = ref()
+    const triggers = ref<any[]>([])
+    const triggerToUnlock = ref()
+    const isBackfillOpen = ref(false)
+    const selectedTrigger = ref(null)
     const backfill = ref<{
         start: Date | null;
         end: Date | null;
@@ -380,7 +380,7 @@
         end: null,
         inputs: null,
         labels: [],
-    });
+    })
 
     const optionalColumns = computed(() => [
         {
@@ -419,72 +419,72 @@
             default: false,
             description: t("filter.table_column.triggers.next evaluation date"),
         },
-    ]);
+    ])
 
-    const storageKey = storageKeys.DISPLAY_TRIGGERS_COLUMNS;
+    const storageKey = storageKeys.DISPLAY_TRIGGERS_COLUMNS
 
     const {visibleColumns: displayColumns, updateVisibleColumns} = useTableColumns({
         columns: optionalColumns.value,
         storageKey,
         initialVisibleColumns: optionalColumns.value.filter(col => col.default).map(col => col.prop),
-    });
+    })
 
     const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as ColumnConfig[],
-    );
+    )
 
-    const ready = ref(false);
+    const ready = ref(false)
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return;
+        if (!loadInit.value) return
         const query = loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "triggerId:asc"),
-        });
+        })
 
-        const previousSelection = selection.value;
+        const previousSelection = selection.value
         await triggerStore.search(query).then(async triggersData => {
-            triggers.value = triggersData?.results;
-            total.value = triggersData?.total;
+            triggers.value = triggersData?.results
+            total.value = triggersData?.total
 
             if (previousSelection && dataTable.value) {
-                await dataTable.value.waitTableRender();
-                dataTable.value.setSelection(previousSelection);
+                await dataTable.value.waitTableRender()
+                dataTable.value.setSelection(previousSelection)
             }
-        });
-    };
+        })
+    }
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        return filters;
-    });
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
     watch(filterQuery, () => {
-        dataTable.value?.resetAndReload();
-    }, {deep: true});
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
-    const selection = computed(() => dataTable.value?.selection ?? []);
-    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
+    const selection = computed(() => dataTable.value?.selection ?? [])
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
 
     const routeInfo = computed(() => ({
         title: t("triggers"),
-    }));
+    }))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
     const updateDisplayColumns = (newColumns: string[]) => {
-        updateVisibleColumns(newColumns);
-    };
+        updateVisibleColumns(newColumns)
+    }
 
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (!trigger) {
-            isBackfillOpen.value = false;
-            selectedTrigger.value = null;
-            return;
+            isBackfillOpen.value = false
+            selectedTrigger.value = null
+            return
         }
 
         executionsStore.loadFlowForExecution({
@@ -492,18 +492,18 @@
             flowId: trigger.flowId,
             store: true,
         }).then(() => {
-            isBackfillOpen.value = bool;
-            selectedTrigger.value = trigger;
-        });
-    };
+            isBackfillOpen.value = bool
+            selectedTrigger.value = trigger
+        })
+    }
 
     const cleanBackfill = computed(() => {
-        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value);
-        return {...backfill.value, labels: labels?.length ? labels : null};
-    });
+        const labels = backfill.value.labels?.filter((label: any) => label.key && label.value)
+        return {...backfill.value, labels: labels?.length ? labels : null}
+    })
 
     const postBackfill = () => {
-        const trigger = selectedTrigger.value as any;
+        const trigger = selectedTrigger.value as any
         triggerStore.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
@@ -511,63 +511,63 @@
             backfill: cleanBackfill.value,
         })
             .then(() => {
-                toast.saved(trigger?.triggerId);
-                setBackfillModal(null, false);
+                toast.saved(trigger?.triggerId)
+                setBackfillModal(null, false)
                 backfill.value = {
                     start: null,
                     end: null,
                     inputs: null,
                     labels: [],
-                };
-                triggerLoadDataAfterBulkEditAction();
-            });
-    };
+                }
+                triggerLoadDataAfterBulkEditAction()
+            })
+    }
 
     const hasLogsContent = (row: any) => {
-        return row.logs && row.logs.length > 0;
-    };
+        return row.logs && row.logs.length > 0
+    }
 
     const getClasses = (row: any) => {
-        return hasLogsContent(row) ? "expandable" : "no-expand";
-    };
+        return hasLogsContent(row) ? "expandable" : "no-expand"
+    }
 
     const disabledStartDate = (time: Date): boolean => {
-        return new Date() < time || !!(backfill.value.end && time > backfill.value.end);
-    };
+        return new Date() < time || !!(backfill.value.end && time > backfill.value.end)
+    }
 
     const disabledEndDate = (time: Date): boolean => {
-        return new Date() < time || !!(backfill.value.start && backfill.value.start > time);
-    };
+        return new Date() < time || !!(backfill.value.start && backfill.value.start > time)
+    }
 
     const triggerLoadDataAfterBulkEditAction = () => {
-        dataTable.value?.reload();
-        setTimeout(() => dataTable.value?.reload(), 200);
-        setTimeout(() => dataTable.value?.reload(), 1000);
-        setTimeout(() => dataTable.value?.reload(), 5000);
-    };
+        dataTable.value?.reload()
+        setTimeout(() => dataTable.value?.reload(), 200)
+        setTimeout(() => dataTable.value?.reload(), 1000)
+        setTimeout(() => dataTable.value?.reload(), 5000)
+    }
 
     const unlock = async () => {
-        const namespace = triggerToUnlock.value?.namespace;
-        const flowId = triggerToUnlock.value?.flowId;
-        const triggerId = triggerToUnlock.value?.triggerId;
+        const namespace = triggerToUnlock.value?.namespace
+        const flowId = triggerToUnlock.value?.flowId
+        const triggerId = triggerToUnlock.value?.triggerId
         const unlockedTrigger = await triggerStore.unlock({
             namespace: namespace,
             flowId: flowId,
             triggerId: triggerId,
-        });
+        })
 
         KsMessage({
             message: t("unlock trigger.success"),
             type: "success",
-        });
+        })
 
-        const triggerIdx = triggers.value?.findIndex((trigger: any) => trigger.namespace === namespace && trigger.flowId === flowId && trigger.triggerId === triggerId);
+        const triggerIdx = triggers.value?.findIndex((trigger: any) => trigger.namespace === namespace && trigger.flowId === flowId && trigger.triggerId === triggerId)
         if (triggerIdx !== -1) {
-            triggers.value[triggerIdx] = unlockedTrigger;
+            triggers.value[triggerIdx] = unlockedTrigger
         }
 
-        triggerToUnlock.value = undefined;
-    };
+        triggerToUnlock.value = undefined
+    }
 
     const setDisabled = (trigger: any, value: boolean) => {
         if (trigger.codeDisabled) {
@@ -576,24 +576,24 @@
                 type: "error",
                 showClose: true,
                 duration: 1500,
-            });
-            return;
+            })
+            return
         }
         triggerStore.setDisabled({...trigger, disabled: !value})
             .then((updatedTrigger: any) => {
-                toast.saved(updatedTrigger.triggerId);
+                toast.saved(updatedTrigger.triggerId)
                 triggers.value = triggers.value?.map((trig: any) => {
                     const triggerContextMatches = trig.triggerContext &&
                         trig.triggerContext.flowId === updatedTrigger.flowId &&
-                        trig.triggerContext.triggerId === updatedTrigger.triggerId;
+                        trig.triggerContext.triggerId === updatedTrigger.triggerId
 
                     if (triggerContextMatches) {
-                        return {triggerContext: updatedTrigger, abstractTrigger: trig.abstractTrigger};
+                        return {triggerContext: updatedTrigger, abstractTrigger: trig.abstractTrigger}
                     }
-                    return trig;
-                });
-            });
-    };
+                    return trig
+                })
+            })
+    }
 
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
         toast.confirm(
@@ -603,15 +603,15 @@
                 flowId: trigger.flowId,
                 triggerId: trigger.triggerId,
             }).then(() => {
-                toast.success(t("delete trigger success", {id: trigger.id}));
-                dataTable.value?.reload();
+                toast.success(t("delete trigger success", {id: trigger.id}))
+                dataTable.value?.reload()
             }).catch(error => {
-                toast.error(t("delete trigger error", {id: trigger.id}));
-                console.error(error);
+                toast.error(t("delete trigger error", {id: trigger.id}))
+                console.error(error)
             }),
             "warning",
-        );
-    };
+        )
+    }
 
     const deleteTriggers = () => {
         genericConfirmAction(
@@ -621,21 +621,21 @@
             "bulk success delete triggers",
             null,
             "WARNING: deleting triggers may lead to duplicate executions if the triggers are still active in flows",
-        );
-    };
+        )
+    }
 
     const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning?: string) => {
-        let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning");
+        let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning")
 
         if (extraWarning) {
-            message += "<br><br><strong>" + extraWarning + "</strong>";
+            message += "<br><br><strong>" + extraWarning + "</strong>"
         }
 
         toast.confirm(
             message,
             () => genericConfirmCallback(queryAction, byIdAction, success, data),
-        );
-    };
+        )
+    }
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, data?: any) => {
         const actionMap: Record<string, () => any> = {
@@ -651,34 +651,34 @@
             "setDisabledByTriggers": () => triggerStore.setDisabledByTriggers,
             "deleteByQuery": () => triggerStore.deleteByQuery,
             "deleteByTriggers": () => triggerStore.deleteByTriggers,
-        };
+        }
 
         if (queryBulkAction.value) {
-            const query = loadQuery({});
-            const options = {...query, ...data};
-            const actions = actionMap[queryAction]();
+            const query = loadQuery({})
+            const options = {...query, ...data}
+            const actions = actionMap[queryAction]()
             return actions(options)
                 .then((res: any) => {
-                    toast.success(t(success, {count: res?.count}));
-                    toggleAllUnselected();
-                    triggerLoadDataAfterBulkEditAction();
-                });
+                    toast.success(t(success, {count: res?.count}))
+                    toggleAllUnselected()
+                    triggerLoadDataAfterBulkEditAction()
+                })
         } else {
-            const selectionData = selection.value;
-            const options = {triggers: selectionData, ...data};
-            const actions = actionMap[byIdAction]();
+            const selectionData = selection.value
+            const options = {triggers: selectionData, ...data}
+            const actions = actionMap[byIdAction]()
             return actions(byIdAction.includes("setDisabled") ? options : selectionData)
                 .then((res: any) => {
-                    toast.success(t(success, {count: res?.count}));
-                    toggleAllUnselected();
-                    triggerLoadDataAfterBulkEditAction();
+                    toast.success(t(success, {count: res?.count}))
+                    toggleAllUnselected()
+                    triggerLoadDataAfterBulkEditAction()
                 }).catch((e: any) => {
                     toast.error(e?.invalids?.map((exec: any) => {
-                        return {message: t(exec?.message, {triggers: exec?.invalidValue})};
-                    }), t(e?.message));
-                });
+                        return {message: t(exec?.message, {triggers: exec?.invalidValue})}
+                    }), t(e?.message))
+                })
         }
-    };
+    }
 
     const unpauseBackfills = () => {
         genericConfirmAction(
@@ -686,8 +686,8 @@
             "unpauseBackfillByQuery",
             "unpauseBackfillByTriggers",
             "bulk success unpause backfills",
-        );
-    };
+        )
+    }
 
     const pauseBackfills = () => {
         genericConfirmAction(
@@ -695,8 +695,8 @@
             "pauseBackfillByQuery",
             "pauseBackfillByTriggers",
             "bulk success pause backfills",
-        );
-    };
+        )
+    }
 
     const deleteBackfills = () => {
         genericConfirmAction(
@@ -704,8 +704,8 @@
             "deleteBackfillByQuery",
             "deleteBackfillByTriggers",
             "bulk success delete backfills",
-        );
-    };
+        )
+    }
 
     const unlockTriggers = () => {
         genericConfirmAction(
@@ -713,8 +713,8 @@
             "unlockByQuery",
             "unlockByTriggers",
             "bulk success unlock",
-        );
-    };
+        )
+    }
 
     const setDisabledTriggers = (bool: boolean) => {
         genericConfirmAction(
@@ -723,53 +723,53 @@
             "setDisabledByTriggers",
             `bulk success disabled status.${bool}`,
             {disabled: bool},
-        );
-    };
+        )
+    }
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>;
+        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>
 
-        const timeRange = queryFilter["filters[timeRange][EQUALS]"];
+        const timeRange = queryFilter["filters[timeRange][EQUALS]"]
         if (timeRange) {
-            const end = new Date();
-            const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds());
-            queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString();
-            queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString();
-            delete queryFilter["filters[timeRange][EQUALS]"];
+            const end = new Date()
+            const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds())
+            queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString()
+            queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString()
+            delete queryFilter["filters[timeRange][EQUALS]"]
         }
 
-        return _merge(base, queryFilter);
-    };
+        return _merge(base, queryFilter)
+    }
 
     const checkBackfill = computed(() => {
         if (!backfill.value?.start) {
-            return true;
+            return true
         }
         if (backfill.value?.end && backfill.value.start > backfill.value.end) {
-            return true;
+            return true
         }
         if (flowStore.flow?.inputs) {
-            const requiredInputs = flowStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || [];
+            const requiredInputs = flowStore.flow.inputs?.map((input: any) => input?.required !== false ? input?.id : null).filter((i: any) => i !== null) || []
 
             if (requiredInputs.length > 0) {
                 if (!backfill.value?.inputs) {
-                    return true;
+                    return true
                 }
-                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value?.inputs?.[i] !== null && backfill.value?.inputs?.[i] !== undefined);
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value?.inputs?.[i] !== null && backfill.value?.inputs?.[i] !== undefined)
                 if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                    return true;
+                    return true
                 }
             }
         }
         if (backfill.value?.labels?.length > 0) {
             for (let label of backfill.value.labels) {
                 if (((label as any)?.key && !(label as any)?.value) || (!(label as any)?.key && (label as any)?.value)) {
-                    return true;
+                    return true
                 }
             }
         }
-        return false;
-    });
+        return false
+    })
 
     const triggersMerged = computed(() => {
         const all = triggers.value?.map((trig: any) => {
@@ -778,14 +778,14 @@
                 ...trig?.state,
                 codeDisabled: trig?.trigger?.disabled,
                 missingSource: !trig?.trigger,
-            };
-        }) ?? [];
+            }
+        }) ?? []
 
-        return all;
-    });
+        return all
+    })
 
     async function exportTriggersAsStream() {
-        await triggerStore.exportTriggersAsCSV(route.query);
+        await triggerStore.exportTriggersAsCSV(route.query)
     }
 </script>
 

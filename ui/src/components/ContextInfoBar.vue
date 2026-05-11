@@ -91,39 +91,39 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, type Component, PropType} from "vue";
-    import {useStorage, useWindowSize} from "@vueuse/core";
-    import ContextDocs from "./docs/ContextDocs.vue";
-    import ContextNews from "./layout/ContextNews.vue";
+    import {computed, ref, watch, type Component, PropType} from "vue"
+    import {useStorage, useWindowSize} from "@vueuse/core"
+    import ContextDocs from "./docs/ContextDocs.vue"
+    import ContextNews from "./layout/ContextNews.vue"
 
-    import Close from "vue-material-design-icons/Close.vue";
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue";
-    import WeatherNight from "vue-material-design-icons/WeatherNight.vue";
+    import Close from "vue-material-design-icons/Close.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
+    import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
 
-    import * as Utils from "../utils/utils";
-    import {useApiStore} from "../stores/api";
-    import {useMiscStore} from "override/stores/misc";
+    import * as Utils from "../utils/utils"
+    import {useApiStore} from "../stores/api"
+    import {useMiscStore} from "override/stores/misc"
 
-    import {useContextButtons} from "override/composables/contextButtons";
-    const {buttons} = useContextButtons();
+    import {useContextButtons} from "override/composables/contextButtons"
+    const {buttons} = useContextButtons()
 
-    const apiStore = useApiStore();
-    const miscStore = useMiscStore();
+    const apiStore = useApiStore()
+    const miscStore = useMiscStore()
 
-    const activeTab = computed(() => miscStore.contextInfoBarOpenTab);
-    const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}));
-    const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0);
+    const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
+    const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
+    const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0)
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null);
+    const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
     const hasUnread = computed(() => {
-        const feeds = apiStore.feeds;
+        const feeds = apiStore.feeds
         return (
             lastNewsReadDate.value === null ||
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
-        );
-    });
+        )
+    })
 
     const props = defineProps({
         additionalButtons: {
@@ -135,35 +135,35 @@
             }>>,
             default: () => ({}),
         },
-    });
+    })
 
-    const BAR_WIDTH_PX = 64;
-    const PANEL_MIN_WIDTH_PX = 50;
+    const BAR_WIDTH_PX = 64
+    const PANEL_MIN_WIDTH_PX = 50
 
-    const sidebarWidth = ref(704);
-    const {width: windowWidth} = useWindowSize();
-    const minSidebarWidth = BAR_WIDTH_PX + PANEL_MIN_WIDTH_PX;
-    const maxSidebarWidth = computed(() => windowWidth.value * 0.5 + BAR_WIDTH_PX);
+    const sidebarWidth = ref(704)
+    const {width: windowWidth} = useWindowSize()
+    const minSidebarWidth = BAR_WIDTH_PX + PANEL_MIN_WIDTH_PX
+    const maxSidebarWidth = computed(() => windowWidth.value * 0.5 + BAR_WIDTH_PX)
 
     watch(maxSidebarWidth, (value) => {
-        sidebarWidth.value = Math.min(Math.max(sidebarWidth.value, minSidebarWidth), value);
-    });
+        sidebarWidth.value = Math.min(Math.max(sidebarWidth.value, minSidebarWidth), value)
+    })
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            miscStore.contextInfoBarOpenTab = "";
+            miscStore.contextInfoBarOpenTab = ""
         } else {
-            miscStore.contextInfoBarOpenTab = tab;
+            miscStore.contextInfoBarOpenTab = tab
         }
     }
 
-    const themeIsDark = ref(localStorage.getItem("theme") === "dark");
+    const themeIsDark = ref(localStorage.getItem("theme") === "dark")
 
     const onSwitchTheme = () => {
-        themeIsDark.value = !themeIsDark.value;
-        const theme = themeIsDark.value ? "dark" : "light";
-        Utils.switchTheme(miscStore, theme);
-    };
+        themeIsDark.value = !themeIsDark.value
+        const theme = themeIsDark.value ? "dark" : "light"
+        Utils.switchTheme(miscStore, theme)
+    }
 </script>
 
 <style scoped lang="scss">

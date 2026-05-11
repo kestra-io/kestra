@@ -1,8 +1,8 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {within, userEvent, expect} from "storybook/test";
-import {ref} from "vue";
-import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {within, userEvent, expect} from "storybook/test"
+import {ref} from "vue"
+import {KsMessageBox} from "../../../src/components/Feedback/KsMessageBox"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 
 const meta: Meta = {
     title: "Components/Feedback/KsMessageBox",
@@ -18,28 +18,28 @@ const meta: Meta = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj
 
 export const Confirm: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const result = ref<string>("");
+            const result = ref<string>("")
             const open = async () => {
                 try {
                     await KsMessageBox.confirm("Are you sure you want to delete this flow?", "Confirmation", {
                         type: "warning",
                         confirmButtonText: "Delete",
                         cancelButtonText: "Cancel",
-                    });
-                    result.value = "confirmed";
+                    })
+                    result.value = "confirmed"
                 } catch {
-                    result.value = "cancelled";
+                    result.value = "cancelled"
                 }
-            };
-            return {open, result};
+            }
+            return {open, result}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -49,13 +49,13 @@ export const Confirm: Story = {
         `,
     }),
     async play({canvasElement}) {
-        const canvas = within(canvasElement);
-        const btn = canvas.getByRole("button");
-        await expect(btn).toBeTruthy();
-        await userEvent.click(btn);
-        await expect(document.querySelector(".kel-message-box")).toBeTruthy();
+        const canvas = within(canvasElement)
+        const btn = canvas.getByRole("button")
+        await expect(btn).toBeTruthy()
+        await userEvent.click(btn)
+        await expect(document.querySelector(".kel-message-box")).toBeTruthy()
     },
-};
+}
 
 export const Alert: Story = {
     render: () => ({
@@ -64,8 +64,8 @@ export const Alert: Story = {
             const open = () =>
                 KsMessageBox.alert("This action cannot be undone. The flow and all its executions will be permanently deleted.", "Notice", {
                     confirmButtonText: "I understand",
-                });
-            return {open};
+                })
+            return {open}
         },
         template: `
             <div style="padding:24px">
@@ -73,26 +73,26 @@ export const Alert: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Prompt: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const result = ref<string>("");
+            const result = ref<string>("")
             const open = async () => {
                 try {
                     const {value} = await KsMessageBox.prompt("Enter the new namespace", "Rename namespace", {
                         inputPlaceholder: "my.namespace",
                         confirmButtonText: "Rename",
                         cancelButtonText: "Cancel",
-                    });
-                    result.value = `Entered: ${value}`;
+                    })
+                    result.value = `Entered: ${value}`
                 } catch {
-                    result.value = "cancelled";
+                    result.value = "cancelled"
                 }
-            };
-            return {open, result};
+            }
+            return {open, result}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -101,14 +101,14 @@ export const Prompt: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const WithCallbackPattern: Story = {
     name: "With callback (options object)",
     render: () => ({
         components: {KsButton},
         setup() {
-            const result = ref<string>("");
+            const result = ref<string>("")
             const open = () => {
                 KsMessageBox({
                     title: "Confirmation",
@@ -116,11 +116,11 @@ export const WithCallbackPattern: Story = {
                     type: "warning",
                     showCancelButton: true,
                     callback: (action: string) => {
-                        result.value = action === "confirm" ? "confirmed" : "cancelled";
+                        result.value = action === "confirm" ? "confirmed" : "cancelled"
                     },
-                });
-            };
-            return {open, result};
+                })
+            }
+            return {open, result}
         },
         template: `
             <div style="padding:24px;display:flex;flex-direction:column;gap:12px">
@@ -129,4 +129,4 @@ export const WithCallbackPattern: Story = {
             </div>
         `,
     }),
-};
+}

@@ -10,26 +10,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenu} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElMenu} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         mode?: "horizontal" | "vertical"
         defaultActive?: string
         collapse?: boolean
-    }>();
+    }>()
 
     const emit = defineEmits<{
         select: [index: string, indexPath: string[]]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

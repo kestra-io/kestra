@@ -35,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, useAttrs} from "vue";
-    import KsButton from "../KsButton/KsButton.vue";
-    import KsTooltip from "../../Feedback/KsTooltip.vue";
+    import {computed, useAttrs} from "vue"
+    import KsButton from "../KsButton/KsButton.vue"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         tooltip?: string
@@ -55,20 +55,20 @@
         disabled: false,
         to: undefined,
         replace: false,
-    });
+    })
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const attrs = useAttrs();
+    const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
         class: [attrs.class],
-    }));
+    }))
 
-    const buttonTag = computed(() => (props.to ? "router-link" : undefined));
-    const nativeType = computed(() => (props.to ? undefined : "button" as const));
+    const buttonTag = computed(() => (props.to ? "router-link" : undefined))
+    const nativeType = computed(() => (props.to ? undefined : "button" as const))
 </script>
 
 <style scoped lang="scss">

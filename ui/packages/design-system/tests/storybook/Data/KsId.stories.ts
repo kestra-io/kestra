@@ -1,5 +1,5 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsId from "../../../src/components/Data/KsId.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsId from "../../../src/components/Data/KsId.vue"
 
 const meta: Meta<typeof KsId> = {
     title: "Components/Data/KsId",
@@ -13,18 +13,18 @@ const meta: Meta<typeof KsId> = {
     parameters: {
         docs: {description: {component: "KsId displays a (typically UUID-like) identifier, optionally truncated with a tooltip showing the full value on hover."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsId>
 
 export const Default: Story = {
     render: (args) => ({
         components: {KsId},
-        setup() { return {args}; },
+        setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-id v-bind=\"args\" /></div>",
     }),
     args: {value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"},
-};
+}
 
 export const Shrink: Story = {
     render: () => ({
@@ -37,7 +37,7 @@ export const Shrink: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Clickable: Story = {
     render: () => ({
@@ -45,7 +45,7 @@ export const Clickable: Story = {
         setup() {
             return {
                 handleClick: () => alert("ID clicked!"),
-            };
+            }
         },
         template: `
             <div style="padding:24px">
@@ -53,7 +53,7 @@ export const Clickable: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const ShortValue: Story = {
     render: () => ({
@@ -64,7 +64,7 @@ export const ShortValue: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const Empty: Story = {
     render: () => ({
@@ -75,4 +75,4 @@ export const Empty: Story = {
             </div>
         `,
     }),
-};
+}

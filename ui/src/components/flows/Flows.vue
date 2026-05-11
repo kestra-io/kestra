@@ -251,53 +251,53 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useTemplateRef, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import _merge from "lodash/merge";
-    import * as FILTERS from "../../utils/filters";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import {useFlowFilter} from "../filter/configurations";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import {ref, computed, useTemplateRef, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import _merge from "lodash/merge"
+    import * as FILTERS from "../../utils/filters"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {useFlowFilter} from "../filter/configurations"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    const {loadInit} = useRestoreUrl();
+    const {loadInit} = useRestoreUrl()
 
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Upload from "vue-material-design-icons/Upload.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Upload from "vue-material-design-icons/Upload.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
 
-    import NavBarActions from "../layout/NavBarActions.vue";
-    import NavBarAction from "../layout/NavBarAction.vue";
-    import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
-    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
-    import Play from "vue-material-design-icons/Play.vue";
+    import NavBarActions from "../layout/NavBarActions.vue"
+    import NavBarAction from "../layout/NavBarAction.vue"
+    import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue"
+    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue"
+    import Play from "vue-material-design-icons/Play.vue"
 
-    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system";
-    import Labels from "../layout/Labels.vue";
-    import TriggerAvatar from "./TriggerAvatar.vue";
+    import {KsExecutionStatus, KsIconButton} from "@kestra-io/design-system"
+    import Labels from "../layout/Labels.vue"
+    import TriggerAvatar from "./TriggerAvatar.vue"
 
     //@ts-expect-error no declaration file
-    import FlowRun from "./FlowRun.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
-    import TimeSeries from "../dashboard/sections/TimeSeries.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import FlowRun from "./FlowRun.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
+    import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
 
-    import {useToast} from "../../utils/toast";
+    import {useToast} from "../../utils/toast"
 
-    import {useFlowStore} from "../../stores/flow";
-    import {useApiStore} from "../../stores/api";
-    import {useAuthStore} from "override/stores/auth";
-    import {useMiscStore} from "override/stores/misc";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow"
+    import {useApiStore} from "../../stores/api"
+    import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
+    import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns} from "../../composables/useTableColumns";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {useTableColumns} from "../../composables/useTableColumns"
+    import useRouteContext from "../../composables/useRouteContext"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -309,25 +309,25 @@
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
-    });
+    })
 
-    const flowStore = useFlowStore();
-    const apiStore = useApiStore();
-    const authStore = useAuthStore();
-    const executionsStore = useExecutionsStore();
-    const miscStore = useMiscStore();
+    const flowStore = useFlowStore()
+    const apiStore = useApiStore()
+    const authStore = useAuthStore()
+    const executionsStore = useExecutionsStore()
+    const miscStore = useMiscStore()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    const {t} = useI18n();
-    const toast = useToast();
+    const {t} = useI18n()
+    const toast = useToast()
 
-    const flowFilter = useFlowFilter();
+    const flowFilter = useFlowFilter()
 
-    const lastExecutionByFlowReady = ref(false);
-    const latestExecutions = ref<any[]>([]);
-    const file = ref<HTMLInputElement | null>(null);
+    const lastExecutionByFlowReady = ref(false)
+    const latestExecutions = ref<any[]>([])
+    const file = ref<HTMLInputElement | null>(null)
 
     const optionalColumns = ref([
         {
@@ -366,7 +366,7 @@
             default: true,
             description: t("filter.table_column.flows.triggers"),
         },
-    ]);
+    ])
 
     const {
         visibleColumns: displayColumns,
@@ -375,27 +375,27 @@
         columns: optionalColumns.value,
         storageKey: "flows",
         initialVisibleColumns: [],
-    });
+    })
 
-    const user = computed(() => authStore.user);
-    const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
-    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE));
-    const routeNamespace = computed(() => route.query.namespace as string | undefined);
-    const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value));
-    const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value));
-    const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value));
-    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace);
+    const user = computed(() => authStore.user)
+    const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
+    const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
+    const routeNamespace = computed(() => route.query.namespace as string | undefined)
+    const canRead = computed(() => user?.value?.isAllowed(resource.FLOW, action.VIEW, routeNamespace.value))
+    const canDelete = computed(() => user?.value?.isAllowed(resource.FLOW, action.DELETE, routeNamespace.value))
+    const canUpdate = computed(() => user?.value?.isAllowed(resource.FLOW, action.UPDATE, routeNamespace.value))
+    const canExecute = (flow: Record<string, any>) => flow && !flow.deleted && user?.value?.isAllowed(resource.EXECUTION, action.CREATE, flow.namespace)
 
-    const routeInfo = computed(() => ({title: t("flows")}));
+    const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
-    const dataTable = useTemplateRef("dataTable");
+    const dataTable = useTemplateRef("dataTable")
 
-    const ready = ref(false);
+    const ready = ref(false)
 
     async function loadData({page, size, sort}: {page: number; size: number; sort?: string}) {
-        if (!loadInit.value) return;
+        if (!loadInit.value) return
         await flowStore
             .findFlows(
                 loadQuery({
@@ -409,40 +409,40 @@
                     executionsStore.loadLatestExecutions({
                         flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
                     }).then((latestExecs: any) => {
-                        latestExecutions.value = latestExecs;
-                        lastExecutionByFlowReady.value = true;
-                    });
+                        latestExecutions.value = latestExecs
+                        lastExecutionByFlowReady.value = true
+                    })
                 }
-            });
+            })
     }
 
     const onRowDoubleClick = (item: any) => router.push({
         name: route.name?.toString().replace("/list", "/update"),
         params: {...item, tenant: route.params.tenant},
-    });
+    })
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        return filters;
-    });
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
 
     watch(filterQuery, () => {
-        dataTable.value?.resetAndReload();
-    }, {deep: true});
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
             id,
             namespace,
             enabled: !disabled,
-        };
+        }
     }
 
-    const selection = computed(() => dataTable.value?.selection ?? []);
-    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
+    const selection = computed(() => dataTable.value?.selection ?? [])
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
-    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})));
+    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})))
 
     interface ChartDefinition {
         id: string;
@@ -493,55 +493,55 @@
                 {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
             ],
         },
-    };
-    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
+    }
+    CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION)
 
     function updateDisplayColumns(newColumns: string[]) {
-        updateVisibleColumns(newColumns);
+        updateVisibleColumns(newColumns)
     }
 
-    const showRunModal = ref(false);
-    const selectedFlow = ref<any | null>(null);
+    const showRunModal = ref(false)
+    const selectedFlow = ref<any | null>(null)
 
     async function openExecuteModal(flow: any) {
         apiStore.posthogEvents({
             type: "FLOW_EXECUTION",
             action: "open_modal",
-        });
-        selectedFlow.value = flow;
+        })
+        selectedFlow.value = flow
 
         await executionsStore.loadFlowForExecution({
             namespace: flow.namespace,
             flowId: flow.id,
             store: true,
-        });
+        })
 
-        showRunModal.value = true;
+        showRunModal.value = true
     }
 
     function handleExecutionStart() {
-        showRunModal.value = false;
-        toast.success(t("execution_started"));
+        showRunModal.value = false
+        toast.success(t("execution_started"))
     }
 
     function exportFlows() {
         toast.confirm(
             t("flow export", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
             () => {
-                const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length;
+                const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length
                 if (queryBulkAction.value) {
                     return flowStore.exportFlowByQuery(loadQuery()).then(() => {
-                        toast.success(t("flows exported", {count: flowCount}));
-                        toggleAllUnselected();
-                    });
+                        toast.success(t("flows exported", {count: flowCount}))
+                        toggleAllUnselected()
+                    })
                 } else {
                     return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
-                        toast.success(t("flows exported", {count: flowCount}));
-                        toggleAllUnselected();
-                    });
+                        toast.success(t("flows exported", {count: flowCount}))
+                        toggleAllUnselected()
+                    })
                 }
             },
-        );
+        )
     }
 
     function disableFlows() {
@@ -550,26 +550,26 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 }
             },
-        );
+        )
     }
 
     function anyFlowDisabled() {
-        return selection.value.some((flow: any) => !flow.enabled);
+        return selection.value.some((flow: any) => !flow.enabled)
     }
     function anyFlowEnabled() {
-        return selection.value.some((flow: any) => flow.enabled);
+        return selection.value.some((flow: any) => flow.enabled)
     }
 
     function enableFlows() {
@@ -579,19 +579,19 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 }
             },
-        );
+        )
     }
 
     function deleteFlows() {
@@ -600,79 +600,79 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
                 }
             },
-        );
+        )
     }
 
     function importFlows() {
-        const formData = new FormData();
+        const formData = new FormData()
         if (file.value && file.value.files && file.value.files[0]) {
-            formData.append("fileUpload", file.value.files[0]);
+            formData.append("fileUpload", file.value.files[0])
             flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
                 if (res.data.length > 0) {
-                    toast.warning(t("flows not imported") + ": " + res.data.join(", "));
+                    toast.warning(t("flows not imported") + ": " + res.data.join(", "))
                 } else {
-                    toast.success(t("flows imported"));
+                    toast.success(t("flows imported"))
                 }
-                if (file.value) file.value.value = "";
-                dataTable.value?.reload();
-            });
+                if (file.value) file.value.value = ""
+                dataTable.value?.reload()
+            })
         }
     }
 
     function getLastExecution(row: any) {
-        if (!latestExecutions.value || !row) return null;
+        if (!latestExecutions.value || !row) return null
         return latestExecutions.value.find(
             (e: any) => e.flowId === row.id && e.namespace === row.namespace,
-        ) ?? null;
+        ) ?? null
     }
 
     function loadQuery(base?: any) {
-        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>;
+        const {page: _p, size: _s, sort: _so, ...queryFilter} = route.query as Record<string, any>
         if (props.namespace) {
-            queryFilter["filters[namespace][PREFIX]"] = route.params.id || props.namespace;
+            queryFilter["filters[namespace][PREFIX]"] = route.params.id || props.namespace
         }
-        return _merge(base, queryFilter);
+        return _merge(base, queryFilter)
     }
 
     function refresh() {
-        dataTable.value?.reload();
+        dataTable.value?.reload()
     }
 
     function rowClasses(row: any) {
-        return row && row.row && row.row.disabled ? "disabled" : "";
+        return row && row.row && row.row.disabled ? "disabled" : ""
     }
 
     function mappedChart(id: string, namespace: string) {
-        let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
-        MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
-        return MAPPED_CHARTS;
+        let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION))
+        MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id)
+        return MAPPED_CHARTS
     }
 
     function chartFilters() {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
-        }];
+        }]
     }
 
     async function exportFlowsAsStream() {
         await flowStore.exportFlowAsCSV(
             route.query,
-        );
+        )
     }
 </script>
 

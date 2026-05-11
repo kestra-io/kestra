@@ -9,7 +9,7 @@
     />
 </template>
 <script>
-    import moment from "moment";
+    import moment from "moment"
 
     export default {
         emits: ["update:modelValue"],
@@ -86,7 +86,7 @@
                         ]),
                     },
                 ],
-            };
+            }
         },
         props: {
             startDate: {
@@ -103,13 +103,13 @@
                 this.$emit("update:modelValue", {
                     "startDate": value != null && value[0] ? moment(value[0]).toISOString(true) : undefined,
                     "endDate": value != null && value[1] ? moment(value[1]).toISOString(true) : undefined,
-                });
+                })
             },
         },
         computed: {
             date() {
-                return [new Date(this.startDate), new Date(this.endDate)];
+                return [new Date(this.startDate), new Date(this.endDate)]
             },
         },
-    };
+    }
 </script>

@@ -1,9 +1,9 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import {ref} from "vue";
-import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue";
-import KsDropdown from "../../../src/components/Navigation/KsDropdown/KsDropdown.vue";
-import KsDropdownItem from "../../../src/components/Navigation/KsDropdown/KsDropdownItem.vue";
-import KsDropdownMenu from "../../../src/components/Navigation/KsDropdown/KsDropdownMenu.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {ref} from "vue"
+import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
+import KsDropdown from "../../../src/components/Navigation/KsDropdown/KsDropdown.vue"
+import KsDropdownItem from "../../../src/components/Navigation/KsDropdown/KsDropdownItem.vue"
+import KsDropdownMenu from "../../../src/components/Navigation/KsDropdown/KsDropdownMenu.vue"
 
 const meta: Meta<typeof KsDropdown> = {
     title: "Components/Navigation/KsDropdown",
@@ -16,8 +16,8 @@ const meta: Meta<typeof KsDropdown> = {
             },
         },
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsDropdown>
 
 /** Basic usage – hover to unfold */
@@ -39,7 +39,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** How to trigger – hover, click, contextmenu */
 export const Triggers: Story = {
@@ -77,15 +77,15 @@ export const Triggers: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Command event – items with command values */
 export const CommandEvent: Story = {
     render: () => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
         setup() {
-            const lastCmd = ref<string | null>(null);
-            return {lastCmd};
+            const lastCmd = ref<string | null>(null)
+            return {lastCmd}
         },
         template: `
             <div style="padding:48px">
@@ -106,7 +106,7 @@ export const CommandEvent: Story = {
             </div>
         `,
     }),
-};
+}
 
 /** Disabled items */
 export const WithDisabledItems: Story = {
@@ -127,4 +127,4 @@ export const WithDisabledItems: Story = {
             </div>
         `,
     }),
-};
+}

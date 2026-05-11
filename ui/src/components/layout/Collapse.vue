@@ -12,10 +12,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import MenuIcon from "vue-material-design-icons/Menu.vue";
+    import {ref} from "vue"
+    import MenuIcon from "vue-material-design-icons/Menu.vue"
 
-    const isNavbarVisible = ref(false);
+    const isNavbarVisible = ref(false)
 </script>
 
 <style scoped lang="scss">

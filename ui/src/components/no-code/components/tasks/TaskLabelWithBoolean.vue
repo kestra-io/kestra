@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-    import TaskBoolean from "./TaskBoolean.vue";
+    import TaskBoolean from "./TaskBoolean.vue"
 
     interface Props {
         type?: string
@@ -18,5 +18,5 @@
         type: "",
         isBoolean: false,
         componentProps: () => ({}),
-    });
+    })
 </script>

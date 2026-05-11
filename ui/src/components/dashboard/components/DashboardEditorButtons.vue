@@ -19,23 +19,23 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import ValidationError from "../../flows/ValidationError.vue";
-    import {useDashboardStore} from "../../../stores/dashboard";
+    import {computed} from "vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import ValidationError from "../../flows/ValidationError.vue"
+    import {useDashboardStore} from "../../../stores/dashboard"
 
     const emit = defineEmits<{
         (e: "save"): void;
-    }>();
+    }>()
 
-    const dashboardStore = useDashboardStore();
+    const dashboardStore = useDashboardStore()
 
     const saveButtonType = computed(() => {
-        if (dashboardStore.errors) return "danger";
-        return dashboardStore.warnings ? "warning" : "primary";
-    });
+        if (dashboardStore.errors) return "danger"
+        return dashboardStore.warnings ? "warning" : "primary"
+    })
 
-    const canSave = computed(() => dashboardStore.haveChange || dashboardStore.isCreating);
+    const canSave = computed(() => dashboardStore.haveChange || dashboardStore.isCreating)
 </script>
 <style lang="scss" scoped>
     .button-top {

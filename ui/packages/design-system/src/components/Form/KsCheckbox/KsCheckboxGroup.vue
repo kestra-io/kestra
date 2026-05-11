@@ -12,28 +12,28 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckboxGroup} from "element-plus";
+    import {ElCheckboxGroup} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any[]>();
+    const model = defineModel<any[]>()
 
     const props = defineProps<{
         disabled?: boolean
         size?: "large" | "default" | "small"
-    }>();
+    }>()
 
     const emit = defineEmits<{
         change: [value: any[]]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

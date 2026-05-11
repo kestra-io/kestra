@@ -29,37 +29,37 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {ElIcon} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {computed} from "vue"
+    import {ElIcon} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     type IconSizeToken = "xs" | "sm" | "base" | "lg" | "xl"
-    const SIZE_TOKENS: readonly IconSizeToken[] = ["xs", "sm", "base", "lg", "xl"] as const;
+    const SIZE_TOKENS: readonly IconSizeToken[] = ["xs", "sm", "base", "lg", "xl"] as const
 
     const props = defineProps<{
         size?: number | string | IconSizeToken
         color?: string
         tooltip?: string
         placement?: string
-    }>();
+    }>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props, ["size"]);
+    const filteredProps = useFilteredProps(props, ["size"])
 
     const resolvedSize = computed(() => {
-        const s = props.size;
+        const s = props.size
         if (typeof s === "string" && (SIZE_TOKENS as readonly string[]).includes(s)) {
-            return `var(--ks-icon-size-${s})`;
+            return `var(--ks-icon-size-${s})`
         }
-        return s;
-    });
+        return s
+    })
 </script>

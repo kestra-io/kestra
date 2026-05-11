@@ -1,16 +1,16 @@
-import type {Component} from "vue";
-import PauseCircle from "vue-material-design-icons/PauseCircle.vue";
-import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-import PlayCircle from "vue-material-design-icons/PlayCircle.vue";
-import CloseCircle from "vue-material-design-icons/CloseCircle.vue";
-import StopCircle from "vue-material-design-icons/StopCircle.vue";
-import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue";
-import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
-import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue";
-import Refresh from "vue-material-design-icons/Refresh.vue";
-import Cancel from "vue-material-design-icons/Cancel.vue";
-import {cssVar} from "./css";
+import type {Component} from "vue"
+import PauseCircle from "vue-material-design-icons/PauseCircle.vue"
+import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+import PlayCircle from "vue-material-design-icons/PlayCircle.vue"
+import CloseCircle from "vue-material-design-icons/CloseCircle.vue"
+import StopCircle from "vue-material-design-icons/StopCircle.vue"
+import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue"
+import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue"
+import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue"
+import Refresh from "vue-material-design-icons/Refresh.vue"
+import Cancel from "vue-material-design-icons/Cancel.vue"
+import {cssVar} from "./css"
 
 interface StateModel {
     name: string;
@@ -22,7 +22,7 @@ interface StateModel {
     isFailed: boolean;
 }
 
-export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const;
+export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const
 
 export const STATES:Record<string, StateModel> = Object.freeze({
     CREATED: {
@@ -160,45 +160,45 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         isKillable: false,
         isFailed: false,
     },
-});
+})
 
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
-    Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
+    Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
-export const CREATED = "CREATED" as const;
-export const RESTARTED = "RESTARTED" as const;
-export const SUCCESS = "SUCCESS" as const;
-export const RUNNING = "RUNNING" as const;
-export const KILLING = "KILLING" as const;
-export const KILLED = "KILLED" as const;
-export const FAILED = "FAILED" as const;
-export const WARNING = "WARNING" as const;
-export const PAUSED = "PAUSED" as const;
-export const CANCELLED = "CANCELLED" as const;
-export const SKIPPED = "SKIPPED" as const;
-export const QUEUED = "QUEUED" as const;
-export const RETRYING = "RETRYING" as const;
-export const RETRIED = "RETRIED" as const;
-export const BREAKPOINT = "BREAKPOINT" as const;
+export const CREATED = "CREATED" as const
+export const RESTARTED = "RESTARTED" as const
+export const SUCCESS = "SUCCESS" as const
+export const RUNNING = "RUNNING" as const
+export const KILLING = "KILLING" as const
+export const KILLED = "KILLED" as const
+export const FAILED = "FAILED" as const
+export const WARNING = "WARNING" as const
+export const PAUSED = "PAUSED" as const
+export const CANCELLED = "CANCELLED" as const
+export const SKIPPED = "SKIPPED" as const
+export const QUEUED = "QUEUED" as const
+export const RETRYING = "RETRYING" as const
+export const RETRIED = "RETRIED" as const
+export const BREAKPOINT = "BREAKPOINT" as const
 
 export function isRunning(state:string) {
-    return STATES[state]?.isRunning;
+    return STATES[state]?.isRunning
 }
 
 export function isKillable(state:string) {
-    return STATES[state]?.isKillable;
+    return STATES[state]?.isKillable
 }
 
 export function isPaused(state:string) {
-    return STATES[state] === STATES.PAUSED;
+    return STATES[state] === STATES.PAUSED
 }
 
 export function isFailed(state:string) {
-    return STATES[state]?.isFailed;
+    return STATES[state]?.isFailed
 }
 
 export function isQueued(state:string) {
-    return STATES[state] === STATES.QUEUED;
+    return STATES[state] === STATES.QUEUED
 }
 
 export function allStates() {
@@ -206,29 +206,29 @@ export function allStates() {
         key: state.name,
         icon: state.icon,
         color: "",
-    }));
+    }))
 }
 
 export function arrayAllStates() {
-    return Object.values(STATES);
+    return Object.values(STATES)
 }
 
 export function colorClass() {
-    return mapValues(STATES, (state) => state.colorClass);
+    return mapValues(STATES, (state) => state.colorClass)
 }
 
 export function color() {
-    return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`));
+    return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`))
 }
 
 export function getStateColor(state:string) {
-    return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`);
+    return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`)
 }
 
 export function icon() {
-    return mapValues(STATES, (state) => state.icon);
+    return mapValues(STATES, (state) => state.icon)
 }
 
 export function getTerminatedStates() {
-    return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name);
+    return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name)
 }

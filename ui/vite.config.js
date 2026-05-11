@@ -1,22 +1,22 @@
-import path from "path";
-import {createLogger, defineConfig, loadEnv} from "vite";
-import vue from "@vitejs/plugin-vue";
+import path from "path"
+import {createLogger, defineConfig, loadEnv} from "vite"
+import vue from "@vitejs/plugin-vue"
 
 // silence some scss warnings about sourceMaps of 
 // element-plus/theme-chalk/src in the wrong directory 
 // and will not be published in prod builds
-const logger = createLogger();
-const loggerWarnOnce = logger.warnOnce.bind(logger);
+const logger = createLogger()
+const loggerWarnOnce = logger.warnOnce.bind(logger)
 logger.warnOnce = (msg, options) => {
-    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return;
-    loggerWarnOnce(msg, options);
-};
+    if (msg.includes("node_modules/element-plus/theme-chalk/src") && (/sourcemap/i).test(msg)) return
+    loggerWarnOnce(msg, options)
+}
 
-import {commit} from "./plugins/commit";
-import {codecovVitePlugin} from "@codecov/vite-plugin";
+import {commit} from "./plugins/commit"
+import {codecovVitePlugin} from "@codecov/vite-plugin"
 
 export default defineConfig(({mode}) => {
-    process.env = {...process.env, ...loadEnv(mode, process.cwd())};
+    process.env = {...process.env, ...loadEnv(mode, process.cwd())}
 
     return {
         base: "",
@@ -80,7 +80,7 @@ export default defineConfig(({mode}) => {
                 template: {
                     compilerOptions: {
                         isCustomElement: (tag) => {
-                            return tag === "rapi-doc";
+                            return tag === "rapi-doc"
                         },
                     },
                 },
@@ -135,5 +135,5 @@ export default defineConfig(({mode}) => {
                 "@kestra-io/topology",
             ],
         },
-    };
-});
+    }
+})

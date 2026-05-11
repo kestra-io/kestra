@@ -3,12 +3,12 @@
 </template>
 
 <script setup lang="ts">
-    import {KsNotification} from "@kestra-io/design-system";
-    import {pageFromRoute} from "../utils/eventsRouter";
-    import {h, onMounted, watch, computed, ref} from "vue";
-    import ErrorToastContainer from "./ErrorToastContainer.vue";
-    import {useApiStore} from "../stores/api";
-    import {useRoute} from "vue-router";
+    import {KsNotification} from "@kestra-io/design-system"
+    import {pageFromRoute} from "../utils/eventsRouter"
+    import {h, onMounted, watch, computed, ref} from "vue"
+    import ErrorToastContainer from "./ErrorToastContainer.vue"
+    import {useApiStore} from "../stores/api"
+    import {useRoute} from "vue-router"
 
     export interface Message {
         title?: string;
@@ -50,43 +50,43 @@
         noAutoHide?: boolean;
     }>(), {
         noAutoHide: false,
-    });
+    })
 
-    const route = useRoute();
-    const apiStore = useApiStore();
-    const notifications = ref<any>();
+    const route = useRoute()
+    const apiStore = useApiStore()
+    const notifications = ref<any>()
 
     const close = () => {
         if (notifications.value) {
-            notifications.value.close();
+            notifications.value.close()
         }
-    };
+    }
 
     const title = computed(() => {
         if (props.message.title) {
-            return props.message.title;
+            return props.message.title
         }
 
         if (props.message.response?.status === 503) {
-            return "503 Service Unavailable";
+            return "503 Service Unavailable"
         }
 
         if (props.message.content?.message && props.message.content.message.indexOf(":") > 0) {
-            return props.message.content.message.substring(0, props.message.content.message.indexOf(":"));
+            return props.message.content.message.substring(0, props.message.content.message.indexOf(":"))
         }
 
-        return "Error";
-    });
+        return "Error"
+    })
 
     const items = computed(() => {
         // oxlint-disable-next-line no-underscore-dangle
-        const messages = props.message.content?._embedded?.errors || [];
-        return Array.isArray(messages) ? messages : [messages];
-    });
+        const messages = props.message.content?._embedded?.errors || []
+        return Array.isArray(messages) ? messages : [messages]
+    })
 
     watch(route, () => {
-        close();
-    });
+        close()
+    })
 
     onMounted(() => {
         const error: ErrorEvent = {
@@ -96,21 +96,21 @@
                 errors: items.value,
             },
             page: pageFromRoute(route),
-        };
+        }
 
         if (props.message.response) {
-            error.error.response = {};
+            error.error.response = {}
             error.error.request = {
                 method: props.message.response.config.method ?? "GET",
                 url: props.message.response.config.url ?? "unknown url",
-            };
+            }
 
             if (props.message.response.status) {
-                error.error.response.status = props.message.response.status;
+                error.error.response.status = props.message.response.status
             }
         }
 
-        apiStore.events(error);
+        apiStore.events(error)
 
         notifications.value = KsNotification({
             title: title.value || "Error",
@@ -128,8 +128,8 @@
             duration: 0,
             dangerouslyUseHTMLString: true,
             customClass: "error-notification kel-notification__large",
-        });
-    });
+        })
+    })
 </script>
 
 <style lang="scss" scoped>

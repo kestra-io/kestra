@@ -24,22 +24,22 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {onMounted, ref} from "vue"
 
     import {
         Execution,
         useExecutionsStore,
-    } from "../../../../../stores/executions";
-    const store = useExecutionsStore();
+    } from "../../../../../stores/executions"
+    const store = useExecutionsStore()
 
-    import {Log} from "../../../../../stores/logs";
+    import {Log} from "../../../../../stores/logs"
 
-    import LogLine from "../../../../logs/LogLine.vue";
+    import LogLine from "../../../../logs/LogLine.vue"
 
-    const props = defineProps<{ execution: Execution }>();
+    const props = defineProps<{ execution: Execution }>()
 
     function stripBackticks(message: string): string {
-        return message.replace(/`([^`]*)`/g, "$1");
+        return message.replace(/`([^`]*)`/g, "$1")
     }
 
     const to = {
@@ -52,9 +52,9 @@
             tab: "logs",
         },
         query: {"filters[level][EQUALS]": "ERROR"},
-    };
+    }
 
-    const logs = ref<Log[]>([]);
+    const logs = ref<Log[]>([])
 
     onMounted(async () => {
         try {
@@ -63,15 +63,15 @@
                 executionId: props.execution.id,
                 params: {minLevel: "ERROR"},
                 showMessageOnError: false,
-            });
+            })
 
-            if (!response.length) return;
+            if (!response.length) return
 
-            logs.value = response;
+            logs.value = response
         } catch {
             // User may not have ACCESS_LOGS permission — silently skip
         }
-    });
+    })
 </script>
 <style scoped lang="scss">
 

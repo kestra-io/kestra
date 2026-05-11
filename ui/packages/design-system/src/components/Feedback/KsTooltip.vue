@@ -16,12 +16,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {ElTooltip} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
-    import {useTheme} from "../../composables/useTheme";
+    import {computed} from "vue"
+    import {ElTooltip} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
+    import {useTheme} from "../../composables/useTheme"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         content?: string
@@ -39,18 +39,18 @@
         effect: undefined,
         enterable: undefined,
         autoClose: undefined,
-    });
+    })
 
     defineSlots<{
         default?(): unknown
         content?(): unknown
-    }>();
+    }>()
 
-    const {isDark} = useTheme();
+    const {isDark} = useTheme()
 
-    const effectValue = computed(() => props.effect ?? (isDark.value ? "light" : "dark"));
+    const effectValue = computed(() => props.effect ?? (isDark.value ? "light" : "dark"))
 
-    const filteredProps = useFilteredProps(props, ["effect"]);
+    const filteredProps = useFilteredProps(props, ["effect"])
 </script>
 
 <style lang="scss">

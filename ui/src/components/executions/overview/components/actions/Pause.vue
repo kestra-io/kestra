@@ -20,40 +20,40 @@
 </template>
 
 <script setup lang="ts">
-    import Pause from "vue-material-design-icons/Pause.vue";
-    import {useExecutionsStore} from "../../../../../stores/executions";
-    import resource from "../../../../../models/resource";
-    import action from "../../../../../models/action";
-    import {State} from "@kestra-io/design-system";
-    import {useAuthStore} from "override/stores/auth";
-    import {computed, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../../../../utils/toast";
+    import Pause from "vue-material-design-icons/Pause.vue"
+    import {useExecutionsStore} from "../../../../../stores/executions"
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
+    import {State} from "@kestra-io/design-system"
+    import {useAuthStore} from "override/stores/auth"
+    import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../../../../utils/toast"
 
     const props = defineProps({
         execution: {
             type: Object,
             required: true,
         },
-    });
+    })
 
-    const {t} = useI18n();
-    const executionsStore = useExecutionsStore();
-    const authStore = useAuthStore();
-    const toast = useToast();
+    const {t} = useI18n()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
+    const toast = useToast()
 
-    const isDrawerOpen = ref(false);
+    const isDrawerOpen = ref(false)
 
     const enabled = computed(() => {
         if (!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)) {
-            return false;
+            return false
         }
-        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current);
-    });
+        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current)
+    })
 
     const click = () => {
-        isDrawerOpen.value = true;
-    };
+        isDrawerOpen.value = true
+    }
 
     const pause = () => {
         toast.confirm(t("pause confirm", {id: props.execution.id}), () => {
@@ -62,9 +62,9 @@
                     id: props.execution.id,
                 })
                 .then(() => {
-                    isDrawerOpen.value = false;
-                    toast.success(t("pause done"));
-                });
-        });
-    };
+                    isDrawerOpen.value = false
+                    toast.success(t("pause done"))
+                })
+        })
+    }
 </script>

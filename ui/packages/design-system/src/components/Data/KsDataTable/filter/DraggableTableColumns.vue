@@ -35,20 +35,20 @@
 </template>
 
 <script setup lang="ts">
-    import {EyeOutline, EyeOffOutline} from "./utils/icons";
-    import {useDragAndDrop} from "./composables/useDragAndDrop";
-    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns";
-    import Drag from "vue-material-design-icons/Drag.vue";
+    import {EyeOutline, EyeOffOutline} from "./utils/icons"
+    import {useDragAndDrop} from "./composables/useDragAndDrop"
+    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
+    import Drag from "vue-material-design-icons/Drag.vue"
 
     const props = defineProps<{
         columns: ColumnConfig[];
         visibleColumns: string[];
         storageKey: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         updateColumns: [columns: string[]];
-    }>();
+    }>()
 
     const {
         visibleColumns: localVisibleColumns,
@@ -60,7 +60,7 @@
         columns: props.columns,
         storageKey: props.storageKey,
         initialVisibleColumns: props.visibleColumns,
-    });
+    })
 
     const {
         draggedIndex,
@@ -69,21 +69,21 @@
         handleDragOver,
         handleDrop,
         handleDragEnd,
-    } = useDragAndDrop();
+    } = useDragAndDrop()
 
     const handleToggle = (column: ColumnConfig) => {
-        toggleColumn(column);
-        emits("updateColumns", localVisibleColumns.value);
-    };
+        toggleColumn(column)
+        emits("updateColumns", localVisibleColumns.value)
+    }
 
     const handleReorder = (fromIndex: number, toIndex: number) => {
-        reorderColumns(fromIndex, toIndex);
-        emits("updateColumns", localVisibleColumns.value);
-    };
+        reorderColumns(fromIndex, toIndex)
+        emits("updateColumns", localVisibleColumns.value)
+    }
 
     const onDrop = (event: DragEvent, targetIndex: number) => {
-        handleDrop(event, targetIndex, handleReorder);
-    };
+        handleDrop(event, targetIndex, handleReorder)
+    }
 </script>
 
 <style lang="scss" scoped>

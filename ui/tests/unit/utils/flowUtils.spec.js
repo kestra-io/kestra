@@ -1,6 +1,6 @@
-import {describe, it, expect} from "vitest";
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-import * as FlowUtils from "../../../src/utils/flowUtils";
+import {describe, it, expect} from "vitest"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+import * as FlowUtils from "../../../src/utils/flowUtils"
 
 export const flat = `
 id: flat
@@ -14,7 +14,7 @@ tasks:
   - id: 1-2
     type: io.kestra.plugin.core.log.Log
     message: 'echo "1-2"'
-`;
+`
 
 export const flowable = `
 id: flowable
@@ -44,7 +44,7 @@ tasks:
     type: io.kestra.plugin.core.log.Log
     commands:
       - 'echo "end"'
-`;
+`
 
 export const plugins = `
 id: flowable
@@ -60,37 +60,37 @@ tasks:
   - id: end
     type: io.kestra.plugin.core.log.Log
     message: "end"
-`;
+`
 
 describe("FlowUtils", () => {
     it("extractTask from a flat flow", () => {
-        let flow = YAML_UTILS.parse(flat);
-        let findTaskById = FlowUtils.findTaskById(flow, "1-2");
+        let flow = YAML_UTILS.parse(flat)
+        let findTaskById = FlowUtils.findTaskById(flow, "1-2")
 
-        expect(findTaskById.id).toBe("1-2");
-        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log");
-    });
-
-    it("extractTask from a flowable flow", () => {
-        let flow = YAML_UTILS.parse(flowable);
-        let findTaskById = FlowUtils.findTaskById(flow, "1-2");
-
-        expect(findTaskById.id).toBe("1-2");
-        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log");
-    });
+        expect(findTaskById.id).toBe("1-2")
+        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log")
+    })
 
     it("extractTask from a flowable flow", () => {
-        let flow = YAML_UTILS.parse(plugins);
-        let findTaskById = FlowUtils.findTaskById(flow, "nest-1");
+        let flow = YAML_UTILS.parse(flowable)
+        let findTaskById = FlowUtils.findTaskById(flow, "1-2")
 
-        expect(findTaskById.id).toBe("nest-1");
-        expect(findTaskById.type).toBe("io.kestra.core.tasks.unittest.Example");
-    });
+        expect(findTaskById.id).toBe("1-2")
+        expect(findTaskById.type).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("extractTask from a flowable flow", () => {
+        let flow = YAML_UTILS.parse(plugins)
+        let findTaskById = FlowUtils.findTaskById(flow, "nest-1")
+
+        expect(findTaskById.id).toBe("nest-1")
+        expect(findTaskById.type).toBe("io.kestra.core.tasks.unittest.Example")
+    })
 
     it("missing task from a flowable flow", () => {
-        let flow = YAML_UTILS.parse(flowable);
-        let findTaskById = FlowUtils.findTaskById(flow, "undefined");
+        let flow = YAML_UTILS.parse(flowable)
+        let findTaskById = FlowUtils.findTaskById(flow, "undefined")
 
-        expect(findTaskById).toBeUndefined();
-    });
-});
+        expect(findTaskById).toBeUndefined()
+    })
+})

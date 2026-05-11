@@ -7,12 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDatePicker} from "element-plus";
-    import {useFilteredProps} from "../../utils/filteredProps";
+    import {ElDatePicker} from "element-plus"
+    import {useFilteredProps} from "../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>();
+    const model = defineModel<any>()
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -32,13 +32,13 @@
         size: undefined,
         startPlaceholder: undefined,
         endPlaceholder: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         change: [value: any]
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 </script>
 
 <style lang="scss">

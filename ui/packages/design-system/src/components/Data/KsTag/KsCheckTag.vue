@@ -11,11 +11,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckTag} from "element-plus";
+    import {ElCheckTag} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         checked?: boolean
@@ -23,17 +23,17 @@
         size?: "large" | "default" | "small"
     }>(), {
         size: "small",
-    });
+    })
 
     const emit = defineEmits<{
         change: [checked: boolean]
-    }>();
+    }>()
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props, ["size"]);
+    const filteredProps = useFilteredProps(props, ["size"])
 </script>
 
 <style lang="scss">

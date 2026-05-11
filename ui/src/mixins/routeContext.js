@@ -6,26 +6,26 @@ export default {
         },
     },
     mounted() {
-        this.handleTitle();
+        this.handleTitle()
     },
     watch: {
         $route() {
-            this.handleTitle();
+            this.handleTitle()
         },
     },
     methods: {
         handleTitle() {
             if(!this.embed) {
-                let baseTitle;
+                let baseTitle
 
                 if (document.title.lastIndexOf("|") > 0) {
-                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1);
+                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1)
                 } else {
-                    baseTitle = document.title;
+                    baseTitle = document.title
                 }
 
-                document.title = this.routeInfo.title + " | " + baseTitle;
+                document.title = this.routeInfo.title + " | " + baseTitle
             }
         },
     },
-};
+}

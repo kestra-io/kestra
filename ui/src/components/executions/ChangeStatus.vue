@@ -62,16 +62,16 @@
 </template>
 
 <script>
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
-    import resource from "../../models/resource";
-    import action from "../../models/action";
-    import {State} from "@kestra-io/design-system";
-    import {shallowRef, ref} from "vue";
-    import {useAuthStore} from "override/stores/auth";
-    import {useToast} from "../../utils/toast";
-    import {useI18n} from "vue-i18n";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue"
+    import {mapStores} from "pinia"
+    import {useExecutionsStore} from "../../stores/executions"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import {State} from "@kestra-io/design-system"
+    import {shallowRef, ref} from "vue"
+    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
+    import {useI18n} from "vue-i18n"
 
     export default {
         components: {StateMachine},
@@ -97,16 +97,16 @@
         },
         emits: ["follow"],
         setup(props, {emit}) {
-            const visible = ref(false);
-            const selectedStatus = ref(undefined);
+            const visible = ref(false)
+            const selectedStatus = ref(undefined)
 
-            const {t} = useI18n();
+            const {t} = useI18n()
 
-            const executionsStore = useExecutionsStore();
-            const toast = useToast();
+            const executionsStore = useExecutionsStore()
+            const toast = useToast()
 
             function changeStatus() {
-                visible.value = false;
+                visible.value = false
 
                 executionsStore
                     .changeStatus({
@@ -116,23 +116,23 @@
                     })
                     .then(() => executionsStore.waitForStateChange(props.execution))
                     .then((execution) => {
-                        executionsStore.execution = execution;
-                        emit("follow");
+                        executionsStore.execution = execution
+                        emit("follow")
 
-                        toast.success(t("change state done"));
-                    });
+                        toast.success(t("change state done"))
+                    })
             }
 
             return {
                 visible,
                 selectedStatus,
                 changeStatus,
-            };
+            }
         },
         computed: {
             ...mapStores(useAuthStore),
             uuid() {
-                return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
+                return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "")
             },
             states() {
                 return (this.taskRun.state.current === "PAUSED" ?
@@ -152,35 +152,35 @@
                             code: value,
                             label: this.$t("mark as", {status: value}),
                             disabled: value === this.taskRun.state.current,
-                        };
-                    });
+                        }
+                    })
             },
             enabled() {
                 if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
+                    return false
                 }
 
                 if (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
-                    return false;
+                    return false
                 }
 
                 if (this.taskRun.state.current === "PAUSED" || this.taskRun.state.current === "CREATED") {
-                    return true;
+                    return true
                 }
 
                 if (State.isRunning(this.execution.state.current)) {
-                    return false;
+                    return false
                 }
 
-                return true;
+                return true
             },
         },
         data() {
             return {
                 icon: {StateMachine: shallowRef(StateMachine)},
-            };
+            }
         },
-    };
+    }
 </script>
 
 <style lang="scss">

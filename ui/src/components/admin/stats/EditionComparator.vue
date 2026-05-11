@@ -12,7 +12,7 @@
     </KsRow>
 </template>
 <script setup lang="ts">
-    import EditionCharacteristics from "./EditionCharacteristics.vue";
+    import EditionCharacteristics from "./EditionCharacteristics.vue"
 
     type EditionButton = {
         text: string;
@@ -113,7 +113,7 @@
                 href: "https://kestra.io/cloud?utm_source=app&utm_medium=referral&utm_campaign=enterprise&utm_content=cloud",
             },
         },
-    ];
+    ]
 </script>
 
 <style scoped lang="scss">

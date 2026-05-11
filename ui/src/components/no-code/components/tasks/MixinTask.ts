@@ -1,8 +1,8 @@
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-import {defineComponent} from "vue";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+import {defineComponent} from "vue"
 
 export function collapseEmptyValues(value: any): any {
-    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value;
+    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value
 }
 
 export default defineComponent({
@@ -35,35 +35,35 @@ export default defineComponent({
     emits: ["update:modelValue"],
     methods: {
         getKey(addKey: string) {
-            return this.root ? this.root + "." + addKey : addKey;
+            return this.root ? this.root + "." + addKey : addKey
         },
         isRequired(key: string) {
-            return this.schema?.required?.includes(key);
+            return this.schema?.required?.includes(key)
         },
         onInput(value:any) {
-            this.$emit("update:modelValue", collapseEmptyValues(value));
+            this.$emit("update:modelValue", collapseEmptyValues(value))
         },
     },
     computed: {
         values() {
             if (this.modelValue === undefined) {
-                return this.schema?.default;
+                return this.schema?.default
             }
 
-            return this.modelValue;
+            return this.modelValue
         },
         editorValue() {
             if (typeof this.values === "string") {
-                return this.values;
+                return this.values
             }
 
-            return YAML_UTILS.stringify(this.values);
+            return YAML_UTILS.stringify(this.values)
         },
         info() {
-            return this.schema?.title ?? this.schema?.type;
+            return this.schema?.title ?? this.schema?.type
         },
         isValid() {
-            return true;
+            return true
         },
     },
-});
+})

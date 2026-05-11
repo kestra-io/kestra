@@ -74,82 +74,82 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import {useRouter, useRoute} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import {KsMessage} from "@kestra-io/design-system";
-    import type {FormInstance} from "@kestra-io/design-system";
-    import {useClient} from "@kestra-io/kestra-sdk";
-    import MailChecker from "mailchecker";
+    import {ref, computed} from "vue"
+    import {useRouter, useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {KsMessage} from "@kestra-io/design-system"
+    import type {FormInstance} from "@kestra-io/design-system"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    import MailChecker from "mailchecker"
 
-    import Account from "vue-material-design-icons/Account.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
-    import Logo from "../home/Logo.vue";
+    import Account from "vue-material-design-icons/Account.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Logo from "../home/Logo.vue"
 
-    import {useCoreStore} from "../../stores/core";
-    import {useApiStore} from "../../stores/api";
-    import {useMiscStore} from "override/stores/misc";
-    import {useSurveySkip} from "../../composables/useSurveyData";
-    import {apiUrlWithoutTenants, apiUrl} from "override/utils/route";
-    import * as BasicAuth from "../../utils/basicAuth";
-    import {shouldShowWelcome} from "../../utils/welcomeGuard";
-    import {identifyPosthogUser} from "../../utils/posthog";
+    import {useCoreStore} from "../../stores/core"
+    import {useApiStore} from "../../stores/api"
+    import {useMiscStore} from "override/stores/misc"
+    import {useSurveySkip} from "../../composables/useSurveyData"
+    import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
+    import * as BasicAuth from "../../utils/basicAuth"
+    import {shouldShowWelcome} from "../../utils/welcomeGuard"
+    import {identifyPosthogUser} from "../../utils/posthog"
 
     interface Credentials {
         username: string
         password: string
     }
 
-    const router = useRouter();
-    const route = useRoute();
-    const {t} = useI18n();
-    const coreStore = useCoreStore();
-    const apiStore = useApiStore();
-    const miscStore = useMiscStore();
-    const {shouldShowHelloDialog} = useSurveySkip();
+    const router = useRouter()
+    const route = useRoute()
+    const {t} = useI18n()
+    const coreStore = useCoreStore()
+    const apiStore = useApiStore()
+    const miscStore = useMiscStore()
+    const {shouldShowHelloDialog} = useSurveySkip()
 
-    const form = ref<FormInstance>();
-    const isLoading = ref(false);
+    const form = ref<FormInstance>()
+    const isLoading = ref(false)
     const credentials = ref<Credentials>({
         username: "",
         password: "",
-    });
+    })
 
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/;
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value?.trim()) {
-            return callback(new Error(t("setup.validation.email_required")));
+            return callback(new Error(t("setup.validation.email_required")))
         } else if (!EMAIL_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.email_invalid")));
+            return callback(new Error(t("setup.validation.email_invalid")))
         } else if (!MailChecker.isValid(value)) {
-            return callback(new Error(t("setup.validation.email_temporary_not_allowed")));
+            return callback(new Error(t("setup.validation.email_temporary_not_allowed")))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const validatePassword = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value || !PASSWORD_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.password_invalid")));
+            return callback(new Error(t("setup.validation.password_invalid")))
         }
-        callback();
-    };
+        callback()
+    }
 
     const rules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
         password: [{required: true, validator: validatePassword, trigger: "blur"}],
-    }));
+    }))
 
     const getFieldError = (fieldName: string): string | undefined => {
-        if (!form.value) return undefined;
-        const field = form.value.fields?.find((f: any) => f.prop === fieldName);
-        return field?.validateState === "error" ? field.validateMessage : undefined;
-    };
+        if (!form.value) return undefined
+        const field = form.value.fields?.find((f: any) => f.prop === fieldName)
+        return field?.validateState === "error" ? field.validateMessage : undefined
+    }
 
-    const redirectPath = computed(() => route.query.from as string | undefined);
+    const redirectPath = computed(() => route.query.from as string | undefined)
 
     const isLoginDisabled = computed(() =>
         !credentials.value.username?.trim() ||
@@ -158,131 +158,131 @@
         !PASSWORD_REGEX.test(credentials.value.password) ||
         !MailChecker.isValid(credentials.value.username) ||
         isLoading.value,
-    );
+    )
 
-    const axios = useClient();
+    const axios = useClient()
 
     const validateCredentials = async (auth: string) => {
         try {
-            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
+            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
             await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
                 withCredentials: true,
-            });
+            })
         } catch(e) {
-            BasicAuth.logout();
-            throw e;
+            BasicAuth.logout()
+            throw e
         }
-    };
+    }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
             timeout: 10000,
             withCredentials: true,
-        });
-        return response.data?.isBasicAuthInitialized;
-    };
+        })
+        return response.data?.isBasicAuthInitialized
+    }
 
     const handleNetworkError = (error: any) => {
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
-            (!error.response && error.message?.includes("Network Error"));
-    };
+            (!error.response && error.message?.includes("Network Error"))
+    }
 
     const loadAuthConfigErrors = async () => {
         try {
-            const errors = await miscStore.loadBasicAuthValidationErrors();
+            const errors = await miscStore.loadBasicAuthValidationErrors()
             if (errors?.length) {
                 errors.forEach((error: string) => {
                     KsMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
                         duration: 5000,
                         showClose: false,
-                    });
-                });
+                    })
+                })
             } else {
                 KsMessage.error({
                     message: t("setup.validation.incorrect_creds"),
-                });
+                })
             }
         } catch {
             KsMessage.error({
                 message: t("setup.validation.incorrect_creds"),
-            });
+            })
         }
-    };
+    }
 
     const handleSubmit = async () => {
         try {
-            coreStore.error = undefined;
-            if (!form.value || isLoading.value) return;
+            coreStore.error = undefined
+            if (!form.value || isLoading.value) return
 
-            if (!(await form.value.validate().catch(() => false))) return;
+            if (!(await form.value.validate().catch(() => false))) return
 
-            isLoading.value = true;
+            isLoading.value = true
 
-            const {username, password} = credentials.value;
+            const {username, password} = credentials.value
 
             if (!username?.trim() || !password?.trim()) {
-                throw new Error("Username and password are required");
+                throw new Error("Username and password are required")
             }
 
-            const trimmedUsername = username.trim();
-            const auth = btoa(`${trimmedUsername}:${password}`);
+            const trimmedUsername = username.trim()
+            const auth = btoa(`${trimmedUsername}:${password}`)
 
-            await validateCredentials(auth);
+            await validateCredentials(auth)
 
-            const isInitialized = await checkServerInitialization();
+            const isInitialized = await checkServerInitialization()
             if (!isInitialized) {
-                router.push({name: "setup"});
-                return;
+                router.push({name: "setup"})
+                return
             }
 
-            BasicAuth.signIn(trimmedUsername, password);
-            localStorage.removeItem("basicAuthSetupInProgress");
-            sessionStorage.setItem("sessionActive", "true");
+            BasicAuth.signIn(trimmedUsername, password)
+            localStorage.removeItem("basicAuthSetupInProgress")
+            sessionStorage.setItem("sessionActive", "true")
 
-            const configs = await miscStore.loadConfigs();
-            await identifyPosthogUser(configs, {email: trimmedUsername});
+            const configs = await miscStore.loadConfigs()
+            await identifyPosthogUser(configs, {email: trimmedUsername})
 
-            credentials.value = {username: "", password: ""};
+            credentials.value = {username: "", password: ""}
 
             if (shouldShowHelloDialog()) {
-                localStorage.setItem("showSurveyDialogAfterLogin", "true");
+                localStorage.setItem("showSurveyDialogAfterLogin", "true")
             }
 
             if (await shouldShowWelcome()) {
-                router.push({name: "welcome"});
+                router.push({name: "welcome"})
             } else if (redirectPath.value) {
-                router.push(redirectPath.value);
+                router.push(redirectPath.value)
             } else {
-                router.push({name: "home", params: {tenant: route.params.tenant}});
+                router.push({name: "home", params: {tenant: route.params.tenant}})
             }
         } catch (error: any) {
             if (handleNetworkError(error)) {
-                router.push({name: "setup"});
-                return;
+                router.push({name: "setup"})
+                return
             }
 
             if (error?.response?.status === 401) {
-                await loadAuthConfigErrors();
+                await loadAuthConfigErrors()
             } else if (error?.response?.status === 404) {
-                router.push({name: "setup"});
+                router.push({name: "setup"})
             } else {
-                KsMessage.error("Login failed");
+                KsMessage.error("Login failed")
             }
         } finally {
-            isLoading.value = false;
+            isLoading.value = false
         }
-    };
+    }
 
     const openTroubleshootingGuide = () => {
         apiStore.posthogEvents({
             type: "ossauth",
             action: "forgot_password_click",
-        });
-        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting?utm_source=app&utm_medium=referral&utm_campaign=login&utm_content=lost-password", "_blank");
-    };
+        })
+        window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting?utm_source=app&utm_medium=referral&utm_campaign=login&utm_content=lost-password", "_blank")
+    }
 </script>
 
 <style scoped lang="scss">

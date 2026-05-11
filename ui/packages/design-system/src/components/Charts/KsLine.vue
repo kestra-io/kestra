@@ -16,23 +16,23 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {ref, computed} from "vue"
 
-    import {use} from "echarts/core";
-    import {LineChart} from "echarts/charts";
+    import {use} from "echarts/core"
+    import {LineChart} from "echarts/charts"
 
-    import KsEchart from "./KsEchart.vue";
-    import type {KsChartSeriesItem} from "./KsEchart.vue";
-    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils";
+    import KsEchart from "./KsEchart.vue"
+    import type {KsChartSeriesItem} from "./KsEchart.vue"
+    import {deepMerge, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
 
-    use([LineChart]);
+    use([LineChart])
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
-    }>();
+    }>()
 
     const props = withDefaults(
         defineProps<{
@@ -60,24 +60,24 @@
             tooltipType: TooltipType.NATIVE,
             renderer: ChartRenderer.CANVAS,
         },
-    );
+    )
 
     const isLoading = computed(() => {
-        if (props.loading !== undefined) return props.loading;
-        return props.data === null || props.data === undefined;
-    });
+        if (props.loading !== undefined) return props.loading
+        return props.data === null || props.data === undefined
+    })
 
     /**
      * When AXIS is disabled (compact/sparkline mode): suppress symbols and add a subtle area fill.
      */
     const effectiveData = computed(() => {
-        if (!props.disableFeatures?.includes(ChartFeature.AXIS) || !props.data) return props.data;
+        if (!props.disableFeatures?.includes(ChartFeature.AXIS) || !props.data) return props.data
         return props.data.map((s) => ({
             ...s,
             symbol: "none",
             areaStyle: (s as Record<string, unknown>).areaStyle ?? {opacity: 0.15},
-        }));
-    });
+        }))
+    })
 
     const mergedOption = computed(() => {
         const base: Record<string, unknown> = {
@@ -90,14 +90,14 @@
                 type: "line",
                 ...s,
             })),
-        };
+        }
 
-        return deepMerge(base, props.options ?? {});
-    });
+        return deepMerge(base, props.options ?? {})
+    })
 
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null);
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     defineExpose({
         getEchartsInstance: () => ksEchartRef.value?.getEchartsInstance() ?? null,
-    });
+    })
 </script>

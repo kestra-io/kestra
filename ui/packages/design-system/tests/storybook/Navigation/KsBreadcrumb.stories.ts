@@ -1,6 +1,6 @@
-import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import KsBreadcrumb from "../../../src/components/Navigation/KsBreadcrumb/KsBreadcrumb.vue";
-import KsBreadcrumbItem from "../../../src/components/Navigation/KsBreadcrumb/KsBreadcrumbItem.vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import KsBreadcrumb from "../../../src/components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
+import KsBreadcrumbItem from "../../../src/components/Navigation/KsBreadcrumb/KsBreadcrumbItem.vue"
 
 const meta: Meta<typeof KsBreadcrumb> = {
     title: "Components/Navigation/KsBreadcrumb",
@@ -9,8 +9,8 @@ const meta: Meta<typeof KsBreadcrumb> = {
     parameters: {
         docs: {description: {component: "KsBreadcrumb is the Kestra design-system abstraction over `ElBreadcrumb` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
     },
-};
-export default meta;
+}
+export default meta
 type Story = StoryObj<typeof KsBreadcrumb>
 
 export const Default: Story = {
@@ -26,7 +26,7 @@ export const Default: Story = {
             </div>
         `,
     }),
-};
+}
 
 export const CustomSeparator: Story = {
     render: () => ({
@@ -41,4 +41,4 @@ export const CustomSeparator: Story = {
             </div>
         `,
     }),
-};
+}

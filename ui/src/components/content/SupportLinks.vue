@@ -12,13 +12,13 @@
 </template>
 
 <script setup lang="ts">
-    import GithubIcon from "vue-material-design-icons/Github.vue";
-    import SlackIcon from "vue-material-design-icons/Slack.vue";
-    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue";
+    import GithubIcon from "vue-material-design-icons/Github.vue"
+    import SlackIcon from "vue-material-design-icons/Slack.vue"
+    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue"
 
     defineProps<{
         title: string
-    }>();
+    }>()
 
     const buttons = [{
                          label: "Community Slack",
@@ -37,7 +37,7 @@
                          description: "Contact support for help with your Enterprise account",
                          href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=support-link",
                          icon: LifebuoyIcon,
-                     }];
+                     }]
 </script>
 
 <style scoped lang="scss">

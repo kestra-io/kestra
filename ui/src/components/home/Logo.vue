@@ -12,7 +12,7 @@
         link?: boolean
     }>(), {
         link: false,
-    });
+    })
 </script>
 
 <style scoped lang="scss">

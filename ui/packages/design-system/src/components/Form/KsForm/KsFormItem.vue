@@ -13,10 +13,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem} from "element-plus";
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {ElFormItem} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         label?: string
@@ -33,15 +33,15 @@
         labelWidth: undefined,
         error: undefined,
         showMessage: undefined,
-    });
+    })
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
         label?(): unknown
         error?: (scope: {error: string}) => unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

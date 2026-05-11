@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCol} from "element-plus";
+    import {ElCol} from "element-plus"
 
-    import {useFilteredProps} from "../../../utils/filteredProps";
+    import {useFilteredProps} from "../../../utils/filteredProps"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         span?: number
@@ -20,13 +20,13 @@
         md?: number | object
         lg?: number | object
         xl?: number | object
-    }>();
+    }>()
 
-    const filteredProps = useFilteredProps(props);
+    const filteredProps = useFilteredProps(props)
 
     defineSlots<{
         default?(): unknown
-    }>();
+    }>()
 </script>
 
 <style lang="scss">

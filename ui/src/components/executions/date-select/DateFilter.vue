@@ -62,12 +62,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
-    import {useRoute} from "vue-router";
+    import {computed, onMounted, ref} from "vue"
+    import {useRoute} from "vue-router"
     // @ts-expect-error types to be done
-    import DateRange from "../../layout/DateRange.vue";
-    import TimeSelect from "./TimeSelect.vue";
-    import moment from "moment";
+    import DateRange from "../../layout/DateRange.vue"
+    import TimeSelect from "./TimeSelect.vue"
+    import moment from "moment"
 
     interface FilterValue {
         startDate?: string;
@@ -87,60 +87,60 @@
     const filterType = {
         RELATIVE: "REL",
         ABSOLUTE: "ABS",
-    } as const;
+    } as const
 
     type FilterType = typeof filterType[keyof typeof filterType];
 
     const props = withDefaults(defineProps<{ absolute?: boolean; wrap?: boolean }>(), {
         absolute: false,
         wrap: false,
-    });
+    })
 
     const emit = defineEmits<{
         (e: "update:isRelative", value: boolean): void;
         (e: "update:filterValue", value: FilterValue): void;
-    }>();
+    }>()
 
-    const route = useRoute();
+    const route = useRoute()
 
     const normalizedQuery = computed<Record<string, string>>(() => {
         const entries = Object.entries(route.query).map(([key, value]) => [
             key,
             Array.isArray(value) ? value[0] ?? "" : value ?? "",
-        ]);
-        return Object.fromEntries(entries);
-    });
+        ])
+        return Object.fromEntries(entries)
+    })
 
-    const selectedFilterType = ref<FilterType | undefined>(undefined);
+    const selectedFilterType = ref<FilterType | undefined>(undefined)
 
     const endDate = computed<string | undefined>(() => {
-        return normalizedQuery.value.endDate ? String(normalizedQuery.value.endDate) : undefined;
-    });
+        return normalizedQuery.value.endDate ? String(normalizedQuery.value.endDate) : undefined
+    })
 
     const timeRange = computed<string>(() => {
-        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "PT24H";
-    });
+        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "PT24H"
+    })
 
     const startDate = computed<string | undefined>(() => {
-        if (normalizedQuery.value.startDate) return String(normalizedQuery.value.startDate);
+        if (normalizedQuery.value.startDate) return String(normalizedQuery.value.startDate)
         if (moment && endDate.value) {
-            return moment(endDate.value).add(-30, "days").toISOString(true);
+            return moment(endDate.value).add(-30, "days").toISOString(true)
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     selectedFilterType.value = props.absolute
         ? filterType.ABSOLUTE
         : (normalizedQuery.value.startDate || normalizedQuery.value.endDate)
             ? filterType.ABSOLUTE
-            : filterType.RELATIVE;
+            : filterType.RELATIVE
 
     onMounted(() => {
-        emit("update:isRelative", selectedFilterType.value === filterType.RELATIVE);
-    });
+        emit("update:isRelative", selectedFilterType.value === filterType.RELATIVE)
+    })
 
     function updateFilter(filter: FilterValue) {
-        emit("update:filterValue", filter);
+        emit("update:filterValue", filter)
     }
 
     function onAbsFilterChange(event: AbsoluteEvent) {
@@ -148,8 +148,8 @@
             startDate: event.startDate,
             endDate: event.endDate,
             timeRange: undefined,
-        };
-        updateFilter(filter);
+        }
+        updateFilter(filter)
     }
 
     function onRelFilterChange(event: RelativeEvent) {
@@ -157,20 +157,20 @@
             startDate: undefined,
             endDate: undefined,
             timeRange: event.timeRange,
-        };
-        updateFilter(filter);
+        }
+        updateFilter(filter)
     }
 
     function tryOverrideAbsFilter(relativeFilterSelected: boolean) {
-        const q = normalizedQuery.value;
+        const q = normalizedQuery.value
         if (relativeFilterSelected && (q.startDate || q.endDate)) {
-            onRelFilterChange({timeRange: undefined});
+            onRelFilterChange({timeRange: undefined})
         }
     }
 
     function onSelectedFilterType() {
-        const relativeFilterSelected = selectedFilterType.value === filterType.RELATIVE;
-        emit("update:isRelative", relativeFilterSelected);
-        tryOverrideAbsFilter(relativeFilterSelected);
+        const relativeFilterSelected = selectedFilterType.value === filterType.RELATIVE
+        emit("update:isRelative", relativeFilterSelected)
+        tryOverrideAbsFilter(relativeFilterSelected)
     }
 </script>

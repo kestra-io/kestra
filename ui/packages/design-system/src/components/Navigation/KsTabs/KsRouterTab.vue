@@ -46,9 +46,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, nextTick, useSlots} from "vue";
-    import {useRoute, type RouteLocationNormalizedLoaded} from "vue-router";
-    import type {Component} from "vue";
+    import {ref, computed, watch, onMounted, nextTick, useSlots} from "vue"
+    import {useRoute, type RouteLocationNormalizedLoaded} from "vue-router"
+    import type {Component} from "vue"
 
     export interface RouterTab {
         name?: string
@@ -64,7 +64,7 @@
         noOverflow?: boolean
     }
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         tabs: RouterTab[]
@@ -87,7 +87,7 @@
         routeName: "",
         top: true,
         embedActiveTab: undefined,
-    });
+    })
 
     const emit = defineEmits<{
         /**
@@ -95,7 +95,7 @@
          * The parent is responsible for updating `embedActiveTab`.
          */
         changed: [tab: RouterTab]
-    }>();
+    }>()
 
     defineSlots<{
         /**
@@ -109,56 +109,56 @@
          * when provided on the tab definition.
          */
         content?(props: {activeTab: RouterTab}): unknown
-    }>();
+    }>()
 
-    const slots = useSlots();
+    const slots = useSlots()
 
     // useRoute() returns the current route via inject; it may be undefined when no
     // router is installed (e.g. isolated unit-test environments).
-    const route = useRoute() as RouteLocationNormalizedLoaded | undefined;
+    const route = useRoute() as RouteLocationNormalizedLoaded | undefined
 
-    const activeName = ref<string | undefined>(undefined);
+    const activeName = ref<string | undefined>(undefined)
 
-    const isEmbedded = computed(() => props.embedActiveTab !== undefined);
+    const isEmbedded = computed(() => props.embedActiveTab !== undefined)
 
-    const visibleTabs = computed(() => props.tabs.filter(t => !t.hidden));
+    const visibleTabs = computed(() => props.tabs.filter(t => !t.hidden))
 
     const activeTab = computed<RouterTab>(() => {
-        const key = props.embedActiveTab ?? (route?.params?.tab as string | undefined);
-        return props.tabs.find(t => t.name === key) ?? props.tabs[0];
-    });
+        const key = props.embedActiveTab ?? (route?.params?.tab as string | undefined)
+        return props.tabs.find(t => t.name === key) ?? props.tabs[0]
+    })
 
-    const hasContent = computed(() => !!slots.content || !!activeTab.value?.component);
+    const hasContent = computed(() => !!slots.content || !!activeTab.value?.component)
 
     const setActiveName = () => {
-        activeName.value = activeTab.value?.name ?? "default";
-    };
+        activeName.value = activeTab.value?.name ?? "default"
+    }
 
     const handleTabClick = (tab: RouterTab) => {
         if (isEmbedded.value) {
-            emit("changed", tab);
+            emit("changed", tab)
         }
-    };
+    }
 
     const toRoute = (tab: RouterTab) => {
         if (activeTab.value === tab) {
-            setActiveName();
-            return route;
+            setActiveName()
+            return route
         }
         return {
             name: props.routeName || route?.name,
             params: {...route?.params, tab: tab.name},
             query: {...tab.query},
-        };
-    };
-
-    if (route) {
-        watch(route, () => setActiveName());
+        }
     }
 
-    watch(activeTab, () => nextTick(() => setActiveName()));
+    if (route) {
+        watch(route, () => setActiveName())
+    }
 
-    onMounted(() => setActiveName());
+    watch(activeTab, () => nextTick(() => setActiveName()))
+
+    onMounted(() => setActiveName())
 </script>
 
 <style scoped lang="scss">

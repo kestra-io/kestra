@@ -35,10 +35,10 @@
 </template>
 
 <script setup lang="ts">
-    import Keyboard from "vue-material-design-icons/Keyboard.vue";
-    import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
+    import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
 
-    const {isKeyShortcutsDialogShown} = useKeyShortcuts();
+    const {isKeyShortcutsDialogShown} = useKeyShortcuts()
 
     const commands = [
         {
@@ -97,7 +97,7 @@
             keys: ["⌘ Cmd/Ctrl", "0"],
             description: "editor_shortcuts.reset_fontsize",
         },
-    ];
+    ]
 </script>
 
 <style scoped lang="scss">

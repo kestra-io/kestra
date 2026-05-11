@@ -19,14 +19,9 @@ on:
         required: false
         type: boolean
         default: false
-    secrets:
-      GH_PERSONAL_TOKEN:
-        required: false
-
 permissions:
-  contents: write
+  contents: read
   id-token: write
-  pull-requests: write
 
 jobs:
   helm-release:
@@ -191,41 +186,3 @@ jobs:
           echo "Published:"
           ls -lh release/*.tgz
 
-      - name: Sync Chart.yaml versions back to develop
-        if: ${{ steps.config.outputs.dry_run == 'false' }}
-        env:
-          VERSION: ${{ steps.config.outputs.version }}
-          TAG: ${{ steps.config.outputs.tag }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Use PAT to bypass branch protection on develop
-          TOKEN="${{ secrets.GH_PERSONAL_TOKEN }}"
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
-
-          # Rebase onto current develop so we don't clobber unrelated commits
-          git fetch origin develop
-          git checkout -B develop origin/develop
-
-          # Re-apply version bump (same logic as Update Chart.yaml versions step)
-          for chart in charts/kestra charts/kestra-starter; do
-            sed -i "s/^version:.*/version: \"${VERSION}\"/" ${chart}/Chart.yaml
-            sed -i "s/^appVersion:.*/appVersion: \"${TAG}\"/" ${chart}/Chart.yaml
-          done
-          awk -v ver="${VERSION}" '
-            /- name: kestra/ { found=1 }
-            found && /version:/ { sub(/version:.*/, "version: \"" ver "\""); found=0 }
-            { print }
-          ' charts/kestra-starter/Chart.yaml > /tmp/chart-starter.yaml
-          mv /tmp/chart-starter.yaml charts/kestra-starter/Chart.yaml
-
-          # Regenerate docs for the new versions
-          helm-docs
-
-          git add charts/kestra/Chart.yaml charts/kestra/README.md \
-                  charts/kestra-starter/Chart.yaml charts/kestra-starter/README.md
-          git diff --cached --quiet && echo "Nothing to commit — already in sync." && exit 0
-          git commit -m "chore(helm): bump chart versions to ${VERSION} [skip ci]"
-          git push origin develop

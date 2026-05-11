@@ -27,11 +27,6 @@ export default defineConfig({
     exports: {
         enabled: "ci-only",
         devExports: false,
-        customExports: {
-            ...componentEntries,
-            "index": "./src/index.ts",
-            "styleBase": "./src/styleBase.ts",
-        }
     },
     fromVite: true,
     dts: {vue: true, tsconfig: "./tsconfig.app.json"},

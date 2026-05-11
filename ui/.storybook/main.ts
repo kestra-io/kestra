@@ -3,7 +3,8 @@ import type {StorybookConfig} from "@storybook/vue3-vite";
 
 const config: StorybookConfig = {
     stories: [
-        "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)"
+        "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+        "../packages/*/tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     ],
     addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
     framework: {
@@ -16,12 +17,6 @@ const config: StorybookConfig = {
             ...(config.plugins ?? []),
             viteJSXPlugin(),
         ];
-
-        if (config.resolve) {
-            config.resolve.alias = {
-                ...config.resolve?.alias
-            };
-        }
 
         return mergeConfig(config, {
             define: {"process.env": {}},

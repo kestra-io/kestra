@@ -38,16 +38,18 @@
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
             <template #taskDetails="taskProps">
-                <component
-                    v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
-                    :is="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
-                    :task="taskProps.data.node?.task"
-                    :execution="executionsStore.execution"
-                    :namespace="props.namespace"
-                    :flowId="props.flowId"
-                    :outputs="taskOutputs(taskProps.data.node?.task?.id)"
-                    :metrics="taskMetrics(taskProps.data.node?.task?.id)"
-                />
+                <slot name="taskDetails" v-bind="taskProps">
+                    <component
+                        v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
+                        :is="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
+                        :task="taskProps.data.node?.task"
+                        :execution="executionsStore.execution"
+                        :namespace="props.namespace"
+                        :flowId="props.flowId"
+                        :outputs="taskOutputs(taskProps.data.node?.task?.id)"
+                        :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                    />
+                </slot>
             </template>
         </Topology>
 
@@ -202,10 +204,12 @@
         };
     };
 
-    onMounted(async () => {
-        // compile the list of task types
+    const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
         const taskTypes = new Set<string>();
-        flowStore.flowParsed.tasks.forEach((task: any) => {
+        tasks.forEach((task: any) => {
+            if (!task?.type) {
+                return;
+            }
             taskTypes.add(`${task.type}:${task.version ?? "null"}`);
         });
 
@@ -219,7 +223,15 @@
         // get the manifest of the all the tasks we will 
         // have in the graph
         await resolveRemoteComponent(taskTypesReParsed);
-    });
+    };
+
+    watch(
+        () => flowStore.flowParsed?.tasks,
+        async (tasks) => {
+            await resolveTaskTopologyDetails(tasks ?? []);
+        },
+        {immediate: true},
+    );
 
     const props = withDefaults(
         defineProps<{

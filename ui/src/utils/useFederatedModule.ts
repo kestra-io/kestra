@@ -44,13 +44,19 @@ export function useFederatedModule(slotName: string) {
 
     
     async function resolveRemoteComponent(taskTypes: {cls: string, version: string | undefined}[]) {
-        // get the manifest of the all the tasks we will 
-        // have in the graph
-        const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({
-            body: Array.from(taskTypes),
-        });
-    
-        const pluginTaskManifests = pluginTaskManifestsResponse?.manifest;
+        let pluginTaskManifests: Record<string, any[]> = {};
+        try {
+            // get the manifest of the all the tasks we will
+            // have in the graph
+            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({
+                body: Array.from(taskTypes),
+            });
+            pluginTaskManifests = pluginTaskManifestsResponse?.manifest ?? {};
+        } catch (error) {
+            console.error("[FederatedModule] Failed to load plugin UI manifest:", error);
+        } finally {
+            manifestReady.value = true;
+        }
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
@@ -62,8 +68,6 @@ export function useFederatedModule(slotName: string) {
             }
         }
 
-        manifestReady.value = true;
-
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
@@ -71,7 +75,7 @@ export function useFederatedModule(slotName: string) {
                     const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`;
 
                     if(manifest.styles){
-                        manifest.styles.forEach((style) => addCSSLinkIfNotAlreadyPresent(`${basePath}${style}`));
+                        manifest.styles.forEach((style: string) => addCSSLinkIfNotAlreadyPresent(`${basePath}${style}`));
                     }
 
                     registerRemotes([
@@ -99,7 +103,7 @@ export function useFederatedModule(slotName: string) {
 
                     if(!module){
                         console.error(`Remote module ${remoteName} did not load correctly`);
-                        return;
+                        continue;
                     }
                     
                     RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default));

@@ -51,17 +51,17 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
+    import {computed, onMounted, ref} from "vue"
 
-    import SearchField from "../../layout/SearchField.vue";
-    import TriggersCategorySection from "./TriggersCategorySection.vue";
-    import TriggerConfigureModal from "./TriggerConfigureModal.vue";
+    import SearchField from "../../layout/SearchField.vue"
+    import TriggersCategorySection from "./TriggersCategorySection.vue"
+    import TriggerConfigureModal from "./TriggerConfigureModal.vue"
 
-    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins";
-    import {MCP_TOOL_TYPE} from "./triggerCatalog";
+    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
+    import {MCP_TOOL_TYPE} from "./triggerCatalog"
 
-    const TRIGGER_GROUPS = ["core", "realtime", "app"] as const;
-    const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const;
+    const TRIGGER_GROUPS = ["core", "realtime", "app"] as const
+    const FILTER_VALUES = ["all", ...TRIGGER_GROUPS] as const
 
     type TriggerGroup = typeof TRIGGER_GROUPS[number];
     type CategoryFilter = typeof FILTER_VALUES[number];
@@ -70,50 +70,50 @@
         {key: "core", expandAll: true},
         {key: "realtime"},
         {key: "app"},
-    ];
+    ]
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const loading = ref(true);
-    const searchQuery = ref("");
-    const activeCategoryFilter = ref<CategoryFilter>("all");
-    const allTriggers = ref<TriggerPluginDto[]>([]);
-    const selectedTrigger = ref<TriggerPluginDto | null>(null);
-    const configureModalVisible = ref(false);
+    const loading = ref(true)
+    const searchQuery = ref("")
+    const activeCategoryFilter = ref<CategoryFilter>("all")
+    const allTriggers = ref<TriggerPluginDto[]>([])
+    const selectedTrigger = ref<TriggerPluginDto | null>(null)
+    const configureModalVisible = ref(false)
 
     const groupedTriggers = computed(() => {
-        const q = searchQuery.value.trim().toLowerCase();
+        const q = searchQuery.value.trim().toLowerCase()
         const matches = (tr: TriggerPluginDto) =>
             !q ||
             tr.name.toLowerCase().includes(q) ||
             tr.type.toLowerCase().includes(q) ||
-            (tr.description ?? "").toLowerCase().includes(q);
+            (tr.description ?? "").toLowerCase().includes(q)
 
         const inGroup = (group: TriggerGroup) =>
-            allTriggers.value.filter(tr => tr.group === group && matches(tr));
+            allTriggers.value.filter(tr => tr.group === group && matches(tr))
 
         return {
             core: inGroup("core").sort((a, b) => {
-                if (a.type === MCP_TOOL_TYPE) return -1;
-                if (b.type === MCP_TOOL_TYPE) return 1;
-                return a.name.localeCompare(b.name);
+                if (a.type === MCP_TOOL_TYPE) return -1
+                if (b.type === MCP_TOOL_TYPE) return 1
+                return a.name.localeCompare(b.name)
             }),
             realtime: inGroup("realtime"),
             app: inGroup("app"),
-        };
-    });
+        }
+    })
 
     const visibleSections = computed(() =>
-        SECTIONS.filter(s => activeCategoryFilter.value === "all" || activeCategoryFilter.value === s.key)
-    );
+        SECTIONS.filter(s => activeCategoryFilter.value === "all" || activeCategoryFilter.value === s.key),
+    )
 
     const hasAnyVisibleTrigger = computed(() =>
-        Object.values(groupedTriggers.value).some(triggers => triggers.length > 0)
-    );
+        Object.values(groupedTriggers.value).some(triggers => triggers.length > 0),
+    )
 
     function openConfigureModal(trigger: TriggerPluginDto) {
-        selectedTrigger.value = trigger;
-        configureModalVisible.value = true;
+        selectedTrigger.value = trigger
+        configureModalVisible.value = true
     }
 
     onMounted(async () => {
@@ -121,12 +121,12 @@
             const [triggers] = await Promise.all([
                 pluginsStore.listTriggers(),
                 pluginsStore.fetchIcons(),
-            ]);
-            allTriggers.value = triggers;
+            ])
+            allTriggers.value = triggers
         } finally {
-            loading.value = false;
+            loading.value = false
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">

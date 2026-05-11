@@ -1,14 +1,14 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import resource from "../../../models/resource";
-import action from "../../../models/action";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {useAuthStore} from "override/stores/auth";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import resource from "../../../models/resource"
+import action from "../../../models/action"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {useAuthStore} from "override/stores/auth"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
 
 export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -27,22 +27,22 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const user = useAuthStore().user;
+                        const user = useAuthStore().user
                         if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
-                            const namespacesStore = useNamespacesStore();
-                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                            const namespacesStore = useNamespacesStore()
+                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
                             return [...new Set(namespaces
                                 .flatMap(namespace => {
                                     return namespace.split(".").reduce((current: string[], part: string) => {
-                                        const previousCombination = current?.[current.length - 1];
-                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                                    }, []);
+                                        const previousCombination = current?.[current.length - 1]
+                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
+                                    }, [])
                                 }))].map(namespace => ({
                                     label: namespace,
                                     value: namespace,
-                                }));
+                                }))
                         }
-                        return [];
+                        return []
                     },
                     searchable: true,
                 },
@@ -53,8 +53,8 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("dashboard");
-                        return VALUES.RELATIVE_DATE;
+                        const {VALUES} = useValues("dashboard")
+                        return VALUES.RELATIVE_DATE
                     },
                 },
                 {
@@ -64,8 +64,8 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.EXECUTION_STATES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.EXECUTION_STATES
                     },
                     searchable: true,
                     showComparatorSelection: true,
@@ -77,8 +77,8 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.SCOPES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.SCOPES
                     },
                     showComparatorSelection: false,
                 },
@@ -90,12 +90,12 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "key-value",
                 },
             ],
-        };
-    });
-};
+        }
+    })
+}
 
 export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
 
@@ -130,8 +130,8 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("dashboard");
-                        return VALUES.RELATIVE_DATE;
+                        const {VALUES} = useValues("dashboard")
+                        return VALUES.RELATIVE_DATE
                     },
                 },
                 {
@@ -142,12 +142,12 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     valueType: "text",
                 },
             ],
-        };
-    });
-};
+        }
+    })
+}
 
 export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
 
@@ -162,8 +162,8 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("dashboard");
-                        return VALUES.RELATIVE_DATE;
+                        const {VALUES} = useValues("dashboard")
+                        return VALUES.RELATIVE_DATE
                     },
                 },
                 {
@@ -174,6 +174,6 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "text",
                 },
             ],
-        };
-    });
-};
+        }
+    })
+}

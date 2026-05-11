@@ -110,136 +110,136 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRouter} from "vue-router";
+    import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRouter} from "vue-router"
 
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import CheckIcon from "vue-material-design-icons/Check.vue";
-    import Close from "vue-material-design-icons/Close.vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import CheckIcon from "vue-material-design-icons/Check.vue"
+    import Close from "vue-material-design-icons/Close.vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
 
-    import {useFlowStore} from "../../../stores/flow";
-    import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import {useTriggerDraftStore} from "../../../stores/triggerDraft";
-    import {triggerDisplayName} from "./triggerCatalog";
+    import {useFlowStore} from "../../../stores/flow"
+    import {usePluginsStore, type TriggerPluginDto, type PluginComponent} from "../../../stores/plugins"
+    import {useNamespacesStore} from "override/stores/namespaces"
+    import {useTriggerDraftStore} from "../../../stores/triggerDraft"
+    import {triggerDisplayName} from "./triggerCatalog"
 
-    import Editor from "../../inputs/Editor.vue";
-    import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
+    import Editor from "../../inputs/Editor.vue"
+    import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
 
-    const visible = defineModel<boolean>("visible", {required: true});
-    const props = defineProps<{trigger: TriggerPluginDto}>();
-    defineEmits<{cancel: []}>();
+    const visible = defineModel<boolean>("visible", {required: true})
+    const props = defineProps<{trigger: TriggerPluginDto}>()
+    defineEmits<{cancel: []}>()
 
-    const COPY_FEEDBACK_MS = 1600;
-    const TAB_VALUES = ["form", "source", "documentation"] as const;
+    const COPY_FEEDBACK_MS = 1600
+    const TAB_VALUES = ["form", "source", "documentation"] as const
     type TabValue = typeof TAB_VALUES[number];
 
-    const {t} = useI18n({useScope: "global"});
-    const router = useRouter();
-    const flowStore = useFlowStore();
-    const pluginsStore = usePluginsStore();
-    const namespacesStore = useNamespacesStore();
-    const triggerDraftStore = useTriggerDraftStore();
+    const {t} = useI18n({useScope: "global"})
+    const router = useRouter()
+    const flowStore = useFlowStore()
+    const pluginsStore = usePluginsStore()
+    const namespacesStore = useNamespacesStore()
+    const triggerDraftStore = useTriggerDraftStore()
 
-    const activeTab = ref<TabValue>("form");
+    const activeTab = ref<TabValue>("form")
     const tabOptions = computed(() =>
-        TAB_VALUES.map(value => ({value, label: t(`triggers_add_modal_tab_${value}`)}))
-    );
-    const copied = ref(false);
-    const namespacesLoading = ref(false);
-    const flowsLoading = ref(false);
+        TAB_VALUES.map(value => ({value, label: t(`triggers_add_modal_tab_${value}`)})),
+    )
+    const copied = ref(false)
+    const namespacesLoading = ref(false)
+    const flowsLoading = ref(false)
 
-    const namespaceOptions = ref<string[]>([]);
-    const flowOptions = ref<{id: string; namespace: string}[]>([]);
-    const documentationPlugin = ref<PluginComponent | null>(null);
+    const namespaceOptions = ref<string[]>([])
+    const flowOptions = ref<{id: string; namespace: string}[]>([])
+    const documentationPlugin = ref<PluginComponent | null>(null)
 
-    const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`;
+    const generateId = () => `mytrigger_${Math.floor(10000 + Math.random() * 90000)}`
     const formModel = ref({
         namespace: "",
         flowId: "",
-        triggerId: generateId()
-    });
+        triggerId: generateId(),
+    })
 
-    const displayName = computed(() => triggerDisplayName(props.trigger));
+    const displayName = computed(() => triggerDisplayName(props.trigger))
     const canSubmit = computed(() =>
-        !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim()
-    );
+        !!formModel.value.namespace && !!formModel.value.flowId && !!formModel.value.triggerId.trim(),
+    )
 
-    const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger";
-    const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}\n`);
+    const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
+    const sourceYaml = computed(() => `  - id: ${getTriggerId()}\n    type: ${props.trigger.type}\n`)
 
     const searchNamespaces = async (query: string) => {
-        namespacesLoading.value = true;
+        namespacesLoading.value = true
         try {
-            await namespacesStore.loadAutocomplete({q: query, existingOnly: true});
-            namespaceOptions.value = (namespacesStore.autocomplete ?? []) as string[];
+            await namespacesStore.loadAutocomplete({q: query, existingOnly: true})
+            namespaceOptions.value = (namespacesStore.autocomplete ?? []) as string[]
         } finally {
-            namespacesLoading.value = false;
+            namespacesLoading.value = false
         }
-    };
+    }
 
     const loadFlows = async (namespace: string) => {
         if (!namespace) {
-            flowOptions.value = [];
-            return;
+            flowOptions.value = []
+            return
         }
-        flowsLoading.value = true;
+        flowsLoading.value = true
         try {
-            const response = await flowStore.findFlows({namespace, size: 200, sort: "id:asc"});
-            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}));
+            const response = await flowStore.findFlows({namespace, size: 200, sort: "id:asc"})
+            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
         } finally {
-            flowsLoading.value = false;
+            flowsLoading.value = false
         }
-    };
+    }
 
     const onNamespaceChange = (ns: string) => {
-        formModel.value.flowId = "";
-        loadFlows(ns);
-    };
+        formModel.value.flowId = ""
+        loadFlows(ns)
+    }
 
     const copySource = async () => {
-        await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`);
-        copied.value = true;
-        setTimeout(() => copied.value = false, COPY_FEEDBACK_MS);
-    };
+        await navigator.clipboard.writeText(`triggers:\n${sourceYaml.value}\n`)
+        copied.value = true
+        setTimeout(() => copied.value = false, COPY_FEEDBACK_MS)
+    }
 
     const loadDocumentation = async () => {
         try {
-            const doc = await pluginsStore.load({cls: props.trigger.type, commit: false});
-            documentationPlugin.value = {...doc, cls: props.trigger.type};
+            const doc = await pluginsStore.load({cls: props.trigger.type, commit: false})
+            documentationPlugin.value = {...doc, cls: props.trigger.type}
         } catch {
-            documentationPlugin.value = null;
+            documentationPlugin.value = null
         }
-    };
+    }
 
     const addTriggerToFlow = () => {
-        if (!canSubmit.value) return;
+        if (!canSubmit.value) return
 
         triggerDraftStore.setDraft({
             namespace: formModel.value.namespace,
             flowId: formModel.value.flowId,
             triggerYaml: `id: ${getTriggerId()}\ntype: ${props.trigger.type}\n`,
-        });
+        })
 
-        visible.value = false;
+        visible.value = false
         router.push({
             name: "flows/update",
             params: {namespace: formModel.value.namespace, id: formModel.value.flowId, tab: "edit"},
-            query: {createTrigger: "true"}
-        });
-    };
+            query: {createTrigger: "true"},
+        })
+    }
 
     watch(visible, val => {
         if (val) {
-            activeTab.value = "form";
-            copied.value = false;
-            formModel.value = {namespace: "", flowId: "", triggerId: generateId()};
-            searchNamespaces("");
-            loadDocumentation();
+            activeTab.value = "form"
+            copied.value = false
+            formModel.value = {namespace: "", flowId: "", triggerId: generateId()}
+            searchNamespaces("")
+            loadDocumentation()
         }
-    }, {immediate: true});
+    }, {immediate: true})
 </script>
 
 <style scoped lang="scss">

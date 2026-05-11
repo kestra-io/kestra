@@ -19,7 +19,16 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-this-alias": "off"
+    "@typescript-eslint/no-this-alias": "off",
+    "no-underscore-dangle": ["warn", {
+      "allow": [
+        "__dirname",
+        "__filename",
+        "__VUE_I18N_SYMBOL__",
+        "__setValueInTests",
+        "__loaded",
+      ]
+    }]
   },
   "overrides": [
     {

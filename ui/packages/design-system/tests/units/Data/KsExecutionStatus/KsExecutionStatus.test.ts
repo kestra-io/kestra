@@ -68,7 +68,7 @@ describe("KsExecutionStatus", () => {
         const statuses = [
             "CREATED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
             "KILLED", "WARNING", "FAILED", "PAUSED", "CANCELLED",
-            "SKIPPED", "QUEUED", "RETRYING", "RETRIED", "BREAKPOINT"
+            "SKIPPED", "QUEUED", "RETRYING", "RETRIED", "BREAKPOINT",
         ] as const
 
         for (const status of statuses) {

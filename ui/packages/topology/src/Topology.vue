@@ -117,30 +117,30 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, nextTick, onMounted, provide, ref, watch} from "vue";
-    import {useVueFlow, VueFlow} from "@vue-flow/core";
-    import type {XYPosition} from "@vue-flow/core";
-    import {ControlButton, Controls} from "@vue-flow/controls";
-    import {Background} from "@vue-flow/background";
-    import ClusterNode from "./nodes/ClusterNode.vue";
-    import DotNode from "./nodes/DotNode.vue";
-    import EdgeNode from "./nodes/EdgeNode.vue";
-    import TaskNode from "./nodes/TaskNode.vue";
+    import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
+    import {useVueFlow, VueFlow} from "@vue-flow/core"
+    import type {XYPosition} from "@vue-flow/core"
+    import {ControlButton, Controls} from "@vue-flow/controls"
+    import {Background} from "@vue-flow/background"
+    import ClusterNode from "./nodes/ClusterNode.vue"
+    import DotNode from "./nodes/DotNode.vue"
+    import EdgeNode from "./nodes/EdgeNode.vue"
+    import TaskNode from "./nodes/TaskNode.vue"
     import TriggerNode from "./nodes/TriggerNode.vue"
-    import CollapsedClusterNode from "./nodes/CollapsedClusterNode.vue";
-    import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue";
-    import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import Information from "vue-material-design-icons/Information.vue";
-    import {cssVar as cssVariable} from "@kestra-io/design-system";
-    import {CLUSTER_PREFIX} from "./utils/constants";
-    import * as flowYamlUtils from "./utils/flowYamlUtils";
+    import CollapsedClusterNode from "./nodes/CollapsedClusterNode.vue"
+    import SplitCellsVertical from "./assets/icons/SplitCellsVertical.vue"
+    import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import Information from "vue-material-design-icons/Information.vue"
+    import {cssVar as cssVariable} from "@kestra-io/design-system"
+    import {CLUSTER_PREFIX} from "./utils/constants"
+    import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
-    import Utils from "./utils/utils"
-    import * as VueFlowUtils from "./utils/vueFlowUtils";
-    import {useScreenshot} from "./composables/useScreenshot";
-    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys";
-    import BasicNode from "./nodes/BasicNode.vue";
+    import * as Utils from "./utils/utils"
+    import * as VueFlowUtils from "./utils/vueFlowUtils"
+    import {useScreenshot} from "./composables/useScreenshot"
+    import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
+    import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
         id: string;
@@ -183,47 +183,47 @@
         customActions: () => ({}),
         showDetails: () => ({}),
         animated: true,
-    });
+    })
 
-    const dragging = ref(false);
-    const showExtraDetails = ref(false);
+    const dragging = ref(false)
+    const showExtraDetails = ref(false)
     const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id);
-    const edgeReplacer = ref({});
-    const hiddenNodes = ref<string[]>([]);
-    const collapsed = ref(new Set<string>());
+    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, fitView, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const edgeReplacer = ref({})
+    const hiddenNodes = ref<string[]>([])
+    const collapsed = ref(new Set<string>())
     const clusterToNode = ref([])
-    const {capture} = useScreenshot();
+    const {capture} = useScreenshot()
 
     const effectiveGetNodeDimensions = computed(() => {
         return (node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) => {
-            const baseHeight = getNodeHeight(node);
+            const baseHeight = getNodeHeight(node)
             const dimensions = props.getNodeDimensions
                 ? props.getNodeDimensions(node, getNodeWidth, getNodeHeight)
-                : {width: getNodeWidth(node), height: baseHeight};
+                : {width: getNodeWidth(node), height: baseHeight}
 
             if (!showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                return {...dimensions, height: baseHeight};
+                return {...dimensions, height: baseHeight}
             }
 
             if (showExtraDetails.value && VueFlowUtils.isTaskNode(node)) {
-                const taskType = node?.task?.type as string | undefined;
+                const taskType = node?.task?.type as string | undefined
                 const hasDetailsAction = Boolean(
                     (taskType && props.customActions?.[taskType]) ||
-                        (taskType && props.showDetails?.[taskType])
-                );
+                        (taskType && props.showDetails?.[taskType]),
+                )
                 if (hasDetailsAction) {
-                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)};
+                    return {...dimensions, height: Math.max(dimensions.height, NODE_SIZES.TASK_EXPANDED_FALLBACK_HEIGHT)}
                 }
             }
 
-            return dimensions;
-        };
-    });
+            return dimensions
+        }
+    })
 
-    provide(EXECUTION_INJECTION_KEY, computed(() => props.execution));
-    provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions));
-    provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails);
+    provide(EXECUTION_INJECTION_KEY, computed(() => props.execution))
+    provide(SUBFLOWS_EXECUTIONS_INJECTION_KEY, computed(() => props.subflowsExecutions))
+    provide(SHOW_EXTRA_DETAILS_INJECTION_KEY, showExtraDetails)
 
 
     const emit = defineEmits(
@@ -244,37 +244,37 @@
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
             EVENTS.SHOW_DETAILS,
-        ]
+        ],
     )
 
     onMounted(() => {
-        generateGraph();
+        generateGraph()
     })
 
     watch(() => props.flowGraph, () => {
-        generateGraph();
+        generateGraph()
     })
 
     watch(() => props.isHorizontal, () => {
-        generateGraph();
+        generateGraph()
     })
 
     watch(showExtraDetails, () => {
-        generateGraph();
+        generateGraph()
     })
 
     const generateGraph = () => {
-        removeEdges(getEdges.value);
-        removeNodes(getNodes.value);
-        removeSelectedElements(getElements.value);
+        removeEdges(getEdges.value)
+        removeNodes(getNodes.value)
+        removeSelectedElements(getElements.value)
 
         nextTick(() => {
-            emit("loading", true);
+            emit("loading", true)
 
-            const oldCollapsed = collapsed.value;
-            collapsed.value = new Set<string>();
-            hiddenNodes.value = [];
-            edgeReplacer.value = {};
+            const oldCollapsed = collapsed.value
+            collapsed.value = new Set<string>()
+            hiddenNodes.value = []
+            edgeReplacer.value = {}
             oldCollapsed.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false, false))
 
             const elements = VueFlowUtils.generateGraph(
@@ -293,65 +293,65 @@
                 props.enableSubflowInteraction,
                 effectiveGetNodeDimensions.value,
                 props.animated,
-            );
+            )
 
             if (elements) {
-                setElements(elements);
-                fitView();
-                emit("loading", false);
+                setElements(elements)
+                fitView()
+                emit("loading", false)
             }
         })
     }
 
-    const HOVERED_NODE_CLASS = "topology-node-hovered";
-    const DROP_TARGET_CLASS = "topology-node-drop-target";
+    const HOVERED_NODE_CLASS = "topology-node-hovered"
+    const DROP_TARGET_CLASS = "topology-node-drop-target"
 
     function setNodeInteractionClass(node: any, cls: string, add: boolean) {
-        const classes = (node.class || "").split(" ").filter(Boolean);
+        const classes = (node.class || "").split(" ").filter(Boolean)
         if (add) {
-            if (!classes.includes(cls)) classes.push(cls);
+            if (!classes.includes(cls)) classes.push(cls)
         } else {
-            const idx = classes.indexOf(cls);
-            if (idx > -1) classes.splice(idx, 1);
+            const idx = classes.indexOf(cls)
+            if (idx > -1) classes.splice(idx, 1)
         }
-        node.class = classes.join(" ");
+        node.class = classes.join(" ")
     }
 
     const onMouseOver = (node: any) => {
         if (!dragging.value) {
             VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
                 if (n?.type === "task") {
-                    setNodeInteractionClass(n, HOVERED_NODE_CLASS, true);
+                    setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
                 }
-            });
+            })
         }
     }
 
     const onMouseLeave = () => {
-        resetNodesStyle();
+        resetNodesStyle()
     }
 
     const resetNodesStyle = () => {
         getNodes.value.filter(n => n.type === "task" || n.type === "trigger")
             .forEach(n => {
-                n.style = {...n.style, opacity: "1"};
-                setNodeInteractionClass(n, HOVERED_NODE_CLASS, false);
-                setNodeInteractionClass(n, DROP_TARGET_CLASS, false);
+                n.style = {...n.style, opacity: "1"}
+                setNodeInteractionClass(n, HOVERED_NODE_CLASS, false)
+                setNodeInteractionClass(n, DROP_TARGET_CLASS, false)
             })
     }
 
     onNodeDragStart((e) => {
-        dragging.value = true;
-        resetNodesStyle();
+        dragging.value = true
+        resetNodesStyle()
         e.node.style = {...e.node.style, zIndex: 1976}
-        lastPosition.value = e.node.position;
+        lastPosition.value = e.node.position
     })
 
     onNodeDragStop((e: any) => {
-        dragging.value = false;
+        dragging.value = false
         if (e.intersections && checkIntersections(e.intersections, e.node) === null) {
-            const taskNode1 = e.node;
-            const taskNode2 = e.intersections.find((n: any) => n.type === "task");
+            const taskNode1 = e.node
+            const taskNode2 = e.intersections.find((n: any) => n.type === "task")
             if (taskNode2) {
                 try {
                     if (props.source) {
@@ -360,41 +360,41 @@
                                 source: props.source,
                                 section: "tasks",
                                 key1: Utils.afterLastDot(taskNode1.id) ?? "",
-                                key2: Utils.afterLastDot(taskNode2.id) ?? ""
+                                key2: Utils.afterLastDot(taskNode2.id) ?? "",
                             }),
-                            swappedTasks: [taskNode1.id, taskNode2.id]
+                            swappedTasks: [taskNode1.id, taskNode2.id],
                         })
                     }
-                } catch (e: any) {
+                } catch (err: any) {
                     emit("message", {
                         variant: "error",
                         title: "cannot swap tasks",
-                        message: `${e.message}, ${e.messageOptions}`
-                    });
-                    taskNode1.position = lastPosition.value;
+                        message: `${err.message}, ${err.messageOptions}`,
+                    })
+                    taskNode1.position = lastPosition.value
                 }
             } else {
-                taskNode1.position = lastPosition.value;
+                taskNode1.position = lastPosition.value
             }
         } else {
-            e.node.position = lastPosition.value;
+            e.node.position = lastPosition.value
         }
-        resetNodesStyle();
+        resetNodesStyle()
         e.node.style = {...e.node.style, zIndex: 5}
-        lastPosition.value = null;
+        lastPosition.value = null
     })
 
     const subflowPrefixes = computed(() => {
         if (!props.flowGraph?.clusters) {
-            return [];
+            return []
         }
 
         return props.flowGraph.clusters.filter(cluster => cluster.cluster.type.endsWith("SubflowGraphCluster"))
-            .map(cluster => cluster.cluster.taskNode.uid + ".");
+            .map(cluster => cluster.cluster.taskNode.uid + ".")
     })
 
     onNodeDrag((e: any) => {
-        resetNodesStyle();
+        resetNodesStyle()
         getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
             if (n.type === "trigger" || (n.type === "task" && (n.id.startsWith(e.node.id + ".") || e.node.id.startsWith(n.id + "."))) || subflowPrefixes?.value?.some(subflowPrefix => n.id.startsWith(subflowPrefix))) {
                 n.style = {...n.style, opacity: "0.5"}
@@ -405,17 +405,17 @@
         if (e.intersections && !checkIntersections(e.intersections, e.node) && e.intersections.filter((n: any) => n.type === "task").length === 1) {
             e.intersections.forEach((n: any) => {
                 if (n.type === "task") {
-                    setNodeInteractionClass(n, DROP_TARGET_CLASS, true);
+                    setNodeInteractionClass(n, DROP_TARGET_CLASS, true)
                 }
             })
-            setNodeInteractionClass(e.node, DROP_TARGET_CLASS, true);
+            setNodeInteractionClass(e.node, DROP_TARGET_CLASS, true)
         }
     })
 
     const checkIntersections = (intersections: any, node: any) => {
-        const tasksMeet = intersections.filter((n: any) => n.type === "task").map((n: any) => Utils.afterLastDot(n.id));
+        const tasksMeet = intersections.filter((n: any) => n.type === "task").map((n: any) => Utils.afterLastDot(n.id))
         if (tasksMeet.length > 1) {
-            return "toomuchtaskerror";
+            return "toomuchtaskerror"
         }
         try {
             if (tasksMeet.length === 1 && props.source
@@ -424,78 +424,78 @@
                     sections: ["tasks", "triggers"],
                     key1: Utils.afterLastDot(tasksMeet[0]) ?? "",
                     key2: Utils.afterLastDot(node.id) ?? "",
-                    keyName: "id"
+                    keyName: "id",
                 })
             ) {
-                return "parentchildrenerror";
+                return "parentchildrenerror"
             }
         } catch {
-            return "parentchildrenerror";
+            return "parentchildrenerror"
         }
         if (intersections.filter((n: any) => n.type === "trigger").length > 0) {
-            return "triggererror";
+            return "triggererror"
         }
-        return null;
+        return null
     }
 
     const collapseCluster = (clusterUid: string, regenerate: boolean, recursive = false) => {
-        const cluster: any = props.flowGraph.clusters.find(cluster => cluster.cluster.uid.endsWith(clusterUid));
-        const nodeId = clusterUid.replace(CLUSTER_PREFIX, "");
+        const cluster: any = props.flowGraph.clusters.find(c => c.cluster.uid.endsWith(clusterUid))
+        const nodeId = clusterUid.replace(CLUSTER_PREFIX, "")
         collapsed.value.add(nodeId)
 
-        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive));
+        hiddenNodes.value = hiddenNodes.value.concat(cluster.nodes.filter((e: any) => e !== nodeId || recursive))
         hiddenNodes.value = hiddenNodes.value.concat([cluster.cluster.uid] as string[])
         edgeReplacer.value = {
             ...edgeReplacer.value,
             [cluster.cluster.uid]: nodeId,
             [cluster.start]: nodeId,
-            [cluster.end]: nodeId
+            [cluster.end]: nodeId,
         }
 
         for (let child of cluster.nodes) {
-            if (props.flowGraph.clusters.map(cluster => cluster.cluster.uid).includes(child)) {
-                collapseCluster(child, false, true);
+            if (props.flowGraph.clusters.map(c => c.cluster.uid).includes(child)) {
+                collapseCluster(child, false, true)
             }
         }
 
         if (regenerate) {
-            generateGraph();
+            generateGraph()
         }
     }
 
     const expand = (expandData: any) => {
         const taskTypesWithSubflows = [
             "io.kestra.core.tasks.flows.Flow", "io.kestra.core.tasks.flows.Subflow", "io.kestra.plugin.core.flow.Subflow",
-            "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable"
-        ];
+            "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable",
+        ]
         if (taskTypesWithSubflows.includes(expandData.type) && !props.expandedSubflows.includes(expandData.id)) {
-            emit("expand-subflow", [...props.expandedSubflows, expandData.id]);
-            return;
+            emit("expand-subflow", [...props.expandedSubflows, expandData.id])
+            return
         }
-        edgeReplacer.value = {};
-        hiddenNodes.value = [];
-        clusterToNode.value = [];
-        collapsed.value.delete(expandData.id);
+        edgeReplacer.value = {}
+        hiddenNodes.value = []
+        clusterToNode.value = []
+        collapsed.value.delete(expandData.id)
 
-        collapsed.value.forEach(n => collapseCluster(n, false, false));
+        collapsed.value.forEach(n => collapseCluster(n, false, false))
 
-        generateGraph();
+        generateGraph()
     }
 
 
-    const controlsShown = ref(true);
-    const isDropdownOpen = ref(false);
-    const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value;
+    const controlsShown = ref(true)
+    const isDropdownOpen = ref(false)
+    const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
     function exportAsImage(type: "jpeg" | "png") {
         if (!vueFlowRef.value) {
-            console.warn("Flow not found");
-            return;
+            console.warn("Flow not found")
+            return
         }
 
         controlsShown.value = false
         capture(vueFlowRef.value, {type, shouldDownload: true})
             .then(() => controlsShown.value = true)
-            .finally(() => isDropdownOpen.value = false);
+            .finally(() => isDropdownOpen.value = false)
     }
 </script>
 

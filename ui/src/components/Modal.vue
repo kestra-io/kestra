@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    const emits = defineEmits<{"update:modelValue": [value: boolean]}>();
+    const emits = defineEmits<{"update:modelValue": [value: boolean]}>()
 
     defineProps({
         title: {
@@ -33,10 +33,10 @@
             type: String,
             default: "560px",
         },
-    });
+    })
 
     const modelValue = defineModel({
         type: Boolean,
         required: true,
-    });
+    })
 </script>

@@ -55,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
-    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils";
-    import {KsAlert, KsButton} from "@kestra-io/design-system";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils"
+    import {KsAlert, KsButton} from "@kestra-io/design-system"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 
-    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`.";
+    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`."
 
     type ValueRow = {
         key: keyof JSONProperty;
@@ -81,22 +81,22 @@
         {key: "maximum", label: "Maximum", format: (value) => `<= ${value}`},
         {key: "exclusiveMaximum", label: "Maximum", format: (value) => `< ${value}`},
         {key: "format", label: "Format"},
-    ];
+    ]
 
-    const props = defineProps<{property: JSONProperty}>();
+    const props = defineProps<{property: JSONProperty}>()
 
-    const subtype = extractTypeInfo(props.property).subType;
-    const enumValues = extractEnumValues(props.property);
+    const subtype = extractTypeInfo(props.property).subType
+    const enumValues = extractEnumValues(props.property)
 
     const isVisible = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return value !== undefined && (row.show?.(value) ?? true);
-    };
+        const value = props.property[row.key]
+        return value !== undefined && (row.show?.(value) ?? true)
+    }
 
     const formatValue = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return row.format ? row.format(value) : value;
-    };
+        const value = props.property[row.key]
+        return row.format ? row.format(value) : value
+    }
 </script>
 
 <style lang="scss" scoped>

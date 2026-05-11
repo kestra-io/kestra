@@ -1,8 +1,8 @@
-import pluginVue from "eslint-plugin-vue";
-import tsParser from "@typescript-eslint/parser";
-import {defineConfig, globalIgnores} from "eslint/config";
+import pluginVue from "eslint-plugin-vue"
+import tsParser from "@typescript-eslint/parser"
+import {defineConfig, globalIgnores} from "eslint/config"
 
-const components = (folder) => `src/components/${folder}/**/*.vue`;
+const components = (folder) => `src/components/${folder}/**/*.vue`
 
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
@@ -13,7 +13,7 @@ export default defineConfig([
         languageOptions: {parser: tsParser},
         rules: {
             quotes: ["warn", "double"],
-            semi: ["warn", "always"],
+            semi: ["warn", "never"],
             "comma-dangle": ["warn", "always-multiline"],
             "object-curly-spacing": ["warn", "never"],
             "array-bracket-spacing": ["warn", "never"],
@@ -32,7 +32,7 @@ export default defineConfig([
             "vue/html-indent": ["warn", 4, {baseIndent: 1}],
             "vue/script-indent": ["warn", 4, {baseIndent: 1}],
             quotes: ["warn", "double"],
-            semi: ["warn", "always"],
+            semi: ["warn", "never"],
             "comma-dangle": ["warn", "always-multiline"],
             "object-curly-spacing": ["warn", "never"],
             "array-bracket-spacing": ["warn", "never"],
@@ -47,8 +47,18 @@ export default defineConfig([
         },
     },
     {
+        // The design system intentionally ships unscoped overrides for
+        // element-plus (kel-*) classes so every consumer gets the same look.
+        // The rule still applies everywhere else, where unscoped styles
+        // would leak globally by accident.
+        files: ["packages/design-system/src/components/**/*.vue"],
+        rules: {
+            "vue/enforce-style-attribute": "off",
+        },
+    },
+    {
         files: [components("filter"), components("code")],
         ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
-]);
+])

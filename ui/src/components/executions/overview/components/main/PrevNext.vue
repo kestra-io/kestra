@@ -18,23 +18,23 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {onMounted, ref} from "vue"
 
-    import {useRouter} from "vue-router";
-    const router = useRouter();
+    import {useRouter} from "vue-router"
+    const router = useRouter()
 
     import {
         Execution,
         useExecutionsStore,
-    } from "../../../../../stores/executions";
-    const store = useExecutionsStore();
+    } from "../../../../../stores/executions"
+    const store = useExecutionsStore()
 
-    import {createLink} from "../../utils/links";
+    import {createLink} from "../../utils/links"
 
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
-    const props = defineProps<{ execution: Execution }>();
+    const props = defineProps<{ execution: Execution }>()
 
     const results = ref<{
         previous: Execution | null;
@@ -44,7 +44,7 @@
         previous: null,
         current: props.execution,
         next: null,
-    });
+    })
 
     const loadExecutions = async () => {
         const baseParams = {
@@ -52,7 +52,7 @@
             "filters[flowId][EQUALS]": props.execution.flowId,
             sort: "state.startDate:desc",
             size: 1,
-        };
+        }
 
         const [newerRes, olderRes] = await Promise.all([
             // one execution AFTER (more recent than) current startDate
@@ -65,25 +65,25 @@
                 ...baseParams,
                 "filters[startDate][LESS_THAN]": props.execution.state.startDate,
             }),
-        ]);
+        ])
 
         results.value = {
             previous: newerRes.results?.[0] ?? null,
             current: props.execution,
             next: olderRes.results?.[0] ?? null,
-        };
-    };
+        }
+    }
 
     const navigate = async (direction: "previous" | "next") => {
-        if (direction === "previous" && !results.value.previous) return;
-        if (direction === "next" && !results.value.next) return;
+        if (direction === "previous" && !results.value.previous) return
+        if (direction === "next" && !results.value.next) return
 
-        router.push(createLink("executions", results.value[direction]!));
-    };
+        router.push(createLink("executions", results.value[direction]!))
+    }
 
     onMounted(async () => {
-        await loadExecutions();
-    });
+        await loadExecutions()
+    })
 </script>
 
 <style scoped lang="scss">

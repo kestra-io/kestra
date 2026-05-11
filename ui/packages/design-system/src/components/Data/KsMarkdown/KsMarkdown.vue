@@ -12,9 +12,9 @@
     import remarkGfm from "remark-gfm"
     import remarkDirective from "remark-directive"
     import type {Root, RootContent} from "mdast"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue";
-    import xss, {escapeAttrValue} from "xss";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
+    import xss, {escapeAttrValue} from "xss"
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -34,8 +34,8 @@
             html: true,
             xssProtection: true,
             components: () => ({}),
-        }
-    );
+        },
+    )
 
     const containerRef = ref<HTMLElement | null>(null)
     // Reactive cache: "lang::value" → Shiki-generated HTML
@@ -116,43 +116,43 @@
             stripIgnoreTag: true,
             onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
                 if (name.startsWith("data-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                    return name + "=\"" + escapeAttrValue(value) + "\""
                 }
                 if (name.startsWith("aria-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\"";
+                    return name + "=\"" + escapeAttrValue(value) + "\""
                 }
-                return undefined;
+                return undefined
             },
-        });
+        })
     }
 
     function parseHtmlAttributes(attrsStr: string): Record<string, unknown> {
-        const attrs: Record<string, unknown> = {};
-        const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
-        let m: RegExpExecArray | null;
+        const attrs: Record<string, unknown> = {}
+        const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g
+        let m: RegExpExecArray | null
         while ((m = re.exec(attrsStr)) !== null) {
-            const key = m[1];
-            attrs[key] = m[2] ?? m[3] ?? m[4] ?? true;
+            const key = m[1]
+            attrs[key] = m[2] ?? m[3] ?? m[4] ?? true
         }
-        return attrs;
+        return attrs
     }
 
     function tryRenderCustomComponent(html: string): VNode | null {
-        if (!props.components || Object.keys(props.components).length === 0) return null;
+        if (!props.components || Object.keys(props.components).length === 0) return null
 
         // Match <ComponentName attrs>inner</ComponentName> or <ComponentName attrs></ComponentName>
         const match = html.trim().match(/^<([A-Za-z][A-Za-z0-9]*)(\s[^>]*)?>(?:([\s\S]*?)<\/\1>)?$/)
-        if (!match) return null;
+        if (!match) return null
 
-        const [, tagName, attrsStr = "", innerHtml = ""] = match;
-        const component = props.components[tagName];
-        if (!component) return null;
+        const [, tagName, attrsStr = "", innerHtml = ""] = match
+        const component = props.components[tagName]
+        if (!component) return null
 
-        const attrs = parseHtmlAttributes(attrsStr.trim());
+        const attrs = parseHtmlAttributes(attrsStr.trim())
         const slots = innerHtml.trim()
             ? {default: () => [h("span", {innerHTML: innerHtml})]}
-            : undefined;
-        return h(component as any, attrs, slots);
+            : undefined
+        return h(component as any, attrs, slots)
     }
 
     function renderNode(node: any): VNode | string | null {
@@ -202,9 +202,9 @@
                         onClick: (e: MouseEvent) => {
                             const btn = e.currentTarget as HTMLButtonElement
                             navigator.clipboard.writeText(value).then(() => {
-                                btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.add("opacity-100");
+                                btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.add("opacity-100")
                                 setTimeout(() => {
-                                    btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.remove("opacity-100");
+                                    btn.querySelector(".ks-markdown__copy-btn-ok")?.classList.remove("opacity-100")
                                 }, 2000)
                             }).catch(() => { /* clipboard unavailable */ })
                         },
@@ -239,12 +239,12 @@
 
             // Column labels extracted from the header row
             const headers = (headerRow.children as any[]).map((cell: any) =>
-                extractText(cell.children as RootContent[])
+                extractText(cell.children as RootContent[]),
             )
 
             // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
             const cellGrid = (bodyRows as any[]).map((row: any) =>
-                (row.children as any[]).map((cell: any) => renderNodes(cell.children))
+                (row.children as any[]).map((cell: any) => renderNodes(cell.children)),
             )
 
             const data = cellGrid.map((_, i) => ({_idx: i}))
@@ -256,6 +256,7 @@
                     // align is not in KsTableColumn's defineProps but is forwarded via $attrs
                     ...(cellAlign ? {align: cellAlign} : {}),
                 } as any, {
+                    // oxlint-disable-next-line no-underscore-dangle
                     default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
                 })
             })

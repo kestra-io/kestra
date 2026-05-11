@@ -39,13 +39,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {KsMarkdown, KsTaskIcon} from "@kestra-io/design-system";
-    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins";
-    import {triggerDisplayName} from "./triggerCatalog";
+    import {computed} from "vue"
+    import {KsMarkdown, KsTaskIcon} from "@kestra-io/design-system"
+    import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
+    import {triggerDisplayName} from "./triggerCatalog"
 
-    const props = defineProps<{ trigger: TriggerPluginDto }>();
-    defineEmits<{ add: [trigger: TriggerPluginDto] }>();
+    const props = defineProps<{ trigger: TriggerPluginDto }>()
+    defineEmits<{ add: [trigger: TriggerPluginDto] }>()
 
     const TOOLTIP_POPPER_STYLE = {
         maxWidth: "26.25rem",
@@ -53,11 +53,11 @@
         lineHeight: "1.5",
         padding: "0.625rem 0.75rem",
         color: "var(--ks-content-primary)",
-    };
+    }
 
-    const pluginsStore = usePluginsStore();
-    const displayName = computed(() => triggerDisplayName(props.trigger));
-    const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g));
+    const pluginsStore = usePluginsStore()
+    const displayName = computed(() => triggerDisplayName(props.trigger))
+    const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 
 <style scoped lang="scss">

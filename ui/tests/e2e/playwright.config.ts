@@ -1,9 +1,9 @@
 import dotenv from "dotenv"
-const __dirname = new URL(".", import.meta.url).pathname;
-dotenv.config({path: __dirname + "/.env"});
+const __dirname = new URL(".", import.meta.url).pathname
+dotenv.config({path: __dirname + "/.env"})
 
-import type {PlaywrightTestConfig} from "@playwright/test";
-import {devices} from "@playwright/test";
+import type {PlaywrightTestConfig} from "@playwright/test"
+import {devices} from "@playwright/test"
 
 
 /**
@@ -73,6 +73,6 @@ const config: PlaywrightTestConfig = {
     //   port: 8080,
     //   reuseExistingServer: !process.env.CI,
     // },
-};
+}
 
-export default config;
+export default config

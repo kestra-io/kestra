@@ -53,79 +53,79 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, nextTick, reactive} from "vue";
-    import {useRoute} from "vue-router";
-    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../../utils/pluginUtils";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {cap} from "../../utils/filters";
+    import {ref, computed, watch, nextTick, reactive} from "vue"
+    import {useRoute} from "vue-router"
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {cap} from "../../utils/filters"
 
     const props = defineProps<{
         plugins: Plugin[];
-    }>();
+    }>()
 
     defineEmits<{
         routerChange: [];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const pluginsStore = usePluginsStore();
+    const route = useRoute()
+    const pluginsStore = usePluginsStore()
 
-    const pluginRefs = reactive<Record<string, any>>({});
-    const activeNames = ref<string[]>([]);
-    const searchInput = ref<string>("");
+    const pluginRefs = reactive<Record<string, any>>({})
+    const activeNames = ref<string[]>([])
+    const searchInput = ref<string>("")
 
     const countPlugin = computed(() => {
-        return new Set(props.plugins.flatMap(plugin => pluginElements(plugin))).size;
-    });
+        return new Set(props.plugins.flatMap(plugin => pluginElements(plugin))).size
+    })
 
     const pluginElements = (plugin: Plugin) => {
         return Object.entries(plugin)
             .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             .flatMap(([_, value]) => (value as PluginElement[])
                 .filter(({deprecated}) => !deprecated)
-                .map(({cls}) => cls)
-            );
-    };
+                .map(({cls}) => cls),
+            )
+    }
 
     const getScrollableParent = (el: HTMLElement): HTMLElement | null => {
-        let parent = el.parentElement;
+        let parent = el.parentElement
         while (parent) {
-            const style = getComputedStyle(parent);
+            const style = getComputedStyle(parent)
             if (style.overflowY === "auto" || style.overflowY === "scroll") {
-                return parent;
+                return parent
             }
-            parent = parent.parentElement;
+            parent = parent.parentElement
         }
-        return null;
-    };
+        return null
+    }
 
     const scrollToActivePlugin = () => {
-        const activePlugin = localStorage.getItem("activePlugin");
+        const activePlugin = localStorage.getItem("activePlugin")
         if (activePlugin) {
-            const pluginElement = pluginRefs[activePlugin];
+            const pluginElement = pluginRefs[activePlugin]
             if (pluginElement) {
-                const el = pluginElement.$el as HTMLElement;
-                const scrollContainer = getScrollableParent(el);
+                const el = pluginElement.$el as HTMLElement
+                const scrollContainer = getScrollableParent(el)
                 if (scrollContainer) {
-                    const elRect = el.getBoundingClientRect();
-                    const containerRect = scrollContainer.getBoundingClientRect();
-                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"});
+                    const elRect = el.getBoundingClientRect()
+                    const containerRect = scrollContainer.getBoundingClientRect()
+                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"})
                 }
             }
         }
-    };
+    }
 
     const pluginsList = computed(() => {
         return props.plugins
             .filter((plugin, index, self) => {
                 return index === self.findIndex((t) => (
                     t.title === plugin.title && t.group === plugin.group
-                ));
+                ))
             })
             .filter(plugin => {
                 return plugin.title?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-                    pluginElements(plugin).some(element => element.toLowerCase().includes(searchInput.value.toLowerCase()));
+                    pluginElements(plugin).some(element => element.toLowerCase().includes(searchInput.value.toLowerCase()))
             })
             .map(plugin => {
                 return {
@@ -136,47 +136,47 @@
                             .map(([elementType, elements]) => [
                                 elementType,
                                 (elements as PluginElement[]).filter(({deprecated}) => !deprecated)
-                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase()))
-                            ])
-                    )
-                };
-            });
-    });
+                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase())),
+                            ]),
+                    ),
+                }
+            })
+    })
 
     watch(() => route.params.cls, (cls) => {
-        if (!cls) return;
+        if (!cls) return
         props.plugins.forEach(plugin => {
             if (Object.entries(plugin).some(([key, value]) => {
                 if (isEntryAPluginElementPredicate(key, value)) {
-                    return (value as PluginElement[]).some(({cls: c}) => c === cls);
+                    return (value as PluginElement[]).some(({cls: c}) => c === cls)
                 }
-                return false;
+                return false
             })) {
                 if (activeNames.value[0] !== plugin.group) {
-                    activeNames.value = [plugin.group];
-                    localStorage.setItem("activePlugin", plugin.group);
+                    activeNames.value = [plugin.group]
+                    localStorage.setItem("activePlugin", plugin.group)
                 }
             }
-        });
+        })
         nextTick(() => {
-            scrollToActivePlugin();
-        });
-    }, {immediate: true});
+            scrollToActivePlugin()
+        })
+    }, {immediate: true})
 
     const handlePluginChange = (pluginGroup: string) => {
-        activeNames.value = [pluginGroup];
-        localStorage.setItem("activePlugin", pluginGroup);
-    };
+        activeNames.value = [pluginGroup]
+        localStorage.setItem("activePlugin", pluginGroup)
+    }
 
     const sortedPlugins = (plugins: Plugin[]) => {
         return plugins
             .sort((a, b) => {
                 const nameA = (a.title ? a.title.toLowerCase() : ""),
-                      nameB = (b.title ? b.title.toLowerCase() : "");
+                      nameB = (b.title ? b.title.toLowerCase() : "")
 
-                return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-            });
-    };
+                return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0))
+            })
+    }
 
     const group = (plugin: Plugin) => {
         return Object.entries(plugin)
@@ -184,27 +184,27 @@
             .flatMap(([type, value]) => {
                 return (value as PluginElement[]).filter(({deprecated}) => !deprecated)
                     .map(({cls}) => {
-                        const namespace = cls.substring(0, cls.lastIndexOf("."));
+                        const namespace = cls.substring(0, cls.lastIndexOf("."))
 
                         return {
                             type,
                             namespace: namespace,
-                            cls: cls.substring(cls.lastIndexOf(".") + 1)
-                        };
-                    });
+                            cls: cls.substring(cls.lastIndexOf(".") + 1),
+                        }
+                    })
             })
             .reduce((accumulator, value) => {
-                accumulator[value.namespace] = accumulator[value.namespace] || {};
-                accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
-                accumulator[value.namespace][value.type].push(value.cls);
+                accumulator[value.namespace] = accumulator[value.namespace] || {}
+                accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || []
+                accumulator[value.namespace][value.type].push(value.cls)
 
-                return accumulator;
-            }, {} as Record<string, Record<string, string[]>>);
-    };
+                return accumulator
+            }, {} as Record<string, Record<string, string[]>>)
+    }
 
     const isVisible = (plugin: Plugin) => {
-        return pluginElements(plugin).length > 0;
-    };
+        return pluginElements(plugin).length > 0
+    }
 </script>
 
 <style lang="scss" scoped>

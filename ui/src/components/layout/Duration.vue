@@ -16,14 +16,14 @@
 <script>
     import {State, durationUtils} from "@kestra-io/design-system"
 
-    const ts = date => new Date(date).getTime();
+    const ts = date => new Date(date).getTime()
 
     export default {
         props: {
             histories: {
                 type: Array,
-                default: undefined
-            }
+                default: undefined,
+            },
         },
         watch: {
             histories(newValue, oldValue) {
@@ -35,7 +35,7 @@
         data () {
             return {
                 duration: "",
-                refreshHandler: undefined
+                refreshHandler: undefined,
             }
         },
         mounted() {
@@ -43,12 +43,12 @@
         },
         computed: {
             start() {
-                return this.histories && this.histories.length && ts(this.histories[0].date);
+                return this.histories && this.histories.length && ts(this.histories[0].date)
             },
 
             lastStep() {
                 return this.histories[this.histories.length - 1]
-            }
+            },
         },
         methods: {
             paint() {
@@ -56,23 +56,23 @@
                     this.refreshHandler = setInterval(() => {
                         this.computeDuration()
                         if (this.histories && !State.isRunning(this.lastStep.state)) {
-                            this.cancel();
+                            this.cancel()
                         }
-                    }, 100);
+                    }, 100)
                 }
             },
             cancel() {
                 if (this.refreshHandler) {
-                    clearInterval(this.refreshHandler);
+                    clearInterval(this.refreshHandler)
                     this.refreshHandler = undefined
                 }
             },
             delta() {
-                return this.stop() - this.start;
+                return this.stop() - this.start
             },
             stop() {
                 if (!this.histories || State.isRunning(this.lastStep.state)) {
-                    return +new Date();
+                    return +new Date()
                 }
                 return ts(this.lastStep.date)
             },
@@ -80,20 +80,20 @@
                 this.duration = durationUtils.humanDuration(this.delta() / 1000)
             },
             squareClass(state) {
-                let statusVarname = state.toLowerCase();
+                let statusVarname = state.toLowerCase()
 
                 // Minor hack to reuse created color for submitted status.
                 // See https://github.com/kestra-io/kestra/issues/14876 for more details.
-                if(statusVarname === "submitted") statusVarname = "created";
+                if(statusVarname === "submitted") statusVarname = "created"
 
                 return {
-                    backgroundColor: `var(--ks-chart-${statusVarname})`
-                };
+                    backgroundColor: `var(--ks-chart-${statusVarname})`,
+                }
             },
         },
         beforeUnmount() {
-            this.cancel();
-        }
+            this.cancel()
+        },
     }
 </script>
 

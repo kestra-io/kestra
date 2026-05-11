@@ -23,10 +23,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {useBrowserLocation} from "@vueuse/core";
-    import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+    import {ref, computed, watch} from "vue"
+    import {useBrowserLocation} from "@vueuse/core"
+    import MenuRight from "vue-material-design-icons/MenuRight.vue"
+    import MenuDown from "vue-material-design-icons/MenuDown.vue"
 
     const props = withDefaults(defineProps<{
         href?: string;
@@ -39,44 +39,44 @@
         arrow: true,
         initiallyExpanded: false,
         noUrlChange: false,
-    });
+    })
 
-    const emit = defineEmits<{expand: []}>();
+    const emit = defineEmits<{expand: []}>()
 
-    const collapsed = ref(true);
-    const location = useBrowserLocation();
-    const bodyHash = computed(() => `#${props.href}-body`);
+    const collapsed = ref(true)
+    const location = useBrowserLocation()
+    const bodyHash = computed(() => `#${props.href}-body`)
 
     const handleToggle = (event: Event) => {
-        event.preventDefault();
-        event.stopPropagation();
+        event.preventDefault()
+        event.stopPropagation()
 
-        collapsed.value = !collapsed.value;
+        collapsed.value = !collapsed.value
 
         if (!collapsed.value) {
-            emit("expand");
+            emit("expand")
         }
 
-        if (props.noUrlChange) return;
+        if (props.noUrlChange) return
 
         if (collapsed.value) {
-            history.replaceState(null, "", window.location.pathname + window.location.search);
+            history.replaceState(null, "", window.location.pathname + window.location.search)
         } else {
-            window.location.hash = bodyHash.value;
+            window.location.hash = bodyHash.value
         }
-    };
+    }
 
     watch(() => props.initiallyExpanded, (initiallyExpanded) => {
         if (initiallyExpanded !== undefined) {
-            collapsed.value = !initiallyExpanded;
+            collapsed.value = !initiallyExpanded
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     watch(() => location.value.hash, (hash) => {
         if (hash === bodyHash.value && collapsed.value) {
-            collapsed.value = false;
+            collapsed.value = false
         }
-    }, {immediate: true});
+    }, {immediate: true})
 </script>
 
 <style scoped lang="scss">

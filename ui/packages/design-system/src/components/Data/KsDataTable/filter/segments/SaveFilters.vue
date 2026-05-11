@@ -79,64 +79,64 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import type {AppliedFilter, SavedFilter} from "../utils/filterTypes";
-    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons";
+    import {ref, computed, watch} from "vue"
+    import type {AppliedFilter, SavedFilter} from "../utils/filterTypes"
+    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
 
     const props = defineProps<{
         disabled: boolean;
         savedFilters: SavedFilter[];
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "close-edit": [];
         save: [name: string, description: string];
         edit: [id: string, name: string, description: string];
-    }>();
+    }>()
 
-    const filterName = ref("");
-    const showSaveDialog = ref(false);
-    const filterDescription = ref("");
+    const filterName = ref("")
+    const showSaveDialog = ref(false)
+    const filterDescription = ref("")
 
-    const isEditMode = computed(() => !!props.editingFilter);
+    const isEditMode = computed(() => !!props.editingFilter)
 
     const hasDuplicate = computed(() => {
-        const name = filterName.value.trim();
-        if (!name) return false;
-        return props.savedFilters.some(f => f.name === name && (!isEditMode.value || f.id !== props.editingFilter?.id));
-    });
+        const name = filterName.value.trim()
+        if (!name) return false
+        return props.savedFilters.some(f => f.name === name && (!isEditMode.value || f.id !== props.editingFilter?.id))
+    })
 
     watch(() => props.editingFilter, (newFilter, oldFilter) => {
         if (newFilter && !oldFilter) {
-            filterName.value = newFilter.name;
-            filterDescription.value = newFilter.description || "";
-            showSaveDialog.value = true;
+            filterName.value = newFilter.name
+            filterDescription.value = newFilter.description || ""
+            showSaveDialog.value = true
         } else if (!newFilter && oldFilter) {
-            closeSaveDialog();
+            closeSaveDialog()
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     const saveFilter = () => {
-        if (!filterName.value.trim()) return;
+        if (!filterName.value.trim()) return
 
         if (isEditMode.value && props.editingFilter) {
-            emits("edit", props.editingFilter.id, filterName.value.trim(), filterDescription.value.trim());
+            emits("edit", props.editingFilter.id, filterName.value.trim(), filterDescription.value.trim())
         } else {
-            emits("save", filterName.value.trim(), filterDescription.value.trim());
+            emits("save", filterName.value.trim(), filterDescription.value.trim())
         }
-        closeSaveDialog();
-    };
+        closeSaveDialog()
+    }
 
     const closeSaveDialog = () => {
-        showSaveDialog.value = false;
-        filterName.value = "";
-        filterDescription.value = "";
+        showSaveDialog.value = false
+        filterName.value = ""
+        filterDescription.value = ""
         if (isEditMode.value) {
-            emits("close-edit");
+            emits("close-edit")
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>

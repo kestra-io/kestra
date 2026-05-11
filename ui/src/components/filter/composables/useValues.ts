@@ -1,39 +1,39 @@
-import {useI18n} from "vue-i18n";
-import {computed} from "vue";
-import {useMiscStore} from "override/stores/misc";
-import {FilterValue} from "@kestra-io/design-system";
+import {useI18n} from "vue-i18n"
+import {computed} from "vue"
+import {useMiscStore} from "override/stores/misc"
+import {FilterValue} from "@kestra-io/design-system"
 
-import {State} from "@kestra-io/design-system";
-import {auditLogTypes} from "../../../models/auditLogTypes";
-import resource from "../../../models/resource";
-import action from "../../../models/action";
+import {State} from "@kestra-io/design-system"
+import {auditLogTypes} from "../../../models/auditLogTypes"
+import resource from "../../../models/resource"
+import action from "../../../models/action"
 
 const capitalize = (str: string): string => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-};
+    return str.charAt(0).toUpperCase() + str.slice(1)
+}
 
 const buildFromArray = (values: string[], isCapitalized = false): FilterValue[] =>
     values.map((value) => ({
         label: isCapitalized ? capitalize(value) : value,
         value,
-    }));
+    }))
 
 const buildFromObject = (object: object): FilterValue[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,
-    }));
+    }))
 
 export function useValues(label: string | undefined, t?: ReturnType<typeof useI18n>["t"]) {
     if (t === undefined) {
-        t = useI18n({useScope: "global"}).t;
+        t = useI18n({useScope: "global"}).t
     }
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     // Override for the scope labels on the dashboard
-    const DASHBOARDS = ["dashboard", "custom_dashboard"];
-    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label;
+    const DASHBOARDS = ["dashboard", "custom_dashboard"]
+    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label
 
     const RELATIVE_DATE = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
@@ -45,12 +45,12 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    ]
 
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
-        return item ? item.label : value;
-    };
+        const found = RELATIVE_DATE.find((item) => item.value === value)
+        return found ? found.label : value
+    }
 
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
@@ -111,7 +111,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("filter.triggerState.enabled"), value: "enabled"},
         {label: t("filter.triggerState.disabled"), value: "disabled"},
     ],
-    };
+    }
 
-    return {VALUES, getRelativeDateLabel};
+    return {VALUES, getRelativeDateLabel}
 }

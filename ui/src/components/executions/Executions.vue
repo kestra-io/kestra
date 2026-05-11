@@ -368,71 +368,71 @@
 </template>
 
 <script setup lang="ts">
-    import _merge from "lodash/merge";
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, h, useTemplateRef} from "vue";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system";
+    import _merge from "lodash/merge"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import {ref, computed, watch, h, useTemplateRef} from "vue"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
 
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import Import from "vue-material-design-icons/Import.vue";
-    import Export from "vue-material-design-icons/Export.vue";
-    import Restart from "vue-material-design-icons/Restart.vue";
-    import RunFast from "vue-material-design-icons/RunFast.vue";
-    import PlayBox from "vue-material-design-icons/PlayBox.vue";
-    import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
-    import Download from "vue-material-design-icons/Download.vue";
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Import from "vue-material-design-icons/Import.vue"
+    import Export from "vue-material-design-icons/Export.vue"
+    import Restart from "vue-material-design-icons/Restart.vue"
+    import RunFast from "vue-material-design-icons/RunFast.vue"
+    import PlayBox from "vue-material-design-icons/PlayBox.vue"
+    import PauseBox from "vue-material-design-icons/PauseBox.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import StateMachine from "vue-material-design-icons/StateMachine.vue"
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
+    import Download from "vue-material-design-icons/Download.vue"
 
-    import {KsId} from "@kestra-io/design-system";
-    import {State} from "@kestra-io/design-system";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import Labels from "../layout/Labels.vue";
+    import {KsId} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import Labels from "../layout/Labels.vue"
 
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    const {loadInit} = useRestoreUrl();
-    import Sections from "../dashboard/sections/Sections.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import LabelInput from "../../components/labels/LabelInput.vue";
+    const {loadInit} = useRestoreUrl()
+    import Sections from "../dashboard/sections/Sections.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import LabelInput from "../../components/labels/LabelInput.vue"
     //@ts-expect-error no declaration file
-    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
-    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue"
+    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels} from "./utils";
-    import {useToast} from "../../utils/toast";
-    import {storageKeys} from "../../utils/constants";
-    import {invisibleSpace} from "../../utils/filters";
-    import Utils from "../../utils/utils";
-    import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
+    import {filterValidLabels} from "./utils"
+    import {useToast} from "../../utils/toast"
+    import {storageKeys} from "../../utils/constants"
+    import {invisibleSpace} from "../../utils/filters"
+    import * as Utils from "../../utils/utils"
+    import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
 
-    import useRouteContext from "../../composables/useRouteContext";
-    import {useTableColumns} from "../../composables/useTableColumns";
+    import useRouteContext from "../../composables/useRouteContext"
+    import {useTableColumns} from "../../composables/useTableColumns"
 
-    import {useFlowStore} from "../../stores/flow";
-    import {useAuthStore} from "override/stores/auth";
-    import {useMiscStore} from "override/stores/misc";
-    import {Label, useExecutionsStore} from "../../stores/executions";
+    import {useFlowStore} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
+    import {Label, useExecutionsStore} from "../../stores/executions"
 
-    import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations";
-    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
+    import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
 
-    const {t} = useI18n();
-    const toast = useToast();
+    const {t} = useI18n()
+    const toast = useToast()
 
-    const executionFilter = useExecutionFilter();
-    const flowExecutionFilter = useFlowExecutionFilter();
+    const executionFilter = useExecutionFilter()
+    const flowExecutionFilter = useFlowExecutionFilter()
 
     const props = withDefaults(defineProps<{
         embed?: boolean;
@@ -460,31 +460,31 @@
         flowId: undefined,
         namespace: undefined,
         defaultScopeFilter: false,
-    });
+    })
 
     const emit = defineEmits<{
         "state-count": [payload: { runningCount: number; totalCount: number }];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    const authStore = useAuthStore();
-    const flowStore = useFlowStore();
-    const miscStore = useMiscStore();
-    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore()
+    const flowStore = useFlowStore()
+    const miscStore = useMiscStore()
+    const executionsStore = useExecutionsStore()
 
-    const executionLabels = ref<Label[]>([]);
-    const recomputeInterval = ref(false);
-    const isOpenLabelsModal = ref(false);
-    const isOpenReplayModal = ref(false);
-    const selectedStatus = ref(undefined);
-    const lastRefreshDate = ref(new Date());
-    const unqueueDialogVisible = ref(false);
-    const changeStatusDialogVisible = ref(false);
-    const actionOptions = ref<Record<string, any>>({});
-    const dblClickRouteName = ref("executions/update");
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false");
+    const executionLabels = ref<Label[]>([])
+    const recomputeInterval = ref(false)
+    const isOpenLabelsModal = ref(false)
+    const isOpenReplayModal = ref(false)
+    const selectedStatus = ref(undefined)
+    const lastRefreshDate = ref(new Date())
+    const unqueueDialogVisible = ref(false)
+    const changeStatusDialogVisible = ref(false)
+    const actionOptions = ref<Record<string, any>>({})
+    const dblClickRouteName = ref("executions/update")
+    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
 
     const optionalColumns = ref([
         {
@@ -565,179 +565,179 @@
             default: false,
             description: t("filter.table_column.executions.parent-execution"),
         },
-    ]);
+    ])
 
     const storageKey = computed(() =>
         route.name === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
-    );
+    )
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
         storageKey: storageKey.value,
-    });
+    })
 
     const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as any[],
-    );
+    )
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
-    };
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
+    }
 
     const selectionMapper = (execution: any) => {
-        return execution.id;
-    };
+        return execution.id
+    }
 
-    const ready = ref(false);
-    const dataTable = useTemplateRef<any>("dataTable");
+    const ready = ref(false)
+    const dataTable = useTemplateRef<any>("dataTable")
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return;
-        lastRefreshDate.value = new Date();
+        if (!loadInit.value) return
+        lastRefreshDate.value = new Date()
 
         await executionsStore.findExecutions(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "state.startDate:desc"),
             state: route.query?.state ? [route.query?.state] : props.statuses,
-        }));
+        }))
 
         if (props.isConcurrency) {
-            emitStateCount();
+            emitStateCount()
         }
-    };
+    }
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        return filters;
-    });
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1);
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25);
+    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
+    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
 
     watch(filterQuery, () => {
         if (!props.embed) {
-            dataTable.value?.resetAndReload();
+            dataTable.value?.resetAndReload()
         }
-    }, {deep: true});
+    }, {deep: true})
 
-    const routeInfo = computed(() => ({title: t("executions")}));
-    useRouteContext(routeInfo, props.embed);
+    const routeInfo = computed(() => ({title: t("executions")}))
+    useRouteContext(routeInfo, props.embed)
 
-    const selection = computed(() => dataTable.value?.selection ?? []);
-    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false);
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected();
+    const selection = computed(() => dataTable.value?.selection ?? [])
+    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
+    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
 
     const displayButtons = computed(() => {
-        return (route.name === "flows/update") || (route.name === "executions/list");
-    });
+        return (route.name === "flows/update") || (route.name === "executions/list")
+    })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value;
-    });
+        return canDelete.value || canUpdate.value
+    })
 
     const canCreate = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.namespace);
-    });
+        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.namespace)
+    })
 
     const canUpdate = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.namespace);
-    });
+        return authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.namespace)
+    })
 
     const canDelete = computed(() => {
-        return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace);
-    });
+        return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace)
+    })
 
     const isAllowedEdit = computed(() => {
-        return authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace);
-    });
+        return authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace)
+    })
 
     const hasAnyExecute = computed(() => {
-        return authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.CREATE);
-    });
+        return authStore.user?.hasAnyActionOnAnyNamespace(resource.EXECUTION, action.CREATE)
+    })
 
     const isDisplayedTop = computed(() => {
-        if (props.visibleCharts) return true;
-        else return props.embed === false && props.filter;
-    });
+        if (props.visibleCharts) return true
+        else return props.embed === false && props.filter
+    })
 
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
             code: value,
             label: t("mark as", {status: value}),
-        }));
-    });
+        }))
+    })
 
     const unQueuestates = computed(() => {
         return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
             code: value,
             label: t("unqueue as", {status: value}),
-        }));
-    });
+        }))
+    })
 
     const charts = computed(() => {
         return [
             {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
-        ];
-    });
+        ]
+    })
 
     const filteredLabels = (labels: any[]) => {
-        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || [];
+        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
 
-        const queryLabels = route.query?.labels;
-        const allowedLabels = queryLabels ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels]).filter((label): label is string => label !== null).map((label: string) => label.split(":")[0]) : [];
+        const queryLabels = route.query?.labels
+        const allowedLabels = queryLabels ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels]).filter((label): label is string => label !== null).map((label: string) => label.split(":")[0]) : []
 
         return labels?.filter(label => {
-            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key);
-        });
-    };
+            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key)
+        })
+    }
 
     const executionParams = (row: any) => {
         return {
             namespace: row?.namespace,
             flowId: row?.flowId,
             id: row?.id,
-        };
-    };
+        }
+    }
 
     const onShowChartChange = (value: boolean) => {
-        showChart.value = value;
-        localStorage.setItem(storageKeys.SHOW_CHART, value.toString());
-    };
+        showChart.value = value
+        localStorage.setItem(storageKeys.SHOW_CHART, value.toString())
+    }
 
     const showStatChart = () => {
-        return isDisplayedTop.value && showChart.value;
-    };
+        return isDisplayedTop.value && showChart.value
+    }
 
     const refresh = () => {
-        recomputeInterval.value = !recomputeInterval.value;
-        dataTable.value?.reload();
-    };
+        recomputeInterval.value = !recomputeInterval.value
+        dataTable.value?.reload()
+    }
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query;
-        let queryFilter: Record<string, any> = {...restQuery};
+        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query
+        let queryFilter: Record<string, any> = {...restQuery}
 
         if (props.namespace) {
-            queryFilter["filters[namespace][PREFIX]"] = props.namespace;
+            queryFilter["filters[namespace][PREFIX]"] = props.namespace
         }
 
         if (props.flowId) {
-            queryFilter["filters[flowId][EQUALS]"] = props.flowId;
+            queryFilter["filters[flowId][EQUALS]"] = props.flowId
         }
 
-        const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state;
+        const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state
         if (!hasStateFilters && props.statuses?.length > 0) {
-            queryFilter["filters[state][IN]"] = props.statuses.join(",");
+            queryFilter["filters[state][IN]"] = props.statuses.join(",")
         }
 
-        return _merge(base, queryFilter);
-    };
+        return _merge(base, queryFilter)
+    }
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
         toast.confirm(
@@ -745,8 +745,8 @@
             () => genericConfirmCallback(queryAction, byIdAction, success),
             "warning",
             showCancelButton,
-        );
-    };
+        )
+    }
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, params?: any) => {
         const actionMap: Record<string, () => any> = {
@@ -768,45 +768,45 @@
             "bulkDeleteExecution": () => executionsStore.bulkDeleteExecution,
             "queryKill": () => executionsStore.queryKill,
             "bulkKill": () => executionsStore.bulkKill,
-        };
+        }
 
         if (queryBulkAction.value) {
             const query = loadQuery({
                 sort: route.query.sort as string || "state.startDate:desc",
                 state: route.query.state ? [route.query.state] : props.statuses,
-            });
-            let options = {...query, ...actionOptions.value};
+            })
+            let options = {...query, ...actionOptions.value}
             if (params) {
-                options = {...options, ...params};
+                options = {...options, ...params}
             }
 
-            const action = actionMap[queryAction]();
-            return action(options)
+            const ac = actionMap[queryAction]()
+            return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}));
-                    toggleAllUnselected();
-                    dataTable.value?.reload();
-                });
+                    toast.success(t(success, {executionCount: r.data.count}))
+                    toggleAllUnselected()
+                    dataTable.value?.reload()
+                })
         } else {
-            const selectionData = {executionsId: selection.value};
-            let options = {...selectionData, ...actionOptions.value};
+            const selectionData = {executionsId: selection.value}
+            let options = {...selectionData, ...actionOptions.value}
             if (params) {
-                options = {...options, ...params};
+                options = {...options, ...params}
             }
 
-            const action = actionMap[byIdAction]();
-            return action(options)
+            const ac = actionMap[byIdAction]()
+            return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}));
-                    toggleAllUnselected();
-                    dataTable.value?.reload();
+                    toast.success(t(success, {executionCount: r.data.count}))
+                    toggleAllUnselected()
+                    dataTable.value?.reload()
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})};
-                    }), t(e.message));
-                });
+                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                    }), t(e.message))
+                })
         }
-    };
+    }
 
     const resumeExecutions = () => {
         genericConfirmAction(
@@ -815,8 +815,8 @@
             "bulkResumeExecution",
             "executions resumed",
             false,
-        );
-    };
+        )
+    }
 
     const pauseExecutions = () => {
         genericConfirmAction(
@@ -824,19 +824,19 @@
             "queryPauseExecution",
             "bulkPauseExecution",
             "executions paused",
-        );
-    };
+        )
+    }
 
     const unqueueExecutions = () => {
-        unqueueDialogVisible.value = false;
-        actionOptions.value.newStatus = selectedStatus.value;
+        unqueueDialogVisible.value = false
+        actionOptions.value.newStatus = selectedStatus.value
 
         genericConfirmCallback(
             "queryUnqueueExecution",
             "bulkUnqueueExecution",
             "executions unqueue",
-        );
-    };
+        )
+    }
 
     const forceRunExecutions = () => {
         genericConfirmAction(
@@ -844,8 +844,8 @@
             "queryForceRunExecution",
             "bulkForceRunExecution",
             "executions force run",
-        );
-    };
+        )
+    }
 
     const restartExecutions = () => {
         genericConfirmAction(
@@ -853,45 +853,45 @@
             "queryRestartExecution",
             "bulkRestartExecution",
             "executions restarted",
-        );
-    };
+        )
+    }
 
     const replayExecutions = (latestRevision: boolean) => {
-        isOpenReplayModal.value = false;
+        isOpenReplayModal.value = false
 
         genericConfirmCallback(
             "queryReplayExecution",
             "bulkReplayExecution",
             "executions replayed",
             {latestRevision: latestRevision},
-        );
-    };
+        )
+    }
 
     const changeReplayToast = () => {
-        return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
-    };
+        return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
+    }
 
     const changeStatus = async () => {
-        changeStatusDialogVisible.value = false;
-        actionOptions.value.newStatus = selectedStatus.value;
+        changeStatusDialogVisible.value = false
+        actionOptions.value.newStatus = selectedStatus.value
 
         await genericConfirmCallback(
             "queryChangeExecutionStatus",
             "bulkChangeExecutionStatus",
             "executions state changed",
-        );
-        window.setTimeout(() => dataTable.value?.reload(), 100);
-    };
+        )
+        window.setTimeout(() => dataTable.value?.reload(), 100)
+    }
 
     const changeStatusToast = () => {
-        return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
-    };
+        return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
+    }
 
     const deleteExecutions = () => {
-        const includeNonTerminated = ref(false);
-        const deleteLogs = ref(true);
-        const deleteMetrics = ref(true);
-        const deleteStorage = ref(true);
+        const includeNonTerminated = ref(false)
+        const deleteLogs = ref(true)
+        const deleteMetrics = ref(true)
+        const deleteStorage = ref(true)
 
         const message = () => h("div", null, [
             h(
@@ -905,7 +905,7 @@
                 h(KsSwitch, {
                     modelValue: includeNonTerminated.value,
                     "onUpdate:modelValue": (val: any) => {
-                        includeNonTerminated.value = Boolean(val);
+                        includeNonTerminated.value = Boolean(val)
                     },
                 }),
             ]),
@@ -931,20 +931,20 @@
                 label: t("execution_deletion.storage"),
                 "onUpdate:modelValue": (val: any) => (deleteStorage.value = Boolean(val)),
             }),
-        ]);
+        ])
         KsMessageBox.confirm(message, t("confirmation")).then(() => {
-            actionOptions.value.includeNonTerminated = includeNonTerminated.value;
-            actionOptions.value.deleteLogs = deleteLogs.value;
-            actionOptions.value.deleteMetrics = deleteMetrics.value;
-            actionOptions.value.deleteStorage = deleteStorage.value;
+            actionOptions.value.includeNonTerminated = includeNonTerminated.value
+            actionOptions.value.deleteLogs = deleteLogs.value
+            actionOptions.value.deleteMetrics = deleteMetrics.value
+            actionOptions.value.deleteStorage = deleteStorage.value
 
             genericConfirmCallback(
                 "queryDeleteExecution",
                 "bulkDeleteExecution",
                 "executions deleted",
-            );
-        });
-    };
+            )
+        })
+    }
 
     const killExecutions = () => {
         genericConfirmAction(
@@ -952,15 +952,15 @@
             "queryKill",
             "bulkKill",
             "executions killed",
-        );
-    };
+        )
+    }
 
     const setLabels = () => {
-        const filtered = filterValidLabels(executionLabels.value);
+        const filtered = filterValidLabels(executionLabels.value)
 
         if (filtered.error) {
-            toast.error(t("wrong labels"), t("error"));
-            return;
+            toast.error(t("wrong labels"), t("error"))
+            return
         }
 
         KsMessageBox.confirm(
@@ -978,10 +978,10 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
-                    });
+                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
+                    })
             } else {
                 return executionsStore
                     .bulkSetLabels({
@@ -989,17 +989,17 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}));
-                        toggleAllUnselected();
-                        dataTable.value?.reload();
+                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toggleAllUnselected()
+                        dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
-                        return {message: t(exec.message, {executionId: exec.invalidValue})};
-                    }), t(e.message)));
+                        return {message: t(exec.message, {executionId: exec.invalidValue})}
+                    }), t(e.message)))
             }
         },
-        );
-        isOpenLabelsModal.value = false;
-    };
+        )
+        isOpenLabelsModal.value = false
+    }
 
     const editFlow = () => {
         router.push({
@@ -1010,27 +1010,27 @@
                 tab: "edit",
                 tenant: route.params?.tenant,
             },
-        });
-    };
+        })
+    }
 
     const emitStateCount = () => {
         const runningCount = executionsStore.executions?.filter(execution =>
             execution?.state?.current === State.RUNNING,
-        )?.length ?? 0;
-        const totalCount = executionsStore.total;
-        emit("state-count", {runningCount, totalCount});
-    };
+        )?.length ?? 0
+        const totalCount = executionsStore.total
+        emit("state-count", {runningCount, totalCount})
+    }
 
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {
-            executionLabels.value = [];
+            executionLabels.value = []
         }
-    });
+    })
 
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
             route.query,
-        );
+        )
     }
 </script>
 

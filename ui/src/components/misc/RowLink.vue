@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
 
     interface Props {
         icon?: string;
@@ -26,12 +26,12 @@
     withDefaults(defineProps<Props>(), {
         icon: undefined,
         icons: undefined,
-        clickable: true
-    });
+        clickable: true,
+    })
 
     defineEmits<{
         click: [];
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

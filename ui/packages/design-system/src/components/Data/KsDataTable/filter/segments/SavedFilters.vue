@@ -57,23 +57,23 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    import {KsMessageBox} from "../../../../Feedback/KsMessageBox";
-    import type {SavedFilter} from "../utils/filterTypes";
-    import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons";
+    import {useI18n} from "vue-i18n"
+    import {KsMessageBox} from "../../../../Feedback/KsMessageBox"
+    import type {SavedFilter} from "../utils/filterTypes"
+    import {Close, Delete, InformationOutline, PencilOutline} from "../utils/icons"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
     defineProps<{
         savedFilters: SavedFilter[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         close: [];
         load: [savedFilter: SavedFilter];
         edit: [savedFilter: SavedFilter];
         delete: [savedFilter: SavedFilter];
-    }>();
+    }>()
 
     const deleteFilter = (savedFilter: SavedFilter) => {
         KsMessageBox.confirm(t("filter.delete filter confirm"), t("confirmation"), {
@@ -82,8 +82,8 @@
             cancelButtonText: t("close"),
         }).then(() => {
             emit("delete", savedFilter)
-        }).catch(() => {});
-    };
+        }).catch(() => {})
+    }
 </script>
 
 <style lang="scss" scoped>

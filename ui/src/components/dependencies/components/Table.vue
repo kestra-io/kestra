@@ -74,103 +74,103 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, nextTick, ref, computed} from "vue";
+    import {watch, nextTick, ref, computed} from "vue"
 
-    import Link from "./Link.vue";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
+    import Link from "./Link.vue"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
-    import type {Types, Node, Element} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
+    import type {Types, Node, Element} from "../utils/types"
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
-    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
+    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>()
     const props = defineProps<{
         elements: Element[];
         highlightShown?: (nodeIDs: string[]) => void;
         selected: Node["id"] | undefined;
         subtype?: Types;
-    }>();
+    }>()
 
     const focusSelectedRow = () => {
-        const row = document.querySelector<HTMLElement>(".kel-table__row.selected");
+        const row = document.querySelector<HTMLElement>(".kel-table__row.selected")
 
-        if (!row) return;
+        if (!row) return
 
-        row.scrollIntoView({behavior: "smooth", block: "center"});
-    };
+        row.scrollIntoView({behavior: "smooth", block: "center"})
+    }
 
     watch(
         () => props.selected,
         async (ID) => {
-            if (!ID) return;
+            if (!ID) return
 
-            await nextTick();
+            await nextTick()
 
-            focusSelectedRow();
+            focusSelectedRow()
         },
-    );
+    )
 
-    const search = ref("");
-    const namespace = ref<string | undefined>(undefined);
-    const flow = ref<boolean>(true);
+    const search = ref("")
+    const namespace = ref<string | undefined>(undefined)
+    const flow = ref<boolean>(true)
 
-    const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__";
+    const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__"
 
-    const isNodeElement = (e: Element): e is {data: Node} => e?.data?.type === NODE;
+    const isNodeElement = (e: Element): e is {data: Node} => e?.data?.type === NODE
 
     const namespaces = computed(() => {
         const unique = new Set<string>(
             props.elements
                 ?.filter((e): e is {data: Node} => isNodeElement(e) && !!e.data.namespace)
-                .map(e => e.data.namespace)
-        );
+                .map(e => e.data.namespace),
+        )
 
         return [
-            ...Array.from(unique).map((namespace) => ({
-                label: namespace,
-                value: namespace,
+            ...Array.from(unique).map((ns) => ({
+                label: ns,
+                value: ns,
             })),
             ...(props.subtype === ASSET ?  [{
                 label: t("dependency.search.namespace.no_namespace"),
                 value: NO_NAMESPACE_VALUE,
-            }] : [])
-        ];
-    });
+            }] : []),
+        ]
+    })
 
     const results = computed(() => {
-        const query = search.value.trim().toLowerCase();
+        const query = search.value.trim().toLowerCase()
 
-        const results = props.elements
+        const filtered = props.elements
             .filter(isNodeElement)
             .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
             .filter(({data}) => {
-                if (!namespace.value) return true;
+                if (!namespace.value) return true
 
                 if (namespace.value === NO_NAMESPACE_VALUE) {
-                    return data.namespace === undefined;
+                    return data.namespace === undefined
                 }
 
-                return data.namespace === namespace.value;
+                return data.namespace === namespace.value
             })
             .filter(({data}) => {
-                if (!query) return true;
+                if (!query) return true
 
                 return (
                     data.flow?.toLowerCase().includes(query) ||
                     data.namespace?.toLowerCase().includes(query)
-                );
-            });
+                )
+            })
 
         // Pass the IDs of the currently shown nodes to the parent component for highlighting in the graph.
-        const IDs = results.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []));
-        props.highlightShown?.(IDs);
+        const IDs = filtered.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []))
+        props.highlightShown?.(IDs)
 
-        return results;
-    });
+        return filtered
+    })
 </script>
 
 <style scoped lang="scss">

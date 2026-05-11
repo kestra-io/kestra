@@ -1,19 +1,19 @@
-import type {Component} from "vue";
+import type {Component} from "vue"
 
-import {useI18n} from "vue-i18n";
+import {useI18n} from "vue-i18n"
 
-import {useNetwork} from "@vueuse/core";
-const {isOnline} = useNetwork();
+import {useNetwork} from "@vueuse/core"
+const {isOnline} = useNetwork()
 
-import ContextNews from "../../components/layout/ContextNews.vue";
-import ContextDocs from "../../components/docs/ContextDocs.vue";
+import ContextNews from "../../components/layout/ContextNews.vue"
+import ContextDocs from "../../components/docs/ContextDocs.vue"
 
-import MessageOutline from "vue-material-design-icons/MessageOutline.vue";
-import FileDocument from "vue-material-design-icons/FileDocument.vue";
-import Slack from "vue-material-design-icons/Slack.vue";
-import Github from "vue-material-design-icons/Github.vue";
-import Calendar from "vue-material-design-icons/Calendar.vue";
-import Star from "vue-material-design-icons/Star.vue";
+import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
+import FileDocument from "vue-material-design-icons/FileDocument.vue"
+import Slack from "vue-material-design-icons/Slack.vue"
+import Github from "vue-material-design-icons/Github.vue"
+import Calendar from "vue-material-design-icons/Calendar.vue"
+import Star from "vue-material-design-icons/Star.vue"
 
 interface Button {
     title: string;
@@ -26,7 +26,7 @@ interface Button {
 }
 
 export function useContextButtons() {
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
@@ -69,7 +69,7 @@ export function useContextButtons() {
                   url: "https://github.com/kestra-io/kestra?utm_source=app&utm_medium=referral&utm_campaign=context-bar",
               },
           }
-        : {};
+        : {}
 
-    return {buttons};
+    return {buttons}
 }

@@ -1,6 +1,6 @@
 
-import "pinia";
-import {type configureAxios} from "@kestra-io/kestra-sdk";
+import "pinia"
+import {type configureAxios} from "@kestra-io/kestra-sdk"
 
 declare module "pinia" {
 

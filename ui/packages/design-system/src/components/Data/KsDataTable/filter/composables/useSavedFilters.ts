@@ -1,10 +1,10 @@
-import {computed} from "vue";
-import {useRoute} from "vue-router";
-import {useStorage} from "@vueuse/core";
-import type {SavedFilter} from "../utils/filterTypes";
+import {computed} from "vue"
+import {useRoute} from "vue-router"
+import {useStorage} from "@vueuse/core"
+import type {SavedFilter} from "../utils/filterTypes"
 
 const isDateString = (value: any) =>
-    typeof value === "string" && !isNaN(Date.parse(value)) && value.includes("T");
+    typeof value === "string" && !isNaN(Date.parse(value)) && value.includes("T")
 
 const deserializeDates = (filter: SavedFilter): SavedFilter => ({
     ...filter,
@@ -14,25 +14,25 @@ const deserializeDates = (filter: SavedFilter): SavedFilter => ({
             ? {startDate: new Date(f.value.startDate), endDate: new Date(f.value.endDate)}
             : isDateString(f.value)
                 ? new Date(f.value)
-                : f.value
+                : f.value,
     })),
-    createdAt: new Date(filter.createdAt)
-});
+    createdAt: new Date(filter.createdAt),
+})
 
 export function useSavedFilters(prefix: string) {
-    const route = useRoute();
+    const route = useRoute()
 
     const storageKey = computed(() => {
-        const routeKey = String(route.name || route.path.replace(/\//g, "_").replace(/^_/, ""));
-        return `saved_filters_${prefix}_${routeKey}`;
-    });
+        const routeKey = String(route.name || route.path.replace(/\//g, "_").replace(/^_/, ""))
+        return `saved_filters_${prefix}_${routeKey}`
+    })
 
     const savedFilters = useStorage<SavedFilter[]>(storageKey.value, [], localStorage, {
         serializer: {
             read: (v: string) => JSON.parse(v).map(deserializeDates),
-            write: (v: SavedFilter[]) => JSON.stringify(v)
-        }
-    });
+            write: (v: SavedFilter[]) => JSON.stringify(v),
+        },
+    })
 
     const saveFilter = (name: string, description: string, filters: any[]) => {
         savedFilters.value = [...savedFilters.value, {
@@ -41,28 +41,28 @@ export function useSavedFilters(prefix: string) {
             description,
             filters: [...filters],
             createdAt: new Date(),
-        }];
-    };
+        }]
+    }
 
     const updateSavedFilter = (id: string, name: string, description: string) => {
-        const index = savedFilters.value.findIndex((f) => f.id === id);
+        const index = savedFilters.value.findIndex((f) => f.id === id)
         if (index !== -1) {
             savedFilters.value[index] = {
                 ...savedFilters.value[index],
                 name,
-                description
-            };
+                description,
+            }
         }
-    };
+    }
 
     const deleteSavedFilter = (savedFilter: SavedFilter) => {
-        savedFilters.value = savedFilters.value.filter((f) => f.id !== savedFilter.id);
-    };
+        savedFilters.value = savedFilters.value.filter((f) => f.id !== savedFilter.id)
+    }
 
     return {
         savedFilters: computed(() => savedFilters.value),
         saveFilter,
         updateSavedFilter,
         deleteSavedFilter,
-    };
+    }
 }

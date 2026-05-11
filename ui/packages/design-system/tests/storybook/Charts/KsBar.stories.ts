@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
 import {expect} from "storybook/test"
 import KsBar from "../../../src/components/Charts/KsBar.vue"
-import {ChartFeature, TooltipType} from "../../../src";
+import {ChartFeature, TooltipType} from "../../../src"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const ALL_FEATURES = ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"] as const
@@ -87,21 +87,21 @@ export const SplitArea: Story = {
             xAxis: {
                 name: "Month",
                 splitLine: {
-                    show: false
+                    show: false,
                 },
                 splitArea: {
-                    show: true
-                }
+                    show: true,
+                },
             },
             yAxis: {
                 name: "Total",
                 splitLine: {
-                    show: false
+                    show: false,
                 },
                 splitArea: {
-                    show: true
-                }
-            }
+                    show: true,
+                },
+            },
         },
         loading: false,
     },
@@ -161,7 +161,7 @@ export const WithOptionsOverride: Story = {
     args: {
         disableFeatures: [ChartFeature.LEGEND],
         loading: true,
-        tooltipType: TooltipType.EXTERNAL
+        tooltipType: TooltipType.EXTERNAL,
     },
 
     render: () => ({
@@ -181,7 +181,7 @@ export const WithOptionsOverride: Story = {
                 />
             </div>
         `,
-    })
+    }),
 }
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────

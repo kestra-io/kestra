@@ -27,23 +27,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
-    import {useI18n} from "vue-i18n";
-    import PlayIcon from "vue-material-design-icons/Play.vue";
-    import {usePluginsStore} from "../../../../../stores/plugins";
-    import {usePlaygroundStore} from "../../../../../stores/playground";
+    import {computed, inject} from "vue"
+    import {useI18n} from "vue-i18n"
+    import PlayIcon from "vue-material-design-icons/Play.vue"
+    import {usePluginsStore} from "../../../../../stores/plugins"
+    import {usePlaygroundStore} from "../../../../../stores/playground"
 
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons"
     import {
         EDIT_TASK_FUNCTION_INJECTION_KEY,
-    } from "../../../injectionKeys";
+    } from "../../../injectionKeys"
 
-    import {KsTaskIcon} from "@kestra-io/design-system";
+    import {KsTaskIcon} from "@kestra-io/design-system"
 
-    const emits = defineEmits(["removeElement", "moveElement"]);
+    const emits = defineEmits(["removeElement", "moveElement"])
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = defineProps<{
         section: string;
@@ -58,28 +58,28 @@
         typeFieldSchema: "on" | "type";
         moved?: boolean;
         title?: string
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const playgroundStore = usePlaygroundStore();
+    const pluginsStore = usePluginsStore()
+    const playgroundStore = usePlaygroundStore()
 
-    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"));
+    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"))
 
-    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {});
+    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {})
 
     const identifier = computed(() => {
         return props.element.id
             ?? props.element[props.typeFieldSchema]
-            ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
-    });
+            ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`
+    })
 
     const handleClick = () => {
         editTask(
             props.parentPathComplete,
             props.blockSchemaPath,
-            props.elementIndex
-        );
-    };
+            props.elementIndex,
+        )
+    }
 </script>
 
 <style scoped lang="scss">

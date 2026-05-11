@@ -69,23 +69,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, nextTick} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {DeleteOutline} from "../../utils/icons";
+    import {computed, ref, watch, nextTick} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {DeleteOutline} from "../../utils/icons"
 
-    import InputText from "../inputs/InputText.vue";
-    import TaskExpression from "./TaskExpression.vue";
-    import Add from "../Add.vue";
-    import debounce from "lodash/debounce";
-    import Wrapper from "./Wrapper.vue";
-    import {useBlockComponent} from "./useBlockComponent";
-    import {useToast} from "../../../../utils/toast";
+    import InputText from "../inputs/InputText.vue"
+    import TaskExpression from "./TaskExpression.vue"
+    import Add from "../Add.vue"
+    import debounce from "lodash/debounce"
+    import Wrapper from "./Wrapper.vue"
+    import {useBlockComponent} from "./useBlockComponent"
+    import {useToast} from "../../../../utils/toast"
 
-    const {t, te} = useI18n();
+    const {t, te} = useI18n()
 
     defineOptions({
         inheritAttrs: false,
-    });
+    })
 
     const props = withDefaults(defineProps<{
         modelValue?: Record<string, any>;
@@ -96,106 +96,106 @@
         disabled: false,
         modelValue: () => ({}),
         root: undefined,
-        schema: () => ({type: "object"})
-    });
+        schema: () => ({type: "object"}),
+    })
 
-    const {getBlockComponent} = useBlockComponent();
+    const {getBlockComponent} = useBlockComponent()
 
     const componentType = computed(() => {
         return props.schema?.additionalProperties ? getBlockComponent.value(
             props.schema.additionalProperties,
-            props.root
-        ) : undefined;
-    });
+            props.root,
+        ) : undefined
+    })
 
     const currentValue = ref<[string, any][]>([])
-    const keyInputRefs: Record<number, any> = {};
+    const keyInputRefs: Record<number, any> = {}
 
     // this flag will avoid updating the modelValue when the
     // change was initiated in the component itself
-    const localEdit = ref(false);
+    const localEdit = ref(false)
 
     watch(
         () => props.modelValue,
         (newValue) => {
             if(localEdit.value) {
-                return;
+                return
             }
-            localEdit.value = false;
+            localEdit.value = false
             if(newValue === undefined || newValue === null) {
-                currentValue.value = [];
-                return;
+                currentValue.value = []
+                return
             }
-            currentValue.value = Object.entries(newValue ?? {});
+            currentValue.value = Object.entries(newValue ?? {})
         },
         {
             immediate: true,
-            deep: true
+            deep: true,
         },
-    );
+    )
 
     const duplicatedKeys = computed(() => {
         return currentValue.value.map(pair => pair[0])
             .filter((key, index, self) =>
-                self.indexOf(key) !== index
-            );
-    });
+                self.indexOf(key) !== index,
+            )
+    })
 
     const emitUpdate = debounce(function () {
         if(duplicatedKeys.value?.length > 0) {
-            return;
+            return
         }
-        localEdit.value = true;
-        emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
-    }, 200);
+        localEdit.value = true
+        emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
+    }, 200)
 
-    const emit = defineEmits(["update:modelValue"]);
+    const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
-        return props.root ? `${props.root}.${key}` : key;
+        return props.root ? `${props.root}.${key}` : key
     }
 
     function isRequired(key: string) {
-        return props.schema?.required?.includes(key);
+        return props.schema?.required?.includes(key)
     }
 
     function onKey(key: number, val: string) {
-        currentValue.value[key][0] = val;
+        currentValue.value[key][0] = val
         emitUpdate()
     }
 
     function onValueChange(key: number, val: any) {
-        currentValue.value[key][1] = val;
+        currentValue.value[key][1] = val
         emitUpdate()
     }
 
     function removeItem(index: number) {
-        currentValue.value.splice(index, 1);
+        currentValue.value.splice(index, 1)
         emitUpdate()
     }
 
-    const toast = useToast();
+    const toast = useToast()
 
     function addItem() {
         if(addButtonDisabled.value) {
-            toast.warning(t("no_code.add.disabled_warning"));
-            return;
+            toast.warning(t("no_code.add.disabled_warning"))
+            return
         }
-        currentValue.value.push(["", undefined]);
-        const newIndex = currentValue.value.length - 1;
+        currentValue.value.push(["", undefined])
+        const newIndex = currentValue.value.length - 1
         emitUpdate()
         
         // Focus the key input field after the new row is rendered
         nextTick(() => {
             setTimeout(() => {
-                keyInputRefs[newIndex]?.focus();
-            }, 100);
-        });
+                keyInputRefs[newIndex]?.focus()
+            }, 100)
+        })
     }
 
     const addButtonDisabled = computed(() => {
-        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
-    });
+        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined
+    })
 </script>
 
 <style scoped lang="scss">

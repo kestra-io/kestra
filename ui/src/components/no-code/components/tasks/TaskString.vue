@@ -61,14 +61,14 @@
     </div>
 </template>
 <script lang="ts" setup>
-    import {ref, computed, onMounted} from "vue";
-    import $moment from "moment";
-    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
-    import Editor from "../../../../components/inputs/Editor.vue";
-    import InputText from "../inputs/InputText.vue";
-    import {Schema} from "./getTaskComponent";
+    import {ref, computed, onMounted} from "vue"
+    import $moment from "moment"
+    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue"
+    import Editor from "../../../../components/inputs/Editor.vue"
+    import InputText from "../inputs/InputText.vue"
+    import {Schema} from "./getTaskComponent"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         disabled?: boolean;
@@ -76,57 +76,57 @@
         schema?: Schema;
         root?: string;
         task?: any;
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:modelValue", value: string | undefined): void;
-    }>();
+    }>()
 
 
-    const pebble = ref(false);
+    const pebble = ref(false)
 
     // Computed property for editor language
     const editorLanguage = computed(() => {
-        return props.schema?.$language ?? "plaintext";
-    });
+        return props.schema?.$language ?? "plaintext"
+    })
 
     const values = computed(() => {
         if (props.modelValue === undefined) {
-            return props.schema?.default;
+            return props.schema?.default
         }
 
-        return props.modelValue;
+        return props.modelValue
     })
 
     onMounted(() => {
-        const schema = props.schema;
-        if (!schema) return;
+        const schema = props.schema
+        if (!schema) return
 
         if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
-            pebble.value = false;
+            pebble.value = false
         } else if (schema.format === "duration" && values.value) {
-            pebble.value = !$moment.duration(props.modelValue).isValid();
+            pebble.value = !$moment.duration(props.modelValue).isValid()
         } else if (schema.format === "date-time" && values.value) {
-            pebble.value = isNaN(Date.parse(props.modelValue as string));
+            pebble.value = isNaN(Date.parse(props.modelValue as string))
         }
-    });
+    })
 
     // FIXME: hardcoded condition only show days input for timeWindow durations
     const showDurationDays = computed(() => {
         return props.schema?.format === "duration" && props.root?.startsWith("timeWindow")
-    });
+    })
 
     const daysDurationValue = computed<number | undefined>(() => {
         if (typeof values.value === "string") {
-            const duration = $moment.duration(values.value);
-            return Math.floor(duration.asDays());
+            const duration = $moment.duration(values.value)
+            return Math.floor(duration.asDays())
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     const timeDurationValue = computed<Date | undefined>(() => {
         if (typeof values.value === "string") {
-            const duration = $moment.duration(values.value);
+            const duration = $moment.duration(values.value)
             return new Date(
                 1981,
                 1,
@@ -134,14 +134,14 @@
                 duration.hours(),
                 duration.minutes(),
                 duration.seconds(),
-            );
+            )
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     const defaultDuration = computed(() => {
-        return $moment().seconds(0).minutes(0).hours(0).toDate();
-    });
+        return $moment().seconds(0).minutes(0).hours(0).toDate()
+    })
 
     function onInputDuration(value: string | Date | null | undefined) {
         const emitted =
@@ -154,12 +154,12 @@
                         minutes: value.getMinutes(),
                         hours: value.getHours(),
                     })
-                    .toString();
-        emit("update:modelValue", emitted);
+                    .toString()
+        emit("update:modelValue", emitted)
     }
 
     function onInputDaysDuration(value: number | undefined) {
-        const currentTimeDuration = timeDurationValue.value;
+        const currentTimeDuration = timeDurationValue.value
         const emitted = (value === undefined)
             ? undefined
             : currentTimeDuration === undefined
@@ -176,14 +176,14 @@
                         seconds: currentTimeDuration.getSeconds(),
                     })
                     .toString()
-        emit("update:modelValue", emitted);
+        emit("update:modelValue", emitted)
     }
 
     function onInput(value: string) {
-        emit("update:modelValue", value);
+        emit("update:modelValue", value)
     }
 
-    const editorValue = computed(() => props.modelValue);
+    const editorValue = computed(() => props.modelValue)
 
 </script>
 

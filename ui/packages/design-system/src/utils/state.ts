@@ -1,16 +1,16 @@
-import type {Component} from "vue";
-import PauseCircle from "vue-material-design-icons/PauseCircle.vue";
-import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-import PlayCircle from "vue-material-design-icons/PlayCircle.vue";
-import CloseCircle from "vue-material-design-icons/CloseCircle.vue";
-import StopCircle from "vue-material-design-icons/StopCircle.vue";
-import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue";
-import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
-import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue";
-import Refresh from "vue-material-design-icons/Refresh.vue";
-import Cancel from "vue-material-design-icons/Cancel.vue";
-import {cssVar} from "./css";
+import type {Component} from "vue"
+import PauseCircle from "vue-material-design-icons/PauseCircle.vue"
+import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+import PlayCircle from "vue-material-design-icons/PlayCircle.vue"
+import CloseCircle from "vue-material-design-icons/CloseCircle.vue"
+import StopCircle from "vue-material-design-icons/StopCircle.vue"
+import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue"
+import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue"
+import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue"
+import Refresh from "vue-material-design-icons/Refresh.vue"
+import Cancel from "vue-material-design-icons/Cancel.vue"
+import {cssVar} from "./css"
 
 interface StateModel {
     name: string;
@@ -22,7 +22,7 @@ interface StateModel {
     isFailed: boolean;
 }
 
-export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const;
+export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const
 
 export const STATES:Record<string, StateModel> = Object.freeze({
     CREATED: {
@@ -160,77 +160,75 @@ export const STATES:Record<string, StateModel> = Object.freeze({
         isKillable: false,
         isFailed: false,
     },
-});
+})
 
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
-    Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
+    Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
-export class State {
-    static readonly CREATED = "CREATED" as const;
-    static readonly RESTARTED = "RESTARTED" as const;
-    static readonly SUCCESS = "SUCCESS" as const;
-    static readonly RUNNING = "RUNNING" as const;
-    static readonly KILLING = "KILLING" as const;
-    static readonly KILLED = "KILLED" as const;
-    static readonly FAILED = "FAILED" as const;
-    static readonly WARNING = "WARNING" as const;
-    static readonly PAUSED = "PAUSED" as const;
-    static readonly CANCELLED = "CANCELLED" as const;
-    static readonly SKIPPED = "SKIPPED" as const;
-    static readonly QUEUED = "QUEUED" as const;
-    static readonly RETRYING = "RETRYING" as const;
-    static readonly RETRIED = "RETRIED" as const;
-    static readonly BREAKPOINT = "BREAKPOINT" as const;
+export const CREATED = "CREATED" as const
+export const RESTARTED = "RESTARTED" as const
+export const SUCCESS = "SUCCESS" as const
+export const RUNNING = "RUNNING" as const
+export const KILLING = "KILLING" as const
+export const KILLED = "KILLED" as const
+export const FAILED = "FAILED" as const
+export const WARNING = "WARNING" as const
+export const PAUSED = "PAUSED" as const
+export const CANCELLED = "CANCELLED" as const
+export const SKIPPED = "SKIPPED" as const
+export const QUEUED = "QUEUED" as const
+export const RETRYING = "RETRYING" as const
+export const RETRIED = "RETRIED" as const
+export const BREAKPOINT = "BREAKPOINT" as const
 
-    static isRunning(state:string) {
-        return STATES[state]?.isRunning;
-    }
+export function isRunning(state:string) {
+    return STATES[state]?.isRunning
+}
 
-    static isKillable(state:string) {
-        return STATES[state]?.isKillable;
-    }
+export function isKillable(state:string) {
+    return STATES[state]?.isKillable
+}
 
-    static isPaused(state:string) {
-        return STATES[state] === STATES.PAUSED;
-    }
+export function isPaused(state:string) {
+    return STATES[state] === STATES.PAUSED
+}
 
-    static isFailed(state:string) {
-        return STATES[state]?.isFailed;
-    }
+export function isFailed(state:string) {
+    return STATES[state]?.isFailed
+}
 
-    static isQueued(state:string) {
-        return STATES[state] === STATES.QUEUED;
-    }
+export function isQueued(state:string) {
+    return STATES[state] === STATES.QUEUED
+}
 
-    static allStates() {
-        return mapValues(STATES, (state:StateModel) => ({
-            key: state.name,
-            icon: state.icon,
-            color: "",
-        }));
-    }
+export function allStates() {
+    return mapValues(STATES, (state:StateModel) => ({
+        key: state.name,
+        icon: state.icon,
+        color: "",
+    }))
+}
 
-    static arrayAllStates() {
-        return Object.values(STATES);
-    }
+export function arrayAllStates() {
+    return Object.values(STATES)
+}
 
-    static colorClass() {
-        return mapValues(STATES, (state) => state.colorClass);
-    }
+export function colorClass() {
+    return mapValues(STATES, (state) => state.colorClass)
+}
 
-    static color() {
-        return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`));
-    }
+export function color() {
+    return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`))
+}
 
-    static getStateColor(state:string) {
-        return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`);
-    }
+export function getStateColor(state:string) {
+    return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`)
+}
 
-    static icon() {
-        return mapValues(STATES, (state) => state.icon);
-    }
+export function icon() {
+    return mapValues(STATES, (state) => state.icon)
+}
 
-    static getTerminatedStates() {
-        return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name);
-    }
+export function getTerminatedStates() {
+    return Object.values(STATES).filter(state => !state.isRunning).map(state => state.name)
 }

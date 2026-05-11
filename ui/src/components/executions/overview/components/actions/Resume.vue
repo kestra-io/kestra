@@ -23,20 +23,20 @@
 </template>
 
 <script setup>
-    import Play from "vue-material-design-icons/Play.vue";
+    import Play from "vue-material-design-icons/Play.vue"
 </script>
 
 <script>
-    import resource from "../../../../../models/resource";
-    import action from "../../../../../models/action";
-    import {State} from "@kestra-io/design-system";
-    import FlowUtils from "../../../../../utils/flowUtils";
-    import * as ExecutionUtils from "../../../../../utils/executionUtils";
-    import InputsForm from "../../../../../components/inputs/InputsForm.vue";
-    import {inputsToFormData} from "../../../../../utils/submitTask";
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../../../../stores/executions";
-    import {useAuthStore} from "override/stores/auth";
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
+    import {State} from "@kestra-io/design-system"
+    import * as FlowUtils from "../../../../../utils/flowUtils"
+    import * as ExecutionUtils from "../../../../../utils/executionUtils"
+    import InputsForm from "../../../../../components/inputs/InputsForm.vue"
+    import {inputsToFormData} from "../../../../../utils/submitTask"
+    import {mapStores} from "pinia"
+    import {useExecutionsStore} from "../../../../../stores/executions"
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {InputsForm},
@@ -54,35 +54,35 @@
             return {
                 inputs: {},
                 isDrawerOpen: false,
-            };
+            }
         },
         created() {
             if (this.enabled) {
-                this.loadDefinition();
+                this.loadDefinition()
             }
         },
         methods: {
             click() {
                 if (this.needInputs) {
-                    this.isDrawerOpen = true;
-                    return;
+                    this.isDrawerOpen = true
+                    return
                 }
 
                 this.$toast()
                     .confirm(this.$t("resumed confirm", {id: this.execution.id}), () => {
-                        return this.resume();
-                    }, () => {}, false);
+                        return this.resume()
+                    }, () => {}, false)
             },
             resumeWithInputs(formRef) {
                 if (formRef) {
                     formRef.validate((valid) => {
                         if (!valid) {
-                            return false;
+                            return false
                         }
 
-                        const formData = inputsToFormData(this, this.inputsList, this.inputs);
-                        this.resume(formData);
-                    });
+                        const formData = inputsToFormData(this, this.inputsList, this.inputs)
+                        this.resume(formData)
+                    })
                 }
 
             },
@@ -93,40 +93,40 @@
                         formData: formData,
                     })
                     .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("resumed done"));
-                    });
+                        this.isDrawerOpen = false
+                        this.$toast().success(this.$t("resumed done"))
+                    })
             },
             loadDefinition() {
                 this.executionsStore.loadFlowForExecution({
                     flowId: this.execution.flowId,
                     namespace: this.execution.namespace,
                     store: true,
-                });
+                })
             },
         },
         computed: {
             ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
                 if (!(this.authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
+                    return false
                 }
 
-                return State.isPaused(this.execution.state.current);
+                return State.isPaused(this.execution.state.current)
             },
             inputsList() {
-                const findTaskRunByState = ExecutionUtils.findTaskRunsByState(this.execution, State.PAUSED);
+                const findTaskRunByState = ExecutionUtils.findTaskRunsByState(this.execution, State.PAUSED)
                 if (findTaskRunByState.length === 0) {
-                    return [];
+                    return []
                 }
 
-                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId);
+                const findTaskById = FlowUtils.findTaskById(this.executionsStore.flow, findTaskRunByState[0].taskId)
 
-                return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : [];
+                return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : []
             },
             needInputs() {
-                return this.inputsList?.length > 0;
+                return this.inputsList?.length > 0
             },
         },
-    };
+    }
 </script>

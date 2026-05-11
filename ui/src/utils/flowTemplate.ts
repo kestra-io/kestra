@@ -1,12 +1,12 @@
-import action from "../models/action";
-import resource from "../models/resource";
+import action from "../models/action"
+import resource from "../models/resource"
 
 export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataType: string) {
     if (item === undefined) {
-        return  true;
+        return  true
     }
 
-    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource];
+    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource]
 
     return (
         isEdit && user &&
@@ -14,7 +14,7 @@ export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataT
     ) || (
         !isEdit && user &&
         user.isAllowed(typedResource, action.CREATE, item.namespace)
-    );
+    )
 }
 
 export function saveFlowTemplate(self: {
@@ -24,8 +24,8 @@ export function saveFlowTemplate(self: {
 }, file: string, dataType: string) {
     return (dataType === "template" ? self.templateStore.saveTemplate({template: file}) : self.flowStore.saveFlow({flow: file}))
         .then((response: { id: string }) => {
-            self.$toast().saved(response.id);
+            self.$toast().saved(response.id)
 
-            return response;
-        });
+            return response
+        })
 }

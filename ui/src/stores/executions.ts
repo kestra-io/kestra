@@ -1,13 +1,13 @@
-import {defineStore} from "pinia";
-import {ref, watch} from "vue";
-import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils";
-import {useCoreStore} from "./core";
-import throttle from "lodash/throttle";
-import {useRoute} from "vue-router";
-import {CLUSTER_PREFIX} from "@kestra-io/design-system";
-import {useClient} from "@kestra-io/kestra-sdk";
-import * as ExecutionUtils from "../utils/executionUtils";
+import {defineStore} from "pinia"
+import {ref, watch} from "vue"
+import {apiUrl} from "override/utils/route"
+import * as Utils from "../utils/utils"
+import {useCoreStore} from "./core"
+import throttle from "lodash/throttle"
+import {useRoute} from "vue-router"
+import {CLUSTER_PREFIX} from "@kestra-io/design-system"
+import {useClient} from "@kestra-io/kestra-sdk"
+import * as ExecutionUtils from "../utils/executionUtils"
 
 interface LogsState {
     total: number;
@@ -69,33 +69,33 @@ export interface Execution{
 
 export const useExecutionsStore = defineStore("executions", () => {
     // State
-    const executions = ref<Execution[] | undefined>(undefined);
-    const execution = ref<Execution | undefined>(undefined);
-    const taskRun = ref<any | undefined>(undefined);
-    const total = ref<number>(0);
+    const executions = ref<Execution[] | undefined>(undefined)
+    const execution = ref<Execution | undefined>(undefined)
+    const taskRun = ref<any | undefined>(undefined)
+    const total = ref<number>(0)
     const logs = ref<LogsState>({
         total: 0,
         results: [],
-    });
-    const metrics = ref<any[]>([]);
-    const metricsTotal = ref<number>(0);
-    const subflowsExecutions = ref<Record<string, any>>({});
-    const flow = ref<any | undefined>(undefined);
-    const flowGraph = ref<any | undefined>(undefined);
-    const namespaces = ref<string[]>([]);
-    const flowsExecutable = ref<any[]>([]);
+    })
+    const metrics = ref<any[]>([])
+    const metricsTotal = ref<number>(0)
+    const subflowsExecutions = ref<Record<string, any>>({})
+    const flow = ref<any | undefined>(undefined)
+    const flowGraph = ref<any | undefined>(undefined)
+    const namespaces = ref<string[]>([])
+    const flowsExecutable = ref<any[]>([])
 
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow
     watch(execution, (newExecution) => {
         if(!newExecution){
-            flowGraph.value = undefined;
-            flow.value = undefined;
+            flowGraph.value = undefined
+            flow.value = undefined
         }
-    });
+    })
 
-    const coreStore = useCoreStore();
-    const axios = useClient();
+    const coreStore = useCoreStore()
+    const axios = useClient()
 
     // Actions
     const restartExecution = (options: { executionId: string; revision?: number }) => {
@@ -106,46 +106,46 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     revision: options.revision,
                 },
-            });
-    };
+            })
+    }
 
     const bulkRestartExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/restart/by-ids`,
             options.executionsId,
-        );
-    };
+        )
+    }
 
     const queryRestartExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/restart/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/resume/by-ids`,
             options.executionsId,
-        );
-    };
+        )
+    }
 
     const queryResumeExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/resume/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/replay/by-ids`,
             options.executionsId,
             {params: options},
-        );
-    };
+        )
+    }
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
         return axios.post(
@@ -156,24 +156,24 @@ export const useExecutionsStore = defineStore("executions", () => {
                     newStatus: options.newStatus,
                 },
             },
-        );
-    };
+        )
+    }
 
     const queryReplayExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/replay/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/change-status/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
         return axios.post<Execution>(
@@ -185,8 +185,8 @@ export const useExecutionsStore = defineStore("executions", () => {
                     revision: options.revision,
                     breakpoints: options.breakpoints ? options.breakpoints : undefined,
                 },
-            });
-    };
+            })
+    }
 
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
@@ -201,8 +201,8 @@ export const useExecutionsStore = defineStore("executions", () => {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
-            });
-    };
+            })
+    }
 
     const changeExecutionStatus = (options: { executionId: string; state: string }) => {
         return axios.post(
@@ -212,8 +212,8 @@ export const useExecutionsStore = defineStore("executions", () => {
                 params: {
                     status: options.state,
                 },
-            });
-    };
+            })
+    }
 
     const changeStatus = (options: { executionId: string; taskRunId?: string; state: string }) => {
         return axios.post(
@@ -221,25 +221,25 @@ export const useExecutionsStore = defineStore("executions", () => {
             {
                 taskRunId: options.taskRunId,
                 state: options.state,
-            });
-    };
+            })
+    }
     const waitForStateChange = async (source: Execution) => {
-        const updated = await ExecutionUtils.waitForState(axios, source) as Execution;
-        execution.value = updated;
-        return updated;
-    };
+        const updated = await ExecutionUtils.waitForState(axios, source) as Execution
+        execution.value = updated
+        return updated
+    }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
-        return axios.delete(`${apiUrl()}/executions/${options.id}/actions/kill?isOnKillCascade=${options.isOnKillCascade}`);
-    };
+        return axios.delete(`${apiUrl()}/executions/${options.id}/actions/kill?isOnKillCascade=${options.isOnKillCascade}`)
+    }
 
     const bulkKill = (options: { executionsId: string[] }) => {
-        return axios.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId});
-    };
+        return axios.delete(`${apiUrl()}/executions/kill/by-ids`, {data: options.executionsId})
+    }
 
     const queryKill = (options: Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/kill/by-query`, {params: options});
-    };
+        return axios.delete(`${apiUrl()}/executions/kill/by-query`, {params: options})
+    }
 
     const resume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
@@ -247,8 +247,8 @@ export const useExecutionsStore = defineStore("executions", () => {
             headers: {
                 "content-type": "multipart/form-data",
             },
-        });
-    };
+        })
+    }
 
     const validateResume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
@@ -256,49 +256,49 @@ export const useExecutionsStore = defineStore("executions", () => {
             headers: {
                 "content-type": "multipart/form-data",
             },
-        });
-    };
+        })
+    }
 
     const pause = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/pause`);
-    };
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/pause`)
+    }
 
     const bulkPauseExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/pause/by-ids`,
             options.executionsId,
-        );
-    };
+        )
+    }
 
     const queryPauseExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/pause/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const loadExecution = (options: { id: string }) => {
         return axios.get(`${apiUrl()}/executions/${options.id}`).then(response => {
-            execution.value = response.data;
-            return response.data;
-        });
-    };
+            execution.value = response.data
+            return response.data
+        })
+    }
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
             if (options.commit !== false) {
-                executions.value = response.data.results;
-                total.value = response.data.total;
+                executions.value = response.data.results
+                total.value = response.data.total
             }
 
             if (options.onlyTotal) {
-                return response.data.total;
+                return response.data.total
             }
 
-            return response.data;
-        });
-    };
+            return response.data
+        })
+    }
 
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
@@ -310,8 +310,8 @@ export const useExecutionsStore = defineStore("executions", () => {
                 labels: options.labels ?? [],
                 scheduleDate: options.scheduleDate,
             },
-        });
-    };
+        })
+    }
 
     const triggerExecution = (options: {
         namespace: string;
@@ -333,87 +333,87 @@ export const useExecutionsStore = defineStore("executions", () => {
                 kind: options.kind,
                 breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             },
-        });
-    };
+        })
+    }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {
-        const {id, deleteLogs, deleteMetrics, deleteStorage} = options;
+        const {id, deleteLogs, deleteMetrics, deleteStorage} = options
         const qs = Object.entries({deleteLogs, deleteMetrics, deleteStorage})
             .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-            .join("&");
+            .join("&")
 
         return axios.delete(`${apiUrl()}/executions/${id}?${qs}`).then(() => {
-            execution.value = undefined;
-        });
-    };
+            execution.value = undefined
+        })
+    }
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}});
-    };
+        return axios.delete(`${apiUrl()}/executions/by-ids`, {data: options.executionsId, params: {...options}})
+    }
 
     const queryDeleteExecution = (options: Record<string, any>) => {
-        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options});
-    };
+        return axios.delete(`${apiUrl()}/executions/by-query`, {params: options})
+    }
 
-    const sse = ref<EventSource | undefined>(undefined);
+    const sse = ref<EventSource | undefined>(undefined)
 
     function closeSSE() {
         if (sse.value) {
             // when closing SSE, the doc seems to say the onerror is called
             // trying to prevent an unwanted error is displayed for the user
-            sse.value.onerror = () => {};
+            sse.value.onerror = () => {}
 
-            sse.value.close();
-            sse.value = undefined;
+            sse.value.close()
+            sse.value = undefined
         }
     }
 
-    const route = useRoute();
+    const route = useRoute()
 
     const throttledExecutionUpdate = throttle((executionEvent: MessageEvent) => {
-        const _execution = JSON.parse(executionEvent.data);
+        const parsedExecution = JSON.parse(executionEvent.data)
 
-        const _flow = flow.value;
+        const flowValue = flow.value
 
-        if ((!_flow ||
-            _execution.flowId !== _flow.id ||
-            _execution.namespace !== _flow.namespace ||
-            _execution.flowRevision !== _flow.revision)
+        if ((!flowValue ||
+            parsedExecution.flowId !== flowValue.id ||
+            parsedExecution.namespace !== flowValue.namespace ||
+            parsedExecution.flowRevision !== flowValue.revision)
         ) {
             loadFlowForExecutionByExecutionId(
                 {
-                    id: _execution.id,
+                    id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = _execution;
-            });
+                execution.value = parsedExecution
+            })
         }
 
-        execution.value = _execution;
-    }, 500);
+        execution.value = parsedExecution
+    }, 500)
 
     const followExecution = (options: { id: string, rawSSE?: boolean }, translate: (itn: string) => string) => {
         if (!options.rawSSE) {
-            execution.value = undefined;
-            closeSSE();
+            execution.value = undefined
+            closeSSE()
         }
-        const serverSentEventSource = new EventSource(`${apiUrl()}/executions/${options.id}/follow`, {withCredentials: true});
+        const serverSentEventSource = new EventSource(`${apiUrl()}/executions/${options.id}/follow`, {withCredentials: true})
         if (options.rawSSE) {
-            return Promise.resolve(serverSentEventSource);
+            return Promise.resolve(serverSentEventSource)
         }
-        sse.value = serverSentEventSource;
+        sse.value = serverSentEventSource
         serverSentEventSource.onmessage = (executionEvent) => {
-            const isEnd = executionEvent && executionEvent.lastEventId === "end";
+            const isEnd = executionEvent && executionEvent.lastEventId === "end"
             // we are receiving a first "fake" event to force initializing the connection: ignoring it
             if (executionEvent.lastEventId !== "start") {
-                throttledExecutionUpdate(executionEvent);
+                throttledExecutionUpdate(executionEvent)
             }
             if (isEnd) {
-                closeSSE();
-                throttledExecutionUpdate.flush();
+                closeSSE()
+                throttledExecutionUpdate.flush()
             }
-        };
+        }
 
         // sse.onerror doesn't return the details of the error
         // but as our emitter can only throw an error on 404
@@ -427,7 +427,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                     content: {
                         message: translate("errors.404.flow or execution"),
                     },
-                };
+                }
             } else {
                 coreStore.message = {
                     variant: "error",
@@ -435,20 +435,20 @@ export const useExecutionsStore = defineStore("executions", () => {
                     content: {
                         message: translate("something_went_wrong.connection_lost.message"),
                     },
-                };
+                }
             }
-        };
+        }
 
-        return Promise.resolve(sse.value);
-    };
+        return Promise.resolve(sse.value)
+    }
 
     function followExecutionDependencies(options: { id: string; expandAll?: boolean }) {
-        return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true});
+        return new EventSource(`${apiUrl()}/executions/${options.id}/follow-dependencies${options.expandAll ? "?expandAll=true" : ""}`, {withCredentials: true})
     }
 
     const followLogs = (options: { id: string }) => {
-        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}));
-    };
+        return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow`, {withCredentials: true}))
+    }
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {
         return axios.get(`${apiUrl()}/logs/${options.executionId}`, {
@@ -456,63 +456,63 @@ export const useExecutionsStore = defineStore("executions", () => {
             ...(options.showMessageOnError === false ? {showMessageOnError: false} : {}),
         }).then(response => {
             if (options.store === false) {
-                return response.data;
+                return response.data
             }
-            logs.value = response.data;
-            return response.data;
-        });
-    };
+            logs.value = response.data
+            return response.data
+        })
+    }
 
     const loadMetrics = (options: { executionId: string; params?: Record<string, any>; store?: boolean }) => {
         return axios.get(`${apiUrl()}/metrics/${options.executionId}`, {
             params: options.params,
         }).then(response => {
             if (options.store === false) {
-                return response.data;
+                return response.data
             }
-            metrics.value = response.data.results;
-            total.value = response.data.total;
-            return response.data;
-        });
-    };
+            metrics.value = response.data.results
+            total.value = response.data.total
+            return response.data
+        })
+    }
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return axios.get(`${apiUrl()}/logs/${options.executionId}/download`, {
             params: options.params,
         }).then(response => {
-            return response.data;
-        });
-    };
+            return response.data
+        })
+    }
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
         return axios.delete(`${apiUrl()}/logs/${options.executionId}`, {
             params: options.params,
         }).then(response => {
-            return response.data;
-        });
-    };
+            return response.data
+        })
+    }
 
-    const _filePreview = ref<any | undefined>(undefined);
+    const filePreviewB = ref<any | undefined>(undefined)
     const filePreview = (options: { executionId: string } & Record<string, any>) => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
         }).then(response => {
-            let data = {...response.data};
+            let data = {...response.data}
 
             // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
             if (data.extension === "ion") {
-                const notObjects = data.content.some((e: any) => typeof e !== "object");
+                const notObjects = data.content.some((e: any) => typeof e !== "object")
 
                 if (notObjects) {
-                    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n");
-                    data = {...data, type: "TEXT", content};
+                    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n")
+                    data = {...data, type: "TEXT", content}
                 }
             }
 
-            _filePreview.value = data;
-            return data;
-        });
-    };
+            filePreviewB.value = data
+            return data
+        })
+    }
 
     const setLabels = (options: { executionId: string; labels: any }) => {
         return axios.post(
@@ -522,214 +522,214 @@ export const useExecutionsStore = defineStore("executions", () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-            });
-    };
+            })
+    }
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
         return axios.post(`${apiUrl()}/executions/labels/by-query`, options.data, {
             params: options.params,
-        });
-    };
+        })
+    }
 
     const bulkSetLabels = (options: any) => {
-        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options);
-    };
+        return axios.post(`${apiUrl()}/executions/labels/by-ids`, options)
+    }
 
     const unqueue = (options: { id: string; state: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/unqueue?state=${options.state}`);
-    };
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/unqueue?state=${options.state}`)
+    }
 
     const bulkUnqueueExecution = (options: { executionsId: string[]; newStatus: string }) => {
         return axios.post(
             `${apiUrl()}/executions/unqueue/by-ids?state=${options.newStatus}`,
             options.executionsId,
-        );
-    };
+        )
+    }
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/unqueue/by-query?state=${options.newStatus}`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const forceRun = (options: { id: string }) => {
-        return axios.post(`${apiUrl()}/executions/${options.id}/actions/force-run`);
-    };
+        return axios.post(`${apiUrl()}/executions/${options.id}/actions/force-run`)
+    }
 
     const bulkForceRunExecution = (options: { executionsId: string[] }) => {
         return axios.post(
             `${apiUrl()}/executions/force-run/by-ids`,
             options.executionsId,
-        );
-    };
+        )
+    }
 
     const queryForceRunExecution = (options: Record<string, any>) => {
         return axios.post(
             `${apiUrl()}/executions/force-run/by-query`,
             {},
             {params: options},
-        );
-    };
+        )
+    }
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
-        const revision = options.revision ? `?revision=${options.revision}` : "";
+        const revision = options.revision ? `?revision=${options.revision}` : ""
         return axios.get(`${apiUrl()}/executions/flows/${options.namespace}/${options.flowId}${revision}`)
             .then(response => {
                 if (options.store) {
-                    flow.value = response.data;
+                    flow.value = response.data
                 }
-                return response.data;
-            });
-    };
+                return response.data
+            })
+    }
 
     const loadFlowForExecutionByExecutionId = (options: { id: string, revision?: string }) => {
         return axios.get(`${apiUrl()}/executions/${options.id}/flow`)
             .then(response => {
-                flow.value = response.data;
-                return response.data;
-            });
-    };
+                flow.value = response.data
+                return response.data
+            })
+    }
 
     const fetchGraph = (options: { id: string; params?: Record<string, any> }) => {
-        const params = options.params ? options.params : {};
+        const params = options.params ? options.params : {}
         return axios.get(`${apiUrl()}/executions/${options.id}/graph`, {params, withCredentials: true, paramsSerializer: {indexes: null}})
             .then(response => {
-                return response.data;
-            });
-    };
+                return response.data
+            })
+    }
 
     function loadGraph(options: { id: string; params?: Record<string, any> }) {
         return fetchGraph(options).then(graph => {
             // force refresh - Create a new object reference to trigger reactivity
-            flowGraph.value = Object.assign({}, graph);
-        });
+            flowGraph.value = Object.assign({}, graph)
+        })
     }
 
     function isUnused(nodeByUid: Record<string, any>, nodeUid: string): boolean {
-            const nodeToCheck = nodeByUid[nodeUid];
+            const nodeToCheck = nodeByUid[nodeUid]
 
             if(!nodeToCheck) {
-                return false;
+                return false
             }
 
             if(!nodeToCheck.task) {
                 // check if parent is unused (current node is probably a cluster root or end)
-                const splitUid = nodeToCheck.uid.split(".");
-                splitUid.pop();
-                return isUnused(nodeByUid, splitUid.join("."));
+                const splitUid = nodeToCheck.uid.split(".")
+                splitUid.pop()
+                return isUnused(nodeByUid, splitUid.join("."))
             }
 
             if (!nodeToCheck.executionId) {
-                return true;
+                return true
             }
 
             const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
-                : Object.values(subflowsExecutions.value).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
+                : Object.values(subflowsExecutions.value).filter(exec => exec.id === nodeToCheck.executionId)?.[0]
 
             if (!nodeExecution) {
-                return true;
+                return true
             }
 
-            return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
+            return !nodeExecution.taskRunList?.some((tr: { taskId: string }) => tr.taskId === nodeToCheck.task?.id)
 
         }
 
     const loadAugmentedGraph = async (options: { id: string; params?: Record<string, any> }) => {
-        const params = options.params ? options.params : {};
+        const params = options.params ? options.params : {}
         const graph: {
             nodes: any[];
             edges: any[];
             clusters?: any[];
-        } = await fetchGraph({id: options.id, params});
+        } = await fetchGraph({id: options.id, params})
         // Augment the graph with additional properties
 
         const subflowPaths = graph.clusters
             ?.map(c => c.cluster)
             ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
             ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
-            ?? [];
-        const nodeByUid: Record<string, any> = {};
+            ?? []
+        const nodeByUid: Record<string, any> = {}
 
         graph.nodes
             // lowest depth first to be available in nodeByUid map for child-to-parent unused check
             .sort((a, b) => a.uid.length - b.uid.length)
             .forEach(node => {
-                nodeByUid[node.uid] = node;
+                nodeByUid[node.uid] = node
 
                 const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
-                    .sort((a, b) => b.length - a.length)?.[0];
+                    .sort((a, b) => b.length - a.length)?.[0]
 
                 if(parentSubflow) {
                     if(parentSubflow in subflowsExecutions.value) {
-                        node.executionId = subflowsExecutions.value[parentSubflow]?.id;
+                        node.executionId = subflowsExecutions.value[parentSubflow]?.id
                     }
 
-                    return;
+                    return
                 }
 
-                node.executionId = options.id;
+                node.executionId = options.id
 
                 // reduce opacity for cluster root & end
                 if(!node.task && isUnused(nodeByUid, node.uid)) {
-                    node.unused = true;
+                    node.unused = true
                 }
-            });
+            })
 
         graph.edges
             // keep only unused (or skipped) paths
             .filter(edge => {
-                return isUnused(nodeByUid, edge.target) || isUnused(nodeByUid, edge.source);
-            }).forEach(edge => edge.unused = true);
+                return isUnused(nodeByUid, edge.target) || isUnused(nodeByUid, edge.source)
+            }).forEach(edge => edge.unused = true)
 
         // force refresh - Create a new object reference to trigger reactivity
-        flowGraph.value = Object.assign({}, graph);
+        flowGraph.value = Object.assign({}, graph)
 
-        return graph;
-    };
+        return graph
+    }
 
     const loadNamespaces = () => {
         return axios.get(`${apiUrl()}/executions/namespaces`)
             .then(response => {
-                namespaces.value = response.data;
-            });
-    };
+                namespaces.value = response.data
+            })
+    }
 
     const loadFlowsExecutable = (options: { namespace: string }) => {
         return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows`)
             .then(response => {
-                flowsExecutable.value = response.data;
-            });
-    };
+                flowsExecutable.value = response.data
+            })
+    }
 
     const loadLatestExecutions = (options: { flowFilters: any }) => {
         return axios.post(`${apiUrl()}/executions/latest`, options.flowFilters).then(response => {
-            return response.data;
-        });
-    };
+            return response.data
+        })
+    }
 
     // mutations
     const addSubflowExecution = (params: { subflow: string; execution: any }) => {
-        subflowsExecutions.value[params.subflow] = params.execution;
-    };
+        subflowsExecutions.value[params.subflow] = params.execution
+    }
 
     const removeSubflowExecution = (subflow: string) => {
-        delete subflowsExecutions.value[subflow];
-    };
+        delete subflowsExecutions.value[subflow]
+    }
 
     const resetLogs = () => {
-        logs.value = {results: [], total: 0};
-    };
+        logs.value = {results: [], total: 0}
+    }
 
     const appendLogs = (logsData: { results: any[] }) => {
-        logs.value.results = logs.value.results.concat(logsData.results);
-    };
+        logs.value.results = logs.value.results.concat(logsData.results)
+    }
 
     const appendFollowedLogs = (logsData: any) => {
-        logs.value.results.push(logsData);
-        logs.value.total = logs.value.results.length;
-    };
+        logs.value.results.push(logsData)
+        logs.value.total = logs.value.results.length
+    }
 
     const getFlowExecutions = ({namespace, flowId}: { namespace: string; flowId: string }) => {
         return axios.get(`${apiUrl()}/executions`, {
@@ -738,26 +738,26 @@ export const useExecutionsStore = defineStore("executions", () => {
                 flowId,
             },
         }).then(response => {
-            executions.value = response.data.results;
-            total.value = response.data.total;
-            return response.data;
-        });
-    };
+            executions.value = response.data.results
+            total.value = response.data.total
+            return response.data
+        })
+    }
 
     const exportExecutionsAsCSV = async (params: any) => {
         const response = await axios.get(
             `${apiUrl()}/executions/export/by-query/csv`,
             {params, responseType: "blob"},
-        );
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", "executions.csv");
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-    };
+        )
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement("a")
+        link.href = url
+        link.setAttribute("download", "executions.csv")
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+    }
 
     return {
         // State
@@ -835,5 +835,5 @@ export const useExecutionsStore = defineStore("executions", () => {
         appendFollowedLogs,
         getFlowExecutions,
         exportExecutionsAsCSV,
-    };
-});
+    }
+})

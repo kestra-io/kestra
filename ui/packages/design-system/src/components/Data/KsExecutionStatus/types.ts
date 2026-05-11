@@ -1,15 +1,15 @@
-import type {Component} from "vue";
-import PauseCircle from "vue-material-design-icons/PauseCircle.vue";
-import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-import PlayCircle from "vue-material-design-icons/PlayCircle.vue";
-import CloseCircle from "vue-material-design-icons/CloseCircle.vue";
-import StopCircle from "vue-material-design-icons/StopCircle.vue";
-import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue";
-import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue";
-import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue";
-import Refresh from "vue-material-design-icons/Refresh.vue";
-import Cancel from "vue-material-design-icons/Cancel.vue";
+import type {Component} from "vue"
+import PauseCircle from "vue-material-design-icons/PauseCircle.vue"
+import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+import PlayCircle from "vue-material-design-icons/PlayCircle.vue"
+import CloseCircle from "vue-material-design-icons/CloseCircle.vue"
+import StopCircle from "vue-material-design-icons/StopCircle.vue"
+import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue"
+import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue"
+import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue"
+import Refresh from "vue-material-design-icons/Refresh.vue"
+import Cancel from "vue-material-design-icons/Cancel.vue"
 
 export interface ExecutionStatusModel {
     name: string;
@@ -125,6 +125,6 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
         isKillable: false,
         isFailed: false,
     },
-});
+})
 
 export type ExecutionStatus = keyof typeof EXECUTION_STATUSES;

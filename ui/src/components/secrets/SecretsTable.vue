@@ -213,39 +213,39 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import type {FormInstance} from "@kestra-io/design-system";
-    import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
-    import _merge from "lodash/merge";
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import type {FormInstance} from "@kestra-io/design-system"
+    import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
+    import _merge from "lodash/merge"
 
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import PencilOff from "vue-material-design-icons/PencilOff.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system";
-    import Labels from "../layout/Labels.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
+    import Labels from "../layout/Labels.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
-    import action from "../../models/action";
-    import resource from "../../models/resource";
-    import Utils from "../../utils/utils";
-    import {useToast} from "../../utils/toast";
-    import {storageKeys} from "../../utils/constants";
-    import {useSecretsStore} from "../../stores/secrets";
-    import {useAuthStore} from "override/stores/auth";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import {useSecretsFilter} from "../filter/configurations";
-    import {useTableColumns} from "../../composables/useTableColumns";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
+    import {storageKeys} from "../../utils/constants"
+    import {useSecretsStore} from "../../stores/secrets"
+    import {useAuthStore} from "override/stores/auth"
+    import {useNamespacesStore} from "override/stores/namespaces"
+    import {useSecretsFilter} from "../filter/configurations"
+    import {useTableColumns} from "../../composables/useTableColumns"
 
-    const secretsFilter = useSecretsFilter();
+    const secretsFilter = useSecretsFilter()
 
     interface SecretForm {
         value: string;
@@ -280,28 +280,28 @@
         paneView: false,
         namespaceColumn: undefined,
         includeInherited: false,
-    });
+    })
 
     const emit = defineEmits<{
         "update:addSecretModalVisible": [value: boolean];
         "update:isSecretReadOnly": [value: boolean];
         hasData: [value: boolean];
-    }>();
+    }>()
 
-    const {t} = useI18n();
-    const toast = useToast();
-    const route = useRoute();
-    const router = useRouter();
-    const authStore = useAuthStore();
-    const secretsStore = useSecretsStore();
-    const namespacesStore = useNamespacesStore();
+    const {t} = useI18n()
+    const toast = useToast()
+    const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const secretsStore = useSecretsStore()
+    const namespacesStore = useNamespacesStore()
 
-    const form = ref<FormInstance>();
+    const form = ref<FormInstance>()
 
-    const total = ref(0);
-    const hasData = ref<boolean>();
-    const areNamespaceSecretsReadOnly = ref(false);
-    const secrets = ref<(NamespaceSecret & {namespace?: string})[]>();
+    const total = ref(0)
+    const hasData = ref<boolean>()
+    const areNamespaceSecretsReadOnly = ref(false)
+    const secrets = ref<(NamespaceSecret & {namespace?: string})[]>()
 
     const secret = ref<SecretForm>({
         namespace: props.namespace,
@@ -311,9 +311,9 @@
         tags: [{key: undefined, value: undefined}],
         update: undefined,
         updateValue: undefined,
-    });
+    })
 
-    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS;
+    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -335,71 +335,71 @@
                 default: true,
                 description: t("filter.table_column.secrets.tags"),
             },
-        ];
+        ]
 
         return columns.filter(col => {
-            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false;
-            if (col.prop === "description" && props.keyOnly) return false;
-            if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false;
-            return true;
-        });
-    });
+            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false
+            if (col.prop === "description" && props.keyOnly) return false
+            if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false
+            return true
+        })
+    })
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
         storageKey: storageKey,
-    });
+    })
 
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
             ?.filter(Boolean) as any[],
-    );
+    )
 
     const secretModalTitle = computed(() => {
         return secret.value?.update
             ? t("secret.update", {name: secret.value?.key})
-            : t("secret.add");
-    });
+            : t("secret.add")
+    })
 
     const addSecretDrawerVisible = computed({
         get() {
-            return props.addSecretModalVisible;
+            return props.addSecretModalVisible
         },
         set(newValue: boolean) {
-            emit("update:addSecretModalVisible", newValue);
+            emit("update:addSecretModalVisible", newValue)
         },
-    });
+    })
 
     const checkSecretValue = (_rule: any, _value: any, callback: any) => {
         if (secret.value?.updateValue && (secret.value.value === undefined || secret.value.value.length === 0)) {
-            callback(new Error("Value must not be empty."));
+            callback(new Error("Value must not be empty."))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const checkSecretTags = (_rule: any, _value: any, callback: any) => {
-        const keys = secret.value?.tags?.map((it) => it.key);
+        const keys = secret.value?.tags?.map((it) => it.key)
 
         if (secret.value?.tags?.length === 1) {
             if (secret.value?.tags?.[0]?.key === undefined && secret.value?.tags?.[0]?.value === undefined) {
-                callback();
-                return;
+                callback()
+                return
             }
         }
 
-        const nullKeys = keys?.filter(item => item === undefined);
-        const duplicateKeys = keys?.filter((item, index) => keys.indexOf(item) !== index);
+        const nullKeys = keys?.filter(item => item === undefined)
+        const duplicateKeys = keys?.filter((item, index) => keys.indexOf(item) !== index)
 
         if (nullKeys?.length > 0) {
-            callback(new Error("Tag key must not be empty."));
+            callback(new Error("Tag key must not be empty."))
         } else if (duplicateKeys?.length > 0) {
-            callback(new Error("Duplicate tags for keys: " + Array.from(new Set(duplicateKeys))));
+            callback(new Error("Duplicate tags for keys: " + Array.from(new Set(duplicateKeys))))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const rules = {
         key: [
@@ -422,26 +422,26 @@
                 required: false,
             },
         ],
-    };
+    }
 
-    const canUpdate = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, secret.namespace) &&
-            !areNamespaceSecretsReadOnly.value;
-    };
+    const canUpdate = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, item.namespace) &&
+            !areNamespaceSecretsReadOnly.value
+    }
 
-    const canDelete = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(resource.SECRET, action.DELETE, secret.namespace) &&
-            !areNamespaceSecretsReadOnly.value;
-    };
+    const canDelete = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.DELETE, item.namespace) &&
+            !areNamespaceSecretsReadOnly.value
+    }
 
-    const dataTable = useTemplateRef("dataTable");
+    const dataTable = useTemplateRef("dataTable")
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        return _merge(base, filters);
-    };
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return _merge(base, filters)
+    }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const secretsResponse = await secretsStore.find(loadQuery({
@@ -455,14 +455,14 @@
                     },
                 },
             }),
-        }));
+        }))
 
-        emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
+        emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
 
-        let allSecrets = secretsResponse.results ?? [];
+        let allSecrets = secretsResponse.results ?? []
 
         if (props.includeInherited && props.namespace) {
-            const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+            const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
                 const parentSecretsResponse = await secretsStore.find(loadQuery({
@@ -471,73 +471,73 @@
                             EQUALS: parentNs,
                         },
                     },
-                }));
+                }))
 
-                const parentSecrets = parentSecretsResponse?.results ?? [];
+                const parentSecrets = parentSecretsResponse?.results ?? []
                 if (parentSecrets.length > 0) {
-                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
+                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean))
                     const newSecrets = parentSecrets.filter(
                         (s: any) => s?.key && !currentKeys.has(s.key),
-                    );
-                    allSecrets.push(...newSecrets);
+                    )
+                    allSecrets.push(...newSecrets)
                 }
             }
         }
 
-        hasData.value = (allSecrets.length ?? 0) !== 0;
-        areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
-        secrets.value = allSecrets;
-        total.value = secretsResponse.total ?? 0;
-    };
+        hasData.value = (allSecrets.length ?? 0) !== 0
+        areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
+        secrets.value = allSecrets
+        total.value = secretsResponse.total ?? 0
+    }
 
     const filterQuery = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        return filters;
-    });
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
 
     watch(filterQuery, () => {
-        dataTable.value?.resetAndReload();
-    }, {deep: true});
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
     const updateSecretModal = (secretData: NamespaceSecret) => {
-        secret.value.namespace = secretData?.namespace;
-        secret.value.key = secretData?.key;
-        secret.value.description = secretData?.description;
-        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}];
-        secret.value.update = true;
-        secret.value.updateValue = false;
-        addSecretDrawerVisible.value = true;
-    };
+        secret.value.namespace = secretData?.namespace
+        secret.value.key = secretData?.key
+        secret.value.description = secretData?.description
+        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}]
+        secret.value.update = true
+        secret.value.updateValue = false
+        addSecretDrawerVisible.value = true
+    }
 
     const addSecretTag = () => {
-        secret.value?.tags?.push({key: "" as any, value: "" as any});
-    };
+        secret.value?.tags?.push({key: "" as any, value: "" as any})
+    }
 
     const removeSecretTag = (index: number) => {
-        secret.value?.tags?.splice(index, 1);
-    };
+        secret.value?.tags?.splice(index, 1)
+    }
 
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {
         toast.confirm(t("delete confirm", {name: key}), () => {
             return namespacesStore
                 .deleteSecrets({namespace, key})
                 .then(() => {
-                    toast.deleted(key);
+                    toast.deleted(key)
                 })
-                .then(() => dataTable.value?.reload());
-        });
-    };
+                .then(() => dataTable.value?.reload())
+        })
+    }
 
     const isSecretValueUpdated = () => {
-        return !secret.value?.update || secret.value?.updateValue;
-    };
+        return !secret.value?.update || secret.value?.updateValue
+    }
 
     const saveSecret = (formRef: FormInstance | undefined) => {
-        if (!formRef) return;
+        if (!formRef) return
 
         formRef.validate((valid: boolean) => {
             if (!valid) {
-                return;
+                return
             }
 
             const secretData: any = {
@@ -546,26 +546,26 @@
                 tags: secret.value?.tags
                     ?.map(item => item.value !== undefined ? item : {key: item.key, value: ""})
                     ?.filter(item => item.key !== undefined),
-            };
+            }
 
             if (isSecretValueUpdated()) {
-                secretData.value = secret.value?.value;
+                secretData.value = secret.value?.value
             }
 
             const actionMethod = isSecretValueUpdated()
                 ? namespacesStore.createSecrets
-                : namespacesStore.patchSecret;
+                : namespacesStore.patchSecret
 
             actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
                 .then(() => {
-                    secret.value!.update = true;
-                    toast.saved(secret.value?.key || "");
-                    addSecretDrawerVisible.value = false;
-                    resetForm();
-                    dataTable.value?.reload();
-                });
-        });
-    };
+                    secret.value!.update = true
+                    toast.saved(secret.value?.key || "")
+                    addSecretDrawerVisible.value = false
+                    resetForm()
+                    dataTable.value?.reload()
+                })
+        })
+    }
 
     const resetForm = () => {
         secret.value = {
@@ -576,27 +576,27 @@
             tags: [{key: undefined, value: undefined}],
             update: undefined,
             updateValue: undefined,
-        };
-    };
+        }
+    }
 
     watch(() => props.addSecretModalVisible, (newValue) => {
         if (!newValue) {
-            resetForm();
+            resetForm()
         }
-    });
+    })
 
     watch(hasData, (newValue, oldValue) => {
         if (oldValue !== newValue) {
-            emit("hasData", newValue!);
+            emit("hasData", newValue!)
         }
-    });
+    })
 
     onMounted(() => {
         updateDisplayColumns(
             localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
                 optionalColumns.value?.filter(col => col.default).map(col => col.prop),
-        );
-    });
+        )
+    })
 </script>
 <style scoped lang="scss">
     .namespace-tag {

@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, type Component, PropType} from "vue";
+    import {computed, ref, watch, type Component, PropType} from "vue"
     import {useStorage, useWindowSize} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -101,15 +101,15 @@
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
 
-    import Utils from "../utils/utils";
-    import {useApiStore} from "../stores/api";
-    import {useMiscStore} from "override/stores/misc";
+    import * as Utils from "../utils/utils"
+    import {useApiStore} from "../stores/api"
+    import {useMiscStore} from "override/stores/misc"
 
-    import {useContextButtons} from "override/composables/contextButtons";
-    const {buttons} = useContextButtons();
+    import {useContextButtons} from "override/composables/contextButtons"
+    const {buttons} = useContextButtons()
 
-    const apiStore = useApiStore();
-    const miscStore = useMiscStore();
+    const apiStore = useApiStore()
+    const miscStore = useMiscStore()
 
     const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
     const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
@@ -133,9 +133,9 @@
                 url: string;
                 hasUnreadMarker: false;
             }>>,
-            default: () => ({})
-        }
-    });
+            default: () => ({}),
+        },
+    })
 
     const BAR_WIDTH_PX = 64
     const PANEL_MIN_WIDTH_PX = 50
@@ -151,18 +151,18 @@
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            miscStore.contextInfoBarOpenTab = "";
+            miscStore.contextInfoBarOpenTab = ""
         } else {
-            miscStore.contextInfoBarOpenTab = tab;
+            miscStore.contextInfoBarOpenTab = tab
         }
     }
 
     const themeIsDark = ref(localStorage.getItem("theme") === "dark")
 
     const onSwitchTheme = () => {
-        themeIsDark.value = !themeIsDark.value;
-        const theme = themeIsDark.value ? "dark" : "light";
-        Utils.switchTheme(miscStore, theme);
+        themeIsDark.value = !themeIsDark.value
+        const theme = themeIsDark.value ? "dark" : "light"
+        Utils.switchTheme(miscStore, theme)
     }
 </script>
 

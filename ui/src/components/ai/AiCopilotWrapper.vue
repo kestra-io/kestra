@@ -33,19 +33,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {onClickOutside} from "@vueuse/core";
-    import AiCopilot from "./AiCopilot.vue";
-    import AITriggerButton from "./AITriggerButton.vue";
-    import {useAuthStore} from "override/stores/auth";
-    import {useApiStore} from "../../stores/api";
-    import {useMiscStore} from "override/stores/misc";
-    import resource from "../../models/resource";
-    import action from "../../models/action";
-    import Utils from "../../utils/utils";
-    import {aiGenerationTypes} from "../../utils/constants";
-    import type {AiGenerationType} from "../../utils/constants";
+    import {computed, ref} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {onClickOutside} from "@vueuse/core"
+    import AiCopilot from "./AiCopilot.vue"
+    import AITriggerButton from "./AITriggerButton.vue"
+    import {useAuthStore} from "override/stores/auth"
+    import {useApiStore} from "../../stores/api"
+    import {useMiscStore} from "override/stores/misc"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import * as Utils from "../../utils/utils"
+    import {aiGenerationTypes} from "../../utils/constants"
+    import type {AiGenerationType} from "../../utils/constants"
 
     const props = withDefaults(defineProps<{
         flow: string;
@@ -55,51 +55,51 @@
     }>(), {
         namespace: undefined,
         sticky: false,
-    });
+    })
 
     const emit = defineEmits<{
         (e: "generated-yaml", yaml: string): void;
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
-    const authStore = useAuthStore();
-    const apiStore = useApiStore();
-    const miscStore = useMiscStore();
+    const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const apiStore = useApiStore()
+    const miscStore = useMiscStore()
 
-    const rootEl = ref<HTMLDivElement>();
-    const copilotEl = ref<InstanceType<typeof AiCopilot>>();
-    const triggerBtn = ref<InstanceType<typeof AITriggerButton>>();
-    const aiCopilotOpened = ref(false);
-    const conversationId = ref<string>(Utils.uid());
+    const rootEl = ref<HTMLDivElement>()
+    const copilotEl = ref<InstanceType<typeof AiCopilot>>()
+    const triggerBtn = ref<InstanceType<typeof AITriggerButton>>()
+    const aiCopilotOpened = ref(false)
+    const conversationId = ref<string>(Utils.uid())
 
     onClickOutside(
         computed(() => copilotEl.value?.$el),
-        () => { if (aiCopilotOpened.value) closeAiCopilot(); },
+        () => { if (aiCopilotOpened.value) closeAiCopilot() },
         {ignore: [computed(() => triggerBtn.value?.$el), ".ai-provider-pill-popper"]},
-    );
+    )
 
     const aiCopilotAllowed = computed(() => {
         if (!authStore.user?.hasAnyActionOnAnyNamespace(resource.COPILOT, action.USE)) {
-            return false;
+            return false
         }
         if (props.generationType === aiGenerationTypes.APP || props.generationType === aiGenerationTypes.TEST) {
-            return miscStore.configs?.isAiApiKeyConfigured === true;
+            return miscStore.configs?.isAiApiKeyConfigured === true
         }
-        return true;
-    });
+        return true
+    })
 
     function openAiCopilot() {
         apiStore.posthogEvents({
             type: "AI_COPILOT",
             action: "open_click",
-        });
-        aiCopilotOpened.value = true;
+        })
+        aiCopilotOpened.value = true
     }
 
     function closeAiCopilot() {
-        aiCopilotOpened.value = false;
-        clearAiQueryParam();
+        aiCopilotOpened.value = false
+        clearAiQueryParam()
     }
 
     function clearAiQueryParam() {
@@ -108,17 +108,17 @@
                 name: route.name,
                 params: route.params,
                 query: {...route.query, ai: undefined},
-            });
+            })
         }
     }
 
     function resetConversation() {
-        conversationId.value = Utils.uid();
+        conversationId.value = Utils.uid()
     }
 
     function onGeneratedYaml(yaml: string) {
-        emit("generated-yaml", yaml);
-        aiCopilotOpened.value = false;
+        emit("generated-yaml", yaml)
+        aiCopilotOpened.value = false
     }
 
     defineExpose({
@@ -127,7 +127,7 @@
         closeAiCopilot,
         resetConversation,
         rootEl,
-    });
+    })
 </script>
 
 <style scoped lang="scss">

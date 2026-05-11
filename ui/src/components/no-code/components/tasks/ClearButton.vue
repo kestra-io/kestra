@@ -9,8 +9,8 @@
 </template>
 
 <script setup lang="ts">
-    import CloseIcon from "vue-material-design-icons/Close.vue";
-    const emit = defineEmits(["click"]);
+    import CloseIcon from "vue-material-design-icons/Close.vue"
+    const emit = defineEmits(["click"])
 </script>
 
 <style scoped>

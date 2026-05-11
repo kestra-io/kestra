@@ -13,8 +13,8 @@
 
 <script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
-    import {useRouter} from "vue-router";
-    import EnterpriseBadge from "./EnterpriseBadge.vue";
+    import {useRouter} from "vue-router"
+    import EnterpriseBadge from "./EnterpriseBadge.vue"
 
     defineOptions({
         name: "LeftMenuLink",
@@ -40,7 +40,7 @@
     })
 
     const isLocked = computed<boolean>(() => {
-        return props.item?.attributes?.locked || false;
+        return props.item?.attributes?.locked || false
     })
 
     const slotContainer = ref<HTMLAnchorElement | null>(null)

@@ -43,46 +43,46 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {Close, Plus} from "../utils/icons";
+    import {ref, computed, watch} from "vue"
+    import {Close, Plus} from "../utils/icons"
     import type {
         FilterConfiguration,
         FilterKeyConfig,
-        AppliedFilter
-    } from "../utils/filterTypes";
+        AppliedFilter,
+    } from "../utils/filterTypes"
 
     const props = defineProps<{
         configuration: FilterConfiguration;
         appliedFilters: AppliedFilter[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         close: [];
         "add-filter": [filter: AppliedFilter];
         "remove-filter": [id: string];
-    }>();
+    }>()
 
-    const selectedCount = computed(() => selectedKeys.value.size);
-    const totalCount = computed(() => props.configuration.keys.length);
+    const selectedCount = computed(() => selectedKeys.value.size)
+    const totalCount = computed(() => props.configuration.keys.length)
 
     const isSelected = (key: FilterKeyConfig): boolean =>
-        selectedKeys.value.has(key.key);
+        selectedKeys.value.has(key.key)
 
-    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)));
+    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)))
 
     watch(() => props.appliedFilters, (newAppliedFilters) => {
-        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key));
-    }, {deep: true});
+        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key))
+    }, {deep: true})
 
     const toggleFilter = (key: FilterKeyConfig) => {
         if (selectedKeys.value.has(key.key)) {
-            selectedKeys.value.delete(key.key);
-            const filterToRemove = props.appliedFilters.find(f => f.key === key.key);
+            selectedKeys.value.delete(key.key)
+            const filterToRemove = props.appliedFilters.find(f => f.key === key.key)
             if (filterToRemove) {
-                emits("remove-filter", filterToRemove.id);
+                emits("remove-filter", filterToRemove.id)
             }
         } else {
-            selectedKeys.value.add(key.key);
+            selectedKeys.value.add(key.key)
             const newFilter: AppliedFilter = {
                 id: `${key.key}-${Date.now()}`,
                 key: key.key,
@@ -90,11 +90,11 @@
                 comparator: key.comparators?.[0],
                 comparatorLabel: key.comparators?.[0],
                 value: [],
-                valueLabel: ""
-            };
-            emits("add-filter", newFilter);
+                valueLabel: "",
+            }
+            emits("add-filter", newFilter)
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>

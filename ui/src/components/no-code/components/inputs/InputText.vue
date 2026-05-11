@@ -18,23 +18,23 @@
 </template>
 
 <script setup lang="ts">
-    import {useId, computed, useTemplateRef} from "vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
+    import {useId, computed, useTemplateRef} from "vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
 
     const SuffixIcon = computed(() => {
         if (props.disabled) {
-            return Lock;
+            return Lock
         }
 
-        return undefined;
-    });
+        return undefined
+    })
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const uid = useId();
-    const elInputRef = useTemplateRef("elInputRef");
+    const uid = useId()
+    const elInputRef = useTemplateRef("elInputRef")
 
-    const emits = defineEmits(["update:modelValue"]);
+    const emits = defineEmits(["update:modelValue"])
     const props = defineProps({
         modelValue: {type: [String, Number, Boolean], default: undefined},
         label: {type: String, default: undefined},
@@ -43,21 +43,21 @@
         disabled: {type: Boolean, default: false},
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
-        haveError: {type: Boolean, default: false}
-    });
+        haveError: {type: Boolean, default: false},
+    })
 
     const input = computed({
         get: () => props.modelValue,
         set: (value) => {
-            emits("update:modelValue", value);
-        }
-    });
+            emits("update:modelValue", value)
+        },
+    })
 
     defineExpose({
         focus: () => {
-            (elInputRef.value as any)?.focus?.();
-        }
-    });
+            (elInputRef.value as any)?.focus?.()
+        },
+    })
 </script>
 
 <style scoped lang="scss">

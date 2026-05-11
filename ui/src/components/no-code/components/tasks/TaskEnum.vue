@@ -15,10 +15,10 @@
     </KsSelect>
 </template>
 <script>
-    import Task from "./MixinTask";
+    import Task from "./MixinTask"
     export default {
         mixins: [Task],
-    };
+    }
 </script>
 
 <style scoped lang="scss">

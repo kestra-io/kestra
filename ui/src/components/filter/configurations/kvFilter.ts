@@ -1,15 +1,15 @@
-import {computed, ComputedRef} from "vue";
-import {Comparators, FilterConfiguration} from "@kestra-io/design-system";
-import {useI18n} from "vue-i18n";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {useAuthStore} from "override/stores/auth";
-import {useRoute} from "vue-router";
-import permission from "../../../models/resource";
-import action from "../../../models/action";
+import {computed, ComputedRef} from "vue"
+import {Comparators, FilterConfiguration} from "@kestra-io/design-system"
+import {useI18n} from "vue-i18n"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {useAuthStore} from "override/stores/auth"
+import {useRoute} from "vue-router"
+import permission from "../../../models/resource"
+import action from "../../../models/action"
 
 export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
-    const route = useRoute();
+    const {t} = useI18n()
+    const route = useRoute()
 
     return computed(() => {
         return {
@@ -28,26 +28,26 @@ export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "multi-select" as const,
                     valueProvider: async () => {
-                        const user = useAuthStore().user;
+                        const user = useAuthStore().user
                         if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.LIST)) {
-                            const namespacesStore = useNamespacesStore();
-                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                            const namespacesStore = useNamespacesStore()
+                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
                             return [...new Set(namespaces
                                 .flatMap(namespace => {
                                     return namespace.split(".").reduce((current: string[], part: string) => {
-                                        const previousCombination = current?.[current.length - 1];
-                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                                    }, []);
+                                        const previousCombination = current?.[current.length - 1]
+                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
+                                    }, [])
                                 }))].map(namespace => ({
                                     label: namespace,
                                     value: namespace,
-                                }));
+                                }))
                         }
-                        return [];
+                        return []
                     },
                     searchable: true,
                 },
             ] : [],
-        };
-    });
-};
+        }
+    })
+}

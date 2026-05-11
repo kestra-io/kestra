@@ -21,40 +21,40 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, watch} from "vue"
 
     const props = defineProps<{
         modelValue: string;
         fullWidth?: boolean;
         placeholder?: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:model-value": [value: string];
-    }>();
+    }>()
 
-    const internalValue = ref(props.modelValue);
+    const internalValue = ref(props.modelValue)
 
     const handleInput = (e: Event) => {
-        const value = (e.target as HTMLInputElement).value;
-        emits("update:model-value", value);
-    };
+        const value = (e.target as HTMLInputElement).value
+        emits("update:model-value", value)
+    }
 
     const handleEnter = () => {
-        emits("update:model-value", internalValue.value);
-    };
+        emits("update:model-value", internalValue.value)
+    }
 
     const clearInput = () => {
-        internalValue.value = "";
-        emits("update:model-value", "");
-    };
+        internalValue.value = ""
+        emits("update:model-value", "")
+    }
 
     watch(
         () => props.modelValue,
         newVal => {
-            internalValue.value = newVal;
-        }
-    );
+            internalValue.value = newVal
+        },
+    )
 </script>
 
 <style lang="scss" scoped>

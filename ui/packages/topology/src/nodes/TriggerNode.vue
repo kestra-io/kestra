@@ -36,18 +36,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
-    import {Handle, Position} from "@vue-flow/core";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import BasicNode from "./BasicNode.vue";
-    import {KsTooltip, SECTIONS} from "@kestra-io/design-system";
-    import {EVENTS} from "../utils/constants";
-    import Utils from "../utils/utils";
+    import {computed, inject} from "vue"
+    import {Handle, Position} from "@vue-flow/core"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import BasicNode from "./BasicNode.vue"
+    import {KsTooltip, SECTIONS} from "@kestra-io/design-system"
+    import {EVENTS} from "../utils/constants"
+    import * as Utils from "../utils/utils"
 
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys";
+    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
 
-    defineOptions({name: "Task", inheritAttrs: false});
+    defineOptions({name: "Task", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition, id, icons, iconComponent} = defineProps<{
         data: any;
@@ -56,16 +56,16 @@
         id: string;
         icons?: Record<string, any>;
         iconComponent?: any;
-    }>();
+    }>()
 
-    const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND]);
+    const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])
 
-    const execution = inject(EXECUTION_INJECTION_KEY);
+    const execution = inject(EXECUTION_INJECTION_KEY)
 
-    const color = computed(() => data.color ?? "primary");
-    const triggerId = computed(() => Utils.afterLastDot(id));
+    const color = computed(() => data.color ?? "primary")
+    const triggerId = computed(() => Utils.afterLastDot(id))
     const formattedData = computed(() => ({
         ...data,
         unused: data.node?.triggerDeclaration?.disabled || data.node?.trigger?.disabled,
-    }));
+    }))
 </script>

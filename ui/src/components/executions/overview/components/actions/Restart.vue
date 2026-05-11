@@ -173,22 +173,22 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../../../../utils/toast";
-    import {State} from "@kestra-io/design-system";
-    import {useFlowStore} from "../../../../../stores/flow";
-    import {useAuthStore} from "override/stores/auth";
-    import {useExecutionsStore} from "../../../../../stores/executions";
-    import action from "../../../../../models/action";
-    import resource from "../../../../../models/resource";
-    import ReplayWithInputs from "../../../ReplayWithInputs.vue";
-    import RestartIcon from "vue-material-design-icons/Restart.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import {KsId} from "@kestra-io/design-system";
+    import {ref, computed, watch} from "vue"
+    import {useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../../../../utils/toast"
+    import {State} from "@kestra-io/design-system"
+    import {useFlowStore} from "../../../../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import {useExecutionsStore} from "../../../../../stores/executions"
+    import action from "../../../../../models/action"
+    import resource from "../../../../../models/resource"
+    import ReplayWithInputs from "../../../ReplayWithInputs.vue"
+    import RestartIcon from "vue-material-design-icons/Restart.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
+    import {KsId} from "@kestra-io/design-system"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         component: {type: String, default: "el-button"},
@@ -198,42 +198,42 @@
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
         tooltipPosition: {type: String, default: "bottom"},
-    });
+    })
 
-    const {t} = useI18n();
-    const toast = useToast();
-    const router = useRouter();
-    const flowStore = useFlowStore();
-    const authStore = useAuthStore();
-    const executionsStore = useExecutionsStore();
+    const {t} = useI18n()
+    const toast = useToast()
+    const router = useRouter()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
+    const executionsStore = useExecutionsStore()
 
-    const isOpen = ref(false);
-    const isReplayWithInputsOpen = ref(false);
-    const revisionsSelected = ref<number | undefined>(undefined);
+    const isOpen = ref(false)
+    const isReplayWithInputsOpen = ref(false)
+    const revisionsSelected = ref<number | undefined>(undefined)
 
-    const replayRevisionMode = ref<"original" | "latest" | "specific">("original");
-    const inputMode = ref<"reuse" | "modify">("reuse");
+    const replayRevisionMode = ref<"original" | "latest" | "specific">("original")
+    const inputMode = ref<"reuse" | "modify">("reuse")
 
-    const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple);
-    const componentClass = computed(() => !props.isReplay ? "restart me-1" : "");
-    const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart");
+    const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
+    const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
+    const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
 
-    const currentFlow = ref<any | undefined>(undefined);
-    const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0);
+    const currentFlow = ref<any | undefined>(undefined)
+    const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
-        const inputs = props.execution.inputs;
-        return inputs != null && Object.keys(inputs).length > 0;
-    });
-    const canReuseInputs = computed(() => hasInputs.value && hasOriginalInputs.value);
+        const inputs = props.execution.inputs
+        return inputs != null && Object.keys(inputs).length > 0
+    })
+    const canReuseInputs = computed(() => hasInputs.value && hasOriginalInputs.value)
 
     const effectiveRevision = computed(() => {
-        if (replayRevisionMode.value === "original") return props.execution.flowRevision;
+        if (replayRevisionMode.value === "original") return props.execution.flowRevision
         if (replayRevisionMode.value === "latest") {
-            const revisions = flowStore.revisions;
-            return revisions?.[revisions.length - 1]?.revision;
+            const revisions = flowStore.revisions
+            return revisions?.[revisions.length - 1]?.revision
         }
-        return revisionsSelected.value;
-    });
+        return revisionsSelected.value
+    })
 
     const revisionsOptions = computed(() =>
         (flowStore.revisions || [])
@@ -246,28 +246,28 @@
                         : ""),
             }))
             .reverse(),
-    );
+    )
 
     const enabled = computed(() => {
-        if (!props.execution?.state) return false;
+        if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
             ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
-            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace);
+            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
-        if (!hasPermission) return false;
+        if (!hasPermission) return false
 
         if (
             props.isReplay &&
             props.taskRun?.attempts &&
             props.taskRun.attempts.length - 1 !== props.attemptIndex
         ) {
-            return false;
+            return false
         }
 
-        const isRunning = State.isRunning(props.execution.state.current);
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED;
-    });
+        const isRunning = State.isRunning(props.execution.state.current)
+        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+    })
 
     const tooltip = computed(() =>
         props.isReplay
@@ -275,86 +275,86 @@
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
                 : t("replay from beginning tooltip")
             : t("restart tooltip", {state: props.execution.state?.current}),
-    );
+    )
 
     const openReplayWithInputsDialog = () => {
-        isOpen.value = false;
-        loadFlowForReplay();
-    };
+        isOpen.value = false
+        loadFlowForReplay()
+    }
 
     const closeReplayWithInputsModal = () => {
-        isReplayWithInputsOpen.value = false;
-    };
+        isReplayWithInputsOpen.value = false
+    }
 
     const loadFlowForReplay = async () => {
-        const revision = replayRevisionMode.value !== "latest" ? revisionsSelected.value : undefined;
+        const revision = replayRevisionMode.value !== "latest" ? revisionsSelected.value : undefined
         await executionsStore.loadFlowForExecution({
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,
             revision,
             store: true,
-        });
-        isReplayWithInputsOpen.value = true;
-    };
+        })
+        isReplayWithInputsOpen.value = true
+    }
 
     const loadRevision = async () => {
-        revisionsSelected.value = props.execution.flowRevision;
-        currentFlow.value = undefined;
+        revisionsSelected.value = props.execution.flowRevision
+        currentFlow.value = undefined
         flowStore.loadRevisions({
             namespace: props.execution.namespace,
             id: props.execution.flowId,
-        });
+        })
         currentFlow.value = await executionsStore.loadFlowForExecution({
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: props.execution.flowRevision,
             store: true,
-        });
-    };
+        })
+    }
 
     const restartLastRevision = () => {
         if (flowStore.revisions?.length) {
-            revisionsSelected.value = flowStore.revisions[flowStore.revisions.length - 1].revision;
+            revisionsSelected.value = flowStore.revisions[flowStore.revisions.length - 1].revision
         }
-        restart();
-    };
+        restart()
+    }
 
     const handleRestartExecute = () => {
-        isOpen.value = false;
-        restart();
-    };
+        isOpen.value = false
+        restart()
+    }
 
     const handleReplayExecute = () => {
-        isOpen.value = false;
+        isOpen.value = false
 
         if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
-            openReplayWithInputsDialog();
-            return;
+            openReplayWithInputsDialog()
+            return
         }
 
         if (replayRevisionMode.value === "latest") {
-            restartLastRevision();
-            return;
+            restartLastRevision()
+            return
         }
 
         if (replayRevisionMode.value === "original") {
-            revisionsSelected.value = props.execution.flowRevision;
+            revisionsSelected.value = props.execution.flowRevision
         }
 
-        restart();
-    };
+        restart()
+    }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore;
+        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
             revision: revisionsSelected.value,
-        });
+        })
 
-        const newExecution = response.data;
+        const newExecution = response.data
 
-        toast.success(t("replayed"));
+        toast.success(t("replayed"))
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({
@@ -366,28 +366,28 @@
                     tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant,
                 },
-            }).href;
+            }).href
         } else {
-            window.setTimeout(() => window.location.reload(), 500);
+            window.setTimeout(() => window.location.reload(), 500)
         }
-    };
+    }
 
-    watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision());
+    watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision())
 
     watch(effectiveRevision, async (newRevision, oldRevision) => {
-        if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return;
-        currentFlow.value = undefined;
+        if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return
+        currentFlow.value = undefined
         currentFlow.value = await executionsStore.loadFlowForExecution({
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: newRevision,
             store: false,
-        });
-    });
+        })
+    })
 
     watch(canReuseInputs, (canReuse) => {
-        inputMode.value = canReuse ? "reuse" : "modify";
-    });
+        inputMode.value = canReuse ? "reuse" : "modify"
+    })
 </script>
 
 <style lang="scss">

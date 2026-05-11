@@ -35,37 +35,37 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import {computed, ref} from "vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    import TriggerCatalogCard from "./TriggerCatalogCard.vue";
-    import type {TriggerPluginDto} from "../../../stores/plugins";
+    import TriggerCatalogCard from "./TriggerCatalogCard.vue"
+    import type {TriggerPluginDto} from "../../../stores/plugins"
 
     const props = defineProps<{
         title: string;
         description: string;
         triggers: TriggerPluginDto[];
         expandAll?: boolean;
-    }>();
+    }>()
 
     defineEmits<{
         add: [trigger: TriggerPluginDto];
-    }>();
+    }>()
 
-    const DEFAULT_VISIBLE_COUNT = 8;
+    const DEFAULT_VISIBLE_COUNT = 8
 
-    const expanded = ref(false);
+    const expanded = ref(false)
 
     const canCollapse = computed(() =>
-        !props.expandAll && props.triggers.length > DEFAULT_VISIBLE_COUNT
-    );
+        !props.expandAll && props.triggers.length > DEFAULT_VISIBLE_COUNT,
+    )
 
     const visibleTriggers = computed(() =>
         canCollapse.value && !expanded.value
             ? props.triggers.slice(0, DEFAULT_VISIBLE_COUNT)
-            : props.triggers
-    );
+            : props.triggers,
+    )
 </script>
 
 <style scoped lang="scss">

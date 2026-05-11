@@ -12,18 +12,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import Layout from "./Layout.vue";
-    import {useDocStore} from "../../stores/doc";
-    import sourceImg from "../../assets/demo/namespace.png";
+    import {computed} from "vue"
+    import Layout from "./Layout.vue"
+    import {useDocStore} from "../../stores/doc"
+    import sourceImg from "../../assets/demo/namespace.png"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    docStore.docId = "namespace.management";
+    docStore.docId = "namespace.management"
 
     const props = defineProps<{
         tab: string;
-    }>();
+    }>()
 
     const videos = {
         edit: "https://www.youtube.com/embed/As4y2oliD_8",
@@ -33,9 +33,9 @@
         "plugin-defaults": "https://www.youtube.com/embed/9zQTUeL0KMc",
         history: "https://www.youtube.com/embed/lpHl52Rlvr0",
         "audit-logs": "https://www.youtube.com/embed/Qz24gBPGZHs",
-    };
+    }
 
     const videoSource = computed(() => ({
         source: videos[props.tab as keyof typeof videos] ?? "",
-    }));
+    }))
 </script>

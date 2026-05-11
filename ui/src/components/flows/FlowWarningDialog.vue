@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
 </script>
 
 <style lang="scss">

@@ -22,19 +22,19 @@
 </template>
 
 <script setup lang="ts">
-    import {Tab} from "../utils/multiPanelTypes";
+    import {Tab} from "../utils/multiPanelTypes"
 
     defineProps<{
         tabs: Tab[],
         openTabs: string[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:tabs", tabValue: string): void;
-    }>();
+    }>()
 
     function setTabValue(tabValue: string) {
-        emit("update:tabs", tabValue);
+        emit("update:tabs", tabValue)
     }
 </script>
 

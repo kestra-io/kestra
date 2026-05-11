@@ -1,19 +1,19 @@
-import {ref} from "vue";
+import {ref} from "vue"
 
-const isKeyShortcutsDialogShown = ref(false);
+const isKeyShortcutsDialogShown = ref(false)
 
 export function useKeyShortcuts() {
     function showKeyShortcuts() {
-        isKeyShortcutsDialogShown.value = true;
+        isKeyShortcutsDialogShown.value = true
     }
 
     function hideKeyShortcuts() {
-        isKeyShortcutsDialogShown.value = false;
+        isKeyShortcutsDialogShown.value = false
     }
 
     return {
         isKeyShortcutsDialogShown,
         showKeyShortcuts,
-        hideKeyShortcuts
-    };
+        hideKeyShortcuts,
+    }
 }

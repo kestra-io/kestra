@@ -23,88 +23,88 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {useRouter} from "vue-router";
-    import {useMiscStore} from "override/stores/misc";
-    import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
-    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
-    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-    import {useI18n} from "vue-i18n";
+    import {ref, computed, watch} from "vue"
+    import {useRouter} from "vue-router"
+    import {useMiscStore} from "override/stores/misc"
+    import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue"
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue"
+    import {useI18n} from "vue-i18n"
 
     const props = defineProps<{
         fetchedUsages?: Record<string, any>;
-    }>();
+    }>()
     const emit = defineEmits<{
         (e: "loaded"): void;
-    }>();
+    }>()
 
-    const miscStore = useMiscStore();
-    const router = useRouter();
+    const miscStore = useMiscStore()
+    const router = useRouter()
 
-    const usages = ref<Record<string, any> | undefined>(undefined);
+    const usages = ref<Record<string, any> | undefined>(undefined)
 
     watch(
         () => props.fetchedUsages,
         async (newVal) => {
-            usages.value = newVal ?? await miscStore.loadAllUsages();
-            emit("loaded");
+            usages.value = newVal ?? await miscStore.loadAllUsages()
+            emit("loaded")
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     function aggregateValues(object: any) {
-        return aggregateValuesFromList(object ? Object.values(object) : object);
+        return aggregateValuesFromList(object ? Object.values(object) : object)
     }
     function aggregateValuesFromList(list: any) {
-        return aggregateValuesFromListWithGetter(list, (item: any) => item);
+        return aggregateValuesFromListWithGetter(list, (item: any) => item)
     }
     function aggregateValuesFromListWithGetter(list: any, valueGetter: (item: any) => any) {
-        return aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, (list: any[]) => list.reduce((a, b) => a + b, 0));
+        return aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, (values: any[]) => values.reduce((a, b) => a + b, 0))
     }
     function aggregateValuesFromListWithGetterAndAggFunction(list: any, valueGetter: (item: any) => any, aggFunction: (list: any[]) => any) {
-        if (!list) return 0;
-        return aggFunction(list.map(valueGetter));
+        if (!list) return 0
+        return aggFunction(list.map(valueGetter))
     }
 
-    const namespaces = computed(() => usages.value?.flows?.namespacesCount ?? 0);
-    const flows = computed(() => usages.value?.flows?.count ?? 0);
-    const tasks = computed(() => aggregateValues(usages.value?.flows?.taskTypeCount));
-    const triggers = computed(() => aggregateValues(usages.value?.flows?.triggerTypeCount));
+    const namespaces = computed(() => usages.value?.flows?.namespacesCount ?? 0)
+    const flows = computed(() => usages.value?.flows?.count ?? 0)
+    const tasks = computed(() => aggregateValues(usages.value?.flows?.taskTypeCount))
+    const triggers = computed(() => aggregateValues(usages.value?.flows?.triggerTypeCount))
 
     const namespaceRoute = computed(() => {
         try {
-            router.resolve({name: "namespaces/list"});
-            return "namespaces/list";
+            router.resolve({name: "namespaces/list"})
+            return "namespaces/list"
         } catch {
-            return "flows/list";
+            return "flows/list"
         }
-    });
+    })
 
     const executionsPerDay = computed(() =>
-        (usages.value?.executions?.dailyExecutionsCount ?? []).filter((item: any) => item.groupBy === "day")
-    );
+        (usages.value?.executions?.dailyExecutionsCount ?? []).filter((item: any) => item.groupBy === "day"),
+    )
 
     const executionsOverTwoDays = computed(() =>
-        aggregateValuesFromListWithGetter(executionsPerDay.value, (item: any) => item.duration.count ?? 0)
-    );
+        aggregateValuesFromListWithGetter(executionsPerDay.value, (item: any) => item.duration.count ?? 0),
+    )
 
     const executionsDurationOverTwoDays = computed(() => {
         // Use $moment from global context
-        const moment = (window as any).$moment;
-        if (!moment) return 0;
+        const moment = (window as any).$moment
+        if (!moment) return 0
         const sum = aggregateValuesFromListWithGetterAndAggFunction(
             executionsPerDay.value,
             (item: any) => item.duration.sum ?? moment.duration("PT0S"),
-            (list: any[]) => list.reduce((a, b) => moment.duration(a).add(moment.duration(b)), moment.duration("PT0S"))
-        );
-        return sum.minutes();
-    });
+            (list: any[]) => list.reduce((a, b) => moment.duration(a).add(moment.duration(b)), moment.duration("PT0S")),
+        )
+        return sum.minutes()
+    })
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const usageItems = computed(() => [
         {
@@ -149,7 +149,7 @@
             value: `${executionsDurationOverTwoDays.value} (${t("last 48 hours")})`,
             route: "executions/list",
         },
-    ]);
+    ])
 </script>
 <style scoped lang="scss">
 .usage-card {

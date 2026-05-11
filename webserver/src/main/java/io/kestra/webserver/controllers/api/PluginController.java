@@ -11,13 +11,16 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -40,6 +43,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import static io.kestra.core.models.Plugin.isDeprecated;
+import static io.kestra.core.models.Plugin.isInternal;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/plugins/")
@@ -136,6 +141,68 @@ public class PluginController {
             .stream()
             .map(p -> Plugin.of(p, null))
             .toList();
+    }
+
+    @Get(uri = "triggers")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get list of trigger plugins grouped by category",
+        description = "Feeds the 'Add Trigger' catalog UI. Returns one entry per non-internal, non-deprecated " +
+            "trigger class, classified as core (bundled with Kestra Core), realtime (implements " +
+            "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
+    )
+    public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
+        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
+                .filter(c -> !isInternal(c))
+                .filter(c -> !c.getName().startsWith("org.kestra."))
+                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
+            )
+            .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+        io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        String title = triggerClass.getSimpleName();
+        String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
+        Boolean deprecated = isDeprecated(triggerClass) ? Boolean.TRUE : null;
+
+        return new ApiTriggerPlugin(
+            triggerClass.getName(),
+            title,
+            description,
+            TriggerPluginCategory.classify(registeredPlugin, triggerClass),
+            isEnterpriseEdition(registeredPlugin, triggerClass),
+            triggerClass.getName(),
+            deprecated
+        );
+    }
+
+    /**
+     * A trigger is classified as Enterprise Edition when either the owning plugin's manifest marks
+     * the module as EE (via the {@code X-Kestra-License} attribute) or the class lives in an EE
+     * package. EE classes show up under several package shapes depending on where they're housed:
+     * {@code io.kestra.ee.*} and {@code io.kestra.plugin.ee.*} for bundled EE modules, plus any
+     * external plugin that carves out an {@code .ee.} namespace (for example
+     * {@code io.kestra.plugin.kestra.ee.assets}). The package fallback matters because uber-jars
+     * strip module-level manifests, so the license attribute alone isn't reliable.
+     */
+    protected boolean isEnterpriseEdition(RegisteredPlugin registeredPlugin, Class<?> triggerClass) {
+        String license = registeredPlugin.license();
+        if (license != null && license.toUpperCase(Locale.ROOT).contains("EE")) {
+            return true;
+        }
+
+        String packageName = triggerClass.getPackageName();
+        return packageName.startsWith("io.kestra.ee.")
+            || packageName.startsWith("io.kestra.plugin.ee.")
+            || packageName.contains(".ee.");
     }
 
     @Get(uri = "icons")
@@ -421,5 +488,27 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Lightweight descriptor of a trigger plugin class for the "Add Trigger" catalog UI.
+     *
+     * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
+     * @param name human-readable name (Schema#title if set, otherwise simple class name)
+     * @param description one-line description from the plugin @Schema
+     * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
+     * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
+     * @param icon icon key resolvable via {@code GET /api/v1/plugins/icons}
+     * @param deprecated whether the trigger is deprecated
+     */
+    public record ApiTriggerPlugin(
+        String type,
+        String name,
+        String description,
+        TriggerPluginCategory group,
+        boolean ee,
+        String icon,
+        Boolean deprecated
+    ) {
     }
 }

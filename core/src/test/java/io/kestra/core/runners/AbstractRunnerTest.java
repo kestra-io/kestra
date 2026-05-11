@@ -219,7 +219,7 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.trigger("listener-tenant");
     }
 
-    @Test // flaky on CI but never fail locally
+    @Test
     @LoadFlows(
         { "flows/valids/trigger-flow-listener-with-pause.yaml",
             "flows/valids/trigger-flow-with-pause.yaml" }

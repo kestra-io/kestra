@@ -231,7 +231,7 @@
 
     defineOptions({
         name: "TaskNode",
-        inheritAttrs: false,
+        inheritAttrs: false
     });
 
     const emit = defineEmits<{
@@ -278,7 +278,7 @@
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid)
         );
     });
 
@@ -318,12 +318,12 @@
 
     const classes = computed(() => ({
         "execution-no-taskrun":
-            Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
+            Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0)
     }));
 
     const expandData = computed<ExpandData>(() => ({
         id: props.id,
-        type: String(props.data.node.task.type),
+        type: String(props.data.node.task.type)
     }));
 
     const dataWithLink = computed(() => {
@@ -337,10 +337,10 @@
                     executionId: taskExecution.value?.taskRunList
                         .filter((taskRun: TaskRun) =>
                             taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId,
+                            taskRun.outputs?.executionId
                         )
-                        ?.[0]?.outputs?.executionId,
-                },
+                        ?.[0]?.outputs?.executionId
+                }
             };
         }
         return props.data;

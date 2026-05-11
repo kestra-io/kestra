@@ -88,7 +88,7 @@
     align-items: center;
     padding: 0.25rem 0.5rem;
     overflow: hidden;
-    border-radius: 0.25rem;
+    border-radius: var(--ks-radius-base);
     box-sizing: border-box;
 }
 

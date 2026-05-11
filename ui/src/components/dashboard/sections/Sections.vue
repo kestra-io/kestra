@@ -155,7 +155,7 @@ section#charts {
             padding: 1.5rem;
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
             box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
         }
 

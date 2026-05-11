@@ -90,7 +90,7 @@
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
             border: 1px solid var(--ks-border-default);
             overflow: hidden;
             margin: 1rem auto;

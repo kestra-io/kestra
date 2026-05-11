@@ -144,7 +144,7 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-info);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         background: transparent;
         color: var(--ks-text-primary);
         cursor: pointer;
@@ -165,7 +165,7 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-default);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
     }
 
     .enum-values {

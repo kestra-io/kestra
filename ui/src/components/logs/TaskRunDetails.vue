@@ -938,7 +938,7 @@
         }
 
         .attempt-wrapper & {
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
         }
 
         tbody:last-child & {

@@ -1,7 +1,7 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from "vue";
 import {apiUrlWithoutTenants} from "override/utils/route";
-import {useClient} from "@kestra-io/kestra-sdk";
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime";
+import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins";
 
 function wrapWithErrorBoundary(inner: any) {
     return defineComponent({
@@ -40,24 +40,17 @@ export function useFederatedModule(slotName: string) {
     const RemoteComponents = shallowReactive<Record<string, any>>({});
     const taskAdditionalInfoRemote = ref<Record<string, any>>({});
 
-    const axios = useClient();
-
     const manifestReady = ref(false);
 
     
-    async function resolveRemoteComponent(taskTypes: {cls: string, version: string | null}[]) {
+    async function resolveRemoteComponent(taskTypes: {cls: string, version: string | undefined}[]) {
         // get the manifest of the all the tasks we will 
         // have in the graph
-        const pluginTaskManifestsResponse = await axios.post<{
-            manifest:Record<string, {
-                group: string;
-                uiModule: string;
-                staticInfo?: Record<string, any>;
-                styles?: string[];
-            }[]>
-        }>(`${apiUrlWithoutTenants()}/plugins/pluginUiManifest`, Array.from(taskTypes));
+        const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({
+            body: Array.from(taskTypes),
+        });
     
-        const pluginTaskManifests = pluginTaskManifestsResponse.data.manifest;
+        const pluginTaskManifests = pluginTaskManifestsResponse?.manifest;
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
@@ -101,7 +94,7 @@ export function useFederatedModule(slotName: string) {
                         },
                     });
 
-                    const taskRoot = taskTypeKey.slice(manifest.group.length + 1);
+                    const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : [];
                     const module = await loadRemote<{default: any}>(`${remoteName}/${taskRoot}/${slotName}`);
 
                     if(!module){

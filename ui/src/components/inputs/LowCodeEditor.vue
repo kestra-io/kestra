@@ -204,14 +204,21 @@
 
     onMounted(async () => {
         // compile the list of task types
-        const taskTypes = new Set<{cls: string, version: string | null}>();
+        const taskTypes = new Set<string>();
         flowStore.flowParsed.tasks.forEach((task: any) => {
-            taskTypes.add({cls: task.type, version: task.version ?? null});
+            taskTypes.add(`${task.type}:${task.version ?? "null"}`);
         });
+
+        const taskTypesReParsed: {cls: string, version: string | undefined}[] = [];
+
+        for (const tt of taskTypes) {
+            const [cls, version] = tt.split(":");
+            taskTypesReParsed.push({cls, version: version === "null" ? undefined : version});
+        }
 
         // get the manifest of the all the tasks we will 
         // have in the graph
-        await resolveRemoteComponent(Array.from(taskTypes));
+        await resolveRemoteComponent(taskTypesReParsed);
     });
 
     const props = withDefaults(
@@ -239,7 +246,7 @@
             toggleOrientationButton: true,
             expandedSubflows: () => [],
             animated: true,
-        })
+        });
 
     const emit = defineEmits([
         "follow",
@@ -274,7 +281,7 @@
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
-        pluginsStore.fetchIcons()
+        pluginsStore.fetchIcons();
         setMinZoom(0.1);
     });
 
@@ -337,13 +344,13 @@
                     source: props.source ?? "",
                     section,
                     key: event.id,
-                })
+                });
                 emit(
                     "on-edit",
                     updatedYmlSource,
                     true,
                 );
-            }
+            },
         );
     };
 
@@ -354,7 +361,7 @@
                 section: SECTIONS.TASKS.toLowerCase() as any,
                 position: event[1],
                 id: event[0],
-            }
+            },
         };
     };
 
@@ -367,7 +374,7 @@
             params: {
                 section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
                 id: event.task.id,
-            }
+            },
         };
     };
 

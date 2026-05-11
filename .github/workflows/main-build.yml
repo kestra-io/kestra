@@ -105,6 +105,9 @@ jobs:
           name: exe
           path: build/executable
 
+      - name: Prepare executable
+        run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
+
       - name: Generate schema
         uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
         with:

@@ -82,7 +82,7 @@
             const currentFlowLimit = limits.find(
                 (limit: any) =>
                     limit.namespace === flowStore.flow?.namespace &&
-                    limit.flowId === flowStore.flow?.id,
+                    limit.flowId === flowStore.flow?.id
             );
 
             if (currentFlowLimit) {
@@ -107,7 +107,7 @@
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id],
         loadConcurrencyLimit,
-        {immediate: true},
+        {immediate: true}
     );
 
     onMounted(loadConcurrencyLimit);

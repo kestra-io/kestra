@@ -485,7 +485,7 @@
             if (!chartRef.value || !execution.value) return;
             chartRef.value?.refresh(filters.value as any);
         },
-        {debounce: 500, maxWait: 1000},
+        {debounce: 500, maxWait: 1000}
     );
 
     defineOptions({inheritAttrs: false});

@@ -217,7 +217,7 @@
         }
         const {data, status} = await axios.get(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
             validateStatus: (status) => status === 200 || status === 404,
-        });
+        })
         if(status === 200) {
             return transform(data, true, path);
         } else {
@@ -256,7 +256,7 @@
 
             resolve([]);
         },
-    };
+    }
 
     const axios = useClient();
     const onDebugExpression = (expression?: string) => {
@@ -448,7 +448,7 @@
         });
 
         if(!tasks?.length) {
-            return undefined;
+            return undefined
         };
 
         const HEADING = {
@@ -468,7 +468,7 @@
             const task = o?.filter(t => t.leaf === false)[0];
             if (!task) return;
 
-            const selectedLocal = [task.value];
+            const selectedLocal = [task.value]
             let expandedValueLocal = task.path;
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
@@ -481,15 +481,15 @@
                     }
 
                     child = child.children?.filter(t => !t.heading)[0];
-                } while(child?.path);
+                } while(child?.path)
 
                 selected.value = selectedLocal;
                 if(expandedValueLocal){
                     expandedValue.value = expandedValueLocal;
                 }
-            });
+            })
         }
-    });
+    })
 
     const pluginsStore = usePluginsStore();
 

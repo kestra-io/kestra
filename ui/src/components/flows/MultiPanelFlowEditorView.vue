@@ -34,13 +34,14 @@
                         <h3>{{ $t("welcome_copilot.execute_hint.title") }}</h3>
                         <p>{{ $t("welcome_copilot.execute_hint.description") }}</p>
                     </div>
-                    <button
+                    <KsButton
+                        link
                         class="onboarding-execute-hint__close"
-                        type="button"
+                        :aria-label="$t('close')"
                         @click="showExecuteHint = false"
                     >
                         <Close />
-                    </button>
+                    </KsButton>
                 </div>
             </div>
         </Transition>
@@ -55,10 +56,12 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {useOnboardingV2Store} from "../../stores/onboardingV2";
 
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
     import NoCode from "../no-code/NoCode.vue";
+    import {useTriggerDraftStore} from "../../stores/triggerDraft";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels";
     import {useTopologyPanels} from "./useTopologyPanels";
@@ -104,7 +107,7 @@
         route.name === "flows/create" && route.query.onboardingPreset === "true",
     );
 
-    onMounted(() => {
+    onMounted(async () => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
@@ -118,16 +121,58 @@
                 editorView.value?.focusTab("nocode")
             }
 
-            const panelIndex = Math.max(0, panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))));
-            const blockSchemaPath = [
-                pluginsStore.flowSchema?.$ref, "properties", "triggers", "items"
-            ].join("/");
-            actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            const draft = triggerDraftStore.consumeDraft(
+                flowStore.flow?.namespace ?? "",
+                flowStore.flow?.id ?? ""
+            );
 
             const {createTrigger: _, ...query} = route.query;
-            router.replace({...route, query});
+            await router.replace({...route, query});
+
+            if (draft?.triggerYaml) {
+                flowStore.flowYaml = spliceTriggerIntoFlow(
+                    flowStore.flowYaml ?? "",
+                    draft.triggerYaml,
+                );
+            } else {
+                const panelIndex = Math.max(
+                    0,
+                    panels.value.findIndex(p => p.tabs.some(t => t.uid.startsWith("nocode"))),
+                );
+                const blockSchemaPath = [
+                    pluginsStore.flowSchema?.$ref,
+                    "properties",
+                    "triggers",
+                    "items",
+                ].join("/");
+                actions.openAddTaskTab({panelIndex, tabIndex: 0}, "triggers", blockSchemaPath);
+            }
         }
     })
+
+    const triggerDraftStore = useTriggerDraftStore();
+
+    function spliceTriggerIntoFlow(source: string, triggerBlock: string): string {
+        const hasTriggersKey = /^triggers\s*:/m.test(source);
+
+        if (hasTriggersKey) {
+            return YAML_UTILS.insertBlockWithPath({
+                source,
+                newBlock: triggerBlock,
+                parentPath: "triggers",
+                position: "after",
+            });
+        }
+
+        const normalizedSource = source.endsWith("\n") ? source : source + "\n";
+        const indentedBlock = triggerBlock
+            .split("\n")
+            .map((line, idx) => (line.length === 0 ? "" : (idx === 0 ? `  - ${line}` : `    ${line}`)))
+            .join("\n")
+            .replace(/\s+$/, "");
+
+        return `${normalizedSource}\ntriggers:\n${indentedBlock}\n`;
+    }
 
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
@@ -254,14 +299,14 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 1rem;
-        width: min(100%, 360px);
+        width: min(100%, 22.5rem);
         padding: calc(1.75rem - 1px) calc(1.75rem - 1px) calc(1.5rem - 1px);
         border: 1px solid transparent;
-        border-radius: 12px;
+        border-radius: 0.75rem;
         background:
             linear-gradient(var(--ks-background-card), var(--ks-background-card)) padding-box,
             var(--hint-gradient) border-box;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.06);
         pointer-events: auto;
         animation: onboardingHintBorderSpin 3s linear infinite;
     }
@@ -284,14 +329,7 @@
     }
 
     .onboarding-execute-hint__close {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        border: 0;
-        background: transparent;
         color: var(--ks-content-tertiary);
-        cursor: pointer;
         flex-shrink: 0;
     }
 

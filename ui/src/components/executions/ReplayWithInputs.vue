@@ -32,7 +32,7 @@
     const props = defineProps({
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
-        revision: {type: Number, required: false, default: undefined},
+        revision: {type: Number, required: false, default: undefined}
     });
 
     const emit = defineEmits(["executionTrigger"]);
@@ -50,7 +50,7 @@
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,
             revision: props.revision,
-            formData,
+            formData
         });
 
         if (response.data.id === props.execution.id) {
@@ -66,8 +66,8 @@
                 flowId: execution.flowId,
                 id: execution.id,
                 tab: "gantt",
-                tenant: route.params.tenant,
-            },
+                tenant: route.params.tenant
+            }
         });
 
         toast.success(t("replayed"));

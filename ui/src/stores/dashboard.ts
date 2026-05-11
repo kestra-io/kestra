@@ -28,7 +28,7 @@ import {useI18n} from "vue-i18n";
 import {RouteLocation} from "vue-router";
 
 export const useDashboardStore = defineStore("dashboard", () => {
-    const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>();
+    const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
     const selectedChart = ref<Chart>();
     const activeDashboard = ref<Dashboard>();
     const defaultDashboards = ref<{
@@ -39,15 +39,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const chartErrors = ref<string[]>([]);
     const isCreating = ref<boolean>(false);
 
-    const sourceCode = ref("");
-    const sourceCodeOrigin = ref("");
+    const sourceCode = ref("")
+    const sourceCodeOrigin = ref("")
     const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
         try {
             return YAML_UTILS.parse(sourceCode.value);
         } catch {
             return previous;
         }
-    });
+    })
 
     const haveChange = computed(() => sourceCodeOrigin.value !== sourceCode.value);
 
@@ -64,13 +64,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
         const res = response.data as { results: { id: string; title: string }[]};
         await loadDefaults();
-        let isThereADefault = false;
+        let isThereADefault = false
         dashboardList.value = res.results.map(dashboard => {
             const isADefaultForThisRoute = isAdminDefinedDefaultDashboard(dashboard.id, route);
             if(isADefaultForThisRoute){
                 isThereADefault = true;
             }
-            return {...dashboard, isDefault: isADefaultForThisRoute};
+            return {...dashboard, isDefault: isADefaultForThisRoute}
         });
         if(!isThereADefault){
             const defaultDashboardBundledInUI = {id: "default", title: t("dashboards.default"), isDefault: true};
@@ -81,7 +81,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function loadDefaults() {
         const response = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`);
-        defaultDashboards.value = response.data;
+        defaultDashboards.value = response.data
         return defaultDashboards.value;
     }
 
@@ -91,19 +91,19 @@ export const useDashboardStore = defineStore("dashboard", () => {
         defaultNamespaceOverviewDashboard?: string,
     }) {
         const loadedDef = await loadDefaults();
-        const def = {...loadedDef, ...defaultDashboardsRequest};
+        const def = {...loadedDef, ...defaultDashboardsRequest}
 
         const res = await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}});
-        defaultDashboards.value = res.data;
+        defaultDashboards.value = res.data
     }
 
-    const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"];
+    const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
     type DASHBOARD_TYPE = "DASHBOARD_MAIN" | "DASHBOARD_FLOW" | "DASHBOARD_NAMESPACE";
 
     const KEY_MAP: Record<string, DASHBOARD_TYPE> = {
         home: "DASHBOARD_MAIN",
         "flows/update": "DASHBOARD_FLOW",
-        "namespaces/update": "DASHBOARD_NAMESPACE",
+        "namespaces/update": "DASHBOARD_NAMESPACE"
     };
 
     function getDashboardType(route: RouteLocation) {
@@ -113,7 +113,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
         const routeName = route.name?.toString();
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
-            throw new Error("invalid route in getDashboard: "+routeName?.toString());
+            throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
 
         // URL
@@ -135,23 +135,23 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
 
         // default
-        return "default";
-    };
+        return "default"
+    }
 
     function getUserDashboardStorageKey(route: RouteLocation){
         const tenant = route.params["tenant"];
         const routeName = route.name?.toString();
         if (!tenant) {
-            throw new Error("tenant is mandatory in getUserDashboardStorageKey");
+            throw new Error("tenant is mandatory in getUserDashboardStorageKey")
         }
-        return `userDashboard/${tenant}/${routeName}`;
+        return `userDashboard/${tenant}/${routeName}`
     }
 
     async function getTenantDefaultDashboardId(route: RouteLocation) {
         const dashboardType = getDashboardType(route);
 
         if (!dashboardType) return Promise.resolve(undefined);
-        await loadDefaults();
+        await loadDefaults()
         switch (dashboardType) {
             case "DASHBOARD_MAIN":
                 return Promise.resolve(defaultDashboards.value?.defaultHomeDashboard);
@@ -172,14 +172,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
             }
         }
         return false;
-    };
+    }
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
-        let response;
+        let response
         try{
             response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
         } catch {
-            return undefined;
+            return undefined
         }
 
         if (response.status === 404){
@@ -187,7 +187,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
 
         activeDashboard.value = response.data;
-        sourceCode.value = response.data.sourceCode ?? "";
+        sourceCode.value = response.data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value;
 
         return activeDashboard.value;
@@ -246,14 +246,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const pluginsStore = usePluginsStore();
 
-    const InitialSchema = {};
+    const InitialSchema = {}
 
     const schema = computed<{
             definitions: any,
             $ref: string,
     }>(() =>  {
         return pluginsStore.schemaType?.dashboard ?? InitialSchema;
-    });
+    })
 
     const definitions = computed<Record<string, any>>(() =>  {
         return schema.value.definitions ?? {};
@@ -281,7 +281,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return {
                 error: chartErrors.value.length > 0 ? chartErrors.value[0] : null,
                 data: selectedChart.value ? {...selectedChart.value, raw: chart} : null,
-                raw: chart,
+                raw: chart
             };
         }
         const result: { error: string | null; data: null | {
@@ -294,7 +294,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }; raw: any } = {
             error: null,
             data: null,
-            raw: {},
+            raw: {}
         };
         const errors = await validateChart(yamlChart);
 
@@ -309,8 +309,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 ...result.data,
                 chartOptions: {
                     ...result.data?.chartOptions,
-                    width: 12,
-                },
+                    width: 12
+                }
             } as any
             : undefined;
         chartErrors.value = [result.error].filter(e => e !== null);
@@ -322,7 +322,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const warnings = ref<string[] | undefined>();
     const coreStore = useCoreStore();
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     watch(sourceCode, _throttle(async () => {
         const errorsResult = await validateDashboard(sourceCode.value);

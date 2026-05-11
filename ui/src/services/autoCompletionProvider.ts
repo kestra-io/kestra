@@ -73,7 +73,7 @@ export class PebbleAutoCompletion {
     }
 
     nestedFieldAutoCompletion(_source: string, _parsed: any | undefined, _parentField: string, _cursorIndex?: number): Promise<string[]> {
-        return Promise.resolve([]);
+        return Promise.resolve([])
     }
 
     functionAutoCompletion(_parsed: any | undefined, _functionName: string, _args: Record<string, string>): Promise<string[]> {

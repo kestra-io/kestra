@@ -42,7 +42,7 @@
                     <TopologyDetailsRemote
                         :taskType="taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
-                        :execution="executionsStore.execution"
+                        :execution="execution"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
@@ -116,7 +116,7 @@
                 <TaskDrawerRemote
                     :taskType="selectedTask.type"
                     :task="selectedTask"
-                    :execution="executionsStore.execution"
+                    :execution="execution"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
                     :metrics="taskMetrics(selectedTask?.id)"
@@ -146,6 +146,7 @@
     import {Topology} from "@kestra-io/topology"
     import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {Execution} from "@kestra-io/kestra-sdk"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useCoreStore} from "../../stores/core"
@@ -166,6 +167,8 @@
     const executionsStore = useExecutionsStore()
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
+
+    const execution = computed(() => executionsStore.execution as any as Execution)
 
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")

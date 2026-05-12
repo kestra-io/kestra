@@ -5,6 +5,10 @@
   $namespace: 'kel'
 );
 
+// types
+$types: success, warning, error, info;
+
+
 $fill-color-base: #fafcff;
 
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
@@ -224,8 +228,16 @@ $fill-color-base: #fafcff;
 
 // notifications
 .kel-notification {
-    --kel-notification-border-color: var(--ks-border-default);
+    --kel-notification-border-color: var(--ks-border-strong);
     --kel-notification-title-color: var(--ks-text-primary);
+    background-color: var(--ks-bg-elevated);
+
+    @each $type in $types {
+        .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
+            --kel-notification-icon-color: var(--ks-text-#{$type});
+            color: var(--kel-notification-icon-color);
+        }
+    }
 
     .kel-notification__group {
         flex-grow: 2;
@@ -253,6 +265,24 @@ $fill-color-base: #fafcff;
             width: 35%;
             min-width: auto;
         }
+    }
+}
+
+// message
+.kel-message {
+    &.is-plain {
+        background-color: var(--ks-bg-elevated);
+        border-color: var(--ks-border-strong);
+    }
+
+    @each $type in $types {
+        .kel-message-icon--#{$type} {
+            color: var(--ks-text-#{$type});
+        }
+    }
+
+    .kel-message__content {
+        color: var(--ks-text-primary);
     }
 }
 

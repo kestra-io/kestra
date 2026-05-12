@@ -30,7 +30,7 @@
     "dependencies": {
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
-        "@kestra-io/kestra-sdk": "^2.0.0-dev.466a185d.e60fb995",
+        "@kestra-io/kestra-sdk": "2.0.0-dev.466a185d.e60fb995",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",
         "@module-federation/enhanced": "^2.4.0",
@@ -110,7 +110,7 @@
         "lint-staged": "^16.4.0",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
-        "oxlint": "^1.63.0",
+        "oxlint": "^1.64.0",
         "patch-package": "^8.0.1",
         "playwright": "^1.59.1",
         "prettier": "^3.8.3",

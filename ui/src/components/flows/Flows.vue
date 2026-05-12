@@ -442,7 +442,7 @@
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
-    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})))
+    const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
 
     interface ChartDefinition {
         id: string;

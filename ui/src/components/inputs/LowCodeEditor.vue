@@ -39,14 +39,12 @@
         >
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
-                    <component
-                        v-if="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
-                        :is="TopologyDetailsRemotes[taskProps.data.node?.task?.type]"
+                    <TopologyDetailsRemote
+                        :taskType="taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
                         :execution="executionsStore.execution"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
-                        :outputs="taskOutputs(taskProps.data.node?.task?.id)"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
                     />
                 </slot>
@@ -115,14 +113,12 @@
                     :lang="customActionMeta.lang"
                     class="mt-3"
                 />
-                <component
-                    v-if="TaskDrawerRemotes[selectedTask?.type]"
-                    :is="TaskDrawerRemotes[selectedTask?.type]"
+                <TaskDrawerRemote
+                    :taskType="selectedTask.type"
                     :task="selectedTask"
                     :execution="executionsStore.execution"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
-                    :outputs="taskOutputs(selectedTask?.id)"
                     :metrics="taskMetrics(selectedTask?.id)"
                     displayMode="full"
                     class="mt-3"
@@ -158,7 +154,7 @@
     import {usePlaygroundStore} from "../../stores/playground"    
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
-    import {useFederatedModule} from "../../utils/useFederatedModule"
+    import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     
     const router = useRouter()
 
@@ -172,8 +168,8 @@
     const flowStore = useFlowStore()
 
 
-    const {RemoteComponents:TopologyDetailsRemotes, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
-    const {RemoteComponents:TaskDrawerRemotes} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent:TaskDrawerRemote} = useFederatedModule("topology-task-drawer")
 
 
     const customActions = computed(() => {
@@ -187,11 +183,8 @@
         return result
     })
 
-    const taskOutputs = (taskId: string | undefined) =>
-        executionsStore.execution?.taskRunList?.filter((tr: any) => tr.taskId === taskId)?.at(-1)?.outputs ?? null
-
     const taskMetrics = (taskId: string | undefined) =>
-        executionsStore.metrics?.filter((m: any) => m.taskId === taskId) ?? null
+        executionsStore.metrics.filter((m) => m.taskId === taskId)
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type

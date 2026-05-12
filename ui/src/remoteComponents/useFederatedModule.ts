@@ -2,6 +2,7 @@ import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {propNames as topologyDetailsPropNames, Props as TopologyDetailsProps} from "./topologyDetails"
 
 function wrapWithErrorBoundary(inner: any) {
     return defineComponent({
@@ -27,15 +28,15 @@ function wrapWithErrorBoundary(inner: any) {
 }
 
 function addCSSLinkIfNotAlreadyPresent(href: string) {
-        if (!document.querySelector(`link[href="${href}"]`)) {
-            const link = document.createElement("link")
-            link.rel = "stylesheet"
-            link.href = href
-            document.head.appendChild(link)
-        }
+    if (!document.querySelector(`link[href="${href}"]`)) {
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = href
+        document.head.appendChild(link)
     }
+}
 
-export function useFederatedModule(slotName: string) {
+export function useFederatedModule(slotName: keyof typeof KnownSlots) {
 
     const RemoteComponents = shallowReactive<Record<string, any>>({})
     const taskAdditionalInfoRemote = ref<Record<string, any>>({})
@@ -118,10 +119,28 @@ export function useFederatedModule(slotName: string) {
         }
     }
 
+    const RemoteComponent = defineComponent<KnownSlotProps[typeof slotName]>({
+        props: ["taskType", ...KnownSlots[slotName]],
+        setup(props) {
+            const Comp = RemoteComponents[props.taskType]
+            return () => Comp ? h(Comp, {...props}) : null
+        },
+    })
+
     return {
-        RemoteComponents,
+        RemoteComponent,
         taskAdditionalInfoRemote,
         manifestReady,
         resolveRemoteComponent,
     }
+}
+
+export const KnownSlots = {
+    "topology-details": topologyDetailsPropNames,
+    "topology-task-drawer": topologyDetailsPropNames,
+} as const
+
+type KnownSlotProps = {
+    "topology-details": TopologyDetailsProps
+    "topology-task-drawer": TopologyDetailsProps
 }

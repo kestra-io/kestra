@@ -65,7 +65,7 @@
 <script setup lang="ts">
     import {reactive, toRefs, watchEffect} from "vue";
     import TimeRangeSwitch from "./TimeRangeSwitch.vue";
-    import type {DateFilterOption} from "../utils/filterTypes";
+    import type {DateFilterOption} from "../../utils/filterTypes";
 
     const props = defineProps<{
         label?: string;

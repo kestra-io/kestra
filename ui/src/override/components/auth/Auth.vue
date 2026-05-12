@@ -91,6 +91,7 @@
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
 <style lang="scss">
 .user-select  {
     &.kel-select-dropdown {

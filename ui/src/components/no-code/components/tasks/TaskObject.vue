@@ -286,6 +286,7 @@
     }
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
 <style lang="scss">
     .kel-form-item__content {
         display: block !important;

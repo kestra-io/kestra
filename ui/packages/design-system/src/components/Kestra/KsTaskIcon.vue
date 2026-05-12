@@ -58,10 +58,10 @@
                 "</svg>"
         }
 
-        let color = cssVar("--ks-text-primary") || cssVar("--ks-text-primary");
+        let color = cssVar("--ks-text-primary") || cssVar("--ks-text-primary")
 
         if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-text-primary") : cssVar("--ks-text-primary")) || color;
+            color = (props.theme === "dark" ? cssVar("--ks-text-primary") : cssVar("--ks-text-primary")) || color
         }
 
         if (props.variable) {

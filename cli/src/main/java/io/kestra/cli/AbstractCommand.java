@@ -47,6 +47,8 @@ import jakarta.inject.Provider;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+@Value("${micronaut.server.context-path:}")
+private String contextPath;
 @Slf4j
 public abstract class AbstractCommand extends BaseCommand implements Callable<Integer> {
     @Inject
@@ -193,6 +195,11 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 } else {
                     log.info("Server is running at {}", server.getURL());
                 }
+                String readyUrl = server.getURL().toString();
+                if (contextPath != null && !contextPath.isBlank()) {
+                    readyUrl = readyUrl.stripTrailing("/") + contextPath;
+                }
+                log.info("Kestra is ready at {}", readyUrl);
 
                 if (isFlowAutoLoadEnabled()) {
                     flowAutoLoaderService.ifPresent(FlowAutoLoader::load);

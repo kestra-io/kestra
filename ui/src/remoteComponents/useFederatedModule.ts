@@ -2,7 +2,7 @@ import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {KnownSlots, KnownSlotProps} from "./knownSlots"
+import {KnownSlotsPropNames, type KnownSlotProps} from "@kestra-io/slot-contracts"
 
 
 function wrapWithErrorBoundary(inner: any) {
@@ -37,7 +37,7 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
     }
 }
 
-export function useFederatedModule(slotName: keyof typeof KnownSlots) {
+export function useFederatedModule(slotName: keyof typeof KnownSlotsPropNames) {
 
     const RemoteComponents = shallowReactive<Record<string, any>>({})
     const taskAdditionalInfoRemote = ref<Record<string, any>>({})
@@ -121,7 +121,7 @@ export function useFederatedModule(slotName: keyof typeof KnownSlots) {
     }
 
     const RemoteComponent = defineComponent<KnownSlotProps[typeof slotName]>({
-        props: ["taskType", ...KnownSlots[slotName]],
+        props: ["taskType", ...KnownSlotsPropNames[slotName]],
         setup(props) {
             const Comp = RemoteComponents[props.taskType]
             return () => Comp ? h(Comp, {...props}) : null

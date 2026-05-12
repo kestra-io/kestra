@@ -1,6 +1,6 @@
-import {propNames as topologyDetailsPropNames, Props as TopologyDetailsProps} from "./topologyDetails"
+import {propNames as topologyDetailsPropNames, type Props as TopologyDetailsProps} from "./topologyDetails"
 
-export const KnownSlots = {
+export const KnownSlotsPropNames = {
     "topology-details": topologyDetailsPropNames,
     "topology-task-drawer": topologyDetailsPropNames,
 } as const

@@ -3,6 +3,7 @@ package io.kestra.core.storages;
 import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.utils.FileUtils;
 import jakarta.annotation.Nullable;
 
 import java.io.BufferedInputStream;
@@ -325,7 +326,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @throws IllegalArgumentException if the URI attempts to traverse parent directories
      */
     default void parentTraversalGuard(URI uri) {
-        if (uri != null && (uri.toString().contains(".." + File.separator) || uri.toString().contains(File.separator + "..") || uri.toString().equals(".."))) {
+        if (FileUtils.isParentTraversal(uri)) {
             throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
         }
     }

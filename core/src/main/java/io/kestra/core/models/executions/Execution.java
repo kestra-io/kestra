@@ -57,6 +57,10 @@ import lombok.extern.slf4j.Slf4j;
 @EqualsAndHashCode
 public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
 
+    public static final String STATE_START_DATE_FIELD = "state.startDate";
+    public static final String STATE_END_DATE_FIELD = "state.endDate";
+
+    @NotNull
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")

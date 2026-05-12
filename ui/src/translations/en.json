@@ -1860,7 +1860,17 @@
             },
             "timeRange": {
                 "label": "Interval",
-                "description": "Filter by execution time"
+                "description": "Filter by execution time",
+                "dateFilter": {
+                    "startDate": "Start date",
+                    "endDate": "End date",
+                    "startOrEndDate": "Start or end date"
+                },
+                "chip": {
+                    "start": "Started",
+                    "end": "Ended",
+                    "startOrEnd": "Started or ended"
+                }
             },
             "timeRange_dashboard": {
                 "label": "Interval",

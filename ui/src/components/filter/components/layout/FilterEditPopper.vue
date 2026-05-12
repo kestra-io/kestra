@@ -305,7 +305,7 @@
             comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
             value: filterData.value,
             valueLabel: filterData.label,
-        });
+        };
 
         if (filterData.meta !== undefined) {
             updatedFilter.meta = filterData.meta;

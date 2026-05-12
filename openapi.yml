@@ -2899,6 +2899,14 @@ paths:
           nullable: true
           allOf:
           - $ref: "#/components/schemas/ExecutionRepositoryInterface.ChildFilter"
+      - name: dateFilter
+        in: query
+        description: Which execution date field the time interval is applied to
+        explode: false
+        schema:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/ExecutionRepositoryInterface.DateFilter"
       - name: tenant
         in: path
         required: true
@@ -8951,6 +8959,12 @@ components:
       enum:
       - CHILD
       - MAIN
+    ExecutionRepositoryInterface.DateFilter:
+      type: string
+      enum:
+      - START_DATE
+      - END_DATE
+      - START_OR_END_DATE
     ExecutionRepositoryInterface.FlowFilter:
       required:
       - id

@@ -85,7 +85,7 @@
         "update:startDateValue": [date: Date | null];
         "update:timeRangeMode": [mode: "predefined" | "custom"];
         "update:dateFilterMode": [mode: string];
-    }();
+    }>();
 
     const {modelValue, timeRangeMode, startDateValue, endDateValue, dateFilterMode} = toRefs(props);
 

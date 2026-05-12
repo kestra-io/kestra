@@ -8,9 +8,10 @@ import {useRoute, useRouter} from "vue-router"
 import {State} from "@kestra-io/design-system"
 import {useToast} from "../utils/toast"
 import {useI18n} from "vue-i18n"
-import {Flow, useFlowStore} from "./flow"
+import {useFlowStore} from "./flow"
 import {useFileExplorerStore} from "./fileExplorer"
 import isEqual from "lodash/isEqual"
+import {FlowWithSource} from "@kestra-io/kestra-sdk"
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -68,7 +69,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
     const taskIdToTaskRunIdMap: Map<string, string>  = new Map()
 
-    async function triggerExecution(flow: Flow, breakpoints?: string[]) {
+    async function triggerExecution(flow: FlowWithSource, breakpoints?: string[]) {
         const defaultInputValues: Record<string, any> = {}
         for (const input of (flow.inputs || [])) {
             const {type, defaults} = input
@@ -102,7 +103,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             const lastExecutionFlow = await flowStore.loadFlow({
                 namespace: flowStore.flow.namespace || "",
                 id: flowStore.flow.id || "",
-                revision: lastExecution.flowRevision.toString(),
+                revision: lastExecution.flowRevision,
                 store: false,
             })
 
@@ -148,9 +149,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         }
 
         // find the node uid of the task with the given taskId
-        const taskNode = graph.nodes.find((node: any) => node?.task?.id === taskId)
+        const taskNode = (graph as any)?.nodes?.find((node: any) => node?.task?.id === taskId)
 
-        const nextTasksNodes = VueFlowUtils.getNextTaskNodes(graph, taskNode)
+        const nextTasksNodes = VueFlowUtils.getNextTaskNodes(graph as any, taskNode)
 
         const nextTasksIds = nextTasksNodes.map((node: any) => node.task.id)
 
@@ -272,7 +273,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         executionsStore.execution = execution
 
         if(execution)
-            addExecution(execution, graph)
+            addExecution(execution, graph as any)
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

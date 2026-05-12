@@ -53,7 +53,7 @@
             ?? "company.team"
 
         if (route.query.copy && flowStore.flow) {
-            flowYaml = flowStore.flow.source
+            flowYaml = flowStore.flow.source ?? ""
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
@@ -93,7 +93,7 @@ tasks:
             namespace: selectedNamespace,
             ...parsedFlow,
             source: flowYaml,
-        }
+        } as any
 
         flowStore.initYamlSource()
     }

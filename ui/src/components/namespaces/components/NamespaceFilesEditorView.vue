@@ -44,7 +44,7 @@
             revision: 0,
             source: `namespace: ${newVal}\n`,
             errors: [],
-        }
+        } as any
     }, {immediate: true})
 
     const sideBarSize = useStorage("namespace-files-editor-view-sidebar-size", 1)

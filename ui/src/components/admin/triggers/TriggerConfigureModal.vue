@@ -187,8 +187,12 @@
         }
         flowsLoading.value = true
         try {
-            const response = await flowStore.findFlows({namespace, size: 200, sort: "id:asc"})
-            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
+            const response = await flowStore.findFlows({filters: [{
+                field: "NAMESPACE",
+                operation: "EQUALS",
+                value: namespace as any,
+            }], size: 200, sort: ["id:asc"]})
+            flowOptions.value = response.results.map((f: any) => ({id: f.id, namespace: f.namespace}))
         } finally {
             flowsLoading.value = false
         }

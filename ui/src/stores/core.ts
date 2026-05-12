@@ -4,7 +4,7 @@ import {ref} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
 import {Message} from "../components/ErrorToast.vue"
 import {TUTORIAL_NAMESPACE} from "../utils/constants"
-import {Flow} from "./flow"
+import {Flow} from "@kestra-io/kestra-sdk"
 
 export const useCoreStore = defineStore("core", () => {
     const message = ref<Message>()

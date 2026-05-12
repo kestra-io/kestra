@@ -7,7 +7,7 @@ export const shouldShowWelcome = async () => {
     const nonTutorialFlows = await useFlowStore().findFlows({
         size: 1,
         onlyTotal: true,
-        "filters[namespace][NOT_EQUALS]": TUTORIAL_NAMESPACE,
+        filters: [{field: "NAMESPACE", operation: "NOT_EQUALS", value: TUTORIAL_NAMESPACE as any}],
     })
 
     return !nonTutorialFlows

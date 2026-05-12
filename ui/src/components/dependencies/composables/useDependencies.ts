@@ -484,7 +484,6 @@ export function useDependencies(
                             namespace: params.namespace as string,
                             subtype:  subtype === FLOW ? FLOW : EXECUTION,
                         },
-                        false,
                     )
                     elements.value = {data: result.data ?? [], count: result.count}
                 }

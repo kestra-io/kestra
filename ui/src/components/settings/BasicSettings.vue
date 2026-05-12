@@ -293,6 +293,7 @@
 </script>
 
 <script>
+    import * as FlowAPI from "@kestra-io/kestra-sdk/flows"
     import RouteContext from "../../mixins/routeContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"
@@ -577,7 +578,7 @@
                     .then((result) => {
                         const flowCount = result.total
 
-                        return this.flowStore.exportFlowByQuery({})
+                        return FlowAPI.exportFlowByQuery({})
                             .then(() => {
                                 this.$toast().success(
                                     this.$t("flows exported", {

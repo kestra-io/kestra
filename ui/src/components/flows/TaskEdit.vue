@@ -167,7 +167,7 @@
         await flowStore.loadFlow({
             namespace: props.namespace,
             id: props.flowId,
-            revision: props.revision?.toString(),
+            revision: props.revision ? Number(props.revision) : undefined,
         })
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {

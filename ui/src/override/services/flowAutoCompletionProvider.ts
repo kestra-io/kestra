@@ -203,7 +203,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     {
                         namespace,
                         id: flowId,
-                        revision,
+                        revision: revision ? Number(revision) : undefined,
                         source: false,
                         store: false,
                         deleted: true,

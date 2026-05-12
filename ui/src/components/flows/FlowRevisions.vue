@@ -65,7 +65,7 @@
                 namespace,
                 id,
             })
-            revisions.value = loaded ?? []
+            revisions.value = (loaded ?? []) as any
         } catch (err) {
             console.error("Failed to load revisions", err)
             revisions.value = []
@@ -108,7 +108,7 @@
         return (await flowStore.loadFlow({
             namespace: flow.value?.namespace ?? "",
             id: flow.value?.id ?? "",
-            revision: revision.toString(),
+            revision: revision,
             allowDeleted: true,
             store: false,
         })).source

@@ -78,7 +78,7 @@
         async ([namespace, flowId, revision]) => {
             if (namespace && flowId && !flowStore.flowYaml) {
                 try {
-                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision as string | undefined, store: false})
+                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision ? Number(revision) : undefined, store: false})
                     if (flow?.source) {
                         flowStore.flowYaml = flow.source
                         flowStore.flowYamlOrigin = flow.source

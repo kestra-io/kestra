@@ -257,6 +257,7 @@
     import _merge from "lodash/merge"
     import * as FILTERS from "../../utils/filters"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import * as FlowAPI from "@kestra-io/kestra-sdk/flows"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
@@ -530,15 +531,16 @@
             () => {
                 const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length
                 if (queryBulkAction.value) {
-                    return flowStore.exportFlowByQuery(loadQuery()).then(() => {
+                    return FlowAPI.exportFlowsByQuery(loadQuery()).then(() => {
                         toast.success(t("flows exported", {count: flowCount}))
                         toggleAllUnselected()
                     })
                 } else {
-                    return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
-                        toast.success(t("flows exported", {count: flowCount}))
-                        toggleAllUnselected()
-                    })
+                    return FlowAPI.exportFlowsByIds({body: selectionIds.value})
+                        .then(() => {
+                            toast.success(t("flows exported", {count: flowCount}))
+                            toggleAllUnselected()
+                        })
                 }
             },
         )
@@ -549,13 +551,13 @@
             t("flow disable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
             () => {
                 if (queryBulkAction.value) {
-                    return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
+                    return FlowAPI.disableFlowsByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
-                    return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
+                    return FlowAPI.disableFlowsByIds({body: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
@@ -578,13 +580,13 @@
             t("flow enable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
             () => {
                 if (queryBulkAction.value) {
-                    return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
+                    return FlowAPI.enableFlowsByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
-                    return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
+                    return FlowAPI.enableFlowsByIds({body: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
@@ -599,13 +601,13 @@
             t("flow delete", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
             () => {
                 if (queryBulkAction.value) {
-                    return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
+                    return FlowAPI.deleteFlowsByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
-                    return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
+                    return FlowAPI.deleteFlowsByIds({body: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
@@ -616,18 +618,17 @@
     }
 
     function importFlows() {
-        const formData = new FormData()
         if (file.value && file.value.files && file.value.files[0]) {
-            formData.append("fileUpload", file.value.files[0])
-            flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
-                if (res.data.length > 0) {
-                    toast.warning(t("flows not imported") + ": " + res.data.join(", "))
-                } else {
-                    toast.success(t("flows imported"))
-                }
-                if (file.value) file.value.value = ""
-                dataTable.value?.reload()
-            })
+            FlowAPI.importFlows({fileUpload: file.value.files[0], failOnError: true})
+                .then((res) => {
+                    if (res.length > 0) {
+                        toast.warning(t("flows not imported") + ": " + res.join(", "))
+                    } else {
+                        toast.success(t("flows imported"))
+                    }
+                    if (file.value) file.value.value = ""
+                    dataTable.value?.reload()
+                })
         }
     }
 
@@ -670,9 +671,17 @@
     }
 
     async function exportFlowsAsStream() {
-        await flowStore.exportFlowAsCSV(
+        const data = await FlowAPI.exportFlowsByQuery(
             route.query,
         )
+        const url = window.URL.createObjectURL(new Blob([data]))
+        const link = document.createElement("a")
+        link.href = url
+        link.setAttribute("download", "flows.csv")
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
     }
 </script>
 

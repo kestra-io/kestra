@@ -107,7 +107,6 @@
                             })
                         "
                         type="warning"
-                        showIcon
                         :closable="false"
                     />
 

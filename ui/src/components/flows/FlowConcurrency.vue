@@ -32,7 +32,7 @@
                 <span class="ms-2">{{ $t('loading') }}</span>
             </div>
         </KsCard>
-        <KsAlert v-else-if="error" type="error" :closable="false" showIcon class="mb-3">
+        <KsAlert v-else-if="error" type="error" :closable="false" class="mb-3">
             {{ $t('failed to load concurrency limit') }}
         </KsAlert>
         <Empty v-else-if="!concurrencyLimit && !loading" type="concurrency_executions" />

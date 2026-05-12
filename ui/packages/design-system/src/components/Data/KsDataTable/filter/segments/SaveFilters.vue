@@ -17,7 +17,7 @@
         @close="closeSaveDialog"
     >
         <div class="save-form">
-            <KsAlert v-if="hasDuplicate" type="error" showIcon :closable="false">
+            <KsAlert v-if="hasDuplicate" type="error" :closable="false">
                 {{ $t("filter.save duplicate") }}
                 <template #icon>
                     <CloseCircleOutline />

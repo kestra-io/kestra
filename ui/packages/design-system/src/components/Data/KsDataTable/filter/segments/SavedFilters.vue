@@ -46,7 +46,7 @@
                     </KsTooltip>
                 </div>
             </div>
-            <KsAlert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
+            <KsAlert v-if="savedFilters.length === 0" type="info" :closable="false">
                 {{ $t("filter.empty") }}
                 <template #icon>
                     <InformationOutline />

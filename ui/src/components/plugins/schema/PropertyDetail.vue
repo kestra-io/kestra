@@ -42,7 +42,7 @@
                     :content="sanitizeForMarkdown(property.description)"
                 />
                 <div v-if="property['$internalStorageURI']">
-                    <KsAlert type="info" showIcon :closable="false">
+                    <KsAlert type="info" :closable="false">
                         <slot
                             name="markdown"
                             :content="INTERNAL_STORAGE_URI_HINT"

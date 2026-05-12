@@ -1,11 +1,11 @@
 <template>
     <template v-if="flow">
-        <KsAlert v-if="flow.disabled" type="warning" showIcon :closable="false">
+        <KsAlert v-if="flow.disabled" type="warning" :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </KsAlert>
         <div class="flow-execution-checks-alerts">
-            <KsAlert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+            <KsAlert v-for="alert in checks || []" :type="alert.style.toLowerCase()" :closable="false" :key="alert">
                 {{ alert.message }}
             </KsAlert>
         </div>

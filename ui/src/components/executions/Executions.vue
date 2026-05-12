@@ -913,7 +913,6 @@
                 title: t("execution-warn-title"),
                 description: t("execution-warn-deleting-still-running"),
                 type: "warning",
-                showIcon: true,
                 closable: false,
             }) : null,
             h(KsCheckbox, {

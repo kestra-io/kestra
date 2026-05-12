@@ -3,7 +3,6 @@
         v-if="duplicatedKeys?.length"
         :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
         type="error"
-        showIcon
         :closable="false"
         class="mb-2"
     />

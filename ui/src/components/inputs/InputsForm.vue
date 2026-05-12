@@ -238,7 +238,7 @@
         </div>
     </template>
 
-    <KsAlert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </KsAlert>
 </template>

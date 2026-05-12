@@ -54,7 +54,6 @@
             <KsAlert
                 v-if="filteredOptions.length === 0"
                 type="info"
-                showIcon
                 :closable="false"
                 class="no-options"
             >

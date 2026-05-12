@@ -30,7 +30,7 @@
             </template>
         </KsDataTable>
         <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <KsAlert type="warning" :closable="false" showIcon>
+            <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
             <br>

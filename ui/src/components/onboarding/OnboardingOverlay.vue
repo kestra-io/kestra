@@ -22,7 +22,6 @@
                 v-if="externalActionNote"
                 type="info"
                 :closable="false"
-                showIcon
                 class="feedback"
             >
                 <template #title>
@@ -34,7 +33,6 @@
                 :title="feedback.message"
                 :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
                 :closable="false"
-                showIcon
                 class="feedback"
             />
             <div v-if="!isFinishStep" class="actions">

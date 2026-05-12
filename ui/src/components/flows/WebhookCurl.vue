@@ -18,12 +18,12 @@
                 </div>
             </div>
 
-            <KsAlert type="info" showIcon :closable="false">
+            <KsAlert type="info" :closable="false">
                 {{ $t('webhook.curl_note') }}
             </KsAlert>
         </div>
         <div v-else>
-            <KsAlert type="warning" showIcon :closable="false">
+            <KsAlert type="warning" :closable="false">
                 {{ $t('webhook.no_triggers') }}
             </KsAlert>
         </div>

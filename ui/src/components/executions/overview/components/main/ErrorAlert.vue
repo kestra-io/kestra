@@ -1,5 +1,5 @@
 <template>
-    <KsAlert id="error" type="error" showIcon :closable="false">
+    <KsAlert id="error" type="error" :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>

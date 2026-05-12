@@ -94,6 +94,7 @@
         startDateValue: null as Date | null,
         selectedComparator: props.filter.comparator,
         timeRangeMode: "predefined" as "predefined" | "custom",
+        dateFilterMode: (props.filter.meta?.dateFilter ?? props.filterKey?.dateFilterOptions?.[0]?.value ?? "") as string,
     })
 
     const shouldShowComparator = computed(
@@ -139,6 +140,7 @@
                     timeRangeMode: state.timeRangeMode,
                     startDateValue: state.startDateValue,
                     endDateValue: state.endDateValue,
+                    dateFilterMode: state.dateFilterMode,
                 },
                 events: {
                     "update:modelValue": (value: string) => (state.selectValue = value),
@@ -147,6 +149,7 @@
                     "update:start-date-value": (value: Date | null) =>
                         (state.startDateValue = value),
                     "update:end-date-value": (value: Date | null) => (state.endDateValue = value),
+                    "update:date-filter-mode": (value: string) => (state.dateFilterMode = value),
                 },
             },
             text: {
@@ -241,6 +244,7 @@
             timeRangeMode: "predefined",
             startDateValue: null,
             endDateValue: null,
+            dateFilterMode: props.filterKey?.dateFilterOptions?.[0]?.value ?? "",
         })
     }
 
@@ -266,6 +270,7 @@
                         endDate: state.endDateValue!,
                     },
                     label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`,
+                    meta: state.dateFilterMode ? {dateFilter: state.dateFilterMode} : undefined,
                 }
             }
             return {
@@ -273,6 +278,9 @@
                 label:
                     state.valueOptions?.find(opt => opt.value === state.selectValue)
                         ?.label || state.selectValue,
+                meta: props.filterKey?.key === "timeRange" && state.dateFilterMode
+                    ? {dateFilter: state.dateFilterMode}
+                    : undefined,
             }
         case "multi-select":
             return {
@@ -306,18 +314,36 @@
             return
         }
 
-        emits("update", {
+        const updatedFilter: any = {
             ...props.filter,
             comparator: state.selectedComparator,
             comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
             value: filterData.value,
             valueLabel: filterData.label,
-        })
+        }
+
+        if (filterData.meta !== undefined) {
+            updatedFilter.meta = filterData.meta
+        } else if (props.filterKey?.key !== "timeRange") {
+            delete updatedFilter.meta
+        }
+
+        if (props.filterKey?.keyLabelProvider) {
+            updatedFilter.keyLabel = props.filterKey.keyLabelProvider(filterData.meta)
+        }
+
+        emits("update", updatedFilter)
         emits("close")
     }
 
     const initializeStateFromFilter = (filter: AppliedFilter) => {
         state.selectedComparator = filter.comparator
+
+        if (props.filterKey?.dateFilterOptions?.length) {
+            state.dateFilterMode = filter.meta?.dateFilter
+                ?? props.filterKey.dateFilterOptions[0]?.value
+                ?? ""
+        }
 
         if (
             props.filterKey?.key === "timeRange" &&

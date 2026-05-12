@@ -759,9 +759,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             Execution execution = executor.getExecution();
-            // handle flow triggers on state change
-            if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                processFlowTriggers(execution);
+            // Fire flow triggers for every distinct state transition that occurred in this cycle.
+            // A single cycle can advance through multiple states (e.g. PAUSED → RUNNING → SUCCESS
+            // when a pause-resume delay fires and the executor immediately completes the next task).
+            // Iterating stateTransitions[1..n] ensures each intermediate state reaches the trigger
+            // pipeline, regardless of how many transitions collapsed into one executor cycle.
+            List<State.Type> transitions = executor.getStateTransitions();
+            for (int i = 1; i < transitions.size(); i++) {
+                processFlowTriggers(execution.withState(transitions.get(i)));
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.

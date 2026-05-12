@@ -590,6 +590,16 @@ export default {
             "timeRange": {
                 "description": "Nach Ausführungszeit filtern",
                 "label": "Intervall",
+                "chip": {
+                    "end": "Beendet",
+                    "start": "Gestartet",
+                    "startOrEnd": "Gestartet oder beendet",
+                },
+                "dateFilter": {
+                    "endDate": "Enddatum",
+                    "startDate": "Startdatum",
+                    "startOrEndDate": "Start- oder Enddatum",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Nach Dashboard-Fenster filtern",
@@ -916,6 +926,16 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tiempo de ejecución",
                 "label": "Intervalo",
+                "chip": {
+                    "end": "Finalizado",
+                    "start": "Iniciado",
+                    "startOrEnd": "Iniciado o finalizado",
+                },
+                "dateFilter": {
+                    "endDate": "Fecha de finalización",
+                    "startDate": "Fecha de inicio",
+                    "startOrEndDate": "Fecha de inicio o fin",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtrar por ventana del dashboard",
@@ -1242,6 +1262,16 @@ export default {
             "timeRange": {
                 "description": "Filtrer par temps d'exécution",
                 "label": "Intervalle",
+                "chip": {
+                    "end": "Terminé",
+                    "start": "Démarré",
+                    "startOrEnd": "Commencé ou terminé",
+                },
+                "dateFilter": {
+                    "endDate": "Date de fin",
+                    "startDate": "Date de début",
+                    "startOrEndDate": "Date de début ou de fin",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtrer par fenêtre de tableau de bord",
@@ -1568,6 +1598,16 @@ export default {
             "timeRange": {
                 "description": "कार्य समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+                "chip": {
+                    "end": "समाप्त",
+                    "start": "शुरू हुआ",
+                    "startOrEnd": "शुरू या समाप्त हुआ",
+                },
+                "dateFilter": {
+                    "endDate": "समाप्ति तिथि",
+                    "startDate": "प्रारंभ तिथि",
+                    "startOrEndDate": "प्रारंभ या समाप्ति तिथि",
+                },
             },
             "timeRange_dashboard": {
                 "description": "डैशबोर्ड विंडो द्वारा फ़िल्टर करें",
@@ -1894,6 +1934,16 @@ export default {
             "timeRange": {
                 "description": "Filtra per tempo di esecuzione",
                 "label": "Intervallo",
+                "chip": {
+                    "end": "Terminato",
+                    "start": "Iniziato",
+                    "startOrEnd": "Iniziato o terminato",
+                },
+                "dateFilter": {
+                    "endDate": "Data di fine",
+                    "startDate": "Data di inizio",
+                    "startOrEndDate": "Data di inizio o fine",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtra per finestra dashboard",
@@ -2220,6 +2270,16 @@ export default {
             "timeRange": {
                 "description": "実行時間でフィルター",
                 "label": "インターバル",
+                "chip": {
+                    "end": "終了しました",
+                    "start": "開始しました",
+                    "startOrEnd": "開始または終了",
+                },
+                "dateFilter": {
+                    "endDate": "終了日",
+                    "startDate": "開始日",
+                    "startOrEndDate": "開始日または終了日",
+                },
             },
             "timeRange_dashboard": {
                 "description": "ダッシュボードウィンドウでフィルター",
@@ -2546,6 +2606,16 @@ export default {
             "timeRange": {
                 "description": "실행 시간으로 필터링",
                 "label": "간격",
+                "chip": {
+                    "end": "종료됨",
+                    "start": "시작됨",
+                    "startOrEnd": "시작되었거나 종료됨",
+                },
+                "dateFilter": {
+                    "endDate": "종료 날짜",
+                    "startDate": "시작 날짜",
+                    "startOrEndDate": "시작 또는 종료 날짜",
+                },
             },
             "timeRange_dashboard": {
                 "description": "대시보드 창별 필터",
@@ -2872,6 +2942,16 @@ export default {
             "timeRange": {
                 "description": "Filtruj według czasu wykonania",
                 "label": "Interwał",
+                "chip": {
+                    "end": "Zakończono",
+                    "start": "Rozpoczęto",
+                    "startOrEnd": "Rozpoczęto lub zakończono",
+                },
+                "dateFilter": {
+                    "endDate": "Data zakończenia",
+                    "startDate": "Data rozpoczęcia",
+                    "startOrEndDate": "Data rozpoczęcia lub zakończenia",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtruj według okna dashboardu",
@@ -3198,6 +3278,16 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "chip": {
+                    "end": "Finalizado",
+                    "start": "Iniciado",
+                    "startOrEnd": "Iniciado ou terminado",
+                },
+                "dateFilter": {
+                    "endDate": "Data de término",
+                    "startDate": "Data de início",
+                    "startOrEndDate": "Data de início ou término",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtrar por janela do dashboard",
@@ -3524,6 +3614,16 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "chip": {
+                    "end": "Finalizado",
+                    "start": "Iniciado",
+                    "startOrEnd": "Iniciado ou finalizado",
+                },
+                "dateFilter": {
+                    "endDate": "Data de término",
+                    "startDate": "Data de início",
+                    "startOrEndDate": "Data de início ou término",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Filtrar por janela do dashboard",
@@ -3850,6 +3950,16 @@ export default {
             "timeRange": {
                 "description": "Фильтр по времени выполнения",
                 "label": "Интервал",
+                "chip": {
+                    "end": "Завершено",
+                    "start": "Начато",
+                    "startOrEnd": "Начато или завершено",
+                },
+                "dateFilter": {
+                    "endDate": "Дата окончания",
+                    "startDate": "Дата начала",
+                    "startOrEndDate": "Дата начала или окончания",
+                },
             },
             "timeRange_dashboard": {
                 "description": "Фильтр по окну дашборда",
@@ -4176,6 +4286,16 @@ export default {
             "timeRange": {
                 "description": "按执行时间筛选",
                 "label": "间隔",
+                "chip": {
+                    "end": "结束",
+                    "start": "已启动",
+                    "startOrEnd": "已开始或已结束",
+                },
+                "dateFilter": {
+                    "endDate": "结束日期",
+                    "startDate": "开始日期",
+                    "startOrEndDate": "开始或结束日期",
+                },
             },
             "timeRange_dashboard": {
                 "description": "按仪表板窗口筛选",

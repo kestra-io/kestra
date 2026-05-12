@@ -43,8 +43,8 @@
     })
 
     const displayText = computed(() => {
-        return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase());
-    });
+        return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
+    })
 
     const classes = computed(() => [
         "ks-execution-status",

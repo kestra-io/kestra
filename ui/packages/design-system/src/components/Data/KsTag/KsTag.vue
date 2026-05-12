@@ -21,7 +21,7 @@
 <script setup lang="ts">
     import {ElTag} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import {type Component} from "vue";
+    import {type Component} from "vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -35,7 +35,7 @@
         label?: string
         plain?: boolean
     }>(), {
-        effect: "plain"
+        effect: "plain",
     })
 
     const emit = defineEmits<{

@@ -96,6 +96,12 @@ export function useFederatedModule(slotName: string) {
                                 singleton: true,
                             },
                         },
+                        "vue-i18n": {
+                            shareConfig: {
+                                requiredVersion: "^11",
+                                singleton: true,
+                            },
+                        },
                     })
 
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []

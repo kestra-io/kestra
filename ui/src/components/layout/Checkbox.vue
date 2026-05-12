@@ -24,11 +24,11 @@
 <script setup lang="ts">
     defineProps<{
         modelValue: boolean;
-    }>();
+    }>()
 
     defineEmits<{
         "update-model-value": [value: boolean];
-    }>();
+    }>()
 </script>
 
 <style lang="scss" scoped>

@@ -25,13 +25,13 @@
 </template>
 
 <script setup lang="ts">
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
 
     defineProps({
         heading: {type: String, default: ""},
         note: {type: String, default: undefined},
         last: {type: Boolean, default: false},
-    });
+    })
 </script>
 
 <style scoped lang="scss">

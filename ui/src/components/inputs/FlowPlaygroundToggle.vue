@@ -5,9 +5,9 @@
 </template>
 
 <script setup lang="ts">
-    import {usePlaygroundStore} from "../../stores/playground";
+    import {usePlaygroundStore} from "../../stores/playground"
 
-    const playgroundStore = usePlaygroundStore();
+    const playgroundStore = usePlaygroundStore()
 </script>
 
 <style scoped lang="scss">

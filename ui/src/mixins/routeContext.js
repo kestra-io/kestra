@@ -2,8 +2,8 @@ export default {
     props: {
         embed: {
             type: Boolean,
-            default: false
-        }
+            default: false,
+        },
     },
     mounted() {
         this.handleTitle()
@@ -11,21 +11,21 @@ export default {
     watch: {
         $route() {
             this.handleTitle()
-        }
+        },
     },
     methods: {
         handleTitle() {
             if(!this.embed) {
-                let baseTitle;
+                let baseTitle
 
                 if (document.title.lastIndexOf("|") > 0) {
-                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1);
+                    baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1)
                 } else {
-                    baseTitle = document.title;
+                    baseTitle = document.title
                 }
 
-                document.title = this.routeInfo.title + " | " + baseTitle;
+                document.title = this.routeInfo.title + " | " + baseTitle
             }
-        }
-    }
+        },
+    },
 }

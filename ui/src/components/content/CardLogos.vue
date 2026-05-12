@@ -54,9 +54,9 @@
 </template>
 
 <script setup lang="ts">
-    import {useDocStore} from "../../stores/doc";
+    import {useDocStore} from "../../stores/doc"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 </script>
 
 <style scoped lang="scss">

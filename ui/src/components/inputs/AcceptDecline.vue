@@ -19,12 +19,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    const emit = defineEmits<{ accept: []; reject: [] }>();
+    import {computed} from "vue"
+    const emit = defineEmits<{ accept: []; reject: [] }>()
     const props = defineProps({
-        visible: {type: Boolean, default: true}
-    });
-    const visible = computed(() => props.visible);
+        visible: {type: Boolean, default: true},
+    })
+    const visible = computed(() => props.visible)
 </script>
 
 <style scoped lang="scss">

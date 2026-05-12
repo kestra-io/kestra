@@ -2,7 +2,7 @@ import NoCode from "../../../../src/components/no-code/NoCode.vue";
 import InitialSchema from "../../../../src/stores/flow-schema.json";
 import {vueRouter} from "storybook-vue3-router";
 import {useFlowStore} from "../../../../src/stores/flow";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 
 export default {
@@ -43,7 +43,7 @@ const PLUGINS_RESPONSE = [{
 const Template = (args) => ({
     setup() {
         const flowStore = useFlowStore()
-        const axios = useAxios()
+        const axios = {}
 
         flowStore.flowYaml = args.flow
         const props = {
@@ -76,6 +76,8 @@ const Template = (args) => ({
                     data: []
                 })
             }
+
+            setMockClient(axios);
 
         return () =>
             <div style="margin: 1rem; width: 400px;border: 1px solid lightgray; padding: .5rem;">

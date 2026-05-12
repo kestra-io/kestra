@@ -1,11 +1,11 @@
-import {MarkerType, Position, useVueFlow} from "@vue-flow/core";
-import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core";
-import * as dagre from "dagre";
-import Utils from "./utils";
-import {CLUSTER_PREFIX, NODE_SIZES} from "./constants";
-import isEqual from "lodash/isEqual";
+import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
+import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
+import * as dagre from "dagre"
+import * as Utils from "./utils"
+import {CLUSTER_PREFIX, NODE_SIZES} from "./constants"
+import isEqual from "lodash/isEqual"
 
-const TRIGGERS_NODE_UID = "root.Triggers";
+const TRIGGERS_NODE_UID = "root.Triggers"
 
 enum BranchType {
     ERROR = "ERROR",
@@ -57,64 +57,64 @@ export interface FlowGraph {
 type EdgeReplacer = Record<string, string>;
 
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId);
-    const nodes = [];
+    const {getEdges} = useVueFlow(vueFlowId)
+    const nodes = []
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
-            nodes.push(edge);
-            const recursiveEdge = predecessorsEdge(vueFlowId, edge.source);
+            nodes.push(edge)
+            const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
-    return nodes;
+    return nodes
 }
 
 export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId);
-    const nodes = [];
+    const {getEdges} = useVueFlow(vueFlowId)
+    const nodes = []
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
-            nodes.push(edge);
-            const recursiveEdge = successorsEdge(vueFlowId, edge.target);
+            nodes.push(edge)
+            const recursiveEdge = successorsEdge(vueFlowId, edge.target)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
-    return nodes;
+    return nodes
 }
 
 export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
-    const {getEdges, findNode} = useVueFlow(vueFlowId);
-    const foundNode = findNode(nodeUid);
-    const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : [];
+    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const foundNode = findNode(nodeUid)
+    const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
-            nodes.push(edge.sourceNode);
-            const recursiveEdge = predecessorsNode(vueFlowId, edge.source);
+            nodes.push(edge.sourceNode)
+            const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
-    return nodes;
+    return nodes
 }
 
 export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {getEdges, findNode} = useVueFlow(vueFlowId);
-    const nodes = [findNode(nodeUid)];
+    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const nodes = [findNode(nodeUid)]
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
-            nodes.push(edge.targetNode);
-            const recursiveEdge = successorsNode(vueFlowId, edge.target);
+            nodes.push(edge.targetNode)
+            const recursiveEdge = successorsNode(vueFlowId, edge.target)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
-    return nodes;
+    return nodes
 }
 
 export function linkedElements(vueFlowId: string, nodeUid: string) {
@@ -123,7 +123,7 @@ export function linkedElements(vueFlowId: string, nodeUid: string) {
         ...predecessorsNode(vueFlowId, nodeUid),
         ...successorsEdge(vueFlowId, nodeUid),
         ...successorsNode(vueFlowId, nodeUid),
-    ];
+    ]
 }
 
 export function generateDagreGraph(
@@ -136,72 +136,72 @@ export function generateDagreGraph(
     clusterToNode: MinimalNode[],
     getNodeDimensions: (
         node: MinimalNode,
-        getNodeWidth: (node: MinimalNode) => number,
-        getNodeHeight: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, getNodeWidth, getNodeHeight) => ({
-        width: getNodeWidth(node),
-        height: getNodeHeight(node),
+        widthFn: (node: MinimalNode) => number,
+        heightFn: (node: MinimalNode) => number,
+    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+        width: widthFn(node),
+        height: heightFn(node),
     }),
 ) {
-    const dagreGraph = new dagre.graphlib.Graph({compound: true});
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({rankdir: isHorizontal ? "LR" : "TB"});
+    const dagreGraph = new dagre.graphlib.Graph({compound: true})
+    dagreGraph.setDefaultEdgeLabel(() => ({}))
+    dagreGraph.setGraph({rankdir: isHorizontal ? "LR" : "TB"})
 
     for (const node of flowGraph.nodes) {
         if (!hiddenNodes.includes(node.uid)) {
-            dagreGraph.setNode(node.uid, getNodeDimensions(node, getNodeWidth, getNodeHeight));
+            dagreGraph.setNode(node.uid, getNodeDimensions(node, getNodeWidth, getNodeHeight))
         }
     }
 
     for (const cluster of flowGraph.clusters || []) {
-        const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "");
+        const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
         if (clustersWithoutRootNode.includes(cluster.cluster.uid) && collapsed.has(nodeUid)) {
-            const node = {uid: nodeUid, type: "collapsedcluster"};
-            const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight);
-            dagreGraph.setNode(nodeUid, dimensions);
-            clusterToNode.push(node);
-            continue;
+            const node = {uid: nodeUid, type: "collapsedcluster"}
+            const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
+            dagreGraph.setNode(nodeUid, dimensions)
+            clusterToNode.push(node)
+            continue
         }
         if (!edgeReplacer[cluster.cluster.uid]) {
-            dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"});
+            dagreGraph.setNode(cluster.cluster.uid, {clusterLabelPos: "top"})
             for (const node of cluster.nodes || []) {
                 if (!hiddenNodes.includes(node)) {
-                    dagreGraph.setParent(node, cluster.cluster.uid);
+                    dagreGraph.setParent(node, cluster.cluster.uid)
                 }
             }
         }
         if (cluster.parents) {
             const nodeChild = edgeReplacer[cluster.cluster.uid]
                 ? edgeReplacer[cluster.cluster.uid]
-                : cluster.cluster.uid;
+                : cluster.cluster.uid
             if (!hiddenNodes.includes(nodeChild)) {
-                dagreGraph.setParent(nodeChild, cluster.parents[cluster.parents.length - 1]);
+                dagreGraph.setParent(nodeChild, cluster.parents[cluster.parents.length - 1])
             }
         }
     }
 
     for (const edge of flowGraph.edges || []) {
-        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes);
+        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes)
         if (newEdge) {
-            dagreGraph.setEdge(newEdge.source, newEdge.target);
+            dagreGraph.setEdge(newEdge.source, newEdge.target)
         }
     }
 
-    dagre.layout(dagreGraph);
-    return dagreGraph;
+    dagre.layout(dagreGraph)
+    return dagreGraph
 }
 
 export function getNodePosition(
     n: {x: number; y: number; width: number; height: number},
     parent?: {x: number; y: number; width: number; height: number},
 ) {
-    const position = {x: n.x - n.width / 2, y: n.y - n.height / 2};
+    const position = {x: n.x - n.width / 2, y: n.y - n.height / 2}
     if (parent) {
-        const parentPosition = getNodePosition(parent);
-        position.x = position.x - parentPosition.x;
-        position.y = position.y - parentPosition.y;
+        const parentPosition = getNodePosition(parent)
+        position.x = position.x - parentPosition.x
+        position.y = position.y - parentPosition.y
     }
-    return position;
+    return position
 }
 
 export function getNodeWidth(node: MinimalNode) {
@@ -209,7 +209,7 @@ export function getNodeWidth(node: MinimalNode) {
         ? NODE_SIZES.TASK_WIDTH
         : isCollapsedCluster(node)
           ? NODE_SIZES.COLLAPSED_CLUSTER_WIDTH
-          : NODE_SIZES.DOT_WIDTH;
+          : NODE_SIZES.DOT_WIDTH
 }
 
 export function getNodeHeight(node: MinimalNode) {
@@ -217,23 +217,23 @@ export function getNodeHeight(node: MinimalNode) {
         ? NODE_SIZES.TASK_HEIGHT
         : isCollapsedCluster(node)
           ? NODE_SIZES.COLLAPSED_CLUSTER_HEIGHT
-          : NODE_SIZES.DOT_HEIGHT;
+          : NODE_SIZES.DOT_HEIGHT
 }
 
 export function isTaskNode(node: MinimalNode) {
-    return ["GraphTask", "SubflowGraphTask$1"].some((t) => node.type.endsWith(t));
+    return ["GraphTask", "SubflowGraphTask$1"].some((t) => node.type.endsWith(t))
 }
 
 export function isTriggerNode(node: MinimalNode) {
-    return node.type.endsWith("GraphTrigger");
+    return node.type.endsWith("GraphTrigger")
 }
 
 export function isCustomNode(node: MinimalNode) {
-    return node.type.endsWith("CustomGraphNode");
+    return node.type.endsWith("CustomGraphNode")
 }
 
 export function isCollapsedCluster(node: MinimalNode) {
-    return node.type === "collapsedcluster";
+    return node.type === "collapsedcluster"
 }
 
 export function replaceIfCollapsed(
@@ -242,37 +242,37 @@ export function replaceIfCollapsed(
     edgeReplacer: EdgeReplacer,
     hiddenNodes: string[],
 ) {
-    const newSource = edgeReplacer[source] ? edgeReplacer[source] : source;
-    const newTarget = edgeReplacer[target] ? edgeReplacer[target] : target;
+    const newSource = edgeReplacer[source] ? edgeReplacer[source] : source
+    const newTarget = edgeReplacer[target] ? edgeReplacer[target] : target
     if (newSource === newTarget || hiddenNodes.includes(newSource) || hiddenNodes.includes(newTarget)) {
-        return null;
+        return null
     }
-    return {target: newTarget, source: newSource};
+    return {target: newTarget, source: newSource}
 }
 
 export function cleanGraph(vueflowId: string) {
     const {getEdges, getNodes, getElements, removeEdges, removeNodes, removeSelectedElements} =
-        useVueFlow(vueflowId);
-    removeEdges(getEdges.value);
-    removeNodes(getNodes.value);
-    removeSelectedElements(getElements.value);
+        useVueFlow(vueflowId)
+    removeEdges(getEdges.value)
+    removeNodes(getNodes.value)
+    removeSelectedElements(getElements.value)
 }
 
 export function flowHaveTasks(source: string): boolean {
-    if (!source) return false;
+    if (!source) return false
     // Check if the root-level `tasks` key exists and has at least one list item
-    const match = source.match(/^tasks\s*:\s*\r?\n([\s\S]*?)(?=^\S|$(?![\r\n]))/m);
-    return match != null && /^\s+-/m.test(match[1] ?? "");
+    const match = source.match(/^tasks\s*:\s*\r?\n([\s\S]*?)(?=^\S|$(?![\r\n]))/m)
+    return match != null && /^\s+-/m.test(match[1] ?? "")
 }
 
 export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
-    if (node.uid === TRIGGERS_NODE_UID) return "success";
-    if (isTriggerNode(node) || isCollapsedCluster(node)) return "success";
-    if (node.type.endsWith("SubflowGraphTask")) return "primary";
-    if (node.branchType == BranchType.ERROR) return "danger";
-    if (node.branchType == BranchType.FINALLY) return "warning";
-    if (collapsed.has(node.uid)) return "blue";
-    return "default";
+    if (node.uid === TRIGGERS_NODE_UID) return "success"
+    if (isTriggerNode(node) || isCollapsedCluster(node)) return "success"
+    if (node.type.endsWith("SubflowGraphTask")) return "primary"
+    if (node.branchType == BranchType.ERROR) return "danger"
+    if (node.branchType == BranchType.FINALLY) return "warning"
+    if (collapsed.has(node.uid)) return "blue"
+    return "default"
 }
 
 export function haveAdd(
@@ -286,40 +286,40 @@ export function haveAdd(
             (prefix) => edge.source.startsWith(prefix) && edge.target.startsWith(prefix),
         )
     ) {
-        return undefined;
+        return undefined
     }
-    if (clustersRootTaskUids.includes(edge.target)) return undefined;
+    if (clustersRootTaskUids.includes(edge.target)) return undefined
     if (
         edge.source.startsWith(TRIGGERS_NODE_UID) ||
         edge.target.startsWith(TRIGGERS_NODE_UID)
     ) {
-        return undefined;
+        return undefined
     }
 
-    const dotSplitTarget = edge.target.split(".");
-    dotSplitTarget.pop();
-    const targetNodeClusterUid = dotSplitTarget.join(".");
-    const clusterRootTaskId = Utils.afterLastDot(targetNodeClusterUid);
-    const targetNode = nodeByUid[edge.target];
+    const dotSplitTarget = edge.target.split(".")
+    dotSplitTarget.pop()
+    const targetNodeClusterUid = dotSplitTarget.join(".")
+    const clusterRootTaskId = Utils.afterLastDot(targetNodeClusterUid)
+    const targetNode = nodeByUid[edge.target]
 
     if (
         targetNode.type.endsWith("GraphClusterEnd") &&
         nodeByUid[targetNodeClusterUid]?.task?.type?.endsWith("Parallel")
     ) {
-        return undefined;
+        return undefined
     }
     if (targetNode.type.endsWith("GraphClusterRoot")) {
-        return [clusterRootTaskId, "before"];
+        return [clusterRootTaskId, "before"]
     }
-    const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd");
+    const sourceIsEndOfCluster = nodeByUid[edge.source].type.endsWith("GraphClusterEnd")
     if (!sourceIsEndOfCluster && targetNode.type.endsWith("GraphClusterEnd")) {
-        return [Utils.afterLastDot(edge.source), "after"];
+        return [Utils.afterLastDot(edge.source), "after"]
     }
     if (sourceIsEndOfCluster) {
-        const dotSplitSource = edge.source.split(".");
-        return [dotSplitSource[dotSplitSource.length - 2], "after"];
+        const dotSplitSource = edge.source.split(".")
+        return [dotSplitSource[dotSplitSource.length - 2], "after"]
     }
-    return [Utils.afterLastDot(edge.target), "before"];
+    return [Utils.afterLastDot(edge.target), "before"]
 }
 
 export function getEdgeColor(
@@ -328,23 +328,23 @@ export function getEdgeColor(
     clusterByNodeUid: Record<string, Cluster>,
 ) {
     const findRootBranchType = (nodeId: string): BranchType | null => {
-        const uidParts = nodeId.split(".");
+        const uidParts = nodeId.split(".")
         for (let i = 1; i <= uidParts.length; i++) {
-            const parentUid = uidParts.slice(0, i).join(".");
-            const branchType = clusterByNodeUid[parentUid]?.branchType;
-            if (branchType) return branchType;
+            const parentUid = uidParts.slice(0, i).join(".")
+            const branchType = clusterByNodeUid[parentUid]?.branchType
+            if (branchType) return branchType
         }
-        return nodeByUid[nodeId]?.branchType ?? null;
-    };
+        return nodeByUid[nodeId]?.branchType ?? null
+    }
 
-    const sourceBranchType = findRootBranchType(edge.source);
-    const targetBranchType = findRootBranchType(edge.target);
+    const sourceBranchType = findRootBranchType(edge.source)
+    const targetBranchType = findRootBranchType(edge.target)
 
     return [sourceBranchType, targetBranchType].includes(BranchType.ERROR)
         ? "danger"
         : [sourceBranchType, targetBranchType].includes(BranchType.FINALLY)
           ? "warning"
-          : null;
+          : null
 }
 
 export function generateGraph(
@@ -363,19 +363,19 @@ export function generateGraph(
     enableSubflowInteraction: boolean,
     getNodeDimensions: (
         node: MinimalNode,
-        getNodeWidth: (node: MinimalNode) => number,
-        getNodeHeight: (node: MinimalNode) => number,
-    ) => {width: number; height: number} = (node, getNodeWidth, getNodeHeight) => ({
-        width: getNodeWidth(node),
-        height: getNodeHeight(node),
+        widthFn: (node: MinimalNode) => number,
+        heightFn: (node: MinimalNode) => number,
+    ) => {width: number; height: number} = (node, widthFn, heightFn) => ({
+        width: widthFn(node),
+        height: heightFn(node),
     }),
     animated: boolean = true,
 ): Elements | undefined {
-    const elements: Elements = [];
-    const clustersWithoutRootNode = [CLUSTER_PREFIX + TRIGGERS_NODE_UID];
+    const elements: Elements = []
+    const clustersWithoutRootNode = [CLUSTER_PREFIX + TRIGGERS_NODE_UID]
 
     if (!flowGraph || (flowSource && !flowHaveTasks(flowSource))) {
-        console.warn("No flow graph or tasks found");
+        console.warn("No flow graph or tasks found")
         elements.push({
             id: "start",
             type: "dot",
@@ -385,7 +385,7 @@ export function generateGraph(
             targetPosition: isHorizontal ? Position.Left : Position.Top,
             parentNode: undefined,
             draggable: false,
-        });
+        })
         elements.push({
             id: "end",
             type: "dot",
@@ -395,7 +395,7 @@ export function generateGraph(
             targetPosition: isHorizontal ? Position.Left : Position.Top,
             parentNode: undefined,
             draggable: false,
-        });
+        })
         elements.push({
             id: "start|end",
             source: "start",
@@ -407,8 +407,8 @@ export function generateGraph(
                 initTask: true,
                 color: "primary",
             },
-        });
-        return;
+        })
+        return
     }
 
     const dagreGraph = generateDagreGraph(
@@ -420,36 +420,36 @@ export function generateGraph(
         collapsed,
         clusterToNode,
         getNodeDimensions,
-    );
+    )
 
-    const clusterByNodeUid: Record<string, Cluster> = {};
-    const clusters = flowGraph.clusters || [];
-    const rawClusters = clusters.map((c) => c.cluster);
+    const clusterByNodeUid: Record<string, Cluster> = {}
+    const clusters = flowGraph.clusters || []
+    const rawClusters = clusters.map((c) => c.cluster)
     const readOnlyUidPrefixes = rawClusters
         .filter((c) => c.type.endsWith("SubflowGraphCluster"))
-        .map((c) => c.taskNode.uid);
+        .map((c) => c.taskNode.uid)
 
     const nodeByUid = Object.fromEntries(
         flowGraph.nodes.concat(clusterToNode).map((node) => [node.uid, node]),
-    );
+    )
 
     for (const cluster of clusters) {
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(cluster.cluster.uid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
             ) {
-                readOnlyUidPrefixes.push(cluster.cluster.taskNode.uid);
+                readOnlyUidPrefixes.push(cluster.cluster.taskNode.uid)
             }
             for (const nodeUid of cluster.nodes) {
-                clusterByNodeUid[nodeUid] = cluster.cluster;
+                clusterByNodeUid[nodeUid] = cluster.cluster
             }
 
-            const clusterUid = cluster.cluster.uid;
-            const dagreNode = dagreGraph.node(clusterUid);
+            const clusterUid = cluster.cluster.uid
+            const dagreNode = dagreGraph.node(clusterUid)
             const parentNode = cluster.parents
                 ? cluster.parents[cluster.parents.length - 1]
-                : undefined;
-            const clusterColor = computeClusterColor(cluster.cluster);
+                : undefined
+            const clusterColor = computeClusterColor(cluster.cluster)
 
             elements.push({
                 id: clusterUid,
@@ -480,32 +480,32 @@ export function generateGraph(
                         : false,
                 },
                 class: `ks-topology-${clusterColor}-border`,
-            } as any);
+            } as any)
         }
     }
 
     for (const node of flowGraph.nodes.concat(clusterToNode)) {
         if (!hiddenNodes.includes(node.uid)) {
-            const dagreNode = dagreGraph.node(node.uid);
-            let nodeType = "task";
+            const dagreNode = dagreGraph.node(node.uid)
+            let nodeType = "task"
             if (isClusterRootOrEnd(node)) {
-                nodeType = "dot";
+                nodeType = "dot"
             } else if (node.type.endsWith("CustomGraphNode")) {
-                nodeType = "custom";
+                nodeType = "custom"
             } else if (node.type.includes("GraphTrigger")) {
-                nodeType = "trigger";
+                nodeType = "trigger"
             } else if (node.type === "collapsedcluster") {
-                nodeType = "collapsedcluster";
+                nodeType = "collapsedcluster"
             }
 
-            const color = nodeColor(node, collapsed);
+            const color = nodeColor(node, collapsed)
             const isReadOnlyTask =
                 isReadOnly ||
                 node.task?.type?.includes("$") ||
-                readOnlyUidPrefixes.some((prefix) => node.uid.startsWith(prefix + "."));
+                readOnlyUidPrefixes.some((prefix) => node.uid.startsWith(prefix + "."))
 
-            const cluster = clusterByNodeUid[node.uid];
-            const nodeDimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight);
+            const cluster = clusterByNodeUid[node.uid]
+            const nodeDimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
 
             elements.push({
                 id: node.uid,
@@ -538,27 +538,27 @@ export function generateGraph(
                     unused: node.unused,
                 },
                 class: node.type === "collapsedcluster" ? `ks-topology-${color}-border` : "",
-            });
+            })
         }
     }
 
-    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode.uid);
-    const edges = flowGraph.edges ?? [];
+    const clusterRootTaskNodeUids = rawClusters.filter((c) => c.taskNode).map((c) => c.taskNode.uid)
+    const edges = flowGraph.edges ?? []
 
     for (const edge of edges) {
-        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes);
+        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes)
         if (newEdge) {
-            const edgeColor = getEdgeColor(edge, nodeByUid, clusterByNodeUid);
-            const targetNodeType = nodeByUid[newEdge.target]?.type ?? "";
-            const sourceNodeType = nodeByUid[newEdge.source]?.type ?? "";
-            let edgeBoundary: "top" | "bottom" | undefined = undefined;
+            const edgeColor = getEdgeColor(edge, nodeByUid, clusterByNodeUid)
+            const targetNodeType = nodeByUid[newEdge.target]?.type ?? ""
+            const sourceNodeType = nodeByUid[newEdge.source]?.type ?? ""
+            let edgeBoundary: "top" | "bottom" | undefined = undefined
             if (typeof targetNodeType === "string" && targetNodeType.endsWith("GraphClusterRoot")) {
-                edgeBoundary = "top";
+                edgeBoundary = "top"
             } else if (
                 typeof sourceNodeType === "string" &&
                 sourceNodeType.endsWith("GraphClusterEnd")
             ) {
-                edgeBoundary = "bottom";
+                edgeBoundary = "bottom"
             }
             elements.push({
                 id: newEdge.source + "|" + newEdge.target,
@@ -593,11 +593,11 @@ export function generateGraph(
                 },
                 style: {zIndex: 10},
                 animated: animated,
-            });
+            })
         }
     }
 
-    return elements;
+    return elements
 }
 
 export function isClusterRootOrEnd(node: MinimalNode) {
@@ -606,14 +606,14 @@ export function isClusterRootOrEnd(node: MinimalNode) {
         "GraphClusterFinally",
         "GraphClusterAfterExecution",
         "GraphClusterEnd",
-    ].some((s) => node.type.endsWith(s));
+    ].some((s) => node.type.endsWith(s))
 }
 
 export function computeClusterColor(cluster: Cluster) {
-    if (cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID) return "success";
-    if (cluster.type.endsWith("SubflowGraphCluster")) return "primary";
-    if (cluster.branchType === BranchType.ERROR) return "danger";
-    return "blue";
+    if (cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID) return "success"
+    if (cluster.type.endsWith("SubflowGraphCluster")) return "primary"
+    if (cluster.branchType === BranchType.ERROR) return "danger"
+    return "blue"
 }
 
 export function isExpandableTask(
@@ -622,41 +622,41 @@ export function isExpandableTask(
     edgeReplacer: EdgeReplacer,
     enableSubflowInteraction?: boolean,
 ) {
-    if (Object.values(edgeReplacer).includes(node.uid)) return true;
-    if (isCollapsedCluster(node)) return true;
+    if (Object.values(edgeReplacer).includes(node.uid)) return true
+    if (isCollapsedCluster(node)) return true
     return (
         node.type.endsWith("SubflowGraphTask") &&
         clusterByNodeUid[node.uid]?.uid?.replace(CLUSTER_PREFIX, "") !== node.uid &&
         enableSubflowInteraction
-    );
+    )
 }
 
 export function getRootNodes(graph: FlowGraph) {
-    const nodeUIDs = graph.nodes.map((node) => node.uid);
+    const nodeUIDs = graph.nodes.map((node) => node.uid)
     const rootUIDs = nodeUIDs.filter((uid) => {
-        return !graph.edges.some((edge) => edge.target === uid);
-    });
-    return graph.nodes.filter((node) => rootUIDs.includes(node.uid));
+        return !graph.edges.some((edge) => edge.target === uid)
+    })
+    return graph.nodes.filter((node) => rootUIDs.includes(node.uid))
 }
 
 export function getTargetNodesEdges(graph: FlowGraph, nodeUid?: string) {
-    if (!nodeUid) return undefined;
-    return graph.edges.filter((edge) => edge.source === nodeUid && edge.target);
+    if (!nodeUid) return undefined
+    return graph.edges.filter((edge) => edge.source === nodeUid && edge.target)
 }
 
 export function getNextTaskNodes(graph: FlowGraph, initialNode: MinimalNode) {
     let edges: GraphEdge[],
         nextTaskNodes: MinimalNode[],
-        nodeUIDs: string[] = [initialNode.uid];
+        nodeUIDs: string[] = [initialNode.uid]
     do {
         edges = nodeUIDs
             .flatMap((uid) => getTargetNodesEdges(graph, uid))
-            .filter(Boolean) as GraphEdge[];
-        if (edges.length === 0) return [];
-        nodeUIDs = edges.map((edge) => edge.target);
-        nextTaskNodes = graph.nodes.filter((node) => nodeUIDs.includes(node.uid) && node.task);
-    } while (!nextTaskNodes.length);
-    return nextTaskNodes;
+            .filter(Boolean) as GraphEdge[]
+        if (edges.length === 0) return []
+        nodeUIDs = edges.map((edge) => edge.target)
+        nextTaskNodes = graph.nodes.filter((node) => nodeUIDs.includes(node.uid) && node.task)
+    } while (!nextTaskNodes.length)
+    return nextTaskNodes
 }
 
 export function areTasksIdenticalInGraphUntilTask(
@@ -664,46 +664,46 @@ export function areTasksIdenticalInGraphUntilTask(
     currentGraph: FlowGraph,
     taskId?: string,
 ) {
-    if (!taskId) return false;
+    if (!taskId) return false
 
-    let previousRootTaskNodes = getRootNodes(previousGraph);
-    let currentRootTaskNodes = getRootNodes(currentGraph);
+    let previousRootTaskNodes = getRootNodes(previousGraph)
+    let currentRootTaskNodes = getRootNodes(currentGraph)
 
-    if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false;
+    if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false
 
-    let failIndex = 120;
+    let failIndex = 120
 
     do {
         currentRootTaskNodes = currentRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(currentGraph, node),
-        );
-        if (currentRootTaskNodes.some((node: any) => node.task.id === taskId)) return true;
+        )
+        if (currentRootTaskNodes.some((node: any) => node.task.id === taskId)) return true
 
         previousRootTaskNodes = previousRootTaskNodes.flatMap((node) =>
             getNextTaskNodes(previousGraph, node),
-        );
-        if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false;
+        )
+        if (previousRootTaskNodes.length !== currentRootTaskNodes.length) return false
 
         for (const currentTaskNode of currentRootTaskNodes) {
             const prevTaskNode = previousRootTaskNodes.find(
                 (taskNode) => taskNode.task?.id === currentTaskNode.task?.id,
-            );
-            const prevTaskValue = (prevTaskNode?.task as Record<string, any>) ?? {};
-            const currentTaskValue = (currentTaskNode.task as Record<string, any>) ?? {};
+            )
+            const prevTaskValue = (prevTaskNode?.task as Record<string, any>) ?? {}
+            const currentTaskValue = (currentTaskNode.task as Record<string, any>) ?? {}
             if (
                 !prevTaskNode ||
                 Object.keys(prevTaskValue).length !== Object.keys(currentTaskValue).length
             ) {
-                return false;
+                return false
             }
-            if (!isEqual(prevTaskValue, currentTaskValue)) return false;
+            if (!isEqual(prevTaskValue, currentTaskValue)) return false
         }
-    } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0);
+    } while (previousRootTaskNodes.length && currentRootTaskNodes.length && failIndex-- > 0)
 
     if (failIndex <= 0) {
-        console.warn("areTasksIdenticalInGraphUntilTask: Infinite loop detected, stopping comparison.");
-        return false;
+        console.warn("areTasksIdenticalInGraphUntilTask: Infinite loop detected, stopping comparison.")
+        return false
     }
 
-    return true;
+    return true
 }

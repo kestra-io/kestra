@@ -7,12 +7,12 @@
 </template>
 
 <script setup lang="ts">
-    import TaskObjectInline from "./TaskObjectInline.vue";
+    import TaskObjectInline from "./TaskObjectInline.vue"
 
-    const modelValue = defineModel<Record<string, any>>();
+    const modelValue = defineModel<Record<string, any>>()
 
     defineProps<{
         parentPath: string;
         taskSchemaPath: string;
-    }>();
+    }>()
 </script>

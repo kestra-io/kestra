@@ -42,42 +42,42 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, computed, ref} from "vue";
-    import {PairField} from "../../utils/types";
+    import {watch, computed, ref} from "vue"
+    import {PairField} from "../../utils/types"
 
-    import {DeleteOutline} from "../../utils/icons";
+    import {DeleteOutline} from "../../utils/icons"
 
-    import InputText from "./InputText.vue";
-    import Add from "../Add.vue";
+    import InputText from "./InputText.vue"
+    import Add from "../Add.vue"
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
     defineOptions({
         name: "InputPair",
         inheritAttrs: false,
-    });
+    })
 
-    const emit = defineEmits(["update:modelValue"]);
+    const emit = defineEmits(["update:modelValue"])
     const props = defineProps<{
         modelValue?: PairField["value"],
         label?: string,
         property?: string,
         required?: boolean
-    }>();
+    }>()
 
     const internalPairs = ref<[string, string | undefined][]>([])
 
     // this flag will avoid updating the modelValue when the
     // change was initiated in the component itself
-    const localEdit = ref(false);
+    const localEdit = ref(false)
 
     const duplicatedKeys = computed(() => {
         return internalPairs.value.map(pair => pair[0])
             .filter((key, index, self) =>
-                self.indexOf(key) !== index
-            );
-    });
+                self.indexOf(key) !== index,
+            )
+    })
 
     const alertState = computed(() => {
         if(duplicatedKeys.value.length > 0){
@@ -89,34 +89,34 @@
         return {
             visible: false,
             message: "",
-        };
-    });
+        }
+    })
 
     watch(() => props.modelValue, (newValue) => {
         // If the alert is visible, we don't want to update the pairs
         // because it would delete problem line silently.
         if (alertState.value.visible || localEdit.value) {
-            return;
+            return
         }
-        localEdit.value = false;
-        internalPairs.value = Object.entries(newValue || {});
+        localEdit.value = false
+        internalPairs.value = Object.entries(newValue || {})
     }, {
         deep: true,
-        immediate: true
-    });
+        immediate: true,
+    })
 
 
 
     function updateModel() {
-        localEdit.value = true;
+        localEdit.value = true
         const newVal = Object.fromEntries(internalPairs.value.filter(pair => pair[0] !== "" && pair[1] !== undefined))
 
-        emit("update:modelValue", newVal);
+        emit("update:modelValue", newVal)
     }
 
     function handleKeyInput(index: number, newValue: string) {
 
-        internalPairs.value[index][0] = newValue.toString();
+        internalPairs.value[index][0] = newValue.toString()
         updateModel()
     };
 
@@ -127,13 +127,13 @@
     };
 
     function removePair (pairId: number) {
-        internalPairs.value.splice(pairId, 1);
+        internalPairs.value.splice(pairId, 1)
         updateModel()
     };
 
     function updateValue (pairId: number, newValue: string){
 
-        internalPairs.value[pairId][1] = newValue;
+        internalPairs.value[pairId][1] = newValue
         updateModel()
     };
 </script>

@@ -7,7 +7,7 @@ import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
-import {useMiscStore} from "override/stores/misc";
+import {useMiscStore} from "override/stores/misc"
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 
 let pendingRoute = false
@@ -75,14 +75,14 @@ interface QueueItem {
 
 const createAxios = (
     router: Router | undefined,
-    oss: boolean
+    oss: boolean,
 ) => {
     const instance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
         withCredentials: true,
         onDownloadProgress: progressInterceptor,
-        onUploadProgress: progressInterceptor
+        onUploadProgress: progressInterceptor,
     })
 
     instance.interceptors.request.use(config => requestInterceptor(config))
@@ -111,6 +111,12 @@ const createAxios = (
             }
 
             if (errorResponse.response.status === 404) {
+                const coreStore = useCoreStore()
+                coreStore.error = errorResponse.response.status
+                return Promise.reject(errorResponse)
+            }
+
+            if (errorResponse.response.status === 403 && errorResponse?.config?.showMessageOnError !== false) {
                 const coreStore = useCoreStore()
                 coreStore.error = errorResponse.response.status
                 return Promise.reject(errorResponse)
@@ -164,7 +170,7 @@ const createAxios = (
 
                     router?.push({
                         name: "login",
-                        query: (isLoginPath ? {} : {from: currentPath})
+                        query: (isLoginPath ? {} : {from: currentPath}),
                     })
 
                     return Promise.reject(errorResponse)
@@ -183,7 +189,7 @@ const createAxios = (
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {
                             headers: {"Content-Type": "application/json"},
-                            timeout: 5000
+                            timeout: 5000,
                         })
 
                         // Process queued requests
@@ -191,7 +197,7 @@ const createAxios = (
                             instance.request(config).then(resolve).catch(error => {
                                 console.warn("Queued request failed after token refresh:", error)
                                 throw error
-                            })
+                            }),
                         )
 
                         await Promise.allSettled(queuePromises)
@@ -222,7 +228,7 @@ const createAxios = (
 
                         router?.push({
                             name: "login",
-                            query: (isLoginPath ? {} : {from: currentPath})
+                            query: (isLoginPath ? {} : {from: currentPath}),
                         })
 
                         return Promise.reject(errorResponse)
@@ -232,7 +238,7 @@ const createAxios = (
                     return new Promise((resolve, reject) => {
                         toRefreshQueue.push({
                             config: originalRequest,
-                            resolve: (response) => resolve(response)
+                            resolve: (response) => resolve(response),
                         })
 
                         // Set a timeout for queued requests
@@ -252,39 +258,37 @@ const createAxios = (
                 coreStore.message = {
                     variant: "error",
                     response: errorResponse.response,
-                    content: errorResponse.response.data
+                    content: errorResponse.response.data,
                 }
                 return Promise.reject(errorResponse)
             }
 
-            return Promise.reject(errorResponse);
-        });
+            return Promise.reject(errorResponse)
+        })
 
     instance.defaults.paramsSerializer = {
-        indexes: null
-    };
+        indexes: null,
+    }
 
-    router?.beforeEach((_to, _from, next) => {
+    router?.beforeEach(() => {
         if (pendingRoute) {
-            requestsTotal--;
+            requestsTotal--
         }
-        pendingRoute = true;
-        initProgress();
-
-        next();
-    });
+        pendingRoute = true
+        initProgress()
+    })
 
     router?.afterEach(() => {
         if (pendingRoute) {
-            increaseProgress();
-            pendingRoute = false;
+            increaseProgress()
+            pendingRoute = false
         }
     })
 
-    return {instance};
-};
+    return {instance}
+}
 
-let clientInstance: ReturnType<typeof createAxios> | null = null;
+let clientInstance: ReturnType<typeof createAxios> | null = null
 
 function configureAxios(
     callback: (clientInstance: ReturnType<typeof createAxios>["instance"]) => void,
@@ -292,30 +296,30 @@ function configureAxios(
     ...args: Parameters<typeof createAxios>
 ) {
     if (!clientInstance) {
-        clientInstance = createAxios(...args);
+        clientInstance = createAxios(...args)
     }
     
-    callback(clientInstance.instance);
+    callback(clientInstance.instance)
 }
 
 export default configureAxios
 
 export function useClient(){
     // for storybook tests we need to allow router to be undefined
-    const router = inject(routerKey, undefined as any) as Router | undefined;
+    const router = inject(routerKey, undefined as any) as Router | undefined
 
-    const miscStore = useMiscStore();
-    const {edition} = miscStore.configs || {};
+    const miscStore = useMiscStore()
+    const {edition} = miscStore.configs || {}
 
     if (!clientInstance) {
-        clientInstance = createAxios(router, edition === "OSS");
+        clientInstance = createAxios(router, edition === "OSS")
     }
 
-    return clientInstance;
+    return clientInstance
 };
 
 export function useAxios(){
-    const axiosInstance = useClient();
+    const axiosInstance = useClient()
 
-    return axiosInstance.instance;
+    return axiosInstance.instance
 };

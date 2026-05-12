@@ -12,7 +12,7 @@
     </KsRow>
 </template>
 <script setup lang="ts">
-    import EditionCharacteristics from "./EditionCharacteristics.vue";
+    import EditionCharacteristics from "./EditionCharacteristics.vue"
 
     type EditionButton = {
         text: string;
@@ -47,11 +47,11 @@
                 "Key-Value Store",
                 "Custom Dashboards",
                 "Multi-Panel Editor with No-Code Forms",
-                "Community support"
+                "Community support",
             ],
             button: {
-                text: "Current version"
-            }
+                text: "Current version",
+            },
         },
         {
             name: "Enterprise Edition",
@@ -89,12 +89,12 @@
                 "Unlimited log retention",
                 "Deploy on-prem or to any cloud, any region",
                 "Enterprise support with guaranteed SLAs",
-                "Onboarding & training"
+                "Onboarding & training",
             ],
             button: {
                 text: "Talk to us",
-                href: "https://kestra.io/demo?utm_source=app$utm_medium=referral&&utm_campaign=enterprise&utm_content=ee"
-            }
+                href: "https://kestra.io/demo?utm_source=app$utm_medium=referral&&utm_campaign=enterprise&utm_content=ee",
+            },
         },
         {
             name: "Kestra Cloud",
@@ -106,13 +106,13 @@
                 "Managed worker pools and curated plugin environment",
                 "Built-in Google, Microsoft, or Basic Authentication",
                 "US & EU deployment regions on GCP",
-                "Infrastructure hosted and managed by the Kestra team with SLA guarantees and custom support"
+                "Infrastructure hosted and managed by the Kestra team with SLA guarantees and custom support",
             ],
             button: {
                 text: "Join Early Adopter Program",
-                href: "https://kestra.io/cloud?utm_source=app&utm_medium=referral&utm_campaign=enterprise&utm_content=cloud"
-            }
-        }
+                href: "https://kestra.io/cloud?utm_source=app&utm_medium=referral&utm_campaign=enterprise&utm_content=cloud",
+            },
+        },
     ]
 </script>
 

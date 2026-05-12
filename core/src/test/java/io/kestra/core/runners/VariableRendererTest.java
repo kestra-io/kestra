@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -33,7 +34,7 @@ class VariableRendererTest {
     VariableRenderer variableRenderer;
 
     @Inject
-    VariableRenderer.VariableConfiguration variableConfiguration;
+    VariableConfiguration variableConfiguration;
 
     @Inject
     private PebbleEngineFactory pebbleEngineFactory;

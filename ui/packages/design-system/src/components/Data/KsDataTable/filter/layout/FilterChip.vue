@@ -32,18 +32,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import KsTag from "../../../KsTag/KsTag.vue";
-    import {Close} from "../utils/icons";
+    import {computed, h, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import KsTag from "../../../KsTag/KsTag.vue"
+    import {Close} from "../utils/icons"
     import {
         type AppliedFilter,
         type FilterKeyConfig,
-        Comparators
-    } from "../utils/filterTypes";
-    import FilterEditPopover from "./FilterEditPopover.vue";
+        Comparators,
+    } from "../utils/filterTypes"
+    import FilterEditPopover from "./FilterEditPopover.vue"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
     const RELATIVE_DATE = [
         {label: t("datepicker.last5minutes"), value: "PT5M"},
@@ -55,87 +55,87 @@
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "P30D"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
-    ];
+    ]
 
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
-        return item ? item.label : value;
-    };
+        const found = RELATIVE_DATE.find((item) => item.value === value)
+        return found ? found.label : value
+    }
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};
 
     const props = defineProps<{
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
-    }>();
+    }>()
 
     const emit = defineEmits<{
         remove: [filterId: string];
         update: [filter: AppliedFilter];
-    }>();
+    }>()
 
-    const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
+    const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
 
     const shouldShowComparatorInPopper = computed(
-        () => (props.filterKey?.comparators?.length ?? 0) >= 2
-    );
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2,
+    )
     const shouldShowComparatorLabel = computed(
-        () => (props.filterKey?.comparators?.length ?? 0) >= 2
-    );
+        () => (props.filterKey?.comparators?.length ?? 0) >= 2,
+    )
 
     const formatValue = (value: FilterValueType) => {
         switch (true) {
         case Array.isArray(value):
             return value.length === 1
                 ? value[0]
-                : [value[0], h(KsTag, {size: "small"}, () => `+${value.length - 1}`)];
+                : [value[0], h(KsTag, {size: "small"}, () => `+${value.length - 1}`)]
         case value instanceof Date:
-            return value.toLocaleDateString();
+            return value.toLocaleDateString()
         case value && typeof value === "object" && "startDate" in value:
-            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`;
+            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
         case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
-            return getRelativeDateLabel(value);
+            return getRelativeDateLabel(value)
         default:
-            return String(value);
+            return String(value)
         }
-    };
+    }
 
     const formatTooltipValue = (value: FilterValueType) =>
         Array.isArray(value)
             ? value.join(", ")
-            : String(formatValue(value));
+            : String(formatValue(value))
 
     const hasValue = (value: FilterValueType) => {
         switch (true) {
         case Array.isArray(value):
-            return value.length > 0;
+            return value.length > 0
         case value instanceof Date:
-            return true;
+            return true
         case value && typeof value === "object" && "startDate" in value:
-            return true;
+            return true
         default:
-            return value !== "" && value != null;
+            return value !== "" && value != null
         }
-    };
+    }
 
     const getComparatorLabel = () =>
         props.filterKey
             ? props.filter.comparatorLabel
-            : "in";
+            : "in"
 
     const renderValueResult = computed(() =>
-        h("span", {class: "value"}, formatValue(props.filter.value))
-    );
+        h("span", {class: "value"}, formatValue(props.filter.value)),
+    )
 
     const isNegative = computed(() =>
-        props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN
-    );
+        props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN,
+    )
 
-    const isToggled = computed(() => editPopover.value?.isDialogVisible ?? false);
+    const isToggled = computed(() => editPopover.value?.isDialogVisible ?? false)
 
     defineExpose({
-        editPopover
-    });
+        editPopover,
+    })
 </script>
 
 <style lang="scss" scoped>

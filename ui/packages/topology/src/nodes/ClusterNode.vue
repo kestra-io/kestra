@@ -21,33 +21,33 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue";
-    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue";
-    import {KsTooltip} from "@kestra-io/design-system";
-    import {EVENTS} from "../utils/constants";
-    import Utils from "../utils/utils";
+    import {computed} from "vue"
+    import ArrowCollapse from "vue-material-design-icons/ArrowCollapse.vue"
+    import {KsTooltip} from "@kestra-io/design-system"
+    import {EVENTS} from "../utils/constants"
+    import * as Utils from "../utils/utils"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         id?: string;
         data: any;
-    }>();
+    }>()
 
-    const emit = defineEmits([EVENTS.COLLAPSE]);
+    const emit = defineEmits([EVENTS.COLLAPSE])
 
-    const collapse = () => emit(EVENTS.COLLAPSE, props.id);
+    const collapse = () => emit(EVENTS.COLLAPSE, props.id)
 
-    const classes = computed(() => ({"unused-path": props.data.unused}));
+    const classes = computed(() => ({"unused-path": props.data.unused}))
 
     const clusterName = computed(() => {
-        const taskNode = props.data.taskNode;
+        const taskNode = props.data.taskNode
         if (taskNode?.type?.endsWith("SubflowGraphTask")) {
-            const subflowIdContainer = taskNode.task.subflowId ?? taskNode.task;
-            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId;
+            const subflowIdContainer = taskNode.task.subflowId ?? taskNode.task
+            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId
         }
-        return Utils.afterLastDot(props.id ?? "");
-    });
+        return Utils.afterLastDot(props.id ?? "")
+    })
 </script>
 <style scoped lang="scss">
     .circle-button {

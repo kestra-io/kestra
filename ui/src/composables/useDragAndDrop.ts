@@ -1,35 +1,35 @@
-import {ref} from "vue";
+import {ref} from "vue"
 
 export function useDragAndDrop() {
-    const draggedIndex = ref<number | null>(null);
-    const dragOverIndex = ref<number | null>(null);
+    const draggedIndex = ref<number | null>(null)
+    const dragOverIndex = ref<number | null>(null)
 
     const handleDragStart = (event: DragEvent, index: number) => {
-        draggedIndex.value = index;
+        draggedIndex.value = index
         if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.effectAllowed = "move"
         }
-    };
+    }
 
     const handleDragOver = (event: DragEvent, index: number) => {
-        event.preventDefault();
-        dragOverIndex.value = index;
+        event.preventDefault()
+        dragOverIndex.value = index
         if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = "move";
+            event.dataTransfer.dropEffect = "move"
         }
-    };
+    }
 
     const handleDrop = (event: DragEvent, targetIndex: number, onReorder: (fromIndex: number, toIndex: number) => void) => {
-        event.preventDefault();
+        event.preventDefault()
         if (draggedIndex.value != null && draggedIndex.value !== targetIndex) {
-            onReorder(draggedIndex.value, targetIndex);
+            onReorder(draggedIndex.value, targetIndex)
         }
-        handleDragEnd();
-    };
+        handleDragEnd()
+    }
 
     const handleDragEnd = () => {
-        draggedIndex.value = dragOverIndex.value = null;
-    };
+        draggedIndex.value = dragOverIndex.value = null
+    }
 
     return {
         draggedIndex,
@@ -38,5 +38,5 @@ export function useDragAndDrop() {
         handleDragOver,
         handleDrop,
         handleDragEnd,
-    };
+    }
 }

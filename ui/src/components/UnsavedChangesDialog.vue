@@ -25,9 +25,9 @@
 </template>
 
 <script lang="ts" setup>
-    import {useUnsavedChangesStore} from "../stores/unsavedChanges";
+    import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 
-    const unsavedChangesStore = useUnsavedChangesStore();
+    const unsavedChangesStore = useUnsavedChangesStore()
 </script>
 
 <style scoped lang="scss">

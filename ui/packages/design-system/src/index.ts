@@ -101,7 +101,8 @@ export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"
 export * as flowYamlUtils from "./utils/flowYamlUtils"
 export type {YamlElement} from "./utils/flowYamlUtils"
-export {State, LOG_LEVELS, STATES} from "./utils/state"
+export * as State from "./utils/state"
+export {LOG_LEVELS, STATES} from "./utils/state"
 export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {setMomentInstance, setDateFormatter} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
@@ -326,6 +327,7 @@ const KestraDesignSystem = {
         app.directive("ks-loading", vKsLoading)
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
+        // oxlint-disable-next-line no-underscore-dangle
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
         if (i18n) registerDesignSystemI18n(i18n)
     },
@@ -336,6 +338,5 @@ export default KestraDesignSystem
 type KestraGlobalComponents = typeof components
 
 declare module "vue" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface GlobalComponents extends KestraGlobalComponents {}
 }

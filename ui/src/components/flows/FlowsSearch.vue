@@ -49,65 +49,65 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, useTemplateRef} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import _escape from "lodash/escape";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import SearchField from "../layout/SearchField.vue";
-    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
-    import useRouteContext from "../../composables/useRouteContext";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
+    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import _escape from "lodash/escape"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import SearchField from "../layout/SearchField.vue"
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
+    import useRouteContext from "../../composables/useRouteContext"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    import {useFlowStore} from "../../stores/flow";
+    import {useFlowStore} from "../../stores/flow"
 
-    const {loadInit} = useRestoreUrl();
+    const {loadInit} = useRestoreUrl()
 
-    const {t} = useI18n();
-    const route = useRoute();
-    const router = useRouter();
-    const flowStore = useFlowStore();
-    const dataTable = useTemplateRef("dataTable");
-    const ready = ref(false);
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
+    const flowStore = useFlowStore()
+    const dataTable = useTemplateRef("dataTable")
+    const ready = ref(false)
 
     const routeInfo = computed(() => ({
         title: (route.meta?.title as string) ?? t("source search"),
         breadcrumb: [
             {
                 label: t("flows"),
-                link: {name: "flows/list"}
-            }
-        ]
-    }));
+                link: {name: "flows/list"},
+            },
+        ],
+    }))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
     const namespace = computed({
         get: () => route.query?.namespace as [],
-        set: (val) => onNamespaceChange(val)
-    });
+        set: (val) => onNamespaceChange(val),
+    })
 
     function onNamespaceChange(val: any) {
-        const query = {...route.query};
+        const query = {...route.query}
         if (val === undefined || val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
-            delete query["namespace"];
+            delete query["namespace"]
         } else {
-            query["namespace"] = val;
+            query["namespace"] = val
         }
-        delete query["page"];
-        router.push({query});
+        delete query["page"]
+        router.push({query})
     }
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
-        if (!loadInit.value) return;
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query;
-        const params: {page: number; size: number; [key: string]: any} = {page, size, ...filters};
+        if (!loadInit.value) return
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        const params: {page: number; size: number; [key: string]: any} = {page, size, ...filters}
         await flowStore.searchFlows(params).finally(() => {
             if (!params.q) {
-                flowStore.total = 0;
-                flowStore.search = undefined;
+                flowStore.total = 0
+                flowStore.search = undefined
             }
-        });
+        })
     }
 
     const filterQuery = computed(() => {
@@ -121,6 +121,6 @@
     function sanitize(content: string) {
         return _escape(content)
             .replaceAll("[mark]", "<mark>")
-            .replaceAll("[/mark]", "</mark>");
+            .replaceAll("[/mark]", "</mark>")
     }
 </script>

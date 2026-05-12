@@ -80,14 +80,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue";
-    import {useRouter} from "vue-router";
-    import {useLeftMenu} from "override/components/useLeftMenu";
-    import type {MenuItem} from "override/components/useLeftMenu";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-    import Close from "vue-material-design-icons/Close.vue";
+    import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
+    import {useRouter} from "vue-router"
+    import {useLeftMenu} from "override/components/useLeftMenu"
+    import type {MenuItem} from "override/components/useLeftMenu"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
+    import Close from "vue-material-design-icons/Close.vue"
 
-    const router = useRouter();
+    const router = useRouter()
     const {menu} = useLeftMenu()
 
     type SearchItem = {
@@ -106,31 +106,31 @@
         items: MenuItem[];
     };
 
-    const query = ref("");
-    const isOpen = ref(false);
-    const searchInput = ref<{ focus?: () => void } | null>(null);
-    const activeIndex = ref(0);
-    const scopeStack = ref<ScopeNode[]>([]);
+    const query = ref("")
+    const isOpen = ref(false)
+    const searchInput = ref<{ focus?: () => void } | null>(null)
+    const activeIndex = ref(0)
+    const scopeStack = ref<ScopeNode[]>([])
 
     const scopePrefix = computed(() => {
         if (scopeStack.value.length === 0) {
-            return "";
+            return ""
         }
 
-        return `${scopeStack.value.map(s => s.title).join(" / ")} /`;
-    });
+        return `${scopeStack.value.map(s => s.title).join(" / ")} /`
+    })
 
     const buildEntries = (items: MenuItem[], ancestors: string[], depth: number, startOrder: {value: number}): SearchItem[] => {
-        const entries: SearchItem[] = [];
+        const entries: SearchItem[] = []
 
         for (const item of items) {
             if (item.hidden) {
-                continue;
+                continue
             }
 
-            const hasChildren = Boolean(item.child && item.child.length > 0);
-            const parentTitle = ancestors.length > 0 ? ancestors.join(" / ") : undefined;
-            const icon = item.icon;
+            const hasChildren = Boolean(item.child && item.child.length > 0)
+            const parentTitle = ancestors.length > 0 ? ancestors.join(" / ") : undefined
+            const icon = item.icon
 
             // Always include a "scope" entry for any item that has children (even if it has no href),
             // so sections like "Blueprints" can be selected and scoped into.
@@ -144,7 +144,7 @@
                     children: item.child,
                     depth,
                     order: startOrder.value++,
-                });
+                })
             } else if (item.href) {
                 entries.push({
                     kind: "link",
@@ -154,158 +154,158 @@
                     icon,
                     depth,
                     order: startOrder.value++,
-                });
+                })
             }
 
             // Include descendants for search (hierarchy preserved via parentTitle/depth).
             if (hasChildren) {
-                entries.push(...buildEntries(item.child!, [...ancestors, item.title], depth + 1, startOrder));
+                entries.push(...buildEntries(item.child!, [...ancestors, item.title], depth + 1, startOrder))
             }
         }
 
-        return entries;
+        return entries
     }
 
     const navItems = computed(() => {
         if (!isOpen.value) {
-            return [];
+            return []
         }
 
-        const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value;
-        const order = {value: 0};
+        const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value
+        const order = {value: 0}
         // When scoped, we treat the scope root as depth 0 for ordering.
-        return buildEntries(root, [], 0, order);
-    });
+        return buildEntries(root, [], 0, order)
+    })
 
     const results = computed(() => {
-        const q = query.value.trim().toLowerCase();
+        const q = query.value.trim().toLowerCase()
         const matches = (item: SearchItem) => {
-            const haystack = [item.parentTitle, item.title].filter(Boolean).join(" ").toLowerCase();
-            return haystack.includes(q);
-        };
+            const haystack = [item.parentTitle, item.title].filter(Boolean).join(" ").toLowerCase()
+            return haystack.includes(q)
+        }
 
-        const filtered = q ? navItems.value.filter(matches) : navItems.value;
+        const filtered = q ? navItems.value.filter(matches) : navItems.value
 
         // Prefer items closest to the current root (depth 0 first), while preserving menu order.
-        return [...filtered].sort((a, b) => (a.depth - b.depth) || (a.order - b.order));
-    });
+        return [...filtered].sort((a, b) => (a.depth - b.depth) || (a.order - b.order))
+    })
 
     const keyDown = (e: KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "k") {
-            e.preventDefault();
-            openSearch();
+            e.preventDefault()
+            openSearch()
         }
         if (e.key === "Escape" && isOpen.value) {
-            e.preventDefault();
-            closeSearch();
+            e.preventDefault()
+            closeSearch()
         }
-    };
+    }
 
     const openSearch = () => {
-        isOpen.value = true;
-        activeIndex.value = 0;
+        isOpen.value = true
+        activeIndex.value = 0
         nextTick(() => {
-            searchInput.value?.focus?.();
-        });
+            searchInput.value?.focus?.()
+        })
     }
 
     const closeSearch = () => {
-        isOpen.value = false;
-        query.value = "";
-        activeIndex.value = 0;
-        scopeStack.value = [];
+        isOpen.value = false
+        query.value = ""
+        activeIndex.value = 0
+        scopeStack.value = []
     }
 
     const clearSearch = () => {
-        query.value = "";
-        activeIndex.value = 0;
+        query.value = ""
+        activeIndex.value = 0
         nextTick(() => {
-            searchInput.value?.focus?.();
-        });
+            searchInput.value?.focus?.()
+        })
     }
 
     const itemKey = (item: SearchItem, index: number): string => {
-        const href = item.href;
+        const href = item.href
         if (typeof href === "string") {
-            return href;
+            return href
         }
         if (typeof href === "object" && href !== null) {
             if ("path" in href && typeof href.path === "string") {
-                return href.path;
+                return href.path
             }
             if ("name" in href && href.name != null) {
-                return `name:${String(href.name)}`;
+                return `name:${String(href.name)}`
             }
         }
 
-        return `${item.kind}:${item.parentTitle ?? ""}:${item.title}:${index}`;
+        return `${item.kind}:${item.parentTitle ?? ""}:${item.title}:${index}`
     }
 
     const enterScope = (item: SearchItem) => {
         if (!item.children || item.children.length === 0) {
-            return;
+            return
         }
 
-        scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}];
-        query.value = "";
-        activeIndex.value = 0;
-        nextTick(() => searchInput.value?.focus?.());
+        scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
+        query.value = ""
+        activeIndex.value = 0
+        nextTick(() => searchInput.value?.focus?.())
     }
 
     const onItemClick = (item: SearchItem) => {
         if (item.kind === "scope") {
-            enterScope(item);
-            return;
+            enterScope(item)
+            return
         }
 
-        closeSearch();
+        closeSearch()
     }
 
     const scrollActiveOptionIntoView = () => {
         nextTick(() => {
-            const el = document.getElementById(`global-search-option-${activeIndex.value}`);
-            el?.scrollIntoView({block: "nearest"});
-        });
+            const el = document.getElementById(`global-search-option-${activeIndex.value}`)
+            el?.scrollIntoView({block: "nearest"})
+        })
     }
 
     const onInputKeydown = (e: KeyboardEvent) => {
         if (e.key === "Backspace" && query.value.length === 0 && scopeStack.value.length > 0) {
-            e.preventDefault();
-            scopeStack.value = scopeStack.value.slice(0, -1);
-            activeIndex.value = 0;
-            return;
+            e.preventDefault()
+            scopeStack.value = scopeStack.value.slice(0, -1)
+            activeIndex.value = 0
+            return
         }
 
         if (results.value.length === 0) {
-            return;
+            return
         }
 
         if (e.key === "Tab") {
-            const activeItem = results.value[activeIndex.value];
+            const activeItem = results.value[activeIndex.value]
             if (activeItem?.kind === "scope") {
-                e.preventDefault();
-                enterScope(activeItem);
-                return;
+                e.preventDefault()
+                enterScope(activeItem)
+                return
             }
 
-            e.preventDefault();
-            const maxIndex = results.value.length;
-            activeIndex.value = (activeIndex.value + (e.shiftKey ? -1 : 1) + maxIndex) % maxIndex;
+            e.preventDefault()
+            const maxIndex = results.value.length
+            activeIndex.value = (activeIndex.value + (e.shiftKey ? -1 : 1) + maxIndex) % maxIndex
         } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            activeIndex.value = Math.min(activeIndex.value + 1, results.value.length - 1);
+            e.preventDefault()
+            activeIndex.value = Math.min(activeIndex.value + 1, results.value.length - 1)
         } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            activeIndex.value = Math.max(activeIndex.value - 1, 0);
+            e.preventDefault()
+            activeIndex.value = Math.max(activeIndex.value - 1, 0)
         } else if (e.key === "Enter") {
-            e.preventDefault();
-            const item = results.value[activeIndex.value];
+            e.preventDefault()
+            const item = results.value[activeIndex.value]
             if (item) {
                 if (item.kind === "scope") {
-                    enterScope(item);
+                    enterScope(item)
                 } else if (item.href) {
-                    router.push(item.href);
-                    closeSearch();
+                    router.push(item.href)
+                    closeSearch()
                 }
             }
         }
@@ -313,32 +313,32 @@
 
 
     onMounted(() => {
-        window.addEventListener("keydown", keyDown);
-    });
+        window.addEventListener("keydown", keyDown)
+    })
 
     onUnmounted(() => {
-        window.removeEventListener("keydown", keyDown);
-    });
+        window.removeEventListener("keydown", keyDown)
+    })
 
     watch(query, () => {
-        activeIndex.value = 0;
-    });
+        activeIndex.value = 0
+    })
 
     watch(results, () => {
         if (!isOpen.value) {
-            return;
+            return
         }
 
-        activeIndex.value = Math.min(activeIndex.value, Math.max(results.value.length - 1, 0));
-    });
+        activeIndex.value = Math.min(activeIndex.value, Math.max(results.value.length - 1, 0))
+    })
 
     watch(activeIndex, () => {
         if (!isOpen.value) {
-            return;
+            return
         }
 
-        scrollActiveOptionIntoView();
-    });
+        scrollActiveOptionIntoView()
+    })
 </script>
 
 <style scoped lang="scss">

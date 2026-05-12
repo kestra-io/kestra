@@ -51,14 +51,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, onMounted} from "vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import FilePreview from "./FilePreview.vue";
-    import Editor from "../inputs/Editor.vue";
-    import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../utils/axios";
-    import Utils from "../../utils/utils";
+    import {ref, watch, onMounted} from "vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import FilePreview from "./FilePreview.vue"
+    import Editor from "../inputs/Editor.vue"
+    import {apiUrl} from "override/utils/route"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    import * as Utils from "../../utils/utils"
 
     interface Execution {
         id: string;
@@ -76,91 +76,91 @@
         value: "",
         execution: () => ({id: ""}),
         restrictUri: false,
-    });
+    })
 
-    const humanSize = ref<string>("");
+    const humanSize = ref<string>("")
 
     const isFileValid = (value: unknown): boolean => {
-        return Utils.isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
-    };
+        return Utils.isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B"
+    }
 
     const isURI = (value: unknown): value is string => {
         if (typeof value !== "string") {
-            return false;
+            return false
         }
         try {
-            const url = new URL(value);
+            const url = new URL(value)
             if (props.restrictUri) {
-                return ["http:", "https:"].includes(url.protocol);
+                return ["http:", "https:"].includes(url.protocol)
             }
-            return true;
+            return true
         } catch {
-            return false;
+            return false
         }
-    };
+    }
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
-            return true;
+            return true
         }
 
         if (typeof value === "string") {
             try {
-                const parsed = JSON.parse(value);
-                return (typeof parsed === "object" && parsed !== null) || Array.isArray(parsed);
+                const parsed = JSON.parse(value)
+                return (typeof parsed === "object" && parsed !== null) || Array.isArray(parsed)
             } catch {
-                return false;
+                return false
             }
         }
 
-        return false;
-    };
+        return false
+    }
 
     const getDisplayValue = (value: unknown): unknown => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
-            return value;
+            return value
         }
 
         if (typeof value === "string") {
             try {
-                const parsed = JSON.parse(value);
+                const parsed = JSON.parse(value)
                 if ((typeof parsed === "object" && parsed !== null) || Array.isArray(parsed)) {
-                    return parsed;
+                    return parsed
                 }
             } catch {
-                return value;
+                return value
             }
         }
 
-        return value;
-    };
+        return value
+    }
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
-    };
+        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
+    }
 
-    const axios = useAxios();
+    const axios = useClient()
 
     const getFileSize = async (): Promise<void> => {
         if (Utils.isFile(props.value) && props.execution?.id) {
             try {
-                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`);
-                humanSize.value = Utils.humanFileSize(response.data.size);
+                const response = await axios.get<FileMetadata>(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`)
+                humanSize.value = Utils.humanFileSize(response.data.size)
             } catch (error) {
-                console.error("Failed to fetch file size:", error);
+                console.error("Failed to fetch file size:", error)
             }
         }
-    };
+    }
 
     watch(() => props.value, (newValue) => {
         if (newValue) {
-            getFileSize();
+            getFileSize()
         }
-    });
+    })
 
     onMounted(() => {
-        getFileSize();
-    });
+        getFileSize()
+    })
 </script>
 
 <style scoped lang="scss">

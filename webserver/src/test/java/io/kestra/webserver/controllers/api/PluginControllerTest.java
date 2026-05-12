@@ -15,6 +15,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
@@ -141,7 +143,32 @@ class PluginControllerTest {
         );
 
         assertThat(doc.getMarkdown()).contains("io.kestra.core.plugins.test.DeprecatedTask");
-        assertThat(doc.getMarkdown()).contains("::: warning\n");
+        // alert blocks must use three-colon remark-directive container syntax, not two-colon Nuxt syntax
+        assertThat(doc.getMarkdown()).contains(":::alert{type=\"warning\"}");
+        assertThat(doc.getMarkdown()).doesNotContain("::: warning");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void schemaDescriptionAlertConversion() {
+        // Flow has ::alert{type="info"} in states.description and ::alert{type="warning"} in inputs.description
+        DocumentationWithSchema doc = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/io.kestra.plugin.core.trigger.Flow"),
+            DocumentationWithSchema.class
+        );
+
+        Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
+
+        String statesDescription = (String) ((Map<String, Object>) properties.get("states")).get("description");
+        assertThat(statesDescription).contains(":::alert{type=\"info\"}");
+        // ^::alert matches the bare two-colon form; :::alert starts with ::: so ^::alert does NOT match it
+        assertThat(statesDescription).doesNotContainPattern("(?m)^::alert\\{type=\"info\"\\}$");
+        assertThat(statesDescription).contains(":::");
+        assertThat(statesDescription).doesNotContain("::: info");
+
+        String inputsDescription = (String) ((Map<String, Object>) properties.get("inputs")).get("description");
+        assertThat(inputsDescription).contains(":::alert{type=\"warning\"}");
+        assertThat(inputsDescription).doesNotContainPattern("(?m)^::alert\\{type=\"warning\"\\}$");
     }
 
     @SuppressWarnings("unchecked")
@@ -268,5 +295,19 @@ class PluginControllerTest {
             )
         );
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void should_list_plugins() {
+        PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/triggers"),
+            Argument.of(PagedResults.class, PluginController.ApiTriggerPlugin.class)
+
+        );
+
+        assertThat(result.getTotal()).isGreaterThan(0);
+        assertThat(result.getResults())
+            .map(ApiTriggerPlugin::name)
+            .contains("Webhook");
     }
 }

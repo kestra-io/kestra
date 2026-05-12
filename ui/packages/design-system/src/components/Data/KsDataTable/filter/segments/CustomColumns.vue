@@ -24,31 +24,31 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {Close} from "../utils/icons";
-    import type {ColumnConfig} from "../composables/useTableColumns";
-    import DraggableTableColumns from "../DraggableTableColumns.vue";
+    import {computed, ref} from "vue"
+    import {Close} from "../utils/icons"
+    import type {ColumnConfig} from "../composables/useTableColumns"
+    import DraggableTableColumns from "../DraggableTableColumns.vue"
 
     const props = defineProps<{
         storageKey: string;
         columns: ColumnConfig[];
         visibleColumns: string[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         close: [];
         updateColumns: [columns: string[]];
-    }>();
+    }>()
 
-    const currentVisibleColumns = ref<string[]>(props.visibleColumns);
+    const currentVisibleColumns = ref<string[]>(props.visibleColumns)
 
-    const totalCount = computed(() => props.columns.length);
-    const visibleCount = computed(() => currentVisibleColumns.value.length);
+    const totalCount = computed(() => props.columns.length)
+    const visibleCount = computed(() => currentVisibleColumns.value.length)
 
     const handleUpdateColumns = (newColumns: string[]) => {
-        currentVisibleColumns.value = newColumns;
-        emits("updateColumns", newColumns);
-    };
+        currentVisibleColumns.value = newColumns
+        emits("updateColumns", newColumns)
+    }
 </script>
 
 <style lang="scss" scoped>

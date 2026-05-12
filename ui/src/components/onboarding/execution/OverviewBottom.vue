@@ -14,14 +14,14 @@
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n";
-    import OverviewCard from "../execution/OverviewCard.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
-    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
-    import VideoInputComponent from "vue-material-design-icons/VideoInputComponent.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
+    import {useI18n} from "vue-i18n"
+    import OverviewCard from "../execution/OverviewCard.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
+    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
+    import VideoInputComponent from "vue-material-design-icons/VideoInputComponent.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = withDefaults(defineProps<{isNamespace?: boolean}>(), {
         isNamespace: false,
@@ -57,10 +57,10 @@
                 content: "",
                 link: "https://www.youtube.com/watch?v=6TqWWz9difM",
                 icon: PlayBoxMultiple,
-            }
-        ];
-        return baseCards;
-    });
+            },
+        ]
+        return baseCards
+    })
 </script>
 
 <style scoped lang="scss">

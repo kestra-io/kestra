@@ -102,23 +102,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import useRouteContext from "../../composables/useRouteContext";
-    import OnboardingResourceList from "./OnboardingResourceList.vue";
-    import {useOnboardingResources} from "./useOnboardingResources";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
+    import useRouteContext from "../../composables/useRouteContext"
+    import OnboardingResourceList from "./OnboardingResourceList.vue"
+    import {useOnboardingResources} from "./useOnboardingResources"
 
-    const {t} = useI18n();
-    const route = useRoute();
+    const {t} = useI18n()
+    const route = useRoute()
 
-    const routeInfo = computed(() => ({title: t("welcome_copilot.success_page.title")}));
-    useRouteContext(routeInfo);
-    const {onboardingResources} = useOnboardingResources();
+    const routeInfo = computed(() => ({title: t("welcome_copilot.success_page.title")}))
+    useRouteContext(routeInfo)
+    const {onboardingResources} = useOnboardingResources()
     const restartRoute = computed(() => ({
         name: "welcome",
         params: {tenant: route.params.tenant},
-    }));
+    }))
 </script>
 
 <style scoped lang="scss">

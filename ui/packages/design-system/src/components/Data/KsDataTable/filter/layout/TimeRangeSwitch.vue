@@ -19,16 +19,16 @@
 <script setup lang="ts">
     defineProps<{
         modelValue: "predefined" | "custom"
-    }>();
+    }>()
 
     const emit = defineEmits<{
         "update:modelValue": [value: "predefined" | "custom"]
-    }>();
+    }>()
 
     const handleChange = (event: Event) => {
-        const target = event.target as HTMLInputElement;
-        emit("update:modelValue", target.checked ? "custom" : "predefined");
-    };
+        const target = event.target as HTMLInputElement
+        emit("update:modelValue", target.checked ? "custom" : "predefined")
+    }
 </script>
 
 <style lang="scss" scoped>

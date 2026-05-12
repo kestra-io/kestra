@@ -1,4 +1,4 @@
-import {dump, load} from "js-yaml";
+import {dump, load} from "js-yaml"
 import {
     Scalar,
     YAMLMap,
@@ -14,62 +14,62 @@ import {
     visit,
     type Range,
     type ToStringOptions,
-} from "yaml";
-import {cloneDeep} from "./util";
+} from "yaml"
+import {cloneDeep} from "./util"
 
 export function parse<T = any>(item?: string, throwIfError = true): T | undefined {
-    if (item === undefined) return undefined;
+    if (item === undefined) return undefined
 
     try {
-        return load(item) as any;
+        return load(item) as any
     } catch (e) {
-        if (throwIfError) throw e;
-        return undefined;
+        if (throwIfError) throw e
+        return undefined
     }
 }
 
-const CRON_LINE_REGEX = /^(\s*-?\s*cron:\s*)([^\n#]*?)(\s*(#.*)?)$/gm;
+const CRON_LINE_REGEX = /^(\s*-?\s*cron:\s*)([^\n#]*?)(\s*(#.*)?)$/gm
 
 function preserveCronQuotes(yamlContent: string) {
     return yamlContent.replace(
         CRON_LINE_REGEX,
         (fullLine, prefix: string, valuePart: string, suffix: string) => {
-            const value = valuePart.trim();
-            const isEmptyValue = value === "" || value === "\"\"" || value === "''";
+            const value = valuePart.trim()
+            const isEmptyValue = value === "" || value === "\"\"" || value === "''"
 
             if (isEmptyValue) {
                 // Leave empty cron values untouched and without extra quotes.
-                return `${prefix}${suffix ?? ""}`;
+                return `${prefix}${suffix ?? ""}`
             }
 
             const shouldSkip =
                 value.startsWith("\"") ||
                 value.startsWith("'") ||
                 value.startsWith("|") ||
-                value.startsWith(">");
+                value.startsWith(">")
 
             if (shouldSkip) {
-                return fullLine;
+                return fullLine
             }
 
-            return `${prefix}"${value}"${suffix ?? ""}`;
-        }
-    );
+            return `${prefix}"${value}"${suffix ?? ""}`
+        },
+    )
 }
 
 export function stringify(item: any) {
-    if (item === undefined) return "";
+    if (item === undefined) return ""
 
-    const clonedValue = cloneDeep(item);
-    delete clonedValue.deleted;
+    const clonedValue = cloneDeep(item)
+    delete clonedValue.deleted
 
     const yamlContent = dump(transform(clonedValue), {
         lineWidth: -1,
         noCompatMode: true,
         quotingType: "\"",
-    });
+    })
 
-    return preserveCronQuotes(yamlContent);
+    return preserveCronQuotes(yamlContent)
 }
 
 const SORT_FIELDS = [
@@ -84,66 +84,66 @@ const SORT_FIELDS = [
     "errors",
     "triggers",
     "listeners",
-    "pluginDefaults"
-];
+    "pluginDefaults",
+]
 
 function sortPredicate(a: string, b: string) {
-    const aIndex = SORT_FIELDS.indexOf(a);
-    const bIndex = SORT_FIELDS.indexOf(b);
-    const aIndexProtected = aIndex >= 0 ? aIndex : Number.MAX_SAFE_INTEGER;
-    const bIndexProtected = bIndex >= 0 ? bIndex : Number.MAX_SAFE_INTEGER;
+    const aIndex = SORT_FIELDS.indexOf(a)
+    const bIndex = SORT_FIELDS.indexOf(b)
+    const aIndexProtected = aIndex >= 0 ? aIndex : Number.MAX_SAFE_INTEGER
+    const bIndexProtected = bIndex >= 0 ? bIndex : Number.MAX_SAFE_INTEGER
 
-    return aIndexProtected - bIndexProtected;
+    return aIndexProtected - bIndexProtected
 }
 
 function sort(value: Record<string, any>) {
     return Object.keys(value)
-        .sort(sortPredicate);
+        .sort(sortPredicate)
 }
 
 export function pairsToMap(pairs?: any[]) {
-    const map = new YAMLMap();
+    const map = new YAMLMap()
     if (!isPair(pairs?.[0])) {
-        return map;
+        return map
     }
 
     for (const pair of pairs!) {
-        map.add(pair);
+        map.add(pair)
     };
-    return map;
+    return map
 }
 
 function transform(value: any): any {
     if (value instanceof Array) {
         return value.map((r) => {
-            return transform(r);
-        });
+            return transform(r)
+        })
     } else if (typeof value === "string" || value instanceof String) {
-        return value;
+        return value
     } else if (value instanceof Object) {
         return sort(value).reduce((accumulator, r) => {
             if (value[r] !== undefined) {
-                accumulator[r] = transform(value[r]);
+                accumulator[r] = transform(value[r])
             }
 
-            return accumulator;
-        }, Object.create({}));
+            return accumulator
+        }, Object.create({}))
     }
 
-    return value;
+    return value
 }
 
 function getSectionNodeAndDocumentFromSource({source, section}: {
     source: string,
     section: string
 }) {
-    const yamlDoc = parseDocumentTyped(source);
-    const sectionNode = getSectionFromDocument({yamlDoc, section});
-    return {yamlDoc, sectionNode};
+    const yamlDoc = parseDocumentTyped(source)
+    const sectionNode = getSectionFromDocument({yamlDoc, section})
+    return {yamlDoc, sectionNode}
 }
 
 function parseDocumentTyped(source: string) {
-    return parseDocument(source) as Document<YAMLMap<Scalar<string>, Node>>;
+    return parseDocument(source) as Document<YAMLMap<Scalar<string>, Node>>
 }
 
 function getSectionFromDocument({yamlDoc, section}:
@@ -152,9 +152,9 @@ function getSectionFromDocument({yamlDoc, section}:
         section: string
     }) {
     const sectionNode = yamlDoc.contents?.items?.find(
-        (e) => e.key.value === section
-    ) as { value: YAMLSeq<YAMLMap<{ value: string }, Node>> } | undefined;
-    return sectionNode?.value;
+        (e) => e.key.value === section,
+    ) as { value: YAMLSeq<YAMLMap<{ value: string }, Node>> } | undefined
+    return sectionNode?.value
 }
 
 function getPathFromId({node, id} : {
@@ -166,30 +166,30 @@ function getPathFromId({node, id} : {
         let index = 0
         for (const item of node.items) {
             if (isMap<{ value: string }, Node>(item)) {
-                const itemId = item.get("id") as string | undefined;
+                const itemId = item.get("id") as string | undefined
                 if (itemId === id) {
-                    return [index];
+                    return [index]
                 } else {
-                    const path = getPathFromId({node: item, id});
+                    const path = getPathFromId({node: item, id})
                     if (path) {
-                        return [index, ...path];
+                        return [index, ...path]
                     }
                 }
             }
-            index++;
+            index++
         }
     }
 
     if( isMap<{ value: string }, Node>(node)) {
-        const itemId = node.get("id") as string | undefined;
+        const itemId = node.get("id") as string | undefined
         if (itemId === id) {
-            return [];
+            return []
         } else {
             for (const item of node.items) {
                 if(item.value) {
-                    const path = getPathFromId({node: item.value, id});
+                    const path = getPathFromId({node: item.value, id})
                     if (path) {
-                        return [item.key.value, ...path];
+                        return [item.key.value, ...path]
                     }
                 }
             }
@@ -208,21 +208,21 @@ export function getPathFromSectionAndId({
     section: string,
     id: string
 }): string | undefined {
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
+    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section})
     if (!sectionNode) {
-        return undefined;
+        return undefined
     }
 
     const pathArray = getPathFromId({node: sectionNode, id}) ?? []
     const path = pathArray.map((e) => {
         if (typeof e === "string") {
-            return `.${e}`;
+            return `.${e}`
         } else {
-            return `[${e}]`;
+            return `[${e}]`
         }
-    }).join("");
+    }).join("")
 
-    return `${section}${path}`;
+    return `${section}${path}`
 }
 
 
@@ -234,22 +234,22 @@ export function extractBlock({source, section, key, keyName}: {
     keyName?: string
 }) {
     if (!keyName) {
-        keyName = "id";
+        keyName = "id"
     }
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
+    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section})
     if (!sectionNode) {
-        return undefined;
+        return undefined
     }
 
     const blockNode = extractBlockFromDocument({
         yamlDoc: sectionNode,
         keyName,
         key,
-    });
+    })
 
     return blockNode === undefined
         ? undefined
-        : new Document(blockNode).toString(TOSTRING_OPTIONS);
+        : new Document(blockNode).toString(TOSTRING_OPTIONS)
 }
 
 function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
@@ -264,16 +264,16 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
 }) {
     function find(element?: Node): Node | void {
         if (!element) {
-            return;
+            return
         }
         if (isMap<{ value: string }, string | Node>(element)) {
             if (element.get("type") !== undefined && key === element.get(keyName)) {
-                return callback ? callback(element) : element;
+                return callback ? callback(element) : element
             }
         }
         if (isSeq<{ value: Node }>(element)
             || isMap<{ value: string }, Node>(element)) {
-            for (const [key, item] of element.items.entries()) {
+            for (const [itemIndex, item] of element.items.entries()) {
                 const result = isMap(item)
                     ? find(item)
                     : find(item.value ?? undefined)
@@ -282,28 +282,28 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
                     if (callback) {
                         if (isMap(element) && isPair<{ value: string }, Node>(item)) {
                             // replace value in the map
-                            element.set(item.key, result);
+                            element.set(item.key, result)
                         } else {
-                            element.items[key] = result as any;
+                            element.items[itemIndex] = result as any
                         }
                     } else if (result) {
-                        return result;
+                        return result
                     }
                 }
             }
         }
     }
 
-    const result = find(yamlDoc);
+    const result = find(yamlDoc)
 
     if (result === undefined) {
-        return undefined;
+        return undefined
     }
 
     if (callback) {
-        return new Document(result);
+        return new Document(result)
     } else {
-        return new Document(result);
+        return new Document(result)
     }
 }
 
@@ -313,12 +313,12 @@ export function extractBlockWithPath({source, path}: {
 }) {
     const doc = extractBlockWithPathFromDocument({
         yamlDoc: parseDocumentTyped(source),
-        path
-    });
+        path,
+    })
     if (!doc) {
-        return undefined;
+        return undefined
     }
-    return new Document(doc).toString(TOSTRING_OPTIONS);
+    return new Document(doc).toString(TOSTRING_OPTIONS)
 }
 
 function extractBlockWithPathFromDocument({yamlDoc, path, callback}: {
@@ -326,17 +326,17 @@ function extractBlockWithPathFromDocument({yamlDoc, path, callback}: {
     path: string,
     callback?: (element: YAMLMap<{ value: string }, Node>) => any
 }) {
-    const parsedPath = parsePath(path);
-    const element = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>;
+    const parsedPath = parsePath(path)
+    const element = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
     if (element === undefined) {
-        return undefined;
+        return undefined
     }
     if (callback) {
-        const replacedEl = callback(element);
-        yamlDoc.setIn(parsedPath, replacedEl);
-        return new Document(replacedEl);
+        const replacedEl = callback(element)
+        yamlDoc.setIn(parsedPath, replacedEl)
+        return new Document(replacedEl)
     }
-    return new Document(element);
+    return new Document(element)
 }
 
 export function replaceBlockWithPath({source, path, newContent}: {
@@ -344,25 +344,25 @@ export function replaceBlockWithPath({source, path, newContent}: {
     path: string,
     newContent: string
 }) {
-    const yamlDoc = parseDocumentTyped(source);
-    const pathArray = parsePath(path);
+    const yamlDoc = parseDocumentTyped(source)
+    const pathArray = parsePath(path)
     // if value is empty, delete the property instead of replacing it with an empty value
     if(newContent === ""){
-        yamlDoc.deleteIn(pathArray);
-        return yamlDoc.toString(TOSTRING_OPTIONS);
+        yamlDoc.deleteIn(pathArray)
+        return yamlDoc.toString(TOSTRING_OPTIONS)
     }
-    const newItem = yamlDoc.createNode(parseDocument(newContent));
-    const insertBlock = !yamlDoc.hasIn(pathArray);
-    yamlDoc.setIn(pathArray, newItem);
+    const newItem = yamlDoc.createNode(parseDocument(newContent))
+    const insertBlock = !yamlDoc.hasIn(pathArray)
+    yamlDoc.setIn(pathArray, newItem)
 
     // When inserting a top level element
     // try to insert the key at the right place
     if (insertBlock && pathArray.length === 1
         && yamlDoc.contents && isMap(yamlDoc.contents)) {
-        yamlDoc.contents.items.sort((a, b) => sortPredicate(a.key.value ?? a.key, b.key.value ?? a.key));
+        yamlDoc.contents.items.sort((a, b) => sortPredicate(a.key.value ?? a.key, b.key.value ?? a.key))
     }
 
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 export function swapBlocks({source, section, key1, key2, keyName}: {
@@ -373,17 +373,17 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
     keyName?: string
 }) {
     if (!keyName) {
-        keyName = "id";
+        keyName = "id"
     }
-    const {yamlDoc, sectionNode} = getSectionNodeAndDocumentFromSource({source, section});
+    const {yamlDoc, sectionNode} = getSectionNodeAndDocumentFromSource({source, section})
     if (!sectionNode) {
-        return source;
+        return source
     }
-    const task1 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1});
-    const task2 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2});
+    const task1 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1})
+    const task2 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2})
 
     if (!task1 || !task2) {
-        return source;
+        return source
     }
 
     visit(yamlDoc, {
@@ -395,15 +395,15 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
                 throw {
                     message: "dependency task",
                     messageOptions: {taskId: key2},
-                };
+                }
             }
         },
-    });
+    })
 
-    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1, callback: () => task2});
-    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2, callback: () => task1});
+    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1, callback: () => task2})
+    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2, callback: () => task1})
 
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 
@@ -412,50 +412,50 @@ function getNodeIndexInParent(
     patentNode: YAMLMap<{ value: string }, Node>,
     parentPath: (string|number)[],
     refPath?: string | number,
-    position: "before" | "after" = "after"
+    position: "before" | "after" = "after",
 ) {
     if (refPath === undefined) {
-        return position === "before" ? 0 : patentNode.items.length - 1;
+        return position === "before" ? 0 : patentNode.items.length - 1
     }
 
-    const indexNode = yamlDoc.getIn([...parentPath, refPath]) as any;
+    const indexNode = yamlDoc.getIn([...parentPath, refPath]) as any
 
-    return patentNode.items.indexOf(indexNode);
+    return patentNode.items.indexOf(indexNode)
 }
 
 export function parsePath(path: string) {
-    const pathParts = path.split(".");
+    const pathParts = path.split(".")
     return pathParts.reduce((acc: (string|number)[], part) => {
         // if the path has a number, it will look like this
         // path[0]
 
         const numberPath = part.match(/\[(\d+)\]$/)
         if (numberPath?.[0]) {
-            acc.push(part.slice(0, numberPath.index));
-            acc.push(parseInt(numberPath[1], 10));
+            acc.push(part.slice(0, numberPath.index))
+            acc.push(parseInt(numberPath[1], 10))
         } else {
-            acc.push(part);
+            acc.push(part)
         }
-        return acc;
+        return acc
     }, [])
 }
 
 function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPath: string) {
     if(!parentPath.includes(".")){
         if(!yamlDoc.contents){
-            throw new Error(`Document is empty, cannot insert block with path ${parentPath}`);
+            throw new Error(`Document is empty, cannot insert block with path ${parentPath}`)
         }
-        return yamlDoc.contents;
+        return yamlDoc.contents
     } else {
         // remove everything after the last "."
-        const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."));
-        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>;
+        const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."))
+        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
         if (!parentNode) {
             // create the missing parent node
-            const newParentNode = createParentNode(parentPathWithoutKey);
+            const newParentNode = createParentNode(parentPathWithoutKey)
             // attach it to the parents parent
-            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey);
-            parentParentNode?.items.push(newParentNode);
+            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
+            parentParentNode?.items.push(newParentNode)
             return newParentNode.value
         }
         return parentNode
@@ -463,16 +463,16 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
 }
 
 function createParentNode(parentPath: string) {
-    const newParentNode = new YAMLSeq();
-    const parentKey = parentPath.split(".").pop() as string;
-    const parentKeyNode = new Pair(new Scalar(parentKey), newParentNode);
-    return parentKeyNode;
+    const newParentNode = new YAMLSeq()
+    const parentKey = parentPath.split(".").pop() as string
+    const parentKeyNode = new Pair(new Scalar(parentKey), newParentNode)
+    return parentKeyNode
 }
 
 function createPairNode(parentKey: string, newPropNode: Node) {
-    const newPairNodeValue = new YAMLSeq();
-    newPairNodeValue.add(newPropNode);
-    return new Pair(new Scalar(parentKey), newPairNodeValue);
+    const newPairNodeValue = new YAMLSeq()
+    newPairNodeValue.add(newPropNode)
+    return new Pair(new Scalar(parentKey), newPairNodeValue)
 }
 
 export function insertBlockWithPath({
@@ -489,30 +489,30 @@ export function insertBlockWithPath({
     position?: "before" | "after",
 }){
     if (!position) {
-        position = "after";
+        position = "after"
     }
-    const yamlDoc = parseDocumentTyped(source);
-    const newPropNode = yamlDoc.createNode(parseDocument(newBlock)) as any;
+    const yamlDoc = parseDocumentTyped(source)
+    const newPropNode = yamlDoc.createNode(parseDocument(newBlock)) as any
 
-    const parsedPath = parsePath(parentPath);
+    const parsedPath = parsePath(parentPath)
 
-    const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>;
+    const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
 
     if (!parentNode) {
-        const newPairNode = createPairNode(parentPath.split(".").pop() as string, newPropNode);
-        const newParentNode = getParentNode(yamlDoc, parentPath);
-        newParentNode?.items.push(newPairNode);
-        return yamlDoc.toString(TOSTRING_OPTIONS);
+        const newPairNode = createPairNode(parentPath.split(".").pop() as string, newPropNode)
+        const newParentNode = getParentNode(yamlDoc, parentPath)
+        newParentNode?.items.push(newPairNode)
+        return yamlDoc.toString(TOSTRING_OPTIONS)
     }
 
-    const index = getNodeIndexInParent(yamlDoc, parentNode, parsedPath, refPath);
+    const index = getNodeIndexInParent(yamlDoc, parentNode, parsedPath, refPath)
     if (position === "before") {
-        parentNode.items.splice(index, 0, newPropNode);
+        parentNode.items.splice(index, 0, newPropNode)
     } else {
-        parentNode.items.splice(index + 1, 0, newPropNode);
+        parentNode.items.splice(index + 1, 0, newPropNode)
     }
 
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 
@@ -523,62 +523,62 @@ export function deleteBlock({source, section, key, keyName}: {
     keyName?: string
 }) {
     if (!keyName) {
-        keyName = "id";
+        keyName = "id"
     }
-    const yamlDoc = parseDocumentTyped(source);
+    const yamlDoc = parseDocumentTyped(source)
     visit(yamlDoc, {
         Pair(_, pair: any) {
             if (pair.key.value === section) {
                 visit(pair.value, {
-                    Map(_, map) {
+                    Map(__, map) {
                         if (map.get(keyName) === key) {
-                            return visit.REMOVE;
+                            return visit.REMOVE
                         }
                     },
-                });
+                })
             }
         },
-    });
+    })
 
     // delete empty sections
     visit(yamlDoc, {
         Pair(_, pair) {
             if (isSeq(pair.value) && pair.value.items.length === 0) {
-                return visit.REMOVE;
+                return visit.REMOVE
             }
         },
-    });
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    })
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 
 export function replaceIdAndNamespace(source: string, id: string, namespace: string) {
-    const yamlDoc = parseDocumentTyped(source);
-    yamlDoc.contents = yamlDoc.contents || new YAMLMap();
+    const yamlDoc = parseDocumentTyped(source)
+    yamlDoc.contents = yamlDoc.contents || new YAMLMap()
 
-    const existingNamespace = yamlDoc.getIn(["namespace"], true) as Scalar | undefined;
+    const existingNamespace = yamlDoc.getIn(["namespace"], true) as Scalar | undefined
     if(existingNamespace){
-        existingNamespace.value = namespace;
+        existingNamespace.value = namespace
     }else{
-        yamlDoc.contents.items.unshift(new Pair(new Scalar("namespace"), new Scalar(namespace)));
+        yamlDoc.contents.items.unshift(new Pair(new Scalar("namespace"), new Scalar(namespace)))
     }
 
-    const existingId = yamlDoc.getIn(["id"], true) as Scalar | undefined;
+    const existingId = yamlDoc.getIn(["id"], true) as Scalar | undefined
     if(existingId){
-        existingId.value = id;
+        existingId.value = id
     }else{
-        yamlDoc.contents.items.unshift(new Pair(new Scalar("id"), new Scalar(id)));
+        yamlDoc.contents.items.unshift(new Pair(new Scalar("id"), new Scalar(id)))
     }
 
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 export function updateMetadata(source: string, metadata: Record<string, any>) {
     // TODO: check how to keep comments
-    const yamlDoc = parseDocument(source) as any;
+    const yamlDoc = parseDocument(source) as any
 
     if (!yamlDoc?.contents?.items) {
-        return source;
+        return source
     }
 
     for (const property in metadata) {
@@ -586,15 +586,15 @@ export function updateMetadata(source: string, metadata: Record<string, any>) {
             yamlDoc.contents.items.find((item: any) => item.key.value === property)
         ) {
             yamlDoc.contents.items.find(
-                (item: any) => item.key.value === property
-            ).value = metadata[property];
+                (item: any) => item.key.value === property,
+            ).value = metadata[property]
         } else {
             yamlDoc.contents.items.push(
-                new Pair(new Scalar(property), metadata[property])
-            );
+                new Pair(new Scalar(property), metadata[property]),
+            )
         }
     }
-    return cleanMetadataDocument(yamlDoc).toString(TOSTRING_OPTIONS);
+    return cleanMetadataDocument(yamlDoc).toString(TOSTRING_OPTIONS)
 }
 
 const FLOW_SECTION_KEYS = [
@@ -633,18 +633,18 @@ function isItemTruthy(item: Node) {
 
 function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | YAMLSeq>>) {
     if (!yamlDoc?.contents?.items) {
-        return yamlDoc;
+        return yamlDoc
     }
-    const updatedItems: Pair<Scalar<string>, Node>[] = [];
+    const updatedItems: Pair<Scalar<string>, Node>[] = []
     for (const prop of ORDERED_FLOW_ROOT_KEYS) {
         const item = yamlDoc.contents?.items.find(
-            (e: any) => (e.key.value ?? e.key) === prop
-        );
+            (e: any) => (e.key.value ?? e.key) === prop,
+        )
         if (item?.value && isItemTruthy(item.value)) {
-            updatedItems.push(item);
+            updatedItems.push(item)
             if(isSeq(item.value)) {
                 if (!item.key.commentBefore) {
-                    item.key.spaceBefore = true;
+                    item.key.spaceBefore = true
                 }
                 // add whitespace between items
                 item.value.items.forEach((seqItem: any, index: number) => {
@@ -652,56 +652,56 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
                         return
                     }
                     if (seqItem.commentBefore) {
-                        seqItem.commentBefore.spaceBefore = true;
+                        seqItem.commentBefore.spaceBefore = true
                     } else {
-                        seqItem.spaceBefore = true;
+                        seqItem.spaceBefore = true
                     }
-                });
+                })
 
             }
         }
     }
-    yamlDoc.contents.items = updatedItems;
-    return yamlDoc;
+    yamlDoc.contents.items = updatedItems
+    return yamlDoc
 }
 
 export function getMetadata(source: string): Record<string, any> {
-    const yamlDoc = parseDocument(source) as any;
-    if(!yamlDoc.contents?.items) return {};
-    const metadata: Record<string, any> = {};
+    const yamlDoc = parseDocument(source) as any
+    if(!yamlDoc.contents?.items) return {}
+    const metadata: Record<string, any> = {}
 
     for (const item of yamlDoc.contents.items) {
         if (!FLOW_SECTION_KEYS.includes(item.key.value)) {
             metadata[item.key.value] =
                 isMap(item.value) || isSeq(item.value)
                     ? item.value.toJSON()
-                    : item.value.value;
+                    : item.value.value
         }
     }
-    return metadata;
+    return metadata
 }
 
 export function deleteMetadata(source: any, metadata: any) {
-    const yamlDoc = parseDocument(source) as any;
+    const yamlDoc = parseDocument(source) as any
 
     if (!yamlDoc.contents.items) {
-        return source;
+        return source
     }
 
-    const item = yamlDoc.contents.items.find((e: any) => e.key.value === metadata);
+    const item = yamlDoc.contents.items.find((e: any) => e.key.value === metadata)
     if (item) {
-        yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(item), 1);
+        yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(item), 1)
     }
 
-    return yamlDoc.toString(TOSTRING_OPTIONS);
+    return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
 export function flowHaveTasks(source: string) {
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section: "tasks"});
+    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section: "tasks"})
     if (!sectionNode) {
-        return false;
+        return false
     }
-    return isSeq(sectionNode) && sectionNode.items.length > 0;
+    return isSeq(sectionNode) && sectionNode.items.length > 0
 }
 
 /**
@@ -717,8 +717,8 @@ export function extractFieldFromMaps<T extends string>(
     valuePredicate = (_: any) => true,
     keepEmptyFields: boolean = false,
 ): (Record<T, any> & {range: Range})[] {
-    const yamlDoc = parseDocument(source) as any;
-    const maps: any[] = [];
+    const yamlDoc = parseDocument(source) as any
+    const maps: any[] = []
     visit(yamlDoc, {
         Map(_, map, parent) {
             if (
@@ -726,20 +726,20 @@ export function extractFieldFromMaps<T extends string>(
                     parent
                         .filter((p) => isPair(p))
                         .map((p: any) => p?.key?.value)
-                        .join(".")
+                        .join("."),
                 ) &&
                 map.items
             ) {
-                let matched = false;
+                let matched = false
                 for (const item of map.items as any[]) {
                     if (item?.key?.value === fieldName) {
-                        const fieldValue = item?.value?.value ?? item.value?.items;
+                        const fieldValue = item?.value?.value ?? item.value?.items
                         if (valuePredicate(fieldValue)) {
                             maps.push({
                                 [fieldName]: fieldValue,
                                 range: map.range,
-                            });
-                            matched = true;
+                            })
+                            matched = true
                         }
                     }
                 }
@@ -748,18 +748,18 @@ export function extractFieldFromMaps<T extends string>(
                     maps.push({
                         [fieldName]: undefined,
                         range: map.range,
-                    });
+                    })
                 }
             }
         },
-    });
-    return maps;
+    })
+    return maps
 }
 
 function extractAllTypes(source: string, validTypes: string[] = []){
     return extractFieldFromMaps(source, "type", () => true, (value) =>
-        validTypes.some((t) => t === value)
-    );
+        validTypes.some((t) => t === value),
+    )
 }
 
 
@@ -770,21 +770,21 @@ function extractAllTypes(source: string, validTypes: string[] = []){
 export function getTypeAtPosition(
     source: string,
     position: { lineNumber: number; column: number },
-    validTypes: any
+    validTypes: any,
 ) {
-    const types = extractAllTypes(source, validTypes);
+    const types = extractAllTypes(source, validTypes)
 
-    const lineCounter = new LineCounter();
-    parseDocument(source, {lineCounter});
+    const lineCounter = new LineCounter()
+    parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column;
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
     for (const type of types.reverse()) {
         if (cursorIndex >= type.range[0]) {
-            return type.type;
+            return type.type
         }
     }
-    return null;
+    return null
 }
 
 /**
@@ -793,54 +793,54 @@ export function getTypeAtPosition(
  */
 export function getVersionAtPosition(
     source: string,
-    position: { lineNumber: number; column: number }
+    position: { lineNumber: number; column: number },
 ) {
-    const versions = extractAllVersions(source);
-    const lineCounter = new LineCounter();
-    parseDocument(source, {lineCounter});
+    const versions = extractAllVersions(source)
+    const lineCounter = new LineCounter()
+    parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column;
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
     for (const version of versions.reverse()) {
         if (cursorIndex >= version.range[0]) {
-            return version.version;
+            return version.version
         }
     }
-    return null;
+    return null
 }
 
 function extractAllVersions(source: string){
-    return extractFieldFromMaps(source, "version", () => true, () => true, true);
+    return extractFieldFromMaps(source, "version", () => true, () => true, true)
 }
 
 const TOSTRING_OPTIONS: ToStringOptions = {
     lineWidth: 0,
-};
+}
 
-const yamlKeyCapture = "([^:\\n]+): *";
+const yamlKeyCapture = "([^:\\n]+): *"
 const indentAndYamlKeyCapture = new RegExp(
-    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`
-);
+    `(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`,
+)
 
 function getParentKeyByChildIndent(
     stringToSearch: string,
-    indent: number
+    indent: number,
 ): { key: string; valueStartIndex: number } | undefined {
     if (indent < 2) {
-        return undefined;
+        return undefined
     }
 
     const matches = stringToSearch.matchAll(
-        new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g")
-    );
-    const lastMatch = [...matches].pop();
+        new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g"),
+    )
+    const lastMatch = [...matches].pop()
     if (lastMatch === undefined) {
-        return undefined;
+        return undefined
     }
     return {
         key: lastMatch[1],
         valueStartIndex: lastMatch.index + lastMatch[0].length,
-    };
+    }
 }
 
 function extractIndentAndMaybeYamlKey(stringToTest: string): {
@@ -848,16 +848,16 @@ function extractIndentAndMaybeYamlKey(stringToTest: string): {
     yamlKey: string | undefined;
     valueStartIndex: number | undefined;
 } | undefined {
-    const exec = indentAndYamlKeyCapture.exec(stringToTest);
+    const exec = indentAndYamlKeyCapture.exec(stringToTest)
     if (exec === null) {
-        return undefined;
+        return undefined
     }
 
     const [stringBeforeValue, indent, yamlKey]: [
         string,
         string,
         string | undefined
-    ] = [exec[1], exec[2], exec[3]];
+    ] = [exec[1], exec[2], exec[3]]
     return {
         indent: indent.length,
         yamlKey,
@@ -865,7 +865,7 @@ function extractIndentAndMaybeYamlKey(stringToTest: string): {
             yamlKey === undefined
                 ? undefined
                 : exec.index + stringBeforeValue.length,
-    };
+    }
 }
 
 export type YamlElement = {
@@ -876,32 +876,32 @@ export type YamlElement = {
 };
 
 export function localizeElementAtIndex(source: string, indexInSource: number): YamlElement {
-    const tillCursor = source.substring(0, indexInSource);
+    const tillCursor = source.substring(0, indexInSource)
 
-    const indentAndYamlKey: any = extractIndentAndMaybeYamlKey(tillCursor);
-    let {yamlKey} = indentAndYamlKey;
-    const {indent} = indentAndYamlKey;
+    const indentAndYamlKey: any = extractIndentAndMaybeYamlKey(tillCursor)
+    let {yamlKey} = indentAndYamlKey
+    const {indent} = indentAndYamlKey
     // We search in previous keys to find the parent key
-    let valueStartIndex;
+    let valueStartIndex
     if (yamlKey === undefined) {
         const parentKeyExtract = getParentKeyByChildIndent(
             tillCursor,
-            indent
-        );
-        yamlKey = parentKeyExtract?.key;
-        valueStartIndex = parentKeyExtract?.valueStartIndex;
+            indent,
+        )
+        yamlKey = parentKeyExtract?.key
+        valueStartIndex = parentKeyExtract?.valueStartIndex
     } else {
         valueStartIndex =
-            tillCursor.lastIndexOf(yamlKey + ":") + yamlKey.length + 1;
+            tillCursor.lastIndexOf(yamlKey + ":") + yamlKey.length + 1
     }
 
-    const yamlDoc = parseDocument(source) as any;
-    const elements: any = [];
+    const yamlDoc = parseDocument(source) as any
+    const elements: any = []
 
     visit(yamlDoc, {
         Pair(_: any, pair: any, parents: readonly any[]) {
             if (pair.value?.range !== undefined && pair.key.value === yamlKey) {
-                const beforeElement = source.substring(0, pair.value.range[0]);
+                const beforeElement = source.substring(0, pair.value.range[0])
                 elements.push({
                     parents: parents
                         .filter((p) => isMap(p))
@@ -914,23 +914,23 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
                             beforeElement.replace(/\s*$/g, "").length),
                         ...pair.value.range.slice(1),
                     ],
-                });
+                })
             }
         },
-    });
+    })
 
     const filter = elements.filter(
         (map: any) =>
-            map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2]
-    );
-    return filter.sort((a: any, b: any) => b.range[0] - a.range[0])?.[0];
+            map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2],
+    )
+    return filter.sort((a: any, b: any) => b.range[0] - a.range[0])?.[0]
 }
 
 // CHARTS for dashboard
 
 export function getAllCharts(source: string) {
-    const yamlDoc = parseDocument(source) as any;
-    const charts: string[] = [];
+    const yamlDoc = parseDocument(source) as any
+    const charts: string[] = []
 
     visit(yamlDoc, {
         Map(_, map) {
@@ -938,25 +938,25 @@ export function getAllCharts(source: string) {
                 for (const item of map.items as any[]) {
                     if (item?.key?.value === "charts" && item?.value?.items) {
                         for (const chartItem of item.value.items) {
-                            charts.push(chartItem.toJSON());
+                            charts.push(chartItem.toJSON())
                         }
                     }
                 }
             }
         },
-    });
+    })
 
-    return charts;
+    return charts
 }
 
 export function getChartAtPosition(source: string, position: { lineNumber: number; column: number }) {
-    const yamlDoc = parseDocument(source) as any;
-    const lineCounter = new LineCounter();
-    parseDocument(source, {lineCounter});
+    const yamlDoc = parseDocument(source) as any
+    const lineCounter = new LineCounter()
+    parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column;
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column
 
-    let chart: any;
+    let chart: any
     visit(yamlDoc, {
         Map(_, map) {
             if (map.items) {
@@ -968,8 +968,8 @@ export function getChartAtPosition(source: string, position: { lineNumber: numbe
                                     chartItem.range[0] <= cursorIndex &&
                                     chartItem.range[1] >= cursorIndex
                                 ) {
-                                    chart = chartItem;
-                                    return visit.BREAK;
+                                    chart = chartItem
+                                    return visit.BREAK
                                 }
                             }
                         }
@@ -977,9 +977,9 @@ export function getChartAtPosition(source: string, position: { lineNumber: numbe
                 }
             }
         },
-    });
+    })
 
-    return chart ? chart.toJSON() : null;
+    return chart ? chart.toJSON() : null
 }
 
 /**
@@ -988,17 +988,17 @@ export function getChartAtPosition(source: string, position: { lineNumber: numbe
  * @returns lines infos for each taskId
  */
 export function getTasksLines(
-    source: string
+    source: string,
 ):Record<string, {start: number, end: number}> {
     // if a task ends on the last line of the YAML,
     // its end range will be one line off.
     // To avoid this specific case, we add a newline at the end of the source.
-    const paddedSource = source + "\n";
-    const yamlDoc = parseDocument(paddedSource) as any;
-    const lineCounter = new LineCounter();
-    parseDocument(paddedSource, {lineCounter});
+    const paddedSource = source + "\n"
+    const yamlDoc = parseDocument(paddedSource) as any
+    const lineCounter = new LineCounter()
+    parseDocument(paddedSource, {lineCounter})
 
-    let tasksLines: Record<string, {start: number, end: number}> = {};
+    let tasksLines: Record<string, {start: number, end: number}> = {}
     visit(yamlDoc, {
         Map(_, map) {
             if (map.items) {
@@ -1007,48 +1007,48 @@ export function getTasksLines(
                         if (item?.value?.items) {
                             for (const task of item.value.items) {
                                 if(isMap(task)){
-                                    const foundChilTasksLines = getTasksAndFlowableLines(lineCounter, task);
+                                    const foundChilTasksLines = getTasksAndFlowableLines(lineCounter, task)
                                     tasksLines = {
                                         ...tasksLines,
-                                        ...foundChilTasksLines
+                                        ...foundChilTasksLines,
                                     }
                                 }
                             }
                         }
-                        return visit.BREAK;
+                        return visit.BREAK
                     }
                 }
             }
         },
-    });
-    return tasksLines;
+    })
+    return tasksLines
 }
 
 function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
-    let tasksLines: Record<string, {start: number, end: number}> = {};
-    const taskId = task.get("id") as string | undefined;
+    let tasksLines: Record<string, {start: number, end: number}> = {}
+    const taskId = task.get("id") as string | undefined
     if(taskId){
         if(task.range) {
             tasksLines[taskId] = {
                 start: lineCounter.linePos(task.range[0]).line,
-                end: lineCounter.linePos(task.range[1]).line - 1
+                end: lineCounter.linePos(task.range[1]).line - 1,
             }
         }
-        const childTasks = new YAMLSeq<YAMLMap>();
-        const tasksChilds = task.get("tasks") as YAMLSeq<YAMLMap> | undefined;
+        const childTasks = new YAMLSeq<YAMLMap>()
+        const tasksChilds = task.get("tasks") as YAMLSeq<YAMLMap> | undefined
         if (isSeq<YAMLMap>(tasksChilds)){
-            tasksChilds.items.forEach(x => childTasks.add(x));
+            tasksChilds.items.forEach(x => childTasks.add(x))
         }
-        const thenChilds = task.get("then") as YAMLSeq<YAMLMap> | undefined;
+        const thenChilds = task.get("then") as YAMLSeq<YAMLMap> | undefined
         // io.kestra.plugin.core.flow special case
         if (isSeq<YAMLMap>(thenChilds)){
-            thenChilds.items.forEach(x => childTasks.add(x));
+            thenChilds.items.forEach(x => childTasks.add(x))
         }
 
-        const elseChilds = task.get("else") as YAMLSeq<YAMLMap> | undefined;
+        const elseChilds = task.get("else") as YAMLSeq<YAMLMap> | undefined
         // io.kestra.plugin.core.flow special case
         if (isSeq<YAMLMap>(elseChilds)){
-            elseChilds.items.forEach(x => childTasks.add(x));
+            elseChilds.items.forEach(x => childTasks.add(x))
         }
 
         childTasks.items.forEach(childTask => {
@@ -1059,11 +1059,11 @@ function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
     } else {
         if (task.get("task")) {
             // io.kestra.plugin.core.flow.Dag special case
-            const nestedDagTaskField = task.get("task") as YAMLMap;
+            const nestedDagTaskField = task.get("task") as YAMLMap
             if(isMap(nestedDagTaskField)) {
-                tasksLines = {...tasksLines, ...getTasksAndFlowableLines(lineCounter, nestedDagTaskField)};
+                tasksLines = {...tasksLines, ...getTasksAndFlowableLines(lineCounter, nestedDagTaskField)}
             }
         }
     }
-    return tasksLines;
+    return tasksLines
 }

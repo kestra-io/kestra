@@ -52,49 +52,49 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, watch} from "vue";
+    import {ref, inject, watch} from "vue"
 
-    import CustomColumns from "./segments/CustomColumns.vue";
+    import CustomColumns from "./segments/CustomColumns.vue"
 
-    import {CogOutline} from "./utils/icons";
+    import {CogOutline} from "./utils/icons"
 
-    import {usePeriodicRefresh} from "./composables/usePeriodicRefresh";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
+    import {usePeriodicRefresh} from "./composables/usePeriodicRefresh"
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
-    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
-    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh();
+    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh()
 
-    const isColumnsPanelVisible = ref(false);
-    const localChartVisible = ref(filter.chartVisible.value);
+    const isColumnsPanelVisible = ref(false)
+    const localChartVisible = ref(filter.chartVisible.value)
 
     const refreshCallback = () => {
         if (filter.tableOptions.value?.refresh?.callback) {
-            filter.tableOptions.value.refresh.callback();
+            filter.tableOptions.value.refresh.callback()
         }
-        filter.refreshData();
-    };
+        filter.refreshData()
+    }
 
     watch(
         () => filter.chartVisible.value,
         (newVal) => {
-            localChartVisible.value = newVal ?? true;
-        }
-    );
+            localChartVisible.value = newVal ?? true
+        },
+    )
 
     watch(
         localChartVisible,
         (newVal) => {
-            filter.updateChart(newVal);
-        }
-    );
+            filter.updateChart(newVal)
+        },
+    )
 
     watch(
         periodicRefreshEnabled,
         (newVal) => {
-            toggleRefresh(newVal, refreshCallback);
-        }, {immediate: true}
-    );
+            toggleRefresh(newVal, refreshCallback)
+        }, {immediate: true},
+    )
 </script>
 
 <style lang="scss" scoped>

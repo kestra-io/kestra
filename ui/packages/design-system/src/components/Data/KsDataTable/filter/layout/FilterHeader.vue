@@ -14,14 +14,14 @@
 </template>
 
 <script setup lang="ts">
-    import {Close} from "../utils/icons";
+    import {Close} from "../utils/icons"
 
     defineProps<{
         label: string;
         description?: string;
-    }>();
+    }>()
 
-    const emits = defineEmits<{close: []}>();
+    const emits = defineEmits<{close: []}>()
 </script>
 
 <style lang="scss" scoped>

@@ -7,36 +7,36 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
 
-    import {ASSET} from "../utils/types";
-    import type {Types, Node} from "../utils/types";
+    import {ASSET} from "../utils/types"
+    import type {Types, Node} from "../utils/types"
 
     const props = defineProps<{
         node: Node;
         subtype: Types;
-    }>();
+    }>()
 
     const to = computed(() => {
-        const base = {namespace: props.node.namespace};
+        const base = {namespace: props.node.namespace}
 
         if (props.subtype === ASSET) {
             return {
                 name: "assets/update",
                 params: {...base, assetId: props.node.flow},
-            };
+            }
         } else if ("id" in props.node.metadata && props.node.metadata.id) {
             return {
                 name: "executions/update",
                 params: {...base, flowId: props.node.flow, id: props.node.metadata.id},
-            };
+            }
         } else {
             return {
                 name: "flows/update",
                 params: {...base, id: props.node.flow},
-            };
+            }
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">

@@ -38,30 +38,30 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {RouterLink} from "vue-router";
-    import type {BreadcrumbItem} from "./breadcrumbTypes";
+    import {computed} from "vue"
+    import {RouterLink} from "vue-router"
+    import type {BreadcrumbItem} from "./breadcrumbTypes"
 
     const {items, title} = defineProps<{
         items: BreadcrumbItem[];
         title: string;
-    }>();
+    }>()
 
-    const COLLAPSE_THRESHOLD = 4;
+    const COLLAPSE_THRESHOLD = 4
 
     type VisibleItem = BreadcrumbItem & {ellipsis?: boolean};
 
-    const shouldCollapse = computed(() => items.length >= COLLAPSE_THRESHOLD);
+    const shouldCollapse = computed(() => items.length >= COLLAPSE_THRESHOLD)
 
     const visibleItems = computed<VisibleItem[]>(() =>
         shouldCollapse.value
             ? [items[0], {label: "...", ellipsis: true}, items[items.length - 1]]
-            : items
-    );
+            : items,
+    )
 
     const collapsedItems = computed<BreadcrumbItem[]>(() =>
-        shouldCollapse.value ? items.slice(1, items.length - 1) : []
-    );
+        shouldCollapse.value ? items.slice(1, items.length - 1) : [],
+    )
 </script>
 
 <style scoped lang="scss">

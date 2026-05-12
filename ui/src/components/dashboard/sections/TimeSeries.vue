@@ -15,29 +15,30 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, PropType} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import moment from "moment";
-    import * as echarts from "echarts/core";
-    import {use} from "echarts/core";
-    import {BarChart, LineChart} from "echarts/charts";
-    import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import {extractState, getConsistentHEXColor} from "../composables/charts";
-    import KestraUtils, {useTheme} from "../../../utils/utils";
-    import {FilterObject} from "../../../utils/filters";
-    import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system";
-    import {TooltipType, ChartFeature} from "@kestra-io/design-system";
-    import {useMiscStore} from "override/stores/misc";
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    import {computed, ref, watch, PropType} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import moment from "moment"
+    import * as echarts from "echarts/core"
+    import {use} from "echarts/core"
+    import {BarChart, LineChart} from "echarts/charts"
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {extractState, getConsistentHEXColor} from "../composables/charts"
+    import * as KestraUtils from "../../../utils/utils"
+    import {useTheme} from "../../../utils/utils"
+    import {FilterObject} from "../../../utils/filters"
+    import {KsEchart, cssVar, durationUtils} from "@kestra-io/design-system"
+    import {TooltipType, ChartFeature} from "@kestra-io/design-system"
+    import {useMiscStore} from "override/stores/misc"
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
 
-    use([BarChart, LineChart]);
+    use([BarChart, LineChart])
 
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
@@ -47,67 +48,67 @@
         execution: {type: Boolean, default: false},
         flow: {type: String, default: undefined},
         namespace: {type: String, default: undefined},
-    });
+    })
 
-    const {data, chartOptions} = props.chart;
+    const {data, chartOptions} = props.chart
 
     const aggregator = computed(() => {
         return Object.entries(data?.columns ?? {})
             .filter(([_, v]) => v.agg)
             .sort((a, b) => {
-                const aStyle = a[1].graphStyle || "";
-                const bStyle = b[1].graphStyle || "";
-                return aStyle.localeCompare(bStyle);
-            });
-    });
+                const aStyle = a[1].graphStyle || ""
+                const bStyle = b[1].graphStyle || ""
+                return aStyle.localeCompare(bStyle)
+            })
+    })
 
-    const yBShown = computed(() => aggregator.value.length === 2);
+    const yBShown = computed(() => aggregator.value.length === 2)
 
-    const theme = useTheme();
+    const theme = useTheme()
 
     function isDuration(field: string | undefined): boolean {
-        return field === "DURATION";
+        return field === "DURATION"
     }
 
     const parseValue = (value: unknown): unknown => {
-        const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
+        const date = moment(value as moment.MomentInput, moment.ISO_8601, true)
         const query = {
-            ...Object.fromEntries(props.filters.map(({field, value, operation}) => [`filters[${field}][${operation}]`, value])),
-            ...route.query
-        };
+            ...Object.fromEntries(props.filters.map(({field, value: filterValue, operation}) => [`filters[${field}][${operation}]`, filterValue])),
+            ...route.query,
+        }
         return date.isValid() ? date.format(KestraUtils.getDateFormat(
             (route.query.startDate ?? query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]) as string | undefined,
             (route.query.endDate ?? query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"]) as string | undefined,
-            query["filters[timeRange][EQUALS]"] as string | undefined
-        )) : value;
-    };
+            query["filters[timeRange][EQUALS]"] as string | undefined,
+        )) : value
+    }
 
     const parsedData = computed(() => {
-        const rawData = generated.value.results as Record<string, any>[] | undefined;
+        const rawData = generated.value.results as Record<string, any>[] | undefined
         const xAxis = (() => {
             const values = rawData?.map((v: Record<string, any>) => {
-                return parseValue(v[chartOptions?.column ?? ""]);
-            });
+                return parseValue(v[chartOptions?.column ?? ""])
+            })
 
-            return Array.from(new Set(values)).sort();
-        })();
+            return Array.from(new Set(values)).sort()
+        })()
 
-        const aggregatorKeys = aggregator.value.map(([key]) => key);
+        const aggregatorKeys = aggregator.value.map(([key]) => key)
 
         const reducer = (array: Record<string, any>[] | undefined, field: string, yAxisID: string) => {
-            if (!array?.length) return;
+            if (!array?.length) return
 
-            const columns = data?.columns ?? {};
-            const column = chartOptions?.column ?? "";
-            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined;
+            const columns = data?.columns ?? {}
+            const column = chartOptions?.column ?? ""
+            const colorByColumn = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
 
             // Get the fields for stacks (columns without `agg` and not the xAxis column)
             const fields = Object.keys(columns)
                 .filter(key => !aggregatorKeys.includes(key))
-                .filter(key => key !== column);
+                .filter(key => key !== column)
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = fields.map((field) => params[field]).join(", ");
+                const stack = fields.map((f) => params[f]).join(", ")
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -121,62 +122,62 @@
                             colorByColumn ? params[colorByColumn] : undefined,
                         ),
                         unique: new Set(),
-                    };
+                    }
                 }
 
-                const current = acc[stack];
-                const parsedDate = parseValue(params[column]);
+                const current = acc[stack]
+                const parsedDate = parseValue(params[column])
 
                 // Check if the date is already processed
                 if (!current.unique.has(parsedDate)) {
-                    current.unique.add(parsedDate);
+                    current.unique.add(parsedDate)
                     current.data.push({
                         x: parsedDate,
                         y: params[field],
-                    });
+                    })
                 } else {
                     // Update existing stack value for the same date
-                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate);
-                    if (existing) existing.y += params[field];
+                    const existing = current.data.find((v: {x: unknown; y: number}) => v.x === parsedDate)
+                    if (existing) existing.y += params[field]
                 }
 
-                return acc;
-            }, {});
-        };
+                return acc
+            }, {})
+        }
 
         const getData = (_field: string, object: Record<string, any> = {}) => {
             return Object.values(object).map((dataset: any) => {
-                const data = xAxis.map((xAxisLabel) => {
-                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel);
-                    return temp ? temp.y : 0;
-                });
+                const datasetData = xAxis.map((xAxisLabel) => {
+                    const temp = dataset.data.find((v: {x: unknown; y: number}) => v.x === xAxisLabel)
+                    return temp ? temp.y : 0
+                })
 
-                return {...dataset, data};
-            });
-        };
+                return {...dataset, data: datasetData}
+            })
+        }
 
-        const yDataset = reducer(rawData, aggregator.value[0][0], "y");
+        const yDataset = reducer(rawData, aggregator.value[0][0], "y")
 
         // Sorts the dataset array alphabetically by label for a consistent order across time ranges.
         const yDatasetData = Object.values(getData(aggregator.value[0][0], yDataset)).sort((a: any, b: any) =>
-            (a.label ?? "").localeCompare(b.label ?? "")
-        );
+            (a.label ?? "").localeCompare(b.label ?? ""),
+        )
 
-        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field;
+        const label = aggregator.value?.[1]?.[1]?.displayName ?? aggregator.value?.[1]?.[1]?.field
 
-        let duration: number[] = [];
+        let duration: number[] = []
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData?.map((v: Record<string, any>) => parseValue(v.date)))).sort();
+            const helper = Array.from(new Set(rawData?.map((v: Record<string, any>) => parseValue(v.date)))).sort()
 
             // Step 1: Group durations by formatted date
-            const groupedDurations: Record<string, number> = {};
+            const groupedDurations: Record<string, number> = {}
             rawData?.forEach((item: Record<string, any>) => {
-                const formattedDate = parseValue(item.date) as string;
-                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
-            });
+                const formattedDate = parseValue(item.date) as string
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration
+            })
 
             // Step 2: Map to target dates
-            duration = helper.map(date => groupedDurations[date as string] || 0);
+            duration = helper.map(date => groupedDurations[date as string] || 0)
         }
 
         return {
@@ -195,26 +196,26 @@
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                                 {
                                     offset: 0,
-                                    color: cssVar("--ks-gray-100")
+                                    color: cssVar("--ks-gray-100"),
                                 },
                                 {
                                     offset: 1,
-                                    color: cssVar("--ks-gray-900")
-                                }
-                            ])
+                                    color: cssVar("--ks-gray-900"),
+                                },
+                            ]),
                         },
                     },
                     ...yDatasetData,
                 ]
                 : yDatasetData,
-        };
-    });
+        }
+    })
 
     const echartsOption = computed((): Record<string, unknown> => {
-        const pd = parsedData.value;
-        const xAxisData = pd.labels as string[];
-        const isCompact = props.short || props.execution;
-        const showAxes = !isCompact && !verticalLayout.value;
+        const pd = parsedData.value
+        const xAxisData = pd.labels as string[]
+        const isCompact = props.short || props.execution
+        const showAxes = !isCompact && !verticalLayout.value
 
         const barSeries = (pd.datasets as any[])
             .filter((ds) => ds.type !== "line")
@@ -227,7 +228,7 @@
                 itemStyle: {color: ds.backgroundColor},
                 barMaxWidth: props.short ? 8 : props.execution ? 24 : 48,
                 ...(props.short ? {barCategoryGap: "0%"} : {}),
-            }));
+            }))
 
         const lineSeries = (pd.datasets as any[])
             .filter((ds) => ds.type === "line")
@@ -241,7 +242,7 @@
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
                 ...(ds.areaStyle ? {areaStyle: ds.areaStyle} : {}),
-            }));
+            }))
 
         const yAxisConfig = (position: "left" | "right", fieldIndex: number) => ({
             type: "value",
@@ -250,11 +251,11 @@
             axisLabel: isDuration(aggregator.value[fieldIndex]?.[1]?.field)
                 ? {formatter: (v: number) => durationUtils.humanDuration(v)}
                 : {},
-        });
+        })
 
         const yAxis = yBShown.value
             ? [yAxisConfig("left", 0), yAxisConfig("right", 1)]
-            : yAxisConfig("left", 0);
+            : yAxisConfig("left", 0)
 
         return {
             grid: isCompact
@@ -271,31 +272,31 @@
                 "right": "10px",
             } : {show: false},
             series: [...barSeries, ...lineSeries],
-        };
-    });
+        }
+    })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
 
-    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null);
+    const ksEchartRef = ref<InstanceType<typeof KsEchart> | null>(null)
 
     // Register click handler when the chart mounts (after data loads and v-if becomes true)
     watch(ksEchartRef, (newRef) => {
-        if (!newRef) return;
-        const instance = newRef.getEchartsInstance();
-        if (!instance) return;
+        if (!newRef) return
+        const instance = newRef.getEchartsInstance()
+        if (!instance) return
         instance.on("click", (params: any) => {
-            if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) return;
+            if (data?.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) return
 
-            const state = params.seriesName;
-            const query: Record<string, any> = {};
+            const state = params.seriesName
+            const query: Record<string, any> = {}
             if (state) {
-                query.state = extractState(state);
-                query.scope = "USER";
-                query.size = 100;
-                query.page = 1;
+                query.state = extractState(state)
+                query.scope = "USER"
+                query.size = 100
+                query.page = 1
             }
-            if (route.query.namespace) query.namespace = route.query.namespace;
-            if (route.query.q) query.q = route.query.q;
+            if (route.query.namespace) query.namespace = route.query.namespace
+            if (route.query.q) query.q = route.query.q
 
             router.push({
                 name: "executions/list",
@@ -306,21 +307,21 @@
                     ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {}),
                     "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
                 },
-            });
-        });
-    });
+            })
+        })
+    })
 
     function refresh(customFilters?: FilterObject[]) {
-        return generate(undefined, customFilters);
+        return generate(undefined, customFilters)
     }
 
     defineExpose({
-        refresh
-    });
+        refresh,
+    })
 
     watch(() => route.params.filters, () => {
-        refresh();
-    }, {deep: true});
+        refresh()
+    }, {deep: true})
 </script>
 
 <style scoped lang="scss">

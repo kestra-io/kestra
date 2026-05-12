@@ -24,7 +24,7 @@ import reactor.core.publisher.FluxSink;
  * If the child repository uses a default filter, it should override it.
  * <p>
  * For example, to avoid supporting allowDeleted:
- * 
+ *
  * <pre>
  * {@code
  * &#64;Override
@@ -122,6 +122,67 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     public void deleteWithoutAcl(T item) {
         T deleted = (T) ((SoftDeletable<?>) item).toDeleted();
         this.jdbcRepository.persist(deleted);
+    }
+
+    /**
+     * Delete an item.
+     * If the entity implements {@link SoftDeletable}, it will be soft-deleted
+     * Otherwise, it will be hard-deleted
+     *
+     * @param item the item to delete.
+     * @return the deleted item.
+     */
+    @SuppressWarnings("unchecked")
+    public T delete(T item) {
+        if (item instanceof SoftDeletable<?> softDeletable) {
+            T deleted = (T) softDeletable.toDeleted();
+            this.jdbcRepository.persist(deleted);
+            return deleted;
+        }
+
+        this.jdbcRepository.delete(item);
+        return item;
+    }
+
+    /**
+     * Hard-delete an item from the database.
+     * Use this for physical purge operations on a single item.
+     *
+     * @param item the item to purge.
+     * @return {@code true} if the item was deleted, {@code false} if it was not found.
+     */
+    public boolean purge(T item) {
+        return this.jdbcRepository.delete(item) > 0;
+    }
+
+    /**
+     * Hard-delete all items matching the given condition for the given tenant.
+     *
+     * @param tenantId  the tenant ID used to build the default filter.
+     * @param condition the condition to match items for deletion.
+     * @return the number of deleted rows.
+     */
+    protected Integer purge(String tenantId, Condition condition) {
+        return purge(defaultFilter(tenantId), condition);
+    }
+
+    /**
+     * Hard-delete all items matching the given conditions.
+     *
+     * @param defaultFilter the base filter condition (e.g. tenant isolation).
+     * @param condition     the condition to match items for deletion.
+     * @return the number of deleted rows.
+     */
+    protected Integer purge(Condition defaultFilter, Condition condition) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+                DSL.using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(defaultFilter)
+                    .and(condition)
+                    .execute()
+            );
     }
 
     /**

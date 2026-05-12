@@ -47,10 +47,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import Item from "./Item.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {ref, computed} from "vue"
+    import Item from "./Item.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     type Dashboard = {id: string; title: string; isDefault: boolean};
 
@@ -58,19 +58,19 @@
         dashboards: Dashboard[];
         selected: {id: string; title: string} | undefined;
         query: Record<string, unknown>;
-    }>();
+    }>()
 
     defineEmits<{
         select: [id: string];
         setDefault: [id: string];
         edit: [id: string];
         remove: [dashboard: {id: string; title: string}];
-    }>();
+    }>()
 
-    const search = ref("");
+    const search = ref("")
     const filtered = computed(() =>
-        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()))
-    );
+        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase())),
+    )
 </script>
 
 <style scoped lang="scss">

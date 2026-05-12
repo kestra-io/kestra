@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -149,9 +148,15 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    @LoadFlows({"flows/valids/replay-loop.yaml"})
     void replayLoop() throws Exception {
         restartCaseTest.replayLoop();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/restart-loop.yaml"})
+    void restartLoop() throws Exception {
+        restartCaseTest.restartLoop();
     }
 
     @Test
@@ -174,7 +179,6 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-parent-loop.yaml", "flows/valids/restart-child.yaml" })
-    @Disabled("This is not implemented yet for loops")
     protected void restartSubflowWithLoop() throws Exception {
         restartCaseTest.restartSubflowWithLoop();
     }
@@ -605,6 +609,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopWithSubflow(Execution execution) {
+        loopCaseTest.loopWithSubflow(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);
@@ -723,11 +734,11 @@ public abstract class AbstractRunnerTest {
         Execution execution = Execution.newExecution(TestsUtils.mockFlow(), Collections.emptyList());
         executionQueue.emit(execution);
 
-        // We expect the initial execution message + the failed due to missing flow
+        // We expect the initial execution message only
         await()
             .during(Duration.ofMillis(500)) // Wait some time to ensure no infinite loop occurs
             .atMost(Duration.ofSeconds(10))
-            .until(() -> executions.size() == 2);
+            .until(() -> executions.size() == 1);
     }
 
     @Test

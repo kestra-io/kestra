@@ -1,39 +1,39 @@
-import {ref, computed, onMounted, onUnmounted, watch} from "vue";
-import {useRoute, useRouter} from "vue-router";
-import {useI18n} from "vue-i18n";
+import {ref, computed, onMounted, onUnmounted, watch} from "vue"
+import {useRoute, useRouter} from "vue-router"
+import {useI18n} from "vue-i18n"
 
-import {useFlowStore} from "../../../stores/flow";
-import {useExecutionsStore} from "../../../stores/executions";
+import {useFlowStore} from "../../../stores/flow"
+import {useExecutionsStore} from "../../../stores/executions"
 
 //@ts-expect-error no declaration file
-import Logs from "../Logs.vue";
-import Gantt from "../Gantt.vue";
+import Logs from "../Logs.vue"
+import Gantt from "../Gantt.vue"
 //@ts-expect-error no declaration file
-import Topology from "../Topology.vue";
-import Overview from "../overview/Overview.vue";
-import DemoAuditLogs from "../../demo/AuditLogs.vue";
-import DemoAssets from "../../demo/Assets.vue";
-import ExecutionMetric from "../ExecutionMetric.vue";
-import ExecutionOutput from "../outputs/Wrapper.vue";
-import Dependencies from "../../dependencies/Dependencies.vue";
+import Topology from "../Topology.vue"
+import Overview from "../overview/Overview.vue"
+import DemoAuditLogs from "../../demo/AuditLogs.vue"
+import DemoAssets from "../../demo/Assets.vue"
+import ExecutionMetric from "../ExecutionMetric.vue"
+import ExecutionOutput from "../outputs/Wrapper.vue"
+import Dependencies from "../../dependencies/Dependencies.vue"
 
 export function useExecutionRoot() {
-    const {t} = useI18n();
-    const route = useRoute();
-    const router = useRouter();
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
 
-    const flowStore = useFlowStore();
-    const executionsStore = useExecutionsStore();
+    const flowStore = useFlowStore()
+    const executionsStore = useExecutionsStore()
 
-    const dependenciesCount = ref<number>();
-    const previousExecutionId = ref<string>();
+    const dependenciesCount = ref<number>()
+    const previousExecutionId = ref<string>()
 
     const routeInfo = computed(() => {
-        const ns = route.params.namespace as string;
-        const flowId = route.params.flowId as string;
+        const ns = route.params.namespace as string
+        const flowId = route.params.flowId as string
 
         if (!ns || !flowId) {
-            return {title: ""};
+            return {title: ""}
         }
 
         return {
@@ -42,8 +42,8 @@ export function useExecutionRoot() {
                 {
                     label: t("executions"),
                     link: {
-                        name: "executions/list"
-                    }
+                        name: "executions/list",
+                    },
                 },
                 {
                     label: `${ns}.${flowId}`,
@@ -51,24 +51,24 @@ export function useExecutionRoot() {
                         name: "flows/update",
                         params: {
                             namespace: ns,
-                            id: flowId
-                        }
-                    }
-                }
-            ]
-        };
-    });
+                            id: flowId,
+                        },
+                    },
+                },
+            ],
+        }
+    })
 
-    const routeName = computed(() => route.params && route.params.id ? "executions/update" : "");
+    const routeName = computed(() => route.params && route.params.id ? "executions/update" : "")
 
     const ready = computed(() => {
-        return executionsStore.execution !== undefined;
-    });
+        return executionsStore.execution !== undefined
+    })
 
     const follow = () => {
-        previousExecutionId.value = route.params.id as string;
-        executionsStore.followExecution(route.params as any, t);
-    };
+        previousExecutionId.value = route.params.id as string
+        executionsStore.followExecution(route.params as any, t)
+    }
 
     const getBaseTabs = () => {
         return [
@@ -77,34 +77,34 @@ export function useExecutionRoot() {
                 component: Overview,
                 title: t("overview"),
                 maximized: true,
-                noOverflow: true
+                noOverflow: true,
             },
             {
                 name: "gantt",
                 component: Gantt,
-                title: t("gantt")
+                title: t("gantt"),
             },
             {
                 name: "logs",
                 component: Logs,
-                title: t("logs")
+                title: t("logs"),
             },
             {
                 name: "topology",
                 component: Topology,
-                title: t("topology")
+                title: t("topology"),
             },
             {
                 name: "outputs",
                 component: ExecutionOutput,
                 title: t("outputs"),
                 maximized: true,
-                noOverflow: true
+                noOverflow: true,
             },
             {
                 name: "metrics",
                 component: ExecutionMetric,
-                title: t("metrics")
+                title: t("metrics"),
             },
             {
                 name: "dependencies",
@@ -122,7 +122,7 @@ export function useExecutionRoot() {
                 component: DemoAuditLogs,
                 title: t("auditlogs"),
                 maximized: true,
-                locked: true
+                locked: true,
             },
             {
                 name: "assets",
@@ -131,45 +131,45 @@ export function useExecutionRoot() {
                 maximized: true,
                 locked: true,
                 props: {
-                    topbar: false
-                }
-            }
-        ];
-    };
+                    topbar: false,
+                },
+            },
+        ]
+    }
 
-    const tabs = computed(() => getBaseTabs());
+    const tabs = computed(() => getBaseTabs())
 
     const setupLifecycle = () => {
         onMounted(async () => {
             if (!route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined;
-                router.replace({name: "executions/update", params: {...route.params, tab}});
+                const tab = localStorage.getItem("executeDefaultTab") || undefined
+                router.replace({name: "executions/update", params: {...route.params, tab}})
             }
 
-            follow();
-            window.addEventListener("popstate", follow);
+            follow()
+            window.addEventListener("popstate", follow)
 
-            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true)).count;
-            previousExecutionId.value = route.params.id as string;
-        });
+            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true)).count
+            previousExecutionId.value = route.params.id as string
+        })
 
         watch(route, () => {
-            executionsStore.taskRun = undefined;
+            executionsStore.taskRun = undefined
             if (previousExecutionId.value !== route.params.id) {
-                flowStore.flow = undefined;
-                flowStore.flowGraph = undefined;
-                follow();
+                flowStore.flow = undefined
+                flowStore.flowGraph = undefined
+                follow()
             }
-        });
+        })
 
         onUnmounted(() => {
-            executionsStore.closeSSE();
-            window.removeEventListener("popstate", follow);
-            executionsStore.execution = undefined;
-            flowStore.flow = undefined;
-            flowStore.flowGraph = undefined;
-        });
-    };
+            executionsStore.closeSSE()
+            window.removeEventListener("popstate", follow)
+            executionsStore.execution = undefined
+            flowStore.flow = undefined
+            flowStore.flowGraph = undefined
+        })
+    }
 
     return {
         tabs,
@@ -180,6 +180,6 @@ export function useExecutionRoot() {
         previousExecutionId,
         follow,
         getBaseTabs,
-        setupLifecycle
-    };
+        setupLifecycle,
+    }
 }

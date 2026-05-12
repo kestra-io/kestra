@@ -1,5 +1,5 @@
-const MINIMUM: number = 100000;
-const MAXIMUM: number = 999999;
+const MINIMUM: number = 100000
+const MAXIMUM: number = 999999
 const ANIMALS: string[] = [
   "Aardvark", "Albatross", "Alligator", "Alpaca", "Ant", "Anteater", "Antelope", "Ape", "Armadillo", "Baboon",
   "Badger", "Barracuda", "Bat", "Bear", "Beaver", "Bee", "Bison", "Boar", "Buffalo", "Butterfly", "Camel", "Capybara",
@@ -19,10 +19,10 @@ const ANIMALS: string[] = [
   "Seahorse", "Seal", "Shark", "Shrew", "Skunk", "Snail", "Snake", "Sparrow", "Spider", "Spoonbill", "Squid", "Squirrel",
   "Starling", "Stingray", "Stinkbug", "Stork", "Swallow", "Swan", "Tapir", "Tarsier", "Termite", "Tiger", "Toad",
   "Trout", "Turkey", "Turtle", "Viper", "Vulture", "Wallaby", "Walrus", "Wasp", "Weasel", "Whale", "Wildcat", "Wolf",
-  "Wolverine", "Wombat", "Woodcock", "Woodpecker", "Worm", "Wren", "Yak", "Zebra"
-];
+  "Wolverine", "Wombat", "Woodcock", "Woodpecker", "Worm", "Wren", "Yak", "Zebra",
+]
   
-const getRandomNumber = (minimum: number = MINIMUM, maximum: number = MAXIMUM): number => Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
-const getRandomAnimal = (): string => ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+const getRandomNumber = (minimum: number = MINIMUM, maximum: number = MAXIMUM): number => Math.floor(Math.random() * (maximum - minimum + 1)) + minimum
+const getRandomAnimal = (): string => ANIMALS[Math.floor(Math.random() * ANIMALS.length)]
 
-export const getRandomID = (): string => `${getRandomAnimal()}_${getRandomNumber()}`.toLowerCase();
+export const getRandomID = (): string => `${getRandomAnimal()}_${getRandomNumber()}`.toLowerCase()

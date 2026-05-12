@@ -29,7 +29,7 @@
     }>()
 
     const type = computed(() =>
-        (props.type === "box" ? "" : props.type)
+        (props.type === "box" ? "" : props.type),
     )
 
     const filteredProps = useFilteredProps(props, ["type"])

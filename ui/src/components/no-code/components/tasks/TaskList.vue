@@ -42,21 +42,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
-    import Creation from "./taskList/buttons/Creation.vue";
-    import Element from "./taskList/Element.vue";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+    import {computed, inject, ref} from "vue"
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
+    import Creation from "./taskList/buttons/Creation.vue"
+    import Element from "./taskList/Element.vue"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
 
-    import {CollapseItem} from "../../utils/types";
+    import {CollapseItem} from "../../utils/types"
 
     import {
         CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, UPDATE_YAML_FUNCTION_INJECTION_KEY,
-    } from "../../injectionKeys";
-    import {SECTIONS_MAP} from "../../../../utils/constants";
-    import {getValueAtJsonPath} from "../../../../utils/utils";
-    import {useI18n} from "vue-i18n";
+    } from "../../injectionKeys"
+    import {SECTIONS_MAP} from "../../../../utils/constants"
+    import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {useI18n} from "vue-i18n"
 
 
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
@@ -75,19 +75,19 @@
                 rootParts.splice(1, 0, "properties")
             }
         }
-        return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/");
-    });
+        return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/")
+    })
 
     defineOptions({
-        inheritAttrs: false
-    });
+        inheritAttrs: false,
+    })
 
     interface Task {
         id:string,
         type:string
     }
 
-    const emits = defineEmits(["update:modelValue"]);
+    const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
@@ -96,40 +96,40 @@
         modelValue: () => [],
         root: undefined,
         merge: false,
-    });
+    })
 
     const elements = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
-    );
+    )
 
     function removeElement(index: number){
         if(elements.value.length <= 1){
-            emits("update:modelValue", undefined);
+            emits("update:modelValue", undefined)
             return
         }
         let localItems = [...elements.value]
         localItems.splice(index, 1)
 
-        emits("update:modelValue", localItems);
+        emits("update:modelValue", localItems)
     };
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const section = computed(() => {
         if(props.merge){
-            return t("tasks");
+            return t("tasks")
         }
-        return props.root ?? t("tasks");
-    });
+        return props.root ?? t("tasks")
+    })
 
-    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
 
-    const filteredElements = computed(() => elements.value?.filter(Boolean) ?? []);
-    const expanded = props.merge ? computed(() => section.value) : ref<CollapseItem["title"]>(props.root ?? "tasks");
+    const filteredElements = computed(() => elements.value?.filter(Boolean) ?? [])
+    const expanded = props.merge ? computed(() => section.value) : ref<CollapseItem["title"]>(props.root ?? "tasks")
 
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined)
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false)
 
     const parentPathComplete = computed(() => {
         return `${[
@@ -141,13 +141,13 @@
                         ? `[${refPath}]`
                         : undefined,
             ].filter(Boolean).join(""),
-            section.value
-        ].filter(p => p.length).join(".")}`;
-    });
+            section.value,
+        ].filter(p => p.length).join(".")}`
+    })
 
-    const movedIndex = ref(-1);
+    const movedIndex = ref(-1)
 
-    const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {});
+    const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
 
     const moveElement = (
         items: Record<string, any>[] | undefined,
@@ -155,20 +155,20 @@
         index: number,
         direction: "up" | "down",
     ) => {
-        const keyName = section.value === "Plugin Defaults" ? "type" : "id";
-        if (!items || !flow) return;
+        const keyName = section.value === "Plugin Defaults" ? "type" : "id"
+        if (!items || !flow) return
         if (
             (direction === "up" && index === 0) ||
             (direction === "down" && index === items.length - 1)
         )
-            return;
+            return
 
-        const newIndex = direction === "up" ? index - 1 : index + 1;
+        const newIndex = direction === "up" ? index - 1 : index + 1
 
-        movedIndex.value = newIndex;
+        movedIndex.value = newIndex
         setTimeout(() => {
-            movedIndex.value = -1;
-        }, 200);
+            movedIndex.value = -1
+        }, 200)
 
         const newYaml = YAML_UTILS.swapBlocks({
             source: flow.value,
@@ -178,15 +178,15 @@
             keyName,
         })
 
-        updateYaml(newYaml);
-    };
+        updateYaml(newYaml)
+    }
 
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
 
-    const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {});
+    const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 
     // resolve parentPathComplete field schema from pluginsStore
-    const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type");
+    const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 
 <style scoped lang="scss">

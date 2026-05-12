@@ -12,7 +12,7 @@
 <script setup lang="ts">
     const props = defineProps<{
         labels: { key: string; value: string }[];
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

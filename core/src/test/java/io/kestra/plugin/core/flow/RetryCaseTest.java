@@ -162,8 +162,17 @@ public class RetryCaseTest {
 
     public void retryFlowableParallel(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().get(1).attemptNumber()).isGreaterThanOrEqualTo(2);
-        assertThat(execution.getTaskRunList().get(2).attemptNumber()).isGreaterThanOrEqualTo(2);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        // The Loop task run itself is not retried; its child tasks are retried within their sub-executions
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(1);
+
+        // At least one sub-execution must have retried its child task
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(2);
+        boolean anyChildRetried = subExecutions.stream()
+            .flatMap(sub -> sub.getTaskRunList().stream())
+            .anyMatch(tr -> tr.getTaskId().equals("child") && tr.attemptNumber() >= 2);
+        assertThat(anyChildRetried).isTrue();
     }
 
     public void retryDynamicTask(Execution execution) {

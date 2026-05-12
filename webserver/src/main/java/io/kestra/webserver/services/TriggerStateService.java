@@ -29,14 +29,13 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.configuration.AsyncOperationsConfiguration;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
-import io.micronaut.context.annotation.Value;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 
 /**
  * Service for managing {@link TriggerState}.
@@ -58,17 +57,17 @@ public class TriggerStateService {
 
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
-                               final FlowRepositoryInterface flowRepository,
-                               final TriggerEventQueue triggerEventQueue,
-                               final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
-                               final AsyncOperationWaiter asyncOperationWaiter,
-                               @Value("${kestra.async-operations.wait-timeout:PT30S}") final Duration asyncWaitTimeout) {
+        final FlowRepositoryInterface flowRepository,
+        final TriggerEventQueue triggerEventQueue,
+        final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
+        final AsyncOperationWaiter asyncOperationWaiter,
+        final AsyncOperationsConfiguration asyncOperationsConfiguration) {
         this.triggerRepository = triggerRepository;
         this.flowRepository = flowRepository;
         this.triggerEventQueue = triggerEventQueue;
         this.executionKilledQueue = executionKilledQueue;
         this.asyncOperationWaiter = asyncOperationWaiter;
-        this.asyncWaitTimeout = asyncWaitTimeout;
+        this.asyncWaitTimeout = asyncOperationsConfiguration.waitTimeout();
     }
 
     /**
@@ -103,8 +102,8 @@ public class TriggerStateService {
         List<TriggerId> lockedIds = triggers.stream()
             .filter(id -> triggerRepository.findById(id).map(TriggerState::isLocked).orElse(false))
             .toList();
-        return submitBatch(lockedIds, (id, operationId) ->
-            triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
+        return submitBatch(
+            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
         );
     }
 
@@ -122,8 +121,8 @@ public class TriggerStateService {
             .collectList()
             .blockOptional()
             .orElse(List.of());
-        return submitBatch(lockedIds, (id, operationId) ->
-            triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
+        return submitBatch(
+            lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
         );
     }
 
@@ -191,8 +190,8 @@ public class TriggerStateService {
      * Pauses backfills for the given triggers. Non-existing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse pauseAllBackfillsByIds(List<TriggerId> triggers) {
-        return submitExistingBatch(triggers, (id, operationId) ->
-            triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
+        return submitExistingBatch(
+            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
         );
     }
 
@@ -200,8 +199,8 @@ public class TriggerStateService {
      * Pauses backfills for triggers matching the given filters.
      */
     public ApiAsyncOperationResponse pauseAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
-        return submitMatching(tenant, filters, (id, operationId) ->
-            triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
+        return submitMatching(
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, true).withOperationId(operationId))
         );
     }
 
@@ -209,8 +208,8 @@ public class TriggerStateService {
      * Resumes backfills for the given triggers. Non-existing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse resumeAllBackfillsByIds(List<TriggerId> triggers) {
-        return submitExistingBatch(triggers, (id, operationId) ->
-            triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
+        return submitExistingBatch(
+            triggers, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
         );
     }
 
@@ -218,8 +217,8 @@ public class TriggerStateService {
      * Resumes backfills for triggers matching the given filters.
      */
     public ApiAsyncOperationResponse resumeAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
-        return submitMatching(tenant, filters, (id, operationId) ->
-            triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
+        return submitMatching(
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new SetPauseBackfillTrigger(id, false).withOperationId(operationId))
         );
     }
 
@@ -243,8 +242,8 @@ public class TriggerStateService {
      * Deletes backfills for the given triggers. Non-existing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse deleteAllBackfillsByIds(List<TriggerId> triggers) {
-        return submitExistingBatch(triggers, (id, operationId) ->
-            triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
+        return submitExistingBatch(
+            triggers, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
         );
     }
 
@@ -252,8 +251,8 @@ public class TriggerStateService {
      * Deletes backfills for triggers matching the given filters.
      */
     public ApiAsyncOperationResponse deleteAllBackfillsMatching(String tenant, List<QueryFilter> filters) {
-        return submitMatching(tenant, filters, (id, operationId) ->
-            triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
+        return submitMatching(
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new DeleteBackfillTrigger(id).withOperationId(operationId))
         );
     }
 
@@ -276,8 +275,8 @@ public class TriggerStateService {
      * Deletes all triggers for the given identifiers. Non-existing triggers are silently skipped.
      */
     public ApiAsyncOperationResponse deleteAllByIds(List<TriggerId> triggers) {
-        return submitExistingBatch(triggers, (id, operationId) ->
-            triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+        return submitExistingBatch(
+            triggers, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
         );
     }
 
@@ -285,8 +284,8 @@ public class TriggerStateService {
      * Deletes all triggers matching the given filters.
      */
     public ApiAsyncOperationResponse deleteAllMatching(String tenant, List<QueryFilter> filters) {
-        return submitMatching(tenant, filters, (id, operationId) ->
-            triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
+        return submitMatching(
+            tenant, filters, (id, operationId) -> triggerEventQueue.send(new TriggerDeleted(id).withOperationId(operationId))
         );
     }
 
@@ -311,7 +310,8 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled) {
         List<TriggerId> toggleable = triggers.stream()
-            .filter(id -> {
+            .filter(id ->
+            {
                 try {
                     validateToggleable(id);
                     return true;
@@ -320,8 +320,8 @@ public class TriggerStateService {
                 }
             })
             .toList();
-        return submitBatch(toggleable, (id, operationId) ->
-            triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId))
+        return submitBatch(
+            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId))
         );
     }
 
@@ -331,7 +331,8 @@ public class TriggerStateService {
     public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled) {
         String operationId = IdUtils.create();
         int count = triggerRepository.find(tenant, filters)
-            .map(trigger -> {
+            .map(trigger ->
+            {
                 TriggerId id = TriggerId.of(trigger);
                 try {
                     validateToggleable(id);
@@ -401,8 +402,8 @@ public class TriggerStateService {
      * <p>
      * Maps the outcome to HTTP semantics:
      * <ul>
-     *     <li>{@code TimeoutException} → {@link HttpStatus#GATEWAY_TIMEOUT} (504);</li>
-     *     <li>{@code FAILED} outcome → {@link ConflictException} (409).</li>
+     * <li>{@code TimeoutException} → {@link HttpStatus#GATEWAY_TIMEOUT} (504);</li>
+     * <li>{@code FAILED} outcome → {@link ConflictException} (409).</li>
      * </ul>
      */
     private void awaitBlockingAction(String itemId, Consumer<String> submit, String actionLabel) throws ConflictException {

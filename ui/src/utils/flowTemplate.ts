@@ -1,20 +1,20 @@
-import action from "../models/action";
-import permission from "../models/permission";
+import action from "../models/action"
+import resource from "../models/resource"
 
 export function canSaveFlowTemplate(isEdit: boolean, user: any, item: any, dataType: string) {
     if (item === undefined) {
-        return  true;
+        return  true
     }
 
-    const typedPermission = permission[dataType.toUpperCase() as keyof typeof permission]
+    const typedResource = resource[dataType.toUpperCase() as keyof typeof resource]
 
     return (
         isEdit && user &&
-        user.isAllowed(typedPermission, action.UPDATE, item.namespace)
+        user.isAllowed(typedResource, action.UPDATE, item.namespace)
     ) || (
         !isEdit && user &&
-        user.isAllowed(typedPermission, action.CREATE, item.namespace)
-    );
+        user.isAllowed(typedResource, action.CREATE, item.namespace)
+    )
 }
 
 export function saveFlowTemplate(self: {
@@ -24,7 +24,7 @@ export function saveFlowTemplate(self: {
 }, file: string, dataType: string) {
     return (dataType === "template" ? self.templateStore.saveTemplate({template: file}) : self.flowStore.saveFlow({flow: file}))
         .then((response: { id: string }) => {
-            self.$toast().saved(response.id);
+            self.$toast().saved(response.id)
 
             return response
         })

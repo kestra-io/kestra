@@ -50,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-    import {reactive, toRefs, watchEffect} from "vue";
-    import TimeRangeSwitch from "./TimeRangeSwitch.vue";
+    import {reactive, toRefs, watchEffect} from "vue"
+    import TimeRangeSwitch from "./TimeRangeSwitch.vue"
 
     const props = defineProps<{
         label?: string;
@@ -62,37 +62,37 @@
         startDateValue?: Date | null;
         timeRangeMode?: "predefined" | "custom";
         options: {value: string; label: string; color?: string}[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         "update:modelValue": [value: string];
         "update:endDateValue": [date: Date | null];
         "update:startDateValue": [date: Date | null];
         "update:timeRangeMode": [mode: "predefined" | "custom"];
-    }>();
+    }>()
 
-    const {modelValue, timeRangeMode, startDateValue, endDateValue} = toRefs(props);
+    const {modelValue, timeRangeMode, startDateValue, endDateValue} = toRefs(props)
 
     const local = reactive({
         value: modelValue.value,
         endDateValue: endDateValue.value ?? null,
         startDateValue: startDateValue.value ?? null,
-        timeRangeMode: timeRangeMode.value ?? "predefined"
-    });
+        timeRangeMode: timeRangeMode.value ?? "predefined",
+    })
 
     watchEffect(() => {
-        local.value = modelValue.value;
-        local.endDateValue = endDateValue.value ?? null;
-        local.startDateValue = startDateValue.value ?? null;
-        local.timeRangeMode = timeRangeMode.value ?? "predefined";
-    });
+        local.value = modelValue.value
+        local.endDateValue = endDateValue.value ?? null
+        local.startDateValue = startDateValue.value ?? null
+        local.timeRangeMode = timeRangeMode.value ?? "predefined"
+    })
 
     watchEffect(() => {
-        emit("update:modelValue", local.value);
-        emit("update:timeRangeMode", local.timeRangeMode);
-        emit("update:endDateValue", local.endDateValue);
-        emit("update:startDateValue", local.startDateValue);
-    });
+        emit("update:modelValue", local.value)
+        emit("update:timeRangeMode", local.timeRangeMode)
+        emit("update:endDateValue", local.endDateValue)
+        emit("update:startDateValue", local.startDateValue)
+    })
 </script>
 
 <style lang="scss" scoped>

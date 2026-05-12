@@ -26,6 +26,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
@@ -175,7 +176,7 @@ class RunVariablesTest {
 
     @Test
     void nonResolvableDynamicInputsShouldBeSkipped() {
-        VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
+        VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableConfiguration.class);
         ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
         MeterRegistry mkMeterRegistry = Mockito.mock(MeterRegistry.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()

@@ -51,39 +51,39 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, useTemplateRef} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import _merge from "lodash/merge";
-    import moment from "moment";
-    import {useLogFilter} from "../filter/configurations";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
+    import {ref, computed, watch, useTemplateRef} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import _merge from "lodash/merge"
+    import moment from "moment"
+    import {useLogFilter} from "../filter/configurations"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
-    const {loadInit} = useRestoreUrl();
-    import Sections from "../dashboard/sections/Sections.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import LogLine from "../logs/LogLine.vue";
-    import {storageKeys} from "../../utils/constants";
+    const {loadInit} = useRestoreUrl()
+    import Sections from "../dashboard/sections/Sections.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import LogLine from "../logs/LogLine.vue"
+    import {storageKeys} from "../../utils/constants"
     import {
         decodeSearchParams,
         encodeFiltersToQuery,
         getUniqueFilters,
         isValidFilter,
-        keyOfComparator
-    } from "@kestra-io/design-system";
-    import type {AppliedFilter} from "@kestra-io/design-system";
+        keyOfComparator,
+    } from "@kestra-io/design-system"
+    import type {AppliedFilter} from "@kestra-io/design-system"
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
-        readRouteLevelFilter
-    } from "@kestra-io/design-system";
-    import {useRouteFilterPolicy} from "@kestra-io/design-system";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
-    import {useLogsStore} from "../../stores/logs";
-    import useRouteContext from "../../composables/useRouteContext";
+        readRouteLevelFilter,
+    } from "@kestra-io/design-system"
+    import {useRouteFilterPolicy} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
+    import {useLogsStore} from "../../stores/logs"
+    import useRouteContext from "../../composables/useRouteContext"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -100,39 +100,39 @@
         logLevel: undefined,
         reloadLogs: undefined,
         namespace: undefined,
-        restoreurl: undefined
-    });
-    defineEmits(["expand-subflow", "go-to-detail", "goToDetail"]);
+        restoreurl: undefined,
+    })
+    defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
-    const route = useRoute();
-    const router = useRouter();
-    const {t} = useI18n();
-    const logsStore = useLogsStore();
-    const logFilter = useLogFilter();
-    const dataTable = useTemplateRef("dataTable");
-    const ready = ref(false);
+    const route = useRoute()
+    const router = useRouter()
+    const {t} = useI18n()
+    const logsStore = useLogsStore()
+    const logFilter = useLogFilter()
+    const dataTable = useTemplateRef("dataTable")
+    const ready = ref(false)
 
     const routeInfo = computed(() => ({
         title: t("logs"),
-    }));
-    useRouteContext(routeInfo, props.embed);
+    }))
+    useRouteContext(routeInfo, props.embed)
 
-    const isLoading = ref(false);
-    const lastRefreshDate = ref(new Date());
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false");
-    const dashboardRef = useTemplateRef("dashboard");
+    const isLoading = ref(false)
+    const lastRefreshDate = ref(new Date())
+    const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false")
+    const dashboardRef = useTemplateRef("dashboard")
 
-    const isFlowEdit = computed(() => route.name === "flows/update");
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update");
-    const hasLevelFilterUI = computed(() => !props.embed || props.showFilters);
+    const isFlowEdit = computed(() => route.name === "flows/update")
+    const isNamespaceEdit = computed(() => route.name === "namespaces/update")
+    const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
             ? localStorage.getItem("defaultLogLevel") || "INFO"
-            : "INFO"
-    );
+            : "INFO",
+    )
     const {
         effectiveValue: effectiveLogLevel,
-        syncFromAppliedFilters: syncLevelFromAppliedFilters
+        syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<string>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel,
@@ -146,108 +146,108 @@
         shouldSyncFromAppliedFilters: (filters, routeQuery) => {
             const encodedFilters = encodeFiltersToQuery(
                 getUniqueFilters(filters.filter(isValidFilter)),
-                keyOfComparator
-            );
+                keyOfComparator,
+            )
 
             return !Object.entries(encodedFilters).some(
                 ([key, value]) =>
                     !key.startsWith("filters[level][") &&
-                    routeQuery[key] !== value
-            );
-        }
-    });
+                    routeQuery[key] !== value,
+            )
+        },
+    })
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
-            return route.query.timeRange as string;
+            return route.query.timeRange as string
         }
 
-        const decodedParams = decodeSearchParams(route.query);
-        const timeRangeFilter = decodedParams.find(item => item?.field === "timeRange");
-        const rawValue = timeRangeFilter?.value;
+        const decodedParams = decodeSearchParams(route.query)
+        const timeRangeFilter = decodedParams.find(item => item?.field === "timeRange")
+        const rawValue = timeRangeFilter?.value
 
         if (Array.isArray(rawValue)) {
-            return rawValue[0];
+            return rawValue[0]
         }
 
-        return rawValue as string | undefined;
-    });
+        return rawValue as string | undefined
+    })
     const endDate = computed(() => {
         if (route.query.endDate) {
-            return route.query.endDate;
+            return route.query.endDate
         }
         if (selectedTimeRange.value) {
-            return moment().toISOString(true);
+            return moment().toISOString(true)
         }
-        return undefined;
-    });
+        return undefined
+    })
     const startDate = computed(() => {
         // we mention the last refresh date here to trick
         // VueJs fine grained reactivity system and invalidate
         // computed property startDate
         if (route.query.startDate && lastRefreshDate.value) {
-            return route.query.startDate;
+            return route.query.startDate
         }
         if (selectedTimeRange.value) {
-            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true);
+            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true)
         }
 
         // the default is PT30D
-        return moment().subtract(7, "days").toISOString(true);
-    });
-    const flowId = computed(() => route.params.id);
-    const routeNamespace = computed(() => route.params.namespace ?? route.params.id);
+        return moment().subtract(7, "days").toISOString(true)
+    })
+    const flowId = computed(() => route.params.id)
+    const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
-    ]);
+        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
+    ])
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query;
-        let queryFilter = props.filters ?? {...routeFilters};
+        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query
+        let queryFilter = props.filters ?? {...routeFilters}
 
         if (isFlowEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value;
-            queryFilter["filters[flowId][EQUALS]"] = flowId.value;
+            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
+            queryFilter["filters[flowId][EQUALS]"] = flowId.value
         } else if (isNamespaceEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value;
+            queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
         }
 
         // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
         if (!props.filters) {
-            queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value);
+            queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
 
         if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
-            queryFilter["startDate"] = startDate.value;
-            queryFilter["endDate"] = endDate.value;
+            queryFilter["startDate"] = startDate.value
+            queryFilter["endDate"] = endDate.value
         }
 
-        delete queryFilter["level"];
+        delete queryFilter["level"]
 
-        return _merge(base, queryFilter);
-    };
+        return _merge(base, queryFilter)
+    }
 
     const loadData = async ({page, size}: {page: number; size: number; sort?: string}) => {
-        if (!loadInit.value) return;
-        isLoading.value = true;
+        if (!loadInit.value) return
+        isLoading.value = true
 
         await logsStore.findLogs(loadQuery({
             page,
             size,
             minLevel: props.filters ? null : effectiveLogLevel.value,
-            sort: "timestamp:desc"
+            sort: "timestamp:desc",
         }))
             .finally(() => {
-                isLoading.value = false;
-            });
-    };
+                isLoading.value = false
+            })
+    }
 
     const onFilterRouteSync = (filters: AppliedFilter[]) => {
         if (props.filters || !hasLevelFilterUI.value) {
-            return;
+            return
         }
 
-        syncLevelFromAppliedFilters(filters);
-    };
+        syncLevelFromAppliedFilters(filters)
+    }
 
     const filterQuery = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
@@ -257,27 +257,27 @@
         dataTable.value?.resetAndReload()
     }, {deep: true})
 
-    const showStatChart = () => showChart.value;
+    const showStatChart = () => showChart.value
 
     const onShowChartChange = (value: boolean) => {
-        showChart.value = value;
-        localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
+        showChart.value = value
+        localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString())
         if (showStatChart()) {
-            dataTable.value?.reload();
+            dataTable.value?.reload()
         }
-    };
+    }
 
     const refresh = () => {
-        lastRefreshDate.value = new Date();
+        lastRefreshDate.value = new Date()
         if (dashboardRef.value) {
-            dashboardRef.value.refreshCharts();
+            dashboardRef.value.refreshCharts()
         }
-        dataTable.value?.reload();
-    };
+        dataTable.value?.reload()
+    }
 
     watch(() => props.reloadLogs, (newValue) => {
-        if (newValue) refresh();
-    });
+        if (newValue) refresh()
+    })
 </script>
 <style scoped lang="scss">
 

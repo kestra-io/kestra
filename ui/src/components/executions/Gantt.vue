@@ -85,7 +85,7 @@
                                                     </span>
                                                 </template>
                                                 <div
-                                                    :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
+                                                    :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${Math.max(item.parentEndPercent - item.start, 3)}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                                     class="task-progress"
                                                 >
                                                     <KsProgress
@@ -709,7 +709,15 @@
                 .task-progress {
                     position: relative;
                     transition: all 0.3s;
-                    min-width: 5px;
+                    min-width: 24px;
+
+                    :deep(.kel-progress-bar__outer) {
+                        min-width: 24px;
+                    }
+
+                    :deep(.kel-progress-bar__inner) {
+                        min-width: 3px;
+                    }
                 }
             }
         }

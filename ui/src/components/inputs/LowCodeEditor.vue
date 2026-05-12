@@ -90,40 +90,40 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, ref, inject, watch} from "vue";
+    import {nextTick, onMounted, ref, inject, watch} from "vue"
 
-    import {useI18n} from "vue-i18n";
-    import {useStorage} from "@vueuse/core";
-    import {useRouter} from "vue-router";
-    import {useVueFlow} from "@vue-flow/core";
+    import {useI18n} from "vue-i18n"
+    import {useStorage} from "@vueuse/core"
+    import {useRouter} from "vue-router"
+    import {useVueFlow} from "@vue-flow/core"
 
-    import SearchField from "../layout/SearchField.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    import SearchField from "../layout/SearchField.vue"
+    import LogLevelSelector from "../logs/LogLevelSelector.vue"
     // @ts-expect-error no types for TaskRunDetails yet
-    import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    import Collapse from "../layout/Collapse.vue";
-    import Editor from "./Editor.vue";
+    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import Collapse from "../layout/Collapse.vue"
+    import Editor from "./Editor.vue"
 
-    import {Topology} from "@kestra-io/topology";
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+    import {Topology} from "@kestra-io/topology"
+    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
-    import {useCoreStore} from "../../stores/core";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {usePlaygroundStore} from "../../stores/playground";
-    import {useToast} from "../../utils/toast";
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
+    import {useCoreStore} from "../../stores/core"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {usePlaygroundStore} from "../../stores/playground"
+    import {useToast} from "../../utils/toast"
 
-    const router = useRouter();
+    const router = useRouter()
 
-    const vueflowId = ref(Math.random().toString());
-    const {fitView, setMinZoom} = useVueFlow(vueflowId.value);
+    const vueflowId = ref(Math.random().toString())
+    const {fitView, setMinZoom} = useVueFlow(vueflowId.value)
 
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
-    const executionsStore = useExecutionsStore();
-    const playgroundStore = usePlaygroundStore();
+    const executionsStore = useExecutionsStore()
+    const playgroundStore = usePlaygroundStore()
 
     const props = withDefaults(
         defineProps<{
@@ -158,74 +158,74 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-    ]);
+    ])
 
-    const coreStore = useCoreStore();
-    const toast = useToast();
-    const {t} = useI18n();
+    const coreStore = useCoreStore()
+    const toast = useToast()
+    const {t} = useI18n()
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
-    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
-    const vueFlow = ref<HTMLDivElement>();
-    const timer = ref<ReturnType<typeof setTimeout>>();
-    const taskEditData = ref();
-    const taskEditDomElement = ref();
-    const isShowLogsOpen = ref(false);
-    const logFilter = ref("");
-    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
-    const isDrawerOpen = ref(false);
-    const isShowDescriptionOpen = ref(false);
-    const isShowConditionOpen = ref(false);
-    const selectedTask = ref();
+    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault)
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"))
+    const vueFlow = ref<HTMLDivElement>()
+    const timer = ref<ReturnType<typeof setTimeout>>()
+    const taskEditData = ref()
+    const taskEditDomElement = ref()
+    const isShowLogsOpen = ref(false)
+    const logFilter = ref("")
+    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
+    const isDrawerOpen = ref(false)
+    const isShowDescriptionOpen = ref(false)
+    const isShowConditionOpen = ref(false)
+    const selectedTask = ref()
 
     onMounted(() => {
         // Regenerate graph on window resize
-        observeWidth();
+        observeWidth()
         pluginsStore.fetchIcons()
-        setMinZoom(0.1);
-    });
+        setMinZoom(0.1)
+    })
 
     watch(() => executionsStore.execution?.id, (id) => {
         if (id) {
             executionsStore.loadAugmentedGraph({
                 id,
-            });
+            })
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     watch(
         () => isDrawerOpen.value,
         () => {
             if (!isDrawerOpen.value) {
-                isShowDescriptionOpen.value = false;
-                isShowLogsOpen.value = false;
-                selectedTask.value = null;
+                isShowDescriptionOpen.value = false
+                isShowLogsOpen.value = false
+                selectedTask.value = null
             }
         },
-    );
+    )
 
     const observeWidth = () => {
         if(vueFlow.value){
             const resizeObserver = new ResizeObserver(function () {
-                clearTimeout(timer.value);
+                clearTimeout(timer.value)
                 timer.value = setTimeout(() => {
                     nextTick(() => {
-                        fitView();
-                    });
-                }, 50) as any;
-            });
-            resizeObserver.observe(vueFlow.value);
+                        fitView()
+                    })
+                }, 50) as any
+            })
+            resizeObserver.observe(vueFlow.value)
         }
-    };
+    }
 
     const onDelete = (event: any) => {
-        const flowParsed = YAML_UTILS.parse(props.source);
+        const flowParsed = YAML_UTILS.parse(props.source)
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             async () => {
-                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
+                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase()
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed.tasks.length === 1 &&
@@ -235,8 +235,8 @@
                         variant: "error",
                         title: t("can not delete"),
                         message: t("can not have less than 1 task"),
-                    };
-                    return;
+                    }
+                    return
                 }
                 const updatedYmlSource = YAML_UTILS.deleteBlock({
                     source: props.source ?? "",
@@ -247,10 +247,10 @@
                     "on-edit",
                     updatedYmlSource,
                     true,
-                );
-            }
-        );
-    };
+                )
+            },
+        )
+    }
 
     const onCreateNewTask = (event: [string, "before" | "after"]) => {
         topologyClick.value = {
@@ -259,9 +259,9 @@
                 section: SECTIONS.TASKS.toLowerCase() as any,
                 position: event[1],
                 id: event[0],
-            }
-        };
-    };
+            },
+        }
+    }
 
     const onEditTask = (event: {
         task: Record<string, any>;
@@ -272,35 +272,35 @@
             params: {
                 section: (event.section ?? SECTIONS.TASKS).toLowerCase() as any,
                 id: event.task.id,
-            }
-        };
-    };
+            },
+        }
+    }
 
     const onAddFlowableError = (event: any) => {
         taskEditData.value = {
             action: "add_flowable_error",
             taskId: event.task.id,
-        };
-        taskEditDomElement.value.$refs.taskEdit.click();
-    };
+        }
+        taskEditDomElement.value.$refs.taskEdit.click()
+    }
 
     const fitViewOrientation = () => {
         if(vueFlow.value){
             const resizeObserver = new ResizeObserver(() => {
-                clearTimeout(timer.value);
+                clearTimeout(timer.value)
                 nextTick(() => {
-                    fitView();
-                });
-            });
-            resizeObserver.observe(vueFlow.value);
+                    fitView()
+                })
+            })
+            resizeObserver.observe(vueFlow.value)
         }
-    };
+    }
 
     const toggleOrientation = () => {
-        isHorizontal.value = !isHorizontal.value;
-        isHorizontalLS.value = isHorizontal.value;
-        fitViewOrientation();
-    };
+        isHorizontal.value = !isHorizontal.value
+        isHorizontalLS.value = isHorizontal.value
+        fitViewOrientation()
+    }
 
     const openFlow = (data: any) => {
         if (data.link.executionId) {
@@ -315,7 +315,7 @@
                     },
                 }).href,
                 "_blank",
-            );
+            )
         } else {
             window.open(
                 router.resolve({
@@ -327,52 +327,52 @@
                     },
                 }).href,
                 "_blank",
-            );
+            )
         }
-    };
+    }
 
     const showLogs = (event: string) => {
-        selectedTask.value = event;
-        isShowLogsOpen.value = true;
-        isDrawerOpen.value = true;
-    };
+        selectedTask.value = event
+        isShowLogsOpen.value = true
+        isDrawerOpen.value = true
+    }
 
     const onSearch = (search: string) => {
-        logFilter.value = search;
-    };
+        logFilter.value = search
+    }
 
     const onLevelChange = (level: string) => {
-        logLevel.value = level;
-    };
+        logLevel.value = level
+    }
 
     const showDescription = (event: string) => {
-        selectedTask.value = event;
-        isShowDescriptionOpen.value = true;
-        isDrawerOpen.value = true;
-    };
+        selectedTask.value = event
+        isShowDescriptionOpen.value = true
+        isDrawerOpen.value = true
+    }
 
     const showCondition = (event: {task: string}) => {
-        selectedTask.value = event.task;
-        isShowConditionOpen.value = true;
-        isDrawerOpen.value = true;
-    };
+        selectedTask.value = event.task
+        isShowConditionOpen.value = true
+        isDrawerOpen.value = true
+    }
 
     const onSwappedTask = (event: any) => {
-        emit("swapped-task", event.swappedTasks);
-        emit("on-edit", event.newSource, true);
-    };
+        emit("swapped-task", event.swappedTasks)
+        emit("on-edit", event.newSource, true)
+    }
 
     const message = (event: any) => {
         coreStore.message = {
             variant: event.variant,
             title: t(event.title),
             message: t(event.message),
-        };
-    };
+        }
+    }
 
     const expandSubflow = (event: any) => {
-        emit("expand-subflow", event);
-    };
+        emit("expand-subflow", event)
+    }
 </script>
 
 <style scoped lang="scss">

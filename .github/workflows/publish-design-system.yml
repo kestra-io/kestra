@@ -65,6 +65,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
+        if: inputs.skip-test != 'true' && inputs.package == 'design-system'
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
@@ -112,14 +113,4 @@ jobs:
         run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
       
       - name: Create release tarball
-        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/design-system
-
-      - name: Create GitHub Release
-        working-directory: .
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ inputs.package }}/v${{ steps.version.outputs.value }}" \
-            --title "@kestra-io/${{ inputs.package }} v${{ steps.version.outputs.value }}" \
-            --notes "${{ inputs.package }} version ${{ steps.version.outputs.value }} published to npm.\n\n To install, run: \`npm install @kestra-io/${{ inputs.package }}@${{ steps.version.outputs.value }}\`" \
-            ui/packages/design-system/*design-system*.tgz
+        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}

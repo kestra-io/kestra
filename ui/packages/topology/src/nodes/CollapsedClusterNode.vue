@@ -24,27 +24,27 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {Handle, Position} from "@vue-flow/core";
-    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import {KsTooltip} from "@kestra-io/design-system";
-    import {EVENTS} from "../utils/constants";
-    import Utils from "../utils/utils";
+    import {computed} from "vue"
+    import {Handle, Position} from "@vue-flow/core"
+    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
+    import {KsTooltip} from "@kestra-io/design-system"
+    import {EVENTS} from "../utils/constants"
+    import * as Utils from "../utils/utils"
 
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const {id, sourcePosition, targetPosition, data} = defineProps<{
         id?: string;
         sourcePosition: Position;
         targetPosition: Position;
         data: any;
-    }>();
+    }>()
 
-    const emit = defineEmits([EVENTS.EXPAND]);
+    const emit = defineEmits([EVENTS.EXPAND])
 
-    const expandable = computed(() => data?.expandable || false);
+    const expandable = computed(() => data?.expandable || false)
 </script>
 
 <style lang="scss" scoped>

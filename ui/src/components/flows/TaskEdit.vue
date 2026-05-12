@@ -82,18 +82,18 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import CodeTags from "vue-material-design-icons/CodeTags.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import Editor from "../inputs/Editor.vue";
-    import TaskEditor from "../no-code/components/TaskEditor.vue";
-    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
-    import ValidationError from "./ValidationError.vue";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useAuthStore} from "override/stores/auth";
-    import {useFlowStore} from "../../stores/flow";
+    import {ref, computed, watch} from "vue"
+    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import CodeTags from "vue-material-design-icons/CodeTags.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import Editor from "../inputs/Editor.vue"
+    import TaskEditor from "../no-code/components/TaskEditor.vue"
+    import {canSaveFlowTemplate} from "../../utils/flowTemplate"
+    import ValidationError from "./ValidationError.vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useAuthStore} from "override/stores/auth"
+    import {useFlowStore} from "../../stores/flow"
 
     interface Props {
         component?: string;
@@ -120,132 +120,132 @@
         emitTaskOnly: false,
         isHidden: false,
         readOnly: false,
-        flowSource: undefined
-    });
+        flowSource: undefined,
+    })
 
     const emit = defineEmits<{
         "update:task": [value: string];
         "close": [];
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
 
-    const taskYaml = ref("");
-    const isModalOpen = ref(false);
-    const activeTabs = ref(props.readOnly ? "source" : "form");
-    const type = ref<string>();
-    const revisions = ref<any[]>();
-    const timer = ref<ReturnType<typeof setTimeout>>();
-    const lastValidatedValue = ref<string | null>(null);
+    const taskYaml = ref("")
+    const isModalOpen = ref(false)
+    const activeTabs = ref(props.readOnly ? "source" : "form")
+    const type = ref<string>()
+    const revisions = ref<any[]>()
+    const timer = ref<ReturnType<typeof setTimeout>>()
+    const lastValidatedValue = ref<string | null>(null)
 
-    const flowStore = useFlowStore();
-    const errors = computed(() => flowStore.taskError?.split(/, ?/));
+    const flowStore = useFlowStore()
+    const errors = computed(() => flowStore.taskError?.split(/, ?/))
     const pluginMarkdown = computed(() => {
         if (pluginsStore?.plugin?.markdown && YAML_UTILS.parse(taskYaml.value)?.type) {
-            return pluginsStore?.plugin.markdown;
+            return pluginsStore?.plugin.markdown
         }
-        return null;
-    });
+        return null
+    })
 
-    const authStore = useAuthStore();
+    const authStore = useAuthStore()
 
     const canSave = computed(() => {
-        const user = authStore.user;
-        return canSaveFlowTemplate(true, user, {namespace: props.namespace}, "flow");
-    });
+        const user = authStore.user
+        return canSaveFlowTemplate(true, user, {namespace: props.namespace}, "flow")
+    })
 
-    const isLoading = computed(() => taskYaml.value === undefined);
+    const isLoading = computed(() => taskYaml.value === undefined)
 
     const source = computed(() => {
         return props.revision
             ? revisions.value?.[props.revision - 1]?.source
-            : flowStore.flow?.source;
-    });
+            : flowStore.flow?.source
+    })
 
     const load = async (taskId: string) => {
         await flowStore.loadFlow({
             namespace: props.namespace,
             id: props.flowId,
             revision: props.revision?.toString(),
-        });
+        })
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
                 revisions.value = await flowStore.loadRevisions({
                     namespace: props.namespace,
                     id: props.flowId,
-                    store: false
-                });
+                    store: false,
+                })
             }
         }
         return YAML_UTILS.extractBlock({
             section: props.section,
             source: source.value,
             key: taskId,
-        });
-    };
+        })
+    }
 
     const saveTask = () => {
-        emit("update:task", taskYaml.value);
-        taskYaml.value = "";
-        isModalOpen.value = false;
-    };
+        emit("update:task", taskYaml.value)
+        taskYaml.value = ""
+        isModalOpen.value = false
+    }
 
     const onShow = async () => {
-        isModalOpen.value = !isModalOpen.value;
+        isModalOpen.value = !isModalOpen.value
         if (props.taskId) {
-            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? "";
+            taskYaml.value = await load(props.taskId ? props.taskId : props.task?.id) ?? ""
         } else if (props.task) {
-            taskYaml.value = YAML_UTILS.stringify(props.task);
+            taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         if (props.task?.type) {
-            pluginsStore.load({cls: props.task.type});
+            pluginsStore.load({cls: props.task.type})
         }
-    };
+    }
 
     const onInput = (value?: string | Record<string, any>) => {
         if (timer.value) {
-            clearTimeout(timer.value);
+            clearTimeout(timer.value)
         }
 
-        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "");
+        taskYaml.value = typeof value === "string" ? value : YAML_UTILS.stringify(value ?? "")
 
         timer.value = setTimeout(() => {
             if (lastValidatedValue.value !== taskYaml.value) {
-                lastValidatedValue.value = taskYaml.value;
+                lastValidatedValue.value = taskYaml.value
                 flowStore.validateTask({
                     task: taskYaml.value,
-                    section: props.section
-                });
+                    section: props.section,
+                })
             }
-        }, 500) as any;
-    };
+        }, 500) as any
+    }
 
     watch(() => props.task, async (newTask) => {
         if (newTask) {
-            taskYaml.value = YAML_UTILS.stringify(newTask);
+            taskYaml.value = YAML_UTILS.stringify(newTask)
             if (newTask.type) {
-                await pluginsStore.load({cls: newTask.type});
+                await pluginsStore.load({cls: newTask.type})
             }
         } else {
-            taskYaml.value = "";
+            taskYaml.value = ""
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     watch(taskYaml, () => {
-        const task = YAML_UTILS.parse(taskYaml.value);
+        const task = YAML_UTILS.parse(taskYaml.value)
         if (task?.type && task.type !== type.value) {
-            pluginsStore.load({cls: task.type});
-            type.value = task.type;
+            pluginsStore.load({cls: task.type})
+            type.value = task.type
         }
-    });
+    })
 
     watch(isModalOpen, () => {
         if (!isModalOpen.value) {
-            emit("close");
-            activeTabs.value = props.readOnly ? "source" : "form";
+            emit("close")
+            activeTabs.value = props.readOnly ? "source" : "form"
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">

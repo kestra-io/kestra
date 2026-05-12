@@ -138,7 +138,7 @@ class IfTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.get(1).findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -158,7 +158,7 @@ class IfTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
     }
 

@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted} from "vue";
-    import {useServiceStore} from "../../stores/service";
+    import {ref, onMounted} from "vue"
+    import {useServiceStore} from "../../stores/service"
 
     interface Props {
         component?: string;
@@ -19,21 +19,21 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        component: "b-button"
-    });
+        component: "b-button",
+    })
 
     defineEmits<{
         follow: []
-    }>();
+    }>()
 
-    const serviceStore = useServiceStore();
-    const service = ref();
+    const serviceStore = useServiceStore()
+    const service = ref()
 
     const load = async () => {
-        service.value = await serviceStore.findServiceById({id: props.serviceId});
-    };
+        service.value = await serviceStore.findServiceById({id: props.serviceId})
+    }
 
     onMounted(() => {
-        load();
-    });
+        load()
+    })
 </script>

@@ -45,83 +45,83 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import {SECTIONS} from "./docsUtils";
+    import {ref, computed, watch} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import {SECTIONS} from "./docsUtils"
 
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ContextDocsLink from "./ContextDocsLink.vue";
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ContextDocsLink from "./ContextDocsLink.vue"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const menuOpen = ref(false);
+    const menuOpen = ref(false)
 
-    const rawStructure = ref<Record<string, any> | undefined>();
-    const currentDocPath = computed(() => docStore.docPath);
+    const rawStructure = ref<Record<string, any> | undefined>()
+    const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {
-        if (!path) return "";
-        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "");
-    };
+        if (!path) return ""
+        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "")
+    }
 
     const isCurrentPage = (path: string) => {
-        if (!currentDocPath.value || !path) return false;
-        const normalizedCurrent = normalizePath(currentDocPath.value);
-        const normalizedPath = normalizePath(path);
+        if (!currentDocPath.value || !path) return false
+        const normalizedCurrent = normalizePath(currentDocPath.value)
+        const normalizedPath = normalizePath(path)
 
-        if (normalizedCurrent === normalizedPath) return true;
+        if (normalizedCurrent === normalizedPath) return true
 
-        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
+        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true
 
-        return false;
-    };
+        return false
+    }
 
     const isCurrentSection = (sectionName: string) => {
-        if (!currentDocPath.value) return false;
-        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || [];
-        return sectionChildren.some(child => isCurrentPage(child.path));
-    };
+        if (!currentDocPath.value) return false
+        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || []
+        return sectionChildren.some(child => isCurrentPage(child.path))
+    }
 
     watch(menuOpen, async (val) => {
-        if(!val || rawStructure.value !== undefined) return;
-        rawStructure.value = await docStore.children();
-    });
+        if(!val || rawStructure.value !== undefined) return
+        rawStructure.value = await docStore.children()
+    })
 
     const toc = computed(() => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
             .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
             .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
-                    return acc;
+                    return acc
                 }
 
-                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "");
+                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
 
                 acc[cleanUrl] = {
                     ...metadata,
-                    path: cleanUrl
-                };
+                    path: cleanUrl,
+                }
 
                 return acc
-            }, {});
+            }, {})
 
         for(const url in childrenWithMetadata){
-            const metadata = childrenWithMetadata[url];
-            const split = url.split("/");
-            const parentUrl = split.slice(0, split.length - 1).join("/");
-            const parent = childrenWithMetadata[parentUrl];
+            const metadata = childrenWithMetadata[url]
+            const split = url.split("/")
+            const parentUrl = split.slice(0, split.length - 1).join("/")
+            const parent = childrenWithMetadata[parentUrl]
             if (parent !== undefined) {
-                parent.children = [...(parent.children ?? []), metadata];
+                parent.children = [...(parent.children ?? []), metadata]
             }
         }
 
-        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[];
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[]
     })
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
@@ -130,10 +130,10 @@
             section,
             children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
-                    path.split("/").length === 2 && (sidebarTitle === name || title === name)
+                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
                 ))
-                .filter((item): item is NonNullable<typeof item> => !!item)
-        }))
+                .filter((item): item is NonNullable<typeof item> => !!item),
+        })),
     )
 </script>
 

@@ -1,8 +1,8 @@
 @use "color-palette" as palette;
 
 // font family
-$font-family-sans-serif: "Public Sans", sans-serif;
-$font-family-monospace: "Source Code Pro", monospace;
+$font-family-sans-serif: "Mona Sans", sans-serif;
+$font-family-monospace: "JetBrains Mono", monospace;
 
 // font sizes
 $font-size-base: 1rem;
@@ -47,6 +47,6 @@ $colors: (
 );
 
 // border radius
-$border-radius: 0.25rem !default;
-$border-radius-lg: 0.5rem !default;
-$border-radius-sm: 0.15rem !default;
+$border-radius: 0.5rem !default;
+$border-radius-lg: 0.625rem !default;
+$border-radius-sm: 0.375rem !default;

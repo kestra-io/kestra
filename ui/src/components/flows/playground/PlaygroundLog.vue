@@ -18,19 +18,19 @@
 </template>
 
 <script setup lang="ts">
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import {date, humanizeDuration} from "../../../utils/filters";
-    import {Execution, useExecutionsStore} from "../../../stores/executions";
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {date, humanizeDuration} from "../../../utils/filters"
+    import {Execution, useExecutionsStore} from "../../../stores/executions"
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
     defineProps<{
         executions: Execution[];
-    }>();
+    }>()
 
     defineEmits<{
         (e: "click", executionId: string): void;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

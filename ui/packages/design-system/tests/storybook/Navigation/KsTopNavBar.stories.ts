@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {KsButton, KsDropdownItem, KsDropdownMenu, KsTag, KsTopNavBar} from "../../../src";
+import {KsButton, KsDropdownItem, KsDropdownMenu, KsTag, KsTopNavBar} from "../../../src"
 
 const meta: Meta<typeof KsTopNavBar> = {
     title: "Components/Navigation/KsTopNavBar",

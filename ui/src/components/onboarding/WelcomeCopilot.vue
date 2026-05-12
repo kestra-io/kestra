@@ -59,16 +59,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed, ref} from "vue"
 
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import AiCopilot from "../ai/AiCopilot.vue";
-    import OnboardingResourceList from "./OnboardingResourceList.vue";
-    import {useOnboardingResources} from "./useOnboardingResources";
-    import type {OnboardingResourceItem} from "./OnboardingResourceList.vue";
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import AiCopilot from "../ai/AiCopilot.vue"
+    import OnboardingResourceList from "./OnboardingResourceList.vue"
+    import {useOnboardingResources} from "./useOnboardingResources"
+    import type {OnboardingResourceItem} from "./OnboardingResourceList.vue"
 
-    import type {AiGenerationType} from "../../utils/constants";
-    import Utils from "../../utils/utils";
+    import type {AiGenerationType} from "../../utils/constants"
+    import * as Utils from "../../utils/utils"
 
     export interface WelcomeCopilotExample {
         label: string;
@@ -83,42 +83,42 @@
         examples: WelcomeCopilotExample[];
         namespace?: string;
         resources?: OnboardingResourceItem[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         generatedYaml: [yaml: string];
         createDirectly: [yaml: string];
-    }>();
+    }>()
 
-    const conversationId = ref<string>(Utils.uid());
-    const selectedIndex = ref<number | undefined>(0);
-    const activeIndex = ref<number>(0);
+    const conversationId = ref<string>(Utils.uid())
+    const selectedIndex = ref<number | undefined>(0)
+    const activeIndex = ref<number>(0)
 
-    const activeExample = computed(() => props.examples[activeIndex.value] ?? {label: "", prompt: "", yaml: ""});
+    const activeExample = computed(() => props.examples[activeIndex.value] ?? {label: "", prompt: "", yaml: ""})
 
     const onboardingExamples = computed(() =>
         props.examples
             .filter((e) => e.prompt.length > 0)
             .map((e) => ({prompt: e.prompt, flow: e.yaml})),
-    );
+    )
 
-    const allShown = ref(false);
+    const allShown = ref(false)
     const visibleExamples = computed(() =>
         allShown.value ? props.examples : props.examples.slice(0, 5),
-    );
+    )
 
-    const {onboardingResources} = useOnboardingResources();
+    const {onboardingResources} = useOnboardingResources()
     const welcomeResources = computed(() =>
         props.resources !== undefined ? props.resources : onboardingResources.value.slice(0, 3),
-    );
+    )
 
     function selectExample(index: number) {
-        activeIndex.value = index;
-        selectedIndex.value = index;
+        activeIndex.value = index
+        selectedIndex.value = index
     }
 
     function clearSelectedTag() {
-        selectedIndex.value = undefined;
+        selectedIndex.value = undefined
     }
 </script>
 

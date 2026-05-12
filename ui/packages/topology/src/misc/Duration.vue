@@ -17,75 +17,75 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
-    import {type Moment} from "moment";
-    import {State, KsTooltip} from "@kestra-io/design-system";
-    import * as Utils from "../utils/utils";
+    import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
+    import {type Moment} from "moment"
+    import {State, KsTooltip} from "@kestra-io/design-system"
+    import * as Utils from "../utils/utils"
 
     const props = defineProps<{
         histories: {
             date: Moment;
             state: string;
         }[];
-    }>();
+    }>()
 
     watch(
         () => props.histories,
         (newValue, oldValue) => {
             if (newValue?.[0]?.date?.valueOf() !== oldValue?.[0]?.date?.valueOf()) {
-                paint();
+                paint()
             }
         },
-    );
+    )
 
-    const duration = ref("");
-    const refreshHandler = ref();
+    const duration = ref("")
+    const refreshHandler = ref()
 
     onMounted(() => {
-        paint();
-    });
+        paint()
+    })
 
     const start = computed(() => {
-        return props.histories?.[0]?.date?.valueOf() ?? null;
-    });
+        return props.histories?.[0]?.date?.valueOf() ?? null
+    })
 
     const lastStep = computed(() => {
-        return props.histories?.length ? props.histories[props.histories.length - 1] : undefined;
-    });
+        return props.histories?.length ? props.histories[props.histories.length - 1] : undefined
+    })
 
     const filteredHistories = computed(() => {
-        return props.histories.filter((h) => h.date.isValid() && h.date && h.state);
-    });
+        return props.histories.filter((h) => h.date.isValid() && h.date && h.state)
+    })
 
     function paint() {
         if (!refreshHandler.value) {
             refreshHandler.value = setInterval(() => {
-                computeDuration();
+                computeDuration()
                 if (lastStep.value && !State.isRunning(lastStep.value.state)) {
-                    cancel();
+                    cancel()
                 }
-            }, 10);
+            }, 10)
         }
     }
 
     function cancel() {
         if (refreshHandler.value) {
-            clearInterval(refreshHandler.value);
-            refreshHandler.value = undefined;
+            clearInterval(refreshHandler.value)
+            refreshHandler.value = undefined
         }
     }
 
     function delta() {
-        const startValue = start.value;
-        if (startValue === null) return 0;
-        return Math.max(0, stop() - startValue);
+        const startValue = start.value
+        if (startValue === null) return 0
+        return Math.max(0, stop() - startValue)
     }
 
     function stop() {
         if (!lastStep.value || State.isRunning(lastStep.value.state)) {
-            return +new Date();
+            return +new Date()
         }
-        return lastStep.value.date.valueOf();
+        return lastStep.value.date.valueOf()
     }
 
     function computeDuration() {
@@ -95,15 +95,15 @@
                 : Utils.humanDuration(delta() / 1000, {
                     maxDecimalPoints: 2,
                     units: ["h", "m", "s"],
-                });
+                })
     }
 
     function squareClass(state: string) {
-        return "ks-duration-tt-square-" + state.toLowerCase();
+        return "ks-duration-tt-square-" + state.toLowerCase()
     }
 
     onBeforeUnmount(() => {
-        cancel();
-    });
+        cancel()
+    })
 </script>
 

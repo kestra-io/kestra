@@ -103,7 +103,7 @@
             tooltipType: TooltipType.NATIVE,
             disableFeatures: () => [],
             data: null,
-            renderer: ChartRenderer.CANVAS
+            renderer: ChartRenderer.CANVAS,
         },
     )
 

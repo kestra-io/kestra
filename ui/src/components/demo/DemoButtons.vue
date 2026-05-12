@@ -13,9 +13,9 @@
 </template>
 
 <script setup lang="ts">
-    import {KsButton} from "@kestra-io/design-system";
+    import {KsButton} from "@kestra-io/design-system"
 
     defineProps<{
         type: string;
-    }>();
+    }>()
 </script>

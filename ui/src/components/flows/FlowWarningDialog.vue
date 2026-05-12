@@ -8,11 +8,11 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .flow-warning-dialog .icon {
     font-size: var(--ks-font-size-lg);
     color: var(--ks-status-warning);

@@ -1,58 +1,42 @@
 @font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src:
-    local('Public Sans Light'),
-    local('PublicSans-Light'),
-    url('../fonts/public-sans/public-sans-v21-latin-300.woff2') format('woff2');
+    font-family: 'Mona Sans';
+    font-style: normal;
+    font-weight: 200 900;
+    font-stretch: 75% 125%;
+    font-display: swap;
+    src:
+        local('Mona Sans'),
+        local('MonaSans'),
+        url('../fonts/mona-sans/MonaSans-VF.woff2') format('woff2-variations'),
+        url('../fonts/mona-sans/MonaSans-VF.woff2') format('woff2');
 }
 
 @font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local('Public Sans Regular'),
-    local('PublicSans-Regular'),
-    url('../fonts/public-sans/public-sans-v21-latin-regular.woff2') format('woff2');
+    font-family: 'Mona Sans';
+    font-style: italic;
+    font-weight: 200 900;
+    font-stretch: 75% 125%;
+    font-display: swap;
+    src:
+        local('Mona Sans Italic'),
+        local('MonaSans-Italic'),
+        url('../fonts/mona-sans/MonaSans-Italic-VF.woff2') format('woff2-variations'),
+        url('../fonts/mona-sans/MonaSans-Italic-VF.woff2') format('woff2');
 }
 
 @font-face {
-  font-family: 'Public Sans';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 600;
+  font-weight: 100 800;
   font-display: swap;
   src:
-    local('Public Sans SemiBold'),
-    local('PublicSans-SemiBold'),
-    url('../fonts/public-sans/public-sans-v21-latin-600.woff2') format('woff2');
+    local('JetBrains Mono'),
+    local('JetBrainsMono'),
+    url('../fonts/jetbrains-mono/JetBrainsMono-VF.woff2') format('woff2-variations'),
+    url('../fonts/jetbrains-mono/JetBrainsMono-VF.woff2') format('woff2');
 }
 
-@font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src:
-    local('Public Sans Bold'),
-    local('PublicSans-Bold'),
-    url('../fonts/public-sans/public-sans-v21-latin-700.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Public Sans';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src:
-    local('Public Sans ExtraBold'),
-    local('PublicSans-ExtraBold'),
-    url('../fonts/public-sans/public-sans-v21-latin-800.woff2') format('woff2');
-}
-
+// Legacy: kept for users whose editor preference is still set to Source Code Pro.
 @font-face {
   font-family: 'Source Code Pro';
   font-style: normal;

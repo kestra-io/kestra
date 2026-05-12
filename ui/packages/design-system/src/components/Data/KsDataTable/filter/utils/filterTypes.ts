@@ -14,12 +14,12 @@ export enum Comparators {
     PREFIX = "^.=",
 }
 
-export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS];
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
     Comparators.ENDS_WITH, 
     Comparators.STARTS_WITH, 
-];
+]
 
 export interface FilterKeyConfig {
     key: string;
@@ -104,7 +104,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.CONTAINS]: "Contains",
     [Comparators.REGEX]: "Matches Pattern",
     [Comparators.PREFIX]: "Prefix",
-};
+}
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "filter.comparator_descriptions.EQUALS",
@@ -120,4 +120,4 @@ export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.CONTAINS]: "filter.comparator_descriptions.CONTAINS",
     [Comparators.REGEX]: "filter.comparator_descriptions.REGEX",
     [Comparators.PREFIX]: "filter.comparator_descriptions.PREFIX",
-};
+}

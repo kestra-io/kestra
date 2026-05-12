@@ -25,28 +25,28 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
-    import type {FilterValue} from "../utils/filterTypes";
+    import {ref, watch} from "vue"
+    import type {FilterValue} from "../utils/filterTypes"
 
     const props = defineProps<{
         modelValue: string;
         options: FilterValue[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:modelValue": [value: string];
-    }>();
+    }>()
 
-    const selectedOption = ref(props.modelValue);
+    const selectedOption = ref(props.modelValue)
 
     watch(() => props.modelValue, (newValue) => {
-        selectedOption.value = newValue;
-    });
+        selectedOption.value = newValue
+    })
 
     const selectOption = (option: string) => {
-        selectedOption.value = option;
-        emits("update:modelValue", option);
-    };
+        selectedOption.value = option
+        emits("update:modelValue", option)
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -61,7 +61,7 @@
         transition: background-color 0.2s;
         padding: 0.25rem 0.75rem;
         padding-right: 4px;
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         border: 1px solid var(--ks-border-default);
         display: flex;
         align-items: center;

@@ -89,25 +89,25 @@
     </section>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
+    import {ref, computed, onMounted} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
 
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import Editor from "../../../../components/inputs/Editor.vue";
-    import TopNavBar from "../../../../components/layout/TopNavBar.vue";
-    import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
-    import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
+    import Editor from "../../../../components/inputs/Editor.vue"
+    import TopNavBar from "../../../../components/layout/TopNavBar.vue"
+    import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue"
+    import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue"
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
 
-    import {useFlowStore} from "../../../../stores/flow";
-    import {usePluginsStore} from "../../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../../stores/blueprints";
-    import {useApiStore} from "../../../../stores/api";
+    import {useFlowStore} from "../../../../stores/flow"
+    import {usePluginsStore} from "../../../../stores/plugins"
+    import {useBlueprintsStore} from "../../../../stores/blueprints"
+    import {useApiStore} from "../../../../stores/api"
 
-    import {canCreate} from "override/composables/blueprintsPermissions";
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
+    import {canCreate} from "override/composables/blueprintsPermissions"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
 
     const props = withDefaults(defineProps<{
         blueprintId: string;
@@ -119,42 +119,42 @@
         embed: false,
         blueprintType: "community",
         kind: "flow",
-        combinedView: false
-    });
+        combinedView: false,
+    })
 
     const emit = defineEmits<{
         back: [];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
-    const {t} = useI18n();
+    const route = useRoute()
+    const router = useRouter()
+    const {t} = useI18n()
 
-    const pluginsStore = usePluginsStore();
-    const blueprintsStore = useBlueprintsStore();
-    const flowStore = useFlowStore();
-    const apiStore = useApiStore();
+    const pluginsStore = usePluginsStore()
+    const blueprintsStore = useBlueprintsStore()
+    const flowStore = useFlowStore()
+    const apiStore = useApiStore()
 
-    const flowGraph = ref();
-    const blueprint = ref();
-    const tab = ref("");
-    const tags = ref();
+    const flowGraph = ref()
+    const blueprint = ref()
+    const tab = ref("")
+    const tags = ref()
 
-    const userCanCreate = computed(() => canCreate(props.kind));
+    const userCanCreate = computed(() => canCreate(props.kind))
 
     const parsedFlow = computed(() => {
         return blueprint.value?.source ? {
             ...YAML_UTILS.parse(blueprint.value.source),
-            source: blueprint.value.source
-        } : {};
-    });
+            source: blueprint.value.source,
+        } : {}
+    })
 
     const processedTags = computed(() => {
         return blueprint.value?.tags?.map((tag: string) => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
-        }));
-    });
+            display: tags.value?.[tag]?.name ?? tag,
+        }))
+    })
 
     const breadcrumb = computed(() => [
         {
@@ -163,41 +163,41 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: route.params?.tab || tab.value
-                }
-            }
-        }
-    ]);
+                    tab: route.params?.tab || tab.value,
+                },
+            },
+        },
+    ])
 
     const editorRoute = computed(() => {
-        let additionalQuery: Record<string, any> = {};
+        let additionalQuery: Record<string, any> = {}
         if (props.kind === "flow") {
-            additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab;
+            additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab
         } else if (props.kind === "dashboard") {
             additionalQuery = {
                 name: "home",
                 params: route.params?.tenant === undefined
                     ? undefined
                     : JSON.stringify({tenant: route.params.tenant}),
-            };
+            }
         }
 
-        return {name: `${props.kind}s/create`, params: {tenant: route.params?.tenant}, query: {blueprintId: props.blueprintId, ...additionalQuery}};
-    });
+        return {name: `${props.kind}s/create`, params: {tenant: route.params?.tenant}, query: {blueprintId: props.blueprintId, ...additionalQuery}}
+    })
 
     const goBack = () => {
         if (props.embed) {
-            emit("back");
+            emit("back")
         } else {
             router.push({
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: tab.value
-                }
-            });
+                    tab: tab.value,
+                },
+            })
         }
-    };
+    }
 
     const trackBlueprintUse = (source: "detail" | "browser") => {
         apiStore.posthogEvents({
@@ -209,40 +209,40 @@
                 blueprint_type: props.combinedView ? props.blueprintType : route.params?.tab,
                 source,
             },
-        });
-    };
+        })
+    }
 
     const loadTags = async () => {
         const data = await blueprintsStore.getBlueprintTags({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any
-        });
-        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? []);
-    };
+            kind: props.kind as any,
+        })
+        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? [])
+    }
 
     onMounted(async () => {
         const blueprintData = await blueprintsStore.getBlueprint({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
             kind: props.kind as any,
-            id: props.blueprintId
-        });
-        blueprint.value = blueprintData;
+            id: props.blueprintId,
+        })
+        blueprint.value = blueprintData
 
-        await loadTags();
+        await loadTags()
 
-        const blueprintTab = props.combinedView ? props.blueprintType : route.params?.tab;
+        const blueprintTab = props.combinedView ? props.blueprintType : route.params?.tab
         if (props.kind === "flow") {
             flowGraph.value = blueprintTab === "community"
                 ? await blueprintsStore.getBlueprintGraph({
                     type: blueprintTab as any,
                     kind: props.kind as any,
-                    id: props.blueprintId
+                    id: props.blueprintId,
                 })
                 : await flowStore.getGraphFromSourceResponse({
-                    flow: blueprint.value?.source
-                });
+                    flow: blueprint.value?.source,
+                })
         }
-    });
+    })
 </script>
 <style scoped lang="scss">
 

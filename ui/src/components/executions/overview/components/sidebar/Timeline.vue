@@ -26,38 +26,38 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, onBeforeUnmount} from "vue";
-    import type {Histories} from "../../../../../stores/executions";
+    import {ref, onMounted, onBeforeUnmount} from "vue"
+    import type {Histories} from "../../../../../stores/executions"
 
-    import {getSchemeValue} from "../../../../../utils/scheme";
+    import {getSchemeValue} from "../../../../../utils/scheme"
 
-    import moment from "moment";
+    import moment from "moment"
 
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    const props = defineProps<{ histories: Histories[] }>();
+    const props = defineProps<{ histories: Histories[] }>()
 
     const formatDate = (date: string) => {
-        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date;
-    };
+        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date
+    }
 
-    const container = ref<HTMLElement | null>(null);
-    const isNarrow = ref(false);
-    let ro: ResizeObserver | null = null;
+    const container = ref<HTMLElement | null>(null)
+    const isNarrow = ref(false)
+    let ro: ResizeObserver | null = null
 
     onMounted(() => {
         ro = new ResizeObserver(([entry]) => {
-            isNarrow.value = entry.contentRect.width < 220;
-        });
-        const el = (container.value as any)?.$el ?? container.value;
+            isNarrow.value = entry.contentRect.width < 220
+        })
+        const el = (container.value as any)?.$el ?? container.value
         if (el) {
-            ro.observe(el);
+            ro.observe(el)
         }
-    });
+    })
 
     onBeforeUnmount(() => {
-        ro?.disconnect();
-    });
+        ro?.disconnect()
+    })
 </script>
 
 <style scoped lang="scss">

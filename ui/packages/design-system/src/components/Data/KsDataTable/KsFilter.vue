@@ -13,21 +13,21 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, provide, onMounted, watch} from "vue";
+    import {ref, computed, provide, onMounted, watch} from "vue"
     import type {
         AppliedFilter,
         FilterConfiguration,
         SavedFilter,
         TableOptions,
-        TableProperties
-    } from "./filter/utils/filterTypes";
-    import {useFilters} from "./filter/composables/useFilters";
-    import {useSavedFilters} from "./filter/composables/useSavedFilters";
-    import {useDataOptions} from "./filter/composables/useDataOptions";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts";
-    import MainFilter from "./filter/MainFilter.vue";
-    import RightFilter from "./filter/RightFilter.vue";
-    import FilterOptions from "./filter/FilterOptions.vue";
+        TableProperties,
+    } from "./filter/utils/filterTypes"
+    import {useFilters} from "./filter/composables/useFilters"
+    import {useSavedFilters} from "./filter/composables/useSavedFilters"
+    import {useDataOptions} from "./filter/composables/useDataOptions"
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
+    import MainFilter from "./filter/MainFilter.vue"
+    import RightFilter from "./filter/RightFilter.vue"
+    import FilterOptions from "./filter/FilterOptions.vue"
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
@@ -55,14 +55,14 @@
         defaultScope: undefined,
         defaultTimeRange: undefined,
         defaultDuration: undefined,
-    });
+    })
 
     const emits = defineEmits<{
         refresh: [];
         search: [query: string];
         filter: [filters: AppliedFilter[]];
         updateProperties: [columns: string[]];
-    }>();
+    }>()
 
     const {
         appliedFilters,
@@ -73,42 +73,42 @@
         updateFilter,
         resetToDefaults,
         hasPreApplied,
-        getPreApplied
+        getPreApplied,
     } = useFilters(
         props.configuration,
         props.showSearchInput,
         props.defaultScope,
         props.defaultTimeRange,
         props.defaultDuration,
-    );
+    )
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
-        props.prefix
-    );
+        props.prefix,
+    )
 
     const {showOptions, chartVisible, toggleOptions, updateChart, refreshData: tableRefreshData} = useDataOptions(
-        props.tableOptions
-    );
+        props.tableOptions,
+    )
 
-    const editingFilter = ref<SavedFilter | undefined>(undefined);
+    const editingFilter = ref<SavedFilter | undefined>(undefined)
 
-    const hasFilterKeys = computed(() => props.configuration.keys?.length > 0);
-    const hasAppliedFilters = computed(() => appliedFilters.value?.length > 0);
+    const hasFilterKeys = computed(() => props.configuration.keys?.length > 0)
+    const hasAppliedFilters = computed(() => appliedFilters.value?.length > 0)
 
     const loadSavedFilter = (savedFilter: SavedFilter) => {
         appliedFilters.value.forEach((filter) => {
-            removeFilter(filter.id);
-        });
+            removeFilter(filter.id)
+        })
 
         savedFilter.filters.forEach((filter) => {
-            addFilter(filter);
-        });
-    };
+            addFilter(filter)
+        })
+    }
 
     const refreshData = () => {
-        tableRefreshData();
-        emits("refresh");
-    };
+        tableRefreshData()
+        emits("refresh")
+    }
 
     provide(FILTER_CONTEXT_INJECTION_KEY, {
         configuration: computed(() => props.configuration),
@@ -141,34 +141,34 @@
         hasPreApplied,
         getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
-            editingFilter.value = filter;
+            editingFilter.value = filter
         },
         closeEditFilter: () => {
-            editingFilter.value = undefined;
+            editingFilter.value = undefined
         },
         updateProperties: (columns: string[]) => {
-            emits("updateProperties", columns);
-        }
-    });
+            emits("updateProperties", columns)
+        },
+    })
 
     onMounted(() => {
         if (props.showSearchInput && searchQuery.value) {
-            emits("search", searchQuery.value);
+            emits("search", searchQuery.value)
         }
         if (appliedFilters.value.length > 0) {
-            emits("filter", appliedFilters.value);
+            emits("filter", appliedFilters.value)
         }
-    });
+    })
 
     watch(searchQuery, (newQuery) => {
         if (props.showSearchInput) {
-            emits("search", newQuery);
+            emits("search", newQuery)
         }
-    });
+    })
 
     watch(appliedFilters, (newFilters) => {
-        emits("filter", newFilters);
-    }, {deep: true});
+        emits("filter", newFilters)
+    }, {deep: true})
 
 </script>
 

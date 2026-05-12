@@ -1,14 +1,14 @@
-import _merge from "lodash/merge";
-import _cloneDeep from "lodash/cloneDeep";
-import _isEqual from "lodash/isEqual";
+import _merge from "lodash/merge"
+import _cloneDeep from "lodash/cloneDeep"
+import _isEqual from "lodash/isEqual"
 
 export default {
     created() {
-        this.refreshPaging();
+        this.refreshPaging()
 
         // @TODO: ugly hack from restoreUrl
         if (this.loadInit) {
-            this.load(this.onDataLoaded);
+            this.load(this.onDataLoaded)
         }
     },
     data() {
@@ -19,46 +19,46 @@ export default {
             ready: false,
             internalPageSize: 25,
             internalPageNumber: 1,
-            internalSort: undefined
-        };
+            internalSort: undefined,
+        }
     },
     props: {
         filters: {
             type: Object,
             default: () => {
-            }
+            },
         },
         pageSize: {
-            type: Number
+            type: Number,
         },
         pageNumber: {
-            type: Number
-        }
+            type: Number,
+        },
     },
     watch: {
         $route(newValue, oldValue) {
             if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
-                this.refreshPaging();
-                this.load(this.onDataLoaded);
+                this.refreshPaging()
+                this.load(this.onDataLoaded)
             }
-        }
+        },
     },
     methods: {
         sortString(sortItem, sortKeyMapper) {
             if (sortItem && sortItem.prop && sortItem.order) {
-                return `${sortKeyMapper(sortItem.prop)}:${sortItem.order === "descending" ? "desc" : "asc"}`;
+                return `${sortKeyMapper(sortItem.prop)}:${sortItem.order === "descending" ? "desc" : "asc"}`
             }
         },
         onSort(sortItem, sortKeyMapper = (k) => k) {
-            this.internalSort = this.sortString(sortItem, sortKeyMapper);
+            this.internalSort = this.sortString(sortItem, sortKeyMapper)
 
             if (this.internalSort) {
-                const sort = this.internalSort;
+                const sort = this.internalSort
                 this.$router.push({
-                    query: {...this.$route.query, sort}
-                });
+                    query: {...this.$route.query, sort},
+                })
             } else {
-                this.load(this.onDataLoaded);
+                this.load(this.onDataLoaded)
             }
         },
         onRowDoubleClick(item) {
@@ -66,89 +66,89 @@ export default {
                 name: this.dblClickRouteName || this.$route.name.replace("/list", "/update"),
                 params: {
                     ...item,
-                    tenant: this.$route.params.tenant
-                }
-            });
+                    tenant: this.$route.params.tenant,
+                },
+            })
         },
         onDataTableValue(keyOrObject, value) {
-            const values = typeof (keyOrObject) === "string" ? {[keyOrObject]: value} : keyOrObject;
-            let query = {...this.$route.query};
+            const values = typeof (keyOrObject) === "string" ? {[keyOrObject]: value} : keyOrObject
+            let query = {...this.$route.query}
 
-            for (const [key, value] of Object.entries(values)) {
-                if (value === undefined || value === "" || value === null || value.length === 0) {
-                    delete query[key];
+            for (const [key, entryValue] of Object.entries(values)) {
+                if (entryValue === undefined || entryValue === "" || entryValue === null || entryValue.length === 0) {
+                    delete query[key]
                 } else {
-                    query[key] = value;
+                    query[key] = entryValue
                 }
             }
 
-            this.internalPageNumber = 1;
+            this.internalPageNumber = 1
 
-            this.$router.push({query: query});
+            this.$router.push({query: query})
         },
         onPageChanged(item) {
-            if (this.internalPageSize === item.size && this.internalPageNumber === item.page) return;
+            if (this.internalPageSize === item.size && this.internalPageNumber === item.page) return
 
-            this.internalPageSize = item.size;
-            this.internalPageNumber = item.page;
+            this.internalPageSize = item.size
+            this.internalPageNumber = item.page
 
             if (!this.embed) {
                 this.$router.push({
                     query: {
                         ...this.$route.query,
                         size: item.size,
-                        page: item.page
-                    }
-                });
+                        page: item.page,
+                    },
+                })
             } else {
-                this.load(this.onDataLoaded);
+                this.load(this.onDataLoaded)
             }
         },
         queryWithFilter(namespace, excludedKeys = []) {
-            let query = this.$route.query;
+            let query = this.$route.query
 
             if (namespace !== undefined) {
                 query = Object.fromEntries(
                     Object.entries(query)
                         .filter(([key]) => key.startsWith(`${namespace}[`))
-                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value])
-                );
+                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value]),
+                )
             }
 
             if (excludedKeys.length > 0) {
-                const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`);
+                const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`)
                 query = Object.fromEntries(
-                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null)
-                );
+                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null),
+                )
             }
 
             return _merge(_cloneDeep(
                 query,
-                this.filters || {}
-            ));
+                this.filters || {},
+            ))
         },
         load(callback) {
             if (this.$refs.dataTable) {
-                this.$refs.dataTable.isLoading = true;
+                this.$refs.dataTable.isLoading = true
             }
 
-            this.loadData(callback || this.onDataLoaded);
+            this.loadData(callback || this.onDataLoaded)
         },
         onDataLoaded() {
-            this.ready = true;
-            this.loadInit = true;
+            this.ready = true
+            this.loadInit = true
 
             if (this.saveRestoreUrl) {
-                this.saveRestoreUrl();
+                this.saveRestoreUrl()
             }
 
             if (this.$refs.dataTable) {
-                this.$refs.dataTable.isLoading = false;
+                this.$refs.dataTable.isLoading = false
             }
         },
         refreshPaging() {
-            this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25;
-            this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1;
-        }
-    }
-};
+            this.internalPageSize = this.pageSize ?? this.$route.query.size ?? 25
+            this.internalPageNumber = this.pageNumber ?? this.$route.query.page ?? 1
+        },
+    },
+}

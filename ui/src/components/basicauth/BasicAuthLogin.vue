@@ -79,7 +79,7 @@
     import {useI18n} from "vue-i18n"
     import {KsMessage} from "@kestra-io/design-system"
     import type {FormInstance} from "@kestra-io/design-system"
-    import axios from "axios"
+    import {useClient} from "@kestra-io/kestra-sdk"
     import MailChecker from "mailchecker"
 
     import Account from "vue-material-design-icons/Account.vue"
@@ -92,9 +92,9 @@
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
-    import * as BasicAuth from "../../utils/basicAuth";
-    import {shouldShowWelcome} from "../../utils/welcomeGuard";
-    import {identifyPosthogUser} from "../../utils/posthog";
+    import * as BasicAuth from "../../utils/basicAuth"
+    import {shouldShowWelcome} from "../../utils/welcomeGuard"
+    import {identifyPosthogUser} from "../../utils/posthog"
 
     interface Credentials {
         username: string
@@ -113,7 +113,7 @@
     const isLoading = ref(false)
     const credentials = ref<Credentials>({
         username: "",
-        password: ""
+        password: "",
     })
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -121,26 +121,26 @@
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value?.trim()) {
-            return callback(new Error(t("setup.validation.email_required")));
+            return callback(new Error(t("setup.validation.email_required")))
         } else if (!EMAIL_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.email_invalid")));
+            return callback(new Error(t("setup.validation.email_invalid")))
         } else if (!MailChecker.isValid(value)) {
-            return callback(new Error(t("setup.validation.email_temporary_not_allowed")));
+            return callback(new Error(t("setup.validation.email_temporary_not_allowed")))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const validatePassword = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value || !PASSWORD_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.password_invalid")));
+            return callback(new Error(t("setup.validation.password_invalid")))
         }
-        callback();
-    };
+        callback()
+    }
 
     const rules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        password: [{required: true, validator: validatePassword, trigger: "blur"}]
+        password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
     const getFieldError = (fieldName: string): string | undefined => {
@@ -157,26 +157,28 @@
         !EMAIL_REGEX.test(credentials.value.username) ||
         !PASSWORD_REGEX.test(credentials.value.password) ||
         !MailChecker.isValid(credentials.value.username) ||
-        isLoading.value
+        isLoading.value,
     )
+
+    const axios = useClient()
 
     const validateCredentials = async (auth: string) => {
         try {
-            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
+            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
             await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
-                withCredentials: true
+                withCredentials: true,
             })
         } catch(e) {
-            BasicAuth.logout();
-            throw e;
+            BasicAuth.logout()
+            throw e
         }
     }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
             timeout: 10000,
-            withCredentials: true
+            withCredentials: true,
         })
         return response.data?.isBasicAuthInitialized
     }
@@ -195,24 +197,24 @@
                     KsMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
                         duration: 5000,
-                        showClose: false
+                        showClose: false,
                     })
                 })
             } else {
                 KsMessage.error({
-                    message: t("setup.validation.incorrect_creds")
+                    message: t("setup.validation.incorrect_creds"),
                 })
             }
         } catch {
             KsMessage.error({
-                message: t("setup.validation.incorrect_creds")
+                message: t("setup.validation.incorrect_creds"),
             })
         }
     }
 
     const handleSubmit = async () => {
         try {
-            coreStore.error = undefined;
+            coreStore.error = undefined
             if (!form.value || isLoading.value) return
 
             if (!(await form.value.validate().catch(() => false))) return
@@ -250,11 +252,11 @@
             }
 
             if (await shouldShowWelcome()) {
-                router.push({name: "welcome"});
+                router.push({name: "welcome"})
             } else if (redirectPath.value) {
-                router.push(redirectPath.value);
+                router.push(redirectPath.value)
             } else {
-                router.push({name: "home", params: {tenant: route.params.tenant}});
+                router.push({name: "home", params: {tenant: route.params.tenant}})
             }
         } catch (error: any) {
             if (handleNetworkError(error)) {

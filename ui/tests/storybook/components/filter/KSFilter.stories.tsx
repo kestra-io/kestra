@@ -3,7 +3,7 @@ import type {Meta, StoryObj} from "@storybook/vue3";
 import {useAuthStore} from "override/stores/auth";
 import {useMiscStore} from "override/stores/misc";
 import {useNamespacesStore} from "override/stores/namespaces";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 import fixture from "../executions/Executions.fixture.json";
 import Executions from "../../../../src/components/executions/Executions.vue";
 
@@ -113,7 +113,7 @@ function getDecorators(data: any[]) {
                 useMiscStore().configs = MOCK_CONFIGS;
                 useNamespacesStore().loadAutocomplete = () => Promise.resolve(FIXTURE_NAMESPACES);
 
-                const axios = useAxios();
+                const axios = {};
                 (axios as any).get = (url: string, config?: any) =>
                     url.includes("/executions/search")
                         ? (() => {
@@ -133,6 +133,8 @@ function getDecorators(data: any[]) {
                     url.includes("/namespaces/autocomplete") 
                         ? Promise.resolve({data: FIXTURE_NAMESPACES}) 
                         : Promise.resolve({data: {}});
+
+                setMockClient(axios);
             },
             template: "<div style='margin:2rem'><story /></div>"
         }),

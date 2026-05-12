@@ -8,7 +8,7 @@ tasks:
     outputs:
       - id: uri
         type: STRING
-        value: "{{outputs['1-1_each'].outputs.s2.uri}}"
+        value: "{{outputs['1-1_each'].outputs[0].outputs.uri}}"
     tasks:
     - id: 1-1_each
       type: io.kestra.plugin.core.flow.Loop
@@ -16,7 +16,7 @@ tasks:
       outputs:
         - id: uri
           type: STRING
-          value: "{{outputs['1-1-1_each'].outputs.s3.uri}}"
+          value: "{{outputs['1-1-1_each'].outputs[0].outputs.uri}}"
       tasks:
         - id: 1-1-1_each
           type: io.kestra.plugin.core.flow.Loop
@@ -42,4 +42,4 @@ tasks:
                   - out/*
   - id: 2_end
     type: io.kestra.plugin.core.debug.Return
-    format: "{{ outputs['1_each'].outputs.s1.uri }}"
+    format: "{{ outputs['1_each'].outputs[0].outputs.uri }}"

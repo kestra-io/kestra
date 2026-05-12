@@ -28,7 +28,7 @@
     const {t} = useI18n({
         useScope: "local",
         inheritLocale: true,
-        messages: locale
+        messages: locale,
     })
 
     const props = withDefaults(defineProps<{

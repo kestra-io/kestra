@@ -119,7 +119,7 @@ class SwitchTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(2);
 
         // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once across all sub-executions

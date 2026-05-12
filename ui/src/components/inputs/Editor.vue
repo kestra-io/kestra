@@ -77,21 +77,21 @@
 
 <script setup lang="ts">
     /* eslint-disable vue/enforce-style-attribute */
-    import {computed, onMounted, ref, shallowRef, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useThrottleFn} from "@vueuse/core";
-    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
-    import Help from "vue-material-design-icons/Help.vue";
-    import {useDocStore} from "../../stores/doc";
-    import {useMiscStore} from "override/stores/misc";
-    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
-    import Close from "vue-material-design-icons/Close.vue";
+    import {computed, onMounted, ref, shallowRef, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useThrottleFn} from "@vueuse/core"
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
+    import Help from "vue-material-design-icons/Help.vue"
+    import {useDocStore} from "../../stores/doc"
+    import {useMiscStore} from "override/stores/misc"
+    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue"
+    import Close from "vue-material-design-icons/Close.vue"
     // @ts-expect-error no clean way to have focus on inputs
-    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
-    import MonacoEditor from "./MonacoEditor.vue";
-    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-    import {useScrollMemory} from "../../composables/useScrollMemory";
+    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus"
+    import MonacoEditor from "./MonacoEditor.vue"
+    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
     import {findDuplicateTaskIds} from "../../utils/yamlValidation.ts"
     const {t} = useI18n()
 
@@ -136,7 +136,7 @@
         (e: "confirm", value?: string): void;
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void;
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void;
-    }>();
+    }>()
 
 
     let editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined = undefined
@@ -153,48 +153,48 @@
     const preventCursorChange = ref(false)
 
     onMounted(() => {
-        useDocStore().docId = "flowEditor";
+        useDocStore().docId = "flowEditor"
     })
 
     watch(
         () => [props.modelValue, props.lang],
         ([value, newLang], [, oldLang]) => {
-            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value;
-            if (newLang === oldLang) return;
-            if (isDiff.value || !editor || !isCodeEditor(editor)) return;
+            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value
+            if (newLang === oldLang) return
+            if (isDiff.value || !editor || !isCodeEditor(editor)) return
 
-            const monacoRef = monacoEditor.value?.monaco;
-            const model = editor.getModel?.();
-            if (!monacoRef || !model) return;
+            const monacoRef = monacoEditor.value?.monaco
+            const model = editor.getModel?.()
+            if (!monacoRef || !model) return
 
-            let lang = "plaintext";
+            let lang = "plaintext"
             if (newLang && typeof newLang === "string" && newLang.trim()) {
                 lang = newLang.includes("json")
                     ? "json"
                     : newLang.includes("-")
                         ? newLang.split("-")[0]
-                        : newLang;
+                        : newLang
             }
             try {
-                monacoRef.editor.setModelLanguage(model, lang);
+                monacoRef.editor.setModelLanguage(model, lang)
             } catch (e) {
-                console.warn("Failed to set model language", e);
+                console.warn("Failed to set model language", e)
             }
-        }
-    );
+        },
+    )
 
     watch(
         () => props.modelValue,
         (newValue) => {
-            if (!editor || !isCodeEditor(editor) || !monacoEditor.value) return;
+            if (!editor || !isCodeEditor(editor) || !monacoEditor.value) return
 
-            const model = editor.getModel();
-            if (!model) return;
+            const model = editor.getModel()
+            if (!model) return
 
             // Only run for YAML files
-            if (props.lang !== "yaml") return;
+            if (props.lang !== "yaml") return
 
-            const duplicateMarkers = findDuplicateTaskIds(newValue);
+            const duplicateMarkers = findDuplicateTaskIds(newValue)
 
             monacoEditor.value.monaco.editor.setModelMarkers(
                 model,
@@ -206,14 +206,14 @@
                     endColumn: m.endColumn,
                     message: m.message,
                     severity: monacoEditor.value!.monaco.MarkerSeverity.Error,
-                }))
-            );
+                })),
+            )
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     const themeComputed = computed(() => {
-        return useMiscStore().theme;
+        return useMiscStore().theme
     })
 
     const containerClass = computed(() => {
@@ -221,7 +221,7 @@
             !props.input ? "" : "single-line",
             "theme-" + themeComputed.value,
             themeComputed.value === "dark" ? "custom-dark-vs-theme" : "",
-        ];
+        ]
     })
 
     const showPlaceholder = computed(() => {
@@ -230,33 +230,33 @@
             !props.shouldFocus &&
             (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
             !focus.value
-        );
+        )
     })
 
     const options = computed(() => {
-        const options: monaco.editor.IStandaloneEditorConstructionOptions & {
+        const opts: monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean
             useInlineViewWhenSpaceIsLimited?:boolean
             renderOverviewRuler?:boolean
-        } = {};
+        } = {}
 
         if (props.input && !props.lineNumbers) {
-            options.lineNumbers = "off";
-            options.folding = false;
-            options.renderLineHighlight = "none";
-            options.wordBasedSuggestions = "off";
-            options.occurrencesHighlight = "off";
-            options.hideCursorInOverviewRuler = true;
-            options.overviewRulerBorder = false;
-            options.overviewRulerLanes = 0;
-            options.lineNumbersMinChars = 0;
-            options.fontSize = 13;
-            options.minimap = {
+            opts.lineNumbers = "off"
+            opts.folding = false
+            opts.renderLineHighlight = "none"
+            opts.wordBasedSuggestions = "off"
+            opts.occurrencesHighlight = "off"
+            opts.hideCursorInOverviewRuler = true
+            opts.overviewRulerBorder = false
+            opts.overviewRulerLanes = 0
+            opts.lineNumbersMinChars = 0
+            opts.fontSize = 13
+            opts.minimap = {
                 enabled: false,
-            };
-            options.scrollBeyondLastColumn = 0;
-            options.overviewRulerLanes = 0;
-            options.scrollbar = {
+            }
+            opts.scrollBeyondLastColumn = 0
+            opts.overviewRulerLanes = 0
+            opts.scrollbar = {
                 vertical: !props.showScroll ? "hidden" : "visible",
                 horizontal: "hidden",
                 alwaysConsumeMouseWheel: false,
@@ -264,38 +264,38 @@
                 horizontalScrollbarSize: 0,
                 verticalScrollbarSize: !props.showScroll ? 0 : 5,
                 useShadows: false,
-            };
-            options.stickyScroll = {
+            }
+            opts.stickyScroll = {
                 enabled: false,
-            };
-            options.find = {
+            }
+            opts.find = {
                 addExtraSpaceOnTop: false,
                 autoFindInSelection: "never",
                 seedSearchStringFromSelection: "never",
-            };
-            options.contextmenu = false;
-            options.lineDecorationsWidth = 0;
+            }
+            opts.contextmenu = false
+            opts.lineDecorationsWidth = 0
 
         } else {
-            options.scrollbar = {
+            opts.scrollbar = {
                 vertical: isDiff.value ? "hidden" : "auto",
                 verticalScrollbarSize: isDiff.value ? 0 : 10,
                 alwaysConsumeMouseWheel: false,
-            };
-            options.renderSideBySide = props.diffSideBySide;
-            options.useInlineViewWhenSpaceIsLimited = false;
-            options.renderOverviewRuler = props.diffOverviewBar;
+            }
+            opts.renderSideBySide = props.diffSideBySide
+            opts.useInlineViewWhenSpaceIsLimited = false
+            opts.renderOverviewRuler = props.diffOverviewBar
         }
 
 
-        options.minimap = props.minimap ? undefined : {
+        opts.minimap = props.minimap ? undefined : {
             enabled: false,
-        };
+        }
 
-        options.readOnly = props.readOnly;
+        opts.readOnly = props.readOnly
 
-        options.wordWrap = props.wordWrap ? "on" : "off";
-        options.automaticLayout = true;
+        opts.wordWrap = props.wordWrap ? "on" : "off"
+        opts.automaticLayout = true
 
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
@@ -311,89 +311,89 @@
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
-            ...options,
+            ...opts,
         } as monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean
             useInlineViewWhenSpaceIsLimited?:boolean
             renderOverviewRuler?:boolean
-        };
+        }
     })
 
     editorDocumentation.value =
         localStorage.getItem("editorDocumentation") !== "false" &&
-        props.navbar;
+        props.navbar
 
     const monacoEditor = ref<InstanceType<typeof MonacoEditor>>()
-    const container = ref<HTMLDivElement>();
+    const container = ref<HTMLDivElement>()
 
     let lastTimeout: number | undefined = undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
 
-    const isDiff = computed(() => props.original !== undefined);
+    const isDiff = computed(() => props.original !== undefined)
 
-    function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
-        return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
+    function isCodeEditor(ed?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): ed is monaco.editor.IStandaloneCodeEditor{
+        return ed?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
     }
 
-    const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+    const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null
 
     function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
 
         const monacoRef = monacoEditor.value
 
-        editor = monacoMounted;
+        editor = monacoMounted
 
         if(!editor || !monacoRef) {
-            console.error("Monaco editor is not mounted properly.");
-            return;
+            console.error("Monaco editor is not mounted properly.")
+            return
         }
 
         // avoid double import of monaco editor, use a reference
-        const KeyCode = monacoRef.monaco.KeyCode;
-        const KeyMod = monacoRef.monaco.KeyMod;
+        const KeyCode = monacoRef.monaco.KeyCode
+        const KeyMod = monacoRef.monaco.KeyMod
 
-        decorations = editor.createDecorationsCollection();
+        decorations = editor.createDecorationsCollection()
 
         if(!isCodeEditor(editor)){
             return
         }
 
-        const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
+        const codeEditor = editor as monaco.editor.IStandaloneCodeEditor
 
         if (props.scrollKey && scrollMemory) {
-            const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
+            const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState")
             if (savedState) {
-                codeEditor.restoreViewState(savedState);
-                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
+                codeEditor.restoreViewState(savedState)
+                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1)
             }
 
-            const top = scrollMemory.loadData<number>("scrollTop", 0);
+            const top = scrollMemory.loadData<number>("scrollTop", 0)
             if (typeof top === "number") {
-                codeEditor.setScrollTop(top);
+                codeEditor.setScrollTop(top)
             }
 
             const throttledSave = useThrottleFn(() => {
-                scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
-                scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
-            }, 100);
+                scrollMemory.saveData(codeEditor.saveViewState(), "viewState")
+                scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop")
+            }, 100)
 
-            codeEditor.onDidScrollChange?.(throttledSave);
+            codeEditor.onDidScrollChange?.(throttledSave)
         }
 
         if (!isDiff.value) {
             editor.onDidBlurEditorWidget?.(() => {
                 emit("focusout", isCodeEditor(editor)
                     ? editor.getValue()
-                    : undefined);
-                focus.value = false;
-            });
+                    : undefined)
+                focus.value = false
+            })
 
             if(props.shouldFocus){
                 editor.onDidFocusEditorText?.(() => {
-                    focus.value = true;
-                });
+                    focus.value = true
+                })
 
-                monacoRef?.focus();
+                monacoRef?.focus()
             }
         }
 
@@ -405,12 +405,12 @@
                 contextMenuGroupId: "navigation",
                 contextMenuOrder: 1.5,
                 run: (ed) => {
-                    emit("save", ed.getValue());
+                    emit("save", ed.getValue())
                 },
-            });
+            })
         } else {
             if (props.lang === "json") {
-                editor.getAction("editor.action.formatDocument")?.run();
+                editor.getAction("editor.action.formatDocument")?.run()
             }
         }
 
@@ -418,12 +418,12 @@
             id: "moveCursor",
             label: "Move cursor",
             run: (ed, args?: { lineNumber: number; column: number }) => {
-                if (!args?.lineNumber || !args?.column) return;
-                ed.setPosition({lineNumber: args.lineNumber, column: args.column});
-                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column});
-                ed.focus();
+                if (!args?.lineNumber || !args?.column) return
+                ed.setPosition({lineNumber: args.lineNumber, column: args.column})
+                ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column})
+                ed.focus()
             },
-        });
+        })
 
         editor.addAction({
             id: "kestra-execute",
@@ -432,9 +432,9 @@
             contextMenuGroupId: "navigation",
             contextMenuOrder: 1.5,
             run: (ed) => {
-                emit("execute", ed.getValue());
+                emit("execute", ed.getValue())
             },
-        });
+        })
 
         editor.addAction({
             id: "confirm",
@@ -443,37 +443,37 @@
             contextMenuGroupId: "navigation",
             contextMenuOrder: 1.5,
             run: (ed) => {
-                emit("confirm", ed.getValue());
+                emit("confirm", ed.getValue())
             },
-        });
+        })
 
         // TabFocus is global to all editor so revert the behavior on non inputs
         editor.onDidFocusEditorText?.(() => {
-            TabFocus.setTabFocusMode(props.keepFocused === undefined ? props.input : false);
-        });
+            TabFocus.setTabFocusMode(props.keepFocused === undefined ? props.input : false)
+        })
 
         if (props.input) {
             editor.addAction({
                 id: "prevent-ctrl-h",
                 label: "Prevent CTRL + H",
                 keybindings: [KeyMod.CtrlCmd | KeyCode.KeyH],
-                run: () => {}
-            });
+                run: () => {},
+            })
 
             editor.addAction({
                 id: "prevent-f1",
                 label: "Prevent F1",
                 keybindings: [KeyCode.F1],
-                run: () => {}
-            });
+                run: () => {},
+            })
 
             if (!props.readOnly) {
                 editor.addAction({
                     id: "prevent-ctrl-f",
                     label: "Prevent CTRL + F",
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyF],
-                    run: () => {}
-                });
+                    run: () => {},
+                })
             }
         }
 
@@ -487,15 +487,15 @@
                 async run(ed) {
                     const foldingContrib = ed.getContribution(
                         "editor.contrib.folding",
-                    ) as any;
-                    const foldingModel = await foldingContrib?.getFoldingModel();
-                    let editorModel = foldingModel.textModel;
-                    let regions = foldingModel.regions;
-                    let toToggle = [];
+                    ) as any
+                    const foldingModel = await foldingContrib?.getFoldingModel()
+                    let editorModel = foldingModel.textModel
+                    let regions = foldingModel.regions
+                    let toToggle = []
                     for (let i = regions.length - 1; i >= 0; i--) {
                         if (regions.isCollapsed(i) === false) {
                             let startLineNumber =
-                                regions.getStartLineNumber(i);
+                                regions.getStartLineNumber(i)
 
                             if (
                                 editorModel
@@ -503,84 +503,84 @@
                                     .trim()
                                     .endsWith("|")
                             ) {
-                                toToggle.push(regions.toRegion(i));
+                                toToggle.push(regions.toRegion(i))
                             }
                         }
                     }
-                    foldingModel.toggleCollapseState(toToggle);
+                    foldingModel.toggleCollapseState(toToggle)
 
-                    return;
+                    return
                 },
-            });
+            })
 
             if (localStorage.getItem("autofoldTextEditor") === "true") {
-                autoFold(true);
+                autoFold(true)
             }
         }
 
         if (!props.fullHeight) {
             editor.onDidContentSizeChange((e) => {
-                if (!container.value) return;
+                if (!container.value) return
                 container.value.style.height =
-                    e.contentHeight + props.customHeight + "px";
-            });
+                    e.contentHeight + props.customHeight + "px"
+            })
         }
 
         if (!isDiff.value) {
             editor.onDidContentSizeChange((_) => {
-                highlightPebble();
-            });
+                highlightPebble()
+            })
 
             editor.onDidChangeCursorPosition?.(() => {
-                clearTimeout(lastTimeout);
+                clearTimeout(lastTimeout)
                 if(!editor) return
                 if(preventCursorChange.value) {
-                    preventCursorChange.value = false;
-                    return;
+                    preventCursorChange.value = false
+                    return
                 }
                 if(!isCodeEditor(editor))return
-                let position = editor.getPosition();
-                let model = editor.getModel();
+                let position = editor.getPosition()
+                let model = editor.getModel()
                 lastTimeout = setTimeout(() => {
-                    if(!position || !model) return;
+                    if(!position || !model) return
                     emit("cursor", {
                         position: position,
                         model: model,
-                    });
+                    })
                     // Save view state when cursor changes
                     if (scrollMemory) {
-                        scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                        scrollMemory.saveData(codeEditor.saveViewState(), "viewState")
                     }
-                }, 100) as unknown as number;
-                highlightPebble();
-            });
+                }, 100) as unknown as number
+                highlightPebble()
+            })
         }
 
         // attach an imperative method to the element so tests can programmatically update
         // the value of the editor without dealing with how Monaco handles the exact keystrokes
         monacoRef.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value: string) => {
             if(!isCodeEditor(editor))return
-            editor?.setValue(value);
-        };
+            editor?.setValue(value)
+        }
     }
 
-    function autoFold(autoFold?: boolean) {
-        if (autoFold && editor) {
-            editor.trigger("fold", "fold-multiline", {});
+    function autoFold(shouldFold?: boolean) {
+        if (shouldFold && editor) {
+            editor.trigger("fold", "fold-multiline", {})
         }
     }
 
     function unfoldAll() {
-        editor?.trigger("unfold", "editor.unfoldAll", {});
+        editor?.trigger("unfold", "editor.unfoldAll", {})
     }
 
     function onInput(value: string) {
-        emit("update:modelValue", value);
+        emit("update:modelValue", value)
     }
 
     function onPlaceholderClick() {
-        editor?.layout();
-        editor?.focus();
+        editor?.layout()
+        editor?.focus()
     }
 
     const decorationsLists: {
@@ -589,26 +589,26 @@
     } = {}
 
     function getHighlightDecoration(range: {start: number, end: number}) {
-        if (!monacoEditor.value) return ;
-        const monacoRef = monacoEditor.value.monaco;
+        if (!monacoEditor.value) return 
+        const monacoRef = monacoEditor.value.monaco
         return [{
             range: new monacoRef.Range(range.start, 1, range.end, 1),
             options: {
                 isWholeLine: true,
                 className: "highlight-lines",
             },
-        }] as monaco.editor.IModelDeltaDecoration[];
+        }] as monaco.editor.IModelDeltaDecoration[]
     }
 
     function highlightLinesRange(range: {start: number, end: number}) {
-        decorationsLists.lines = getHighlightDecoration(range);
-        setDecorations();
+        decorationsLists.lines = getHighlightDecoration(range)
+        setDecorations()
     }
 
 
     function clearLinesRangeHighlights() {
-        decorationsLists.lines = [];
-        setDecorations();
+        decorationsLists.lines = []
+        setDecorations()
     }
 
     defineExpose({
@@ -621,24 +621,24 @@
     function setDecorations() {
         decorations?.clear()
         if(decorationsLists.lines){
-            decorations?.append(decorationsLists.lines);
+            decorations?.append(decorationsLists.lines)
         }
         if(decorationsLists.pebble){
-            decorations?.append(decorationsLists.pebble);
+            decorations?.append(decorationsLists.pebble)
         }
     }
 
     function highlightPebble() {
         if(!isCodeEditor(editor))return
         // Highlight code that match pebble content
-        let model = editor?.getModel?.();
-        let text = model?.getValue?.();
-        let regex = new RegExp("\\{\\{(.+?)}}", "g");
-        let match;
-        const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = [];
-        while (text && model && (match = regex.exec(text)) !== null) {
-            let startPos = model.getPositionAt(match.index);
-            let endPos = model.getPositionAt(match.index + match[0].length);
+        let model = editor?.getModel?.()
+        let text = model?.getValue?.()
+        let regex = new RegExp("\\{\\{(.+?)}}", "g")
+        let match
+        const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = []
+        if (text && model) while ((match = regex.exec(text)) !== null) {
+            let startPos = model.getPositionAt(match.index)
+            let endPos = model.getPositionAt(match.index + match[0].length)
             decorationsToAdd.push({
                 range: {
                     startLineNumber: startPos.lineNumber,
@@ -649,20 +649,20 @@
                 options: {
                     inlineClassName: "highlight-pebble",
                 },
-            });
+            })
         }
 
-        decorationsLists.pebble = decorationsToAdd;
-        setDecorations();
+        decorationsLists.pebble = decorationsToAdd
+        setDecorations()
     }
 
     const widgetNode = (() => {
-        const node = document.createElement("div");
-        node.className = "editor-content-widget";
+        const node = document.createElement("div")
+        node.className = "editor-content-widget"
         const content = document.createElement("div")
-        content.className = "editor-content-widget-content";
+        content.className = "editor-content-widget-content"
         node.appendChild(content)
-        return node;
+        return node
     })()
 
     const showWidgetContent = ref(false)
@@ -689,18 +689,18 @@
                 }
             },
             getDomNode: () => {
-                const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement;
+                const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement
                 if(content){
-                    content.style.height = widget.height + "rem";
+                    content.style.height = widget.height + "rem"
                 }
-                return widgetNode;
+                return widgetNode
             },
             afterRender() {
-                const boundingClientRect = monacoEditor.value!.$el.querySelector(".ks-monaco-editor .monaco-scrollable-element").getBoundingClientRect();
+                const boundingClientRect = monacoEditor.value!.$el.querySelector(".ks-monaco-editor .monaco-scrollable-element").getBoundingClientRect()
                 // Since we must position the widget on the right side but our anchor is from the left, we add the width of the editor minus the right offset (150px is a rough estimate of the widget's width)
-                widgetNode.style.left = `calc(${boundingClientRect.width}px - 150px - ${widget.right})`;
-            }
-        });
+                widgetNode.style.left = `calc(${boundingClientRect.width}px - 150px - ${widget.right})`
+            },
+        })
 
         await waitForWidgetContentNode()
 
@@ -708,18 +708,18 @@
     }
 
     async function wait(time: number){
-        return new Promise(resolve => setTimeout(resolve, time));
+        return new Promise(resolve => setTimeout(resolve, time))
     }
 
     async function waitForWidgetContentNode() {
-        await wait(30);
+        await wait(30)
         if (document.querySelector(".editor-content-widget-content") === null) {
-            return waitForWidgetContentNode();
+            return waitForWidgetContentNode()
         }
     }
 
     function removeContentWidget(id: string) {
-        showWidgetContent.value = false;
+        showWidgetContent.value = false
         if(!isCodeEditor(editor)) return
         editor?.removeContentWidget({
             getId: () => id,
@@ -730,9 +730,9 @@
                 }
             },
             getDomNode: () => {
-                return widgetNode;
+                return widgetNode
             },
-        });
+        })
     }
 </script>
 

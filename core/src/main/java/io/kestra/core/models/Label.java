@@ -32,6 +32,8 @@ public record Label(
     public static final String TEST = SYSTEM_PREFIX + "test";
     public static final String FROM = SYSTEM_PREFIX + "from";
     public static final String KILL_SWITCH = SYSTEM_PREFIX + "killSwitch";
+    public static final String MCP_SERVER_ID = SYSTEM_PREFIX + "mcpServerId";
+    public static final String MCP_SESSION_ID = SYSTEM_PREFIX + "mcpSessionId";
 
     /**
      * Static helper method for converting a list of labels to a nested map.

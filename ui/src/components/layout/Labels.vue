@@ -15,11 +15,11 @@
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue";
+    import {watch} from "vue"
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
+    import {useRouter, useRoute} from "vue-router"
+    const router = useRouter()
+    const route = useRoute()
 
     interface Label {
         key?: string;
@@ -37,49 +37,49 @@
             readOnly: false,
             filterType: "labels",
         },
-    );
+    )
 
-    import {decodeSearchParams} from "@kestra-io/design-system";
-    let query: any[] = [];
+    import {decodeSearchParams} from "@kestra-io/design-system"
+    let query: any[] = []
     watch(
         () => route.query,
         (q) => (query = decodeSearchParams(q)),
         {immediate: true},
-    );
+    )
 
     const isChecked = (label: Label) => {
         return query.some((l) => {
             if (props.filterType === "type") {
-                return l.field === props.filterType && l.operation === "EQUALS" && typeof l.value === "string" && l.value === label.value;
+                return l.field === props.filterType && l.operation === "EQUALS" && typeof l.value === "string" && l.value === label.value
             }
 
-            if (typeof l?.value !== "string") return false;
+            if (typeof l?.value !== "string") return false
 
-            const [key, value] = l.value.split(":");
-            return l.field === props.filterType && l.operation === "EQUALS" && key === label.key && value === label.value;
-        });
-    };
+            const [key, value] = l.value.split(":")
+            return l.field === props.filterType && l.operation === "EQUALS" && key === label.key && value === label.value
+        })
+    }
 
     const updateLabel = (label: Label) => {
         const getKey = (key?: string) => (props.filterType === "type"
             ? `filters[${props.filterType}][EQUALS]`
-            : `filters[${props.filterType}][EQUALS][${key}]`);
+            : `filters[${props.filterType}][EQUALS][${key}]`)
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query} as Record<string, any>;
-            delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)];
-            replacementQuery.page = "1";
-            router.replace({query: replacementQuery});
+            const replacementQuery = {...route.query} as Record<string, any>
+            delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)]
+            replacementQuery.page = "1"
+            router.replace({query: replacementQuery})
         } else {
-            const newQuery = {...route.query, page: "1"} as Record<string, any>;
+            const newQuery = {...route.query, page: "1"} as Record<string, any>
             if (props.filterType === "type") {
-                newQuery[getKey()] = label.value;
+                newQuery[getKey()] = label.value
             } else {
-                newQuery[getKey(label.key)] = label.value;
+                newQuery[getKey(label.key)] = label.value
             }
-            router.replace({query: newQuery});
+            router.replace({query: newQuery})
         }
-    };
+    }
 </script>
 
 <style scoped lang="scss">

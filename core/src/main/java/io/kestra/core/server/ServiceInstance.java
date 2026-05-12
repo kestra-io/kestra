@@ -16,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.server.Service.ServiceState;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Runtime information about a Kestra's service (e.g., WORKER, EXECUTOR, etc.).
  *
@@ -40,7 +42,7 @@ public record ServiceInstance(
     Instant createdAt,
     Instant updatedAt,
     List<TimestampedEvent> events,
-    ServerConfig config,
+    @Schema(hidden = true) ServerConfig config,
     Map<String, Object> props,
     Set<Metric> metrics,
     long seqId) implements HasUID {

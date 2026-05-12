@@ -39,6 +39,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -106,8 +107,8 @@ public class ExecutionService {
     }
 
     /**
-     * Retry set the given taskRun in created state
-     * and return the execution in running state
+     * Retry set the given taskRun in the created state
+     * and return the execution in the running state
      **/
     public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
@@ -115,29 +116,36 @@ public class ExecutionService {
 
         if (taskRun.getParentTaskRunId() != null) {
             // we need to find the parent to remove any errors or finally tasks already executed
-            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
-            Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
-            if (parentTask instanceof FlowableTask<?> flowableTask) {
-                if (flowableTask.getErrors() != null) {
-                    List<Task> allErrors = Stream.concat(
-                        flowableTask.getErrors().stream()
-                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
-                            .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
-                        flowableTask.getErrors().stream()
-                    )
-                        .toList();
-                    allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
-                }
+            // When the task run belongs to a Loop sub-execution its logical
+            // parent (the Loop task run) lives in the parent execution, not this one.
+            Optional<TaskRun> maybeParentTaskRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+                .filter(t -> t.getId().equals(taskRun.getParentTaskRunId()))
+                .findFirst();
+            if (maybeParentTaskRun.isPresent()) {
+                TaskRun parentTaskRun = maybeParentTaskRun.get();
+                Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+                if (parentTask instanceof FlowableTask<?> flowableTask) {
+                    if (flowableTask.getErrors() != null) {
+                        List<Task> allErrors = Stream.concat(
+                            flowableTask.getErrors().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
+                            flowableTask.getErrors().stream()
+                        )
+                            .toList();
+                        allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    }
 
-                if (flowableTask.getFinally() != null) {
-                    List<Task> allFinally = Stream.concat(
-                        flowableTask.getFinally().stream()
-                            .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
-                            .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
-                        flowableTask.getFinally().stream()
-                    )
-                        .toList();
-                    allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    if (flowableTask.getFinally() != null) {
+                        List<Task> allFinally = Stream.concat(
+                            flowableTask.getFinally().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
+                            flowableTask.getFinally().stream()
+                        )
+                            .toList();
+                        allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                    }
                 }
             }
 
@@ -273,6 +281,13 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+        if (taskRunId != null) {
+            // The task run may live in a loop sub-execution (possibly nested); find the right execution to operate on
+            Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+                .map(ExecutionWithTaskRun::execution)
+                .orElse(execution);
+            return replay(targetExecution, flow, taskRunId, revision, breakpoints, false);
+        }
         return replay(execution, flow, taskRunId, revision, breakpoints, false);
     }
 
@@ -386,16 +401,21 @@ public class ExecutionService {
     }
 
     public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
-        Execution newExecution = markAs(execution, flow, taskRunId, newState);
+        // Resolve the actual execution containing the task run — may be a loop sub-execution
+        Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+            .map(ExecutionWithTaskRun::execution)
+            .orElse(execution);
 
-        List<Label> newLabels = new ArrayList<>(newExecution.getLabels());
+        Execution newExecution = markAs(targetExecution, flow, taskRunId, newState);
+
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(newExecution.getLabels()));
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
         }
         newExecution = newExecution.withLabels(newLabels);
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
-        if (execution.getState().canChangeStatus()) {
+        if (targetExecution.getState().canChangeStatus()) {
             List<TaskRun> newTaskRuns = newExecution.getTaskRunList();
             // We need to remove global error tasks and flowable error tasks if any
             flow
@@ -416,15 +436,50 @@ public class ExecutionService {
             throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
 
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, targetExecution, CrudEventType.UPDATE));
         return newExecution;
     }
 
-    public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
-        return this.markAs(execution, flow, taskRunId, newState, null, null);
+    /**
+     * Find the execution (main or loop sub-execution) that contains the given task run.
+     * Searches the given execution first; if not found, searches loop sub-executions.
+     *
+     * @param execution the parent execution to search first
+     * @param taskRunId the task run ID to find
+     * @return the execution and task run pair, or empty if not found in any execution
+     */
+    public Optional<ExecutionWithTaskRun> findExecutionWithTaskRun(Execution execution, String taskRunId) {
+        Optional<TaskRun> maybeTaskRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(tr -> tr.getId().equals(taskRunId))
+            .findFirst();
+        if (maybeTaskRun.isPresent()) {
+            return Optional.of(new ExecutionWithTaskRun(execution, maybeTaskRun.get()));
+        }
+
+        // Recursively search loop sub-executions to support nested loops
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream()
+            .map(sub -> findExecutionWithTaskRun(sub, taskRunId))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst();
     }
 
-    @SuppressWarnings("deprecation")
+    public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
+        // The task run may live in a loop sub-execution; find the right execution to operate on
+        Execution targetExecution = findExecutionWithTaskRun(execution, taskRunId)
+            .map(ExecutionWithTaskRun::execution)
+            .orElse(execution);
+        return this.markAs(targetExecution, flow, taskRunId, newState, null, null);
+    }
+
+    /**
+     * Holds an execution alongside the specific task run found within it.
+     *
+     * @param execution the execution (main or sub-execution) that contains the task run
+     * @param taskRun   the task run found in that execution
+     */
+    public record ExecutionWithTaskRun(Execution execution, TaskRun taskRun) {}
+
     private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
         @Nullable Pause.Resumed resumed) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -777,6 +832,44 @@ public class ExecutionService {
     }
 
     /**
+     * Lookup for all loop sub-executions created by the given execution that are still running or paused,
+     * and returns the relevant {@link ExecutionKilledExecution} events that should be requested.
+     * This method is not responsible for executing the events.
+     *
+     * @param tenantId    of the parent execution.
+     * @param executionId of the parent execution.
+     * @return a list of zero or more {@link ExecutionKilledExecution}.
+     */
+    public List<ExecutionKilledExecution> killLoopSubExecutions(final String tenantId, final String executionId) {
+        return executionRepository.findLoopSubExecutions(tenantId, executionId)
+            .stream()
+            .filter(subExecution -> subExecution.getState().isRunning() || subExecution.getState().isPaused())
+            .map(subExecution -> (ExecutionKilledExecution) ExecutionKilledExecution.builder()
+                .executionId(subExecution.getId())
+                .isOnKillCascade(true)
+                .state(ExecutionKilled.State.REQUESTED)
+                .tenantId(tenantId)
+                .build())
+            .toList();
+    }
+
+    /**
+     * Finds the last failing loop sub-execution associated with the given loop task run.
+     * Used when restarting an execution to identify which sub-execution needs to be restarted.
+     *
+     * @param execution   the parent execution
+     * @param loopTaskRun the Loop task run in the parent execution
+     * @return the last restartable sub-execution for that loop task run, if any
+     */
+    public Optional<Execution> findLastFailingLoopSubExecution(Execution execution, TaskRun loopTaskRun) {
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId())
+            .stream()
+            .filter(sub -> sub.getLoopRun() != null && sub.getLoopRun().taskRunId().equals(loopTaskRun.getId()))
+            .filter(sub -> sub.getState().canBeRestarted())
+            .max(Comparator.comparingInt(sub -> sub.getLoopRun().index()));
+    }
+
+    /**
      * Kill an execution.
      *
      * @return the execution in a KILLING state if not already terminated
@@ -817,7 +910,19 @@ public class ExecutionService {
      * Climb up the hierarchy of parent taskruns and kill them all.
      */
     public Execution killParentTaskruns(TaskRun taskRun, Execution execution) throws InternalException {
-        var parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
+        if (execution.getTaskRunList() == null) {
+            return execution;
+        }
+
+        Optional<TaskRun> maybeParent = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getId().equals(taskRun.getParentTaskRunId()))
+            .findFirst();
+        // Parent may live in a different execution (e.g., a Loop task run in the parent execution when this is a Loop sub-execution).
+        // Skip kill propagation in that case, this is handled directly by killExecution.
+        if (maybeParent.isEmpty()) {
+            return execution;
+        }
+        var parentTaskRun = maybeParent.get();
         Execution newExecution = execution;
         if (parentTaskRun.getState().getCurrent() != State.Type.KILLED) {
             newExecution = newExecution.withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.KILLED));
@@ -918,8 +1023,8 @@ public class ExecutionService {
             alterState = originalTaskRun.withState(newStateType).getState();
         } else {
             Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
-            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil) {
-                // The current task run is the reference task run, its default state will be newState
+            if (!task.isFlowable() || task instanceof WorkingDirectory || task instanceof LoopUntil || task instanceof Loop) {
+                // The current task run is the reference task run, its default state will be newState.
                 alterState = originalTaskRun.withState(newStateType).getState();
             } else {
                 // The current task run is an ascendant of the reference task run

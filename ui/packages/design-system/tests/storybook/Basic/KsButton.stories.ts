@@ -62,15 +62,28 @@ export const Default: Story = {
 export const Types: Story = {
     render: () => ({
         components: {KsButton},
+        setup() {
+            return {DownloadIcon}
+        },
         template: `
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
-                <ks-button>Default</ks-button>
-                <ks-button type="primary">Primary</ks-button>
-                <ks-button type="success">Success</ks-button>
-                <ks-button type="warning">Warning</ks-button>
-                <ks-button type="danger">Danger</ks-button>
-                <ks-button type="info">Info</ks-button>
-                <ks-button text>Text</ks-button>
+                <ks-button :icon="DownloadIcon">Default</ks-button>
+                <ks-button :icon="DownloadIcon" type="primary">Primary</ks-button>
+                <ks-button :icon="DownloadIcon" type="success">Success</ks-button>
+                <ks-button :icon="DownloadIcon" type="warning">Warning</ks-button>
+                <ks-button :icon="DownloadIcon" type="danger">Danger</ks-button>
+                <ks-button :icon="DownloadIcon" type="info">Info</ks-button>
+                <ks-button :icon="DownloadIcon" text>Text</ks-button>
+            </div>
+
+            <div style="padding:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+                <ks-button disabled :icon="DownloadIcon">Default</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="primary">Primary</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="success">Success</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="warning">Warning</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="danger">Danger</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="info">Info</ks-button>
+                <ks-button disabled :icon="DownloadIcon" text>Text</ks-button>
             </div>
         `,
     }),
@@ -101,6 +114,7 @@ export const Plain: Story = {
                 <ks-button type="success" plain>Success</ks-button>
                 <ks-button type="warning" plain>Warning</ks-button>
                 <ks-button type="danger" plain>Danger</ks-button>
+                <ks-button type="info" plain>Info</ks-button>
             </div>
         `,
     }),
@@ -129,9 +143,13 @@ export const Disabled: Story = {
         components: {KsButton},
         template: `
             <div style="padding:24px;display:flex;gap:12px;align-items:center">
-                <ks-button disabled>Default</ks-button>
-                <ks-button type="primary" disabled>Primary</ks-button>
-                <ks-button type="danger" disabled>Danger</ks-button>
+                <ks-button disabled :icon="DownloadIcon">Default</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="primary">Primary</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="success">Success</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="warning">Warning</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="danger">Danger</ks-button>
+                <ks-button disabled :icon="DownloadIcon" type="info">Info</ks-button>
+                <ks-button disabled :icon="DownloadIcon" text>Text</ks-button>
             </div>
         `,
     }),

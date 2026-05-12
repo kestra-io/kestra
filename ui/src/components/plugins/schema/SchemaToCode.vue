@@ -22,13 +22,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import type {HighlighterCore} from "shiki/core";
-    import {KsButton, KsTooltip} from "@kestra-io/design-system";
-    import Check from "vue-material-design-icons/Check.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import {computed, ref} from "vue"
+    import type {HighlighterCore} from "shiki/core"
+    import {KsButton, KsTooltip} from "@kestra-io/design-system"
+    import Check from "vue-material-design-icons/Check.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 
-    const COPY_RESET_DELAY_MS = 2000;
+    const COPY_RESET_DELAY_MS = 2000
 
     const props = withDefaults(defineProps<{
         highlighter: HighlighterCore;
@@ -39,26 +39,26 @@
         code: "",
         language: null,
         theme: "github-dark",
-    });
+    })
 
-    const isHoveringCode = ref(false);
-    const copied = ref(false);
-    const copyResetTimer = ref<ReturnType<typeof setTimeout>>();
+    const isHoveringCode = ref(false)
+    const copied = ref(false)
+    const copyResetTimer = ref<ReturnType<typeof setTimeout>>()
 
     const codeData = computed(() => props.highlighter.codeToHtml(props.code, {
         lang: props.language ?? "text",
         theme: props.theme,
-    }));
+    }))
 
     function copyToClipboard() {
-        clearTimeout(copyResetTimer.value);
-        navigator.clipboard.writeText(props.code.trimEnd());
-        copied.value = true;
+        clearTimeout(copyResetTimer.value)
+        navigator.clipboard.writeText(props.code.trimEnd())
+        copied.value = true
 
         copyResetTimer.value = setTimeout(() => {
-            copied.value = false;
-            copyResetTimer.value = undefined;
-        }, COPY_RESET_DELAY_MS);
+            copied.value = false
+            copyResetTimer.value = undefined
+        }, COPY_RESET_DELAY_MS)
     }
 </script>
 

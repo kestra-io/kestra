@@ -24,17 +24,17 @@
 </template>
 
 <script setup lang="ts">
-    import {Restore} from "../utils/icons";
+    import {Restore} from "../utils/icons"
 
     defineProps<{
         footerText: string;
         timeRangeMode: "predefined" | "custom";
-    }>();
+    }>()
 
     const emits = defineEmits<{
         reset: [];
         apply: [];
-    }>();
+    }>()
 </script>
 
 <style lang="scss" scoped>

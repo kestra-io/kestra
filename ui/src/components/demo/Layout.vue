@@ -26,9 +26,9 @@
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
 
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import DemoButtons from "./DemoButtons.vue";
-    import EnterpriseTag from "../EnterpriseTag.vue";
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
+    import DemoButtons from "./DemoButtons.vue"
+    import EnterpriseTag from "../EnterpriseTag.vue"
 
     defineProps<{
         title: string;
@@ -41,7 +41,7 @@
             source: string;
         };
         embed?: boolean;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">
@@ -90,7 +90,7 @@
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
             border: 1px solid var(--ks-border-default);
             overflow: hidden;
             margin: 1rem auto;

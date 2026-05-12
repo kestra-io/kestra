@@ -12,11 +12,11 @@
     defineProps<{
         label: string;
         textValue: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:textValue": [value: string];
-    }>();
+    }>()
 </script>
 
 <style lang="scss" scoped>

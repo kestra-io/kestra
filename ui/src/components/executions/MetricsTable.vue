@@ -77,22 +77,22 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, useTemplateRef, watch} from "vue";
-    import {useI18n} from "vue-i18n";
+    import {ref, useTemplateRef, watch} from "vue"
+    import {useI18n} from "vue-i18n"
 
-    import Timer from "vue-material-design-icons/Timer.vue";
-    import Counter from "vue-material-design-icons/Numeric.vue";
-    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
+    import Timer from "vue-material-design-icons/Timer.vue"
+    import Counter from "vue-material-design-icons/Numeric.vue"
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
 
-    import type {Execution} from "../../stores/executions";
-    import {humanizeDuration, humanizeNumber} from "../../utils/filters";
+    import type {Execution} from "../../stores/executions"
+    import {humanizeDuration, humanizeNumber} from "../../utils/filters"
 
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns} from "../../composables/useTableColumns";
+    import {useTableColumns} from "../../composables/useTableColumns"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = withDefaults(defineProps<{
         embed?: boolean;
@@ -105,62 +105,62 @@
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
-        optionalColumns: () => []
-    });
+        optionalColumns: () => [],
+    })
 
     const localOptionalColumns = ref([
         {label: t("task"), prop: "taskId", default: true},
         {label: t("name"), prop: "name", default: true},
         {label: t("value"), prop: "value", default: true},
         {label: t("tags"), prop: "tags", default: true},
-    ]);
+    ])
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: localOptionalColumns.value,
-        storageKey: "execution-metrics"
-    });
+        storageKey: "execution-metrics",
+    })
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
-    const metrics = ref<any[] | undefined>(undefined);
-    const metricsTotal = ref<number>(0);
+    const metrics = ref<any[] | undefined>(undefined)
+    const metricsTotal = ref<number>(0)
 
-    const dataTable = useTemplateRef("dataTable");
+    const dataTable = useTemplateRef("dataTable")
 
     const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
-        let params: Record<string, any> = {};
+        let params: Record<string, any> = {}
 
         if (props.taskRunId) {
-            params.taskRunId = props.taskRunId;
+            params.taskRunId = props.taskRunId
         }
 
         if (page) {
-            params.page = page;
+            params.page = page
         }
 
         if (size) {
-            params.size = size;
+            params.size = size
         }
 
-        params.sort = sort ?? "name:asc";
+        params.sort = sort ?? "name:asc"
 
         const response: any = await executionsStore.loadMetrics({
             executionId: props.execution?.id ?? "",
             params: params,
-            store: false
-        });
-        metrics.value = response.results;
-        metricsTotal.value = response.total;
-    };
+            store: false,
+        })
+        metrics.value = response.results
+        metricsTotal.value = response.total
+    }
 
     watch(() => props.taskRunId, () => {
-        dataTable.value?.resetAndReload();
-    });
+        dataTable.value?.resetAndReload()
+    })
 
     defineExpose({
         loadData,
-        updateDisplayColumns
-    });
+        updateDisplayColumns,
+    })
 </script>
 
 <style lang="scss" scoped>

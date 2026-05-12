@@ -86,7 +86,7 @@ export const Default: Story = {
         const dropdown = document.querySelector(".kel-select-dropdown")
         await expect(dropdown).toBeTruthy()
         const runningOption = Array.from(document.querySelectorAll(".kel-select-dropdown__item")).find(
-            (el) => el.textContent?.trim() === "Running"
+            (el) => el.textContent?.trim() === "Running",
         ) as HTMLElement | undefined
         if (runningOption) {
             await userEvent.click(runningOption)
@@ -200,7 +200,7 @@ export const Disabled: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await expect(
-            trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true"
+            trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true",
         ).toBe(true)
     },
 }

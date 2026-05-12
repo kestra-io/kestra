@@ -49,8 +49,8 @@ html.dark {
     #{--ks-btn-secondary-bg-hover}: $base-gray-400;
     #{--ks-btn-secondary-bg-inactive}: $base-gray-700;
     #{--ks-btn-secondary-border-active}: $base-primary-300;
-    #{--ks-btn-secondary-border-default}: $base-gray-500;
-    #{--ks-btn-secondary-border-hover}: $base-gray-400;
+    #{--ks-btn-secondary-border-default}: $base-gray-400;
+    #{--ks-btn-secondary-border-hover}: $base-primary-300;
     #{--ks-btn-secondary-border-inactive}: $base-gray-700;
     #{--ks-btn-primary-text}: $base-white;
 
@@ -108,7 +108,7 @@ html.dark {
     #{--ks-topology-dash}: $base-white;
 
     /* scrollbar */
-    #{--ks-scrollbar-background}: $base-gray-900;
+    #{--ks-scrollbar-bg}: $base-gray-900;
     #{--ks-scrollbar-content}: $base-gray-400;
 
     /* dependencies */

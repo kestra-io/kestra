@@ -244,26 +244,26 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage} from "@kestra-io/design-system";
-    import type {FormItemRule} from "@kestra-io/design-system";
-    import ValidationError from "../flows/ValidationError.vue";
-    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue";
-    import {Execution, useExecutionsStore} from "../../stores/executions";
-    import {useI18n} from "vue-i18n";
-    import debounce from "lodash/debounce";
-    import Editor from "../../components/inputs/Editor.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import {normalize, type InputType} from "../../utils/inputs";
+    import {KsMessage} from "@kestra-io/design-system"
+    import type {FormItemRule} from "@kestra-io/design-system"
+    import ValidationError from "../flows/ValidationError.vue"
+    import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
+    import {Execution, useExecutionsStore} from "../../stores/executions"
+    import {useI18n} from "vue-i18n"
+    import debounce from "lodash/debounce"
+    import Editor from "../../components/inputs/Editor.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import {normalize, type InputType} from "../../utils/inputs"
 
     // @ts-expect-error no types for it yet
-    import {inputsToFormData} from "../../utils/submitTask";
-    import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue";
-    import PencilIcon from "vue-material-design-icons/Pencil.vue";
-    import PlusIcon from "vue-material-design-icons/Plus.vue";
-    import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import {Flow} from "../../stores/flow";
+    import {inputsToFormData} from "../../utils/submitTask"
+    import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
+    import PencilIcon from "vue-material-design-icons/Pencil.vue"
+    import PlusIcon from "vue-material-design-icons/Plus.vue"
+    import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import {Flow} from "../../stores/flow"
 
     interface InputError {
         message: string;
@@ -326,7 +326,7 @@
         flow: undefined,
         execution: undefined,
         selectedTrigger: undefined,
-    });
+    })
 
     // Emits
     const emit = defineEmits<{
@@ -335,56 +335,56 @@
         "update:checks": [checks: unknown[]];
         "confirm": [];
         "validation": [payload: ValidationEventPayload];
-    }>();
+    }>()
 
     // Stores and composables
-    const executionsStore = useExecutionsStore();
-    const {t} = useI18n();
-    const instance = getCurrentInstance();
+    const executionsStore = useExecutionsStore()
+    const {t} = useI18n()
+    const instance = getCurrentInstance()
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components
-    const inputsValues = reactive<Record<string, any>>({...props.modelValue});
-    const previousInputsValues = ref<Record<string, any>>({});
-    const inputsMetaData = ref<InputMetaData[]>([]);
-    const multiSelectInputs = reactive<Record<string, any>>({});
-    const inputsValidated = ref<Set<string>>(new Set());
-    const editingArrayId = ref<string | null>(null);
-    const editableItems = reactive<Record<string, string[]>>({});
+    const inputsValues = reactive<Record<string, any>>({...props.modelValue})
+    const previousInputsValues = ref<Record<string, any>>({})
+    const inputsMetaData = ref<InputMetaData[]>([])
+    const multiSelectInputs = reactive<Record<string, any>>({})
+    const inputsValidated = ref<Set<string>>(new Set())
+    const editingArrayId = ref<string | null>(null)
+    const editableItems = reactive<Record<string, string[]>>({})
 
     // Icons exposed to template (markRaw to avoid reactivity overhead)
-    const DeleteOutline = markRaw(DeleteOutlineIcon) as Component;
-    const Pencil = markRaw(PencilIcon) as Component;
-    const Plus = markRaw(PlusIcon) as Component;
-    const ContentSave = markRaw(ContentSaveIcon) as Component;
+    const DeleteOutline = markRaw(DeleteOutlineIcon) as Component
+    const Pencil = markRaw(PencilIcon) as Component
+    const Plus = markRaw(PlusIcon) as Component
+    const ContentSave = markRaw(ContentSaveIcon) as Component
 
     // Computed
     const inputErrors = computed<string[] | null>(() => {
         // we only keep errors that don't target an input directly
-        const keepErrors = inputsMetaData.value.filter(it => it.id === undefined);
-        const errorsExist = keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0;
+        const keepErrors = inputsMetaData.value.filter(it => it.id === undefined)
+        const errorsExist = keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0
 
         return errorsExist
             ? keepErrors
                 .filter(it => it.errors && it.errors.length > 0)
                 .flatMap(it => it.errors?.flatMap(err => err.message) ?? [])
-            : null;
-    });
+            : null
+    })
 
     // Methods
     function normalizeJSON(value: string): unknown {
         try {
             // Step 1: Remove trailing commas in objects and arrays
-            let cleaned = value.replace(/,\s*([}\]])/g, "$1");
+            let cleaned = value.replace(/,\s*([}\]])/g, "$1")
 
             // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
-            cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":");
+            cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":")
 
             // Step 3: Parse into JS object
-            return JSON.parse(cleaned);
+            return JSON.parse(cleaned)
         } catch (e) {
-            console.error("Failed to normalize JSON:", (e as Error).message);
-            return null;
+            console.error("Failed to normalize JSON:", (e as Error).message)
+            return null
         }
     }
 
@@ -392,31 +392,31 @@
         // if this input has not been edited yet
         // showing any error is annoying
         if (!inputsValidated.value.has(id)) {
-            return undefined;
+            return undefined
         }
 
         const errors = inputsMetaData.value
             .filter((it) => it.id === id && it.errors && it.errors.length > 0)
-            .map(it => it.errors!.map(err => err.message).join("\n"));
+            .map(it => it.errors!.map(err => err.message).join("\n"))
 
-        return errors.length > 0 ? errors[0] : undefined;
+        return errors.length > 0 ? errors[0] : undefined
     }
 
     function updateDefaults(): void {
         for (const input of inputsMetaData.value) {
-            const {type, id, value, defaults} = input;
-            const valueOrDefault = value ?? defaults;
+            const {type, id, value, defaults} = input
+            const valueOrDefault = value ?? defaults
             if (inputsValues[id] === undefined || inputsValues[id] === null || input.isDefault) {
                 if (type === "MULTISELECT") {
-                    multiSelectInputs[id] = valueOrDefault;
+                    multiSelectInputs[id] = valueOrDefault
                 } else if (type === "JSON" && value == undefined && input.isDefault) {
                     /*
                     * Handle multiline JSON default values
                     * See https://github.com/kestra-io/kestra/issues/11449
                     */
-                    inputsValues[id] = normalize(type as InputType, normalizeJSON(input.defaults as string));
+                    inputsValues[id] = normalize(type as InputType, normalizeJSON(input.defaults as string))
                 } else {
-                    inputsValues[id] = normalize(type as InputType, valueOrDefault);
+                    inputsValues[id] = normalize(type as InputType, valueOrDefault)
                 }
             }
         }
@@ -426,160 +426,160 @@
         // give 2 seconds for the user to finish their edit
         // and for the server to return with validated content
         setTimeout(() => {
-            inputsValidated.value.add(input.id);
-        }, 2000);
-        input.isDefault = false;
-        emit("update:modelValue", {...inputsValues});
-        emit("update:modelValueNoDefault", inputsValuesWithNoDefault());
+            inputsValidated.value.add(input.id)
+        }, 2000)
+        input.isDefault = false
+        emit("update:modelValue", {...inputsValues})
+        emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
     }
 
     function onSubmit(): void {
-        emit("confirm");
+        emit("confirm")
     }
 
     function onMultiSelectChange(input: InputMetaData, e: unknown[]): void {
-        inputsValues[input.id] = JSON.stringify(e);
-        onChange(input);
+        inputsValues[input.id] = JSON.stringify(e)
+        onChange(input)
     }
 
     function onFileChange(input: InputMetaData, e: Event): void {
-        const target = e.target as HTMLInputElement | null;
+        const target = e.target as HTMLInputElement | null
         if (!target) {
-            return;
+            return
         }
 
-        const files = target.files;
+        const files = target.files
 
         if (!files?.length) {
-            return;
+            return
         }
 
-        const file = files[0];
+        const file = files[0]
 
         // Sanitize the filename: remove spaces and special characters
         const sanitizedName = file.name
             .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
-            .replace(/\s+/g, "_");           // Replace spaces with underscore
+            .replace(/\s+/g, "_")           // Replace spaces with underscore
 
         // Create a new File object with the sanitized name
         const sanitizedFile = new File([file], sanitizedName, {
             type: file.type,
             lastModified: file.lastModified,
-        });
+        })
 
-        const acceptedTypes = getAcceptedFileTypes(input);
+        const acceptedTypes = getAcceptedFileTypes(input)
         if (acceptedTypes) {
-            const allowedTypes = acceptedTypes.toLowerCase().split(",");
-            const fileName = sanitizedName.toLowerCase();
-            const fileType = file.type.toLowerCase();
+            const allowedTypes = acceptedTypes.toLowerCase().split(",")
+            const fileName = sanitizedName.toLowerCase()
+            const fileType = file.type.toLowerCase()
 
             const isAllowed = allowedTypes.some(type => {
-                type = type.trim();
+                type = type.trim()
                 if (type.startsWith(".")) {
-                    return fileName.endsWith(type);
+                    return fileName.endsWith(type)
                 } else {
-                    return fileType === type;
+                    return fileType === type
                 }
-            });
+            })
 
             if (!isAllowed) {
-                KsMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}));
-                target.value = "";
-                return;
+                KsMessage.error(t("fileTypeNotAllowed", {types: acceptedTypes}))
+                target.value = ""
+                return
             }
         }
 
-        inputsValues[input.id] = sanitizedFile;
-        setTimeout(() => onChange(input), 300);
+        inputsValues[input.id] = sanitizedFile
+        setTimeout(() => onChange(input), 300)
     }
 
     function onYamlChange(input: InputMetaData, e: Event): void {
-        const target = e.target as HTMLInputElement;
-        inputsValues[input.id] = target.value;
-        onChange(input);
+        const target = e.target as HTMLInputElement
+        inputsValues[input.id] = target.value
+        onChange(input)
     }
 
     function inputsValuesWithNoDefault(): Record<string, unknown> {
         return inputsMetaData.value.reduce((acc: Record<string, unknown>, input) => {
-            acc[input.id] = input.isDefault ? undefined : inputsValues[input.id];
-            return acc;
-        }, {});
+            acc[input.id] = input.isDefault ? undefined : inputsValues[input.id]
+            return acc
+        }, {})
     }
 
     function numberHint(input: InputMetaData): string | false {
-        const {min, max} = input;
+        const {min, max} = input
 
         if (min !== undefined && max !== undefined) {
-            if (min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`;
-            return `Minimum value is ${min}, maximum value is ${max}.`;
+            if (min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`
+            return `Minimum value is ${min}, maximum value is ${max}.`
         } else if (min !== undefined) {
-            return `Minimum value is ${min}.`;
+            return `Minimum value is ${min}.`
         } else if (max !== undefined) {
-            return `Maximum value is ${max}.`;
+            return `Maximum value is ${max}.`
         }
-        return false;
+        return false
     }
 
     async function validateInputs(): Promise<void> {
         if (inputsMetaData.value === undefined || inputsMetaData.value.length === 0) {
-            return;
+            return
         }
 
-        const inputsValuesNoDefault = inputsValuesWithNoDefault();
+        const inputsValuesNoDefault = inputsValuesWithNoDefault()
 
-        const formData = inputsToFormData(instance?.proxy, inputsMetaData.value, inputsValuesNoDefault);
+        const formData = inputsToFormData(instance?.proxy, inputsMetaData.value, inputsValuesNoDefault)
 
         const metadataCallback = (response: ValidationResponse): void => {
-            emit("update:checks", response.checks || []);
+            emit("update:checks", response.checks || [])
             inputsMetaData.value = response.inputs.reduce((acc: InputMetaData[], it) => {
                 if (it.enabled) {
                     acc.push({
                         ...it.input,
                         errors: it.errors,
                         value: it.value || it.input.prefill,
-                        isDefault: it.isDefault
-                    });
+                        isDefault: it.isDefault,
+                    })
                 }
-                return acc;
-            }, []);
-            updateDefaults();
-        };
+                return acc
+            }, [])
+            updateDefaults()
+        }
 
         if (props.flow !== undefined) {
-            const options = {namespace: props.flow.namespace, id: props.flow.id};
-            const {data} = await executionsStore.validateExecution({...options, formData});
+            const options = {namespace: props.flow.namespace, id: props.flow.id}
+            const {data} = await executionsStore.validateExecution({...options, formData})
 
-            metadataCallback(data);
+            metadataCallback(data)
         } else if (props.execution !== undefined) {
-            const options = {id: props.execution.id};
-            const {data} = await executionsStore.validateResume({...options, formData});
+            const options = {id: props.execution.id}
+            const {data} = await executionsStore.validateResume({...options, formData})
 
-            metadataCallback(data);
+            metadataCallback(data)
         } else {
             emit("validation", {
                 formData: formData,
                 inputsMetaData: inputsMetaData.value,
                 callback: (response: ValidationResponse) => {
-                    metadataCallback(response);
-                }
-            });
+                    metadataCallback(response)
+                },
+            })
         }
     }
 
     function requiredRules(input: InputMetaData): FormItemRule[] | undefined {
         if (input.required === false) {
-            return undefined;
+            return undefined
         }
 
         if (input.type === "BOOLEAN") {
             return [{
                 validator: (_rule, val: unknown, callback: (error?: Error) => void) => {
                     if (val === "undefined") {
-                        return callback(new Error(t("is required", {field: input.displayName || input.id})));
+                        return callback(new Error(t("is required", {field: input.displayName || input.id})))
                     }
-                    callback();
+                    callback()
                 },
-            }];
+            }]
         }
 
         if (["ENUM", "SELECT", "MULTISELECT"].includes(input.type)) {
@@ -588,109 +588,109 @@
                 validator: (_rule, _val: unknown, callback: (error?: Error) => void) => {
                     const val = input.type === "MULTISELECT"
                         ? multiSelectInputs[input.id] as unknown[] | undefined
-                        : inputsValues[input.id] as unknown[] | string | undefined;
+                        : inputsValues[input.id] as unknown[] | string | undefined
                     if (!val || (Array.isArray(val) ? val.length === 0 : !val)) {
-                        return callback(new Error(t("is required", {field: input.displayName || input.id})));
+                        return callback(new Error(t("is required", {field: input.displayName || input.id})))
                     }
-                    callback();
+                    callback()
                 },
                 trigger: "change",
-            }];
+            }]
         }
 
-        return undefined;
+        return undefined
     }
 
     function parseArrayValue(inputId: string): unknown[] {
-        const value = inputsValues[inputId];
-        if (!value) return [];
+        const value = inputsValues[inputId]
+        if (!value) return []
 
         if (typeof value === "string") {
             try {
-                return JSON.parse(value);
+                return JSON.parse(value)
             } catch {
-                return [];
+                return []
             }
         }
-        return [];
+        return []
     }
 
     function addNewArrayItem(input: InputMetaData): void {
         if (!editableItems[input.id]) {
             editableItems[input.id] = parseArrayValue(input.id).map(item =>
-                item?.toString() || ""
-            );
+                item?.toString() || "",
+            )
         }
-        editableItems[input.id].push("");
+        editableItems[input.id].push("")
     }
 
     function updateArrayValue(input: InputMetaData): void {
         const validItems = editableItems[input.id]
             .filter(item => item && item.trim() !== "")
-            .map(item => item.trim());
+            .map(item => item.trim())
 
-        inputsValues[input.id] = JSON.stringify(validItems);
-        onChange(input);
+        inputsValues[input.id] = JSON.stringify(validItems)
+        onChange(input)
     }
 
     function removeArrayItem(input: InputMetaData, index: number): void {
-        editableItems[input.id].splice(index, 1);
-        updateArrayValue(input);
+        editableItems[input.id].splice(index, 1)
+        updateArrayValue(input)
     }
 
     function toggleArrayEdit(inputId: string): void {
-        const isEditing = editingArrayId.value === inputId;
+        const isEditing = editingArrayId.value === inputId
         if (isEditing && editableItems[inputId]) {
-            const input = inputsMetaData.value.find(i => i.id === inputId);
+            const input = inputsMetaData.value.find(i => i.id === inputId)
             if (input) {
-                updateArrayValue(input);
+                updateArrayValue(input)
             }
         }
-        editingArrayId.value = isEditing ? null : inputId;
+        editingArrayId.value = isEditing ? null : inputId
         if (!isEditing) {
-            editableItems[inputId] = parseArrayValue(inputId).map(v => v?.toString() || "");
+            editableItems[inputId] = parseArrayValue(inputId).map(v => v?.toString() || "")
         }
     }
 
     function moveArrayItem(input: InputMetaData, direction: "up" | "down", index: number): void {
-        const {id} = input;
-        const items = editableItems[id];
-        const isValidMove = direction === "up" ? index > 0 : index < items.length - 1;
-        if (!isValidMove) return;
+        const {id} = input
+        const items = editableItems[id]
+        const isValidMove = direction === "up" ? index > 0 : index < items.length - 1
+        if (!isValidMove) return
         const targetIndex = direction === "up" ? index - 1 : index + 1;
-        [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
+        [items[index], items[targetIndex]] = [items[targetIndex], items[index]]
 
-        updateArrayValue(input);
+        updateArrayValue(input)
     }
 
     function getFilePlaceholder(value: unknown): string {
         if (typeof value === "string" && value.startsWith("nsfile://")) {
-            return t("defaultsToNamespaceFile", {name: value.substring(10)});
+            return t("defaultsToNamespaceFile", {name: value.substring(10)})
         }
         if (value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string") {
-            return (value as {name: string}).name;
+            return (value as {name: string}).name
         }
-        return t("no_file_choosen");
+        return t("no_file_choosen")
     }
 
     function getAcceptedFileTypes(input: Pick<InputMetaData, "allowedFileExtensions" | "accept">): string {
         if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
-            return input.allowedFileExtensions.join(",");
+            return input.allowedFileExtensions.join(",")
         }
-        return input.accept || "";
+        return input.accept || ""
     }
 
     // Debounced validation
-    const debouncedValidation = debounce(validateInputs, 500);
+    const debouncedValidation = debounce(validateInputs, 500)
 
     // Keyboard event listener
-    let keyListener: ((e: KeyboardEvent) => void) | null = null;
+    let keyListener: ((e: KeyboardEvent) => void) | null = null
 
     // Initialization
-    inputsMetaData.value = JSON.parse(JSON.stringify(props.initialInputs));
+    inputsMetaData.value = JSON.parse(JSON.stringify(props.initialInputs))
 
     if (props.selectedTrigger?.inputs) {
-        Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs));
+        Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs))
     }
 
     // Run initial validation and setup watcher
@@ -702,62 +702,62 @@
                 if (JSON.stringify(val) !== JSON.stringify(previousInputsValues.value)) {
                     // only revalidate if values are stable for more than 500ms
                     // to avoid too many calls to the server
-                    debouncedValidation();
-                    emit("update:modelValue", {...inputsValues});
-                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault());
+                    debouncedValidation()
+                    emit("update:modelValue", {...inputsValues})
+                    emit("update:modelValueNoDefault", inputsValuesWithNoDefault())
                 }
-                previousInputsValues.value = JSON.parse(JSON.stringify(val));
+                previousInputsValues.value = JSON.parse(JSON.stringify(val))
             },
-            {deep: true}
-        );
+            {deep: true},
+        )
 
         // on first load default values need to be sent to the parent
         // since they are part of the actual value
-        emit("update:modelValue", {...inputsValues});
-    });
+        emit("update:modelValue", {...inputsValues})
+    })
 
     // Lifecycle hooks
     onMounted(() => {
         setTimeout(() => {
-            const el = instance?.proxy?.$el as HTMLElement | undefined;
-            const input = el?.querySelector?.("input");
+            const el = instance?.proxy?.$el as HTMLElement | undefined
+            const input = el?.querySelector?.("input")
             if (input && !input.className.includes("mx-input")) {
-                input.focus();
+                input.focus()
             }
-        }, 500);
+        }, 500)
 
         keyListener = (e: KeyboardEvent) => {
             // Ctrl/Control + Enter
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                onSubmit();
+                e.preventDefault()
+                onSubmit()
             }
-        };
+        }
 
-        document.addEventListener("keydown", keyListener);
-    });
+        document.addEventListener("keydown", keyListener)
+    })
 
     onBeforeUnmount(() => {
         if (keyListener) {
-            document.removeEventListener("keydown", keyListener);
+            document.removeEventListener("keydown", keyListener)
         }
-    });
+    })
 
     // Watchers
     watch(() => props.flow, () => {
-        validateInputs();
-    });
+        validateInputs()
+    })
 
     watch(() => props.execution, () => {
-        validateInputs();
-    });
+        validateInputs()
+    })
 
     // Expose to template (for icons and methods used in template)
     defineExpose({
         validateInputs,
         inputsValues,
         inputsMetaData,
-    });
+    })
 </script>
 
 <style scoped lang="scss">

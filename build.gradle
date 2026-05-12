@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.2.3.7755"
+    id "org.sonarqube" version "7.3.0.8198"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -37,7 +37,7 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.1" apply false
+    id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
     id "io.kestra.gradle.spotless-conventions" version "1.1.0"

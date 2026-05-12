@@ -7,7 +7,7 @@ import org.jooq.Field;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
@@ -25,9 +25,9 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public H2ExecutionRepository(@Named("executions") H2Repository<Execution> repository,
                                  ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
-                                 KestraConfig kestraConfig,
+                                 SystemFlowsConfiguration systemFlowsConfiguration,
                                  JdbcFilterService filterService) {
-        super(repository, eventPublisher, kestraConfig, filterService);
+        super(repository, eventPublisher, systemFlowsConfiguration, filterService);
     }
 
     @Override

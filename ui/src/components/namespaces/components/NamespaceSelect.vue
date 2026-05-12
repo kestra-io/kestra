@@ -35,9 +35,9 @@
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import {defaultNamespace} from "../../../composables/useNamespaces";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import {defaultNamespace} from "../../../composables/useNamespaces"
 
     const props = withDefaults(defineProps<{
         multiple?: boolean,
@@ -48,21 +48,21 @@
     }>(), {
         multiple: false,
         clearable: true,
-        placeholder: undefined
-    });
-
-    const suffixIcon = computed(() => props.readOnly ? Lock : undefined);
-
-    defineOptions({
-        inheritAttrs: false
+        placeholder: undefined,
     })
 
-    const modelValue = defineModel<string | string[]>();
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
 
-    const namespacesStore = useNamespacesStore();
+    defineOptions({
+        inheritAttrs: false,
+    })
+
+    const modelValue = defineModel<string | string[]>()
+
+    const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean)
+        [modelValue.value].flat().filter(Boolean),
     )
 
     const options = computed(() => {
@@ -73,16 +73,16 @@
     })
 
     onMounted(() => {
-        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []});
+        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []})
 
         if (modelValue.value === undefined || modelValue.value.length === 0) {
-            const defaultNamespaceVal = defaultNamespace();
+            const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal];
+                    modelValue.value = [defaultNamespaceVal]
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value;
+                modelValue.value = defaultNamespaceVal ?? modelValue.value
             }
         }
     })

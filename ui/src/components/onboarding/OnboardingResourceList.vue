@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
@@ -38,7 +38,7 @@
 
     defineProps<{
         items: OnboardingResourceItem[];
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

@@ -166,7 +166,7 @@
         const isChecked = selection.some(s =>
             typeof rowKey === "function"
                 ? rowKey(s) === rowKey(row)
-                : s[rowKey as string] === row[rowKey as string]
+                : s[rowKey as string] === row[rowKey as string],
         )
 
         if (isShiftPressed.value && lastCheckedIndex.value !== null) {
@@ -243,7 +243,7 @@
             await props.loadData({
                 page: internalPage.value,
                 size: internalSize.value,
-                sort: internalSort.value
+                sort: internalSort.value,
             })
         } finally {
             isLoading.value = false

@@ -12,27 +12,27 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {useRoute} from "vue-router";
-    import {useDocStore} from "../stores/doc";
-    import Utils from "../utils/utils";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {computed, ref} from "vue"
+    import {useRoute} from "vue-router"
+    import {useDocStore} from "../stores/doc"
+    import * as Utils from "../utils/utils"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
 
-    const docStore = useDocStore();
-    const route = useRoute();
+    const docStore = useDocStore()
+    const route = useRoute()
 
-    const showDocId = computed(() => route.query["showDocId"] !== undefined);
+    const showDocId = computed(() => route.query["showDocId"] !== undefined)
 
-    const text = computed(() => `docId: ${docStore.docId}`);
+    const text = computed(() => `docId: ${docStore.docId}`)
 
-    const copied = ref(false);
+    const copied = ref(false)
 
     function clipboardSuccess() {
-        copied.value = true;
+        copied.value = true
         setTimeout(() => {
-            copied.value = false;
-        }, 2000);
+            copied.value = false
+        }, 2000)
     }
 </script>
 

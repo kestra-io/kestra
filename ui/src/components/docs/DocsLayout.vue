@@ -42,26 +42,26 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useRoute} from "vue-router";
-    import {useScrollMemory} from "../../composables/useScrollMemory";
-    import Menu from "vue-material-design-icons/Menu.vue";
-    import Close from "vue-material-design-icons/Close.vue";
+    import {useRoute} from "vue-router"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
+    import Menu from "vue-material-design-icons/Menu.vue"
+    import Close from "vue-material-design-icons/Close.vue"
 
-    const collapsed = ref(false);
-    const mobileMenuOpen = ref(false);
-    const route = useRoute();
-    const scrollKey = computed(() => `docs:${route.fullPath}`);
+    const collapsed = ref(false)
+    const mobileMenuOpen = ref(false)
+    const route = useRoute()
+    const scrollKey = computed(() => `docs:${route.fullPath}`)
 
     const isPluginsRoute = computed(() => {
         return route.path.startsWith("/main/plugins") ||
-            (typeof route.name === "string" && route.name.startsWith("plugins/"));
-    });
+            (typeof route.name === "string" && route.name.startsWith("plugins/"))
+    })
 
-    useScrollMemory(scrollKey, undefined, true);
+    useScrollMemory(scrollKey, undefined, true)
 
     watch(() => route.fullPath, () => {
-        mobileMenuOpen.value = false;
-    });
+        mobileMenuOpen.value = false
+    })
 
 </script>
 

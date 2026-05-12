@@ -4,11 +4,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.*;
 
-import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -21,14 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ExecutorsUtils {
-
     @Inject
     private MeterRegistry meterRegistry;
 
-    @Value("${" + KestraContext.KESTRA_ALLOCATED_CPU_CORES + ":0}")
-    private int allocatedCpuCores;
+    @Inject
+    private KestraConfiguration kestraConfiguration;
 
     public int getAllocatedCpuCores() {
+        int allocatedCpuCores = kestraConfiguration.allocatedCpuCores() != null ? kestraConfiguration.allocatedCpuCores() : 0;
         return allocatedCpuCores == 0 ? Runtime.getRuntime().availableProcessors() : allocatedCpuCores;
     }
 
@@ -41,6 +40,15 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService cachedVirtualThreadPool(String name) {
+        return this.wrap(
+            name,
+            Executors.newCachedThreadPool(
+                Thread.ofVirtual().name(name + "_%d").factory()
+            )
+        );
+    }
+
     public ExecutorService maxCachedThreadPool(int maxThread, String name) {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
             maxThread,
@@ -49,6 +57,24 @@ public class ExecutorsUtils {
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(),
             ThreadMainFactoryBuilder.build(name + "_%d")
+        );
+
+        threadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        return this.wrap(
+            name,
+            threadPoolExecutor
+        );
+    }
+
+    public ExecutorService maxCachedVirtualThreadPool(int maxThread, String name) {
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+            maxThread,
+            maxThread,
+            60L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            Thread.ofVirtual().name(name + "_%d").factory()
         );
 
         threadPoolExecutor.allowCoreThreadTimeOut(true);

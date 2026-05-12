@@ -1,0 +1,130 @@
+/**
+ * DS 2.0 dark theme — derived from Figma file "_2.0" (node 27078:9083).
+ *
+ * Token naming convention (new in DS 2.0):
+ *   --ks-bg-*        background surfaces (5-level elevation model)
+ *   --ks-text-*      text colors
+ *   --ks-icon-*      icon colors
+ *   --ks-border-*    borders  (semantic + state)
+ *   --ks-btn-*       button states (bg, border, text per variant/state)
+ *   --ks-toogle-*    toggle/switch states
+ *   --ks-status-*    execution status dot colors (same in light + dark)
+ *   --ks-shadow-*    box-shadow presets (3-tier elevation)
+ *   --ks-artwork-*   illustration / empty-state fill & stroke
+ *
+ * The legacy --ks-background-*, --ks-content-*, --ks-button-* tokens from
+ * DS 1.0 (ks-theme-dark.scss) continue to work unchanged so existing
+ * components stay functional during the migration.
+ */
+@use "color-palette" as *;
+
+html.dark {
+
+    // ── Background surfaces ───────────────────────────────────────────────────
+    // 5-level elevation model (base → overlay → surface → elevated → hover)
+    #{--ks-bg-base}:          #{$base-violet-gray-950};   // #111115 deepest layer
+    #{--ks-bg-overlay}:       #{$base-violet-gray-900};   // #1a1c22 app shell / sidebar
+    #{--ks-bg-sidebar}:       #{$base-violet-gray-900};   // #1a1c22 left nav background
+    #{--ks-bg-surface}:       #{$base-violet-gray-800};   // #23252e cards, panels
+    #{--ks-bg-elevated}:      #{$base-violet-gray-900};   // #1a1c22 dropdowns, popovers
+    #{--ks-bg-hover}:         #{$base-violet-gray-800};   // #23252e hover on base layer
+    #{--ks-bg-hover-elevated}: #{$base-violet-gray-700};  // #2e2e3c hover on elevated layer
+    #{--ks-bg-active}:        #{$base-violet-gray-700};   // #2e2e3c active / selected
+    #{--ks-bg-input}:         #{$base-violet-gray-950};   // #111115 text inputs
+    #{--ks-bg-badge}:         #{$base-violet-gray-800};   // #23252e badge pill
+    #{--ks-bg-tag}:           rgba($base-white, 0.1);     // #ffffff1a default tag
+    #{--ks-bg-tag-hover}:     rgba($base-primary-v2-300, 0.2); // #9869f733
+    #{--ks-bg-tag-active}:    rgba($base-primary-v2-300, 0.4); // #9869f766
+
+    // State-semantic backgrounds (used by alert, log, execution row)
+    #{--ks-bg-success}:  #{$base-violet-gray-950};
+    #{--ks-bg-error}:    #{$base-violet-gray-950};
+    #{--ks-bg-info}:     #{$base-violet-gray-950};
+    #{--ks-bg-warning}:  #{$base-violet-gray-950};
+
+    // ── Text ─────────────────────────────────────────────────────────────────
+    #{--ks-text-primary}:   #{$base-white};               // #ffffff  body + headings
+    #{--ks-text-secondary}: #{$base-violet-gray-300};     // #adadbf  labels, meta
+    #{--ks-text-dim}:       #{$base-violet-gray-300};     // #adadbf  placeholder
+    #{--ks-text-inactive}:  #{$base-violet-gray-400};     // #7e7e9b  disabled text
+    #{--ks-text-link}:      #{$base-primary-v2-200};      // #cdb6fb  hyperlinks
+    #{--ks-text-link-hover}: #{$base-primary-v2-300};     // #9869f7  link hover
+
+    #{--ks-text-success}: #{$base-teal-100};              // #bffddd
+    #{--ks-text-error}:   #{$base-coral-100};             // #ffacac
+    #{--ks-text-info}:    #{$base-periwinkle-300};        // #718bfe
+    #{--ks-text-warning}: #{$base-amber-300};             // #ff8b61
+
+    // ── Icons ─────────────────────────────────────────────────────────────────
+    #{--ks-icon}:          #{$base-violet-gray-200};      // #cfd3d6 default icon
+    #{--ks-icon-default}:  #{$base-white};                // #ffffff  on-surface icon
+    #{--ks-icon-active}:   #{$base-primary-v2-200};       // #cdb6fb  active nav icon
+    #{--ks-icon-inactive}: #{$base-violet-gray-300};      // #adadbf  disabled icon
+    #{--ks-icon-muted}:    #{$base-violet-gray-300};      // #adadbf  secondary icon
+    #{--ks-icon-hover}:    #{$base-primary-v2-400};       // #7738f5  icon hover
+
+    #{--ks-icon-success}: #{$base-teal-300};              // #43f6b6
+    #{--ks-icon-error}:   #{$base-coral-100};             // #ffacac
+    #{--ks-icon-info}:    #{$base-periwinkle-300};        // #718bfe
+    #{--ks-icon-warning}: #{$base-amber-300};             // #ff8b61
+
+    // ── Borders ───────────────────────────────────────────────────────────────
+    #{--ks-border-default}:  #{$base-violet-gray-700};    // #2e2e3c standard divider
+    #{--ks-border-subtle}:   #{$base-violet-gray-700};    // #2e2e3c soft divider
+    #{--ks-border-strong}:   #{$base-violet-gray-600};    // #424256 prominent border
+    #{--ks-border-focus}:    #{$base-primary-v2-500};     // #631bf3 focus ring
+
+    #{--ks-border-success}: #{$base-teal-700};            // #1e875e
+    #{--ks-border-error}:   #{$base-coral-600};           // #ed0011
+    #{--ks-border-info}:    #{$base-periwinkle-300};      // #718bfe
+    #{--ks-border-warning}: #{$base-amber-700};           // #a44500
+
+    // ── Buttons — primary ─────────────────────────────────────────────────────
+    #{--ks-btn-primary-bg-default}:  #{$base-primary-v2-500}; // #631bf3
+    #{--ks-btn-primary-bg-hover}:    #{$base-primary-v2-400}; // #7738f5
+    #{--ks-btn-primary-bg-active}:   #{$base-primary-v2-600}; // #5212d6
+    #{--ks-btn-primary-bg-inactive}: #{$base-violet-gray-800}; // #23252e
+    #{--ks-btn-primary-text-default}:  #{$base-white};
+    #{--ks-btn-primary-text-inactive}: #{$base-violet-gray-400}; // #7e7e9b
+
+    // ── Buttons — secondary (outlined ghost) ─────────────────────────────────
+    #{--ks-btn-secondary-bg-default}:  #{$base-violet-gray-800}; // #23252e
+    #{--ks-btn-secondary-bg-hover}:    #{$base-violet-gray-700}; // #2e2e3c
+    #{--ks-btn-secondary-bg-active}:   #{$base-violet-gray-700}; // #2e2e3c
+    #{--ks-btn-secondary-bg-inactive}: #{$base-violet-gray-800}; // #23252e
+
+    #{--ks-btn-secondary-border-default}:  #{$base-violet-gray-600}; // #424256
+    #{--ks-btn-secondary-border-hover}:    #{$base-violet-gray-500}; // #5f5f7c
+    #{--ks-btn-secondary-border-active}:   #{$base-primary-v2-300};  // #9869f7
+    #{--ks-btn-secondary-border-inactive}: #{$base-violet-gray-600}; // #424256
+
+    #{--ks-btn-secondary-text-default}:  #{$base-white};
+    #{--ks-btn-secondary-text-inactive}: #{$base-violet-gray-400};   // #7e7e9b
+
+    // ── Toggle / switch ───────────────────────────────────────────────────────
+    #{--ks-toogle-bg-default}:  #{$base-violet-gray-600}; // #424256
+    #{--ks-toogle-bg-hover}:    #{$base-violet-gray-500}; // #5f5f7c
+    #{--ks-toogle-bg-active}:   #{$base-primary-v2-400};  // #7738f5
+    #{--ks-toogle-bg-inactive}: #{$base-violet-gray-800}; // #23252e
+
+    // ── Execution status dots (same in light + dark) ──────────────────────────
+    #{--ks-status-success}: #{$base-teal-300};            // #43f6b6
+    #{--ks-status-error}:   #{$base-coral-300};           // #ff6a6c
+    #{--ks-status-info}:    #{$base-periwinkle-300};      // #718bfe
+    #{--ks-status-running}: #{$base-primary-v2-300};      // #9869f7
+    #{--ks-status-warning}: #{$base-amber-300};           // #ff8b61
+    #{--ks-status-pending}: #{$base-pending-300};         // #fce070
+    #{--ks-status-neutral}: #{$base-violet-gray-300};     // #adadbf
+
+    // ── Shadows — 3-tier elevation ─────────────────────────────────────────────
+    // element: subtle depth for buttons, inputs, small cards
+    #{--ks-shadow-element}: 0 1px 4px rgba(0, 0, 0, 0.05);
+    // surface: panels, menus, popovers
+    #{--ks-shadow-surface}: 0 2px 8px rgba(0, 0, 0, 0.15);
+    // elevated: modals, dialogs, floating layers
+    #{--ks-shadow-elevated}: 0 8px 24px rgba(0, 0, 0, 0.65);
+
+    // ── Artwork / empty-state illustrations ───────────────────────────────────
+    #{--ks-artwork-fill}:   #{$base-primary-v2-300};  // #9869f7
+    #{--ks-artwork-border}: #{$base-periwinkle-200};  // #a9b5fe
+}

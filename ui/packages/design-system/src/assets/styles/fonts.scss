@@ -53,6 +53,57 @@
     url('../fonts/public-sans/public-sans-v21-latin-800.woff2') format('woff2');
 }
 
+// ── Mona Sans (DS 2.0 primary typeface, replaces Public Sans) ────────────────
+// Font files must be placed in src/assets/fonts/mona-sans/ before these rules
+// activate.  Download from: https://github.com/github/mona-sans/releases
+// Weights shipped: 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold).
+// Until the files are present the browser falls back to any locally installed
+// "Mona Sans", then system-ui.
+
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Mona Sans'),
+    local('MonaSans-Regular'),
+    url('../fonts/mona-sans/MonaSans-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local('Mona Sans Medium'),
+    local('MonaSans-Medium'),
+    url('../fonts/mona-sans/MonaSans-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Mona Sans SemiBold'),
+    local('MonaSans-SemiBold'),
+    url('../fonts/mona-sans/MonaSans-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mona Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Mona Sans Bold'),
+    local('MonaSans-Bold'),
+    url('../fonts/mona-sans/MonaSans-Bold.woff2') format('woff2');
+}
+
 @font-face {
   font-family: 'Source Code Pro';
   font-style: normal;

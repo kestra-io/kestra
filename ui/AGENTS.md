@@ -18,12 +18,87 @@ Under the hood, the design system wraps Element Plus under the `kel` namespace a
 
 > **Note on `@kestra-io/ui-libs`:** The codebase may still contain imports from `@kestra-io/ui-libs`, the previous shared component library. That repository is sunsetting — all components have been migrated here into `ui/packages/`. Do not add new imports from `@kestra-io/ui-libs`; use `Ks*` components from the design system instead.
 
+## Design System 2.0 (in progress)
+
+DS 2.0 is being drafted on branch `draft-design-system-2`. It introduces breaking visual changes derived from the Figma "_2.0" file. Understanding the scope is essential before touching any styling work.
+
+### What changed from DS 1.0 → DS 2.0
+
+| Dimension | DS 1.0 | DS 2.0 |
+|---|---|---|
+| Primary font | Public Sans | **Mona Sans** |
+| Primary purple | `#8405FF` | **`#631BF3`** (cooler, deeper) |
+| Dark neutral ramp | blue-gray (`$base-gray-*`) | **violet-gray** (`$base-violet-gray-*`) |
+| Background model | 2-level (`body`/`card`) | **5-level elevation** (`base` → `overlay` → `surface` → `elevated` → `hover`) |
+| Shadow system | 3 generic (`sm`/`base`/`lg`) | **3 semantic** (`element` / `surface` / `elevated`) |
+| Status colors | green/red/blue/orange | **teal / coral / periwinkle / amber** (higher contrast) |
+| Token naming | `--ks-background-*`, `--ks-content-*` | **`--ks-bg-*`, `--ks-text-*`, `--ks-icon-*`** |
+
+### DS 2.0 token files
+
+| File | Purpose |
+|---|---|
+| `_color-palette.scss` | Primitive palette — now includes `$base-violet-gray-*`, `$base-primary-v2-*`, `$base-teal-*`, `$base-coral-*`, `$base-periwinkle-*`, `$base-amber-*`, `$base-pending-*` |
+| `ks-theme-v2-light.scss` | DS 2.0 semantic tokens for `:root` (light mode) |
+| `ks-theme-v2-dark.scss` | DS 2.0 semantic tokens for `html.dark` |
+| `ks-tokens.scss` | Extended with `--ks-radius-v2-*`, `--ks-shadow-v2-*`, `--ks-font-family-sans-v2`, `--ks-topbar-height`, `--ks-sidebar-width`, `--ks-focus-ring` |
+| `variables.scss` | Extended with `$font-family-sans-serif-v2` and `$colors-v2` map |
+| `fonts.scss` | Mona Sans `@font-face` declarations added (font files in `src/assets/fonts/mona-sans/` — **must be downloaded separately**) |
+
+### DS 2.0 token taxonomy
+
+```
+--ks-bg-*           background surfaces (5-level elevation model)
+--ks-text-*         text colors (primary / secondary / dim / inactive / link / status)
+--ks-icon-*         icon fill colors  (default / active / muted / hover / status)
+--ks-border-*       border colors     (default / subtle / strong / focus / status)
+--ks-btn-primary-*  primary button states  (bg / text per: default/hover/active/inactive)
+--ks-btn-secondary-* secondary button states (bg / border / text per state)
+--ks-toogle-*       toggle/switch states
+--ks-status-*       execution status dot colors (same in light + dark)
+--ks-shadow-*       box-shadow presets  (element / surface / elevated)
+--ks-artwork-*      illustration / empty-state fill & stroke
+--ks-radius-v2-*    border-radius scale (xs=4px, sm=6px, md=8px, lg=12px, xl=16px)
+--ks-shadow-v2-*    aliased shadows pointing to theme-defined values
+```
+
+### Migration strategy (DS 1.0 → 2.0)
+
+- **Phase 1 (current):** DS 2.0 tokens added *alongside* DS 1.0; no existing code broken.
+- **Phase 2:** New `Ks*` components or redesigned variants adopt `--ks-bg-*` / `--ks-text-*` / `--ks-btn-*` tokens.
+- **Phase 3:** Legacy `--ks-background-*` / `--ks-content-*` / `--ks-button-*` tokens deprecated and removed.
+
+**When writing new UI code today:**
+- Use `--ks-bg-surface` instead of `--ks-background-card`.
+- Use `--ks-text-primary` instead of `--ks-content-primary`.
+- Use `--ks-border-default` instead of `--ks-border-primary`.
+- Use `--ks-btn-primary-bg-default` for a primary action button background.
+- Use `--ks-status-*` for execution status indicator colors.
+- Use `--ks-shadow-v2-element` / `--ks-shadow-v2-surface` / `--ks-shadow-v2-elevated` for depth.
+- Use `--ks-font-family-sans-v2` (Mona Sans) for DS 2.0 surfaces.
+
+### Font file setup
+
+Mona Sans `.woff2` files are not included in the repository. Download them from the [GitHub release page](https://github.com/github/mona-sans/releases) and place them in:
+
+```
+ui/packages/design-system/src/assets/fonts/mona-sans/
+  MonaSans-Regular.woff2
+  MonaSans-Medium.woff2
+  MonaSans-SemiBold.woff2
+  MonaSans-Bold.woff2
+```
+
+Until these files are present, browsers fall back to any locally installed "Mona Sans", then `system-ui`.
+
+---
+
 ## Golden rules (non-negotiable)
 
 These rules are what keep the UI maintainable as it grows. Treat any deviation as a bug.
 
 1. **Use a `Ks*` component if one exists.** Check the tables below before writing anything custom or importing from `element-plus`. New screens that mix `<el-button>` and `<KsButton>` are a regression.
-2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.scss` / `ks-theme-dark.scss` — do not pick a one-off color.
+2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-v2-light.scss` / `ks-theme-v2-dark.scss` (DS 2.0) or `ks-theme-light.scss` / `ks-theme-dark.scss` (DS 1.0 legacy) — do not pick a one-off color.
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `$font-family-*` and `$font-size-*` SCSS variables only inside the design-system package — feature code should not redefine them.
 4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream.
 5. **No SCSS variables (`$...`) in feature components.** Use `var(--ks-*)` CSS custom properties inside `<style>` blocks. SCSS variables don't react to dark mode, can't be overridden at runtime, and bind your component to a specific theme. SCSS variables are only acceptable inside `ui/packages/design-system/` itself, in mixins, or for math at build time.

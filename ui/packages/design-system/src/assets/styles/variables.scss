@@ -1,8 +1,13 @@
 @use "color-palette" as palette;
 
-// font family
+// ── DS 1.0 fonts (kept for backward compatibility) ────────────────────────────
 $font-family-sans-serif: "Public Sans", sans-serif;
 $font-family-monospace: "Source Code Pro", monospace;
+
+// ── DS 2.0 fonts ──────────────────────────────────────────────────────────────
+// "Mona Sans" is the new primary typeface.  @font-face declarations live in
+// fonts.scss; font files must be added to src/assets/fonts/mona-sans/.
+$font-family-sans-serif-v2: "Mona Sans", system-ui, sans-serif;
 
 // font sizes
 $font-size-base: 1rem;
@@ -36,6 +41,7 @@ $gray-dark-800: #A69FC1;
 $gray-dark-900: #CAC5DA;
 $gray-dark-950: #f9f9fa;
 
+// ── DS 1.0 semantic colors ─────────────────────────────────────────────────────
 $colors: (
     'primary': palette.$base-purple-500,
     'success': palette.$base-green-500,
@@ -43,6 +49,16 @@ $colors: (
     'danger': palette.$base-red-500,
     'error': palette.$base-red-500,
     'info': palette.$base-blue-500,
+);
+
+// ── DS 2.0 semantic colors ─────────────────────────────────────────────────────
+$colors-v2: (
+    'primary': palette.$base-primary-v2-500,   // #631bf3
+    'success': palette.$base-teal-500,          // #15b983
+    'warning': palette.$base-amber-300,         // #ff8b61
+    'danger':  palette.$base-coral-300,         // #ff6a6c
+    'error':   palette.$base-coral-300,         // #ff6a6c
+    'info':    palette.$base-periwinkle-300,    // #718bfe
 );
 
 // border radius

@@ -3,6 +3,9 @@
  * It is a summary of color choices made in Figma.
  * Should you need to make a change in it, ask a designer
  * at Kestra first, so your changes are not overwritten.
+ *
+ * DS 2.0 additions (violet-gray, primary-v2, teal, coral, periwinkle, amber)
+ * are appended below and follow the Figma "_2.0" file (node 27078:9083).
  */
 /* black */
 $base-black: #14181f;
@@ -94,3 +97,45 @@ $base-yellow-600: #ddc46d;
 $base-yellow-700: #bda85d;
 $base-yellow-800: #9e8c4e;
 $base-yellow-900: #7e703e;
+
+// ─── DS 2.0 palette additions ────────────────────────────────────────────────
+
+/* violet-gray — dark-mode surface / border neutral ramp */
+$base-violet-gray-950: #111115;
+$base-violet-gray-900: #1a1c22;
+$base-violet-gray-800: #23252e;
+$base-violet-gray-700: #2e2e3c;
+$base-violet-gray-600: #424256;
+$base-violet-gray-500: #5f5f7c;
+$base-violet-gray-400: #7e7e9b;
+$base-violet-gray-300: #adadbf;
+$base-violet-gray-200: #cfd3d6;
+
+/* primary-v2 — cooler, deeper purple (DS 2.0 brand shift from #8405FF → #631BF3) */
+$base-primary-v2-200: #cdb6fb;
+$base-primary-v2-300: #9869f7;
+$base-primary-v2-400: #7738f5;
+$base-primary-v2-500: #631bf3;
+$base-primary-v2-600: #5212d6;
+
+/* teal — DS 2.0 success green (brighter, higher contrast) */
+$base-teal-100: #bffddd;
+$base-teal-300: #43f6b6;
+$base-teal-500: #15b983;
+$base-teal-700: #1e875e;
+
+/* coral — DS 2.0 error red (softer salmon-red) */
+$base-coral-100: #ffacac;
+$base-coral-300: #ff6a6c;
+$base-coral-600: #ed0011;
+
+/* periwinkle — DS 2.0 info blue (indigo-leaning) */
+$base-periwinkle-200: #a9b5fe;
+$base-periwinkle-300: #718bfe;
+
+/* amber — DS 2.0 warning orange */
+$base-amber-300: #ff8b61;
+$base-amber-700: #a44500;
+
+/* pending — DS 2.0 queued/pending yellow */
+$base-pending-300: #fce070;

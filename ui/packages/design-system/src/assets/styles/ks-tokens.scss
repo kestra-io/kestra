@@ -5,6 +5,9 @@
     #{--ks-black}: #{v.$black};
     #{--ks-white}: #{v.$white};
 
+    // ── DS 2.0 typography ─────────────────────────────────────────────────────
+    --ks-font-family-sans-v2: #{v.$font-family-sans-serif-v2};
+
     // typography
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};
@@ -77,4 +80,29 @@
     --ks-icon-size-base: 1.25rem;
     --ks-icon-size-lg: 1.5rem;
     --ks-icon-size-xl: 2rem;
+
+    // ── DS 2.0 tokens ─────────────────────────────────────────────────────────
+
+    // Radius — DS 2.0 defines three button-specific radii (from Figma btn-* frames)
+    --ks-radius-v2-xs:  0.25rem;   // 4px  alerts, tags
+    --ks-radius-v2-sm:  0.375rem;  // 6px  secondary/ghost buttons, icon buttons
+    --ks-radius-v2-md:  0.5rem;    // 8px  primary/danger/success buttons
+    --ks-radius-v2-lg:  0.75rem;   // 12px modals, drawers, cards
+    --ks-radius-v2-xl:  1rem;      // 16px toggles, pills
+
+    // Shadows — the three values below are theme-aware (defined in v2 theme files)
+    // and are referenced here as composite tokens for component consumption.
+    // element → smallest depth (buttons, inputs)
+    --ks-shadow-v2-element: var(--ks-shadow-element, 0 1px 4px rgba(0, 0, 0, 0.05));
+    // surface → medium depth (cards, panels, dropdowns)
+    --ks-shadow-v2-surface: var(--ks-shadow-surface, 0 2px 8px rgba(0, 0, 0, 0.10));
+    // elevated → high depth (modals, dialogs, floating layers)
+    --ks-shadow-v2-elevated: var(--ks-shadow-elevated, 0 8px 24px rgba(0, 0, 0, 0.15));
+
+    // Focus ring — used on interactive elements for keyboard accessibility
+    --ks-focus-ring: 0 0 0 3px rgba(99, 27, 243, 0.35);  // primary-v2-500 @ 35%
+
+    // Top-bar / nav chrome heights
+    --ks-topbar-height: 3.5rem;    // 56px  matches main-top-bar Figma component
+    --ks-sidebar-width: 14rem;     // 224px matches Left-sidebar Figma component
 }

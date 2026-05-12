@@ -7,8 +7,13 @@
 // css variables
 @use "fonts.scss";
 @use "ks-tokens.scss";
+// DS 1.0 themes (kept for backward compatibility during migration)
 @use "ks-theme-light.scss";
 @use "ks-theme-dark.scss";
+// DS 2.0 themes — new --ks-bg-*, --ks-text-*, --ks-icon-*, --ks-btn-*, etc.
+// These add new tokens alongside DS 1.0; they do not replace anything yet.
+@use "ks-theme-v2-light.scss";
+@use "ks-theme-v2-dark.scss";
 
 // material-design-icon
 .material-design-icon {

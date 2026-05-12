@@ -22,6 +22,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -37,6 +39,7 @@ import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
+import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -53,7 +56,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
-import io.kestra.worker.senders.WorkerIOSender;
+import io.kestra.worker.senders.GrpcWorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
 
 import io.micronaut.context.ApplicationContext;
@@ -156,10 +159,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             applicationContext.createBean(WorkerJobExecutor.class),
             applicationContext.createBean(WorkerJobFetcher.class),
             List.of(
-                applicationContext.createBean(WorkerIOSender.class, Qualifiers.byName("taskResultSender")),
-                applicationContext.createBean(WorkerIOSender.class, Qualifiers.byName("triggerResultSender")),
-                applicationContext.createBean(WorkerIOSender.class, Qualifiers.byName("logEntrySender")),
-                applicationContext.createBean(WorkerIOSender.class, Qualifiers.byName("metricsSender"))
+                applicationContext.createBean(GrpcWorkerIOSender.class, Qualifiers.byTypeArguments(WorkerTaskResult.class)),
+                applicationContext.createBean(GrpcWorkerIOSender.class, Qualifiers.byTypeArguments(WorkerTriggerResult.class)),
+                applicationContext.createBean(GrpcWorkerIOSender.class, Qualifiers.byTypeArguments(LogEntry.class)),
+                applicationContext.createBean(GrpcWorkerIOSender.class, Qualifiers.byTypeArguments(MetricEntry.class))
             ),
             applicationContext.getBean(MaintenanceService.class),
             applicationContext.getBean(MetricRegistry.class),

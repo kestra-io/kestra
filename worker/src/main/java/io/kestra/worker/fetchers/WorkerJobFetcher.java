@@ -57,7 +57,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Slf4j
-public class WorkerJobFetcher extends WorkerLoop {
+public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
     /**
      * Qualifier of the worker-local cluster-event broadcast bus.

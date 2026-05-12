@@ -2,7 +2,8 @@ import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {propNames as topologyDetailsPropNames, Props as TopologyDetailsProps} from "./topologyDetails"
+import {KnownSlots, KnownSlotProps} from "./knownSlots"
+
 
 function wrapWithErrorBoundary(inner: any) {
     return defineComponent({
@@ -135,12 +136,4 @@ export function useFederatedModule(slotName: keyof typeof KnownSlots) {
     }
 }
 
-export const KnownSlots = {
-    "topology-details": topologyDetailsPropNames,
-    "topology-task-drawer": topologyDetailsPropNames,
-} as const
 
-type KnownSlotProps = {
-    "topology-details": TopologyDetailsProps
-    "topology-task-drawer": TopologyDetailsProps
-}

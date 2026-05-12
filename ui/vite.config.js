@@ -72,7 +72,6 @@ export default defineConfig(({mode}) => {
                 {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
                 {find: /^@kestra-io\/slot-contracts$/, replacement: path.resolve(__dirname, "packages/slot-contracts/src/index.ts")},
 
-
                 // to be removed when all mdc import are removed
                 // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".
                 {find: "#imports", replacement: path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js")},

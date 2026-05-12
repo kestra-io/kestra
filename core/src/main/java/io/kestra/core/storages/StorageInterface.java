@@ -8,12 +8,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
-
 import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
-
+import io.kestra.core.utils.FileUtils;
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
+
+import java.io.*;
+import java.net.URI;
+import java.nio.file.NoSuchFileException;
+import java.util.List;
 
 /**
  * Interface for internal Kestra storage implementations. It handles file-like operations
@@ -326,10 +331,11 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @throws IllegalArgumentException if the URI attempts to traverse parent directories
      */
     default void parentTraversalGuard(URI uri) {
-        if (uri != null && (uri.toString().contains(".." + File.separator) || uri.toString().contains(File.separator + "..") || uri.toString().equals(".."))) {
+        if (FileUtils.isParentTraversal(uri)) {
             throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
         }
     }
+
 
     /**
      * Builds the internal storage path based on the URI.

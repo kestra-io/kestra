@@ -39,6 +39,25 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/radio-group';
 
+    .kel-radio-group {
+        .kel-radio__label {
+            font-size: var(--kel-font-size-small);
+        }
+
+        &:not(.kel-radio-group--small) {
+            .kel-radio-button__inner {
+                font-size: var(--kel-font-size-small);
+            }
+        }
+
+        &.kel-radio-group--large {
+            .kel-radio__label {
+                font-size: var(--kel-font-size-base);
+            }
+        }
+    }
+
+    // @FIXME: should not be part of design system, should be inside filter implementation
     .kel-radio-group.filter {
         padding: 1px 4px;
         box-shadow: 0 0 0 1px var(--ks-border-default) inset;

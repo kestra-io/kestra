@@ -61,7 +61,15 @@
     }
 
     .kel-input {
-        background-color: var(--ks-bg-base);
         width: 100%;
+        &.kel-input--small {
+            .kel-input__wrapper {
+                border-radius: var(--ks-radius-sm);
+            }
+        }
+
+        .kel-input-group__append, .kel-input-group__prepend {
+            color: var(--ks-text-dim);
+        }
     }
 </style>

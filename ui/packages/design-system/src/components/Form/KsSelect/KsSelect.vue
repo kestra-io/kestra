@@ -97,6 +97,17 @@
              font-size: var(--ks-font-size-base);
          }
 
+        .kel-select__wrapper {
+            .kel-tag.kel-tag--default.kel-tag--light {
+                --kel-tag-text-color: var(--ks-text-primary);
+                --kel-tag-bg-color: var(--ks-bg-tag);
+            }
+
+            &.is-hovering:not(.is-focused) {
+                box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
+            }
+        }
+
         .kel-select__caret {
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
         }
@@ -121,12 +132,7 @@
     .kel-select__popper {
         // icon for selection of items in multiple choices
         .kel-select-dropdown.is-multiple .kel-select-dropdown__item.is-selected::after{
-            background-color: var(--ks-icon-active);
-            -webkit-mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
-            mask: no-repeat url(data:image/svg+xml,%3Csvg%20width%3D%2214%22%20height%3D%2211%22%20viewBox%3D%220%200%2014%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5.00035%2010.6134L0.860352%206.47342L2.74702%204.58675L5.00035%206.84675L11.587%200.253418L13.4737%202.14008L5.00035%2010.6134Z%22%20fill%3D%22%23BBBBFF%22%2F%3E%3C%2Fsvg%3E);
-            -webkit-mask-size: 100% 100%;
-            mask-size: 100% 100%;
-            right: 1rem;
+            display: none;
         }
 
         .kel-select-dropdown__item {
@@ -134,12 +140,13 @@
             margin: 0 0.6rem 1px;
 
             &.is-selected {
-                background-color: var(--ks-bg-active);
+                background-color: var(--ks-bg-hover-elevated);
                 color: var(--ks-text-primary);
+                font-weight: normal;
             }
 
             &.is-hovering {
-                background-color: var(--ks-bg-hover-elevated);
+                background-color: var(--ks-bg-elevated);
             }
         }
     }

@@ -48,6 +48,14 @@
     @use 'element-plus/theme-chalk/src/form';
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
+    .kel-form {
+        &.kel-form--small {
+            &.kel-form--label-top .kel-form-item__label {
+                margin-bottom: 0;
+            }
+        }
+
+    }
     form.ks-horizontal {
         .kel-form-item {
             @include res(xs) {

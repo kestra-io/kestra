@@ -48,15 +48,26 @@
     @use 'element-plus/theme-chalk/src/input-number';
 
     .kel-input-number {
-        background-color: var(--ks-bg-base);
         width: 100%;
 
         .kel-input-number__increase, .kel-input-number__decrease {
             background: var(--ks-bg-surface);
         }
 
+        &.kel-input-number--small {
+
+            .kel-input-number__decrease {
+                border-radius:  var(--ks-radius-sm) 0 0 var(--ks-radius-sm);
+            }
+
+            .kel-input-number__increase {
+                border-radius: 0 var(--ks-radius-sm) var(--ks-radius-sm) 0;
+            }
+        }
+
         .kel-input-number__increase:hover, .kel-input-number__decrease:hover {
-                color: var(--ks-text-secondary);
+            color: var(--ks-text-secondary);
+
         }
     }
 </style>

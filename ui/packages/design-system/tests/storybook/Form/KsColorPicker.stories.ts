@@ -72,3 +72,15 @@ export const Disabled: Story = {
         template: "<div style=\"padding:24px\"><ks-color-picker v-model=\"value\" disabled /></div>",
     }),
 }
+
+export const Size: Story = {
+    render: () => ({
+        components: {KsColorPicker},
+        setup() { return {value: ref("#409EFF")} },
+        template: `<div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+            <ks-color-picker v-model="value" size="large" />
+            <ks-color-picker v-model="value" />
+            <ks-color-picker v-model="value" size="small" />
+        </div>`,
+    }),
+}

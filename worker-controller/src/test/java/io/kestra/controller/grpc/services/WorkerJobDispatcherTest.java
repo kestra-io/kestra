@@ -136,7 +136,7 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry);
+        dispatcher = new WorkerJobDispatcher(mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry, mock(MetadataChangeListener.class));
     }
 
     @AfterEach
@@ -1005,6 +1005,33 @@ class WorkerJobDispatcherTest {
                 c.accept(Either.left(event));
             }
         }
+    }
+
+    @Test
+    @DisplayName("broadcastToAllWorkers fans out the given event to every connected worker")
+    void broadcastToAllWorkers_sendsToAllConnectedWorkers() {
+        // Given
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obsA = mock(StreamObserver.class);
+        @SuppressWarnings("unchecked")
+        StreamObserver<WorkerJobResponse> obsB = mock(StreamObserver.class);
+        WorkerStreamContext<WorkerJobResponse> ctxA = new WorkerStreamContext<>("worker-A", WORKER_GROUP_A, 10, obsA);
+        WorkerStreamContext<WorkerJobResponse> ctxB = new WorkerStreamContext<>("worker-B", WORKER_GROUP_B, 10, obsB);
+        dispatcher.registerWorker(ctxA);
+        dispatcher.registerWorker(ctxB);
+
+        io.kestra.core.worker.MetadataChangePayload payload =
+            new io.kestra.core.worker.MetadataChangePayload(
+                io.kestra.core.worker.MetadataChangePayload.Type.NAMESPACE,
+                "tenant-a", "prod.team");
+
+        // When
+        dispatcher.broadcastToAllWorkers(
+            new io.kestra.core.worker.WorkerBroadcastEvent.MetadataChangeEvent(payload));
+
+        // Then — each worker's underlying StreamObserver should have received an onNext
+        verify(obsA).onNext(any(WorkerJobResponse.class));
+        verify(obsB).onNext(any(WorkerJobResponse.class));
     }
 
 }

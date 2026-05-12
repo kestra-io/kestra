@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Optional;
 
@@ -57,5 +58,19 @@ public final class FileUtils {
     public static String getFileName(final URI uri) {
         String path = uri.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    /**
+     * Check if the provided URI does not contain relative parent path traversal (i.e., "..").
+     *
+     * @param uri the URI to validate
+     * @return true if there is a relative parent path traversal
+     */
+    public static boolean isParentTraversal(URI uri) {
+        if (uri == null) {
+            return false;
+        }
+        var path = uri.getPath();
+        return path != null && (path.contains(".." + File.separator) || path.contains(File.separator + "..") || path.equals(".."));
     }
 }

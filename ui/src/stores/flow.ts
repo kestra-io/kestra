@@ -251,7 +251,13 @@ export const useFlowStore = defineStore("flow", () => {
                 if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
-                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value.id, namespace: flowParsed.value.namespace})}),
+                        message: () => h(KsMarkdown, {
+                            content: t("flow already exists message", 
+                                {
+                                    id: flowParsed.value.id, 
+                                    namespace: flowParsed.value.namespace,
+                                }),
+                            }),
                         type: "warning",
                         showCancelButton: true,
                     }).then(async () => {

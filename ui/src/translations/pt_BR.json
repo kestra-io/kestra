@@ -877,6 +877,16 @@
         "label": "Tarefa"
       },
       "timeRange": {
+        "chip": {
+          "end": "Finalizado",
+          "start": "Iniciado",
+          "startOrEnd": "Iniciado ou finalizado"
+        },
+        "dateFilter": {
+          "endDate": "Data de término",
+          "startDate": "Data de início",
+          "startOrEndDate": "Data de início ou término"
+        },
         "description": "Filtrar por tempo de execução",
         "label": "Intervalo"
       },

@@ -877,6 +877,16 @@
         "label": "작업"
       },
       "timeRange": {
+        "chip": {
+          "end": "종료됨",
+          "start": "시작됨",
+          "startOrEnd": "시작되었거나 종료됨"
+        },
+        "dateFilter": {
+          "endDate": "종료 날짜",
+          "startDate": "시작 날짜",
+          "startOrEndDate": "시작 또는 종료 날짜"
+        },
         "description": "실행 시간으로 필터링",
         "label": "간격"
       },

@@ -877,6 +877,16 @@
         "label": "Aufgabe"
       },
       "timeRange": {
+        "chip": {
+          "end": "Beendet",
+          "start": "Gestartet",
+          "startOrEnd": "Gestartet oder beendet"
+        },
+        "dateFilter": {
+          "endDate": "Enddatum",
+          "startDate": "Startdatum",
+          "startOrEndDate": "Start- oder Enddatum"
+        },
         "description": "Nach Ausführungszeit filtern",
         "label": "Intervall"
       },

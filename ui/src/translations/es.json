@@ -877,6 +877,16 @@
         "label": "Tarea"
       },
       "timeRange": {
+        "chip": {
+          "end": "Finalizado",
+          "start": "Iniciado",
+          "startOrEnd": "Iniciado o finalizado"
+        },
+        "dateFilter": {
+          "endDate": "Fecha de finalización",
+          "startDate": "Fecha de inicio",
+          "startOrEndDate": "Fecha de inicio o fin"
+        },
         "description": "Filtrar por tiempo de ejecución",
         "label": "Intervalo"
       },

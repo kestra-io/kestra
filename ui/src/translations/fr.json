@@ -877,6 +877,16 @@
         "label": "Tâche"
       },
       "timeRange": {
+        "chip": {
+          "end": "Terminé",
+          "start": "Démarré",
+          "startOrEnd": "Commencé ou terminé"
+        },
+        "dateFilter": {
+          "endDate": "Date de fin",
+          "startDate": "Date de début",
+          "startOrEndDate": "Date de début ou de fin"
+        },
         "description": "Filtrer par temps d'exécution",
         "label": "Intervalle"
       },

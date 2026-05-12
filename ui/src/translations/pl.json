@@ -877,6 +877,16 @@
         "label": "Zadanie"
       },
       "timeRange": {
+        "chip": {
+          "end": "Zakończono",
+          "start": "Rozpoczęto",
+          "startOrEnd": "Rozpoczęto lub zakończono"
+        },
+        "dateFilter": {
+          "endDate": "Data zakończenia",
+          "startDate": "Data rozpoczęcia",
+          "startOrEndDate": "Data rozpoczęcia lub zakończenia"
+        },
         "description": "Filtruj według czasu wykonania",
         "label": "Interwał"
       },

@@ -877,6 +877,16 @@
         "label": "任务"
       },
       "timeRange": {
+        "chip": {
+          "end": "结束",
+          "start": "已启动",
+          "startOrEnd": "已开始或已结束"
+        },
+        "dateFilter": {
+          "endDate": "结束日期",
+          "startDate": "开始日期",
+          "startOrEndDate": "开始或结束日期"
+        },
         "description": "按执行时间筛选",
         "label": "间隔"
       },

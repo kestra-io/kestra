@@ -877,6 +877,16 @@
         "label": "कार्य"
       },
       "timeRange": {
+        "chip": {
+          "end": "समाप्त",
+          "start": "शुरू हुआ",
+          "startOrEnd": "शुरू या समाप्त हुआ"
+        },
+        "dateFilter": {
+          "endDate": "समाप्ति तिथि",
+          "startDate": "प्रारंभ तिथि",
+          "startOrEndDate": "प्रारंभ या समाप्ति तिथि"
+        },
         "description": "कार्य समय द्वारा फ़िल्टर करें",
         "label": "अंतराल"
       },

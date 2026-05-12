@@ -877,6 +877,16 @@
         "label": "タスク"
       },
       "timeRange": {
+        "chip": {
+          "end": "終了しました",
+          "start": "開始しました",
+          "startOrEnd": "開始または終了"
+        },
+        "dateFilter": {
+          "endDate": "終了日",
+          "startDate": "開始日",
+          "startOrEndDate": "開始日または終了日"
+        },
         "description": "実行時間でフィルター",
         "label": "インターバル"
       },

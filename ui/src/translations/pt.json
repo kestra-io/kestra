@@ -2104,7 +2104,7 @@
       },
       "need_help": "Precisa de Ajuda?",
       "placeholder_prompt": "Envie-me uma mensagem de saudação diária às 9h.",
-      "remaining_quota": "Você tem {count} gerações de IA restantes",
+      "remaining_quota": "Você tem {count} gerações de IA restantes. O limite é redefinido diariamente à meia-noite UTC.",
       "show_less": "Mostrar menos prompts",
       "show_more": "Mostrar mais prompts",
       "success_page": {

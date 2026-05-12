@@ -2104,7 +2104,7 @@
       },
       "need_help": "Нужна помощь?",
       "placeholder_prompt": "Отправляйте мне ежедневное приветственное сообщение в 9 утра.",
-      "remaining_quota": "У вас осталось {count} AI generations",
+      "remaining_quota": "У вас осталось {count} AI generations. Лимит сбрасывается ежедневно в полночь UTC.",
       "show_less": "Показать меньше подсказок",
       "show_more": "Показать больше подсказок",
       "success_page": {

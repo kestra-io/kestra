@@ -2104,7 +2104,7 @@
       },
       "need_help": "需要帮助？",
       "placeholder_prompt": "每天早上9点发送问候消息给我。",
-      "remaining_quota": "您还有 {count} 次 AI 生成机会",
+      "remaining_quota": "您还有 {count} 次 AI 生成机会。限制将在每天的UTC午夜重置。",
       "show_less": "显示更少提示",
       "show_more": "显示更多提示",
       "success_page": {

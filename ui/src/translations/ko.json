@@ -2104,7 +2104,7 @@
       },
       "need_help": "도움이 필요하신가요?",
       "placeholder_prompt": "매일 오전 9시에 인사 메시지를 보내주세요.",
-      "remaining_quota": "{count}개의 AI 생성이 남았습니다",
+      "remaining_quota": "{count}개의 AI 생성이 남았습니다. 제한은 매일 자정 UTC에 초기화됩니다.",
       "show_less": "더 적은 프롬프트 표시",
       "show_more": "더 많은 프롬프트 보기",
       "success_page": {

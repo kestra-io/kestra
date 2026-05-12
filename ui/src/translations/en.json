@@ -2060,7 +2060,7 @@
             "placeholder_prompt": "Send me a daily greeting message at 9am.",
             "show_more": "Show more prompts",
             "show_less": "Show fewer prompts",
-            "remaining_quota": "You have {count} AI generations left",
+            "remaining_quota": "You have {count} AI generations left. Limit resets daily at midnight UTC.",
             "execute_hint": {
                 "title": "Save & Execute your flow",
                 "description": "Click to save your workflow and run it immediately."

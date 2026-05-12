@@ -2104,7 +2104,7 @@
       },
       "need_help": "お困りですか？",
       "placeholder_prompt": "毎朝9時に挨拶メッセージを送ってください。",
-      "remaining_quota": "あなたにはあと{count}回のAI生成が残っています",
+      "remaining_quota": "あなたにはあと{count}回のAI生成が残っています。制限は毎日深夜0時 UTCにリセットされます。",
       "show_less": "プロンプトを減らす",
       "show_more": "さらにプロンプトを表示",
       "success_page": {

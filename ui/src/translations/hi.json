@@ -2104,7 +2104,7 @@
       },
       "need_help": "मदद चाहिए?",
       "placeholder_prompt": "मुझे सुबह 9 बजे एक दैनिक अभिवादन संदेश भेजें।",
-      "remaining_quota": "आपके पास {count} AI generations शेष हैं",
+      "remaining_quota": "आपके पास {count} AI generations शेष हैं। सीमा प्रतिदिन मध्यरात्रि UTC पर रीसेट होती है।",
       "show_less": "कम प्रॉम्प्ट दिखाएं",
       "show_more": "अधिक प्रॉम्प्ट दिखाएं",
       "success_page": {

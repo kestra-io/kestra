@@ -2104,7 +2104,7 @@
       },
       "need_help": "Potrzebujesz pomocy?",
       "placeholder_prompt": "Wyślij mi codzienną wiadomość powitalną o 9 rano.",
-      "remaining_quota": "Masz {count} generacji AI pozostałych",
+      "remaining_quota": "Masz {count} generacji AI pozostałych. Limit resetuje się codziennie o północy UTC.",
       "show_less": "Pokaż mniej podpowiedzi",
       "show_more": "Pokaż więcej podpowiedzi",
       "success_page": {

@@ -2104,7 +2104,7 @@
       },
       "need_help": "Brauchen Sie Hilfe?",
       "placeholder_prompt": "Sende mir um 9 Uhr morgens eine tägliche Begrüßungsnachricht.",
-      "remaining_quota": "Sie haben {count} AI-Generationen übrig",
+      "remaining_quota": "Sie haben {count} AI-Generationen übrig. Das Limit wird täglich um Mitternacht UTC zurückgesetzt.",
       "show_less": "Weniger Eingabeaufforderungen anzeigen",
       "show_more": "Mehr Eingabeaufforderungen anzeigen",
       "success_page": {

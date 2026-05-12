@@ -2104,7 +2104,7 @@
       },
       "need_help": "Hai bisogno di aiuto?",
       "placeholder_prompt": "Mandami un messaggio di saluto giornaliero alle 9:00.",
-      "remaining_quota": "Hai {count} generazioni AI rimanenti",
+      "remaining_quota": "Hai {count} generazioni AI rimanenti. Il limite si resetta ogni giorno a mezzanotte UTC.",
       "show_less": "Mostra meno prompt",
       "show_more": "Mostra più prompt",
       "success_page": {

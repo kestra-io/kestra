@@ -2104,7 +2104,7 @@
       },
       "need_help": "Besoin d'aide ?",
       "placeholder_prompt": "Envoyez-moi un message de salutation quotidien à 9h.",
-      "remaining_quota": "Il vous reste {count} générations d'IA",
+      "remaining_quota": "Il vous reste {count} générations d'IA. La limite se réinitialise quotidiennement à minuit UTC.",
       "show_less": "Afficher moins d'invites",
       "show_more": "Afficher plus d'invites",
       "success_page": {

@@ -224,19 +224,50 @@ $fill-color-base: #fafcff;
 
 // notifications
 .kel-notification {
-    --kel-notification-border-color: var(--ks-border-default);
+    --kel-notification-border-color: var(--ks-border-strong);
     --kel-notification-title-color: var(--ks-text-primary);
+    --kel-notification-content-color: var(--ks-text-secondary);
+    --kel-notification-radius: var(--ks-radius-base);
+    --kel-notification-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+    --kel-notification-padding: 1rem;
+    --kel-notification-icon-size: 1rem;
+    --kel-notification-title-font-size: var(--ks-font-size-sm);
+    --kel-notification-content-font-size: var(--ks-font-size-2xs);
+    --kel-notification-group-margin-left: 0;
+    --kel-notification-group-margin-right: 0;
+    --kel-notification-close-color: var(--ks-icon-muted);
+
+    background-color: var(--ks-bg-elevated);
+    gap: 0.75rem;
+    align-items: flex-start;
 
     .kel-notification__group {
         flex-grow: 2;
+    }
+
+    .kel-notification__title {
+        font-weight: 600;
+        line-height: 1;
     }
 
     .kel-notification__content {
         text-align: left;
         max-height: 200px;
         overflow-y: auto;
-        font-size: var(--ks-font-size-sm);
-        line-height: inherit;
+        font-weight: 500;
+        line-height: 1.25;
+    }
+
+    .kel-notification__closeBtn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    @each $type in (success, info, warning, error) {
+        &.kel-notification--#{$type} .kel-notification__icon {
+            color: var(--ks-icon-#{$type});
+        }
     }
 
     &.kel-notification__large {

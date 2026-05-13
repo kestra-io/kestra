@@ -4,6 +4,15 @@ if (rootProject.name == "kestra") {
     }
 }
 
+test {
+    // Fork a new JVM per test class to prevent OOM cascade: runner test classes
+    // (ExecutionControllerRunnerTest, ClusterControllerTest, etc.) start a full
+    // Micronaut context with JdbcExecutor + Worker threads that do not fully GC
+    // before subsequent test classes run. Isolation prevents those heap leftovers
+    // from killing unrelated tests like FlowControllerTest.
+    forkEvery = 1
+}
+
 configurations {
     implementation.extendsFrom(micronaut)
 }

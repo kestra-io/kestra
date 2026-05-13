@@ -1389,7 +1389,8 @@
         "drawer_outputs_hint": "Data produced by this task",
         "flow_inputs": "Flow Inputs",
         "execution_context": "Execution Context",
-        "schema_outputs": "Schema"
+        "schema_outputs": "Schema",
+        "drop_hint": "Drop here to add"
       },
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",

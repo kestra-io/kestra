@@ -1,115 +1,7 @@
 <template>
     <div class="no-code-workspace">
-        <!-- Left: Plugin Picker Panel -->
-        <div class="plugin-panel">
-            <div class="plugin-panel-header">
-                <div class="plugin-panel-label">{{ t("no_code.workspace.plugins") }}</div>
-                <KsInput
-                    v-model="pluginSearch"
-                    :placeholder="t('no_code.workspace.search_plugin')"
-                    clearable
-                    size="small"
-                    class="plugin-search"
-                >
-                    <template #prefix>
-                        <Magnify class="search-icon" />
-                    </template>
-                </KsInput>
-                <div class="kind-tabs">
-                    <div
-                        v-for="kind in PLUGIN_KINDS"
-                        :key="kind.value"
-                        class="kind-tab"
-                        :class="{active: kindFilter === kind.value}"
-                        @click="kindFilter = kind.value"
-                    >
-                        <span v-if="kind.dot" class="kind-dot" :style="{background: kind.dot}" />
-                        {{ kind.label }}
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="filteredPluginCount > 0" class="result-count">
-                {{ t("no_code.workspace.plugin_count", {count: filteredPluginCount}) }}
-            </div>
-
-            <div class="plugin-scroll">
-                <!-- Flat search results -->
-                <template v-if="pluginSearch.trim()">
-                    <div
-                        v-for="entry in flatFilteredPlugins"
-                        :key="entry.cls"
-                        class="plugin-row"
-                        :title="entry.cls"
-                        @click="addPlugin(entry)"
-                    >
-                        <KsTaskIcon :cls="entry.cls" :icons="pluginsStore.icons" onlyIcon class="plugin-task-icon" />
-                        <div class="plugin-row-text">
-                            <div class="plugin-row-type">{{ shortType(entry.cls) }}</div>
-                            <div class="plugin-row-group">{{ entry.group }}</div>
-                        </div>
-                        <PlusIcon class="plugin-row-add" />
-                    </div>
-                    <div v-if="flatFilteredPlugins.length === 0" class="plugin-empty">
-                        {{ t("no_code.workspace.no_plugins", {query: pluginSearch}) }}
-                    </div>
-                </template>
-
-                <!-- Grouped view -->
-                <template v-else>
-                    <div
-                        v-for="group in groupedFilteredPlugins"
-                        :key="group.name"
-                        class="plugin-group"
-                    >
-                        <div
-                            class="plugin-group-header"
-                            @click="toggleGroup(group.name)"
-                        >
-                            <div class="plugin-group-left">
-                                <ChevronRight
-                                    class="plugin-group-chevron"
-                                    :class="{open: openGroups.has(group.name)}"
-                                />
-                                <span class="plugin-group-name">{{ group.name }}</span>
-                            </div>
-                            <span class="plugin-group-count">{{ group.entries.length }}</span>
-                        </div>
-
-                        <template v-if="openGroups.has(group.name)">
-                            <div
-                                v-for="entry in group.entries.slice(0, expandedGroups.has(group.name) ? undefined : MAX_PER_GROUP)"
-                                :key="entry.cls"
-                                class="plugin-row"
-                                :title="entry.cls"
-                                @click="addPlugin(entry)"
-                            >
-                                <KsTaskIcon :cls="entry.cls" :icons="pluginsStore.icons" onlyIcon class="plugin-task-icon" />
-                                <div class="plugin-row-text">
-                                    <div class="plugin-row-type">{{ shortType(entry.cls) }}</div>
-                                </div>
-                                <PlusIcon class="plugin-row-add" />
-                            </div>
-
-                            <button
-                                v-if="group.entries.length > MAX_PER_GROUP"
-                                class="plugin-group-more"
-                                @click.stop="toggleGroupExpand(group.name)"
-                            >
-                                <template v-if="expandedGroups.has(group.name)">
-                                    <ChevronUp class="plugin-group-more-icon" />
-                                    {{ t("no_code.workspace.show_fewer") }}
-                                </template>
-                                <template v-else>
-                                    <ChevronDown class="plugin-group-more-icon" />
-                                    {{ t("no_code.workspace.show_more", {count: group.entries.length - MAX_PER_GROUP}) }}
-                                </template>
-                            </button>
-                        </template>
-                    </div>
-                </template>
-            </div>
-        </div>
+        <!-- Left: Plugin Picker -->
+        <PluginPicker @addPlugin="addPlugin" />
 
         <!-- Center: Flow Editor Canvas -->
         <div class="flow-canvas" ref="scrollContainer">
@@ -142,18 +34,32 @@
                             <hr class="section-divider">
 
                             <!-- Sections: tasks, triggers, errors, finally, afterExecution, pluginDefaults -->
-                            <Wrapper
-                                v-for="v in fieldsFromSchemaRest"
-                                :key="v.fieldKey"
-                                :transparent="LIST_FIELDS.includes(v.fieldKey)"
-                            >
-                                <template #tasks>
+                            <template v-for="v in fieldsFromSchemaRest" :key="v.fieldKey">
+                                <div
+                                    v-if="LIST_FIELDS.includes(v.fieldKey)"
+                                    class="droppable-section"
+                                    :class="{'drag-over': dragOverSection === v.fieldKey}"
+                                    @dragover.prevent="onSectionDragOver(v.fieldKey)"
+                                    @dragleave.self="dragOverSection = null"
+                                    @drop.prevent="onSectionDrop($event, v.fieldKey)"
+                                >
                                     <TaskObjectField
                                         v-bind="v"
                                         @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
                                     />
-                                </template>
-                            </Wrapper>
+                                    <div class="drop-hint">
+                                        <span>{{ t("no_code.workspace.drop_hint") }}</span>
+                                    </div>
+                                </div>
+                                <Wrapper v-else :merge="shouldMerge(v.schema)">
+                                    <template #tasks>
+                                        <TaskObjectField
+                                            v-bind="v"
+                                            @update:model-value="(val) => onTaskUpdateField(v.fieldKey, val)"
+                                        />
+                                    </template>
+                                </Wrapper>
+                            </template>
                         </KsForm>
                     </div>
                 </template>
@@ -162,94 +68,11 @@
 
         <!-- Right: Task Editor Drawer -->
         <Transition name="drawer-slide">
-            <div v-if="creatingTask || editingTask" class="task-drawer">
-                <!-- Drawer Header -->
-                <div class="drawer-header">
-                    <div class="drawer-header-title">
-                        {{ creatingTask ? t("no_code.workspace.new_task") : t("no_code.workspace.edit_task") }}
-                    </div>
-                    <KsIconButton
-                        :aria-label="t('close')"
-                        class="drawer-close-btn"
-                        @click="emit('closeTask')"
-                    >
-                        <CloseIcon />
-                    </KsIconButton>
-                </div>
-
-                <!-- Drawer Body: three columns -->
-                <div class="drawer-body">
-                    <!-- Left column: Inputs & Context -->
-                    <div class="drawer-col drawer-col-inputs">
-                        <div class="drawer-col-head">
-                            <div class="drawer-col-title">{{ t("no_code.workspace.drawer_inputs") }}</div>
-                            <div class="drawer-col-sub">{{ t("no_code.workspace.drawer_inputs_hint") }}</div>
-                        </div>
-
-                        <div class="drawer-col-scroll">
-                            <!-- Flow Inputs -->
-                            <template v-if="flowInputs.length > 0">
-                                <div class="drawer-section-label">{{ t("no_code.workspace.flow_inputs") }}</div>
-                                <div
-                                    v-for="input in flowInputs"
-                                    :key="input.id"
-                                    class="context-card"
-                                    :title="`{{ inputs.${input.id} }}`"
-                                >
-                                    <code class="context-card-expr">{{ input.id }}</code>
-                                    <KsTag v-if="input.type" size="small" disableTransitions class="context-card-type">
-                                        {{ input.type }}
-                                    </KsTag>
-                                </div>
-                            </template>
-
-                            <!-- Execution Context variables -->
-                            <div class="drawer-section-label mt-2">{{ t("no_code.workspace.execution_context") }}</div>
-                            <div
-                                v-for="ctxVar in EXECUTION_CONTEXT_VARS"
-                                :key="ctxVar.expr"
-                                class="context-card"
-                                :title="ctxVar.expr"
-                            >
-                                <code class="context-card-expr">{{ ctxVar.label }}</code>
-                                <KsTag size="small" disableTransitions class="context-card-type">{{ ctxVar.type }}</KsTag>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Center column: Properties -->
-                    <div class="drawer-col drawer-col-properties">
-                        <div class="drawer-col-head">
-                            <div class="drawer-col-title">{{ t("no_code.workspace.drawer_properties") }}</div>
-                        </div>
-                        <div class="drawer-col-scroll">
-                            <Task />
-                        </div>
-                    </div>
-
-                    <!-- Right column: Outputs -->
-                    <div class="drawer-col drawer-col-outputs">
-                        <div class="drawer-col-head">
-                            <div class="drawer-col-title">{{ t("no_code.workspace.drawer_outputs") }}</div>
-                            <div class="drawer-col-sub">{{ t("no_code.workspace.drawer_outputs_hint") }}</div>
-                        </div>
-                        <div class="drawer-col-scroll">
-                            <template v-if="currentTaskOutputs.length > 0">
-                                <div class="drawer-section-label">{{ t("no_code.workspace.schema_outputs") }}</div>
-                                <div
-                                    v-for="output in currentTaskOutputs"
-                                    :key="output.name"
-                                    class="output-card"
-                                >
-                                    <div class="output-card-name">{{ output.name }}</div>
-                                    <div v-if="output.type" class="output-card-type">{{ output.type }}</div>
-                                </div>
-                            </template>
-                            <KsEmpty v-else />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <TaskDrawer
+                v-if="creatingTask || editingTask"
+                :creatingTask
+                @close="emit('closeTask')"
+            />
         </Transition>
     </div>
 </template>
@@ -257,10 +80,11 @@
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue"
 
-    import {flowYamlUtils as YAML_UTILS, KsTaskIcon} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
     import {removeNullAndUndefined} from "./utils/cleanUp"
 
-    import Task from "./segments/Task.vue"
+    import TaskDrawer from "./components/TaskDrawer.vue"
+    import PluginPicker, {type PluginEntry, PLUGIN_DRAG_TYPE} from "./components/PluginPicker.vue"
     import Wrapper from "./components/tasks/Wrapper.vue"
     import TaskObjectField from "./components/tasks/TaskObjectField.vue"
     import {
@@ -295,13 +119,6 @@
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
     import {aiGenerationTypes} from "../../utils/constants"
     import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue"
-    import {extractPluginElements, isPluginMatched} from "../../utils/pluginUtils"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
-    import PlusIcon from "vue-material-design-icons/Plus.vue"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-    import CloseIcon from "vue-material-design-icons/Close.vue"
     import {useI18n} from "vue-i18n"
 
     const {t} = useI18n()
@@ -402,83 +219,11 @@
         },
     )
 
-    // ── Plugin Picker ──
+    // ── Plugin add / drag-and-drop ──
 
-    const MAX_PER_GROUP = 8
-    const pluginSearch = ref("")
-    const kindFilter = ref<"all" | "task" | "trigger">("all")
-    const openGroups = ref(new Set<string>())
-    const expandedGroups = ref(new Set<string>())
-
-    const PLUGIN_KINDS = [
-        {value: "all" as const, label: t("no_code.workspace.kind_all")},
-        {value: "task" as const, label: t("no_code.workspace.kind_tasks"), dot: "var(--ks-chart-purple)"},
-        {value: "trigger" as const, label: t("no_code.workspace.kind_triggers"), dot: "var(--ks-chart-yellow)"},
-    ]
-
-    interface PluginEntry {
-        cls: string;
-        kind: "task" | "trigger";
-        group: string;
-    }
-
-    const allPluginEntries = computed<PluginEntry[]>(() => {
-        if (!pluginsStore.plugins) return []
-        return pluginsStore.plugins.flatMap(plugin => {
-            const elements = extractPluginElements(plugin)
-            return Object.entries(elements).flatMap(([kind, clsList]) => {
-                const normalizedKind = kind.toLowerCase().includes("trigger") ? "trigger" : "task"
-                return clsList.map(cls => ({cls, kind: normalizedKind, group: plugin.title || plugin.name}))
-            })
-        })
-    })
-
-    const filteredPluginEntries = computed<PluginEntry[]>(() => {
-        const q = pluginSearch.value.trim().toLowerCase()
-        return allPluginEntries.value.filter(entry => {
-            const kindOk = kindFilter.value === "all" || entry.kind === kindFilter.value
-            const queryOk = !q || entry.cls.toLowerCase().includes(q) || entry.group.toLowerCase().includes(q)
-            return kindOk && queryOk
-        })
-    })
-
-    const flatFilteredPlugins = computed(() => filteredPluginEntries.value)
-
-    const groupedFilteredPlugins = computed(() => {
-        const map = new Map<string, PluginEntry[]>()
-        filteredPluginEntries.value.forEach(entry => {
-            if (!map.has(entry.group)) map.set(entry.group, [])
-            map.get(entry.group)!.push(entry)
-        })
-        return Array.from(map.entries()).map(([name, entries]) => ({name, entries}))
-    })
-
-    const filteredPluginCount = computed(() => filteredPluginEntries.value.length)
-
-    function shortType(cls: string): string {
-        return cls.split(".").pop() ?? cls
-    }
-
-    function toggleGroup(name: string) {
-        if (openGroups.value.has(name)) {
-            openGroups.value.delete(name)
-        } else {
-            openGroups.value.add(name)
-        }
-        openGroups.value = new Set(openGroups.value)
-    }
-
-    function toggleGroupExpand(name: string) {
-        if (expandedGroups.value.has(name)) {
-            expandedGroups.value.delete(name)
-        } else {
-            expandedGroups.value.add(name)
-        }
-        expandedGroups.value = new Set(expandedGroups.value)
-    }
-
-    function addPlugin(entry: PluginEntry) {
-        const section = entry.kind === "trigger" ? "triggers" : "tasks"
+    /** Append a plugin to a specific flow section. */
+    function addPlugin(entry: PluginEntry, targetSection?: string) {
+        const section = targetSection ?? (entry.kind === "trigger" ? "triggers" : "tasks")
         const currentCount = (() => {
             try {
                 const parsed = YAML_UTILS.parse(flowYaml.value) ?? {}
@@ -490,47 +235,27 @@
         emit("createTask", section, entry.cls, currentCount > 0 ? currentCount - 1 : undefined, "after")
     }
 
-    // ── Drawer: Inputs Panel ──
+    const dragOverSection = ref<string | null>(null)
 
-    const parsedFlow = computed(() => {
+    function onSectionDragOver(section: string) {
+        dragOverSection.value = section
+    }
+
+    function onSectionDrop(event: DragEvent, section: string) {
+        dragOverSection.value = null
+        const raw = event.dataTransfer?.getData(PLUGIN_DRAG_TYPE)
+        if (!raw) return
         try {
-            return YAML_UTILS.parse(lastValidFlowYaml.value) ?? {}
+            const entry = JSON.parse(raw) as PluginEntry
+            addPlugin(entry, section)
         } catch {
-            return {}
+            // ignore malformed drag data
         }
-    })
-
-    const flowInputs = computed<Array<{id: string; type?: string}>>(() => {
-        const inputs = parsedFlow.value?.inputs
-        if (!Array.isArray(inputs)) return []
-        return inputs.filter(Boolean).map(i => ({id: i.id ?? "", type: i.type}))
-    })
-
-    const EXECUTION_CONTEXT_VARS = [
-        {label: "execution.id", expr: "{{ execution.id }}", type: "String"},
-        {label: "execution.startDate", expr: "{{ execution.startDate }}", type: "DateTime"},
-        {label: "flow.id", expr: "{{ flow.id }}", type: "String"},
-        {label: "flow.namespace", expr: "{{ flow.namespace }}", type: "String"},
-        {label: "trigger.date", expr: "{{ trigger.date }}", type: "DateTime"},
-    ]
-
-    // ── Drawer: Outputs Panel ──
-
-    const currentTaskOutputs = computed<Array<{name: string; type?: string}>>(() => {
-        const outputs = pluginsStore.pluginAllProps?.outputs?.properties
-        if (!outputs || typeof outputs !== "object") return []
-        return Object.entries(outputs).map(([name, schema]: [string, any]) => ({
-            name,
-            type: schema?.type ?? schema?.$ref?.split("/").pop(),
-        }))
-    })
-
-    // ── Panel ──
-
-    const panel = ref()
+    }
 
     // ── Scroll memory ──
 
+    const panel = ref()
     const scrollContainer = ref<HTMLDivElement | null>(null)
 
     const flowIdentity = computed(() => {
@@ -601,239 +326,6 @@
     background: var(--ks-background-default);
 }
 
-// ── Left: Plugin Panel ──
-
-.plugin-panel {
-    width: 280px;
-    min-width: 220px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--ks-background-card);
-    border-right: 1px solid var(--ks-border-primary);
-}
-
-.plugin-panel-header {
-    padding: 0.75rem 0.875rem 0.625rem;
-    border-bottom: 1px solid var(--ks-border-secondary);
-    flex-shrink: 0;
-}
-
-.plugin-panel-label {
-    font-size: 0.625rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--ks-content-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.plugin-search {
-    width: 100%;
-    margin-bottom: 0.5rem;
-
-    :deep(.kel-input__wrapper) {
-        background: var(--ks-background-input);
-    }
-}
-
-.search-icon {
-    font-size: 0.875rem;
-    color: var(--ks-content-tertiary);
-}
-
-.kind-tabs {
-    display: flex;
-    gap: 0;
-    margin-top: 0.5rem;
-    background: var(--ks-background-default);
-    border-radius: 7px;
-    padding: 3px;
-}
-
-.kind-tab {
-    flex: 1;
-    padding: 0.3rem 0;
-    text-align: center;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 5px;
-    color: var(--ks-content-secondary);
-    transition: all 0.14s;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-
-    &:hover:not(.active) {
-        color: var(--ks-content-primary);
-        background: var(--ks-background-hover);
-    }
-
-    &.active {
-        background: var(--ks-background-card);
-        color: var(--ks-content-link);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-}
-
-.kind-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.result-count {
-    padding: 0.3rem 0.875rem 0.2rem;
-    font-size: 0.625rem;
-    color: var(--ks-content-tertiary);
-    flex-shrink: 0;
-}
-
-.plugin-scroll {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.plugin-group-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 0.875rem;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--ks-background-card);
-    cursor: pointer;
-    transition: background 0.1s;
-    user-select: none;
-    border-radius: 6px;
-
-    &:hover {
-        background: var(--ks-background-hover);
-    }
-}
-
-.plugin-group-left {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.plugin-group-chevron {
-    color: var(--ks-content-tertiary);
-    font-size: 0.875rem;
-    transition: transform 0.15s;
-
-    &.open {
-        transform: rotate(90deg);
-    }
-}
-
-.plugin-group-name {
-    font-size: 0.6875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ks-content-link);
-}
-
-.plugin-group-count {
-    font-size: 0.625rem;
-    color: var(--ks-content-tertiary);
-}
-
-.plugin-row {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding: 0.5rem 0.875rem;
-    cursor: pointer;
-    border-bottom: 1px solid var(--ks-border-secondary);
-    transition: background 0.1s;
-
-    &:hover {
-        background: var(--ks-background-hover);
-
-        .plugin-row-add {
-            opacity: 1;
-        }
-    }
-}
-
-.plugin-task-icon {
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-}
-
-.plugin-row-text {
-    flex: 1;
-    min-width: 0;
-}
-
-.plugin-row-type {
-    font-size: 0.71875rem;
-    color: var(--ks-content-primary);
-    font-family: var(--ks-font-monospace, ui-monospace, monospace);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
-}
-
-.plugin-row-group {
-    font-size: 0.65625rem;
-    color: var(--ks-content-tertiary);
-    margin-top: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.plugin-row-add {
-    color: var(--ks-content-tertiary);
-    font-size: 0.875rem;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.12s;
-}
-
-.plugin-group-more {
-    width: 100%;
-    padding: 0.2rem 0.875rem 0.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.6875rem;
-    color: var(--ks-content-link);
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    transition: color 0.12s;
-
-    &:hover {
-        color: var(--ks-button-primary-background);
-    }
-}
-
-.plugin-group-more-icon {
-    font-size: 0.625rem;
-}
-
-.plugin-empty {
-    padding: 1.75rem 1rem;
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--ks-content-tertiary);
-}
-
 // ── Center: Flow Canvas ──
 
 .flow-canvas {
@@ -857,150 +349,36 @@
     border-top: 1px solid var(--ks-border-primary);
 }
 
-// ── Right: Task Drawer ──
+// ── Droppable sections ──
 
-.task-drawer {
-    width: 860px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--ks-background-card);
-    border-left: 1px solid var(--ks-border-primary);
-    flex-shrink: 0;
-}
+.droppable-section {
+    position: relative;
+    border-radius: 8px;
+    transition: box-shadow 0.14s, border-color 0.14s;
 
-.drawer-header {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    padding: 0 1.25rem;
-    height: 50px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--ks-border-primary);
-    background: var(--ks-background-card);
-}
+    .drop-hint {
+        display: none;
+    }
 
-.drawer-header-title {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--ks-content-primary);
-    flex: 1;
-}
+    &.drag-over {
+        box-shadow: 0 0 0 2px var(--ks-border-focus), 0 0 0 4px rgba(124, 58, 237, 0.09);
 
-.drawer-close-btn {
-    margin-left: auto;
-}
-
-.drawer-body {
-    display: grid;
-    grid-template-columns: 260px 1fr 260px;
-    flex: 1;
-    overflow: hidden;
-    min-height: 0;
-}
-
-.drawer-col {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-right: 1px solid var(--ks-border-primary);
-
-    &:last-child {
-        border-right: none;
+        .drop-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px dashed var(--ks-border-focus);
+            border-radius: 7px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--ks-content-link);
+            background: var(--ks-background-hover);
+        }
     }
 }
 
-.drawer-col-head {
-    padding: 0.75rem 1.125rem 0.5rem;
-    border-bottom: 1px solid var(--ks-border-secondary);
-    flex-shrink: 0;
-}
-
-.drawer-col-title {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--ks-content-primary);
-    margin-bottom: 2px;
-}
-
-.drawer-col-sub {
-    font-size: 0.6875rem;
-    color: var(--ks-content-secondary);
-}
-
-.drawer-col-scroll {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.875rem 1.125rem;
-}
-
-.drawer-section-label {
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--ks-content-secondary);
-    margin-bottom: 0.5rem;
-
-    &.mt-2 {
-        margin-top: 1rem;
-    }
-}
-
-.context-card {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    background: var(--ks-background-default);
-    border: 1px solid var(--ks-border-secondary);
-    border-radius: 6px;
-    padding: 0.3rem 0.5rem;
-    margin-bottom: 0.25rem;
-    cursor: default;
-    transition: border-color 0.1s;
-
-    &:hover {
-        border-color: var(--ks-border-focus);
-    }
-}
-
-.context-card-expr {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.65625rem;
-    color: var(--ks-content-link);
-    font-family: var(--ks-font-monospace, ui-monospace, monospace);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.context-card-type {
-    flex-shrink: 0;
-}
-
-.output-card {
-    background: var(--ks-background-default);
-    border: 1px solid var(--ks-border-secondary);
-    border-radius: 7px;
-    padding: 0.5625rem 0.6875rem;
-    margin-bottom: 0.375rem;
-}
-
-.output-card-name {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--ks-content-primary);
-    font-family: var(--ks-font-monospace, ui-monospace, monospace);
-}
-
-.output-card-type {
-    font-size: 0.625rem;
-    color: var(--ks-content-secondary);
-    margin-top: 1px;
-}
-
-// ── Transitions ──
+// ── Transition ──
 
 .drawer-slide-enter-active,
 .drawer-slide-leave-active {

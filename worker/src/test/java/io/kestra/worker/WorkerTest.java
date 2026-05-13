@@ -170,7 +170,12 @@ class WorkerTest {
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
 
-            Thread.sleep(500);
+            // Wait until the worker has actually started executing a task before sending the kill.
+            // Thread.sleep() was insufficient — the gRPC handshake is async and 500ms is not guaranteed.
+            await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofMillis(50))
+                .until(() -> !worker.getRunningJobs().isEmpty());
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()

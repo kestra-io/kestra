@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -123,6 +125,16 @@ public class WorkerJobFetcher extends WorkerLoop {
      * Set in {@code onError()} and cleared on successful connection.
      */
     private final AtomicLong reconnectNotBefore = new AtomicLong(0L);
+
+    /**
+     * Executor for the blocking workerJobQueue.put() calls.
+     * <p>
+     * gRPC delivers stream messages via a SerializingExecutor that processes one message at a time.
+     * If put() blocks (queue full), every subsequent message — including kill event broadcasts — is
+     * stuck behind it. Virtual threads are cheap and absorb the blocking without tying up the
+     * gRPC executor thread.
+     */
+    private final ExecutorService jobIngestExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * Creates a new {@code WorkerJobFetcher} instance.
@@ -282,12 +294,13 @@ public class WorkerJobFetcher extends WorkerLoop {
      * Handles a job response from the controller.
      */
     private void handleJobResponse(WorkerJobResponse response) {
-        ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
-        if (observer == null || !isRunning()) {
+        if (!isRunning()) {
             return;
         }
 
         // Process broadcast events (kill commands, cluster events, etc.)
+        // Kill events must be processed regardless of observer state — a null observer
+        // (e.g. after a transient stream error) must never silently drop a kill command.
         for (ByteString eventData : response.getEventsList()) {
             try {
                 WorkerBroadcastEvent event = MessageFormats.JSON.fromByteString(eventData, WorkerBroadcastEvent.class);
@@ -308,29 +321,44 @@ public class WorkerJobFetcher extends WorkerLoop {
             }
         }
 
+        // Job ingestion must not block the gRPC onNext thread.
+        // workerJobQueue.put() blocks when the queue is full; if it runs on the gRPC
+        // SerializingExecutor, every subsequent message (including kill broadcasts) is stuck
+        // behind it. Submit each batch to a virtual thread so the gRPC thread stays free.
+        List<WorkerJobPayload> jobs = response.getJobsList();
+        if (!jobs.isEmpty()) {
+            jobIngestExecutor.submit(() -> ingestJobsAndAck(new ArrayList<>(jobs)));
+        }
+    }
+
+    /**
+     * Puts each job into the local queue and sends a single ACK+permits response.
+     * Runs on a virtual thread so the blocking {@code put()} never stalls the gRPC executor.
+     */
+    private void ingestJobsAndAck(List<WorkerJobPayload> payloads) {
         List<String> acks = new ArrayList<>();
-        for (WorkerJobPayload payload : response.getJobsList()) {
+        for (WorkerJobPayload payload : payloads) {
             try {
                 String jobId = payload.getJobId();
                 WorkerJob job = MessageFormats.JSON.fromByteString(payload.getJobData(), WorkerJob.class);
-
                 log.debug("Received job: {}", jobId);
-
-                // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
-
-                // Collect ACK for this job (receipt acknowledgment)
                 acks.add(jobId);
-
             } catch (Exception e) {
+                if (e instanceof RuntimeException re && re.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    log.debug("Job ingestion interrupted");
+                    break;
+                }
                 log.error("Error processing job payload: {}", e.getMessage(), e);
             }
         }
 
-        // Send ACKs and request more permits based on remaining capacity
-        // Only send if there were jobs (event-only responses don't need permit updates)
         if (!acks.isEmpty()) {
-            sendPermitsAndAcks(observer, calculatePermits(), acks);
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null) {
+                sendPermitsAndAcks(observer, calculatePermits(), acks);
+            }
         }
     }
 
@@ -424,6 +452,8 @@ public class WorkerJobFetcher extends WorkerLoop {
      */
     @Override
     protected void cleanup() {
+        jobIngestExecutor.shutdownNow();
+
         ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.getAndSet(null);
         if (observer != null) {
             try {

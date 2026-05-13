@@ -2632,8 +2632,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private URI createFile() throws IOException {
-        // Explicitly use /tmp so the file is under the allowed path configured via @Property
-        File tempFile = File.createTempFile("file", ".txt", new File("/tmp"));
+        File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

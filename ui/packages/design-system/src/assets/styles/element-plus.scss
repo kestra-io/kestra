@@ -288,10 +288,28 @@ $fill-color-base: #fafcff;
 
 // message box
 .kel-message-box {
+    --kel-messagebox-border-radius: var(--ks-radius-base);
     border: 1px solid var(--ks-border-default);
+    background-color: var(--ks-bg-elevated);
 
     .kel-message-box__headerbtn .kel-message-box__close {
         color: var(--ks-text-primary);
+    }
+
+    .kel-message-box__header {
+        margin-bottom: var(--kel-messagebox-padding-primary);
+        font-weight: bold;
+    }
+
+    .kel-message-box__btns {
+        margin-top: calc(var(--kel-messagebox-padding-primary) * 2);
+        border-top: 1px solid var(--ks-border-default);
+        margin-left: calc(var(--kel-messagebox-padding-primary) * -1);
+        margin-bottom: calc(var(--kel-messagebox-padding-primary) * -1);
+        padding-bottom: var(--kel-messagebox-padding-primary);
+        padding-right: var(--kel-messagebox-padding-primary);
+        width: calc(100% + var(--kel-messagebox-padding-primary) * 2);
+        background-color: var(--ks-bg-base);
     }
 }
 

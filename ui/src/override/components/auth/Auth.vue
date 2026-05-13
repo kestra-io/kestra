@@ -132,10 +132,12 @@
     }
 }
 
-.kel-select {
-    >.kel-select__wrapper {
-        padding: 2px 8px;
-        padding-left: 6px !important;
+.v-sidebar-menu {
+    .kel-select {
+        >.kel-select__wrapper {
+            padding: 2px 8px;
+            padding-left: 6px !important;
+        }
     }
 }
 

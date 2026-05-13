@@ -8,6 +8,13 @@ buildCache {
     }
 }
 
+develocity {
+    buildScan {
+        tag("releases/v1.0.x")
+        value("baseBranch", "releases/v1.0.x")
+    }
+}
+
 rootProject.name = "kestra"
 
 include 'platform'

@@ -98,10 +98,10 @@ public class LocalPathFactory {
             Path workingDirectory = runContext.workingDir().path(true);
             Path path = Path.of(uri).toRealPath(); // toRealPath() will protect about path traversal issues
             // We allow working directory or globally allowed path
-            if (!path.startsWith(workingDirectory) && globalAllowedPaths.stream().noneMatch(path::startsWith)) {
+            if (!path.startsWith(workingDirectory) && globalAllowedPaths.stream().noneMatch(allowed -> isUnderAllowedPath(path, allowed))) {
                 // if not globally allowed, we check if it's allowed for this specific plugin
                 List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
-                if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
+                if (pluginAllowedPaths.stream().noneMatch(allowed -> isUnderAllowedPath(path, allowed))) {
                     throw new SecurityException(
                         "The path " + path + " is not authorized. " +
                             "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `"
@@ -126,7 +126,7 @@ public class LocalPathFactory {
         protected Path checkPath(URI uri) throws IOException {
             Path path = Path.of(uri).toRealPath(); // toRealPath() will protect about path traversal issues
             // we only allow globally allowed as we don't have a run context to get the working directory nor the plugin configuration
-            if (globalAllowedPaths.stream().noneMatch(path::startsWith)) {
+            if (globalAllowedPaths.stream().noneMatch(allowed -> isUnderAllowedPath(path, allowed))) {
                 throw new SecurityException(
                     "The path " + path + " is not authorized. " +
                         "Path must be allowed either globally inside the Kestra configuration using the `" + LocalPath.ALLOWED_PATHS_CONFIG + "` property."
@@ -134,6 +134,16 @@ public class LocalPathFactory {
             }
 
             return path;
+        }
+    }
+
+    // Resolve the allowed path's real path (following symlinks) before comparing, so that
+    // symlinked allowed paths (e.g. /tmp -> /private/tmp on macOS) work correctly.
+    private static boolean isUnderAllowedPath(Path path, String allowedPath) {
+        try {
+            return path.startsWith(Path.of(allowedPath).toRealPath());
+        } catch (IOException e) {
+            return path.startsWith(allowedPath);
         }
     }
 }

@@ -46,6 +46,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunnerUtils;
@@ -134,6 +135,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private FlowService flowService;
 
     @MockBean(TenantService.class)
     public TenantService getTenantService() {
@@ -2356,11 +2360,16 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml" })
-    void triggerExecutionAndFollowDependencies() throws InterruptedException {
+    void triggerExecutionAndFollowDependencies() {
         Execution result = triggerExecutionExecution(TESTS_FLOW_NS, "subflow-parent", null, true);
 
-        // without this slight delay, the event stream may miss some 'end' events
-        Thread.sleep(500);
+        // The executor computes flow topology asynchronously from execution processing.
+        // Wait until topology is ready before connecting to the SSE stream, otherwise
+        // findDependencies() returns empty and the stream emits only start + end-all.
+        Awaitility.await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(100))
+            .until(() -> flowService.findDependencies(MAIN_TENANT, TESTS_FLOW_NS, "subflow-parent", false, true).findAny().isPresent());
 
         List<Event<ExecutionStatusEvent>> results = sseClient
             .eventStream("/api/v1/main/executions/" + result.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
@@ -2623,7 +2632,8 @@ class ExecutionControllerRunnerTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt");
+        // Explicitly use /tmp so the file is under the allowed path configured via @Property
+        File tempFile = File.createTempFile("file", ".txt", new File("/tmp"));
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

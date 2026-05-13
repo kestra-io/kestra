@@ -231,6 +231,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color |
+| `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
 
 ### Charts

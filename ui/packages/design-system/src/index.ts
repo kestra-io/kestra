@@ -24,6 +24,7 @@ import KsCheckbox from "./components/Form/KsCheckbox/KsCheckbox.vue"
 import KsCheckboxButton from "./components/Form/KsCheckbox/KsCheckboxButton.vue"
 import KsCheckboxGroup from "./components/Form/KsCheckbox/KsCheckboxGroup.vue"
 import KsCheckTag from "./components/Data/KsTag/KsCheckTag.vue"
+import KsCodeStatus from "./components/Data/KsCodeStatus.vue"
 import KsCol from "./components/Basic/KsRow/KsCol.vue"
 import KsCollapse from "./components/Data/KsCollapse/KsCollapse.vue"
 import KsCollapseItem from "./components/Data/KsCollapse/KsCollapseItem.vue"
@@ -164,6 +165,7 @@ const components = {
     KsCheckboxButton,
     KsCheckboxGroup,
     KsCheckTag,
+    KsCodeStatus,
     KsCol,
     KsCollapse,
     KsCollapseItem,
@@ -251,6 +253,7 @@ export {
     KsCheckboxButton,
     KsCheckboxGroup,
     KsCheckTag,
+    KsCodeStatus,
     KsCol,
     KsCollapse,
     KsCollapseItem,

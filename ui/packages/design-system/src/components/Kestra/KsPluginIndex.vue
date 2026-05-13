@@ -81,6 +81,7 @@
     import {useElementSize} from "@vueuse/core"
     import type {Plugin, PluginMetadata} from "../../utils/plugins"
     import {subGroupName, extractPluginElements, slugifyPlugin} from "../../utils/plugins"
+    import {usePluginElementCounts} from "../../composables/usePluginElementCounts"
     import KsIcon from "../Basic/KsIcon.vue"
     import KsElementCard from "./KsElementCard.vue"
     import KsSubgroupCard from "./KsSubgroupCard.vue"
@@ -134,9 +135,7 @@
     const getTotalElementCount = (p: Plugin): number =>
         Object.values(extractPluginElements(p)).reduce((sum, arr) => sum + arr.length, 0)
 
-    const elementsByType = computed(() =>
-        plugin.value ? extractPluginElements(plugin.value) : {},
-    )
+    const {elementsByType} = usePluginElementCounts(plugin)
 
     const contentWrap = ref<HTMLElement | null>(null)
     const contentInner = ref<HTMLElement | null>(null)

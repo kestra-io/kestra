@@ -180,12 +180,10 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
      *
      * @throws UnsupportedOperationException if the repository implementation does not support this operation
      */
-    default ArrayListTotal<Flow> findWithNoAcl(
+    ArrayListTotal<Flow> findWithNoAcl(
         Pageable pageable,
         @Nullable String tenantId,
-        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
-        throw new UnsupportedOperationException("findWithNoAcl is not supported by this repository implementation");
-    }
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     ArrayListTotal<FlowWithSource> findWithSource(
         Pageable pageable,

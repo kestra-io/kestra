@@ -85,6 +85,9 @@ import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
+import KsElementCard from "./components/Kestra/KsElementCard.vue"
+import KsSubgroupCard from "./components/Kestra/KsSubgroupCard.vue"
+import KsPluginIndex from "./components/Kestra/KsPluginIndex.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
 
@@ -96,6 +99,9 @@ export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
 
 export {cssVar} from "./utils/css"
+export type {Plugin, PluginElement, PluginMetadata} from "./utils/plugins"
+export {isEntryAPluginElementPredicate, subGroupName, extractPluginElements, slugifyPlugin} from "./utils/plugins"
+export {usePluginElementCounts} from "./composables/usePluginElementCounts"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"
@@ -219,6 +225,9 @@ const components = {
     KsTableColumn,
     KsTag,
     KsTaskIcon,
+    KsElementCard,
+    KsSubgroupCard,
+    KsPluginIndex,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -306,6 +315,9 @@ export {
     KsTableColumn,
     KsTag,
     KsTaskIcon,
+    KsElementCard,
+    KsSubgroupCard,
+    KsPluginIndex,
     KsText,
     KsTimeline,
     KsTimelineItem,

@@ -37,7 +37,7 @@ export const useMcpStore = defineStore("mcp", () => {
         } catch {
             server.value = null
         }
-    };
+    }
 
     const create = async (payload: McpServerPayload): Promise<McpServer> => {
         const {data} = await axios.post(`${apiUrl()}/mcp/servers`, payload, {withCredentials: true})
@@ -59,4 +59,4 @@ export const useMcpStore = defineStore("mcp", () => {
     }
 
     return {server, list, load, create, update, remove, toggle}
-});
+})

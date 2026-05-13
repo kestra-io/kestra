@@ -121,35 +121,35 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import type {FormInstance} from "element-plus";
-    import {useMcpStore} from "../../../../stores/mcp";
-    import {useMiscStore} from "override/stores/misc";
-    import {useAuthStore} from "override/stores/auth";
-    import resource from "../../../../models/resource";
-    import action from "../../../../models/action";
-    import LockOutline from "vue-material-design-icons/LockOutline.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import Web from "vue-material-design-icons/Web.vue";
+    import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import type {FormInstance} from "element-plus"
+    import {useMcpStore} from "../../../../stores/mcp"
+    import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../../models/resource"
+    import action from "../../../../models/action"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import Web from "vue-material-design-icons/Web.vue"
 
-    const {t} = useI18n({useScope: "global"});
-    const route = useRoute();
-    const router = useRouter();
-    const mcpStore = useMcpStore();
-    const isOss = computed(() => useMiscStore().configs?.edition === "OSS");
+    const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
+    const router = useRouter()
+    const mcpStore = useMcpStore()
+    const isOss = computed(() => useMiscStore().configs?.edition === "OSS")
 
-    const isUpdate = computed(() => !!route.params.id);
+    const isUpdate = computed(() => !!route.params.id)
 
-    const authStore = useAuthStore();
+    const authStore = useAuthStore()
     const canSave = computed(() =>
         isUpdate.value
             ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
-            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true
-    );
-    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true);
-    const readOnly = computed(() => !canSave.value);
+            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true,
+    )
+    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true)
+    const readOnly = computed(() => !canSave.value)
 
     interface McpForm {
         id: string;
@@ -163,7 +163,7 @@
     const AUTH_OPTIONS = [
         {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
         {value: "API_TOKEN" as const, labelKey: "mcp.api_token", hintKey: "mcp.bearer_token", ee: true},
-    ];
+    ]
 
     const defaultForm = (): McpForm => ({
         id: "",
@@ -172,12 +172,12 @@
         serverType: "PRIVATE",
         authType: "BASIC",
         disabled: false,
-    });
+    })
 
-    const formRef = ref<FormInstance>();
-    const form = ref<McpForm>(defaultForm());
-    const saving = ref(false);
-    const deleting = ref(false);
+    const formRef = ref<FormInstance>()
+    const form = ref<McpForm>(defaultForm())
+    const saving = ref(false)
+    const deleting = ref(false)
 
     watch(() => mcpStore.server, (server) => {
         if (server) {
@@ -188,17 +188,17 @@
                 serverType: server.serverType,
                 authType: server.authType,
                 disabled: server.disabled,
-            };
+            }
         } else if (!isUpdate.value) {
-            form.value = defaultForm();
+            form.value = defaultForm()
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     const save = async (): Promise<void> => {
-        if (!formRef.value) return;
+        if (!formRef.value) return
         await formRef.value.validate(async (valid) => {
-            if (!valid) return;
-            saving.value = true;
+            if (!valid) return
+            saving.value = true
             try {
                 const payload = {
                     id: form.value.id,
@@ -207,33 +207,33 @@
                     serverType: form.value.serverType,
                     authType: form.value.authType,
                     disabled: form.value.disabled,
-                };
+                }
                 if (isUpdate.value) {
-                    await mcpStore.update(form.value.id, payload);
-                    router.push({name: "admin/mcp-servers"});
+                    await mcpStore.update(form.value.id, payload)
+                    router.push({name: "admin/mcp-servers"})
                 } else {
-                    const created = await mcpStore.create(payload);
+                    const created = await mcpStore.create(payload)
                     router.push({
                         name: "admin/mcp-servers/update",
                         params: {id: created.id, tab: "edit"},
-                    });
+                    })
                 }
             } finally {
-                saving.value = false;
+                saving.value = false
             }
-        });
-    };
+        })
+    }
 
     const confirmDelete = async (): Promise<void> => {
-        if (!confirm(t("mcp.delete_confirm"))) return;
-        deleting.value = true;
+        if (!confirm(t("mcp.delete_confirm"))) return
+        deleting.value = true
         try {
-            await mcpStore.remove(mcpStore.server!.id);
-            router.push({name: "admin/mcp-servers"});
+            await mcpStore.remove(mcpStore.server!.id)
+            router.push({name: "admin/mcp-servers"})
         } finally {
-            deleting.value = false;
+            deleting.value = false
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>

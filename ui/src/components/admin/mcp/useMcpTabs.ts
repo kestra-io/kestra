@@ -1,17 +1,17 @@
-import {computed} from "vue";
-import {useRoute} from "vue-router";
-import {useI18n} from "vue-i18n";
-import McpEdit from "./tabs/McpEdit.vue";
-import McpConnect from "./tabs/McpConnect.vue";
-import McpToolFlows from "./tabs/McpToolFlows.vue";
+import {computed} from "vue"
+import {useRoute} from "vue-router"
+import {useI18n} from "vue-i18n"
+import McpEdit from "./tabs/McpEdit.vue"
+import McpConnect from "./tabs/McpConnect.vue"
+import McpToolFlows from "./tabs/McpToolFlows.vue"
 
-export const ORDER = ["edit", "connect", "tool-flows"];
+export const ORDER = ["edit", "connect", "tool-flows"]
 
 export function useMcpTabs() {
-    const route = useRoute();
-    const {t} = useI18n({useScope: "global"});
+    const route = useRoute()
+    const {t} = useI18n({useScope: "global"})
 
-    const isCreate = computed(() => route.name === "admin/mcp-servers/create");
+    const isCreate = computed(() => route.name === "admin/mcp-servers/create")
 
     const tabs = computed(() => [
         {
@@ -31,7 +31,7 @@ export function useMcpTabs() {
             component: McpToolFlows,
             disabled: isCreate.value,
         },
-    ]);
+    ])
 
-    return {tabs};
+    return {tabs}
 }

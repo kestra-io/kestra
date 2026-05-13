@@ -63,20 +63,20 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useMcpStore, type McpServer} from "../../stores/mcp";
-    import useRouteContext from "../../composables/useRouteContext";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import Action from "../namespaces/components/buttons/Action.vue";
-    import ServerNetwork from "vue-material-design-icons/ServerNetwork.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import Web from "vue-material-design-icons/Web.vue";
-    import Loading from "vue-material-design-icons/Loading.vue";
-    import {useMiscStore} from "override/stores/misc";
-    import {useAuthStore} from "override/stores/auth";
-    import resource from "../../models/resource";
-    import action from "../../models/action";
+    import {computed, onMounted, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useMcpStore, type McpServer} from "../../stores/mcp"
+    import useRouteContext from "../../composables/useRouteContext"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import Action from "../namespaces/components/buttons/Action.vue"
+    import ServerNetwork from "vue-material-design-icons/ServerNetwork.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import Web from "vue-material-design-icons/Web.vue"
+    import Loading from "vue-material-design-icons/Loading.vue"
+    import {useMiscStore} from "override/stores/misc"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     interface DisplayServer {
         id: string;
@@ -88,45 +88,45 @@
 
     const props = defineProps<{
         instanceServers?: DisplayServer[];
-    }>();
+    }>()
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
-    const routeInfo = computed(() => ({title: t("mcp.servers")}));
-    useRouteContext(routeInfo);
+    const routeInfo = computed(() => ({title: t("mcp.servers")}))
+    useRouteContext(routeInfo)
 
-    const mcpStore = useMcpStore();
-    const tenantServers = ref<McpServer[]>([]);
-    const loading = ref(false);
+    const mcpStore = useMcpStore()
+    const tenantServers = ref<McpServer[]>([])
+    const loading = ref(false)
 
-    const instanceMode = computed(() => props.instanceServers !== undefined);
+    const instanceMode = computed(() => props.instanceServers !== undefined)
 
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
-    const authStore = useAuthStore();
-    const canCreate = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE));
-    const canView = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.VIEW));
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
+    const authStore = useAuthStore()
+    const canCreate = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE))
+    const canView = computed(() => isOSS.value || authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.VIEW))
     const displayServers = computed<DisplayServer[]>(() =>
-        instanceMode.value ? (props.instanceServers ?? []) : tenantServers.value
-    );
+        instanceMode.value ? (props.instanceServers ?? []) : tenantServers.value,
+    )
 
     function routeFor(server: DisplayServer) {
-        const params: Record<string, string> = {id: server.id, tab: "edit"};
+        const params: Record<string, string> = {id: server.id, tab: "edit"}
         if (instanceMode.value) {
-            params.tenant = server.tenantId ?? "main";
+            params.tenant = server.tenantId ?? "main"
         }
-        return {name: "admin/mcp-servers/update", params};
+        return {name: "admin/mcp-servers/update", params}
     }
 
     onMounted(async () => {
-        if (instanceMode.value) return;
-        loading.value = true;
+        if (instanceMode.value) return
+        loading.value = true
         try {
-            const result = await mcpStore.list();
-            tenantServers.value = result?.results ?? [];
+            const result = await mcpStore.list()
+            tenantServers.value = result?.results ?? []
         } finally {
-            loading.value = false;
+            loading.value = false
         }
-    });
+    })
 </script>
 
 <style lang="scss" scoped>

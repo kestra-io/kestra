@@ -3,6 +3,7 @@
     "version": "0.0.0-dev",
     "description": "Kestra slot prop contracts – shared type definitions for federated plugin UI slots",
     "type": "module",
+    "private": true,
     "homepage": "https://github.com/kestra-io/kestra#readme",
     "repository": {
         "type": "git",
@@ -19,9 +20,6 @@
     "files": [
         "dist"
     ],
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",

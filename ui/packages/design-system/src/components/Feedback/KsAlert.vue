@@ -17,24 +17,14 @@
 <script setup lang="ts">
     import {computed, useSlots} from "vue"
     import {ElAlert} from "element-plus"
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
-    import AlertBoxOutline from "vue-material-design-icons/AlertBoxOutline.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
-    import InformationSlabCircleOutline from "vue-material-design-icons/InformationSlabCircleOutline.vue"
+    import {TYPE_ICONS, type FeedbackType} from "./typeIcons"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const TYPE_ICONS = {
-        success: CheckCircleOutline,
-        info: InformationSlabCircleOutline,
-        error: AlertBoxOutline,
-        warning: AlertOutline,
-    } as const
-
     const props = defineProps<{
-        type?: "success" | "warning" | "info" | "error"
+        type?: FeedbackType
         title?: string
         description?: string
         closable?: boolean

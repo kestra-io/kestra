@@ -18,7 +18,6 @@ on:
         options:
           - design-system
           - topology
-          - slot-contracts
 
       skip-test:
         description: "Skip test"

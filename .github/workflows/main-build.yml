@@ -28,10 +28,11 @@ jobs:
     steps:
       # Targeting develop branch from develop
       - name: Trigger EE Workflow (develop push, no payload)
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: kestra-io/actions/composite/repository-dispatch@main
         with:
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
           client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
@@ -65,11 +66,7 @@ jobs:
     with:
       plugin-version: 'LATEST-SNAPSHOT'
       java-version: 25
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+    secrets: inherit
 
 
   publish-develop-maven:

@@ -42,14 +42,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onActivated, provide, ref, watch} from "vue";
+    import {computed, onActivated, provide, ref, watch} from "vue"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system";
-    import {removeNullAndUndefined} from "./utils/cleanUp";
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {removeNullAndUndefined} from "./utils/cleanUp"
 
-    import Task from "./segments/Task.vue";
-    import Wrapper from "./components/tasks/Wrapper.vue";
-    import TaskObjectField from "./components/tasks/TaskObjectField.vue";
+    import Task from "./segments/Task.vue"
+    import Wrapper from "./components/tasks/Wrapper.vue"
+    import TaskObjectField from "./components/tasks/TaskObjectField.vue"
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -69,31 +69,31 @@
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
-    } from "./injectionKeys";
-    import {useFlowFields} from "./utils/useFlowFields";
-    import debounce from "lodash/debounce";
-    import {NoCodeProps} from "../flows/noCodeTypes";
-    import {useFlowStore} from "../../stores/flow";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useKeyboardSave} from "./utils/useKeyboardSave";
-    import {deepEqual} from "../../utils/utils";
-    import {useScrollMemory} from "../../composables/useScrollMemory";
-    import {defaultNamespace} from "../../composables/useNamespaces";
-    import {LIST_FIELDS} from "./components/tasks/getTaskComponent";
-    import {aiGenerationTypes} from "../../utils/constants";
-    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue";
-    const props = defineProps<NoCodeProps>();
+    } from "./injectionKeys"
+    import {useFlowFields} from "./utils/useFlowFields"
+    import debounce from "lodash/debounce"
+    import {NoCodeProps} from "../flows/noCodeTypes"
+    import {useFlowStore} from "../../stores/flow"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useKeyboardSave} from "./utils/useKeyboardSave"
+    import {deepEqual} from "../../utils/utils"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
+    import {defaultNamespace} from "../../composables/useNamespaces"
+    import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
+    import {aiGenerationTypes} from "../../utils/constants"
+    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue"
+    const props = defineProps<NoCodeProps>()
 
-    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>();
-    const namespace = computed(() => flowStore.flow?.namespace);
+    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>()
+    const namespace = computed(() => flowStore.flow?.namespace)
 
     function onGeneratedYaml(yaml: string) {
-        editorUpdate(yaml);
-        copilotWrapper.value?.resetConversation();
+        editorUpdate(yaml)
+        copilotWrapper.value?.resetConversation()
     }
 
     function shouldMerge(schema: any): boolean {
-        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
+        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
         return !complexObject
     }
 
@@ -104,26 +104,26 @@
             // for TaskKvPair.vue (object) we added the buffer value in the input component
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
-                : val; // Handle null values
+                : val // Handle null values
 
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
             source: flowYaml.value,
             path: key,
             newContent: YAML_UTILS.stringify(realValue),
-        }));
+        }))
     }
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {
             try {
-                YAML_UTILS.parse(flowYaml.value);
-                return flowYaml.value;
+                YAML_UTILS.parse(flowYaml.value)
+                return flowYaml.value
             } catch {
-                return oldValue ?? "";
+                return oldValue ?? ""
             }
-        }
-    );
+        },
+    )
 
     const {
         fieldsFromSchemaTop,
@@ -132,78 +132,78 @@
 
     useKeyboardSave()
 
-    const flowStore = useFlowStore();
-    const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
+    const flowStore = useFlowStore()
+    const flowYaml = computed<string>(() => flowStore.flowYaml ?? "")
 
     const validateFlow = debounce(() => {
-        flowStore.validateFlow({flow: flowYaml.value});
-    }, 500);
+        flowStore.validateFlow({flow: flowYaml.value})
+    }, 500)
 
-    const timeout = ref();
+    const timeout = ref()
 
     const editorUpdate = (source: string) => {
         let parsedSource: any = {}
         try {
-            parsedSource = YAML_UTILS.parse(source);
+            parsedSource = YAML_UTILS.parse(source)
         } catch {
             // ignore parse errors here
-            return;
+            return
         }
 
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(parsedSource, flowStore.flowParsed)) {
-            return;
+            return
         }
-        flowStore.flowYaml = source;
-        validateFlow();
+        flowStore.flowYaml = source
+        validateFlow()
 
         // throttle the trigger of the flow update
-        clearTimeout(timeout.value);
+        clearTimeout(timeout.value)
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source,
                 topologyVisible: true,
-            });
-        }, 1000);
-    };
+            })
+        }, 1000)
+    }
 
     onActivated(() => {
-        pluginsStore.updateDocumentation();
-    });
+        pluginsStore.updateDocumentation()
+    })
 
     watch(
         () => flowStore.flowYaml,
         (newVal, oldVal) => {
             if (newVal !== oldVal) {
-                editorUpdate(newVal);
+                editorUpdate(newVal)
             }
-        }
-    );
+        },
+    )
 
     const panel = ref()
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value));
-    provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "");
-    provide(REF_PATH_INJECTION_KEY, props.refPath);
+    provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value))
+    provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "")
+    provide(REF_PATH_INJECTION_KEY, props.refPath)
     provide(PANEL_INJECTION_KEY, panel)
-    provide(POSITION_INJECTION_KEY, props.position ?? "after");
-    provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false);
-    provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"));
-    provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
-    provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
-    provide(FIELDNAME_INJECTION_KEY, props.fieldName);
-    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath ?? pluginsStore.flowSchema?.$ref ?? ""));
-    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}));
-    provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}));
-    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}));
+    provide(POSITION_INJECTION_KEY, props.position ?? "after")
+    provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false)
+    provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"))
+    provide(CREATING_TASK_INJECTION_KEY, props.creatingTask)
+    provide(EDITING_TASK_INJECTION_KEY, props.editingTask)
+    provide(FIELDNAME_INJECTION_KEY, props.fieldName)
+    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath ?? pluginsStore.flowSchema?.$ref ?? ""))
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
+    provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
         (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined): boolean | void;
         (e: "closeTask"): boolean | void;
-    }>();
+    }>()
 
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
         emit("closeTask")
@@ -222,27 +222,27 @@
     })
 
     // Scroll position persistence for No-code editor
-    const scrollContainer = ref<HTMLDivElement | null>(null);
+    const scrollContainer = ref<HTMLDivElement | null>(null)
 
     const flowIdentity = computed(() => {
-        const namespace = flowStore.flow?.namespace ?? "";
-        const flowId = flowStore.flow?.id ?? "";
-        return `${namespace}/${flowId}`;
-    });
+        const ns = flowStore.flow?.namespace ?? ""
+        const flowId = flowStore.flow?.id ?? ""
+        return `${ns}/${flowId}`
+    })
 
     const scrollKey = computed(() => {
-        const base = `nocode:${flowIdentity.value}`;
+        const base = `nocode:${flowIdentity.value}`
         // home screen
-        if (!props.creatingTask && !props.editingTask) return `${base}:home`;
+        if (!props.creatingTask && !props.editingTask) return `${base}:home`
         // task-specific
-        const action = props.creatingTask ? "create" : "edit";
-        const parentPath = props.parentPath ?? "";
-        const refPath = props.refPath ?? "";
-        const fieldName = props.fieldName ?? "";
-        return `${base}:task:${action}:parentPath:${parentPath}:refPath:${refPath}:fieldName:${fieldName}`;
-    });
+        const action = props.creatingTask ? "create" : "edit"
+        const parentPath = props.parentPath ?? ""
+        const refPath = props.refPath ?? ""
+        const fieldName = props.fieldName ?? ""
+        return `${base}:task:${action}:parentPath:${parentPath}:refPath:${refPath}:fieldName:${fieldName}`
+    })
 
-    useScrollMemory(scrollKey, scrollContainer);
+    useScrollMemory(scrollKey, scrollContainer)
 
 </script>
 

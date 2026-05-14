@@ -20,6 +20,7 @@ import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -172,7 +173,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<QueryFilter> filters
 
     ) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters));
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, null));
+    }
+
+    @Override
+    public ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        @Nullable DateFilter dateFilter
+    ) {
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
     }
 
     @Override
@@ -224,11 +235,32 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         );
     }
 
-    private Condition computeFindCondition(@Nullable List<QueryFilter> filters) {
+    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
         boolean hasKindFilter = filters != null && filters.stream()
             .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()));
-        return hasKindFilter ? this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION)
-            : this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION).and(NORMAL_KIND_CONDITION);
+        Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
+        return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+    }
+
+    private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
+        if (dateFilter == DateFilter.START_OR_END_DATE && filters != null) {
+            List<QueryFilter> dateBoundaryFilters = filters.stream()
+                .filter(f -> f.field() == QueryFilter.Field.START_DATE || f.field() == QueryFilter.Field.END_DATE)
+                .toList();
+            List<QueryFilter> otherFilters = filters.stream()
+                .filter(f -> f.field() != QueryFilter.Field.START_DATE && f.field() != QueryFilter.Field.END_DATE)
+                .toList();
+
+            Condition onStartDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION);
+            Condition onEndDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.END_DATE), Resource.EXECUTION);
+            Condition dateOrCondition = dateBoundaryFilters.isEmpty() ? DSL.noCondition() : onStartDate.or(onEndDate);
+            return dateOrCondition.and(this.filter(otherFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION));
+        }
+
+        String dateColumn = dateFilter == DateFilter.END_DATE
+            ? fieldsMapping.get(Executions.Fields.END_DATE)
+            : fieldsMapping.get(dateFilterField());
+        return this.filter(filters, dateColumn, Resource.EXECUTION);
     }
 
     private SelectConditionStep<Record1<Object>> findSelect(
@@ -710,10 +742,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public Integer purge(Execution execution) {
-        int delete = this.jdbcRepository.delete(execution);
+    public boolean purge(Execution execution) {
+        boolean deleted = this.jdbcRepository.delete(execution) > 0;
         eventPublisher.publishEvent(CrudEvent.delete(execution));
-        return delete;
+        return deleted;
     }
 
     @Override
@@ -776,8 +808,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     public Function<String, String> sortMapping() throws IllegalArgumentException {
         Map<String, String> mapper = Map.of(
             "id", "id",
-            "state.startDate", "start_date",
-            "state.endDate", "end_date",
+            Execution.STATE_START_DATE_FIELD, "start_date",
+            Execution.STATE_END_DATE_FIELD, "end_date",
             "state.duration", "state_duration",
             "namespace", "namespace",
             "flowId", "flow_id",

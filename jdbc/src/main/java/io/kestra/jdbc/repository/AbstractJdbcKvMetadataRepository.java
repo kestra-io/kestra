@@ -93,6 +93,11 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
     }
 
     @Override
+    public PersistedKvMetadata delete(PersistedKvMetadata persistedKvMetadata) {
+        return this.save(persistedKvMetadata.toDeleted());
+    }
+
+    @Override
     public Integer purge(List<PersistedKvMetadata> persistedKvsMetadata) {
         return this.jdbcRepository
             .getDslContextWrapper()

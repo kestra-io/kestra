@@ -3,7 +3,7 @@ export const logDisplayTypes = {
     ERROR: "error",
     HIDDEN: "hidden",
     DEFAULT: "all",
-} as const;
+} as const
 
 export const editorViewTypes = {
     STORAGE_KEY: "view-type",
@@ -12,7 +12,7 @@ export const editorViewTypes = {
     SOURCE_DOC: "source-doc",
     TOPOLOGY: "topology",
     SOURCE_BLUEPRINTS: "source-blueprints",
-} as const;
+} as const
 
 export const storageKeys = {
     DISPLAY_EXECUTIONS_COLUMNS: "displayExecutionsColumns",
@@ -41,18 +41,18 @@ export const storageKeys = {
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
-} as const;
+} as const
 
 export const executeFlowBehaviours = {
     SAME_TAB: "same tab",
     NEW_TAB: "new tab",
-} as const;
+} as const
 
 export const stateDisplayValues = {
     INPROGRESS: "IN-PROGRESS",
-} as const;
+} as const
 
-export const PLUGIN_DEFAULTS_SECTION = "plugin defaults";
+export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
 
 export const SECTIONS_MAP = {
     tasks: "tasks",
@@ -61,19 +61,19 @@ export const SECTIONS_MAP = {
     finally: "finally",
     "after execution": "afterExecution",
     [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
-} as const;
+} as const
 
 export const groupMemberships = {
     OWNER: "OWNER",
     MEMBER: "MEMBER",
-} as const;
+} as const
 
 export const aiGenerationTypes = {
     FLOW: "flow",
     APP: "app",
     TEST: "test",
-    DASHBOARD: "dashboard"
-} as const;
+    DASHBOARD: "dashboard",
+} as const
 export type AiGenerationType = typeof aiGenerationTypes[keyof typeof aiGenerationTypes];
 
-export const TUTORIAL_NAMESPACE = "tutorial";
+export const TUTORIAL_NAMESPACE = "tutorial"

@@ -5,7 +5,7 @@
 <script setup lang="ts">
     import {ElProgress} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-    import {computed} from "vue";
+    import {computed} from "vue"
 
     defineOptions({inheritAttrs: false})
 

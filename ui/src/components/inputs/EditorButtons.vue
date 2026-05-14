@@ -55,17 +55,17 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
 
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
 
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import {usePlaygroundStore} from "../../stores/playground";
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {usePlaygroundStore} from "../../stores/playground"
 
-    const playgroundStore = usePlaygroundStore();
+    const playgroundStore = usePlaygroundStore()
 
     const props = defineProps<{
         isCreating: boolean;
@@ -85,14 +85,14 @@
         "copy",
         "save",
         "save-and-execute",
-        "export"
+        "export",
     ])
 
-    const hasErrors = computed(() => props.errors && props.errors.length > 0);
+    const hasErrors = computed(() => props.errors && props.errors.length > 0)
 
     const canSave = computed(() => {
-        return props.haveChange || props.isCreating;
-    });
+        return props.haveChange || props.isCreating
+    })
 </script>
 
 <style scoped lang="scss">

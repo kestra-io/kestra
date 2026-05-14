@@ -48,28 +48,28 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, ref} from "vue";
+    import {watch, ref} from "vue"
 
-    import Editor from "../../../../../inputs/Editor.vue";
-    import VarValue from "../../../../VarValue.vue";
+    import Editor from "../../../../../inputs/Editor.vue"
+    import VarValue from "../../../../VarValue.vue"
 
-    import {Execution} from "../../../../../../stores/executions";
-    import {useFlowStore} from "../../../../../../stores/flow";
+    import {Execution} from "../../../../../../stores/executions"
+    import {useFlowStore} from "../../../../../../stores/flow"
 
-    import Refresh from "vue-material-design-icons/Refresh.vue";
-    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
+    import Refresh from "vue-material-design-icons/Refresh.vue"
+    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
 
-    import Utils from "../../../../../../utils/utils";
-    import {apiUrl} from "override/utils/route";
-    import {useAxios} from "../../../../../../utils/axios";
+    import * as Utils from "../../../../../../utils/utils"
+    import {apiUrl} from "override/utils/route"
+    import {useClient} from "@kestra-io/kestra-sdk"
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     const props = defineProps<{
         property?: "outputs" | "trigger";
         execution: Execution;
         path?: string;
-    }>();
+    }>()
 
     // Fetch the flow source and populate flowStore.flowYaml so pebble
     // autocompletion works identically to the flow editor.
@@ -78,10 +78,10 @@
         async ([namespace, flowId, revision]) => {
             if (namespace && flowId && !flowStore.flowYaml) {
                 try {
-                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision as string | undefined, store: false});
+                    const flow = await flowStore.loadFlow({namespace: namespace as string, id: flowId as string, revision: revision as string | undefined, store: false})
                     if (flow?.source) {
-                        flowStore.flowYaml = flow.source;
-                        flowStore.flowYamlOrigin = flow.source;
+                        flowStore.flowYaml = flow.source
+                        flowStore.flowYamlOrigin = flow.source
                     }
                 } catch {
                     // Autocompletion is best-effort; don't block the UI
@@ -89,61 +89,61 @@
             }
         },
         {immediate: true},
-    );
+    )
 
-    const axios = useAxios();
+    const axios = useClient()
 
-    const result = ref<{ value: string; type: string } | undefined>(undefined);
-    const error = ref<string | undefined>(undefined);
-    const stackTrace = ref<string | undefined>(undefined);
+    const result = ref<{ value: string; type: string } | undefined>(undefined)
+    const error = ref<string | undefined>(undefined)
+    const stackTrace = ref<string | undefined>(undefined)
 
     const clearAll = () => {
-        result.value = undefined;
-        error.value = undefined;
-        stackTrace.value = undefined;
-    };
+        result.value = undefined
+        error.value = undefined
+        stackTrace.value = undefined
+    }
 
-    const expression = ref<string>("");
+    const expression = ref<string>("")
     watch(
         () => [props.property, props.path],
         ([property, path]) => {
             if (property) {
-                clearAll();
-                expression.value = `{{ ${property}${path ? `.${path}` : ""} }}`;
+                clearAll()
+                expression.value = `{{ ${property}${path ? `.${path}` : ""} }}`
             }
         },
         {immediate: true},
-    );
+    )
 
     const onRender = () => {
-        if (!props.execution) return;
+        if (!props.execution) return
 
-        clearAll();
+        clearAll()
 
-        const url = `${apiUrl()}/executions/${props.execution.id}/eval`;
+        const url = `${apiUrl()}/executions/${props.execution.id}/actions/eval`
         axios
             .post(url, expression.value, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
                 if (response.data.error) {
-                    error.value = response.data.error;
-                    stackTrace.value = response.data.stackTrace;
-                    return;
+                    error.value = response.data.error
+                    stackTrace.value = response.data.stackTrace
+                    return
                 }
 
                 try {
-                    const parsed = JSON.parse(response.data.result);
+                    const parsed = JSON.parse(response.data.result)
                     result.value = {
                         value: JSON.stringify(parsed, null, 2),
                         type: "json",
-                    };
+                    }
                 } catch {
-                    result.value = {value: response.data.result, type: "text"};
+                    result.value = {value: response.data.result, type: "text"}
                 }
             })
             .catch((err) => {
-                error.value = err.message || "Failed to evaluate expression";
-            });
-    };
+                error.value = err.message || "Failed to evaluate expression"
+            })
+    }
 </script>
 
 <style scoped lang="scss">

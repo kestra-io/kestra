@@ -22,7 +22,7 @@
         image: string;
         imageDark: string;
         transparentImage?: boolean;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

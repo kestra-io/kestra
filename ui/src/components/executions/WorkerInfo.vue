@@ -33,10 +33,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import ServiceInfo from "./ServiceInfo.vue";
+    import {ref, computed} from "vue"
+    import ServiceInfo from "./ServiceInfo.vue"
 
-    import Server from "vue-material-design-icons/Server.vue";
+    import Server from "vue-material-design-icons/Server.vue"
 
     interface Attempt {
         id: string | number;
@@ -51,9 +51,9 @@
     const props = defineProps<{
         component?: string;
         taskRun: TaskRun;
-    }>();
+    }>()
 
-    const visible = ref(false);
+    const visible = ref(false)
 
-    const uuid = computed(() => `workerinfo-${props.taskRun.id}`);
+    const uuid = computed(() => `workerinfo-${props.taskRun.id}`)
 </script>

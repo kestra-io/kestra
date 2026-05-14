@@ -53,54 +53,54 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, watch} from "vue"
 
     const props = withDefaults(defineProps<{
         modelValue: string[];
     }>(), {
-    });
+    })
 
     const emits = defineEmits<{
         "update:modelValue": [value: string[]];
-    }>();
+    }>()
 
-    const newKey = ref("");
-    const newValue = ref("");
-    const detailPairs = ref<Array<{ key: string; value: string }>>([]);
+    const newKey = ref("")
+    const newValue = ref("")
+    const detailPairs = ref<Array<{ key: string; value: string }>>([])
 
     // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
         values?.map(value => {
-            const [key, ...valueParts] = value?.split(":") ?? [];
-            return {key: key ?? "", value: valueParts?.join(":") ?? ""};
-        }).filter(pair => pair.key && pair.value) ?? [];
+            const [key, ...valueParts] = value?.split(":") ?? []
+            return {key: key ?? "", value: valueParts?.join(":") ?? ""}
+        }).filter(pair => pair.key && pair.value) ?? []
 
     const serializeDetailPairs = (pairs: typeof detailPairs.value) =>
-        pairs.map(pair => `${pair.key}:${pair.value}`);
+        pairs.map(pair => `${pair.key}:${pair.value}`)
 
     const addPair = () => {
-        const key = newKey.value.trim(), value = newValue.value.trim();
-        if (!key || !value) return;
+        const key = newKey.value.trim(), value = newValue.value.trim()
+        if (!key || !value) return
 
-        const existingIndex = detailPairs.value.findIndex(pair => pair.key === key);
+        const existingIndex = detailPairs.value.findIndex(pair => pair.key === key)
         if (existingIndex !== -1) {
-            detailPairs.value[existingIndex].value = value;
+            detailPairs.value[existingIndex].value = value
         } else {
-            detailPairs.value.push({key, value});
+            detailPairs.value.push({key, value})
         }
 
-        emits("update:modelValue", serializeDetailPairs(detailPairs.value));
-        newKey.value = newValue.value = "";
-    };
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+        newKey.value = newValue.value = ""
+    }
 
     const removePair = (index: number) => {
-        detailPairs.value.splice(index, 1);
-        emits("update:modelValue", serializeDetailPairs(detailPairs.value));
-    };
+        detailPairs.value.splice(index, 1)
+        emits("update:modelValue", serializeDetailPairs(detailPairs.value))
+    }
 
-    watch(() => props.modelValue, (newValue) => {
-        detailPairs.value = newValue ? parseDetailPairs(newValue) : [];
-    }, {immediate: true});
+    watch(() => props.modelValue, (val) => {
+        detailPairs.value = val ? parseDetailPairs(val) : []
+    }, {immediate: true})
 </script>
 
 <style lang="scss" scoped>

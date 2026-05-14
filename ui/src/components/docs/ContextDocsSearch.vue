@@ -46,96 +46,96 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-    import ContextDocsLink from "./ContextDocsLink.vue";
-    import {debounce} from "lodash-es";
+    import {ref, computed, onMounted, onUnmounted} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
+    import ContextDocsLink from "./ContextDocsLink.vue"
+    import {debounce} from "lodash-es"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const searchQuery = ref("");
-    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([]);
-    const loading = ref(false);
-    const selectedIndex = ref(0);
-    const searchContainer = ref<HTMLDivElement | null>(null);
+    const searchQuery = ref("")
+    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([])
+    const loading = ref(false)
+    const selectedIndex = ref(0)
+    const searchContainer = ref<HTMLDivElement | null>(null)
 
     const showResults = computed(() => {
-        return searchQuery.value.trim().length > 0;
-    });
+        return searchQuery.value.trim().length > 0
+    })
 
     const handleKeyUp = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            selectedIndex.value = Math.max(0, selectedIndex.value - 1);
+            selectedIndex.value = Math.max(0, selectedIndex.value - 1)
         }
-    };
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1);
+            selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1)
         }
-    };
+    }
 
     const handleEnterKey = (e: KeyboardEvent) => {
-        e.preventDefault();
+        e.preventDefault()
         if (searchResults.value.length > 0) {
-            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement;
+            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement
             if (selectedResult) {
-                selectedResult.click();
+                selectedResult.click()
             }
         }
-    };
+    }
 
     const resetSearch = () => {
-        searchQuery.value = "";
-        searchResults.value = [];
-    };
+        searchQuery.value = ""
+        searchResults.value = []
+    }
 
     const performSearch = async (query: string) => {
         if (!query) {
-            searchResults.value = [];
-            selectedIndex.value = 0;
-            return;
+            searchResults.value = []
+            selectedIndex.value = 0
+            return
         }
 
         try {
-            loading.value = true;
-            const results = await docStore.search({q: query, scoredSearch: true});
+            loading.value = true
+            const results = await docStore.search({q: query, scoredSearch: true})
 
-            const processedResults = (results || []).slice(0, 10);
-            searchResults.value = processedResults;
-            selectedIndex.value = 0;
+            const processedResults = (results || []).slice(0, 10)
+            searchResults.value = processedResults
+            selectedIndex.value = 0
         } catch (error) {
-            console.error("Error searching docs:", error);
-            searchResults.value = [];
-            selectedIndex.value = 0;
+            console.error("Error searching docs:", error)
+            searchResults.value = []
+            selectedIndex.value = 0
         } finally {
-            loading.value = false;
+            loading.value = false
         }
-    };
+    }
 
-    const debouncedSearch = debounce(performSearch, 500);
+    const debouncedSearch = debounce(performSearch, 500)
 
     const handleSearch = () => {
-        debouncedSearch(searchQuery.value.trim());
-    };
+        debouncedSearch(searchQuery.value.trim())
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
         if (searchContainer.value && !searchContainer.value.contains(event.target as Node)) {
-            resetSearch();
+            resetSearch()
         }
-    };
+    }
 
     onMounted(() => {
-        document.addEventListener("click", handleClickOutside);
-    });
+        document.addEventListener("click", handleClickOutside)
+    })
 
     onUnmounted(() => {
-        document.removeEventListener("click", handleClickOutside);
-        debouncedSearch.cancel();
-    });
+        document.removeEventListener("click", handleClickOutside)
+        debouncedSearch.cancel()
+    })
 </script>
 
 <style scoped lang="scss">

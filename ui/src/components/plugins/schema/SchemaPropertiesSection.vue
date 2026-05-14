@@ -76,16 +76,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
-    import {KsTooltip} from "@kestra-io/design-system";
-    import Alert from "vue-material-design-icons/Alert.vue";
-    import AlphaBBox from "vue-material-design-icons/AlphaBBox.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
-    import Snowflake from "vue-material-design-icons/Snowflake.vue";
-    import SchemaSection from "./SchemaSection.vue";
-    import PropertyDetail from "./PropertyDetail.vue";
+    import {ref, watch} from "vue"
+    import {KsTooltip} from "@kestra-io/design-system"
+    import Alert from "vue-material-design-icons/Alert.vue"
+    import AlphaBBox from "vue-material-design-icons/AlphaBBox.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
+    import Snowflake from "vue-material-design-icons/Snowflake.vue"
+    import SchemaSection from "./SchemaSection.vue"
+    import PropertyDetail from "./PropertyDetail.vue"
     import {
         aggregateAllOf,
         className,
@@ -95,7 +95,7 @@
         type JSONProperty,
         type JSONSchema,
         type SchemaExample,
-    } from "./utils/schemaUtils";
+    } from "./utils/schemaUtils"
 
     const props = withDefaults(defineProps<{
         href?: string;
@@ -120,41 +120,41 @@
         description: undefined,
         examples: undefined,
         nested: false,
-    });
+    })
 
-    const emit = defineEmits<{expand: []}>();
+    const emit = defineEmits<{expand: []}>()
 
-    const autoExpanded = ref(false);
+    const autoExpanded = ref(false)
 
     watch(autoExpanded, (expanded) => {
-        if (expanded) emit("expand");
-    });
+        if (expanded) emit("expand")
+    })
 
     const nonDeprecatedTypes = (types: string[]) =>
-        types.filter((type) => !type.startsWith("#") || !isDeprecated(props.definitions?.[type.slice(1)]));
+        types.filter((type) => !type.startsWith("#") || !isDeprecated(props.definitions?.[type.slice(1)]))
 
     function sortedAndAggregated(schema?: Record<string, JSONProperty>): Record<string, JSONProperty> {
-        const source = schema ?? {};
-        const requiredKeys: string[] = [];
-        const nonRequiredKeys: string[] = [];
+        const source = schema ?? {}
+        const requiredKeys: string[] = []
+        const nonRequiredKeys: string[] = []
 
         for (const key of Object.keys(source)) {
             if (typeof source[key] === "object") {
                 source[key] = aggregateAllOf(source[key]);
-                (source[key].$required ? requiredKeys : nonRequiredKeys).push(key);
+                (source[key].$required ? requiredKeys : nonRequiredKeys).push(key)
             }
         }
 
-        const sortedKeys = [...requiredKeys.sort(), ...nonRequiredKeys.sort()];
-        const sortedSchema: Record<string, JSONProperty> = {};
+        const sortedKeys = [...requiredKeys.sort(), ...nonRequiredKeys.sort()]
+        const sortedSchema: Record<string, JSONProperty> = {}
 
         for (const key of sortedKeys) {
             if (!source[key].$deprecated || props.forceInclude?.includes(key)) {
-                sortedSchema[key] = source[key];
+                sortedSchema[key] = source[key]
             }
         }
 
-        return sortedSchema;
+        return sortedSchema
     }
 </script>
 

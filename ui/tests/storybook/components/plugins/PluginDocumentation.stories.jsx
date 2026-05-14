@@ -1,5 +1,5 @@
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 export default {
     title: "Components/Plugins/PluginDocumentation",
@@ -11,10 +11,11 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const axios = useAxios()
+        const axios = {}
         axios.get = () =>{
                 return  Promise.resolve({data: []})
             }
+        setMockClient(axios);
 
         return () => <PluginDocumentation {...args} />
     }

@@ -1,4 +1,4 @@
-import type {RouterLink} from "vue-router";
+import type {RouterLink} from "vue-router"
 
 type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
 

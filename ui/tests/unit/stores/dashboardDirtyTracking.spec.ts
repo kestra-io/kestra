@@ -1,13 +1,14 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
-import {setActivePinia, createPinia} from "pinia";
-import {nextTick} from "vue";
+import {describe, it, expect, vi, beforeEach} from "vitest"
+import {setActivePinia, createPinia} from "pinia"
+import {nextTick} from "vue"
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
     done: vi.fn(),
     set: vi.fn(),
     inc: vi.fn(),
-}));
+}))
 
 vi.mock("vue-router", () => ({
     useRouter: () => ({
@@ -16,96 +17,93 @@ vi.mock("vue-router", () => ({
         replace: vi.fn(),
         push: vi.fn(),
     }),
-}));
+}))
 
 vi.mock("vue-i18n", () => ({
     useI18n: () => ({t: (key: string) => key}),
-}));
+}))
 
-const axiosGet = vi.fn();
-const axiosPost = vi.fn().mockResolvedValue({data: {}});
-const axiosPut = vi.fn().mockResolvedValue({data: {}});
-
-vi.mock("../../../src/utils/axios", () => ({
-    useAxios: () => ({
-        get: axiosGet,
-        post: axiosPost,
-        put: axiosPut,
-        delete: vi.fn(),
-    }),
-}));
+const axiosGet = vi.fn()
+const axiosPost = vi.fn().mockResolvedValue({data: {}})
+const axiosPut = vi.fn().mockResolvedValue({data: {}})
 
 describe("dashboard store dirty tracking", () => {
     beforeEach(() => {
-        vi.resetModules();
-        axiosGet.mockReset();
-        axiosPost.mockReset().mockResolvedValue({data: {}});
-        axiosPut.mockReset().mockResolvedValue({data: {}});
-        setActivePinia(createPinia());
-    });
+        vi.resetModules()
+        setMockClient({
+            get: axiosGet,
+            post: axiosPost,
+            put: axiosPut,
+            delete: vi.fn(),
+        })
+        axiosGet.mockReset()
+        axiosPost.mockReset().mockResolvedValue({data: {}})
+        axiosPut.mockReset().mockResolvedValue({data: {}})
+        setActivePinia(createPinia())
+    })
 
     it("haveChange is false when source matches origin", async () => {
-        const {useDashboardStore} = await import("../../../src/stores/dashboard");
-        const dashboardStore = useDashboardStore();
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
 
-        expect(dashboardStore.haveChange).toBe(false);
+        expect(dashboardStore.haveChange).toBe(false)
 
-        dashboardStore.sourceCode = "id: foo";
-        dashboardStore.sourceCodeOrigin = "id: foo";
+        dashboardStore.sourceCode = "id: foo"
+        dashboardStore.sourceCodeOrigin = "id: foo"
 
-        expect(dashboardStore.haveChange).toBe(false);
-    });
+        expect(dashboardStore.haveChange).toBe(false)
+    })
 
     it("haveChange is true when source diverges from origin", async () => {
-        const {useDashboardStore} = await import("../../../src/stores/dashboard");
-        const dashboardStore = useDashboardStore();
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
 
-        dashboardStore.sourceCodeOrigin = "id: foo";
-        dashboardStore.sourceCode = "id: bar";
+        dashboardStore.sourceCodeOrigin = "id: foo"
+        dashboardStore.sourceCode = "id: bar"
 
-        expect(dashboardStore.haveChange).toBe(true);
-    });
+        expect(dashboardStore.haveChange).toBe(true)
+    })
 
     it("syncs unsavedChange to unsavedChangesStore when source changes", async () => {
-        const {useDashboardStore} = await import("../../../src/stores/dashboard");
-        const {useUnsavedChangesStore} = await import("../../../src/stores/unsavedChanges");
-        const dashboardStore = useDashboardStore();
-        const unsavedChangesStore = useUnsavedChangesStore();
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const {useUnsavedChangesStore} = await import("../../../src/stores/unsavedChanges")
+        const dashboardStore = useDashboardStore()
+        const unsavedChangesStore = useUnsavedChangesStore()
 
-        expect(unsavedChangesStore.unsavedChange).toBe(false);
+        expect(unsavedChangesStore.unsavedChange).toBe(false)
 
-        dashboardStore.sourceCode = "id: foo";
-        await nextTick();
-        expect(unsavedChangesStore.unsavedChange).toBe(true);
+        dashboardStore.sourceCode = "id: foo"
+        await nextTick()
+        expect(unsavedChangesStore.unsavedChange).toBe(true)
 
-        dashboardStore.sourceCodeOrigin = dashboardStore.sourceCode;
-        await nextTick();
-        expect(unsavedChangesStore.unsavedChange).toBe(false);
-    });
+        dashboardStore.sourceCodeOrigin = dashboardStore.sourceCode
+        await nextTick()
+        expect(unsavedChangesStore.unsavedChange).toBe(false)
+    })
 
     it("load seeds sourceCodeOrigin so haveChange stays false after fetch", async () => {
-        axiosGet.mockResolvedValueOnce({status: 200, data: {id: "d1", sourceCode: "id: d1"}});
+        axiosGet.mockResolvedValueOnce({status: 200, data: {id: "d1", sourceCode: "id: d1"}})
 
-        const {useDashboardStore} = await import("../../../src/stores/dashboard");
-        const dashboardStore = useDashboardStore();
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
 
-        await dashboardStore.load("d1");
+        await dashboardStore.load("d1")
 
-        expect(dashboardStore.sourceCode).toBe("id: d1");
-        expect(dashboardStore.sourceCodeOrigin).toBe("id: d1");
-        expect(dashboardStore.haveChange).toBe(false);
-    });
+        expect(dashboardStore.sourceCode).toBe("id: d1")
+        expect(dashboardStore.sourceCodeOrigin).toBe("id: d1")
+        expect(dashboardStore.haveChange).toBe(false)
+    })
 
     it("update resets sourceCodeOrigin so haveChange clears post-save", async () => {
-        const {useDashboardStore} = await import("../../../src/stores/dashboard");
-        const dashboardStore = useDashboardStore();
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
 
-        dashboardStore.sourceCodeOrigin = "id: d1";
-        dashboardStore.sourceCode = "id: d1\ntitle: edited";
-        expect(dashboardStore.haveChange).toBe(true);
+        dashboardStore.sourceCodeOrigin = "id: d1"
+        dashboardStore.sourceCode = "id: d1\ntitle: edited"
+        expect(dashboardStore.haveChange).toBe(true)
 
-        await dashboardStore.update({id: "d1", source: dashboardStore.sourceCode});
+        await dashboardStore.update({id: "d1", source: dashboardStore.sourceCode})
 
-        expect(dashboardStore.haveChange).toBe(false);
-    });
-});
+        expect(dashboardStore.haveChange).toBe(false)
+    })
+})

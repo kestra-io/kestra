@@ -133,31 +133,31 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
-    import {Handle, Position} from "@vue-flow/core";
-    import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system";
-    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants";
-    import ExecutionInformations from "../misc/ExecutionInformations.vue";
-    import Utils from "../utils/utils";
-    import BasicNode from "./BasicNode.vue";
+    import {computed, inject} from "vue"
+    import {Handle, Position} from "@vue-flow/core"
+    import {State, KsTooltip, SECTIONS} from "@kestra-io/design-system"
+    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
+    import ExecutionInformations from "../misc/ExecutionInformations.vue"
+    import * as Utils from "../utils/utils"
+    import BasicNode from "./BasicNode.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
         SHOW_EXTRA_DETAILS_INJECTION_KEY,
-    } from "../injectionKeys";
+    } from "../injectionKeys"
 
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue";
-    import SendLock from "vue-material-design-icons/SendLock.vue";
-    import PlayIcon from "vue-material-design-icons/Play.vue";
-    import CheckIcon from "vue-material-design-icons/Check.vue";
-    import AlertCircleIcon from "vue-material-design-icons/AlertCircle.vue";
-    import AlertIcon from "vue-material-design-icons/Alert.vue";
-    import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue";
-    import RotatingDots from "../assets/icons/RotatingDots.vue";
-    import Eye from "vue-material-design-icons/Eye.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
+    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
+    import SendLock from "vue-material-design-icons/SendLock.vue"
+    import PlayIcon from "vue-material-design-icons/Play.vue"
+    import CheckIcon from "vue-material-design-icons/Check.vue"
+    import AlertCircleIcon from "vue-material-design-icons/AlertCircle.vue"
+    import AlertIcon from "vue-material-design-icons/Alert.vue"
+    import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
+    import RotatingDots from "../assets/icons/RotatingDots.vue"
+    import Eye from "vue-material-design-icons/Eye.vue"
 
 
     interface TaskType {
@@ -227,12 +227,12 @@
         iconComponent: undefined,
         customActions: () => ({}),
         showDetails: () => ({}),
-    });
+    })
 
     defineOptions({
         name: "TaskNode",
-        inheritAttrs: false
-    });
+        inheritAttrs: false,
+    })
 
     const emit = defineEmits<{
         (event: typeof EVENTS.EXPAND, data: any): void;
@@ -249,49 +249,49 @@
         (event: typeof EVENTS.RUN_TASK, data: { task: any }) :void;
         (event: typeof EVENTS.SHOW_CUSTOM_ACTION, data: { task: any; customAction: CustomActionConfig }) :void;
         (event: typeof EVENTS.SHOW_DETAILS, data: { task: any; showDetails: ShowDetailsConfig }) :void;
-    }>();
+    }>()
 
-    const execution = inject(EXECUTION_INJECTION_KEY);
-    const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY);
-    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY);
+    const execution = inject(EXECUTION_INJECTION_KEY)
+    const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
+    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
 
-    const color = computed(() => props.data.color ?? "primary");
+    const color = computed(() => props.data.color ?? "primary")
 
-    const taskId = computed(() => Utils.afterLastDot(props.id));
+    const taskId = computed(() => Utils.afterLastDot(props.id))
 
     const taskExecution = computed(() => {
-        const executionId = props.data.executionId;
+        const executionId = props.data.executionId
         if (executionId) {
             return executionId === execution?.value?.id
                 ? execution?.value
                 : Object.values(subflowsExecutions?.value || {})
-                    .find((exec: any) => exec.id === executionId);
+                    .find((exec: any) => exec.id === executionId)
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     const taskRunList = computed(() => {
         return taskExecution.value && taskExecution.value.taskRunList
             ? taskExecution.value.taskRunList
-            : [];
-    });
+            : []
+    })
 
     const taskRuns = computed(() => {
         return taskRunList.value.filter(
-            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid)
-        );
-    });
+            (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
+        )
+    })
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
-            return null;
+            return null
         }
 
         if (taskRuns.value.length === 1) {
-            return taskRuns.value[0].state.current;
+            return taskRuns.value[0].state.current
         }
 
-        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current);
+        const allStates = taskRuns.value.map((t: TaskRun) => t.state.current)
 
         const SORT_STATUS: string[] = [
             State.FAILED,
@@ -303,32 +303,32 @@
             State.SUCCESS,
             State.RESTARTED,
             State.CREATED,
-        ];
+        ]
 
         const result = allStates
             .map((item: [string, string]) => {
-                const n = SORT_STATUS.indexOf(item[1]);
-                return [n, item] as [number, [string, string]];
+                const n = SORT_STATUS.indexOf(item[1])
+                return [n, item] as [number, [string, string]]
             })
             .sort()
-            .map((j: [number, [string, string]]) => j[1]);
+            .map((j: [number, [string, string]]) => j[1])
 
-        return result[0];
-    });
+        return result[0]
+    })
 
     const classes = computed(() => ({
         "execution-no-taskrun":
-            Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0)
-    }));
+            Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
+    }))
 
     const expandData = computed<ExpandData>(() => ({
         id: props.id,
-        type: String(props.data.node.task.type)
-    }));
+        type: String(props.data.node.task.type),
+    }))
 
     const dataWithLink = computed(() => {
         if (props.data.node.type?.endsWith("SubflowGraphTask") && props.enableSubflowInteraction) {
-            const subflowIdContainer = props.data.node.task.subflowId ?? props.data.node.task;
+            const subflowIdContainer = props.data.node.task.subflowId ?? props.data.node.task
             return {
                 ...props.data,
                 link: {
@@ -337,52 +337,52 @@
                     executionId: taskExecution.value?.taskRunList
                         .filter((taskRun: TaskRun) =>
                             taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId
+                            taskRun.outputs?.executionId,
                         )
-                        ?.[0]?.outputs?.executionId
-                }
-            };
+                        ?.[0]?.outputs?.executionId,
+                },
+            }
         }
-        return props.data;
-    });
+        return props.data
+    })
 
     const actionConfig = computed(() => {
-        const taskType = props.data.node.task?.type as string | undefined;
-        if (!taskType) return undefined;
-        const customAction = props.customActions?.[taskType];
-        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const;
-        const showDetail = props.showDetails?.[taskType];
-        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const;
-        return undefined;
-    });
+        const taskType = props.data.node.task?.type as string | undefined
+        if (!taskType) return undefined
+        const customAction = props.customActions?.[taskType]
+        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
+        const showDetail = props.showDetails?.[taskType]
+        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
+        return undefined
+    })
 
     function onShowDetails() {
-        if (!actionConfig.value || !props.data.node.task) return;
+        if (!actionConfig.value || !props.data.node.task) return
         if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
-            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig});
+            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig})
         } else {
-            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig});
+            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig})
         }
     }
 
     const iconAlt = computed(() => {
         if (state.value === State.RUNNING) {
-            return "task is running";
+            return "task is running"
         }
         if (state.value === State.SUCCESS) {
-            return "task was successful";
+            return "task was successful"
         }
         if (state.value === State.WARNING) {
-            return "task sent a warning";
+            return "task sent a warning"
         }
         if (state.value === State.SKIPPED) {
-            return "task was skipped";
+            return "task was skipped"
         }
         if (state.value === State.FAILED) {
-            return "task failed";
+            return "task failed"
         }
-        return undefined;
-    });
+        return undefined
+    })
 </script>
 
 <style lang="scss" scoped>

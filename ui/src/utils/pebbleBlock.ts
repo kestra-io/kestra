@@ -12,8 +12,8 @@ export function isOffsetInPebbleBlock(text: string, offset: number): boolean {
     // For offset >= 2, search up to (offset - 1) so a `}}` that starts AT the
     // cursor is not treated as a closer.
     if (offset < 2) {
-        return false;
+        return false
     }
-    const searchUpTo = offset - 1;
-    return text.lastIndexOf("{{", searchUpTo) > text.lastIndexOf("}}", searchUpTo);
+    const searchUpTo = offset - 1
+    return text.lastIndexOf("{{", searchUpTo) > text.lastIndexOf("}}", searchUpTo)
 }

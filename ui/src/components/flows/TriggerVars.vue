@@ -29,20 +29,20 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    import VarValue from "../executions/VarValue.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import Cron from "../layout/Cron.vue";
-    import {Execution} from "../../stores/executions";
+    import {useI18n} from "vue-i18n"
+    import VarValue from "../executions/VarValue.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import Cron from "../layout/Cron.vue"
+    import {Execution} from "../../stores/executions"
 
-    const {t, te} = useI18n();
+    const {t, te} = useI18n()
 
     defineProps<{
         data: Record<string, any>;
         execution?: Execution;
-    }>();
+    }>()
     
-    const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
+    const emit = defineEmits<{ (e: "on-copy", event: any): void }>()
 
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {
@@ -53,10 +53,10 @@
             "evaluatedAt": "last evaluation date",
             "locked": "locked",
             "states": "trigger_states",
-        };
-        const translationKey = mappings[key] ?? key;
-        return te(translationKey) && t(translationKey) || translationKey;
-    };
+        }
+        const translationKey = mappings[key] ?? key
+        return te(translationKey) && t(translationKey) || translationKey
+    }
 </script>
 
 <style scoped lang="scss">

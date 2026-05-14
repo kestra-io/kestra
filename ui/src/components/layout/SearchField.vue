@@ -20,10 +20,10 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, watch, onMounted, onUnmounted} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import debounce from "lodash/debounce";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {ref, watch, onMounted, onUnmounted} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import debounce from "lodash/debounce"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     const props = withDefaults(defineProps<{
         router?: boolean;
@@ -32,58 +32,58 @@
     }>(), {
         router: true,
         placeholder: "search",
-        readonly: false
-    });
+        readonly: false,
+    })
 
     const emit = defineEmits<{
         (e: "search", value: string): void;
-    }>();
+    }>()
 
-    const route = useRoute();
-    const vueRouter = useRouter();
+    const route = useRoute()
+    const vueRouter = useRouter()
 
-    const search = ref<string>("");
+    const search = ref<string>("")
 
-    let searchDebounce: ReturnType<typeof debounce>;
+    let searchDebounce: ReturnType<typeof debounce>
 
     function init() {
         if (route.query.q && props.router !== false) {
-            search.value = String(route.query.q);
+            search.value = String(route.query.q)
         }
         searchDebounce = debounce(() => {
-            emit("search", search.value);
+            emit("search", search.value)
             if (props.router !== false) {
                 const query: Record<string, any> = {
                     ...route.query,
                     q: search.value,
-                    page: 1
-                };
-                if (!search.value) {
-                    delete query.q;
+                    page: 1,
                 }
-                vueRouter.push({query});
+                if (!search.value) {
+                    delete query.q
+                }
+                vueRouter.push({query})
             }
-        }, 300);
+        }, 300)
     }
 
     function onInput() {
-        searchDebounce();
+        searchDebounce()
     }
 
     onMounted(() => {
-        init();
-    });
+        init()
+    })
 
     onUnmounted(() => {
-        if (searchDebounce) searchDebounce.cancel();
-    });
+        if (searchDebounce) searchDebounce.cancel()
+    })
 
     watch(
         () => route.query.q,
         (newQ) => {
-            search.value = newQ ? String(newQ) : "";
-        }
-    );
+            search.value = newQ ? String(newQ) : ""
+        },
+    )
 </script>
 
 <style scoped lang="scss">

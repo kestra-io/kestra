@@ -6,27 +6,27 @@
 
 <script setup lang="ts">
     import {cssVar} from "@kestra-io/design-system"
-    import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "override/stores/misc";
-    import {computed} from "vue";
+    import {useLayoutStore} from "../../stores/layout"
+    import {useMiscStore} from "override/stores/misc"
+    import {computed} from "vue"
 
-    const layoutStore = useLayoutStore();
-    const miscStore = useMiscStore();
+    const layoutStore = useLayoutStore()
+    const miscStore = useMiscStore()
 
     const name = computed(() => {
-        return layoutStore.envName || miscStore.configs?.environment?.name;
+        return layoutStore.envName || miscStore.configs?.environment?.name
     })
 
     const color = computed(() => {
         if (layoutStore.envColor) {
-            return layoutStore.envColor;
+            return layoutStore.envColor
         }
 
         if (miscStore.configs?.environment?.color) {
-            return miscStore.configs.environment.color;
+            return miscStore.configs.environment.color
         }
 
-        return cssVar("--ks-content-info");
+        return cssVar("--ks-content-info")
     })
 
 </script>

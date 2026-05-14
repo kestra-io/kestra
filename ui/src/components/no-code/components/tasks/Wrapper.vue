@@ -6,9 +6,9 @@
 </template>
 
 <script setup lang="ts">
-    defineOptions({name: "Wrapper"});
+    defineOptions({name: "Wrapper"})
 
-    defineProps<{merge?: boolean, transparent?: boolean}>();
+    defineProps<{merge?: boolean, transparent?: boolean}>()
 </script>
 
 <style scoped lang="scss">

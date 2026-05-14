@@ -40,26 +40,26 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, provide, ref} from "vue";
+    import {computed, inject, provide, ref} from "vue"
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons"
 
-    import Add from "../Add.vue";
-    import Wrapper from "./Wrapper.vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
-    import {useBlockComponent} from "./useBlockComponent";
+    import Add from "../Add.vue"
+    import Wrapper from "./Wrapper.vue"
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
+    import {useBlockComponent} from "./useBlockComponent"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref())
 
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
-        return [blockSchemaPath.value, "properties", props.root, "items"].join("/");
-    }));
+        return [blockSchemaPath.value, "properties", props.root, "items"].join("/")
+    }))
 
-    const emits = defineEmits(["update:modelValue"]);
+    const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema?: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
         root?: string;
@@ -68,13 +68,13 @@
         schema: () => ({}),
         required: false,
         root: undefined,
-    });
+    })
 
-    const {getBlockComponent} = useBlockComponent();
+    const {getBlockComponent} = useBlockComponent()
 
     const componentType = computed(() => {
-        return getBlockComponent.value?.(props.schema.items, props.root);
-    });
+        return getBlockComponent.value?.(props.schema.items, props.root)
+    })
 
     const needWrapper = computed(() => {
         return ![
@@ -83,7 +83,7 @@
             "boolean",
             "expression",
         ].includes(componentType.value.ksTaskName)
-    });
+    })
 
     const items = computed(() =>
         props.modelValue === undefined && !props.required
@@ -92,32 +92,32 @@
             // if field is required though it invites users to fill it in
             ? []
             : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
-    );
+    )
 
     const handleInput = (value: string, index: number) => {
         const newVal = [...items.value]
-        newVal.splice(index, 1, value);
-        emits("update:modelValue", newVal);
-    };
+        newVal.splice(index, 1, value)
+        emits("update:modelValue", newVal)
+    }
 
     const newEmptyValue = computed(() => {
         if (props.schema.items?.type === "string") {
-            return "";
+            return ""
         }
-        return props.schema.items?.default ?? undefined;
+        return props.schema.items?.default ?? undefined
     })
 
     const addItem = () => {
-        emits("update:modelValue", [...items.value, newEmptyValue.value]);
-    };
+        emits("update:modelValue", [...items.value, newEmptyValue.value])
+    }
 
     const removeItem = (index: number) => {
         if (items.value.length <= 1) {
-            emits("update:modelValue", undefined);
-            return;
+            emits("update:modelValue", undefined)
+            return
         }
-        emits("update:modelValue", [...items.value].splice(index, 1));
-    };
+        emits("update:modelValue", [...items.value].splice(index, 1))
+    }
 
     const moveItem = (index: number, direction: "up" | "down") => {
         const tempValue = items.value
@@ -125,15 +125,15 @@
             [tempValue[index - 1], tempValue[index]] = [
                 tempValue[index],
                 tempValue[index - 1],
-            ];
+            ]
         } else if (direction === "down" && index < tempValue.length - 1) {
             [tempValue[index + 1], tempValue[index]] = [
                 tempValue[index],
                 tempValue[index + 1],
-            ];
+            ]
         }
-        emits("update:modelValue", tempValue);
-    };
+        emits("update:modelValue", tempValue)
+    }
 </script>
 
 <style scoped lang="scss">

@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-    import ContextDocsLink from "../docs/ContextDocsLink.vue";
+    import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
     interface Button {
         label: string;
@@ -21,8 +21,8 @@
     }
 
     withDefaults(defineProps<Props>(), {
-        buttons: () => []
-    });
+        buttons: () => [],
+    })
 </script>
 
 <style scoped lang="scss">

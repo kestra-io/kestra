@@ -32,6 +32,6 @@
   "include": [
     ".storybook/preview.*",
     "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue",
-    "tests/**/*.ts", "tests/**/*.tsx"
+    "tests/**/*.ts", "tests/**/*.tsx", "tests/**/*.jsx", "tests/**/*.vue"
   ]
 }

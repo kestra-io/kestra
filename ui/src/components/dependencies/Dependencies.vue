@@ -73,44 +73,44 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {ref} from "vue"
 
-    import Table from "./components/Table.vue";
-    import Empty from "../layout/empty/Empty.vue";
+    import Table from "./components/Table.vue"
+    import Empty from "../layout/empty/Empty.vue"
 
-    import {KsGraph} from "@kestra-io/design-system";
+    import {KsGraph} from "@kestra-io/design-system"
 
-    import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
-    import type {Types} from "./utils/types";
+    import {useDependencies} from "./composables/useDependencies"
+    import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types"
+    import type {Types} from "./utils/types"
 
-    const PANEL = {size: "70%", min: "30%", max: "80%"};
+    const PANEL = {size: "70%", min: "30%", max: "80%"}
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useRoute} from "vue-router"
+    const route = useRoute()
 
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
-    import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
-    import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import {use} from "echarts/core";
-    import {TitleComponent} from "echarts/components";
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Minus from "vue-material-design-icons/Minus.vue"
+    import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue"
+    import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {use} from "echarts/core"
+    import {TitleComponent} from "echarts/components"
 
     const props = defineProps<{
         fetchAssetDependencies?: () => Promise<{
             data: any[];
             count: number;
         }>;
-    }>();
+    }>()
 
-    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
+    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION
 
-    const graphRef = ref(null);
-    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
-    const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
+    const graphRef = ref(null)
+    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId)
+    const TESTING = false // When true, bypasses API data fetching and uses mock/test data.
 
-    use([TitleComponent]);
+    use([TitleComponent])
 
     const {
         getElements,
@@ -122,7 +122,7 @@
         selectNode,
         handleNodeClick,
         handlers,
-    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
+    } = useDependencies(graphRef, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies)
 </script>
 
 <style scoped lang="scss">

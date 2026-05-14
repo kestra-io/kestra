@@ -1,10 +1,10 @@
-import _merge from "lodash/merge";
-import Utils from "../../../utils/utils";
-import {State} from "@kestra-io/design-system";
+import _merge from "lodash/merge"
+import * as Utils from "../../../utils/utils"
+import {State} from "@kestra-io/design-system"
 import {cssVar} from "@kestra-io/design-system"
-import {getSchemeValue} from "../../../utils/scheme";
+import {getSchemeValue} from "../../../utils/scheme"
 
-import {useMiscStore} from "override/stores/misc";
+import {useMiscStore} from "override/stores/misc"
 
 export function tooltip(tooltipModel: {
     title?: string[];
@@ -14,37 +14,37 @@ export function tooltip(tooltipModel: {
         borderColor: string
     }[];
 }) {
-    const titleLines = tooltipModel.title || [];
-    const bodyLines = (tooltipModel.body || []).map((r) => r.lines);
+    const titleLines = tooltipModel.title || []
+    const bodyLines = (tooltipModel.body || []).map((r) => r.lines)
 
     if (tooltipModel.body) {
-        let innerHtml = "";
+        let innerHtml = ""
 
         titleLines.forEach(function (title) {
-            innerHtml += "<h6>" + title + "</h6>";
-        });
+            innerHtml += "<h6>" + title + "</h6>"
+        })
 
         bodyLines.forEach(function (body, i) {
             if (body.length > 0) {
-                const colors = tooltipModel.labelColors[i];
-                let style = "background:" + colors.backgroundColor;
-                style += "; border-color:" + colors.borderColor;
-                const span = "<span class=\"square\" style=\"" + style + "\"></span>";
-                innerHtml += span + body + "<br />";
+                const colors = tooltipModel.labelColors[i]
+                let style = "background:" + colors.backgroundColor
+                style += "; border-color:" + colors.borderColor
+                const span = "<span class=\"square\" style=\"" + style + "\"></span>"
+                innerHtml += span + body + "<br />"
             }
-        });
+        })
 
-        return innerHtml;
+        return innerHtml
     }
 
-    return undefined;
+    return undefined
 }
 
 export function defaultConfig(override: {
     [key: string]: any;
 }, theme?: "dark" | "light") {
-    const protectedTheme = theme ?? Utils.getTheme();
-    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVar("--ks-gray-700");
+    const protectedTheme = theme ?? Utils.getTheme()
+    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVar("--ks-gray-700")
 
     return _merge(
         {
@@ -101,42 +101,42 @@ export function defaultConfig(override: {
             },
         },
         override,
-    );
+    )
 }
 
 export function extractState(value: any) {
-    if (!value || typeof value !== "string") return value;
+    if (!value || typeof value !== "string") return value
 
     if (value.includes(",")) {
-        const stateNames = State.arrayAllStates().map(state => state.name);
+        const stateNames = State.arrayAllStates().map(state => state.name)
         const matchedState = value.split(",")
             .map(part => part.trim())
-            .find(part => stateNames.includes(part.toUpperCase()));
-        return matchedState || value;
+            .find(part => stateNames.includes(part.toUpperCase()))
+        return matchedState || value
     }
 
-    return value;
+    return value
 }
 
 export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
-    const query: Record<string, any> = {};
+    const query: Record<string, any> = {}
 
     if (elements && parsedData) {
         if (elements.length > 0) {
-            const element = elements[0];
-            let state;
+            const element = elements[0]
+            let state
             if (type === "label") {
                 // For Bar charts that use dataset labels for state
-                state = parsedData.datasets[element.datasetIndex].label;
+                state = parsedData.datasets[element.datasetIndex].label
             } else if (type === "dataset") {
                 // For Pie/Doughnut charts that use labels array for state
-                state = parsedData.labels[element.index];
+                state = parsedData.labels[element.index]
             }
             if (state) {
-                query.state = extractState(state);
-                query.scope = "USER";
-                query.size = 100;
-                query.page = 1;
+                query.state = extractState(state)
+                query.scope = "USER"
+                query.size = 100
+                query.page = 1
             }
         }
     }
@@ -145,33 +145,33 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
         const formattedDate = moment(
             event.date,
             moment.localeData().longDateFormat("L"),
-        );
-        query.startDate = formattedDate.toISOString(true);
-        query.endDate = formattedDate.add(1, "d").toISOString(true);
+        )
+        query.startDate = formattedDate.toISOString(true)
+        query.endDate = formattedDate.add(1, "d").toISOString(true)
     }
 
     if (event.startDate) {
-        query.startDate = moment(event.startDate).toISOString(true);
+        query.startDate = moment(event.startDate).toISOString(true)
     }
 
     if (event.endDate) {
-        query.endDate = moment(event.endDate).toISOString(true);
+        query.endDate = moment(event.endDate).toISOString(true)
     }
 
     if (event.status) {
-        query.status = event.status.toUpperCase();
+        query.status = event.status.toUpperCase()
     }
 
     if (event.state) {
-        query.state = extractState(event.state);
+        query.state = extractState(event.state)
     }
 
     if (route.query.namespace) {
-        query.namespace = route.query.namespace;
+        query.namespace = route.query.namespace
     }
 
     if (route.query.q) {
-        query.q = route.query.q;
+        query.q = route.query.q
     }
 
     if (event.namespace && event.flowId) {
@@ -184,10 +184,10 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
                 tenant: route.params.tenant,
             },
             query: query,
-        });
+        })
     } else {
         if (event.namespace) {
-            query.namespace = event.namespace;
+            query.namespace = event.namespace
         }
 
         router.push({
@@ -198,74 +198,74 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             query: {
                 ...query,
                 ...filters,
-                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"
+                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
             },
-        });
+        })
     }
 }
 
 export function backgroundFromState(state: string, alpha = 1) {
-    const hex = State.color()[state];
+    const hex = State.color()[state]
     if (!hex) {
-        return null;
+        return null
     }
 
-    const [r, g, b] = hex.match(/\w\w/g)?.map((x) => parseInt(x, 16)) ?? [0, 0, 0];
-    return `rgba(${r},${g},${b},${alpha})`;
+    const [r, g, b] = hex.match(/\w\w/g)?.map((x) => parseInt(x, 16)) ?? [0, 0, 0]
+    return `rgba(${r},${g},${b},${alpha})`
 }
 
 export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
     // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
     // Idea is to separate the value to parts and only use the status
     // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
-    const result = value?.includes(",") ? value.split(",").pop()?.trim() : value;
+    const result = value?.includes(",") ? value.split(",").pop()?.trim() : value
 
-    let hex;
+    let hex
 
-    hex = getSchemeValue(result as any, "executions");
+    hex = getSchemeValue(result as any, "executions")
     if (hex && hex !== "transparent") {
-        return hex;
+        return hex
     }
 
-    hex = getSchemeValue(result as any, "logs");
+    hex = getSchemeValue(result as any, "logs")
     if (hex && hex !== "transparent") {
-        return hex;
+        return hex
     }
 
     // FNV-1a Hash Algorithm
-    let hash = 0x811c9dc5; // FNV offset basis (32-bit)
-    const fnvPrime = 0x01000193; // FNV prime (32-bit)
+    let hash = 0x811c9dc5 // FNV offset basis (32-bit)
+    const fnvPrime = 0x01000193 // FNV prime (32-bit)
 
     for (let i = 0; i < (value ?? "").length; i++) {
-        hash ^= value.charCodeAt(i); // XOR with character code
-        hash = (hash * fnvPrime) >>> 0; // Multiply by FNV prime and ensure 32-bit
+        hash ^= value.charCodeAt(i) // XOR with character code
+        hash = (hash * fnvPrime) >>> 0 // Multiply by FNV prime and ensure 32-bit
     }
 
     // Bit-mixing step (to ensure greater differentiation)
-    hash ^= hash >>> 16; // XOR with a shifted version
-    hash *= 0x85ebca6b; // Multiply with a large prime
-    hash ^= hash >>> 13; // XOR again with another shift
-    hash *= 0xc2b2ae35; // Multiply with another large prime
-    hash ^= hash >>> 16; // Final XOR with a shift
+    hash ^= hash >>> 16 // XOR with a shifted version
+    hash *= 0x85ebca6b // Multiply with a large prime
+    hash ^= hash >>> 13 // XOR again with another shift
+    hash *= 0xc2b2ae35 // Multiply with another large prime
+    hash ^= hash >>> 16 // Final XOR with a shift
 
     // Generate a HEX color from the hash
-    return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`;
+    return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
 }
 
 export function getStateColor(state: string) {
-    return State.getStateColor(state);
+    return State.getStateColor(state)
 }
 
 export function getFormat(groupBy?: string) {
     switch (groupBy) {
         case "minute":
-            return "LT";
+            return "LT"
         case "hour":
-            return "LLL";
+            return "LLL"
         case "day":
         case "week":
-            return "l";
+            return "l"
         case "month":
-            return "MM.YYYY";
+            return "MM.YYYY"
     }
 }

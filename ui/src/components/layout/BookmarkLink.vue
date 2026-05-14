@@ -36,24 +36,24 @@
 
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
-    import {useI18n} from "vue-i18n";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
-    import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
-    import {KsMessageBox} from "@kestra-io/design-system";
-    import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useI18n} from "vue-i18n"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
+    import {KsMessageBox} from "@kestra-io/design-system"
+    import {useBookmarksStore} from "../../stores/bookmarks"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
     const props = defineProps<{
         href: string
         title: string
     }>()
-    const bookmarksStore = useBookmarksStore();
+    const bookmarksStore = useBookmarksStore()
 
-    const editing = ref(false);
-    const updatedTitle = ref(props.title);
-    const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);
+    const editing = ref(false)
+    const updatedTitle = ref(props.title)
+    const titleInput = ref<{ focus: () => void; select: () => void } | null>(null)
 
     function deleteBookmark() {
         KsMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
@@ -61,21 +61,21 @@
             confirmButtonText: t("ok"),
             cancelButtonText: t("close"),
         }).then(() => {
-            bookmarksStore.remove({path: props.href});
-        });
+            bookmarksStore.remove({path: props.href})
+        })
     }
 
     function startEditBookmark() {
-        editing.value = true;
+        editing.value = true
         nextTick(() => {
-            titleInput.value?.focus();
-            titleInput.value?.select();
-        });
+            titleInput.value?.focus()
+            titleInput.value?.select()
+        })
     }
     function renameBookmark() {
         bookmarksStore.rename({
             path: props.href,
-            label: updatedTitle.value
+            label: updatedTitle.value,
         })
         editing.value = false
     }

@@ -46,29 +46,29 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, ref} from "vue";
+    import {computed, onMounted, reactive, ref} from "vue"
     import {useStorage} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"
 
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import MenuDown from "vue-material-design-icons/MenuDown.vue"
 
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import ContextInfoContent from "../ContextInfoContent.vue";
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import ContextInfoContent from "../ContextInfoContent.vue"
 
-    import {useApiStore} from "../../stores/api";
+    import {useApiStore} from "../../stores/api"
 
-    const apiStore = useApiStore();
+    const apiStore = useApiStore()
 
-    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
-    const feeds = computed(() => apiStore.feeds);
+    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
+    const feeds = computed(() => apiStore.feeds)
 
-    const expanded = reactive<Record<string, boolean>>({});
+    const expanded = reactive<Record<string, boolean>>({})
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     onMounted(() => {
-        lastNewsReadDate.value = feeds.value[0].publicationDate;
-    });
+        lastNewsReadDate.value = feeds.value[0].publicationDate
+    })
 
     const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
     useScrollMemory(ref("context-panel-news"), scrollableElement as any)

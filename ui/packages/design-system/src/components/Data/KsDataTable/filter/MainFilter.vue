@@ -87,53 +87,53 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed} from "vue";
-    import {useDebounceFn} from "@vueuse/core";
+    import {ref, inject, nextTick, computed} from "vue"
+    import {useDebounceFn} from "@vueuse/core"
 
-    import {FilterOutline} from "./utils/icons";
+    import {FilterOutline} from "./utils/icons"
 
-    import FilterChip from "./layout/FilterChip.vue";
-    import SearchInput from "./layout/SearchInput.vue";
-    import CustomizeFilters from "./segments/CustomizeFilters.vue";
+    import FilterChip from "./layout/FilterChip.vue"
+    import SearchInput from "./layout/SearchInput.vue"
+    import CustomizeFilters from "./segments/CustomizeFilters.vue"
 
-    import type {AppliedFilter} from "./utils/filterTypes";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
+    import type {AppliedFilter} from "./utils/filterTypes"
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
-    const isCustomizeFiltersVisible = ref(false);
-    const chipRefs = ref<Record<string, any>>({});
-    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+    const isCustomizeFiltersVisible = ref(false)
+    const chipRefs = ref<Record<string, any>>({})
+    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const canReset = computed(() => {
         return (
             !!filter.hasAppliedFilters?.value ||
             !!filter.hasDismissedDefaultVisibleKeys?.value ||
             !!filter.searchQuery?.value
-        );
-    });
+        )
+    })
 
     const getFilterKeyConfig = (appliedFilter: any) => {
-        return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null;
-    };
+        return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null
+    }
 
     const setChipRef = (filterId: string, el: any) => el
         ? chipRefs.value[filterId] = el
-        : delete chipRefs.value[filterId];
+        : delete chipRefs.value[filterId]
 
     const handleAddFilter = (newFilter: AppliedFilter) => {
-        filter.addFilter(newFilter);
+        filter.addFilter(newFilter)
         setTimeout(() => {
-            isCustomizeFiltersVisible.value = false;
-        }, 300);
-        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog());
-    };
+            isCustomizeFiltersVisible.value = false
+        }, 300)
+        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
+    }
 
     const handleReset = () => {
-        filter.resetToDefaults();
-    };
+        filter.resetToDefaults()
+    }
 
     const debouncedUpdateSearch = useDebounceFn((value: string) => {
-        filter.searchQuery.value = value;
-    }, 700);
+        filter.searchQuery.value = value
+    }, 700)
 </script>
 
 <style lang="scss" scoped>

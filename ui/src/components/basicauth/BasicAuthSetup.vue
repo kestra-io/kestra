@@ -161,7 +161,7 @@
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import success from "../../assets/success.svg"
-    import * as BasicAuth from "../../utils/basicAuth";
+    import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {
         username: string
@@ -189,13 +189,13 @@
 
     const userFormData = ref<UserFormData>({
         username: "",
-        password: ""
+        password: "",
     })
 
     const surveyData = ref<SurveyData>({
         mainGoal: "",
         useCases: [],
-        newsletter: false
+        newsletter: false,
     })
 
     const formData = computed(() => userFormData.value)
@@ -214,7 +214,7 @@
             await initPosthogIfEnabled(config)
 
             trackSetupEvent("setup_flow:started", {
-                setup_step: "account_creation"
+                setup_step: "account_creation",
             }, userFormData.value)
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
@@ -236,7 +236,7 @@
         {value: "learning_exploring", label: t("setup.survey.company_1_10")},
         {value: "personal_project", label: t("setup.survey.company_11_50")},
         {value: "evaluating_team_company", label: t("setup.survey.company_50_250")},
-        {value: "production_use", label: t("setup.survey.company_250_plus")}
+        {value: "production_use", label: t("setup.survey.company_250_plus")},
     ])
 
     const useCaseOptions = computed<CompanySizeOption[]>(() => [
@@ -245,7 +245,7 @@
         {value: "ml", label: t("setup.survey.use_case_ml")},
         {value: "business", label: t("setup.survey.use_case_business")},
         {value: "scheduling", label: t("setup.survey.use_case_scheduling")},
-        {value: "other", label: t("setup.survey.use_case_other")}
+        {value: "other", label: t("setup.survey.use_case_other")},
     ])
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
@@ -272,7 +272,7 @@
 
     const userRules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        password: [{required: true, pattern: PASSWORD_REGEX, message: t("setup.validation.password_invalid"), trigger: "blur"}]
+        password: [{required: true, pattern: PASSWORD_REGEX, message: t("setup.validation.password_invalid"), trigger: "blur"}],
     }))
 
     const isUserStepValid = computed(() => {
@@ -294,7 +294,7 @@
 
             await miscStore.addBasicAuth({
                 username: normalizedEmail,
-                password: userFormData.value.password
+                password: userFormData.value.password,
             })
 
             BasicAuth.signIn(normalizedEmail, userFormData.value.password)
@@ -304,7 +304,7 @@
             await identifyPosthogUser(configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {
-                user_email: normalizedEmail
+                user_email: normalizedEmail,
             }, userFormData.value)
 
 
@@ -313,7 +313,7 @@
             activeStep.value = 1
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
-                error_message: error.message || "Unknown error"
+                error_message: error.message || "Unknown error",
             }, userFormData.value)
             console.error("Failed to create basic auth account:", error)
         }
@@ -327,7 +327,7 @@
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,
             newsletter_opted_in: surveyData.value.newsletter,
-            survey_action: "submitted"
+            survey_action: "submitted",
         }
 
         if (surveyData.value.useCases.length > 0) {
@@ -337,7 +337,7 @@
         }
 
         trackSetupEvent("setup_flow:marketing_survey_submitted", {
-            ...surveySelections
+            ...surveySelections,
         }, userFormData.value)
 
         activeStep.value = 2
@@ -347,7 +347,7 @@
         const surveySelections: Record<string, any> = {
             main_goal: surveyData.value.mainGoal,
             newsletter_opted_in: surveyData.value.newsletter,
-            survey_action: "skipped"
+            survey_action: "skipped",
         }
 
         if (surveyData.value.useCases.length > 0) {
@@ -357,11 +357,11 @@
         }
 
         storeSurveySkipData({
-            ...surveySelections
+            ...surveySelections,
         })
 
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
-            ...surveySelections
+            ...surveySelections,
         }, userFormData.value)
 
         activeStep.value = 2
@@ -375,7 +375,7 @@
         const completeEventPayload: Record<string, any> = {
             user_email: normalizedEmail,
             newsletter_opted_in: surveyData.value.newsletter,
-            ...surveySelections
+            ...surveySelections,
         }
 
         trackSetupEvent("setup_flow:completed", completeEventPayload, userFormData.value)

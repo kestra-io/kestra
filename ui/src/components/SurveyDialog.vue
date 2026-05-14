@@ -75,7 +75,7 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        visible: false
+        visible: false,
     })
 
     const emit = defineEmits<{
@@ -100,7 +100,7 @@
         {value: "11-50", labelKey: "setup.survey.company_11_50"},
         {value: "50-250", labelKey: "setup.survey.company_50_250"},
         {value: "250+", labelKey: "setup.survey.company_250_plus"},
-        {value: "personal", labelKey: "setup.survey.company_personal"}
+        {value: "personal", labelKey: "setup.survey.company_personal"},
     ]
 
     const useCaseOptions = [
@@ -108,14 +108,14 @@
         {value: "business", labelKey: "setup.survey.use_case_business"},
         {value: "data", labelKey: "setup.survey.use_case_data"},
         {value: "ml", labelKey: "setup.survey.use_case_ml"},
-        {value: "other", labelKey: "setup.survey.use_case_other"}
+        {value: "other", labelKey: "setup.survey.use_case_other"},
     ]
 
     const isVisible = computed({
         get: () => props.visible,
         set: (value: boolean) => {
             if (!value) emit("close")
-        }
+        },
     })
 
     const handleClose = () => {
@@ -126,7 +126,7 @@
         trackSurveyEvent("survey_skipped", {
             company_size: companySize.value || undefined,
             use_cases: useCases.value.length > 0 ? useCases.value : undefined,
-            newsletter_subscribed: subscribeNewsletter.value
+            newsletter_subscribed: subscribeNewsletter.value,
         })
         emit("skip")
         emit("close")
@@ -136,13 +136,13 @@
         const surveyData = {
             companySize: companySize.value,
             useCases: useCases.value,
-            subscribeNewsletter: subscribeNewsletter.value
+            subscribeNewsletter: subscribeNewsletter.value,
         }
 
         trackSurveyEvent("survey_submitted", {
             company_size: surveyData.companySize,
             use_cases: surveyData.useCases,
-            newsletter_subscribed: surveyData.subscribeNewsletter
+            newsletter_subscribed: surveyData.subscribeNewsletter,
         })
 
         emit("submit", surveyData)
@@ -156,7 +156,7 @@
             type: eventName,
             instance_id: configs?.uuid,
             survey_context: "standalone_dialog",
-            ...additionalData
+            ...additionalData,
         })
     }
 </script>

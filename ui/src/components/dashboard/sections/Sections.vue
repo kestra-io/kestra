@@ -72,58 +72,58 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {ref, computed} from "vue"
 
-    import type {Dashboard, Chart} from "../composables/useDashboards";
-    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
-    import {TYPES} from "../dashboard-types";
+    import type {Dashboard, Chart} from "../composables/useDashboards"
+    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards"
+    import {TYPES} from "../dashboard-types"
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useRoute} from "vue-router"
+    const route = useRoute()
 
-    import {useDashboardStore} from "../../../stores/dashboard";
-    const dashboardStore = useDashboardStore();
+    import {useDashboardStore} from "../../../stores/dashboard"
+    const dashboardStore = useDashboardStore()
 
-    import Download from "vue-material-design-icons/Download.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Download from "vue-material-design-icons/Download.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
 
-    const chartsComponents = ref<{refresh(): void}[]>();
+    const chartsComponents = ref<{refresh(): void}[]>()
 
     function refreshCharts() {
-        (chartsComponents.value ?? []).forEach((component) => component.refresh());
+        (chartsComponents.value ?? []).forEach((component) => component.refresh())
     }
 
     defineExpose({
-        refreshCharts
-    });
+        refreshCharts,
+    })
 
     const props = defineProps<{
         dashboard: Dashboard;
         charts?: Chart[];
         showDefault?: boolean;
         padding?: boolean;
-    }>();
+    }>()
 
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),
         description: chart?.chartOptions?.description,
-    });
+    })
 
     // Make the overview of flows/dashboard/namespace specific
     const filters = computed(() => {
-        const baseFilters: { field: string; operation: string; value: string | string[] }[] = [];
+        const baseFilters: { field: string; operation: string; value: string | string[] }[] = []
 
         if (route.name === "flows/update") {
-            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string});
-            baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string})
+            baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
         if (route.name === "namespaces/update") {
-            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string})
         }
 
-        return baseFilters;
-    });
+        return baseFilters
+    })
 </script>
 
 <style scoped lang="scss">

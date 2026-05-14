@@ -1,3 +1,3 @@
-import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+import {useBreakpoints, breakpointsElement} from "@vueuse/core"
 
-export const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md");
+export const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md")

@@ -19,7 +19,7 @@ const globalConfig = {
         "ks-switch": true,
         "ks-tag": true,
         "ks-icon": true,
-    }
+    },
 }
 
 describe("KsFilter", () => {

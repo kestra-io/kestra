@@ -30,15 +30,15 @@ function statsGlobalData(config: Config, uid: string): any {
         uid: uid,
         app: {
             version: config.version,
-            type: config.edition
-        }
+            type: config.edition,
+        },
     }
 }
 
 const SURVEY_HOOKS_FLAG = "__kestra_posthog_survey_hooks_installed"
 
 function installSurveyHooksOnce() {
-    if ((window as any)[SURVEY_HOOKS_FLAG]) return
+    if ((window as any)[SURVEY_HOOKS_FLAG]) return;
     (window as any)[SURVEY_HOOKS_FLAG] = true
 
     let surveyVisible = false
@@ -84,7 +84,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
-        posthog.register_for_session(statsGlobalData(config, uid));
+        posthog.register_for_session(statsGlobalData(config, uid))
 
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)
@@ -99,7 +99,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
 export function trackSetupEvent(
     eventName: string,
     additionalData: Record<string, any>,
-    userFormData: UserFormData
+    userFormData: UserFormData,
 ): void {
     const miscStore = useMiscStore()
     const uid = getUid()
@@ -109,7 +109,7 @@ export function trackSetupEvent(
     const userInfo = userFormData.firstName ? {
         user_firstname: userFormData.firstName,
         user_lastname: userFormData.lastName,
-        user_email: userFormData.username
+        user_email: userFormData.username,
     } : {}
 
     const eventData: SetupEventData = {
@@ -117,7 +117,7 @@ export function trackSetupEvent(
         instance_id: miscStore.configs?.uuid,
         user_id: uid,
         ...userInfo,
-        ...additionalData
+        ...additionalData,
     }
 
     useApiStore().posthogEvents(eventData)

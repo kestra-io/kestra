@@ -1,5 +1,5 @@
-import type {ComputedRef, InjectionKey, Ref} from "vue";
-import type {FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties} from "./filterTypes";
+import type {ComputedRef, InjectionKey, Ref} from "vue"
+import type {FilterConfiguration, AppliedFilter, SavedFilter, TableOptions, TableProperties} from "./filterTypes"
 
 export interface FilterContext {
     searchQuery: Ref<string>;
@@ -41,4 +41,4 @@ export interface FilterContext {
     saveFilter: (name: string, description: string, filters: AppliedFilter[]) => void;
 }
 
-export const FILTER_CONTEXT_INJECTION_KEY = Symbol("filter-context-injection-key") as InjectionKey<FilterContext>;
+export const FILTER_CONTEXT_INJECTION_KEY = Symbol("filter-context-injection-key") as InjectionKey<FilterContext>

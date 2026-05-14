@@ -20,8 +20,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {EXECUTION_STATUSES, type ExecutionStatus} from "./types";
+    import {computed} from "vue"
+    import {EXECUTION_STATUSES, type ExecutionStatus} from "./types"
 
     const props = withDefaults(defineProps<{
         status: ExecutionStatus;
@@ -32,25 +32,25 @@
         icon: false,
         size: "default",
         title: undefined,
-    });
+    })
 
     defineSlots<{
         title?: unknown
     }>()
 
     const statusIcon = computed(() => {
-        return EXECUTION_STATUSES[props.status]?.icon;
-    });
+        return EXECUTION_STATUSES[props.status]?.icon
+    })
 
     const displayText = computed(() => {
-        return props.title ?? props.status;
-    });
+        return props.title ?? props.status
+    })
 
     const classes = computed(() => [
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
-        props.size !== "default" && `ks-execution-status--${props.size}`
-    ].filter(Boolean));
+        props.size !== "default" && `ks-execution-status--${props.size}`,
+    ].filter(Boolean))
 </script>
 
 <style scoped lang="scss">

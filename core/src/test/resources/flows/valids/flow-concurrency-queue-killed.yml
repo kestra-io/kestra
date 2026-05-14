@@ -8,4 +8,4 @@ concurrency:
 tasks:
   - id: sleep
     type: io.kestra.plugin.core.flow.Sleep
-    duration: PT10S
+    duration: PT1M

@@ -51,7 +51,8 @@ public final class LabelService {
 
     private static String renderLabelValue(RunContext runContext, Label label) {
         try {
-            return runContext.render(label.value());
+            String value = runContext.render(label.value());
+            return (value != null && !value.isEmpty()) ? value : null;
         } catch (IllegalVariableEvaluationException e) {
             runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
             return null;

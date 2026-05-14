@@ -105,23 +105,17 @@ jobs:
           name: exe
           path: build/executable
 
-      - name: Generate schema
+      - name: Prepare executable
+        run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
+
+      - name: Generate and publish schema
         uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
         with:
           kestra-version: develop
           executable-path: build/executable/kestra
           output-path: oss.json
-
-      - name: GCP - Auth
-        uses: 'google-github-actions/auth@v3'
-        with:
-          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-
-      - name: Upload schema to GCS
-        uses: 'google-github-actions/upload-cloud-storage@v2'
-        with:
-          path: oss.json
-          destination: kestra-api-storage_prd/configuration-schema/develop/
+          gcs-destination: kestra-api-storage_prd/configuration-schema/develop/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Slack - Schema generation failure
         if: failure()

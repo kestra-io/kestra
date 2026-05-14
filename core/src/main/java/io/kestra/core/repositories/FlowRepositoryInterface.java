@@ -10,6 +10,7 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.namespaces.NamespaceInterface;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
 import io.micronaut.data.model.Pageable;
@@ -165,6 +166,11 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         Pageable pageable,
         @Nullable String tenantId,
         String namespace,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
+
+    ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
         @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass);
 
     ArrayListTotal<FlowWithSource> findWithSource(

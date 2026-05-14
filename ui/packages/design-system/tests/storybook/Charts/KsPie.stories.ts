@@ -7,7 +7,7 @@ const STATUS_DATA = [
     {name: "Failed", value: 87},
     {name: "Running", value: 34},
     {name: "Killed", value: 12},
-    {name: "Paused", value: 5}
+    {name: "Paused", value: 5},
 ]
 
 const meta: Meta<typeof KsPie> = {
@@ -64,9 +64,9 @@ export const Donut: Story = {
         loading: false,
         options: {
             legend: {
-                show: false
-            }
-        }
+                show: false,
+            },
+        },
     },
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--pie")).toBeTruthy()

@@ -166,16 +166,16 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue";
-    import type {HighlighterCore} from "shiki/core";
-    import SchemaSection from "./SchemaSection.vue";
-    import SchemaPropertiesSection from "./SchemaPropertiesSection.vue";
-    import SchemaToCode from "./SchemaToCode.vue";
-    import {getHighlighterCore} from "./shikiToolset";
-    import {isDeprecated, type JSONProperty, type JSONSchema, type SchemaExample} from "./utils/schemaUtils";
+    import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
+    import type {HighlighterCore} from "shiki/core"
+    import SchemaSection from "./SchemaSection.vue"
+    import SchemaPropertiesSection from "./SchemaPropertiesSection.vue"
+    import SchemaToCode from "./SchemaToCode.vue"
+    import {getHighlighterCore} from "./shikiToolset"
+    import {isDeprecated, type JSONProperty, type JSONSchema, type SchemaExample} from "./utils/schemaUtils"
 
-    const COLON_NORMALIZE_REGEX = /(?<!:):(?![: /])/g;
-    const MAX_SCROLL_ATTEMPTS = 30;
+    const COLON_NORMALIZE_REGEX = /(?<!:):(?![: /])/g
+    const MAX_SCROLL_ATTEMPTS = 30
 
     const props = withDefaults(defineProps<{
         schema: JSONSchema;
@@ -189,91 +189,91 @@
         propsInitiallyExpanded: false,
         forceIncludeProperties: () => [],
         noUrlChange: false,
-    });
+    })
 
-    const definitionsExpanded = ref(false);
-    const expandedDefinitions = ref<Set<string>>(new Set());
-    const forceExpandKey = ref(0);
-    const highlighter: HighlighterCore = await getHighlighterCore();
+    const definitionsExpanded = ref(false)
+    const expandedDefinitions = ref<Set<string>>(new Set())
+    const forceExpandKey = ref(0)
+    const highlighter: HighlighterCore = await getHighlighterCore()
 
-    const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`);
+    const codeTheme = computed(() => `github-${props.darkMode ? "dark" : "light"}`)
 
-    const examples = computed(() => props.schema.properties?.$examples);
+    const examples = computed(() => props.schema.properties?.$examples)
 
     const metrics = computed<Record<string, JSONProperty>>(() => Object.fromEntries(
         props.schema.properties?.$metrics?.map((metric) => [metric.name, {...metric, name: undefined}]) ?? [],
-    ));
+    ))
 
     const nonDeprecatedDefinitions = computed(() =>
         Object.entries(props.schema.definitions ?? {}).filter(([, value]) => !isDeprecated(value)),
-    );
+    )
 
-    const normalizeColons = (text: string) => text.replace(COLON_NORMALIZE_REGEX, ": ");
+    const normalizeColons = (text: string) => text.replace(COLON_NORMALIZE_REGEX, ": ")
 
     const generateExampleCode = (example: SchemaExample) => {
-        if (example?.full) return example.code;
+        if (example?.full) return example.code
 
-        const id = props.pluginType.split(".").pop()?.toLowerCase();
-        return `id: ${id}\ntype: ${props.pluginType}\n${example.code}`;
-    };
+        const id = props.pluginType.split(".").pop()?.toLowerCase()
+        return `id: ${id}\ntype: ${props.pluginType}\n${example.code}`
+    }
 
     const onDefinitionExpand = (definitionKey: string) => {
-        definitionsExpanded.value = true;
-        expandedDefinitions.value.add(definitionKey);
-    };
+        definitionsExpanded.value = true
+        expandedDefinitions.value.add(definitionKey)
+    }
 
     const checkHashAndExpand = async () => {
-        const hash = window.location.hash.slice(1);
+        const hash = window.location.hash.slice(1)
         if (!hash || !props.schema.definitions) {
-            expandedDefinitions.value.clear();
-            return;
+            expandedDefinitions.value.clear()
+            return
         }
 
-        const cleanHash = hash.replace(/-body$/, "");
+        const cleanHash = hash.replace(/-body$/, "")
         const definitionKey = Object.keys(props.schema.definitions).find((defKey) =>
             cleanHash === defKey || cleanHash.startsWith(`${defKey}_`),
-        );
+        )
 
         if (!definitionKey) {
-            expandedDefinitions.value.clear();
-            return;
+            expandedDefinitions.value.clear()
+            return
         }
 
-        definitionsExpanded.value = true;
-        forceExpandKey.value += 1;
-        expandedDefinitions.value.clear();
-        expandedDefinitions.value.add(definitionKey);
+        definitionsExpanded.value = true
+        forceExpandKey.value += 1
+        expandedDefinitions.value.clear()
+        expandedDefinitions.value.add(definitionKey)
 
-        await nextTick();
+        await nextTick()
 
-        let attempts = 0;
+        let attempts = 0
         const attemptScroll = () => {
-            const element = document.getElementById(cleanHash);
+            const element = document.getElementById(cleanHash)
             if (element) {
-                element.scrollIntoView({behavior: "smooth", block: "start"});
+                element.scrollIntoView({behavior: "smooth", block: "start"})
             } else if (attempts < MAX_SCROLL_ATTEMPTS) {
-                attempts++;
-                requestAnimationFrame(attemptScroll);
+                attempts++
+                requestAnimationFrame(attemptScroll)
             }
-        };
+        }
 
-        requestAnimationFrame(attemptScroll);
-    };
+        requestAnimationFrame(attemptScroll)
+    }
 
     watch([() => props.schema, () => props.pluginType], () => {
         if (props.schema.definitions) {
-            checkHashAndExpand();
+            checkHashAndExpand()
         }
-    });
+    })
 
     onMounted(() => {
-        checkHashAndExpand();
-        window.addEventListener("hashchange", checkHashAndExpand);
-    });
+        checkHashAndExpand()
+        window.addEventListener("hashchange", checkHashAndExpand)
+    })
 
     onUnmounted(() => {
-        window.removeEventListener("hashchange", checkHashAndExpand);
-    });
+        window.removeEventListener("hashchange", checkHashAndExpand)
+    })
 </script>
 
 <style scoped lang="scss">

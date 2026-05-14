@@ -18,24 +18,24 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import img from "../../assets/demo/assets.png";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import img from "../../assets/demo/assets.png"
+    import useRouteContext from "../../composables/useRouteContext"
 
     defineProps({
         topbar: {
             type: Boolean,
-            default: true
-        }
-    });
+            default: true,
+        },
+    })
 
-    import Layout from "./Layout.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import Layout from "./Layout.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.assets.header")}));
+    const routeInfo = computed(() => ({title: t("demos.assets.header")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 </script>

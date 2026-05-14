@@ -105,26 +105,26 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Errors from "../../../components/errors/Errors.vue";
-    import {KsFilter as KSFilter} from "@kestra-io/design-system";
-    import {editorViewTypes} from "../../../utils/constants";
-    import Utils from "../../../utils/utils";
-    import {usePluginsStore} from "../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../stores/blueprints";
-    import {useApiStore} from "../../../stores/api";
-    import {useCoreStore} from "../../../stores/core";
-    import {useDocStore} from "../../../stores/doc";
-    import {canCreate} from "override/composables/blueprintsPermissions";
-    import {useBlueprintFilter} from "../../filter/configurations";
-    import useRestoreUrl from "../../../composables/useRestoreUrl";
+    import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Errors from "../../../components/errors/Errors.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {editorViewTypes} from "../../../utils/constants"
+    import * as Utils from "../../../utils/utils"
+    import {usePluginsStore} from "../../../stores/plugins"
+    import {useBlueprintsStore} from "../../../stores/blueprints"
+    import {useApiStore} from "../../../stores/api"
+    import {useCoreStore} from "../../../stores/core"
+    import {useDocStore} from "../../../stores/doc"
+    import {canCreate} from "override/composables/blueprintsPermissions"
+    import {useBlueprintFilter} from "../../filter/configurations"
+    import useRestoreUrl from "../../../composables/useRestoreUrl"
 
-    const {loadInit} = useRestoreUrl();
+    const {loadInit} = useRestoreUrl()
 
-    const blueprintFilter = useBlueprintFilter();
+    const blueprintFilter = useBlueprintFilter()
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
@@ -137,60 +137,60 @@
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
-    });
+        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag])),
+    })
 
-    const emit = defineEmits(["goToDetail", "loaded"]);
+    const emit = defineEmits(["goToDetail", "loaded"])
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    const dataTable = useTemplateRef("dataTable");
-    const ready = ref(false);
+    const dataTable = useTemplateRef("dataTable")
+    const ready = ref(false)
 
-    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]";
+    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]"
 
     const initSelectedTags = (): string[] => {
-        const raw = route.query[SELECTED_TAG_QUERY_KEY];
-        return ([raw].flat().filter(Boolean) as string[]).flatMap(t => t.split(","));
-    };
+        const raw = route.query[SELECTED_TAG_QUERY_KEY]
+        return ([raw].flat().filter(Boolean) as string[]).flatMap(t => t.split(","))
+    }
 
-    const searchText = ref(route.query["filters[q][EQUALS]"] ?? "");
-    const selectedTags = ref<string[]>(initSelectedTags());
-    const tags = ref<Record<string, any> | undefined>(undefined);
-    const total = ref(0);
+    const searchText = ref(route.query["filters[q][EQUALS]"] ?? "")
+    const selectedTags = ref<string[]>(initSelectedTags())
+    const tags = ref<Record<string, any> | undefined>(undefined)
+    const total = ref(0)
     const blueprints = ref<{
         includedTasks: string[];
         id: string;
         tags: string[];
         title?: string;
         template?: Record<string, any>;
-    }[] | undefined>(undefined);
-    const error = ref(false);
-    const icon = {ContentCopy};
+    }[] | undefined>(undefined)
+    const error = ref(false)
+    const icon = {ContentCopy}
 
     const handleSearch = (query: string) => {
-        searchText.value = query;
-    };
+        searchText.value = query
+    }
 
     const onPageChanged = ({page}: {page: number; size: number}) => {
-        router.push({query: {...route.query, page}});
-    };
+        router.push({query: {...route.query, page}})
+    }
 
-    const pluginsStore = usePluginsStore();
-    const blueprintsStore = useBlueprintsStore();
-    const apiStore = useApiStore();
-    const coreStore = useCoreStore();
-    const docStore = useDocStore();
+    const pluginsStore = usePluginsStore()
+    const blueprintsStore = useBlueprintsStore()
+    const apiStore = useApiStore()
+    const coreStore = useCoreStore()
+    const docStore = useDocStore()
 
-    const userCanCreate = computed(() => canCreate(props.blueprintKind));
+    const userCanCreate = computed(() => canCreate(props.blueprintKind))
 
     const processedTags = (blueprintTags: string[]) => {
         return blueprintTags.map(tag => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
-        }));
-    };
+            display: tags.value?.[tag]?.name ?? tag,
+        }))
+    }
 
     async function copy(id: string) {
         await Utils.copy(
@@ -198,8 +198,8 @@
                 type: props.blueprintType,
                 kind: props.blueprintKind,
                 id,
-            })
-        );
+            }),
+        )
     };
 
     async function blueprintToEditor (blueprintId: string) {
@@ -212,14 +212,14 @@
                 type: props.blueprintType,
                 source: "browser",
             },
-        });
-        localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
-        router.push(editorRoute(blueprintId));
+        })
+        localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY)
+        router.push(editorRoute(blueprintId))
     };
 
     function goToDetail(blueprintId: string) {
         if (props.embed) {
-            emit("goToDetail", blueprintId);
+            emit("goToDetail", blueprintId)
         } else {
             router.push({
                 name: "blueprints/view",
@@ -227,39 +227,39 @@
                     tenant: route.params.tenant,
                     kind: props.blueprintKind,
                     tab: props.blueprintType,
-                    blueprintId: blueprintId
-                }
-            });
+                    blueprintId: blueprintId,
+                },
+            })
         }
     };
 
     async function loadTags(beforeLoadBlueprintType: string) {
-        const query: Record<string, any> = {};
+        const query: Record<string, any> = {}
         if (route.query["filters[q][EQUALS]"] ?? searchText.value) {
-            query.q = route.query["filters[q][EQUALS]"] ?? searchText.value;
+            query.q = route.query["filters[q][EQUALS]"] ?? searchText.value
         }
         const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
             ...query,
-        });
+        })
         if(props.blueprintType === beforeLoadBlueprintType){
-            tags.value = props.tagsResponseMapper(data);
+            tags.value = props.tagsResponseMapper(data)
         }
     };
 
     async function loadBlueprints (beforeLoadBlueprintType: string, page: number, size: number) {
-        const query: Record<string, any> = {};
-        if (page) query.page = page;
-        if (size) query.size = size;
-        if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value;
+        const query: Record<string, any> = {}
+        if (page) query.page = page
+        if (size) query.size = size
+        if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value
         if (props.system) {
-            query.tags = "system";
+            query.tags = "system"
         } else {
-            const tagsFromRoute = initSelectedTags();
-            const tagsToUse = tagsFromRoute.length > 0 ? tagsFromRoute : selectedTags.value;
+            const tagsFromRoute = initSelectedTags()
+            const tagsToUse = tagsFromRoute.length > 0 ? tagsFromRoute : selectedTags.value
             if (tagsToUse.length > 0) {
-                query.tags = tagsToUse;
+                query.tags = tagsToUse
             }
         }
 
@@ -267,104 +267,104 @@
             type: props.blueprintType,
             kind: props.blueprintKind,
             params: query,
-        });
+        })
         if(props.blueprintType === beforeLoadBlueprintType){
-            total.value = data.total;
-            blueprints.value = data.results;
+            total.value = data.total
+            blueprints.value = data.results
         }
     };
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
         // Skip while useRestoreUrl is restoring the URL — the route.query
         // watcher will trigger resetAndReload once the restore lands.
-        if (!loadInit.value) return;
-        const beforeLoadBlueprintType = props.blueprintType;
+        if (!loadInit.value) return
+        const beforeLoadBlueprintType = props.blueprintType
         try {
             await Promise.all([
                 loadTags(beforeLoadBlueprintType),
-                loadBlueprints(beforeLoadBlueprintType, page, size)
-            ]);
-            emit("loaded");
+                loadBlueprints(beforeLoadBlueprintType, page, size),
+            ])
+            emit("loaded")
         } catch {
-            if (props.embed) error.value = true;
-            else coreStore.error = 404;
+            if (props.embed) error.value = true
+            else coreStore.error = 404
         }
     };
 
     function editorRoute(blueprintId: string) {
-        const additionalQuery: Record<string, any> = {};
+        const additionalQuery: Record<string, any> = {}
         if (props.blueprintKind === "flow") {
-            additionalQuery.blueprintSource = props.blueprintType;
+            additionalQuery.blueprintSource = props.blueprintType
         }
         return {
             name: `${props.blueprintKind}s/create`,
             params: {tenant: route.params.tenant},
             query: {blueprintId, ...additionalQuery},
-        };
-    };
-
-    const syncFromRoute = () => {
-        searchText.value = route.query?.["filters[q][EQUALS]"] ?? "";
-        const newTags = initSelectedTags();
-        const same = newTags.length === selectedTags.value.length
-            && newTags.every((t, i) => t === selectedTags.value[i]);
-        if (!same) {
-            selectedTags.value = newTags;
         }
     };
 
+    const syncFromRoute = () => {
+        searchText.value = route.query?.["filters[q][EQUALS]"] ?? ""
+        const newTags = initSelectedTags()
+        const same = newTags.length === selectedTags.value.length
+            && newTags.every((t, i) => t === selectedTags.value[i])
+        if (!same) {
+            selectedTags.value = newTags
+        }
+    }
+
     onMounted(() => {
-        syncFromRoute();
-        docStore.docId = `blueprints.${props.blueprintType}`;
-    });
+        syncFromRoute()
+        docStore.docId = `blueprints.${props.blueprintType}`
+    })
 
     onActivated(() => {
-        syncFromRoute();
-        dataTable.value?.resetAndReload();
-    });
+        syncFromRoute()
+        dataTable.value?.resetAndReload()
+    })
 
     watch(
         () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
         () => {
-            syncFromRoute();
-            dataTable.value?.resetAndReload();
-        }
-    );
+            syncFromRoute()
+            dataTable.value?.resetAndReload()
+        },
+    )
 
     watch(searchText, () => {
-        dataTable.value?.resetAndReload();
-    });
+        dataTable.value?.resetAndReload()
+    })
 
     watch(selectedTags, (newTags) => {
         if (!props.embed) {
-            const query = {...route.query};
+            const query = {...route.query}
             if (newTags.length > 0) {
-                query[SELECTED_TAG_QUERY_KEY] = newTags.join(",");
+                query[SELECTED_TAG_QUERY_KEY] = newTags.join(",")
             } else {
-                delete query[SELECTED_TAG_QUERY_KEY];
+                delete query[SELECTED_TAG_QUERY_KEY]
             }
-            router.push({query});
+            router.push({query})
         } else {
-            dataTable.value?.resetAndReload();
+            dataTable.value?.resetAndReload()
         }
-    });
+    })
 
     watch(tags, (val) => {
         const validTags = selectedTags.value.filter(tagId =>
-            Object.prototype.hasOwnProperty.call(val, tagId)
-        );
+            Object.prototype.hasOwnProperty.call(val, tagId),
+        )
         if (validTags.length !== selectedTags.value.length) {
-            selectedTags.value = validTags;
+            selectedTags.value = validTags
         }
     })
 
     watch([() => props.blueprintType, () => props.blueprintKind], () => {
-        dataTable.value?.resetAndReload();
-    });
+        dataTable.value?.resetAndReload()
+    })
 
     defineExpose({
         reload: () => dataTable.value?.reload(),
-    });
+    })
 </script>
 
 <style scoped lang="scss">

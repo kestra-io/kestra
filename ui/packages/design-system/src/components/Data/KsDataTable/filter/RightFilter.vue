@@ -81,33 +81,33 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject} from "vue";
-    import {ChevronDown, BookmarkCheckOutline, Refresh} from "./utils/icons";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
+    import {ref, inject} from "vue"
+    import {ChevronDown, BookmarkCheckOutline, Refresh} from "./utils/icons"
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
-    import SaveFilters from "./segments/SaveFilters.vue";
-    import SavedFilters from "./segments/SavedFilters.vue";
-    import VerticalSliders from "./assets/VerticalSliders.vue";
+    import SaveFilters from "./segments/SaveFilters.vue"
+    import SavedFilters from "./segments/SavedFilters.vue"
+    import VerticalSliders from "./assets/VerticalSliders.vue"
 
-    const isSavedFiltersVisible = ref(false);
-    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+    const isSavedFiltersVisible = ref(false)
+    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const handleSave = (name: string, description: string) => {
         filter.saveFilter(
             name,
             description,
-            filter.appliedFilters.value
-        );
-    };
+            filter.appliedFilters.value,
+        )
+    }
 
     const handleEdit = (id: string, name: string, description: string) => {
-        filter.updateSavedFilter(id, name, description);
-    };
+        filter.updateSavedFilter(id, name, description)
+    }
 
     const handleLoad = (savedFilter: any) => {
-        filter.loadSavedFilter(savedFilter);
-        isSavedFiltersVisible.value = false;
-    };
+        filter.loadSavedFilter(savedFilter)
+        isSavedFiltersVisible.value = false
+    }
 </script>
 
 <style lang="scss" scoped>

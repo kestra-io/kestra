@@ -23,7 +23,7 @@
         router?: boolean
     }>(), {
         value: "INFO",
-        router: true
+        router: true,
     })
 
     const LEVELS = [
@@ -32,5 +32,5 @@
         "INFO",
         "WARN",
         "ERROR",
-    ];
+    ]
 </script>

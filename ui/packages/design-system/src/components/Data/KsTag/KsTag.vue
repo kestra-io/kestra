@@ -21,7 +21,7 @@
 <script setup lang="ts">
     import {ElTag} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import type {Component} from "vue";
+    import type {Component} from "vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -106,7 +106,6 @@
             &.kel-tag--#{$i} {
                 --kel-tag-bg-color: #{map.get($colors, bg)};
                 --kel-tag-text-color: #{map.get($colors, text)};
-                --kel-tag-border-color: #{map.get($colors, border)};
                 --kel-tag-hover-color: #{map.get($colors, text)};
 
                 a {

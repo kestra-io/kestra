@@ -11,6 +11,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.kestra.webserver.models.api.ApiMcpServer;
 import io.kestra.webserver.responses.PagedResults;
@@ -89,7 +90,7 @@ public class McpServerController {
             throw new InvalidException(mcpServer, "MCP id '" + McpServer.DEFAULT_ID + "' is reserved");
         }
 
-        requireEnvCompatibleAuthType(mcpServer.authType());
+        validateMcp(mcpServer);
 
         if (mcpServerRepository.get(tenantId, mcpServer.id()).isPresent()) {
             throw new ConflictException("MCP server already exists with id: '" + mcpServer.id() + "'");
@@ -121,7 +122,7 @@ public class McpServerController {
             throw new InvalidException(mcpServer, "MCP id '" + McpServer.DEFAULT_ID + "' is reserved");
         }
 
-        requireEnvCompatibleAuthType(mcpServer.authType());
+        validateMcp(mcpServer);
 
         McpServer toSave = new McpServer(tenantId, id,
             mcpServer.description(), mcpServer.instructions(),
@@ -130,6 +131,34 @@ public class McpServerController {
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(existing.get(), toSave)));
+    }
+
+    protected void validateMcp(ApiMcpServer mcpServer) {
+        McpServer.AuthType authType = mcpServer.authType();
+
+        if (editionProvider.get() == EditionProvider.Edition.OSS
+                && (authType == McpServer.AuthType.API_TOKEN || authType == McpServer.AuthType.OAUTH)) {
+            throw new HttpStatusException(HttpStatus.FORBIDDEN, "Auth type '" + authType + "' requires Enterprise Edition");
+        }
+
+        boolean hasOauthProvider = mcpServer.oauthProvider() != null && !mcpServer.oauthProvider().isBlank();
+        boolean hasScopes = !ListUtils.isEmpty(mcpServer.scopesSupported());
+
+        if (authType == McpServer.AuthType.OAUTH) {
+            if (!hasOauthProvider) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthProvider is required when authType is OAUTH");
+            }
+            if (!hasScopes) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "scopesSupported is required when authType is OAUTH");
+            }
+        } else {
+            if (hasOauthProvider) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthProvider must not be set when authType is not OAUTH");
+            }
+            if (hasScopes) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "scopesSupported must not be set when authType is not OAUTH");
+            }
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -148,13 +177,6 @@ public class McpServerController {
         return mcpServerRepository.delete(tenantId, id)
             .map(ignored -> HttpResponse.<Void>status(HttpStatus.NO_CONTENT))
             .orElse(HttpResponse.status(HttpStatus.NOT_FOUND));
-    }
-
-    private void requireEnvCompatibleAuthType(McpServer.AuthType authType) {
-        if (editionProvider.get() == EditionProvider.Edition.OSS
-                && (authType == McpServer.AuthType.API_TOKEN || authType == McpServer.AuthType.OAUTH)) {
-            throw new HttpStatusException(HttpStatus.FORBIDDEN, "Auth type '" + authType + "' requires Enterprise Edition");
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

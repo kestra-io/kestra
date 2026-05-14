@@ -176,15 +176,17 @@ export function useFilters(
         comparator: Comparators,
         value: any,
         valueLabel: string,
-        idSuffix: string
+        idSuffix: string,
+        meta?: Record<string, string>
     ): AppliedFilter => ({
         id: `${key}-${idSuffix}-${Date.now()}`,
         key,
-        keyLabel: config?.label,
+        keyLabel: config?.keyLabelProvider ? config.keyLabelProvider(meta) : config?.label,
         comparator,
         comparatorLabel: COMPARATOR_LABELS[comparator],
         value,
-        valueLabel
+        valueLabel,
+        ...(meta ? {meta} : {})
     });
 
     const createFilter = (
@@ -206,7 +208,8 @@ export function useFilters(
         config: any,
         startDate: Date,
         endDate: Date,
-        comparator = Comparators.EQUALS
+        comparator = Comparators.EQUALS,
+        meta?: Record<string, string>
     ): AppliedFilter => {
         return {
             ...createAppliedFilter(
@@ -215,7 +218,8 @@ export function useFilters(
                 comparator,
                 {startDate, endDate},
                 `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-                keyOfComparator(comparator)
+                keyOfComparator(comparator),
+                meta
             ),
             comparatorLabel: "Is Between"
         };
@@ -330,6 +334,8 @@ export function useFilters(
             }
         });
 
+        const routeDateFilter = route.query.dateFilter as string | undefined;
+
         fieldParams.forEach((params, field) => {
             const config = configuration.keys?.find(k => k?.key === field);
             if (!config) return;
@@ -341,9 +347,12 @@ export function useFilters(
             if (!comparator) return;
 
             const {value, valueLabel} = processFieldValue(config, params, field, comparator);
+            const meta = field === "timeRange" && routeDateFilter && config.dateFilterOptions
+                ? {dateFilter: routeDateFilter}
+                : undefined;
             filtersMap.set(
                 field,
-                createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation)
+                createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation, meta)
             );
         });
 
@@ -353,13 +362,17 @@ export function useFilters(
                 const comparator = Comparators[
                     dateFilters.startDate?.comparatorKey as keyof typeof Comparators
                 ];
+                const meta = routeDateFilter && (timeRangeConfig as any).dateFilterOptions
+                    ? {dateFilter: routeDateFilter}
+                    : undefined;
                 filtersMap.set(
                     "timeRange",
                     createTimeRangeFilter(
                         timeRangeConfig,
                         new Date(dateFilters.startDate?.value),
                         new Date(dateFilters.endDate?.value),
-                        comparator
+                        comparator,
+                        meta
                     )
                 );
             }

@@ -60,6 +60,14 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
+    default ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        @Nullable DateFilter dateFilter) {
+        return find(pageable, tenantId, filters);
+    }
+
     default Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
@@ -147,6 +155,13 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     enum ChildFilter {
         CHILD,
         MAIN
+    }
+
+    /** Controls which execution date column(s) the time-based filters are applied against. */
+    enum DateFilter {
+        START_DATE,
+        END_DATE,
+        START_OR_END_DATE
     }
 
     List<Execution> lastExecutions(

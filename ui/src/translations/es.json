@@ -877,6 +877,16 @@
         "label": "Tarea"
       },
       "timeRange": {
+        "chip": {
+          "end": "Finalizado",
+          "start": "Iniciado",
+          "startOrEnd": "Iniciado o finalizado"
+        },
+        "dateFilter": {
+          "endDate": "Fecha de finalización",
+          "startDate": "Fecha de inicio",
+          "startOrEndDate": "Fecha de inicio o fin"
+        },
         "description": "Filtrar por tiempo de ejecución",
         "label": "Intervalo"
       },
@@ -2104,7 +2114,7 @@
       },
       "need_help": "¿Necesitas ayuda?",
       "placeholder_prompt": "Envíame un mensaje de saludo diario a las 9am.",
-      "remaining_quota": "Te quedan {count} generaciones de IA",
+      "remaining_quota": "Te quedan {count} generaciones de IA. El límite se restablece diariamente a medianoche UTC.",
       "show_less": "Mostrar menos mensajes",
       "show_more": "Mostrar más indicaciones",
       "success_page": {

@@ -1,35 +1,43 @@
 <template>
     <div class="breadcrumb">
-        <template v-for="item in visibleItems" :key="item.label">
-            <el-dropdown v-if="item.ellipsis" trigger="click" :showArrow="false" size="large">
-                <button class="ellipsis-btn">
-                    ...
-                </button>
-                <template #dropdown>
-                    <el-dropdown-menu>
-                        <el-dropdown-item
-                            v-for="(collapsed, i) in collapsedItems"
-                            :key="i"
-                            :disabled="collapsed.disabled"
-                        >
-                            <RouterLink v-if="collapsed.link && !collapsed.disabled" :to="collapsed.link" class="breadcrumb-collapse-link">
-                                {{ collapsed.label }}
-                            </RouterLink>
-                            <span v-else>{{ collapsed.label }}</span>
-                        </el-dropdown-item>
-                    </el-dropdown-menu>
-                </template>
-            </el-dropdown>
+        <img :src="monogram" class="monogram" alt="Kestra" />
+        <span class="separator">/</span>
+        <KsBreadcrumb v-if="visibleItems.length" separator="/" class="breadcrumb-list">
+            <KsBreadcrumbItem
+                v-for="(item, index) in visibleItems"
+                :key="item.label"
+                :to="!item.ellipsis && item.link && !item.disabled ? (item.link as string | object) : undefined"
+            >
+                <KsDropdown v-if="item.ellipsis" trigger="click" :showArrow="false" size="large">
+                    <button class="ellipsis-btn">
+                        ...
+                    </button>
+                    <template #dropdown>
+                        <KsDropdownMenu>
+                            <KsDropdownItem
+                                v-for="(collapsed, i) in collapsedItems"
+                                :key="i"
+                                :disabled="collapsed.disabled"
+                            >
+                                <RouterLink v-if="collapsed.link && !collapsed.disabled" :to="collapsed.link" class="breadcrumb-collapse-link">
+                                    {{ collapsed.label }}
+                                </RouterLink>
+                                <span v-else>{{ collapsed.label }}</span>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
+                    </template>
+                </KsDropdown>
 
-            <RouterLink v-else-if="item.link && !item.disabled" class="item" :to="item.link">
-                {{ item.label }}
-            </RouterLink>
+                <span v-else class="item" :class="{'item--with-icon': index === 0 && mainIcon}">
+                    <component :is="mainIcon" v-if="index === 0 && mainIcon" class="main-icon" />
+                    {{ item.label }}
+                </span>
+            </KsBreadcrumbItem>
+        </KsBreadcrumb>
+        <span v-if="visibleItems.length" class="separator">/</span>
 
-            <span v-else class="item">{{ item.label }}</span>
-            <span class="separator">/</span>
-        </template>
-
-        <h1 class="item item--last">
+        <h1 class="item item--last" :class="{'item--with-icon': visibleItems.length === 0 && mainIcon}">
+            <component :is="mainIcon" v-if="visibleItems.length === 0 && mainIcon" class="main-icon" />
             <slot name="title">
                 {{ title }}
             </slot>
@@ -38,13 +46,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, type Component} from "vue"
     import {RouterLink} from "vue-router"
     import type {BreadcrumbItem} from "./breadcrumbTypes"
+    import monogram from "../../assets/kestra-monogram.svg"
 
     const {items, title} = defineProps<{
         items: BreadcrumbItem[];
         title: string;
+        mainIcon?: Component;
     }>()
 
     const COLLAPSE_THRESHOLD = 4
@@ -68,35 +78,57 @@
     .breadcrumb {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: var(--ks-spacing-1);
         align-self: stretch;
 
+        .monogram {
+            width: var(--ks-icon-size-lg);
+            height: var(--ks-icon-size-lg);
+            flex-shrink: 0;
+        }
+
         .separator {
-            font-size: var(--font-size-sm);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-text-dim);
             user-select: none;
+            margin: 0 10px;
+        }
+
+        .breadcrumb-list {
+            display: inline-flex;
+            align-items: center;
         }
 
         .item {
-            font-size: var(--font-size-sm);
+            font-size: var(--ks-font-size-sm);
+            font-weight: var(--ks-font-weight-medium);
             color: var(--ks-text-dim);
             text-decoration: none;
             white-space: nowrap;
 
+            &--with-icon {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--ks-spacing-2);
+            }
+
             &--last {
-                font-size: var(--font-size-base);
-                font-weight: 700;
+                font-size: var(--ks-font-size-base);
+                font-weight: var(--ks-font-weight-semibold);
                 color: var(--ks-text-primary);
                 margin: 0;
             }
         }
 
-        a.item:hover {
+        .main-icon {
+            display: inline-flex;
+            align-items: center;
+            font-size: var(--ks-icon-size-base);
             color: var(--ks-text-primary);
         }
 
         .ellipsis-btn {
-            font-size: var(--font-size-sm);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
             background: none;
             border: none;

@@ -1,6 +1,8 @@
 <template>
     <a v-if="isHyperLink" v-bind="$attrs" ref="slotContainer">
-        <slot />
+        <EnterpriseBadge :enable="isLocked">
+            <slot />
+        </EnterpriseBadge>
     </a>
     <router-link v-else :to="$attrs.href as string" custom v-slot="{href:linkHref, navigate}">
         <a v-bind="$attrs" :href="linkHref" @click="navigate" ref="slotContainer">

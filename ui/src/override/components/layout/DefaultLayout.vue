@@ -1,5 +1,6 @@
 <template>
     <LeftMenu v-if="miscStore.configs && !layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
+    <RouteTabsSidebar v-if="miscStore.configs" />
     <main>
         <Errors v-if="coreStore.error" :code="coreStore.error" />
         <slot v-else />
@@ -14,6 +15,7 @@
 
 <script setup lang="ts">
     import LeftMenu from "override/components/LeftMenu.vue"
+    import RouteTabsSidebar from "../../../components/layout/RouteTabsSidebar.vue"
     import Errors from "../../../components/errors/Errors.vue"
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
     import SurveyDialog from "../../../components/SurveyDialog.vue"

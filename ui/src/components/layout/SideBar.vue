@@ -4,21 +4,15 @@
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
-        width="280px"
+        width="220px"
         :collapsed="collapsed"
         linkComponentName="LeftMenuLink"
         hideToggle
-        showOneChild
     >
         <template #header>
             <SidebarToggleButton
                 @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
-            <div class="logo">
-                <component :is="props.showLink ? 'router-link' : 'div'" :to="props.logoTo">
-                    <span class="img" />
-                </component>
-            </div>
             <Environment />
         </template>
 
@@ -29,12 +23,10 @@
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, computed, h, watch} from "vue"
-    import {useI18n} from "vue-i18n"
+    import {onMounted, onUpdated, nextTick, computed, h, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useMediaQuery} from "@vueuse/core"
     import {SidebarMenu} from "vue-sidebar-menu"
-    import StarOutline from "vue-material-design-icons/StarOutline.vue"
 
     import Environment from "./Environment.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
@@ -56,7 +48,6 @@
     const $emit = defineEmits(["menu-collapse"])
 
     const $route = useRoute()
-    const {t} = useI18n({useScope: "global"})
 
     const layoutStore = useLayoutStore()
 
@@ -91,10 +82,12 @@
 
 
     function expandParentIfNeeded() {
-        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
+        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active[aria-expanded=\"false\"]").forEach(e => {
             (e as HTMLElement).click()
         })
     }
+
+    onMounted(() => nextTick(expandParentIfNeeded))
 
     onUpdated(() => {
         // Required here because in mounted() the menu is not yet rendered
@@ -105,19 +98,15 @@
 
     const menu = computed(() => {
         return [
+            ...(props.menu ? disabledCurrentRoute(props.menu) : []),
             ...(bookmarksStore.pages?.length ? [{
-                title: t("bookmark"),
-                icon: {
-                    element: StarOutline,
-                    class: "menu-icon",
-                },
+                title: "Favourites",
                 child: [{
                     // here we use only one component for all bookmarks
                     // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }],
             }] : []),
-            ...(props.menu ? disabledCurrentRoute(props.menu) : []),
         ]
     })
 
@@ -138,7 +127,7 @@
 <style scoped lang="scss">
 .collapseButton {
     position: absolute;
-    top: .75rem;
+    top: -1.55rem;
     right: .5rem;
     z-index: 1;
 
@@ -152,34 +141,6 @@
     z-index: 1039;
     border-right: 1px solid var(--ks-border-default);
     background-color: var(--ks-bg-sidebar);
-
-    .logo {
-        overflow: hidden;
-        padding: 35px 0;
-        height: 112px;
-        position: relative;
-
-        > * {
-            transition: 0.2s all;
-            position: absolute;
-            left: 37px;
-            display: block;
-            height: 55px;
-            width: 100%;
-            overflow: hidden;
-
-            span.img {
-                height: 100%;
-                background: url(../../assets/logo.svg) 0 0 no-repeat;
-                background-size: 179px 55px;
-                display: block;
-                transition: 0.2s all;
-
-                html.dark & {
-                    background-image: url(../../assets/logo-white.svg);
-                }
-            }
-        }
-    }
+    padding: 32px 0 16px;
 }
 </style>

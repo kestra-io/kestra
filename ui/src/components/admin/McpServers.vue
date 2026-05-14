@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="t('mcp.servers')" :longDescription="t('mcp.page_description')" />
+    <TopNavBar :title="t('mcp.servers')" />
 
     <section class="container">
         <div class="d-flex justify-content-end mb-4 mt-3">

@@ -227,6 +227,19 @@ body{
     height: 100vh;
     overflow: hidden;
 }
+#app-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+#app-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
 #app main {
     flex: 1;
     overflow: auto;
@@ -238,5 +251,3 @@ body{
     left: 0;
     z-index: 10000;
 }
-
-

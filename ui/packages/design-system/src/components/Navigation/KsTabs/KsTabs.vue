@@ -51,7 +51,7 @@
 
         .kel-tabs__item {
             padding: 1rem 1.5rem !important;
-            transition: all 0.3s ease;
+            transition: color 0.3s ease;
             color: var(--ks-text-secondary);
 
             &:hover {
@@ -81,11 +81,10 @@
         }
 
         &.kel-tabs--box {
-            background: var(--ks-bg-surface);
-            border-bottom: 1px solid var(--ks-border-default);
-            padding: .5rem;
+            background: var(--ks-bg-input);
+            border-bottom: 1px solid var(--ks-border-subtle);
+            padding: .5rem 1rem;
             position: sticky;
-            top: var(--top-navbar-height);
             z-index: 1000;
 
             .kel-tabs__active-bar {
@@ -131,12 +130,18 @@
             }
 
             .kel-tabs__item {
-                padding: .5rem 1rem !important;
+                min-width: 45px;
+                max-width: fit-content;
+                height: 28px;
+                padding: 0.25rem 0.5rem !important;
+                font-size: var(--ks-font-size-xs);
+                color: var(--ks-text-secondary);
+                border-radius: var(--kel-border-radius-base);
 
                 &.is-active {
-                    background: var(--ks-btn-secondary-bg-hover);
+                    background: var(--ks-btn-secondary-bg-active);
                     color: var(--ks-text-link);
-                    border-radius: var(--kel-border-radius-base);
+                    border: 0.5px solid var(--ks-btn-secondary-border-active);
                 }
             }
         }

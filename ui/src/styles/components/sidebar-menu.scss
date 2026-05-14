@@ -5,28 +5,36 @@
     }
 
     .vsm--item {
-        padding: 0 30px;
+        padding: 0 18px;
         transition: padding 0.2s ease;
     }
 
+    .vsm--header {
+        padding: var(--ks-spacing-3) 18px var(--ks-spacing-1);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
+        text-transform: none;
+    }
+
     .vsm--icon {
-        width: var(--ks-font-size-lg);
-        margin-right: calc(1rem / 2);
+        width: 1rem;
+        height: 1rem;
+        margin-right: var(--ks-spacing-2);
         transition: left 0.2s ease;
         background-color: transparent !important;
-        padding-bottom: 15px;
+        color: inherit;
         z-index: 3;
 
         svg {
-            height: 20px !important;
-            width: 20px !important;
+            height: 1rem !important;
+            width: 1rem !important;
             position: relative;
-            margin-top: 13px;
+            fill: currentColor;
         }
     }
 
     .vsm--title {
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--ks-font-size-xs);
 
         &>span {
             width: 100%;
@@ -53,18 +61,26 @@
     }
 
     .vsm--link {
-        height: 30px;
-        padding: 0.25rem 0.5rem;
+        max-height: 26px;
+        padding: 2px var(--ks-spacing-2);
+        gap: var(--ks-spacing-2);
         margin-bottom: 0.3rem;
-        border-radius: .25rem;
-        transition: padding 0.2s ease;
-        color: var(--ks-text-primary);
+        border-radius: 6px;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
         box-shadow: none;
+
+        &.vsm--link_level-1[aria-haspopup] {
+            font-weight: 400;
+        }
 
         &_active,
         body &_active:hover {
-            background-color: var(--ks-btn-secondary-bg-active) !important;
-            font-weight: normal;
+            background-color: var(--ks-bg-active) !important;
+            color: var(--ks-text-link) !important;
+            font-weight: 600;
         }
 
         &.vsm--link_open,
@@ -76,11 +92,20 @@
         &_disabled {
             pointer-events: auto;
             opacity: 1;
+            color: var(--ks-text-inactive);
+        }
+
+        &:has(.lock-ee),
+        &:has(.lock-ee):hover,
+        &.vsm--link_active:has(.lock-ee),
+        body &.vsm--link_active:has(.lock-ee):hover {
+            color: var(--ks-text-inactive) !important;
         }
 
         &:hover,
         body &_hover {
-            background-color: var(--ks-btn-secondary-bg-hover);
+            background-color: var(--ks-bg-hover);
+            color: var(--ks-text-secondary);
         }
 
         .kel-tooltip__trigger {
@@ -102,34 +127,11 @@
     }
 
     .vsm--child .vsm--link {
-        padding: 0 0.2rem;
         position: relative !important;
-        margin-left: 1.8rem;
+        margin-left: 10px;
 
         &.vsm--link_level-3 {
-            margin-left: 3.6rem;
-
-            & span {
-                margin-left: calc(1rem / 4);
-            }
-        }
-
-        .vsm--icon {
-            margin-left: calc(1rem / 2);
-            color: var(--ks-text-secondary);
-        }
-
-        &:before {
-            content: "";
-            position: absolute;
-            left: -.8rem;
-            height: 150%;
-            border: 2px solid var(--ks-border-default);
-            border-top: 0;
-            border-right: 0;
-            z-index: 2;
-            // mask the right half of the object and the top border
-            clip-path: polygon(50% 8px, 50% 100%, 0 100%, 0 8px);
+            margin-left: 20px;
         }
     }
 

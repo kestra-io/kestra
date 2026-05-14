@@ -108,6 +108,11 @@
 
 .label.kel-check-tag.is-checked {
     background-color: var(--ks-bg-tag-active);
-    color: var(--label-text-active);
+    color: var(--ks-black);
+    font-weight: var( --ks-font-weight-medium);
+
+    html.light & {
+        color: var(--label-text-active);
+    }
 }
 </style>

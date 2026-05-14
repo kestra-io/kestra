@@ -1,6 +1,7 @@
 package io.kestra.core.mcp.models;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,6 +40,8 @@ public record McpServer(
     AuthType authType,
 
     String oauthProvider,
+
+    List<String> scopesSupported,
 
     boolean disabled,
 
@@ -124,11 +127,11 @@ public record McpServer(
     @Override
     public McpServer toDeleted() {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, disabled, isDefault, true, created, updated);
+            serverType, authType, oauthProvider, scopesSupported, disabled, isDefault, true, created, updated);
     }
 
     public McpServer withTimestamps(Instant created, Instant updated) {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, disabled, isDefault, deleted, created, updated);
+            serverType, authType, oauthProvider, scopesSupported, disabled, isDefault, deleted, created, updated);
     }
 }

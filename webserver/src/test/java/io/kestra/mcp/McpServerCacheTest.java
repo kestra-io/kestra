@@ -165,7 +165,7 @@ class McpServerCacheTest {
     private static McpServer buildServer(String id) {
         return new McpServer(
             TENANT, id, "Original", null,
-            McpServer.ServerType.PRIVATE, McpServer.AuthType.BASIC, null,
+            McpServer.ServerType.PRIVATE, McpServer.AuthType.BASIC, null, null,
             false, false, false, null, null
         );
     }
@@ -174,6 +174,7 @@ class McpServerCacheTest {
         return new McpServer(
             original.tenantId(), original.id(), description, original.instructions(),
             original.serverType(), original.authType(), original.oauthProvider(),
+            original.scopesSupported(),
             original.disabled(), original.isDefault(), original.deleted(),
             original.created(), original.updated()
         );

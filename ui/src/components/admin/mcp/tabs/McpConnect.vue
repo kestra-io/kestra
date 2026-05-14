@@ -53,6 +53,8 @@
     import {useI18n} from "vue-i18n"
     import {KsMarkdown, KsSegmented} from "@kestra-io/design-system"
     import {useMcpStore} from "../../../../stores/mcp";
+    import {useMiscStore} from "override/stores/misc"
+    import {baseUrl} from "override/utils/route"
     import claudeDesktopLogo from "../../../../assets/icons/mcp-clients/claude-desktop.svg"
     import claudeCodeLogo from "../../../../assets/icons/mcp-clients/claude-code.svg"
     import cursorLogo from "../../../../assets/icons/mcp-clients/cursor.svg"
@@ -65,13 +67,17 @@
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const mcpStore = useMcpStore()
+    const miscStore = useMiscStore()
 
     const tenant = computed(() => (route.params.tenant as string) ?? "main")
     const serverId = computed(() => route.params.id as string)
 
-    const serverUrl = computed(() =>
-        `${window.location.origin}/api/v1/${tenant.value}/mcp/${serverId.value}`
-    );
+    const serverUrl = computed(() => {
+        const configured = (miscStore.configs?.url as string | undefined)?.replace(/\/$/, "")
+        const path = `${baseUrl}/api/v1/${tenant.value}/mcp/${serverId.value}`
+        const base = configured || window.location.origin
+        return new URL(path, base).toString()
+    });
 
     // Falls back to BASIC / PRIVATE while the server is loading or if absent.
     const authType = computed<AuthType>(() => mcpStore.server?.authType ?? "BASIC")
@@ -96,24 +102,19 @@
     const authHeaderValue = computed<string | null>(() => {
         if (isPublic.value) return null
         switch (authType.value) {
-        case "API_TOKEN": return "Bearer ${env:KESTRA_TOKEN}"
-        case "BASIC": // header-less; URL embedding handles it
+        case "API_TOKEN":
+            return "Bearer ${KESTRA_TOKEN}"
+        case "BASIC":
+            return "Basic ${KESTRA_BASIC_AUTH}"
         case "OAUTH": // PKCE handled by mcp-remote / Cursor / Codex via PRM challenge
             return null
         }
         return null
     })
 
-    // For BASIC auth (and only on PRIVATE servers) swap the URL's host with
-    // `<username>:<password>@host`. The client will encode the credentials per RFC 7617.
-    const effectiveUrl = computed(() => {
-        if (isPublic.value || authType.value !== "BASIC") return serverUrl.value
-        return serverUrl.value.replace(/^(https?:\/\/)/, "$1<username>:<password>@")
-    });
-
     // ── Per-client snippet builders ──────────────────────────────────────────
     const claudeDesktopConfig = computed(() => {
-        const args: string[] = ["-y", "mcp-remote", effectiveUrl.value]
+        const args: string[] = ["-y", "mcp-remote", serverUrl.value];
         if (authHeaderValue.value) {
             args.push("--header", `Authorization: ${authHeaderValue.value}`)
         }
@@ -125,21 +126,19 @@
     });
 
     const claudeCodeCommand = computed(() => {
-        const lines: string[] = ["claude mcp add", "--transport http"]
+        const lines: string[] = [`claude mcp add ${serverId.value} ${serverUrl.value}`, "--transport http"]
         if (!isPublic.value && authType.value === "OAUTH") {
             lines.push(`--client-id ${oauthClientIdPlaceholder}`)
-            lines.push("--client-secret"); // omit the value to trigger Claude Code's masked prompt
             lines.push(`--callback-port ${oauthCallbackPort}`)
         } else if (authHeaderValue.value) {
             lines.push(`--header "Authorization: ${authHeaderValue.value}"`)
         }
-        lines.push(`${serverId.value} ${effectiveUrl.value}`)
         return lines.join(" \\\n  ")
     });
 
     // Cursor (~/.cursor/mcp.json) — JSON
     const cursorConfig = computed(() => {
-        const config: Record<string, unknown> = {url: effectiveUrl.value}
+        const config: Record<string, unknown> = {url: serverUrl.value}
         if (authHeaderValue.value) {
             config.headers = {Authorization: authHeaderValue.value}
         }
@@ -155,7 +154,7 @@
         const lines: string[] = [
             "[[mcp_servers]]",
             `name = "${serverId.value}"`,
-            `url = "${effectiveUrl.value}"`,
+            `url = "${serverUrl.value}"`,
         ];
         if (authHeaderValue.value) {
             lines.push("[mcp_servers.headers]")

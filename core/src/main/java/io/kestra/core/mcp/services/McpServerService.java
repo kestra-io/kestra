@@ -35,6 +35,7 @@ public class McpServerService {
             McpServer.ServerType.PRIVATE,
             McpServer.AuthType.BASIC,
             null,
+            null,
             false,
             false, false, null, null
         );

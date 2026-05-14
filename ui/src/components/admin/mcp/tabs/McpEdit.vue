@@ -116,6 +116,25 @@
                 </el-select>
             </el-form-item>
 
+            <el-form-item
+                v-if="form.serverType === 'PRIVATE' && form.authType === 'OAUTH'"
+                :label="t('mcp.scopes_supported')"
+            >
+                <el-select
+                    v-model="form.scopesSupported"
+                    multiple
+                    filterable
+                    allowCreate
+                    defaultFirstOption
+                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :disabled="readOnly"
+                    class="mcp-edit__provider-select"
+                />
+                <div class="mcp-edit__field-hint">
+                    {{ t("mcp.scopes_supported_hint") }}
+                </div>
+            </el-form-item>
+
             <el-form-item :label="t('enabled')">
                 <el-switch
                     :modelValue="!form.disabled"
@@ -192,8 +211,11 @@
         serverType: "PRIVATE" | "PUBLIC";
         authType: "BASIC" | "API_TOKEN" | "OAUTH";
         oauthProvider: string;
+        scopesSupported: string[];
         disabled: boolean;
     }
+
+    const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"];
 
     const AUTH_OPTIONS = [
         {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
@@ -208,6 +230,7 @@
         serverType: "PRIVATE",
         authType: "BASIC",
         oauthProvider: "",
+        scopesSupported: [...DEFAULT_OAUTH_SCOPES],
         disabled: false,
     })
 
@@ -225,6 +248,7 @@
                 serverType: server.serverType,
                 authType: server.authType,
                 oauthProvider: server.oauthProvider ?? "",
+                scopesSupported: server.scopesSupported ?? [],
                 disabled: server.disabled,
             }
         } else if (!isUpdate.value) {
@@ -251,6 +275,9 @@
                     serverType: form.value.serverType,
                     authType: form.value.authType,
                     oauthProvider: form.value.authType === "OAUTH" ? form.value.oauthProvider || undefined : undefined,
+                    scopesSupported: form.value.authType === "OAUTH" && form.value.scopesSupported.length > 0
+                        ? form.value.scopesSupported
+                        : undefined,
                     disabled: form.value.disabled,
                 }
                 if (isUpdate.value) {
@@ -374,6 +401,12 @@
 
         &__provider-select {
             width: 100%;
+        }
+
+        &__field-hint {
+            font-size: 0.8125rem;
+            color: var(--ks-content-secondary);
+            margin-top: 0.25rem;
         }
 
         &__toggle {

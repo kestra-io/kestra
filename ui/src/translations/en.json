@@ -1959,6 +1959,9 @@
         "oauth_provider": "OAuth Provider",
         "oauth_provider_placeholder": "Select a configured OIDC provider",
         "oauth_provider_required": "OAuth provider is required when authentication type is OAuth",
+        "scopes_supported": "Supported scopes",
+        "scopes_supported_placeholder": "openid, profile, email",
+        "scopes_supported_hint": "Scopes advertised in this server's Protected Resource Metadata document. Spec-compliant MCP clients constrain their authorize request to this list. Leave empty to omit the field and let clients fall back to the IdP's advertised scopes.",
         "no_oauth_providers": "No OIDC providers configured in this instance",
         "delete_confirm": "Are you sure you want to delete this MCP server?",
         "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
@@ -1998,9 +2001,9 @@
               "cursor_hint": "Add the following to ~/.cursor/mcp.json:",
               "codex": "Codex (OpenAI)",
               "codex_hint": "Add the following to ~/.codex/config.toml:",
-              "auth_basic_hint": "Replace <code>&lt;username&gt;</code> and <code>&lt;password&gt;</code> with your Kestra credentials. The client will base64-encode them for you.",
+              "auth_basic_hint": "Set <code>KESTRA_BASIC_AUTH</code> as an environment variable containing a base64-encoded <code>username:password</code> string before starting the client.",
               "auth_api_token_hint": "Set <code>KESTRA_TOKEN</code> as an environment variable before starting the client.",
-              "auth_oauth_client_id_hint": "Replace <code>&lt;client-id&gt;</code> with the OAuth client ID, and register <code>http://localhost:7777</code> as a valid redirect URI on that client. Pressing Enter at the masked prompt will let Claude Code request the client secret securely.",
+              "auth_oauth_client_id_hint": "Replace <code>&lt;client-id&gt;</code> with the OAuth client ID, and register <code>http://localhost:7777</code> as a valid redirect URI on that client.",
               "auth_oauth_browser_hint": "Your browser will open the identity provider's login page on first connection."
           }
     },

@@ -98,6 +98,7 @@ public class McpServerController {
         McpServer toSave = new McpServer(tenantId,
             mcpServer.id(), mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
+            mcpServer.scopesSupported(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(null, toSave)));
@@ -125,6 +126,7 @@ public class McpServerController {
         McpServer toSave = new McpServer(tenantId, id,
             mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
+            mcpServer.scopesSupported(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(existing.get(), toSave)));
@@ -187,6 +189,7 @@ public class McpServerController {
         McpServer toggled = new McpServer(tenantId, mcpServer.id(),
             mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
+            mcpServer.scopesSupported(),
             !mcpServer.disabled(), false, false, null, null);
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(mcpServer, toggled)));
     }

@@ -155,6 +155,7 @@
             border-radius: var(--kel-border-radius-base);
             margin: 0 0.6rem 1px;
             position: relative;
+            font-size: var(--ks-font-size-xs);
 
             &.is-selected {
                 background-color: transparent;

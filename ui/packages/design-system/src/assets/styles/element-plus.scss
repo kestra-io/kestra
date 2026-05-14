@@ -169,7 +169,9 @@ $fill-color-base: #fafcff;
     /* page */
     //#{--kel-bg-color-page}: var(--ks-text-primary);
     #{--kel-bg-color}: var(--ks-bg-base);
-    //#{--kel-bg-color-overlay}: var(--ks-text-primary);
+    #{--kel-bg-color-overlay}: var(--ks-bg-elevated);
+
+    #{--kel-popover-bg-color}: var(--ks-bg-elevated);
 
     /* text */
     #{--kel-text-color-primary}: var(--ks-text-primary);

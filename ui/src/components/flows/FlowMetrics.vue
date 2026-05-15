@@ -143,8 +143,7 @@
         }
 
         if (selectedTextSearch.value) {
-            const search = selectedTextSearch.value
-            return metrics.filter((m) => m.indexOf(search) !== -1)
+            return metrics.filter((m) => m.indexOf(selectedTextSearch.value!) !== -1)
         }
 
         return metrics
@@ -289,7 +288,7 @@
     }
 
     .metric-title {
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--kel-font-size-small);
         font-weight: 600;
         margin-bottom: 0.5rem;
         color: var(--ks-content-secondary);

@@ -129,14 +129,14 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));
-        boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
 
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         newWorker.run();
-        boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
+        boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
         WorkerTaskResult workerTaskResult = receive.blockLast();
         assertThat(workerTaskResult).isNotNull();

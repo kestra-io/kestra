@@ -261,6 +261,11 @@ public class PluginCatalogService {
         String artifactId,
         String group) {
 
+        /** Backward-compatible constructor for callers that don't provide a Java package group. */
+        public PluginManifest(String title, String icon, String groupId, String artifactId) {
+            this(title, icon, groupId, artifactId, null);
+        }
+
         @Override
         public String toString() {
             return groupId + ":" + artifactId + ":LATEST";

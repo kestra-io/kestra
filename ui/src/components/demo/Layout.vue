@@ -1,7 +1,9 @@
 <template>
     <EmptyTemplate class="demo-layout">
         <div class="content">
-            <img class="artwork" :src="artwork" :alt="image?.alt ?? ''" aria-hidden="true">
+            <div class="artwork" aria-hidden="true">
+                <img :src="artwork" :alt="image?.alt ?? ''">
+            </div>
             <h2 class="title">
                 {{ title }}
             </h2>
@@ -46,7 +48,7 @@
     import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
 
     import EmptyTemplate from "../layout/EmptyTemplate.vue"
-    import artwork from "../../assets/empty_visuals/Artwork-empty.svg"
+    import artwork from "../../assets/empty_visuals/assets-illus.svg"
 
     const {isOnline} = useNetwork()
     const {t} = useI18n()
@@ -83,36 +85,50 @@
         align-items: flex-start;
         text-align: left;
         gap: 10px;
-        max-width: 360px;
-        padding: 0 1.5rem;
+        max-width: 370px;
     }
 
     .artwork {
-        width: 120px;
-        height: 120px;
-        display: block;
+        width: 104px;
+        height: 104px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--ks-bg-surface);
+        border-radius: 12px;
+
+        img {
+            width: 80px;
+            height: 80px;
+            display: block;
+        }
     }
 
     .title {
         margin: 0;
-        font-size: var(--ks-font-size-md);
-        font-weight: 600;
-        line-height: 1.35;
+        font-size: 18px;
+        font-weight: var(--ks-font-weight-semibold);
+        line-height: 22px;
         color: var(--ks-content-primary);
     }
 
     .message {
         margin: 0;
-        font-size: var(--ks-font-size-xs);
-        line-height: 1.5;
-        color: var(--ks-content-secondary);
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-regular);
+        line-height: 18px;
+        color: var(--ks-text-secondary);
     }
 
     .actions {
         display: flex;
-        gap: 8px;
-        margin-top: 8px;
+        gap: 0.5rem;
+        margin-top: 12px;
         justify-content: flex-start;
+
+        :deep(.kel-button + .kel-button) {
+            margin-left: 0;
+        }
     }
 
     .learn-more {
@@ -121,7 +137,7 @@
         gap: 4px;
         margin-top: 4px;
         font-size: var(--ks-font-size-xs);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         text-decoration: none;
 
         &:hover {

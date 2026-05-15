@@ -82,6 +82,11 @@ main {
         }
     }
 
+    section.container.tabs-flush-top:has(> section.empty) {
+        margin: 0;
+        padding: 0;
+    }
+
     > section.full-container {
         flex: 1;
         display: flex;

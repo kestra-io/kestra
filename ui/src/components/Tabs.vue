@@ -119,7 +119,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked) return {"px-0": true}
+        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 
@@ -176,11 +176,6 @@
 </script>
 
 <style scoped lang="scss">
-    section.container.mt-4:has(> section.empty) {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
     section.maximized {
         margin: 0 !important;
         padding: 0;

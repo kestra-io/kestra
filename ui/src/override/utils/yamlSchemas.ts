@@ -8,15 +8,15 @@ export const yamlSchemas: () => SchemasSettings[] = () => [
     },
     {
         fileMatch: ["task-*.yaml"],
-        uri: `${apiUrlWithoutTenants()}/plugins/schemas/task`,
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/task?includeCatalog=true`,
     },
     {
         fileMatch: ["trigger-*.yaml"],
-        uri: `${apiUrlWithoutTenants()}/plugins/schemas/trigger`,
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/trigger?includeCatalog=true`,
     },
     {
         fileMatch: ["plugindefault-*.yaml"],
-        uri: `${apiUrlWithoutTenants()}/plugins/schemas/plugindefault?arrayOf=true`,
+        uri: `${apiUrlWithoutTenants()}/plugins/schemas/plugindefault?arrayOf=true&includeCatalog=true`,
     },
     {
         fileMatch: ["dashboard-*.yaml"],

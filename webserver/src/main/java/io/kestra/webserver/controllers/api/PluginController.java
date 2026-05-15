@@ -26,6 +26,7 @@ import io.kestra.core.plugins.PluginInstallJob;
 import io.kestra.core.plugins.PluginInstallJobRegistry;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.PluginSchemaBundleService;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.EditionProvider;
@@ -110,6 +111,9 @@ public class PluginController {
     @Inject
     protected PluginInstallJobRegistry pluginInstallJobRegistry;
 
+    @Inject
+    protected PluginSchemaBundleService pluginSchemaBundleService;
+
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -120,12 +124,21 @@ public class PluginController {
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
+        @Parameter(description = "Whether to merge the pre-baked plugin schema bundle for un-installed types") @Nullable @QueryValue(value = "includeCatalog", defaultValue = "false") Boolean includeCatalog,
         @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
-        final String etag = schemaETag("schema", type, arrayOf);
+        // The catalog-merged response differs from the plain one, so key the ETag on includeCatalog
+        // to keep the two variants from colliding in the browser cache.
+        final String etag = schemaETag(Boolean.TRUE.equals(includeCatalog) ? "schema-catalog" : "schema", type, arrayOf);
         if (etag.equals(ifNoneMatch)) {
             return notModified(etag);
         }
-        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
+
+        Map<String, Object> schema = jsonSchemaCache.getSchemaForType(type, arrayOf);
+        if (Boolean.TRUE.equals(includeCatalog)) {
+            schema = pluginSchemaBundleService.mergeWithBundle(type, schema);
+        }
+
+        return HttpResponse.ok(schema)
             .header(HttpHeaders.ETAG, etag)
             .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }

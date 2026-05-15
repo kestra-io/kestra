@@ -213,6 +213,7 @@ kestra:
       poll-switch-interval: 60s
 
   plugins:
+    schema-bundle-url-template: "https://storage.googleapis.com/kestra-api-storage_prd/configuration-schema/{version}/plugins-schema.json"
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/

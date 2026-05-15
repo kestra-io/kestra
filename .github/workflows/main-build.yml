@@ -140,6 +140,16 @@ jobs:
           gcs-destination: kestra-api-storage_prd/configuration-schema/develop/
           gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Generate and publish plugin schema bundle
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        with:
+          kestra-version: develop
+          executable-path: build/executable/kestra
+          kestra-command: plugins-schema
+          output-path: plugins-schema.json
+          gcs-destination: kestra-api-storage_prd/configuration-schema/develop/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Slack - Schema generation failure
         if: failure()
         uses: kestra-io/actions/composite/slack-status@main

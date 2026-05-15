@@ -301,7 +301,7 @@ When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-the
 - **Brand:** `$base-purple-500` (primary, `#8405FF`)
 - **Status palette:** `$base-green-500` (success), `$base-red-500` (danger), `$base-orange-500` (warning), `$base-blue-500` (info)
 - **Grays:** `$base-gray-50` … `$base-gray-950`
-- **Typography:** `$font-family-sans-serif` (Public Sans), `$font-family-monospace` (Source Code Pro)
+- **Typography:** `$font-family-sans-serif` (Inter), `$font-family-monospace` (JetBrains Mono)
 - **Font sizes:** `$font-size-xs` / `sm` / `md` / `lg` / `xl` / `2xl` / `3xl` / `4xl`
 - **Radii:** `$border-radius` (0.25rem), `$border-radius-sm` (0.15rem), `$border-radius-lg` (0.5rem)
 

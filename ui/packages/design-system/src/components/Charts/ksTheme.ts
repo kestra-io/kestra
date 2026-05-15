@@ -60,7 +60,7 @@ export default () => {
         ],
         backgroundColor: "transparent",
         textStyle: {
-            fontFamily: "'Mona Sans', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontSize: 12,
             color: cssVar("--ks-text-primary"),
         },

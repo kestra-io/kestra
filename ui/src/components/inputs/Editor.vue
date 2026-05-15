@@ -304,7 +304,7 @@
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily")
                 ? localStorage.getItem("editorFontFamily")
-                : "'Source Code Pro', monospace",
+                : "'JetBrains Mono', monospace",
             fontSize: settingsEditorFontSize
                 ? parseInt(settingsEditorFontSize)
                 : 12,
@@ -589,7 +589,7 @@
     } = {}
 
     function getHighlightDecoration(range: {start: number, end: number}) {
-        if (!monacoEditor.value) return 
+        if (!monacoEditor.value) return
         const monacoRef = monacoEditor.value.monaco
         return [{
             range: new monacoRef.Range(range.start, 1, range.end, 1),

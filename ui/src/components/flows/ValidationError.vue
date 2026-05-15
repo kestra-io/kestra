@@ -200,7 +200,7 @@
 
         .kel-main {
             padding: 1.5rem 1rem !important;
-            font-family: "Source Code Pro", monospace;
+            font-family: "JetBrains Mono", monospace;
             background-color: var(--ks-bg-surface);
             white-space: normal;
             border-top: 1px solid var(--ks-border-default);

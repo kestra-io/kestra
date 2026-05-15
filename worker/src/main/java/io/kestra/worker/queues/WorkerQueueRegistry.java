@@ -15,6 +15,17 @@ import jakarta.inject.Singleton;
 @Singleton
 public class WorkerQueueRegistry {
 
+    /**
+     * Canonical {@code name} tag value for the worker's job buffer queue. Derived
+     * from the queue's element type so it stays in sync with the generic
+     * {@code queueName} computed in {@link #getOrCreate(WorkerContext, Class)}.
+     * Both the worker's heartbeat metric ({@code worker.queue.size {name=workerjob}})
+     * and any downstream consumer that needs to single out this queue from other
+     * {@code MonitoredWorkerQueue} instances (e.g., EE's broadcast queues) should
+     * import this constant rather than hard-coding the string.
+     */
+    public static final String WORKER_JOB_QUEUE_NAME = io.kestra.core.runners.WorkerJob.class.getSimpleName().toLowerCase();
+
     private final Map<QueueKey, WorkerQueue<?>> queues;
 
     private final MetricRegistry metricRegistry;
@@ -28,6 +39,20 @@ public class WorkerQueueRegistry {
     public WorkerQueueRegistry(final MetricRegistry metricRegistry) {
         this.queues = new ConcurrentHashMap<>();
         this.metricRegistry = metricRegistry;
+    }
+
+    /**
+     * Computes the in-memory job buffer size for a worker with the given thread count.
+     * The buffer holds pending jobs (between dispatch from the controller and execution
+     * by a worker thread). The worker's total maximum in-flight capacity is
+     * {@code workerThreads + bufferSize(workerThreads)}.
+     *
+     * <p>Single source of truth — callers that need the buffer size before the queue
+     * is constructed (e.g., metric registration in {@code WorkerAgent}) should call
+     * this helper instead of recomputing the formula.
+     */
+    public static int bufferSize(int workerThreads) {
+        return workerThreads;
     }
 
     /**
@@ -45,8 +70,10 @@ public class WorkerQueueRegistry {
         QueueKey key = new QueueKey(context.workerId(), type);
         return (WorkerQueue<T>) queues.computeIfAbsent(key, unused ->
         {
-            // by default, queue capacity is twice the number of worker threads
-            int queueCapacity = context.workerThreads() * 2;
+            // Buffer mirrors the thread count so the worker's total in-flight capacity
+            // is `threads (executing) + threads (queued) = 2 × threads`. Advertised to
+            // the controller as `WorkerConnectionInfo.maxConcurrency` for reservation math.
+            int queueCapacity = bufferSize(context.workerThreads());
             String queueName = type.getSimpleName().toLowerCase();
             return new MonitoredWorkerQueue<T>(metricRegistry, queueName, new InMemoryWorkerQueue<>(queueCapacity));
         }

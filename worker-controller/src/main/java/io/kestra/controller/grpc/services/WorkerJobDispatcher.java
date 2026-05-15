@@ -3,6 +3,8 @@ package io.kestra.controller.grpc.services;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -52,7 +54,6 @@ import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import io.kestra.core.worker.MetadataChangePayload;
 import io.kestra.core.worker.WorkerBroadcastEvent;
-import io.kestra.core.worker.WorkerGroups;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -153,6 +154,12 @@ public class WorkerJobDispatcher {
 
     private final WorkerQueueResolver workerQueueResolver;
 
+    /**
+     * Listeners notified on worker stream lifecycle transitions. Set once at
+     * construction from Micronaut DI; never mutated afterwards.
+     */
+    private final List<WorkerLifecycleListener> lifecycleListeners;
+
     @Inject
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
@@ -163,7 +170,8 @@ public class WorkerJobDispatcher {
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
         MetadataChangeListener metadataChangeListener,
-        WorkerQueueResolver workerQueueResolver) {
+        WorkerQueueResolver workerQueueResolver,
+        List<WorkerLifecycleListener> lifecycleListeners) {
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.workerTaskResultQueue = workerTaskResultQueue;
@@ -171,6 +179,7 @@ public class WorkerJobDispatcher {
         this.metricRegistry = metricRegistry;
         this.metadataChangeListener = metadataChangeListener;
         this.workerQueueResolver = workerQueueResolver;
+        this.lifecycleListeners = List.copyOf(lifecycleListeners);
 
         // Construct broadcast subscribers and gauges with cleanup on partial failure.
         // @PreDestroy is not invoked when bean construction fails, so any subscriber that has
@@ -218,6 +227,13 @@ public class WorkerJobDispatcher {
                     .mapToInt(WorkerStreamContext::getAvailablePermits)
                     .sum()
             );
+
+            // Notify lifecycle listeners that the dispatcher is fully wired. No worker can
+            // register yet — the gRPC service that drives registerWorker is built after this
+            // constructor returns — so listeners are safe to capture {@code this} here.
+            for (WorkerLifecycleListener listener : this.lifecycleListeners) {
+                safelyInvoke(() -> listener.init(this), "init");
+            }
         } catch (Throwable t) {
             try {
                 metadataChangeListener.stop();
@@ -370,13 +386,14 @@ public class WorkerJobDispatcher {
         // Add to global index
         activeStreams.put(context.getWorkerId(), context);
 
-        // Add to worker group index for dynamic reconfiguration. The default worker group cannot be reconfigured
-        // (no row exists for it in the repository), so we don't track its workers here.
+        // Track every worker (including those in the default group) in the worker-group
+        // index so that subscription changes can trigger a re-registration via
+        // {@code WORKER_GROUP_SYNC_REQUESTED}. EE persists a configurable default
+        // worker group, so the previous "default is immutable" assumption no longer
+        // holds — workers in that group must also be reachable for reconfiguration.
         String workerGroupId = context.getWorkerGroupId();
-        if (!WorkerGroups.isDefault(workerGroupId)) {
-            workerIdsByWorkerGroup.computeIfAbsent(workerGroupId, k -> ConcurrentHashMap.newKeySet())
-                .add(context.getWorkerId());
-        }
+        workerIdsByWorkerGroup.computeIfAbsent(workerGroupId, k -> ConcurrentHashMap.newKeySet())
+            .add(context.getWorkerId());
 
         // Register in each subscribed Worker Queue, acquiring locks in consistent order.
         // Retry on disposed-state races, but cap so a real bug can't spin forever.
@@ -392,6 +409,8 @@ public class WorkerJobDispatcher {
                 }
             }
         }
+
+        fireWorkerRegistered(context);
     }
 
     private static final int REGISTER_MAX_RETRIES = 50;
@@ -521,15 +540,13 @@ public class WorkerJobDispatcher {
         // counting toward bucket usage.
         context.releaseAllInFlightBuckets();
 
-        // Remove from worker group index (mirror of registerWorker — the default worker group is not tracked)
+        // Remove from worker group index (mirror of registerWorker — default group included)
         String workerGroupId = context.getWorkerGroupId();
-        if (!WorkerGroups.isDefault(workerGroupId)) {
-            Set<String> workerGroupWorkers = workerIdsByWorkerGroup.get(workerGroupId);
-            if (workerGroupWorkers != null) {
-                workerGroupWorkers.remove(workerId);
-                if (workerGroupWorkers.isEmpty()) {
-                    workerIdsByWorkerGroup.remove(workerGroupId);
-                }
+        Set<String> workerGroupWorkers = workerIdsByWorkerGroup.get(workerGroupId);
+        if (workerGroupWorkers != null) {
+            workerGroupWorkers.remove(workerId);
+            if (workerGroupWorkers.isEmpty()) {
+                workerIdsByWorkerGroup.remove(workerGroupId);
             }
         }
 
@@ -585,6 +602,8 @@ public class WorkerJobDispatcher {
                 state.lock.unlock();
             }
         }
+
+        fireWorkerUnregistered(context);
     }
 
     /**
@@ -757,6 +776,15 @@ public class WorkerJobDispatcher {
                 log.error("Unexpected exception when trying to handle a deserialization error", e);
             }
         }
+    }
+
+    /**
+     * Returns a snapshot of all active worker stream contexts. Iteration is safe; the
+     * returned collection is an unmodifiable view backed by a {@link ConcurrentHashMap}
+     * whose iterators are weakly consistent.
+     */
+    public Collection<WorkerStreamContext<WorkerJobResponse>> activeStreams() {
+        return Collections.unmodifiableCollection(activeStreams.values());
     }
 
     /**
@@ -1085,6 +1113,8 @@ public class WorkerJobDispatcher {
                 state.lock.unlock();
             }
         }
+
+        fireWorkerSubscriptionsChanged(context, toAdd, toRemove);
     }
 
     /**
@@ -1193,6 +1223,39 @@ public class WorkerJobDispatcher {
      */
     public boolean isClosed() {
         return closed.get();
+    }
+
+    private void fireWorkerRegistered(WorkerStreamContext<WorkerJobResponse> context) {
+        for (WorkerLifecycleListener l : lifecycleListeners) {
+            safelyInvoke(() -> l.onWorkerRegistered(context), "onWorkerRegistered");
+        }
+    }
+
+    private void fireWorkerUnregistered(WorkerStreamContext<WorkerJobResponse> context) {
+        for (WorkerLifecycleListener l : lifecycleListeners) {
+            safelyInvoke(() -> l.onWorkerUnregistered(context), "onWorkerUnregistered");
+        }
+    }
+
+    private void fireWorkerSubscriptionsChanged(
+        WorkerStreamContext<WorkerJobResponse> context,
+        Set<String> added,
+        Set<String> removed
+    ) {
+        if (added.isEmpty() && removed.isEmpty()) {
+            return;
+        }
+        for (WorkerLifecycleListener l : lifecycleListeners) {
+            safelyInvoke(() -> l.onWorkerSubscriptionsChanged(context, added, removed), "onWorkerSubscriptionsChanged");
+        }
+    }
+
+    private void safelyInvoke(Runnable action, String description) {
+        try {
+            action.run();
+        } catch (Exception e) {
+            log.warn("Worker lifecycle listener failed on '{}': {}", description, e.getMessage(), e);
+        }
     }
 
     /**

@@ -31,6 +31,7 @@ import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.JobFetcher;
 import io.kestra.worker.queues.MonitoredWorkerQueue;
+import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.WorkerIOSender;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -129,6 +130,16 @@ public abstract class AbstractWorker extends AbstractService {
             numThreads,
             metricRegistry.workerGroupTags(workerGroupId)
         );
+        // Total max in-flight capacity = executing threads + buffered jobs. This is the
+        // authoritative figure the controller uses for reservation math, and what the
+        // UI should display as the worker's "capacity total". Kept in sync with the
+        // buffer formula in WorkerQueueRegistry via the static helper.
+        this.metricRegistry.gauge(
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY,
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION,
+            numThreads + WorkerQueueRegistry.bufferSize(numThreads),
+            metricRegistry.workerGroupTags(workerGroupId)
+        );
 
         WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads);
 
@@ -189,6 +200,7 @@ public abstract class AbstractWorker extends AbstractService {
 
         Stream<String> metrics = Stream.of(
             MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT,
+            MetricRegistry.METRIC_WORKER_MAX_CONCURRENCY,
             MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
             MonitoredWorkerQueue.QUEUE_SIZE,
             MonitoredWorkerQueue.QUEUE_REMAINING_CAPACITY

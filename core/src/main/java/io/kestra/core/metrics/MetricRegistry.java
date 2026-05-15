@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class MetricRegistry {
     public static final String METRIC_WORKER_JOB_THREAD_COUNT = "worker.job.thread";
     public static final String METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION = "The number of worker threads";
+    public static final String METRIC_WORKER_MAX_CONCURRENCY = "worker.max.concurrency";
+    public static final String METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION = "Maximum number of in-flight jobs the worker can hold (threads currently executing + jobs pending in the buffer)";
     public static final String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public static final String METRIC_WORKER_RUNNING_COUNT_DESCRIPTION = "The number of tasks currently running inside the Worker";
     public static final String METRIC_WORKER_PENDING_COUNT = "worker.pending.count";
@@ -89,6 +91,16 @@ public class MetricRegistry {
     public static final String METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_TOTAL_DESCRIPTION = "The total number of queue subscription pauses";
     public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL = "controller.subscription.resumed.total";
     public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL_DESCRIPTION = "The total number of queue subscription resumes";
+    public static final String METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED = "controller.capacity.subscription.allocated";
+    public static final String METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED_DESCRIPTION = "Reserved slots allocated to a worker queue subscription, aggregated across workers in the worker group";
+    public static final String METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_USED = "controller.capacity.subscription.used";
+    public static final String METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_USED_DESCRIPTION = "Reserved slots currently used by a worker queue subscription, aggregated across workers in the worker group";
+    public static final String METRIC_CONTROLLER_CAPACITY_SHARED_ALLOCATED = "controller.capacity.shared.allocated";
+    public static final String METRIC_CONTROLLER_CAPACITY_SHARED_ALLOCATED_DESCRIPTION = "Shared (unreserved) slots allocated, aggregated across workers in the worker group";
+    public static final String METRIC_CONTROLLER_CAPACITY_SHARED_USED = "controller.capacity.shared.used";
+    public static final String METRIC_CONTROLLER_CAPACITY_SHARED_USED_DESCRIPTION = "Shared (unreserved) slots currently used, aggregated across workers in the worker group";
+    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT = "controller.workergroup.job.inflight";
+    public static final String METRIC_CONTROLLER_WORKER_GROUP_JOB_INFLIGHT_DESCRIPTION = "The total number of in-flight jobs being processed by workers in a worker group";
 
     public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
     public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
@@ -201,12 +213,7 @@ public class MetricRegistry {
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
     public static final String TAG_LABEL_PREFIX = "label";
     /**
-     * Sentinel value representing the logical absence of a dynamic per-execution label
-     * (used when a label-prefix tag is expected on a metric but the execution carries no
-     * such label). Distinct from the worker-group/queue {@code "default"} sentinels in
-     * {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID} and
-     * {@link io.kestra.core.worker.WorkerQueues#DEFAULT_ID}, which mean "the implicit
-     * default group/queue" rather than "no value".
+     * Sentinel value representing logical absence of label.
      * <br />
      * <a href="https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html?utm_source=chatgpt.com#_limitation_on_same_name_with_different_set_of_tag_keys">
      * Micrometer - Limitation on same name with different set of tag keys

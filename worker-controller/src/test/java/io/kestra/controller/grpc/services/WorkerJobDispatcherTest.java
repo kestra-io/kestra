@@ -3,6 +3,7 @@ package io.kestra.controller.grpc.services;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -149,8 +150,12 @@ class WorkerJobDispatcherTest {
             return subscriber;
         });
 
-        dispatcher = new WorkerJobDispatcher(
-            mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry, mock(MetadataChangeListener.class), new WorkerQueueResolver.Default()
+        dispatcher = buildDispatcher(List.of());
+    }
+
+    private WorkerJobDispatcher buildDispatcher(List<WorkerLifecycleListener> listeners) {
+        return new WorkerJobDispatcher(
+            mockQueue, mockStateStore, mockKillQueue, mockClusterEventQueue, mockResultQueue, mockTriggerEventQueue, mockMetricRegistry, mock(MetadataChangeListener.class), new WorkerQueueResolver.Default(), listeners
         );
     }
 
@@ -1523,6 +1528,73 @@ class WorkerJobDispatcherTest {
 
         // Then — should remain paused (still no permits)
         assertThat(subA.isPaused.get()).isTrue();
+    }
+
+    @Test
+    void shouldFireLifecycleListenerWhenWorkerRegistersAndUnregisters() {
+        // Given
+        WorkerLifecycleListener listener = mock(WorkerLifecycleListener.class);
+        dispatcher.close();
+        dispatcher = buildDispatcher(List.of(listener));
+
+        WorkerStreamContext<WorkerJobResponse> ctx = createWorkerContext("w1", "group-a", "gpu", 10);
+        ctx.setPermits(10);
+
+        // When
+        dispatcher.registerWorker(ctx);
+
+        // Then
+        verify(listener).onWorkerRegistered(ctx);
+
+        // When
+        dispatcher.unregisterWorker(ctx);
+
+        // Then
+        verify(listener).onWorkerUnregistered(ctx);
+    }
+
+    @Test
+    void shouldInitLifecycleListenerAtConstructionTime() {
+        // Given
+        WorkerLifecycleListener listener = mock(WorkerLifecycleListener.class);
+        dispatcher.close();
+
+        // When
+        dispatcher = buildDispatcher(List.of(listener));
+
+        // Then — listener is initialized with the dispatcher reference
+        verify(listener).init(dispatcher);
+    }
+
+    @Test
+    void shouldFireSubscriptionsChangedWhenWorkerReRegisters() {
+        // Given — dispatcher wired with the listener up front
+        WorkerLifecycleListener listener = mock(WorkerLifecycleListener.class);
+        dispatcher.close();
+        dispatcher = buildDispatcher(List.of(listener));
+
+        var initialSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 50),
+            new io.kestra.core.worker.QueueSubscription("cpu", 50)
+        );
+        WorkerStreamContext<WorkerJobResponse> ctx = createMultiGroupWorkerContext("w1", "group-a", initialSubs, 10);
+        ctx.setPermits(10);
+        dispatcher.registerWorker(ctx);
+        verify(listener).onWorkerRegistered(ctx);
+
+        // When — drop "cpu", add "tpu"
+        var newSubs = List.of(
+            new io.kestra.core.worker.QueueSubscription("gpu", 50),
+            new io.kestra.core.worker.QueueSubscription("tpu", 50)
+        );
+        dispatcher.reRegisterWorker("w1", newSubs);
+
+        // Then
+        verify(listener).onWorkerSubscriptionsChanged(
+            eq(ctx),
+            eq(Set.of("tpu")),
+            eq(Set.of("cpu"))
+        );
     }
 
     /**

@@ -272,6 +272,11 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
         String workerGroupId = workerContext.workerGroupId();
 
+        // Advertise the worker's true maximum in-flight capacity: threads currently
+        // executing plus jobs pending in the buffer. Controller bases its reservation
+        // math (guaranteedCapacity / sharedCapacity) on this value.
+        int maxConcurrency = workerContext.workerThreads() + workerJobQueue.capacity();
+
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setPermits(initialPermits)
@@ -279,7 +284,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
                 WorkerConnectionInfo.newBuilder()
                     .setWorkerId(workerContext.workerId())
                     .setWorkerGroupId(workerGroupId)
-                    .setMaxConcurrency(workerContext.workerThreads())
+                    .setMaxConcurrency(maxConcurrency)
                     .build()
             );
         addPendingCompletions(requestBuilder);
@@ -293,7 +298,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             workerGroupId,
-            workerContext.workerThreads(),
+            maxConcurrency,
             initialPermits
         );
         for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {

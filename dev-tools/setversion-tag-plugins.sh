@@ -4,7 +4,7 @@
 #
 # DESCRIPTION:
 #   This script can be used to update and tag plugins from a release branch .e.g., releases/v0.21.x.
-#   By default, if no `GITHUB_PAT` environment variable exist, the script will attempt to clone GitHub repositories using SSH_KEY.
+#   By default, if no `GH_TOKEN` environment variable exist, the script will attempt to clone GitHub repositories using SSH_KEY.
 #
 # USAGE: ./setversion-tag-plugins.sh [options]
 # OPTIONS:
@@ -148,11 +148,11 @@ do
   echo "---------------------------------------------------------------------------------------"
   echo "[$COUNTER/$PLUGINS_COUNT] $PLUGIN"
   echo "---------------------------------------------------------------------------------------"
-  if [[ -z "${GITHUB_PAT}" ]]; then
+  if [[ -z "${GH_TOKEN}" ]]; then
     git clone git@github.com:kestra-io/$PLUGIN
   else
-    echo "Clone git repository using GITHUB PAT"
-    git clone https://${GITHUB_PAT}@github.com/kestra-io/$PLUGIN.git
+    echo "Clone git repository using GH_TOKEN"
+    git clone https://${GH_TOKEN}@github.com/kestra-io/$PLUGIN.git
   fi
 
   cd "$PLUGIN";

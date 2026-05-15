@@ -35,6 +35,8 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
+import io.kestra.webserver.utils.QueryFilterUtils.TriggerDateFilter;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
@@ -101,12 +103,13 @@ public class TriggerController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) throws HttpStatusException {
+        @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
+        @Parameter(description = "Which trigger date field the time interval is applied to") @Nullable @QueryValue TriggerDateFilter dateFilter
+    ) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),
-            filters
-
+            QueryFilterUtils.rewriteTriggerDateFilters(filters, dateFilter)
         );
 
         List<ApiTriggerAndState> triggers = new ArrayList<>();
@@ -183,9 +186,9 @@ public class TriggerController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> unlockTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
+        @QueryFilterFormat List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.unlockAllMatching(tenantService.resolveTenant(), filters)
+            triggerStateService.unlockAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
     // endregion
@@ -255,7 +258,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.pauseAllBackfillsMatching(tenantService.resolveTenant(), filters)
+            triggerStateService.pauseAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -289,7 +292,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.resumeAllBackfillsMatching(tenantService.resolveTenant(), filters)
+            triggerStateService.resumeAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -323,7 +326,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllBackfillsMatching(tenantService.resolveTenant(), filters)
+            triggerStateService.deleteAllBackfillsMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
     //endregion
@@ -360,7 +363,7 @@ public class TriggerController {
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`")
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters) {
         return HttpResponse.accepted().body(
-            triggerStateService.deleteAllMatching(tenantService.resolveTenant(), filters)
+            triggerStateService.deleteAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
         );
     }
 
@@ -398,7 +401,7 @@ public class TriggerController {
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled) {
         return HttpResponse.accepted().body(
-            triggerStateService.toggleAllMatching(tenantService.resolveTenant(), filters, disabled)
+            triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled)
         );
     }
     // endregion
@@ -413,7 +416,7 @@ public class TriggerController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                triggerRepository.find(this.tenantService.resolveTenant(), filters)
+                triggerRepository.find(this.tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null))
                     .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
             )
         )

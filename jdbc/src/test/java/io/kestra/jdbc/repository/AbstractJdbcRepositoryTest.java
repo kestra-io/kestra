@@ -33,6 +33,10 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.TAGS,
         QueryFilter.Field.ATTEMPT_NUMBER,
         QueryFilter.Field.SUPER_ADMIN
+        QueryFilter.Field.SUPER_ADMIN,
+        QueryFilter.Field.LOCKED,
+        QueryFilter.Field.LAST_TRIGGERED_DATE,
+        QueryFilter.Field.TIME_RANGE,
     );
 
     @Test

@@ -279,7 +279,7 @@ public abstract class AbstractJdbcRepository {
      *
      * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
      */
-    protected Condition getConditionOnField(
+    protected final Condition getConditionOnField(
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
@@ -377,6 +377,26 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.DETAILS) {
             return detailsCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.TAGS) {
+            return tagsCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.LOCKED) {
+            return lockedCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.LAST_TRIGGERED_DATE) {
+            return lastTriggeredDateCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.NEXT_EXECUTION_DATE) {
+            return nextExecutionDateCondition(value, operation);
+        }
+
+        if (field == QueryFilter.Field.TIME_RANGE) {
+            return timeRangeCondition(value, operation);
         }
 
         return defaultHandlers(field, value, operation);
@@ -499,6 +519,22 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
+    protected Condition lockedCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LOCKED");
+    }
+
+    protected Condition lastTriggeredDateCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: LAST_TRIGGERED_DATE");
+    }
+
+    protected Condition nextExecutionDateCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: NEXT_EXECUTION_DATE");
+    }
+
+    protected Condition timeRangeCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported field: TIME_RANGE");
+    }
+
     protected Condition statusCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.STATUS, value, operation);
     }
@@ -569,7 +605,7 @@ public abstract class AbstractJdbcRepository {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    private Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {
+    protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {
         Name columnName = getColumnName(QueryFilter.Field.ATTEMPT_NUMBER);
         return switch (operation) {
             case EQUALS -> DSL.field(columnName).eq(toInteger(value));

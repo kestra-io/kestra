@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
@@ -140,7 +140,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         {value: "END_DATE", label: t("filter.timeRange.dateFilter.endDate")},
                         {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")},
                     ],
-                    keyLabelProvider: (meta?: Record<string, string>) => {
+                    keyLabelProvider: (meta?: FilterMeta) => {
                         switch (meta?.dateFilter) {
                         case "END_DATE": return t("filter.timeRange.chip.end")
                         case "START_OR_END_DATE": return t("filter.timeRange.chip.startOrEnd")

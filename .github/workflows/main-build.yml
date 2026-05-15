@@ -31,7 +31,7 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
         uses: kestra-io/actions/composite/repository-dispatch@main
         with:
-          gh-app-id: ${{ secrets.GH_BOT_CLIENT_ID }}
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"

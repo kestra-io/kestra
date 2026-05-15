@@ -35,7 +35,7 @@ jobs:
       # Checkout
       - uses: kestra-io/actions/composite/checkout-and-auth@main
         with:
-          gh-app-id: ${{ secrets.GH_BOT_CLIENT_ID }}
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           fetch-depth: 0
           path: kestra

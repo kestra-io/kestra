@@ -72,6 +72,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
       java-version: 25
+      notify-in-slack-release-channel: 'false'
     secrets: inherit
 
 

@@ -179,7 +179,7 @@ public class PluginSchemaBundleService {
             targetDefs = (ObjectNode) localDefs;
         }
 
-        bundleDefs.fields().forEachRemaining(entry -> {
+        bundleDefs.properties().forEach(entry -> {
             if (!targetDefs.has(entry.getKey())) {
                 targetDefs.set(entry.getKey(), entry.getValue());
             }

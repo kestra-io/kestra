@@ -1,39 +1,60 @@
 <template>
     <EmptyTemplate class="demo-layout">
-        <img :src="image.source" :alt="image.alt" class="img">
-        <div class="message-block">
-            <EnterpriseTag>
-                {{ $t('demos.enterprise_edition') }}
-            </EnterpriseTag>
-        </div>
-        <div class="msg-block">
-            <h2>{{ title }}</h2>
-            <div v-if="isOnline && video" class="video-container">
-                <iframe
-                    v-if="video.source"
-                    :src="video.source"
-                    allowfullscreen
-                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope;"
-                />
+        <div class="content">
+            <img class="artwork" :src="artwork" :alt="image?.alt ?? ''" aria-hidden="true">
+            <h2 class="title">
+                {{ title }}
+            </h2>
+            <p class="message">
+                <slot name="message" />
+            </p>
+            <div class="actions">
+                <KsButton
+                    type="primary"
+                    tag="a"
+                    target="_blank"
+                    :href="`https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${type}`"
+                >
+                    {{ t("demos.contact_sales") }}
+                </KsButton>
+                <KsButton
+                    v-if="isOnline && video?.source"
+                    tag="a"
+                    target="_blank"
+                    :href="video.source"
+                >
+                    {{ t("demos.watch_the_video") }}
+                </KsButton>
             </div>
-            <p><slot name="message" /></p>
-            <DemoButtons :type="type" />
+            <a
+                class="learn-more"
+                href="#"
+                target="_blank"
+                rel="noopener"
+            >
+                {{ t("learn_more") }}
+                <ArrowTopRight :size="14" />
+            </a>
         </div>
     </EmptyTemplate>
 </template>
 
 <script setup lang="ts">
     import {useNetwork} from "@vueuse/core"
-    const {isOnline} = useNetwork()
+    import {useI18n} from "vue-i18n"
+    import {KsButton} from "@kestra-io/design-system"
+    import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
 
     import EmptyTemplate from "../layout/EmptyTemplate.vue"
-    import DemoButtons from "./DemoButtons.vue"
-    import EnterpriseTag from "../EnterpriseTag.vue"
+    import artwork from "../../assets/empty_visuals/Artwork-empty.svg"
+
+    const {isOnline} = useNetwork()
+    const {t} = useI18n()
 
     defineProps<{
         title: string;
         type: string;
-        image: {
+        image?: {
             source: string;
             alt: string;
         };
@@ -45,135 +66,66 @@
 </script>
 
 <style scoped lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-
     .demo-layout {
         padding: 1rem 0 !important;
         margin-top: 0 !important;
+        background-image: none !important;
+        min-height: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .img {
-        width: 253px;
-        height: 212px;
-        margin-bottom: -1.5rem;
-    }
-
-    .message-block {
-        width: 100%;
-        max-width: 665px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
-    }
-
-    .msg-block {
+    .content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
         text-align: left;
-        width: 100%;
-        max-width: 665px;
-        margin: 0 auto;
+        gap: 10px;
+        max-width: 360px;
         padding: 0 1.5rem;
-
-        h2 {
-            margin: 1rem 0;
-            line-height: var(--ks-font-size-lg);
-            font-size: var(--ks-font-size-md);
-            font-weight: 600;
-            text-align: center;
-        }
-
-        p {
-            line-height: 16px;
-            font-size: var(--ks-font-size-sm);
-            text-align: left;
-            color: var(--ks-text-secondary);
-        }
-
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%;
-            border-radius: var(--ks-radius-base);
-            border: 1px solid var(--ks-border-default);
-            overflow: hidden;
-            margin: 1rem auto;
-
-            iframe {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                margin: 0;
-            }
-        }
     }
 
-    .img {
-        width: 60%;
-        height: auto;
-        margin-bottom: -1.5rem;
+    .artwork {
+        width: 120px;
+        height: 120px;
+        display: block;
     }
 
-    @include res(md) {
-        .message-block,
-        .msg-block {
-            padding: 0 1rem;
-        }
-
-        .enterprise-tag {
-            padding: .125rem 0.75rem;
-            font-size: var(--ks-font-size-sm);
-        }
-
-        .msg-block {
-            h2 {
-                font-size: var(--ks-font-size-base);
-                line-height: 24px;
-            }
-
-            p {
-                font-size: var(--ks-font-size-xs);
-                line-height: 18px;
-            }
-        }
+    .title {
+        margin: 0;
+        font-size: var(--ks-font-size-md);
+        font-weight: 600;
+        line-height: 1.35;
+        color: var(--ks-content-primary);
     }
 
-    @include res(lg) {
-        .enterprise-tag {
-            font-size: var(--ks-font-size-sm);
-            padding: .125rem 1rem;
-        }
-
-        .msg-block {
-            h2 {
-                font-size: var(--ks-font-size-md);
-                line-height: 26px;
-                margin: 1.5rem 0;
-            }
-
-            p {
-                font-size: var(--ks-font-size-xs);
-                line-height: var(--ks-font-size-lg);
-            }
-        }
-
-        .img {
-            width: 253px;
-            height: 212px;
-        }
+    .message {
+        margin: 0;
+        font-size: var(--ks-font-size-xs);
+        line-height: 1.5;
+        color: var(--ks-content-secondary);
     }
 
-    @include res(xl) {
-        .msg-block {
-            h2 {
-                font-size: var(--ks-font-size-lg);
-                line-height: 30px;
-            }
+    .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        justify-content: flex-start;
+    }
 
-            p {
-                font-size: var(--ks-font-size-base);
-                line-height: 22px;
-            }
+    .learn-more {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-content-secondary);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--ks-content-link);
         }
     }
 </style>

@@ -911,6 +911,8 @@
     "demos": {
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Get a Demo",
+      "contact_sales": "Contact Sales",
+      "watch_the_video": "Watch the video",
       "secrets": {
         "title": "Upgrade your Secrets Management",
         "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",

@@ -1,5 +1,5 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex gap-1 labels-container">
+    <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
             v-for="(label, index) in props.labels"
             :key="index"
@@ -30,12 +30,14 @@
         defineProps<{
             labels?: Label[];
             readOnly?: boolean;
-            filterType?: "labels" | "metadata" | "type";
+            filterType?: "labels" | "metadata" | "type" | "details";
+            wrap?: boolean;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
+            wrap: false,
         },
     )
 
@@ -104,6 +106,11 @@
     overflow: hidden;
     flex-wrap: nowrap;
     min-width: 0;
+
+    &.wrap {
+        flex-wrap: wrap;
+        overflow: visible;
+    }
 }
 
 .label.kel-check-tag.is-checked {

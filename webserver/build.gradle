@@ -47,3 +47,10 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
+// The webserver test suite (33 classes) accumulates heap over a single JVM run and
+// has hit OOM in CI, killing the Micronaut IO thread pool and causing cascading hangs.
+// Restarting the JVM every 10 classes caps peak memory without excessive startup overhead.
+tasks.withType(Test).configureEach {
+    forkEvery = 10
+}
+

@@ -1,4 +1,4 @@
-import type {App} from "vue"
+import type {App, Component} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
@@ -143,7 +143,7 @@ export type {
     FilterValue,
 } from "./components/Data/KsDataTable/filter/utils/filterTypes"
 
-const components = {
+const components: Record<string, Component> = {
     KsAlert,
     KsEchart,
     KsGraph,
@@ -338,8 +338,92 @@ const KestraDesignSystem = {
 
 export default KestraDesignSystem
 
-type KestraGlobalComponents = typeof components
-
 declare module "vue" {
-    interface GlobalComponents extends KestraGlobalComponents {}
+    interface GlobalComponents {
+        KsAlert: typeof KsAlert
+        KsEchart: typeof KsEchart
+        KsGraph: typeof KsGraph
+        KsLine: typeof KsLine
+        KsBar: typeof KsBar
+        KsPie: typeof KsPie
+        KsAutocomplete: typeof KsAutocomplete
+        KsAvatar: typeof KsAvatar
+        KsBadge: typeof KsBadge
+        KsBreadcrumb: typeof KsBreadcrumb
+        KsBreadcrumbItem: typeof KsBreadcrumbItem
+        KsButton: typeof KsButton
+        KsButtonGroup: typeof KsButtonGroup
+        KsCard: typeof KsCard
+        KsDateAgo: typeof KsDateAgo
+        KsDataTable: typeof KsDataTable
+        KsCascaderPanel: typeof KsCascaderPanel
+        KsCheckbox: typeof KsCheckbox
+        KsCheckboxButton: typeof KsCheckboxButton
+        KsCheckboxGroup: typeof KsCheckboxGroup
+        KsCheckTag: typeof KsCheckTag
+        KsCodeStatus: typeof KsCodeStatus
+        KsCol: typeof KsCol
+        KsCollapse: typeof KsCollapse
+        KsCollapseItem: typeof KsCollapseItem
+        KsColorPicker: typeof KsColorPicker
+        KsContainer: typeof KsContainer
+        KsHeader: typeof KsHeader
+        KsMain: typeof KsMain
+        KsDatePicker: typeof KsDatePicker
+        KsDialog: typeof KsDialog
+        KsDivider: typeof KsDivider
+        KsDrawer: typeof KsDrawer
+        KsDurationPicker: typeof KsDurationPicker
+        KsDropdown: typeof KsDropdown
+        KsDropdownItem: typeof KsDropdownItem
+        KsDropdownMenu: typeof KsDropdownMenu
+        KsEmpty: typeof KsEmpty
+        KsExecutionStatus: typeof KsExecutionStatus
+        KsFilter: typeof KsFilter
+        KsForm: typeof KsForm
+        KsFormItem: typeof KsFormItem
+        KsId: typeof KsId
+        KsIcon: typeof KsIcon
+        KsIconButton: typeof KsIconButton
+        KsInput: typeof KsInput
+        KsInputNumber: typeof KsInputNumber
+        KsPassword: typeof KsPassword
+        KsLink: typeof KsLink
+        KsMarkdown: typeof KsMarkdown
+        KsMenu: typeof KsMenu
+        KsMenuItem: typeof KsMenuItem
+        KsOption: typeof KsOption
+        KsOptionGroup: typeof KsOptionGroup
+        KsPagination: typeof KsPagination
+        KsPopover: typeof KsPopover
+        KsProgress: typeof KsProgress
+        KsRadio: typeof KsRadio
+        KsRadioButton: typeof KsRadioButton
+        KsRadioGroup: typeof KsRadioGroup
+        KsRow: typeof KsRow
+        KsScrollbar: typeof KsScrollbar
+        KsSegmented: typeof KsSegmented
+        KsSelect: typeof KsSelect
+        KsSkeleton: typeof KsSkeleton
+        KsSplitter: typeof KsSplitter
+        KsSplitterPanel: typeof KsSplitterPanel
+        KsStep: typeof KsStep
+        KsSteps: typeof KsSteps
+        KsSwitch: typeof KsSwitch
+        KsTabPane: typeof KsTabPane
+        KsTabs: typeof KsTabs
+        KsRouterTab: typeof KsRouterTab
+        KsTable: typeof KsTable
+        KsTableColumn: typeof KsTableColumn
+        KsTag: typeof KsTag
+        KsTaskIcon: typeof KsTaskIcon
+        KsText: typeof KsText
+        KsTimeline: typeof KsTimeline
+        KsTimelineItem: typeof KsTimelineItem
+        KsTimePicker: typeof KsTimePicker
+        KsTooltip: typeof KsTooltip
+        KsTopNavBar: typeof KsTopNavBar
+        KsTree: typeof KsTree
+        KsUpload: typeof KsUpload
+    }
 }

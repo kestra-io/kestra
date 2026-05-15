@@ -81,9 +81,6 @@
         }
 
         &.kel-tabs--box {
-            background: var(--ks-bg-input);
-            border-bottom: 1px solid var(--ks-border-subtle);
-            padding: .5rem 1rem;
             position: sticky;
             z-index: 1000;
 
@@ -91,8 +88,18 @@
                 display: none;
             }
 
-            .kel-tabs__nav-wrap::after {
-                display: none;
+            .kel-tabs__nav-wrap {
+                background: var(--ks-bg-input);
+                border-bottom: var(--ks-border-width-thin) solid var(--ks-border-subtle);
+
+                &::after {
+                    display: none;
+                }
+            }
+
+            .kel-tabs__nav {
+                gap: var(--ks-spacing-1);
+                padding: var(--ks-spacing-2) var(--ks-spacing-4);
             }
 
             .kel-tabs__header {
@@ -132,16 +139,24 @@
             .kel-tabs__item {
                 min-width: 45px;
                 max-width: fit-content;
-                height: 28px;
-                padding: 0.25rem 0.5rem !important;
+                height: 1.75rem;
+                padding: var(--ks-spacing-1) var(--ks-spacing-2) !important;
                 font-size: var(--ks-font-size-xs);
                 color: var(--ks-text-secondary);
-                border-radius: var(--kel-border-radius-base);
+                border: var(--ks-border-width-thin) solid transparent;
+                border-radius: var(--ks-radius-sm);
+                transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
+                &:hover,
                 &.is-active {
                     background: var(--ks-btn-secondary-bg-active);
-                    color: var(--ks-text-link);
-                    border: 0.5px solid var(--ks-btn-secondary-border-active);
+                    color: var(--ks-text-primary);
+                    border-color: var(--ks-btn-secondary-border-active);
+                }
+
+                &.is-disabled {
+                    background: transparent;
+                    border-color: transparent;
                 }
             }
         }

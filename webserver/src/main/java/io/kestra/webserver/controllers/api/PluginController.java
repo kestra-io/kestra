@@ -386,7 +386,7 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles()))
+                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
                                 .toList()
                         );
                     }

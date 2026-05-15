@@ -148,7 +148,6 @@ class WorkerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldKillTasksWhenExecutionKillEventReceived() throws InterruptedException, QueueException {
         // Given
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -170,7 +169,14 @@ class WorkerTest {
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
 
-            Thread.sleep(500);
+            // Wait until at least one task for this execution is in RUNNING state before killing.
+            // This ensures the callable is set in the processor and the interrupt will land.
+            await()
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(100))
+                .until(() -> results.stream()
+                    .anyMatch(r -> r.getTaskRun().getExecutionId().equals(executionId)
+                        && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING));
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()

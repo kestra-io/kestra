@@ -98,6 +98,9 @@ public class ExecutionKilledManager {
 
     /**
      * Registers a running job with its kill callback.
+     * <p>
+     * If the job's execution was already killed before this registration, the kill action
+     * is invoked immediately so queued tasks don't slip through the kill window.
      *
      * @param jobUid the unique identifier of the job
      * @param job the worker job
@@ -105,6 +108,14 @@ public class ExecutionKilledManager {
      */
     public void register(String jobUid, WorkerJob job, Runnable killAction) {
         runningJobs.put(jobUid, new KillableJob(job, killAction));
+        // If a kill event arrived before this job was registered, apply it now.
+        if (job instanceof WorkerTask workerTask) {
+            ExecutionKilledExecution killedExecution = killedExecutions.getIfPresent(workerTask.getTaskRun().getExecutionId());
+            if (killedExecution != null && killedExecution.isEqual(workerTask)) {
+                Logs.logTaskRun(workerTask.getTaskRun(), Level.INFO, "Killing task (execution was already killed before registration)");
+                killAction.run();
+            }
+        }
     }
 
     /**

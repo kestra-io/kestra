@@ -31,6 +31,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;
@@ -117,6 +118,9 @@ public class FlowController {
 
     @Inject
     private SourceSearchService sourceSearchService;
+
+    @Inject
+    protected PluginAutoInstallService pluginAutoInstallService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -349,6 +353,7 @@ public class FlowController {
         @RequestBody(description = "The flow source code") @Body String flow,
         @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
         @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException {
+        pluginAutoInstallService.installMissingPlugins(flow);
         final String tenantId = tenantService.resolveTenant();
 
         // Draft is metadata about the revision, not part of the YAML body, so it comes from the
@@ -545,6 +550,7 @@ public class FlowController {
         @RequestBody(description = "The flow source code") @Body String source,
         @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
         @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException, FlowProcessingException, QueueException {
+        pluginAutoInstallService.installMissingPlugins(source);
         final String tenantId = tenantService.resolveTenant();
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 

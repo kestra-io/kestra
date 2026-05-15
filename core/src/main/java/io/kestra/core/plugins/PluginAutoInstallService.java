@@ -1,0 +1,179 @@
+package io.kestra.core.plugins;
+
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.kestra.core.docs.JsonSchemaCache;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.micronaut.context.annotation.Value;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Service that automatically downloads and installs missing plugins when a flow is saved.
+ * <p>
+ * This is the core "Save &amp; Fetch" mechanism described in KIP-45: when a user saves a flow that
+ * references a plugin not yet present in the plugin registry, this service:
+ * <ol>
+ *   <li>Parses the flow YAML to extract all task/trigger type FQCNs.</li>
+ *   <li>Identifies which ones are absent from the current {@link PluginRegistry}.</li>
+ *   <li>Maps each missing FQCN to its Maven artifact via the {@link PluginCatalogService}.</li>
+ *   <li>Downloads and installs the missing artifacts via {@link PluginManager}.</li>
+ *   <li>Clears the {@link JsonSchemaCache} so the new plugins are immediately reflected in the schema.</li>
+ * </ol>
+ * <p>
+ * Works transparently with both {@code LocalPluginManager} (OSS standalone — installs to local disk)
+ * and {@code RemotePluginManager} (EE distributed — uploads to internal storage and notifies the cluster).
+ * <p>
+ * Feature gating: disabled by default; enable with {@code kestra.plugins.auto-install.enabled=true}.
+ */
+@Singleton
+@Slf4j
+public class PluginAutoInstallService {
+
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
+
+    private final PluginCatalogService catalogService;
+    private final PluginManager pluginManager;
+    private final PluginRegistry pluginRegistry;
+    private final JsonSchemaCache jsonSchemaCache;
+    private final boolean enabled;
+
+    @Inject
+    public PluginAutoInstallService(
+        final PluginCatalogService catalogService,
+        final PluginManager pluginManager,
+        final PluginRegistry pluginRegistry,
+        final JsonSchemaCache jsonSchemaCache,
+        @Value("${kestra.plugins.auto-install.enabled:false}") final boolean enabled
+    ) {
+        this.catalogService = Objects.requireNonNull(catalogService);
+        this.pluginManager = Objects.requireNonNull(pluginManager);
+        this.pluginRegistry = Objects.requireNonNull(pluginRegistry);
+        this.jsonSchemaCache = Objects.requireNonNull(jsonSchemaCache);
+        this.enabled = enabled;
+    }
+
+    /**
+     * Returns whether the auto-install feature is enabled.
+     *
+     * @return {@code true} if enabled via {@code kestra.plugins.auto-install.enabled}.
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Scans the given flow YAML for task/trigger types that are not yet registered in the plugin
+     * registry, resolves their Maven artifacts from the catalog, downloads and installs them, then
+     * clears the JSON schema cache so the new plugins are immediately visible.
+     * <p>
+     * This method is a no-op when the feature is disabled or when all referenced types are already
+     * installed. Failures to map a type to a catalog artifact are logged as warnings and do not
+     * propagate — the subsequent flow-save attempt will surface the error normally.
+     *
+     * @param flowYaml the YAML source of the flow to save.
+     * @return the list of plugin artifacts that were installed, or an empty list if nothing changed.
+     */
+    public List<PluginArtifact> installMissingPlugins(final String flowYaml) {
+        if (!enabled) {
+            return List.of();
+        }
+
+        Set<String> missingTypes = findMissingTypes(flowYaml);
+        if (missingTypes.isEmpty()) {
+            return List.of();
+        }
+
+        log.info("Detected missing plugin types on flow save, attempting auto-install: {}", missingTypes);
+
+        List<PluginArtifact> toInstall = missingTypes.stream()
+            .map(this::findArtifactForType)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .distinct()
+            .toList();
+
+        if (toInstall.isEmpty()) {
+            log.warn(
+                "Could not map missing plugin types to catalog artifacts " +
+                    "(network unavailable or types not published): {}",
+                missingTypes
+            );
+            return List.of();
+        }
+
+        List<PluginArtifact> installed = pluginManager.install(toInstall, List.of(), true, null);
+        jsonSchemaCache.clear();
+        log.info("Auto-installed {} plugin artifact(s): {}", installed.size(), installed);
+        return installed;
+    }
+
+    /**
+     * Returns all task/trigger type FQCNs referenced in the given flow YAML that are not currently
+     * registered in the plugin registry.
+     *
+     * @param flowYaml the YAML source of the flow.
+     * @return a set of missing type FQCNs; empty if the YAML cannot be parsed or all types are known.
+     */
+    public Set<String> findMissingTypes(final String flowYaml) {
+        Map<String, Object> rawFlow;
+        try {
+            rawFlow = JacksonMapper.ofYaml().readValue(flowYaml, MAP_TYPE);
+        } catch (Exception e) {
+            log.debug("Could not parse flow YAML for plugin type extraction", e);
+            return Set.of();
+        }
+
+        Set<String> allTypes = new HashSet<>();
+        collectTypes(rawFlow, allTypes);
+
+        return allTypes.stream()
+            .filter(type -> pluginRegistry.findClassByIdentifier(type) == null)
+            .collect(Collectors.toSet());
+    }
+
+    /**
+     * Finds the Maven artifact that provides the given plugin type FQCN, using the plugin catalog.
+     * <p>
+     * Uses longest-prefix matching on the plugin's Java package group so that sub-packages
+     * (e.g. {@code io.kestra.plugin.scripts.python}) are preferred over parent packages
+     * (e.g. {@code io.kestra.plugin.scripts}).
+     *
+     * @param fqcn the fully-qualified class name of the task or trigger type.
+     * @return the corresponding {@link PluginArtifact} ready for installation, or empty if not found.
+     */
+    public Optional<PluginArtifact> findArtifactForType(final String fqcn) {
+        return catalogService.get().stream()
+            .filter(manifest -> manifest.group() != null && fqcn.startsWith(manifest.group() + "."))
+            .max(Comparator.comparingInt(m -> m.group().length()))
+            .map(manifest -> PluginArtifact.fromCoordinates(manifest.toString()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectTypes(final Object node, final Set<String> types) {
+        if (node instanceof Map<?, ?> map) {
+            Object typeValue = ((Map<String, Object>) map).get("type");
+            if (typeValue instanceof String type && !type.isBlank()) {
+                types.add(type);
+            }
+            for (Object value : ((Map<String, Object>) map).values()) {
+                collectTypes(value, types);
+            }
+        } else if (node instanceof List<?> list) {
+            for (Object item : list) {
+                collectTypes(item, types);
+            }
+        }
+    }
+}

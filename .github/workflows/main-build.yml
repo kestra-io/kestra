@@ -48,11 +48,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
       plugin-version: 'LATEST-SNAPSHOT'
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+    secrets: inherit
 
 
   publish-develop-maven:
@@ -73,10 +69,11 @@ jobs:
     if: always()
     steps:
       - name: Trigger EE Workflow
-        uses: peter-evans/repository-dispatch@v3
         if: github.ref == 'refs/heads/develop' && needs.release.result == 'success'
+        uses: kestra-io/actions/composite/repository-dispatch@main
         with:
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
 

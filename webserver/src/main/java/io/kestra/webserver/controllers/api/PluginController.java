@@ -19,7 +19,11 @@ import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginAutoInstallDetectResult;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginCatalogService;
+import io.kestra.core.plugins.PluginInstallJob;
+import io.kestra.core.plugins.PluginInstallJobRegistry;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -39,6 +43,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
@@ -99,6 +104,12 @@ public class PluginController {
     @Inject
     protected PluginManager pluginManager;
 
+    @Inject
+    protected PluginAutoInstallService pluginAutoInstallService;
+
+    @Inject
+    protected PluginInstallJobRegistry pluginInstallJobRegistry;
+
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -123,17 +134,62 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = { "Plugins" },
-        summary = "Install plugin artifacts",
-        description = "Downloads and installs the specified plugin artifacts from the configured Maven " +
-            "repository and refreshes the JSON schema. In distributed (EE) deployments the installation " +
-            "is propagated cluster-wide via the internal-storage sync mechanism."
+        summary = "Start async plugin installation",
+        description = "Enqueues installation of the specified plugin artifacts and returns a job id " +
+            "immediately (HTTP 202). Poll GET /plugins/install/{jobId} for status and per-artifact " +
+            "byte-level progress. In distributed (EE) deployments the installation is propagated " +
+            "cluster-wide after the job succeeds."
     )
-    @ApiResponse(responseCode = "200", description = "Artifacts successfully installed")
-    public HttpResponse<List<PluginArtifact>> installPlugins(
+    @ApiResponse(responseCode = "202", description = "Installation job accepted")
+    public HttpResponse<PluginInstallJob> installPlugins(
         @Valid @Body List<PluginArtifact> artifacts) {
-        List<PluginArtifact> installed = pluginManager.install(artifacts, List.of(), true, null);
-        jsonSchemaCache.clear();
-        return HttpResponse.ok(installed);
+        UUID jobId = pluginInstallJobRegistry.submit(artifacts);
+        PluginInstallJob job = pluginInstallJobRegistry.get(jobId)
+            .orElseThrow(() -> new IllegalStateException("Job vanished immediately after submit: " + jobId));
+        return HttpResponse.status(HttpStatus.ACCEPTED).body(job);
+    }
+
+    @Get(uri = "install/{jobId}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get plugin installation job status",
+        description = "Returns the current state of an async plugin installation job, including " +
+            "per-artifact byte-level transfer progress. Returns 404 when the job is unknown or " +
+            "has been evicted (jobs are kept for one hour after completion)."
+    )
+    @ApiResponse(responseCode = "200", description = "Job snapshot")
+    @ApiResponse(responseCode = "404", description = "Job not found")
+    public HttpResponse<PluginInstallJob> getInstallJob(@PathVariable UUID jobId) {
+        return pluginInstallJobRegistry.get(jobId)
+            .map(HttpResponse::ok)
+            .orElse(HttpResponse.notFound());
+    }
+
+    @Post(uri = "auto-install/detect", consumes = MediaType.TEXT_PLAIN)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Detect missing plugins in a flow",
+        description = "Parses the provided flow YAML, identifies task and trigger types that are not " +
+            "yet registered, and maps them to their Maven artifacts via the plugin catalog. " +
+            "Returns an empty result (not an error) when auto-install is disabled or all types are known."
+    )
+    @ApiResponse(responseCode = "200", description = "Detection result")
+    public HttpResponse<PluginAutoInstallDetectResult> detectMissingPlugins(@Body String flowYaml) {
+        if (!pluginAutoInstallService.isEnabled()) {
+            return HttpResponse.ok(new PluginAutoInstallDetectResult(false, Set.of(), List.of()));
+        }
+
+        var missingTypes = pluginAutoInstallService.findMissingTypes(flowYaml);
+        var artifacts = missingTypes.stream()
+            .map(pluginAutoInstallService::findArtifactForType)
+            .filter(java.util.Optional::isPresent)
+            .map(java.util.Optional::get)
+            .distinct()
+            .toList();
+
+        return HttpResponse.ok(new PluginAutoInstallDetectResult(true, missingTypes, artifacts));
     }
 
     @Get(uri = "properties/{type}")

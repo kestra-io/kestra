@@ -493,6 +493,12 @@
     },
     "use": "Use",
     "plugins": {
+      "autoInstall": {
+        "failed": "Plugin installation failed",
+        "progress": "{transferred} / {total}",
+        "succeeded": "Plugin installed successfully | Plugins installed successfully",
+        "title": "Installing {count} plugin | Installing {count} plugins"
+      },
       "names": "Plugins",
       "release": "Release notes",
       "beta": "Beta",

@@ -13,6 +13,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.eclipse.aether.transfer.TransferListener;
+
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.KestraRuntimeException;
 
@@ -118,10 +120,21 @@ public class LocalPluginManager implements PluginManager {
         List<MavenPluginRepositoryConfig> repositoryConfigs,
         boolean installForRegistration,
         @Nullable Path localRepositoryPath) {
+        return install(artifact, repositoryConfigs, installForRegistration, localRepositoryPath, null);
+    }
+
+    /**
+     * Installs the given artifact, reporting byte-level transfer progress to the provided listener.
+     */
+    public PluginArtifact install(PluginArtifact artifact,
+        List<MavenPluginRepositoryConfig> repositoryConfigs,
+        boolean installForRegistration,
+        @Nullable Path localRepositoryPath,
+        @Nullable TransferListener transferListener) {
         Objects.requireNonNull(artifact, "cannot install null artifact");
 
         log.info("Installing managed plugin artifact '{}'", artifact);
-        final PluginArtifact resolvedPluginArtifact = mavenPluginDownloader.resolve(artifact.toString(), repositoryConfigs);
+        final PluginArtifact resolvedPluginArtifact = mavenPluginDownloader.resolve(artifact.toString(), repositoryConfigs, transferListener);
 
         return install(resolvedPluginArtifact, installForRegistration, localRepositoryPath);
     }
@@ -169,8 +182,20 @@ public class LocalPluginManager implements PluginManager {
         List<MavenPluginRepositoryConfig> repositoryConfigs,
         boolean refreshPluginRegistry,
         @Nullable Path localRepositoryPath) {
+        return install(artifacts, repositoryConfigs, refreshPluginRegistry, localRepositoryPath, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<PluginArtifact> install(List<PluginArtifact> artifacts,
+        List<MavenPluginRepositoryConfig> repositoryConfigs,
+        boolean refreshPluginRegistry,
+        @Nullable Path localRepositoryPath,
+        @Nullable TransferListener transferListener) {
         return artifacts.stream()
-            .map(artifact -> install(artifact, repositoryConfigs, refreshPluginRegistry, localRepositoryPath))
+            .map(artifact -> install(artifact, repositoryConfigs, refreshPluginRegistry, localRepositoryPath, transferListener))
             .toList();
     }
 

@@ -10,6 +10,38 @@ import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
+/** Mirrors io.kestra.core.plugins.PluginInstallJob */
+export interface PluginArtifact {
+    groupId: string;
+    artifactId: string;
+    extension: string;
+    classifier: string | null;
+    version: string;
+}
+
+export interface ArtifactProgress {
+    resource: string;
+    transferred: number;
+    total: number;
+    state: "STARTED" | "PROGRESSING" | "SUCCEEDED" | "FAILED";
+}
+
+export interface PluginInstallJob {
+    id: string;
+    status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
+    artifacts: PluginArtifact[];
+    progress: Record<string, ArtifactProgress>;
+    startedAt: string | null;
+    finishedAt: string | null;
+    error: string | null;
+}
+
+export interface PluginAutoInstallDetectResult {
+    enabled: boolean;
+    missingTypes: string[];
+    artifacts: PluginArtifact[];
+}
+
 export interface PluginComponent {
     icon?: string;
     cls?: string;
@@ -471,6 +503,34 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
+    async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
+        const response = await axios.post<PluginAutoInstallDetectResult>(
+            `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+            flowYaml,
+            {headers: {"Content-Type": "text/plain"}},
+        )
+        return response.data
+    }
+
+    async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
+        const response = await axios.post<PluginInstallJob>(
+            `${apiUrlWithoutTenants()}/plugins/install`,
+            artifacts,
+        )
+        return response.data
+    }
+
+    async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
+        try {
+            const response = await axios.get<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
+            )
+            return response.data
+        } catch {
+            return null
+        }
+    }
+
     return {
         plugin,
         versions,
@@ -511,5 +571,10 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadIcon,
         groupIcons,
         ensureGroupIcons,
+
+        // auto-install
+        detectMissingPlugins,
+        startInstall,
+        getInstallJob,
     }
 })

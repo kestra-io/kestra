@@ -14,6 +14,7 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.MultiRuntimeException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.Proxy;
@@ -32,6 +33,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.configuration.PluginsConfiguration;
 import io.kestra.core.utils.Version;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -105,17 +107,48 @@ public class MavenPluginDownloader implements Closeable {
      * @return the local {@link Path} of the resolved dependency.
      */
     public PluginArtifact resolve(String dependency, List<MavenPluginRepositoryConfig> repositories) {
+        return resolve(dependency, repositories, null);
+    }
+
+    /**
+     * Resolves the given dependencies given the additional repositories, reporting byte-level
+     * transfer progress to the provided listener.
+     *
+     * @param dependency The dependency to resolve.
+     * @param repositories The Maven repositories.
+     * @param listener optional transfer listener; {@code null} disables progress reporting.
+     * @return the resolved {@link PluginArtifact}.
+     */
+    public PluginArtifact resolve(
+        @NonNull String dependency,
+        @NonNull List<MavenPluginRepositoryConfig> repositories,
+        @Nullable TransferListener listener
+    ) {
         List<RemoteRepository> allRepositories = new ArrayList<>();
         allRepositories.addAll(buildRemoteRepositories(this.repositoryConfigs));
         allRepositories.addAll(buildRemoteRepositories(repositories));
 
-        return doResolve(allRepositories, dependency);
+        return doResolve(allRepositories, dependency, effectiveSession(listener));
     }
 
     private PluginArtifact doResolve(List<RemoteRepository> repositories, String dependency) {
-        PluginArtifact result = resolveArtifact(repositories, dependency);
+        return doResolve(repositories, dependency, this.session);
+    }
+
+    private PluginArtifact doResolve(List<RemoteRepository> repositories, String dependency, RepositorySystemSession session) {
+        PluginArtifact result = resolveArtifact(repositories, dependency, session);
         log.debug("Resolved Plugin '{}' with '{}'", dependency, result.uri());
         return result;
+    }
+
+    /** Returns the base session or a shallow copy with the given listener attached. */
+    private RepositorySystemSession effectiveSession(@Nullable TransferListener listener) {
+        if (listener == null) {
+            return this.session;
+        }
+        DefaultRepositorySystemSession copy = new DefaultRepositorySystemSession(this.session);
+        copy.setTransferListener(listener);
+        return copy;
     }
 
     public List<PluginResolutionResult> resolveVersions(final List<PluginArtifact> artifacts) {
@@ -202,7 +235,7 @@ public class MavenPluginDownloader implements Closeable {
         return session;
     }
 
-    private PluginArtifact resolveArtifact(List<RemoteRepository> repositories, String dependency) {
+    private PluginArtifact resolveArtifact(List<RemoteRepository> repositories, String dependency, RepositorySystemSession session) {
         try {
             DefaultArtifact artifact = new DefaultArtifact(dependency);
             VersionRangeResult version = system.resolveVersionRange(session, new VersionRangeRequest(artifact, repositories, null));

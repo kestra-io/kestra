@@ -8,6 +8,15 @@ configurations {
     implementation.extendsFrom(micronaut)
 }
 
+// The webserver test JVM runs a full Micronaut server + H2 in-memory DB + 30 test classes.
+// Several classes (FlowControllerTest, ExecutionControllerTest, etc.) reload 273 flows before
+// each test method, creating heavy GC pressure that exceeds the default 4g limit.
+// ExitOnOutOfMemoryError ensures a fast failure instead of a 17-minute read-timeout hang.
+tasks.withType(Test).configureEach {
+    maxHeapSize = '6g'
+    jvmArgs '-XX:+ExitOnOutOfMemoryError'
+}
+
 dependencies {
 
     annotationProcessor "io.micronaut.openapi:micronaut-openapi"

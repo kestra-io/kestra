@@ -35,6 +35,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -98,6 +99,9 @@ public class FlowService {
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
+    @Inject
+    private PluginAutoInstallService pluginAutoInstallService;
 
     private final ExecutorService executorService;
 
@@ -463,7 +467,13 @@ public class FlowService {
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
                     String friendlyMessage = formatValidationError(cve.getMessage());
-                    constraintsBuilder.constraints(friendlyMessage);
+                    // When auto-install is enabled, "Invalid type" is a warning — the missing plugin
+                    // will be installed transparently when the user saves the flow.
+                    if (pluginAutoInstallService.isEnabled() && cve.getMessage().startsWith("Invalid type:")) {
+                        constraintsBuilder.warnings(List.of(friendlyMessage));
+                    } else {
+                        constraintsBuilder.constraints(friendlyMessage);
+                    }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
                     constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());

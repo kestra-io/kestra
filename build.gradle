@@ -214,6 +214,7 @@ subprojects {
         def commonTestConfig = { Test t ->
             // set Xmx for test workers
             t.maxHeapSize = '4g'
+            t.jvmArgs '-XX:+ExitOnOutOfMemoryError'
 
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'

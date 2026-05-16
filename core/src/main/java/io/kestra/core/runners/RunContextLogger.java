@@ -200,6 +200,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
         if (this.logEntry != null) {
             loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
+            // Also populate the SLF4J global MDC so logs emitted on this thread by other
+            // loggers (worker, executor, scheduler, third-party libs) inherit the same
+            // execution context. Restores the v0.19.5 behavior. Cleaned up in resetMDC().
+            this.logEntry.toMap().forEach(org.slf4j.MDC::put);
         }
 
         // unit tests don't always have the log queue as we construct a logger directly without it
@@ -238,6 +242,9 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public void resetMDC() {
         this.logger.getLoggerContext().getMDCAdapter().clear();
+        if (this.logEntry != null) {
+            this.logEntry.toMap().keySet().forEach(org.slf4j.MDC::remove);
+        }
     }
 
     @Override
@@ -334,6 +341,15 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     message,
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
+                );
+                // Set MDC from the LogEntry directly: the per-run LoggerContext's MDC adapter
+                // is thread-local and only populated on the thread that first called logger(),
+                // so event.getMDCPropertyMap() would be empty for logs emitted from any other
+                // thread (typical worker-pool case).
+                lle.setMDCPropertyMap(
+                    this.runContextLogger.logEntry != null
+                        ? this.runContextLogger.logEntry.toMap()
+                        : event.getMDCPropertyMap()
                 );
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());

@@ -54,6 +54,33 @@ class WorkerSelectorTest {
         }
     }
 
+    @Test
+    void shouldExposeMatchField() {
+        WorkerSelector req = new WorkerSelector(List.of("docker"), WorkerSelectorMatch.ANY, null);
+
+        assertThat(req.match()).isEqualTo(WorkerSelectorMatch.ANY);
+    }
+
+    @Test
+    void shouldAllowNullMatch() {
+        WorkerSelector req = new WorkerSelector(List.of("docker"), null);
+
+        assertThat(req.match()).isNull();
+    }
+
+    @Test
+    void shouldRejectMatchWithoutTags() {
+        try (jakarta.validation.ValidatorFactory factory = validatorFactory()) {
+            jakarta.validation.Validator validator = factory.getValidator();
+
+            WorkerSelector emptyTags = new WorkerSelector(List.of(), WorkerSelectorMatch.ANY, null);
+            WorkerSelector nullTags = new WorkerSelector(null, WorkerSelectorMatch.ANY, null);
+
+            assertThat(validator.validate(emptyTags)).isNotEmpty();
+            assertThat(validator.validate(nullTags)).isNotEmpty();
+        }
+    }
+
     /**
      * Builds a validator factory configured with {@link org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator}
      * to avoid requiring the optional EL dependency on the core test classpath.

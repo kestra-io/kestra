@@ -62,9 +62,6 @@ public class ExecutorService {
     private MetricRegistry metricRegistry;
 
     @Inject
-    private WorkerQueueMetaStore workerQueueMetaStore;
-
-    @Inject
     protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
@@ -1013,38 +1010,27 @@ public class ExecutorService {
                 }
                 if (routing.isEmpty() || routing.get().isDefault()) {
                     return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
-                } else {
-                    String workerQueueId = routing.get().workerQueueId();
-                    if (workerQueueMetaStore.isWorkerQueueAvailableForId(workerQueueId)) {
-                        return new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
-                    }
-                    // No worker available - apply the routing fallback policy.
-                    // Prefer the source tags carried by the routing for log messages —
-                    // much more readable than the resolved uid.
-                    String workerQueueForLog = WorkerQueues.forLog(routing.get().tags(), workerQueueId);
-                    WorkerQueueFallback fallback = routing.map(WorkerQueueRouting::fallback).orElse(WorkerQueueFallback.WAIT);
-                    return switch (fallback) {
-                        case FAIL -> {
-                            runContext.logger()
-                                .error("No workers are available for {}, failing the task.", workerQueueForLog);
-                            yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
-                        }
-                        case CANCEL -> {
-                            runContext.logger()
-                                .info("No workers are available for {}, canceling the task.", workerQueueForLog);
-                            yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED)), runContext);
-                        }
-                        case WAIT -> {
-                            runContext.logger()
-                                .info("No workers are available for {}, waiting for one to be available.", workerQueueForLog);
-                            yield new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
-                        }
-                        // IGNORE is a resolution-time directive consumed by the resolver; it
-                        // never appears on a resolved routing.
-                        case IGNORE -> throw new IllegalStateException(
-                            "WorkerQueueFallback.IGNORE must be consumed at resolution time and must not appear on a resolved routing");
-                    };
                 }
+                WorkerQueueRouting r = routing.get();
+                String workerQueueForLog = WorkerQueues.forLog(r.tags(), r.workerQueueId());
+                return switch (r.disposition()) {
+                    case DISPATCH -> new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                    case WAIT_AND_DISPATCH -> {
+                        runContext.logger()
+                            .info("No workers are available for {}, waiting for one to be available.", workerQueueForLog);
+                        yield new ExecutorContext.ExecutorWorkerTask(workerTask, runContext);
+                    }
+                    case FAIL -> {
+                        runContext.logger()
+                            .error("No workers are available for {}, failing the task.", workerQueueForLog);
+                        yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().fail()), runContext);
+                    }
+                    case CANCEL -> {
+                        runContext.logger()
+                            .info("No workers are available for {}, canceling the task.", workerQueueForLog);
+                        yield new ExecutorContext.ExecutorWorkerTask(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.CANCELLED)), runContext);
+                    }
+                };
             })
             )
             .collect(

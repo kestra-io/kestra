@@ -1,7 +1,7 @@
 package io.kestra.core.models.tasks;
 
 /**
- * Strategy when no worker is available to handle a job routed via {@link WorkerSelector}.
+ * Strategy when no worker is available on the tag-matched Worker Queue.
  */
 public enum WorkerQueueFallback {
     /** Fail the job. */

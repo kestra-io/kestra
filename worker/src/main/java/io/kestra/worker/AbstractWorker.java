@@ -206,8 +206,10 @@ public abstract class AbstractWorker extends AbstractService {
             MonitoredWorkerQueue.QUEUE_REMAINING_CAPACITY
         );
 
+        String ownGroup = WorkerGroups.normalize(this.workerGroupId);
         return metrics
             .flatMap(metric -> metricRegistry.findGauges(metric).stream())
+            .filter(gauge -> ownGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP)))
             .map(Metric::of)
             .collect(Collectors.toSet());
     }

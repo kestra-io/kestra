@@ -52,8 +52,8 @@ public class WorkerJobExecutor {
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    private static final AtomicInteger pendingJobCount = new AtomicInteger(0);
-    private static final AtomicInteger runningJobCount = new AtomicInteger(0);
+    private final AtomicInteger pendingJobCount = new AtomicInteger(0);
+    private final AtomicInteger runningJobCount = new AtomicInteger(0);
 
     @Inject
     public WorkerJobExecutor(final WorkerQueueRegistry workerQueueRegistry,
@@ -214,7 +214,7 @@ public class WorkerJobExecutor {
      * A {@link WorkerJobConsumer} is responsible for continuously polling
      * for new {@link WorkerJob} and processing them sequentially.
      */
-    private static class WorkerJobConsumer extends WorkerLoop {
+    private class WorkerJobConsumer extends WorkerLoop {
 
         private final AtomicReference<WorkerJobProcessor<WorkerJob>> running = new AtomicReference<>(null);
         private final AtomicReference<WorkerJob> workerJob = new AtomicReference<>(null);

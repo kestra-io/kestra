@@ -9,6 +9,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -70,7 +71,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
+public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>, SystemTask {
     @Schema(
         title = "Namespace of logs that need to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."

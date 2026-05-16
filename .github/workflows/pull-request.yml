@@ -17,7 +17,7 @@ jobs:
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
       uses: actions/create-github-app-token@v3
       with:
-        app-id: ${{ secrets.GH_BOT_CLIENT_ID }}
+        app-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
         owner: kestra-io
         repositories: kestra-ee

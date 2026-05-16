@@ -438,7 +438,7 @@
 
 
     const kvModalTitle = computed(() => {
-        return kv.value.key ? "kv.update" : "kv.add"
+        return kv.value.key ? t("kv.update", {key: kv.value.key}) : t("kv.add")
     })
 
     const addKvDrawerVisible = computed({

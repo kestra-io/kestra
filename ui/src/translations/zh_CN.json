@@ -77,6 +77,7 @@
     "backfill executions": "回填执行",
     "backfill paused": "补数据已暂停",
     "backfill running": "正在运行Backfill",
+    "bar": "条形图",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "更改执行状态",
     "chart": "图表",
     "chart preview": "图表预览",
+    "chart type": "图表类型",
     "charts": "图表",
     "choice": "选择",
     "choose file": "选择文件或拖放到此处...",
@@ -824,6 +826,7 @@
     "leave page": "离开页面",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
+    "line": "线条",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
@@ -875,7 +878,7 @@
       "username_password": "用户名和密码"
     },
     "metric": "指标",
-    "metric choice": "请选择一个指标和一个聚合",
+    "metric choice": "此flow没有可用的指标",
     "metrics": "指标",
     "min": "最小",
     "missingSource": "缺少源",

@@ -77,6 +77,7 @@
     "backfill executions": "Выполнения заполнение",
     "backfill paused": "Заполнение приостановлено",
     "backfill running": "Запуск Backfill",
+    "bar": "Бар",
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "Изменить состояние выполнения",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
+    "chart type": "Тип диаграммы",
     "charts": "Графики",
     "choice": "Выбор",
     "choose file": "Выберите файл или перетащите его сюда...",
@@ -824,6 +826,7 @@
     "leave page": "Покинуть страницу",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
+    "line": "Линия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
     "log expand setting": "Отображение logs по умолчанию",
@@ -875,7 +878,7 @@
       "username_password": "Имя пользователя и пароль"
     },
     "metric": "Метрика",
-    "metric choice": "Пожалуйста, выберите метрику и агрегацию",
+    "metric choice": "Для этого flow метрики недоступны",
     "metrics": "Метрики",
     "min": "Мин",
     "missingSource": "Отсутствует источник",

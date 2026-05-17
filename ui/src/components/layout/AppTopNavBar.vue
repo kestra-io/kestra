@@ -87,7 +87,10 @@
         // resolved full path, not by `route.params.tab`.
         const matchedByRoute = routeTabsStore.visibleTabs.find((t) => {
             if (!t.route) return false
-            return router.resolve(t.route).fullPath === route?.fullPath
+            const resolved = router.resolve(t.route)
+            if (resolved.fullPath === route?.fullPath) return true
+            if (resolved.name && resolved.name === route?.name) return true
+            return false
         })
         if (matchedByRoute) return matchedByRoute.name ?? "default"
 

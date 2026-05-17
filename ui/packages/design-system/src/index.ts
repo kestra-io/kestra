@@ -41,6 +41,7 @@ import KsDropdown from "./components/Navigation/KsDropdown/KsDropdown.vue"
 import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vue"
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
+import KsEmptyState from "./components/Data/KsEmptyState.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
@@ -182,6 +183,7 @@ const components: Record<string, Component> = {
     KsDropdownItem,
     KsDropdownMenu,
     KsEmpty,
+    KsEmptyState,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -270,6 +272,7 @@ export {
     KsDropdownItem,
     KsDropdownMenu,
     KsEmpty,
+    KsEmptyState,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -378,6 +381,7 @@ declare module "vue" {
         KsDropdownItem: typeof KsDropdownItem
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
+        KsEmptyState: typeof KsEmptyState
         KsExecutionStatus: typeof KsExecutionStatus
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm

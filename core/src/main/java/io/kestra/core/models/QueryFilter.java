@@ -110,7 +110,7 @@ public record QueryFilter(
         TAGS("tags") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.CONTAINS, Op.IN);
+                return List.of(Op.IN, Op.NOT_IN, Op.PREFIX, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH);
             }
         },
         METADATA("metadata") {
@@ -591,7 +591,7 @@ public record QueryFilter(
         APP {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID);
+                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID, Field.ENABLED);
             }
         };
 

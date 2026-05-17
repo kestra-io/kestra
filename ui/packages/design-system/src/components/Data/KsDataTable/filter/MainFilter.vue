@@ -147,7 +147,7 @@
     gap: .5rem;
     row-gap: 0.5rem;
     flex: 1;
-    min-width: 0;
+    min-width: 7rem;
 
     &.filter-grow {
         flex-wrap: nowrap;

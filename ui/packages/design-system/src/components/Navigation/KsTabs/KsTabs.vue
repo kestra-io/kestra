@@ -118,7 +118,7 @@
                     right: -10px;
                     height: 100%;
                     width: 10px;
-                    background: linear-gradient(90deg, var(--ks-bg-surface) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }
@@ -131,7 +131,7 @@
                     left: -15px;
                     height: 100%;
                     width: 15px;
-                    background: linear-gradient(-90deg, var(--ks-bg-surface) 0%, rgba(0, 0, 0, 0) 100%);
+                    background: linear-gradient(-90deg, var(--ks-bg-input) 0%, rgba(0, 0, 0, 0) 100%);
                     z-index: calc(var(--kel-index-normal) + 2);
                 }
             }

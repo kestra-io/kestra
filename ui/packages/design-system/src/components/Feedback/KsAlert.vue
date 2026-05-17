@@ -52,35 +52,43 @@
     @use "element-plus/theme-chalk/src/common/var" as *;
 
     .kel-alert {
-        --kel-alert-description-font-size: var(--ks-font-size-sm);
+        --kel-alert-icon-size: 1.5rem;
+        --kel-alert-icon-large-size: 1.5rem;
+        --kel-alert-description-font-size: var(--ks-font-size-xs);
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
+
+         .kel-alert__title {
+            line-height: 1;
+        }
+
+        .kel-alert__icon {
+            .material-design-icon,
+            .material-design-icon > .material-design-icon__svg {
+                height: var(--kel-alert-icon-size);
+                width: var(--kel-alert-icon-size);
+            }
+        }
+
+        .kel-alert__close-btn {
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--ks-icon-muted);
+        }
 
         .kel-alert__title.with-description {
             font-weight: bold;
         }
 
-        &.kel-alert--success.is-light {
-            border: 1px solid var(--ks-border-success);
-            background-color: var(--ks-bg-success);
-            --kel-color-success: var(--ks-text-success);
-        }
+        @each $type in (success, info, warning, error) {
+            &.kel-alert--#{$type}.is-light {
+                border: 1px solid var(--ks-border-#{$type});
+                background-color: var(--ks-bg-#{$type});
+                #{--kel-color-#{$type}}: var(--ks-text-#{$type});
 
-        &.kel-alert--warning.is-light {
-            border: 1px solid var(--ks-border-warning);
-            background-color: var(--ks-bg-warning);
-            --kel-color-warning: var(--ks-text-warning);
-        }
-
-        &.kel-alert--info.is-light {
-            border: 1px solid var(--ks-border-info);
-            background-color: var(--ks-bg-info);
-            --kel-color-info: var(--ks-text-info);
-        }
-
-        &.kel-alert--error.is-light {
-            border: 1px solid var(--ks-border-error);
-            background-color: var(--ks-bg-error);
-            --kel-color-error: var(--ks-text-error);
+                .kel-alert__icon {
+                    color: var(--ks-icon-#{$type});
+                }
+            }
         }
     }
 </style>

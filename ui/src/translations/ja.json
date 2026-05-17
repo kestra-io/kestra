@@ -77,6 +77,7 @@
     "backfill executions": "backfill実行",
     "backfill paused": "バックフィル PAUSED",
     "backfill running": "バックフィル実行中",
+    "bar": "バー",
     "before": "前",
     "behavior": "動作",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "実行状態を変更",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
+    "chart type": "チャートタイプ",
     "charts": "チャート",
     "choice": "選択",
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
@@ -824,6 +826,7 @@
     "leave page": "ページを離れる",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
+    "line": "ライン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
     "log expand setting": "Logのデフォルト表示",
@@ -875,7 +878,7 @@
       "username_password": "ユーザー名 & パスワード"
     },
     "metric": "メトリック",
-    "metric choice": "メトリックと集計を選択してください",
+    "metric choice": "このflowには利用可能なメトリクスがありません",
     "metrics": "メトリクス",
     "min": "Min",
     "missingSource": "ソースが見つかりません",

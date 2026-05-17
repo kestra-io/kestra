@@ -1,25 +1,23 @@
 <template>
     <TopNavBar :title="routeInfo.title" v-if="!isFullScreen() && !embed" />
-    <Layout
-        :title="$t('demos.audit-logs.title')"
+    <Empty
         type="auditlogs"
-        :image="{source: sourceImg, alt: $t('demos.audit-logs.title')}"
-        :video="{
-            source: 'https://www.youtube.com/embed/Qz24gBPGZHs',
-        }"
+        demoCta
+        :title="$t('demos.audit-logs.title')"
+        video="https://www.youtube.com/embed/Qz24gBPGZHs"
+        learnMore="https://kestra.io/docs/enterprise/governance/audit-logs"
     >
-        <template #message>
+        <template #description>
             {{ $t('demos.audit-logs.message') }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import Layout from "./Layout.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
-    import sourceImg from "../../assets/demo/audit-logs.png"
     import useRouteContext from "../../composables/useRouteContext"
 
     const {t} = useI18n()

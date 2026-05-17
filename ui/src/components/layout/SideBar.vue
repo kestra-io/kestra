@@ -66,12 +66,20 @@
                     r.disabled = true
                 }
 
-                // route hack is still needed for blueprints
-                if (typeof r.href === "string" && r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                // When `routes` is defined on the item, treat it as authoritative —
+                // otherwise a coarse path prefix can hijack a more specific sibling
+                // (e.g. /apps matching /apps/catalog).
+                const isLeafActive = (item: MenuItem) => {
+                    if (typeof item.href !== "string" || item.href === "/") return false
+                    if (item.routes) return item.routes.includes($route.name)
+                    return $route.path.startsWith(item.href)
+                }
+
+                if (isLeafActive(r)) {
                     r.class = "vsm--link_active"
                 }
 
-                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(isLeafActive)) {
                     r.class = "vsm--link_active"
                     r.child = disabledCurrentRoute(r.child)
                 }

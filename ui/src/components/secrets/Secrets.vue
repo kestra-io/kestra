@@ -116,6 +116,7 @@
         .header-block {
             p {
                 font-size: var(--ks-font-size-sm);
+                color: var(--ks-text-secondary);
             }
 
         }

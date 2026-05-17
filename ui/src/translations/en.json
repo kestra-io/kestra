@@ -1541,9 +1541,21 @@
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
+      "concurrency_limits": {
+        "title": "No concurrency limits are set.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+      },
       "pluginDefaults": {
         "title": "You have no plugin defaults yet!",
         "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
+      },
+      "workerRegistrationTokens": {
+        "title": "You have no registration tokens yet!",
+        "content": "Registration tokens let remote workers securely authenticate and register with your Kestra instance. Create a token, then use it to connect new workers to this cluster."
+      },
+      "groups": {
+        "title": "You have no groups yet!",
+        "content": "Groups let you bundle users together so you can manage permissions and role bindings collectively across your tenant."
       },
       "dependencies": {
         "FLOW": {

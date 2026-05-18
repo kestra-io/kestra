@@ -22,7 +22,7 @@
                             type="button"
                             class="view-details-button"
                             aria-label="Show details"
-                            @click="onShowDetails()"
+                            @click.stop="onShowDetails()"
                         >
                             Show details
                         </button>
@@ -85,18 +85,7 @@
                     <TextBoxSearch class="button-icon" alt="Show logs" />
                 </KsTooltip>
             </span>
-            <button
-                v-if="actionConfig?.eventName === EVENTS.SHOW_CUSTOM_ACTION && data.node.task"
-                type="button"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                :aria-label="actionConfig.config.label"
-                @click="onShowDetails()"
-            >
-                <KsTooltip :content="actionConfig.config.label">
-                    <Eye class="button-icon" :alt="actionConfig.config.label" />
-                </KsTooltip>
-            </button>
+
             <span
                 v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
                 class="circle-button"
@@ -157,8 +146,7 @@
     import AlertIcon from "vue-material-design-icons/Alert.vue"
     import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
     import RotatingDots from "../assets/icons/RotatingDots.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
-
+    
 
     interface TaskType {
         id: string;

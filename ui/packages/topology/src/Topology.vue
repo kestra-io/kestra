@@ -512,8 +512,18 @@
 </script>
 
 <style scoped lang="scss">
-    .material-design-icon.download-icon {
+    .material-design-icon.download-icon,
+    .material-design-icon.information-icon,
+    .material-design-icon.arrow-expand-all-icon {
         max-width: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            width: 12px;
+            height: 12px;
+        }
     }
 
     :deep(.unused-path) {

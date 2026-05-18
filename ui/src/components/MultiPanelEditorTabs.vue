@@ -75,30 +75,28 @@
     }
 
     .tabs {
-        padding: .5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: .5rem;
+        gap: var(--ks-spacing-1);
 
         > button {
             background: transparent;
             border: 1px solid transparent;
-            border-radius: 6px;
-            padding: 0.35rem 0.75rem;
+            border-radius: var(--ks-radius-base);
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
-            color: var(--ks-color-text-primary);
+            color: var(--ks-text-secondary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease-in-out;
-            gap: 0.4rem;
-            opacity: .7;
+            gap: var(--ks-spacing-2);
 
             &:hover {
                 background-color: var(--ks-bg-body);
-                opacity: 1;
                 .playgroundMode & {
                     background-color: transparent;
                     background-color: color-mix(in srgb, var(--ks-bg-body) 20%, transparent);
@@ -106,9 +104,8 @@
             }
 
             &.active {
-                background-color: var(--ks-bg-body);
-                border-color: var(--ks-border-default);
-                color: var(--ks-color-text-primary);
+                background-color: var(--ks-btn-secondary-bg-active);
+                color: var(--ks-text-link);
                 opacity: 1;
                 .playgroundMode & {
                     background-color: transparent;
@@ -131,12 +128,12 @@
         }
 
         .tabs {
-            gap: 0.25rem;
-            padding: 0.4rem 0.5rem;
+            gap: var(--ks-spacing-1);
+            padding: var(--ks-spacing-2);
         }
 
         .tabs > button {
-            padding: 0.5rem;
+            padding: var(--ks-spacing-2);
             gap: 0;
             aspect-ratio: 1 / 1;
         }

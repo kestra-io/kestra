@@ -14,7 +14,7 @@
             >
                 <div class="editor-tabs-container">
                     <KsButton
-                        :icon="DragVertical"
+                        :icon="DotsGrid"
                         link
                         class="tab-icon drag-handle"
                         draggable="true"
@@ -86,7 +86,7 @@
                         <KsDropdown trigger="click" placement="bottom-end">
                             <KsButton :icon="DotsVertical" link class="me-2 tab-icon" />
                             <template #dropdown>
-                                <KsDropdownMenu class="m-2">
+                                <KsDropdownMenu>
                                     <KsDropdownItem
                                         :icon="DockRight"
                                         :disabled="panelIndex === panels.length - 1"
@@ -187,7 +187,7 @@
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
-    import DragVertical from "vue-material-design-icons/DragVertical.vue"
+    import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import DockRight from "vue-material-design-icons/DockRight.vue"
@@ -689,12 +689,14 @@
         background-color: var(--ks-bg-body);
         border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
+        padding-top: var(--ks-spacing-2);
+        gap: var(--ks-spacing-1);
 
         button.split_right{
             border: none;
             color: var(--ks-text-dim);
             background-color: transparent;
-            padding: 0 .5rem;
+            padding: 0 var(--ks-spacing-2);
             line-height: 16px;
             svg {
                 height: 16px;
@@ -707,7 +709,8 @@
         }
         .drag-handle {
             cursor: grab;
-            opacity: 0.5;
+            opacity: 0.7;
+            padding: var(--ks-spacing-2);
             &:hover {
                 opacity: 1;
             }
@@ -735,36 +738,32 @@
         flex: 1;
         align-items: end;
         padding-bottom: 0;
-        font-size: .8rem;
-        border-left: 1px solid var(--ks-border-default);
+        font-size: var(--ks-font-size-xs);
         line-height: 1.5rem;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: none;
+        gap: var(--ks-spacing-1);
         &.dragover {
             background-color: var(--ks-bg-hover-elevated);
         }
     }
 
     .tab-icon{
-        color: var(--ks-text-inactive);
+        color: var(--ks-icon-muted);
     }
 
     .small-text {
-        font-size: .8rem;
-    }
-
-    :deep(.kel-dropdown-menu__item.is-disabled) {
-        color: var(--ks-border-subtle);
+        font-size: var(--ks-font-size-xs);
     }
 
     .editor-tabs .editor-tab{
-        padding: 3px .5rem;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
         border: none;
-        border-right: 1px solid var(--ks-border-default);
-        border-radius: 2px 2px 0 0;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg) var(--ks-radius-lg) 0 0;
         border-bottom: none;
-        background-color: var(--ks-bg-surface);
+        background-color: var(--ks-btn-secondary-bg-default);
         display: flex;
         flex-wrap: nowrap;
         /* Prevent shrinking so tabs overflow and the container can scroll */
@@ -775,13 +774,12 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         align-items: center;
-        gap: .5rem;
-        color: var(--ks-text-secondary);
-        opacity: .6;
+        gap: var(--ks-spacing-2);
+        color: var(--ks-text-primary);
+        opacity: .5;
 
         &.active {
             opacity: 1;
-            color: var(--ks-text-primary);
         }
 
         .tab-title{
@@ -800,9 +798,11 @@
             flex: 0 0 auto;
             opacity: .6;
             cursor: pointer;
-        }
-        &:hover .close-icon{
-            opacity: 1;
+            color: var(--ks-icon-default);
+
+            &:hover{
+                opacity: 1;
+            }
         }
     }
 

@@ -11,7 +11,7 @@
         label: string;
         tooltip?: string;
     }
-    const props = defineProps<Props>();
+    const props = defineProps<Props>()
 </script>
 
 <style scoped lang="scss">

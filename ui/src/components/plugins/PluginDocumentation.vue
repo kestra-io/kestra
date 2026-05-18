@@ -50,14 +50,14 @@
 
 <script setup lang="ts">
 
-    import {computed} from "vue";
-    import SchemaToHtml from "./schema/SchemaToHtml.vue";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import {useMiscStore} from "override/stores/misc";
-    import {usePluginsStore} from "../../stores/plugins";
-    import GitHub from "vue-material-design-icons/Github.vue";
-    import intro from "../../assets/docs/basic.md?raw";
+    import {computed} from "vue"
+    import SchemaToHtml from "./schema/SchemaToHtml.vue"
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import {useMiscStore} from "override/stores/misc"
+    import {usePluginsStore} from "../../stores/plugins"
+    import GitHub from "vue-material-design-icons/Github.vue"
+    import intro from "../../assets/docs/basic.md?raw"
 
     const props = withDefaults(defineProps<{
         overrideIntro?: string | null;
@@ -68,34 +68,34 @@
         overrideIntro: null,
         absolute: false,
         fetchPluginDocumentation: true,
-        plugin: null
-    });
+        plugin: null,
+    })
 
-    const miscStore = useMiscStore();
-    const pluginsStore = usePluginsStore();
+    const miscStore = useMiscStore()
+    const pluginsStore = usePluginsStore()
 
     const currentPlugin = computed(() => {
-        return props.plugin ?? pluginsStore.editorPlugin;
-    });
+        return props.plugin ?? pluginsStore.editorPlugin
+    })
 
     const introContent = computed(() => {
-        return props.overrideIntro ?? intro;
-    });
+        return props.overrideIntro ?? intro
+    })
 
     const pluginName = computed(() => {
-        const split = currentPlugin.value?.cls.split(".");
-        return split[split.length - 1];
-    });
+        const split = currentPlugin.value?.cls.split(".")
+        return split[split.length - 1]
+    })
 
     const releaseNotesUrl = computed(() => {
-        return getPluginReleaseUrl(currentPlugin.value?.cls);
-    });
+        return getPluginReleaseUrl(currentPlugin.value?.cls)
+    })
 
     const openReleaseNotes = () => {
         if (releaseNotesUrl.value) {
-            window.open(releaseNotesUrl.value, "_blank");
+            window.open(releaseNotesUrl.value, "_blank")
         }
-    };
+    }
 </script>
 
 <style scoped lang="scss">

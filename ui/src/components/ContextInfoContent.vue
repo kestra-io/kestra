@@ -11,15 +11,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {ref} from "vue"
 
-    defineProps<{title:string}>();
+    defineProps<{title:string}>()
 
-    const contentRef = ref<HTMLDivElement | null>(null);
+    const contentRef = ref<HTMLDivElement | null>(null)
 
     defineExpose({
-        contentRef
-    });
+        contentRef,
+    })
 </script>
 
 <style scoped lang="scss">

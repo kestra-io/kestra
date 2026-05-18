@@ -33,51 +33,51 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
+    import {computed, ref, onMounted} from "vue"
+    import {useDocStore} from "../../stores/doc"
 
-    import ContextDocsLink from "./ContextDocsLink.vue";
+    import ContextDocsLink from "./ContextDocsLink.vue"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const props = defineProps({
         pageUrl: {
             type: String,
-            default: undefined
-        }
-    });
+            default: undefined,
+        },
+    })
 
     const currentPage = computed(() => {
         if (props.pageUrl) {
-            return props.pageUrl.replace(/^\//, "").replace(/\/$/, "");
+            return props.pageUrl.replace(/^\//, "").replace(/\/$/, "")
         } else {
-            const p = docStore.docPath;
-            return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs";
+            const p = docStore.docPath
+            return p ? p.replace(/^\/?(.*?)\/?$/, "$1").replace(/^\.\//, "/") : "docs"
         }
     })
 
-    const resourcesWithMetadata = ref<Record<string, any>>({});
+    const resourcesWithMetadata = ref<Record<string, any>>({})
     onMounted(async () => {
-        resourcesWithMetadata.value = await docStore.children(currentPage.value);
+        resourcesWithMetadata.value = await docStore.children(currentPage.value)
     })
 
     const navigation = computed(() => {
-        let parentMetadata: Record<string, any> = {};
+        let parentMetadata: Record<string, any> = {}
         if (props.pageUrl) {
-            parentMetadata = {...resourcesWithMetadata.value[currentPage.value]};
-            delete parentMetadata.description;
+            parentMetadata = {...resourcesWithMetadata.value[currentPage.value]}
+            delete parentMetadata.description
         }
 
-        const parentLevel = currentPage.value.split("/").length;
+        const parentLevel = currentPage.value.split("/").length
         return Object.entries(resourcesWithMetadata.value)
             .filter(([path]) => path.split("/").length === parentLevel + 1)
             .filter(([path]) => path !== currentPage.value)
             .map(([path, metadata]) => ({
                 path: path.replace(/^docs\//, ""),
                 ...parentMetadata,
-                ...metadata
+                ...metadata,
             }))
-    });
+    })
 </script>
 
 <style scoped lang="scss">

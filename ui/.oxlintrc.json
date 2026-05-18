@@ -1,0 +1,56 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "vue"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "no-console": ["error", {"allow": ["warn", "error"]}],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-this-alias": "off",
+    "no-underscore-dangle": ["warn", {
+      "allow": [
+        "__dirname",
+        "__filename",
+        "__VUE_I18N_SYMBOL__",
+        "__setValueInTests",
+        "__loaded",
+      ]
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["src/generated/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-empty-object-type": "off"
+      }
+    },
+    {
+      "files": ["src/translations/check.js", "**/tests/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "node/**",
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**",
+    "**/dist/**"
+  ]
+}

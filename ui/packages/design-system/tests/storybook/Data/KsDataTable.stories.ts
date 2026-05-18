@@ -79,7 +79,7 @@ export const WithNavbar: Story = {
 
             const onFilter = () => {
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
                 )
                 total.value = filtered.length
                 filteredData.value = filtered.slice(0, size.value)
@@ -90,7 +90,7 @@ export const WithNavbar: Story = {
                 page.value = p
                 size.value = s
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
                 )
                 filteredData.value = filtered.slice((p - 1) * s, p * s)
             }

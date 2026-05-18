@@ -10,14 +10,14 @@ const config: StorybookConfig = {
         "@storybook/addon-themes",
         "@storybook/addon-vitest",
         "@storybook/addon-a11y",
-        "@storybook/addon-docs"
+        "@storybook/addon-docs",
     ],
     framework: {
         name: "@storybook/vue3-vite",
         options: {},
     },
-    async viteFinal(config) {
-        return mergeConfig(config, {
+    async viteFinal(viteConfig) {
+        return mergeConfig(viteConfig, {
             define: {"process.env": {}},
             css: {
                 preprocessorOptions: {

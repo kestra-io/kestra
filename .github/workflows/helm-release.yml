@@ -19,7 +19,6 @@ on:
         required: false
         type: boolean
         default: false
-
 permissions:
   contents: read
   id-token: write
@@ -41,12 +40,15 @@ jobs:
         with:
           version: v3.12.3
 
-      - name: Install kubeconform
+      - name: Install kubeconform and helm-docs
         run: |
           set -euo pipefail
           curl -fsSL -o /tmp/kc.tar.gz \
             https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
           tar -xzf /tmp/kc.tar.gz -C /usr/local/bin kubeconform
+          curl -fsSL -o /tmp/hd.tar.gz \
+            https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz
+          tar -xzf /tmp/hd.tar.gz -C /usr/local/bin helm-docs
 
       - name: Verify helm-docs are up to date
         uses: losisin/helm-docs-github-action@v1
@@ -183,3 +185,4 @@ jobs:
           gsutil cp release/index.yaml gs://${BUCKET}/index.yaml
           echo "Published:"
           ls -lh release/*.tgz
+

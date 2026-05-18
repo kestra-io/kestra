@@ -39,6 +39,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -1486,5 +1487,68 @@ public abstract class AbstractExecutionRepositoryTest {
 
         // Then
         assertThat(value).isEqualTo((double) testCase.expectedIds().size());
+    }
+
+    @Test
+    protected void findWithDateFilter() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        ZonedDateTime windowStart = ZonedDateTime.now().minusHours(3);
+        ZonedDateTime windowEnd = ZonedDateTime.now().minusHours(2);
+        // 2h30m ago — strictly inside [3h ago, 2h ago]
+        ZonedDateTime midWindow = ZonedDateTime.now().minusMinutes(150);
+
+        // Execution A: started inside window, ended after window
+        State stateA = State.of(Type.SUCCESS, List.of(
+            new State.History(Type.CREATED, midWindow.toInstant()),
+            new State.History(Type.SUCCESS, Instant.now())
+        ));
+        var execA = Execution.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .kind(ExecutionKind.NORMAL)
+            .state(stateA)
+            .build();
+        executionRepository.save(execA);
+
+        // Execution B: started before window, ended inside window
+        State stateB = State.of(Type.SUCCESS, List.of(
+            new State.History(Type.CREATED, ZonedDateTime.now().minusHours(4).toInstant()),
+            new State.History(Type.SUCCESS, midWindow.toInstant())
+        ));
+        var execB = Execution.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .kind(ExecutionKind.NORMAL)
+            .state(stateB)
+            .build();
+        executionRepository.save(execB);
+
+        List<QueryFilter> windowFilters = List.of(
+            QueryFilter.builder().field(Field.START_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
+            QueryFilter.builder().field(Field.END_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+        );
+
+        // START_DATE mode: only A (A.start in window; B.start before window)
+        var resultStart = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.START_DATE);
+        assertThat(resultStart).hasSize(1);
+        assertThat(resultStart.getFirst().getId()).isEqualTo(execA.getId());
+
+        // END_DATE mode: only B (B.end in window; A.end after window)
+        var resultEnd = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.END_DATE);
+        assertThat(resultEnd).hasSize(1);
+        assertThat(resultEnd.getFirst().getId()).isEqualTo(execB.getId());
+
+        // START_OR_END_DATE mode: both A and B
+        var resultBoth = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.START_OR_END_DATE);
+        assertThat(resultBoth).hasSize(2);
+        assertThat(resultBoth).extracting(Execution::getId)
+            .containsExactlyInAnyOrder(execA.getId(), execB.getId());
     }
 }

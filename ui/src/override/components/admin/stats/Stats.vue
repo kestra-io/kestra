@@ -7,19 +7,19 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import TopNavBar from "../../../../components/layout/TopNavBar.vue";
-    import Usages from "../../../../components/admin/stats/Usages.vue";
-    import EditionComparator from "../../../../components/admin/stats/EditionComparator.vue";
-    import useRouteContext from "../../../../composables/useRouteContext";
-    import {useI18n} from "vue-i18n";
+    import {ref, computed} from "vue"
+    import TopNavBar from "../../../../components/layout/TopNavBar.vue"
+    import Usages from "../../../../components/admin/stats/Usages.vue"
+    import EditionComparator from "../../../../components/admin/stats/EditionComparator.vue"
+    import useRouteContext from "../../../../composables/useRouteContext"
+    import {useI18n} from "vue-i18n"
 
-    const ready = ref(false);
+    const ready = ref(false)
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const routeInfo = computed(() => ({
         title: t("system overview"),
-    }));
-    useRouteContext(routeInfo);
+    }))
+    useRouteContext(routeInfo)
 </script>

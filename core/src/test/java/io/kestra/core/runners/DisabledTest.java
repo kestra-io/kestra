@@ -33,7 +33,7 @@ public class DisabledTest {
     void flowable(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(7);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(3);
         assertThat(subExecutions.stream().map(Execution::getTaskRunList).mapToLong(List::size).sum()).isEqualTo(3);
     }

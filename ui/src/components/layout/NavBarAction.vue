@@ -19,29 +19,29 @@
 </template>
 
 <script setup lang="ts">
-    import {inject, type Component} from "vue";
-    import {useRouter, type RouteLocationRaw} from "vue-router";
-    import {asItemKey} from "./navBarActionsContext";
+    import {inject, type Component} from "vue"
+    import {useRouter, type RouteLocationRaw} from "vue-router"
+    import {asItemKey} from "./navBarActionsContext"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         icon?: Component;
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | "";
         label?: string;
         to?: RouteLocationRaw;
-    }>();
+    }>()
 
-    const emit = defineEmits<{(e: "click"): void}>();
+    const emit = defineEmits<{(e: "click"): void}>()
 
-    const asItem = inject(asItemKey, false);
+    const asItem = inject(asItemKey, false)
 
-    const router = useRouter();
+    const router = useRouter()
 
     const onClick = () => {
         if (props.to) {
-            router.push(props.to);
+            router.push(props.to)
         }
-        emit("click");
-    };
+        emit("click")
+    }
 </script>

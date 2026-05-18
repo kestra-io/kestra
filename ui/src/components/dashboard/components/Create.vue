@@ -42,41 +42,41 @@
     const save = async (source?: string) => {
         const response = await dashboardStore.create(source)
 
-        toast.success(t("dashboards.creation.confirmation", {title: response.title}));
-        unsavedChangesStore.unsavedChange = false;
+        toast.success(t("dashboards.creation.confirmation", {title: response.title}))
+        unsavedChangesStore.unsavedChange = false
 
         const name = route.query.name as string
-        const params = route.query.params as string;
+        const params = route.query.params as string
 
         router.push({
             name,
             params: {
                 ...(params ? JSON.parse(params) : {}),
-                ...(name === "home" ? {dashboard: response.id!} : {})
+                ...(name === "home" ? {dashboard: response.id!} : {}),
             },
-            query: {created: String(true)}
+            query: {created: String(true)},
         })
     }
 
     onMounted(async () => {
-        dashboardStore.isCreating = true;
+        dashboardStore.isCreating = true
 
-        const {blueprintId, name, params} = route.query;
+        const {blueprintId, name, params} = route.query
 
         if (blueprintId) {
-            dashboardStore.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string});
+            dashboardStore.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string})
             if (!/^id:.*$/m.test(dashboardStore.sourceCode ?? "")) {
-                dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode;
+                dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode
             }
         } else {
             if (name === "flows/update") {
-                const {namespace, id} = JSON.parse(params as string);
-                dashboardStore.sourceCode = processFlowYaml(YAML_FLOW, namespace, id);
+                const {namespace, id} = JSON.parse(params as string)
+                dashboardStore.sourceCode = processFlowYaml(YAML_FLOW, namespace, id)
             } else {
-                dashboardStore.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+                dashboardStore.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN
             }
 
-            dashboardStore.sourceCode = "id: " + getRandomID() + "\n" + dashboardStore.sourceCode;
+            dashboardStore.sourceCode = "id: " + getRandomID() + "\n" + dashboardStore.sourceCode
         }
     })
 

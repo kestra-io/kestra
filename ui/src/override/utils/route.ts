@@ -1,4 +1,4 @@
-import {RouteLocationNormalizedLoaded} from "vue-router";
+import {RouteLocationNormalizedLoaded} from "vue-router"
 
 declare global {
     interface Window {
@@ -16,8 +16,8 @@ export const basePath = () => "/api/v1/main"
 export const basePathWithoutTenant = () => "/api/v1"
 
 export const apiUrl = (): string => {
-    return `${baseUrl}${basePath()}`;
+    return `${baseUrl}${basePath()}`
 }
 
-export const apiUrlWithTenant = (_: RouteLocationNormalizedLoaded): string => apiUrl();
-export const apiUrlWithoutTenants = (): string => `${baseUrl}${basePathWithoutTenant()}`;
+export const apiUrlWithTenant = (_: RouteLocationNormalizedLoaded): string => apiUrl()
+export const apiUrlWithoutTenants = (): string => `${baseUrl}${basePathWithoutTenant()}`

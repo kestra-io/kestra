@@ -32,7 +32,7 @@ public class BadFlowableTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions).hasSize(2);
         assertThat(subExecutions).extracting("state.current").containsOnly(State.Type.FAILED);
     }

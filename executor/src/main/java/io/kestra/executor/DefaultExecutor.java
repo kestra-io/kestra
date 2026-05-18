@@ -82,7 +82,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
-    private DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue;
+    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     @Inject
     private KillSwitchService killSwitchService;
     @Inject
@@ -133,7 +133,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
     @Inject
-    private TerminatedLoopExecutionMessageHandler terminatedLoopExecutionMessageHandler;
+    private LoopExecutionEventMessageHandler loopExecutionEventMessageHandler;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
@@ -238,7 +238,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
-        this.queueSubscribers.addFirst(this.terminatedLoopExecutionQueue.subscriber().subscribe(this::loopExecutionTerminatedQueue));
+        this.queueSubscribers.addFirst(this.loopExecutionEventQueue.subscriber().subscribe(this::loopExecutionEventQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
 
         // Register maintenance listener
@@ -489,15 +489,24 @@ public class DefaultExecutor extends AbstractService implements Executor {
         multipleConditionEventMessageHandler.handle(multipleConditionEvent);
     }
 
-    private void loopExecutionTerminatedQueue(Either<TerminatedLoopExecution, DeserializationException> either) {
+    private void loopExecutionEventQueue(Either<LoopExecutionEvent, DeserializationException> either) {
         if (either.isRight()) {
-            log.error("Unable to deserialize a terminated loop execution event: {}", either.getRight().getMessage());
+            log.error("Unable to deserialize a loop execution event: {}", either.getRight().getMessage());
             return;
         }
 
-        TerminatedLoopExecution terminatedLoopExecution = either.getLeft();
+        LoopExecutionEvent message = either.getLeft();
+        // skip if there is a kill switch on the loop sub-execution or the parent execution
+        if (killSwitchService.evaluate(message.executionId()) != EvaluationType.PASS) {
+            log.warn("Ignoring loop execution event for sub-execution {} as there is a kill switch on it", message.executionId());
+            return;
+        }
+        if (killSwitchService.evaluate(message.loopRun().parent().getId()) != EvaluationType.PASS) {
+            log.warn("Ignoring loop execution event for parent execution {} as there is a kill switch on it", message.loopRun().parent().getId());
+            return;
+        }
 
-        Optional<ExecutorContext> maybeExecutor = terminatedLoopExecutionMessageHandler.handle(terminatedLoopExecution);
+        Optional<ExecutorContext> maybeExecutor = loopExecutionEventMessageHandler.handle(message);
         maybeExecutor.ifPresent(this::toExecution);
     }
 
@@ -750,9 +759,14 @@ public class DefaultExecutor extends AbstractService implements Executor {
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             Execution execution = executor.getExecution();
-            // handle flow triggers on state change
-            if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                processFlowTriggers(execution);
+            // Fire flow triggers for every distinct state transition that occurred in this cycle.
+            // A single cycle can advance through multiple states (e.g. PAUSED → RUNNING → SUCCESS
+            // when a pause-resume delay fires and the executor immediately completes the next task).
+            // Iterating stateTransitions[1..n] ensures each intermediate state reaches the trigger
+            // pipeline, regardless of how many transitions collapsed into one executor cycle.
+            List<State.Type> transitions = executor.getStateTransitions();
+            for (int i = 1; i < transitions.size(); i++) {
+                processFlowTriggers(execution.withState(transitions.get(i)));
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
@@ -801,8 +815,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         }
 
                     }
-                    var terminatedLoopExecution = new TerminatedLoopExecution(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs);
-                    terminatedLoopExecutionQueue.emit(terminatedLoopExecution);
+                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs));
                 }
 
                 // purge SLA monitors

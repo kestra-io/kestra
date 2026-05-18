@@ -25,28 +25,28 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
-    import type {FilterValue} from "../utils/filterTypes";
+    import {ref, watch} from "vue"
+    import type {FilterValue} from "../utils/filterTypes"
 
     const props = defineProps<{
         modelValue: string;
         options: FilterValue[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:modelValue": [value: string];
-    }>();
+    }>()
 
-    const selectedOption = ref(props.modelValue);
+    const selectedOption = ref(props.modelValue)
 
     watch(() => props.modelValue, (newValue) => {
-        selectedOption.value = newValue;
-    });
+        selectedOption.value = newValue
+    })
 
     const selectOption = (option: string) => {
-        selectedOption.value = option;
-        emits("update:modelValue", option);
-    };
+        selectedOption.value = option
+        emits("update:modelValue", option)
+    }
 </script>
 
 <style lang="scss" scoped>

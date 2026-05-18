@@ -40,17 +40,17 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, nextTick} from "vue";
-    import Convert from "ansi-to-html";
-    import {useStorage} from "@vueuse/core";
-    import xss from "xss";
-    import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import linkify, {processLinkTags} from "./linkify";
-    import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import {LevelKey} from "../../utils/logs";
-    import {Log} from "../../stores/logs";
-    import {useRouter} from "vue-router";
-    import * as Filters from "../../utils/filters";
+    import {ref, computed, watch, nextTick} from "vue"
+    import Convert from "ansi-to-html"
+    import {useStorage} from "@vueuse/core"
+    import xss from "xss"
+    import MenuRight from "vue-material-design-icons/MenuRight.vue"
+    import linkify, {processLinkTags} from "./linkify"
+    import CopyToClipboard from "../layout/CopyToClipboard.vue"
+    import {LevelKey} from "../../utils/logs"
+    import {Log} from "../../stores/logs"
+    import {useRouter} from "vue-router"
+    import * as Filters from "../../utils/filters"
 
     // Props
     const props = defineProps<{
@@ -60,21 +60,21 @@
         level?: LevelKey,
         excludeMetas?: (keyof Log)[],
         title?: boolean
-    }>();
+    }>()
 
     // State
-    const logsFontSize = useStorage<number>("logsFontSize", 12);
-    const lineContent = ref<HTMLElement>();
+    const logsFontSize = useStorage<number>("logsFontSize", 12)
+    const lineContent = ref<HTMLElement>()
 
-    const convert = new Convert();
+    const convert = new Convert()
 
     // Computed
     const logLineStyle = computed(() => ({
         fontSize: `${logsFontSize.value}px`,
-    }));
+    }))
 
     const metaWithValue = computed(() => {
-        const metaWithValue: any[] = [];
+        const result: any[] = []
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -84,12 +84,12 @@
             "index",
             "attemptNumber",
             "executionKind",
-            ...(props.excludeMetas ?? [])
-        ];
+            ...(props.excludeMetas ?? []),
+        ]
         for (const keyString in props.log) {
-            const key = keyString as keyof Log;
+            const key = keyString as keyof Log
             if (props.log[key] && !excludes.includes(key)) {
-                let meta: any = {key, value: props.log[key]};
+                let meta: any = {key, value: props.log[key]}
                 if (key === "executionId") {
                     meta["router"] = {
                         name: "executions/update",
@@ -98,40 +98,40 @@
                             flowId: props.log["flowId"],
                             id: props.log[key],
                         },
-                    };
+                    }
                 }
                 if (key === "namespace") {
-                    meta["router"] = {name: "flows/list", query: {namespace: props.log[key]}};
+                    meta["router"] = {name: "flows/list", query: {namespace: props.log[key]}}
                 }
                 if (key === "flowId") {
                     meta["router"] = {
                         name: "flows/update",
                         params: {namespace: props.log["namespace"], id: props.log[key]},
-                    };
+                    }
                 }
-                metaWithValue.push(meta);
+                result.push(meta)
             }
         }
-        return metaWithValue;
-    });
+        return result
+    })
 
     const levelStyle = computed(() => {
-        const lowerCaseLevel = props.log?.level?.toLowerCase();
+        const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
             "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
             "color": `var(--ks-log-content-${lowerCaseLevel})`,
             "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
-        };
-    });
+        }
+    })
 
     const filtered = computed(() =>
-        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? ""))
-    );
+        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? "")),
+    )
 
     const iconColor = computed(() => {
-        const logLevel = props.log.level?.toLowerCase();
-        return `var(--ks-log-content-${logLevel}) !important`;
-    });
+        const logLevel = props.log.level?.toLowerCase()
+        return `var(--ks-log-content-${logLevel}) !important`
+    })
 
     const message = computed(() => {
         let logMessage = !props.log.message
@@ -139,22 +139,22 @@
             : convert.toHtml(
                 xss(props.log.message, {
                     allowList: {span: ["style"]},
-                })
-            );
+                }),
+            )
         logMessage = logMessage.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-            "$1<a href='$2' target='_blank'>$2</a>$3"
-        );
-        logMessage = processLinkTags(logMessage);
-        return logMessage;
-    });
+            "$1<a href='$2' target='_blank'>$2</a>$3",
+        )
+        logMessage = processLinkTags(logMessage)
+        return logMessage
+    })
 
-    const router = useRouter();
+    const router = useRouter()
     watch(message, () => {
         nextTick(() => {
-            linkify(lineContent.value, router);
-        });
-    }, {immediate: true});
+            linkify(lineContent.value, router)
+        })
+    }, {immediate: true})
 </script>
 <style scoped lang="scss">
 div.line {

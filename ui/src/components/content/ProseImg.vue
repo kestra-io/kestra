@@ -10,36 +10,36 @@
 </template>
 
 <script setup lang="ts">
-    import {useDocStore} from "../../stores/doc";
-    import {computed} from "vue";
+    import {useDocStore} from "../../stores/doc"
+    import {computed} from "vue"
     
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const props = defineProps({
         src: {
             type: String,
-            default: ""
+            default: "",
         },
         alt: {
             type: String,
-            default: ""
+            default: "",
         },
         width: {
             type: [String, Number],
-            default: undefined
+            default: undefined,
         },
         height: {
             type: [String, Number],
-            default: undefined
+            default: undefined,
         },
         class: {
             type: String,
-            default: ""
-        }
-    });
+            default: "",
+        },
+    })
 
-    const rawDocUrl = computed(() => docStore.resourceUrl(props.src)!);
-    const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value);
+    const rawDocUrl = computed(() => docStore.resourceUrl(props.src)!)
+    const finalUrl = computed(() => docStore.docPath ? rawDocUrl.value.replace("/./", "/" + docStore.docPath + "/") : rawDocUrl.value)
 </script>
 
 <style scoped lang="scss">

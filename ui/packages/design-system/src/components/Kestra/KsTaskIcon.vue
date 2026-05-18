@@ -12,9 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import KsTooltip from "../Feedback/KsTooltip.vue";
-    import {cssVar} from "../../utils/css";
+    import {computed} from "vue"
+    import KsTooltip from "../Feedback/KsTooltip.vue"
+    import {cssVar} from "../../utils/css"
 
     defineOptions({
         name: "KsTaskIcon",
@@ -41,12 +41,12 @@
 
     const styles = computed(() => {
         return {
-            backgroundImage: `url(${backgroundImage.value})`
+            backgroundImage: `url(${backgroundImage.value})`,
         }
     })
 
     const imageBase64 = computed(() => {
-        let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : undefined;
+        let localIcon = icon.value?.icon ? window.atob(icon.value.icon) : undefined
 
         if (!localIcon) {
             localIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
@@ -55,30 +55,30 @@
                 "rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" " +
                 "preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\">" +
                 "<path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"currentColor\"/>" +
-                "</svg>";
+                "</svg>"
         }
 
-        let color = cssVar("--ks-content-primary") || cssVar("--ks-content-inverse");
+        let color = cssVar("--ks-content-primary") || cssVar("--ks-content-inverse")
 
         if (props.theme) {
-            color = (props.theme === "dark" ? cssVar("--ks-content-inverse") : cssVar("--ks-content-primary")) || color;
+            color = (props.theme === "dark" ? cssVar("--ks-content-inverse") : cssVar("--ks-content-primary")) || color
         }
 
         if (props.variable) {
-            color = cssVar(props.variable) || color;
+            color = cssVar(props.variable) || color
         }
 
-        localIcon = localIcon.replace(/currentColor/g, color);
+        localIcon = localIcon.replace(/currentColor/g, color)
 
-        return window.btoa(localIcon);
+        return window.btoa(localIcon)
     })
 
     const icon = computed(() => {
-        return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon;
+        return props.cls ? (props.icons ?? {})[innerClassToParent(props.cls)] : props.customIcon
     })
 
     function innerClassToParent(cls: string) {
-        return cls.includes("$") ? cls.substring(0, cls.indexOf("$")) : cls;
+        return cls.includes("$") ? cls.substring(0, cls.indexOf("$")) : cls
     }
 </script>
 

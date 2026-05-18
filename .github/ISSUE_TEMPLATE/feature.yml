@@ -1,7 +1,6 @@
 name: Feature request
 description: Suggest a new feature or improvement to enhance the project
 
-labels: ["area/backend", "area/frontend"]
 type: Feature
 projects: ["kestra-io/15"]
 

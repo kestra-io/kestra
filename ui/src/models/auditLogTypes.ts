@@ -8,4 +8,4 @@ export const auditLogTypes = [
     {value: "IMPERSONATE", label: "Impersonate"},
     {value: "LOGIN_FAILURE", label: "LoginFailure"},
     {value: "ACCOUNT_LOCKED", label: "AccountLocked"},
-];
+]

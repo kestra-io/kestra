@@ -180,6 +180,7 @@ public class Extension extends AbstractExtension {
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
         functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
+        functions.put(LoopOutputsFunction.NAME, new LoopOutputsFunction());
         return functions;
     }
 

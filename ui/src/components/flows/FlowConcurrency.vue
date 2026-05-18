@@ -41,65 +41,65 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted} from "vue";
-    import Executions from "../executions/Executions.vue";
-    import Empty from "../layout/empty/Empty.vue";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import {useFlowStore} from "../../stores/flow";
-    import {useAxios} from "../../utils/axios";
-    import {apiUrl} from "override/utils/route";
-    import Loading from "vue-material-design-icons/Loading.vue";
+    import {ref, computed, watch, onMounted} from "vue"
+    import Executions from "../executions/Executions.vue"
+    import Empty from "../layout/empty/Empty.vue"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {useFlowStore} from "../../stores/flow"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    import {apiUrl} from "override/utils/route"
+    import Loading from "vue-material-design-icons/Loading.vue"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const flowStore = useFlowStore();
-    const axios = useAxios();
+    const flowStore = useFlowStore()
+    const axios = useClient()
 
-    const runningCount = ref(0);
-    const totalCount = ref(0);
-    const runningCountSet = ref(false);
-    const loading = ref(false);
-    const error = ref<string | undefined>(undefined);
-    const concurrencyLimit = ref<{ tenantId: string; namespace: string; flowId: string; running: number } | undefined>(undefined);
+    const runningCount = ref(0)
+    const totalCount = ref(0)
+    const runningCountSet = ref(false)
+    const loading = ref(false)
+    const error = ref<string | undefined>(undefined)
+    const concurrencyLimit = ref<{ tenantId: string; namespace: string; flowId: string; running: number } | undefined>(undefined)
 
     const progress = computed(() => {
-        if (!flowStore.flow?.concurrency || concurrencyLimit.value === undefined) return 0;
-        return (concurrencyLimit.value.running / flowStore.flow.concurrency.limit) * 100;
-    });
+        if (!flowStore.flow?.concurrency || concurrencyLimit.value === undefined) return 0
+        return (concurrencyLimit.value.running / flowStore.flow.concurrency.limit) * 100
+    })
 
     async function loadConcurrencyLimit() {
         if (!flowStore.flow?.namespace || !flowStore.flow?.id) {
-            return;
+            return
         }
 
-        loading.value = true;
-        error.value = undefined;
+        loading.value = true
+        error.value = undefined
 
         try {
-            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`);
-            const limits = response.data?.results || [];
+            const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
+            const limits = response.data?.results || []
 
             const currentFlowLimit = limits.find(
                 (limit: any) =>
                     limit.namespace === flowStore.flow?.namespace &&
-                    limit.flowId === flowStore.flow?.id
-            );
+                    limit.flowId === flowStore.flow?.id,
+            )
 
             if (currentFlowLimit) {
-                concurrencyLimit.value = currentFlowLimit;
-                runningCount.value = currentFlowLimit.running;
-                runningCountSet.value = true;
-                totalCount.value = currentFlowLimit.running;
+                concurrencyLimit.value = currentFlowLimit
+                runningCount.value = currentFlowLimit.running
+                runningCountSet.value = true
+                totalCount.value = currentFlowLimit.running
             } else {
-                concurrencyLimit.value = undefined;
-                runningCount.value = 0;
-                runningCountSet.value = true;
-                totalCount.value = 0;
+                concurrencyLimit.value = undefined
+                runningCount.value = 0
+                runningCountSet.value = true
+                totalCount.value = 0
             }
         } catch (e: any) {
-            error.value = e.message;
+            error.value = e.message
         } finally {
-            loading.value = false;
+            loading.value = false
         }
     }
 
@@ -107,10 +107,10 @@
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id],
         loadConcurrencyLimit,
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
-    onMounted(loadConcurrencyLimit);
+    onMounted(loadConcurrencyLimit)
 </script>
 
 <style scoped lang="scss">

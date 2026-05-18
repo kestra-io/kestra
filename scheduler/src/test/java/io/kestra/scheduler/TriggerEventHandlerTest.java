@@ -379,6 +379,8 @@ class TriggerEventHandlerTest {
                 State.Type.CREATED,
                 null,
                 null,
+                null,
+                null,
                 null
             )
         );
@@ -399,6 +401,8 @@ class TriggerEventHandlerTest {
             triggerId, new TriggerEvaluationResult(
                 IdUtils.create(),
                 State.Type.FAILED,
+                null,
+                null,
                 null,
                 null,
                 null

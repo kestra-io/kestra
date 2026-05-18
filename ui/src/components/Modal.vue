@@ -22,21 +22,21 @@
 </template>
 
 <script setup lang="ts">
-    const emits = defineEmits<{"update:modelValue": [value: boolean]}>();
+    const emits = defineEmits<{"update:modelValue": [value: boolean]}>()
 
     defineProps({
         title: {
             type: String,
-            default: undefined
+            default: undefined,
         },
         width: {
             type: String,
-            default: "560px"
-        }
-    });
+            default: "560px",
+        },
+    })
 
     const modelValue = defineModel({
         type: Boolean,
-        required: true
-    });
+        required: true,
+    })
 </script>

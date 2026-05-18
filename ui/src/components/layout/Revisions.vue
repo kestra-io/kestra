@@ -112,18 +112,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute, useRouter} from "vue-router";
-    import Restore from "vue-material-design-icons/Restore.vue";
-    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
-    import Editor from "../../components/inputs/Editor.vue";
-    import moment from "moment";
+    import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import Restore from "vue-material-design-icons/Restore.vue"
+    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import Editor from "../../components/inputs/Editor.vue"
+    import moment from "moment"
 
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
+    import {useToast} from "../../utils/toast"
+    import {useFlowStore} from "../../stores/flow"
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     export interface Revision {
         revision: number;
@@ -131,89 +131,89 @@
         source?: string;
     }
 
-    const {t} = useI18n();
-    const route = useRoute();
-    const router = useRouter();
-    const toast = useToast();
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
+    const toast = useToast()
 
-    const revisionLeftIndex = ref();
-    const revisionRightIndex = ref();
-    const revisionLeftText = ref();
-    const revisionRightText = ref();
-    const sideBySide = ref(true);
-    const isLoadingRevisions = ref(false);
+    const revisionLeftIndex = ref()
+    const revisionRightIndex = ref()
+    const revisionLeftText = ref()
+    const revisionRightText = ref()
+    const sideBySide = ref(true)
+    const isLoadingRevisions = ref(false)
     const displayTypes = [
         {value: true, text: t("side-by-side")},
-        {value: false, text: t("line-by-line")}
-    ];
+        {value: false, text: t("line-by-line")},
+    ]
 
     const emit = defineEmits<{
         restore: [source: string],
         deleted: [revision: number]
-    }>();
+    }>()
 
     const props = withDefaults(defineProps<{
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
         editRouteQuery?: boolean
-    }>(), {editRouteQuery: true});
+    }>(), {editRouteQuery: true})
 
     const sortedRevisions = computed(() => {
-        return props.revisions.toSorted((a, b) => a.revision - b.revision);
-    });
+        return props.revisions.toSorted((a, b) => a.revision - b.revision)
+    })
 
     const currentRevisionWithSource = computed(() => {
-        return sortedRevisions.value[sortedRevisions.value.length - 1];
-    });
+        return sortedRevisions.value[sortedRevisions.value.length - 1]
+    })
 
     function load() {
-        const currentRevision = currentRevisionWithSource.value?.revision ?? 1;
+        const currentRevision = currentRevisionWithSource.value?.revision ?? 1
 
         if (route.query.revisionRight) {
             revisionRightIndex.value = revisionIndex(
-                route.query.revisionRight.toString()
-            );
+                route.query.revisionRight.toString(),
+            )
             if (
                 !route.query.revisionLeft &&
                 revisionRightIndex.value !== undefined &&
                 revisionRightIndex.value > 0
             ) {
-                revisionLeftIndex.value = revisionRightIndex.value - 1;
+                revisionLeftIndex.value = revisionRightIndex.value - 1
             }
         } else if (currentRevision && currentRevision > 0) {
-            revisionRightIndex.value = revisionIndex(currentRevision.toString());
+            revisionRightIndex.value = revisionIndex(currentRevision.toString())
         }
 
         if (route.query.revisionLeft) {
             revisionLeftIndex.value = revisionIndex(
-                route.query.revisionLeft.toString()
-            );
+                route.query.revisionLeft.toString(),
+            )
         } else if (revisionRightIndex.value !== undefined && revisionRightIndex.value > 0) {
-            revisionLeftIndex.value = revisionRightIndex.value - 1;
+            revisionLeftIndex.value = revisionRightIndex.value - 1
         }
     }
 
     function revisionIndex(revision: string) {
-        const revisionInt = parseInt(revision);
-        const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
-        return idx === -1 ? undefined : idx;
+        const revisionInt = parseInt(revision)
+        const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt)
+        return idx === -1 ? undefined : idx
     }
 
     function revisionNumber(index: number) {
-        return sortedRevisions.value[index].revision;
+        return sortedRevisions.value[index].revision
     }
 
     function restoreRevision(index: number, revisionSource: string) {
         toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
-            emit("restore", revisionSource);
-            return Promise.resolve();
-        });
+            emit("restore", revisionSource)
+            return Promise.resolve()
+        })
     }
 
     function addQuery() {
         if (isLoadingRevisions.value) {
-            return;
+            return
         }
 
         if (props.editRouteQuery) {
@@ -221,50 +221,50 @@
                 query: {
                     ...route.query,
                     revisionLeft: sortedRevisions.value[revisionLeftIndex.value].revision,
-                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision
-                }
-            });
+                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision,
+                },
+            })
         }
     }
 
     function formatTimestamp(updatedDate?: string): string {
-        if (!updatedDate) return "";
+        if (!updatedDate) return ""
 
-        return moment(updatedDate).format("YYYY-MM-DD HH:mm");
+        return moment(updatedDate).format("YYYY-MM-DD HH:mm")
     }
 
     function formatRevisionText(revision: number): string {
-        let text = revision.toString();
+        let text = revision.toString()
 
         if (currentRevisionWithSource.value.revision === revision) {
-            text += ` (${t("current")})`;
+            text += ` (${t("current")})`
         }
 
-        return text;
+        return text
     }
 
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
             .map(({revision, updated}) => {
-                const isCurrent = currentRevisionWithSource.value.revision === revision;
+                const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
-                    text: formatRevisionText(revision)
-                };
-            });
+                    text: formatRevisionText(revision),
+                }
+            })
     }
 
     const leftOptions = computed(() => {
-        return options(revisionRightIndex.value);
-    });
+        return options(revisionRightIndex.value)
+    })
 
     const rightOptions = computed(() => {
-        return options(revisionLeftIndex.value);
-    });
+        return options(revisionLeftIndex.value)
+    })
 
     const currentRevision = computed(() => {
         return currentRevisionWithSource.value?.revision ?? 1
@@ -272,81 +272,81 @@
 
     async function loadRevisionContent(index: number | undefined) {
         if (index === undefined) {
-            return undefined;
+            return undefined
         }
 
-        const revisionObject = sortedRevisions.value[index];
-        let source = revisionObject.source;
+        const revisionObject = sortedRevisions.value[index]
+        let source = revisionObject.source
 
         if (!source) {
-            source = await props.revisionSource(revisionObject.revision);
-            revisionObject.source = source;
+            source = await props.revisionSource(revisionObject.revision)
+            revisionObject.source = source
         }
 
-        return source;
+        return source
     }
 
     async function onDelete(index: number) {
-        const revisionToDelete = revisionNumber(index);
+        const revisionToDelete = revisionNumber(index)
         toast.confirm(t("delete revision confirm", {revision: revisionToDelete}), async () => {
             try {
                 await flowStore.deleteRevision({
                     namespace: route.params.namespace?.toString() || "",
                     id: route.params.id?.toString() || "",
-                    revision: revisionToDelete.toString()
-                });
-                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
-                emit("deleted", revisionToDelete);
-                load();
+                    revision: revisionToDelete.toString(),
+                })
+                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}))
+                emit("deleted", revisionToDelete)
+                load()
             } catch (error: any) {
-                toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}));
+                toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}))
             }
-        });
+        })
     };
 
     watch(revisionLeftIndex, async (newValue) => {
-        isLoadingRevisions.value = true;
+        isLoadingRevisions.value = true
         try {
-            revisionLeftText.value = await loadRevisionContent(newValue);
+            revisionLeftText.value = await loadRevisionContent(newValue)
         } finally {
-            isLoadingRevisions.value = false;
+            isLoadingRevisions.value = false
         }
-    });
+    })
 
     watch(revisionRightIndex, async (newValue) => {
-        isLoadingRevisions.value = true;
+        isLoadingRevisions.value = true
         try {
-            revisionRightText.value = await loadRevisionContent(newValue);
+            revisionRightText.value = await loadRevisionContent(newValue)
         } finally {
-            isLoadingRevisions.value = false;
+            isLoadingRevisions.value = false
         }
-    });
+    })
 
     watch(() => route.query.revisionLeft, async (newValue) => {
         if (newValue) {
-            const newLeftIndex = revisionIndex(newValue.toString());
+            const newLeftIndex = revisionIndex(newValue.toString())
             if (newLeftIndex !== revisionLeftIndex.value) {
-                revisionLeftIndex.value = newLeftIndex;
+                revisionLeftIndex.value = newLeftIndex
             }
         }
-    });
+    })
 
     watch(() => route.query.revisionRight, async (newValue) => {
         if (newValue) {
-            const newRightIndex = revisionIndex(newValue.toString());
+            const newRightIndex = revisionIndex(newValue.toString())
             if (newRightIndex !== revisionRightIndex.value) {
-                revisionRightIndex.value = newRightIndex;
+                revisionRightIndex.value = newRightIndex
             }
         }
-    });
+    })
 
     watch(() => currentRevisionWithSource.value.revision, (newRevision, oldRevision) => {
         if (revisionNumber(revisionRightIndex.value) === oldRevision) {
-            revisionRightIndex.value = revisionIndex(newRevision.toString());
+            revisionRightIndex.value = revisionIndex(newRevision.toString())
         }
-    });
+    })
 
-    load();
+    load()
 </script>
 
 <style scoped lang="scss">

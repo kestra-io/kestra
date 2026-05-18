@@ -26,9 +26,9 @@
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
 
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
-    import DemoButtons from "./DemoButtons.vue";
-    import EnterpriseTag from "../EnterpriseTag.vue";
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
+    import DemoButtons from "./DemoButtons.vue"
+    import EnterpriseTag from "../EnterpriseTag.vue"
 
     defineProps<{
         title: string;
@@ -41,7 +41,7 @@
             source: string;
         };
         embed?: boolean;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

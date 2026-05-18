@@ -39,97 +39,97 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount, ref} from "vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {computed, inject, onBeforeMount, ref} from "vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
-        SCHEMA_DEFINITIONS_INJECTION_KEY
-    } from "../no-code/injectionKeys";
-    import {getValueAtJsonPath} from "../../utils/utils";
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+    } from "../no-code/injectionKeys"
+    import {getValueAtJsonPath} from "../../utils/utils"
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
-    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
 
-    const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "");
-    const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType);
+    const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
+    const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)
 
     const fieldDefinition = computed(() => {
         if (props.blockSchemaPath.length === 0) {
-            console.error("Definition key is required for PluginSelect component");
+            console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)
     })
 
     onBeforeMount(() => {
         if (blockType === "pluginDefaults" || isPluginBlock) {
-            pluginsStore.listWithSubgroup({includeDeprecated: false});
+            pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
     })
 
     const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
         if (item.allOf) {
             // if the item is an allOf, we need to find the first item that has a $ref
-            const refItem = item.allOf.find((d: any) => d.$ref);
+            const refItem = item.allOf.find((d: any) => d.$ref)
             if (refItem?.$ref) {
-                return removeRefPrefix(refItem.$ref);
+                return removeRefPrefix(refItem.$ref)
             }
         }
-        return removeRefPrefix(item.$ref);
-    }) || []);
+        return removeRefPrefix(item.$ref)
+    }) || [])
 
     const taskModelsSets = computed(() => {
         return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
             const def = rootDefinitions.value?.[item]
 
             if (!def || def.$deprecated) {
-                return acc;
+                return acc
             }
 
             const consolidatedType = def.allOf
                 ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
-                : def.properties?.type;
+                : def.properties?.type
 
             if (consolidatedType?.const) {
-                acc.set(consolidatedType.const, def.title ?? consolidatedType.const);
+                acc.set(consolidatedType.const, def.title ?? consolidatedType.const)
             }
 
             if (consolidatedType?.enum) {
-                const val = consolidatedType.enum[0];
+                const val = consolidatedType.enum[0]
 
-                acc.set(val, def.title ?? val);
+                acc.set(val, def.title ?? val)
             }
             return acc
-        }, new Map<string, string>());
+        }, new Map<string, string>())
     })
 
     const taskModels = computed(() => {
         const entries = blockType === "pluginDefaults"
             ? (() => {
-                const deprecated = new Set(pluginsStore.deprecatedTypes);
+                const deprecated = new Set(pluginsStore.deprecatedTypes)
                 return pluginsStore.allTypes
                     .filter((cls: string) => !deprecated.has(cls) && rootDefinitions.value?.[cls])
-                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}));
+                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}))
             })()
             : (Array.from(taskModelsSets.value) as [string, string][])
-                .map(([cls, title]) => ({cls, title}));
+                .map(([cls, title]) => ({cls, title}))
 
-        return entries.sort((a, b) => a.cls.localeCompare(b.cls));
-    });
+        return entries.sort((a, b) => a.cls.localeCompare(b.cls))
+    })
 
     const hasIcons = computed(() => {
-        const models = taskModels.value.map(m => m.cls);
-        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0;
-    });
+        const models = taskModels.value.map(m => m.cls)
+        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0
+    })
 
     const modelValue = defineModel({
         type: String,
         default: "",
-    });
+    })
 
     const props = defineProps<{
         blockSchemaPath: string,

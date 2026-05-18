@@ -1,7 +1,7 @@
 apiVersion: v2
 type: application
-version: "1.1.23"
-appVersion: "v1.3.14"
+version: "0.0.0"
+appVersion: "0.0.0"
 name: kestra-starter
 description: Infinitely scalable, event-driven, language-agnostic orchestration and scheduling platform to manage millions of workflows declaratively in code.
 home: https://kestra.io
@@ -40,4 +40,4 @@ dependencies:
     version: "1.5.7"
   - name: kestra
     repository: https://helm.kestra.io/
-    version: "1.0.53"
+    version: "0.0.0"

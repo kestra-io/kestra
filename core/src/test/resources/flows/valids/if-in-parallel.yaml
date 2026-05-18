@@ -32,6 +32,6 @@ tasks:
   - id: assert
     type: io.kestra.plugin.core.execution.Assert
     conditions:
-      - "{{ outputs.for_each.outputs['1'].return1 == '1' }}"
-      - "{{ outputs.for_each.outputs['3'].return1 == '3' }}"
-      - "{{ outputs.for_each.outputs['2'].return2 == 'After if 2' }}"
+      - "{{ outputs.for_each.outputs[0].outputs.return1 == '1' }}"
+      - "{{ outputs.for_each.outputs[2].outputs.return1 == '3' }}"
+      - "{{ outputs.for_each.outputs[1].outputs.return2 == 'After if 2' }}"

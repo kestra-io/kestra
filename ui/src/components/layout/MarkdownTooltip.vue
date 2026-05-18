@@ -18,30 +18,30 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
+    import {ref} from "vue"
+    import HelpCircle from "vue-material-design-icons/HelpCircle.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
 
     defineProps({
         id: {
             type: String,
-            required: true
+            required: true,
         },
         title: {
             type: String,
-            default: ""
+            default: "",
         },
         description: {
             type: String,
-            default: ""
-        }
-    });
+            default: "",
+        },
+    })
 
-    const isOpen = ref(false);
+    const isOpen = ref(false)
 
     const open = (): void => {
-        isOpen.value = true;
-    };
+        isOpen.value = true
+    }
 </script>
 
 <style scoped lang="scss">

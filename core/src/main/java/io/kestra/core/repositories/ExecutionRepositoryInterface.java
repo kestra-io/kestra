@@ -71,6 +71,14 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
+    default ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        @Nullable DateFilter dateFilter) {
+        return find(pageable, tenantId, filters);
+    }
+
     default Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
@@ -110,7 +118,7 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     @VisibleForTesting
     Execution delete(Execution execution);
 
-    Integer purge(Execution execution);
+    boolean purge(Execution execution);
 
     Integer purge(List<Execution> executions);
 
@@ -157,20 +165,27 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         MAIN
     }
 
+    /** Controls which execution date column(s) the time-based filters are applied against. */
+    enum DateFilter {
+        START_DATE,
+        END_DATE,
+        START_OR_END_DATE
+    }
+
     List<Execution> lastExecutions(
         String tenantId,
         @Nullable List<FlowFilter> flows);
 
     /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
-    default List<Execution> findLoopSubExecutions(Execution parentExecution) {
+    default List<Execution> findLoopSubExecutions(String tenantId, String parentExecutionId) {
         return find(
             Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
-            parentExecution.getTenantId(),
+            tenantId,
             List.of(
                 QueryFilter.builder()
                     .field(QueryFilter.Field.PARENT_ID)
                     .operation(QueryFilter.Op.EQUALS)
-                    .value(parentExecution.getId())
+                    .value(parentExecutionId)
                     .build(),
                 QueryFilter.builder()
                     .field(QueryFilter.Field.KIND)

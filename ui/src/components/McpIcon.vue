@@ -34,16 +34,16 @@
             },
             fillColor: {
                 type: String,
-                default: "currentColor"
+                default: "currentColor",
             },
             size: {
                 type: Number,
-                default: 24
+                default: 24,
             },
             strokeWidth: {
                 type: Number,
-                default: 12
-            }
-        }
+                default: 12,
+            },
+        },
     }
 </script>

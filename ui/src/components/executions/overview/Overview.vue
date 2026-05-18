@@ -174,77 +174,77 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
-    import {watchDebounced} from "@vueuse/core";
+    import {onMounted, computed, ref} from "vue"
+    import {watchDebounced} from "@vueuse/core"
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useRoute} from "vue-router"
+    const route = useRoute()
 
-    import {useExecutionsStore} from "../../../stores/executions";
-    const store = useExecutionsStore();
+    import {useExecutionsStore} from "../../../stores/executions"
+    const store = useExecutionsStore()
 
-    import {useMiscStore} from "override/stores/misc";
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+    import {useMiscStore} from "override/stores/misc"
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
-    import moment from "moment";
+    import moment from "moment"
 
-    import {verticalLayout} from "./utils/layout";
-    import {createLink} from "./utils/links";
-    import {FilterObject} from "../../../utils/filters";
+    import {verticalLayout} from "./utils/layout"
+    import {createLink} from "./utils/links"
+    import {FilterObject} from "../../../utils/filters"
 
-    import {State, durationUtils} from "@kestra-io/design-system";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
+    import {State, durationUtils} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import Row from "./components/sidebar/Row.vue";
-    import Labels from "./components/sidebar/Labels.vue";
-    import Timeline from "./components/sidebar/Timeline.vue";
+    import Row from "./components/sidebar/Row.vue"
+    import Labels from "./components/sidebar/Labels.vue"
+    import Timeline from "./components/sidebar/Timeline.vue"
 
-    import ErrorAlert from "./components/main/ErrorAlert.vue";
-    import {KsId} from "@kestra-io/design-system";
-    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
-    import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
-    import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
-    import PrevNext from "./components/main/PrevNext.vue";
+    import ErrorAlert from "./components/main/ErrorAlert.vue"
+    import {KsId} from "@kestra-io/design-system"
+    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue"
+    import DebugPanel from "./components/main/cascaders/DebugPanel.vue"
+    import TimeSeries from "../../dashboard/sections/TimeSeries.vue"
+    import PrevNext from "./components/main/PrevNext.vue"
 
-    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
-    import SetLabels from "../SetLabels.vue";
-    import Pause from "./components/actions/Pause.vue";
+    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue"
+    import SetLabels from "../SetLabels.vue"
+    import Pause from "./components/actions/Pause.vue"
     //@ts-expect-error No declaration file
-    import Resume from "./components/actions/Resume.vue";
-    import Restart from "./components/actions/Restart.vue";
-    import Unqueue from "./components/actions/Unqueue.vue";
-    import ForceRun from "./components/actions/ForceRun.vue";
-    import Kill from "./components/actions/Kill.vue";
-    import Api from "./components/actions/Api.vue";
-    import Delete from "./components/actions/Delete.vue";
+    import Resume from "./components/actions/Resume.vue"
+    import Restart from "./components/actions/Restart.vue"
+    import Unqueue from "./components/actions/Unqueue.vue"
+    import ForceRun from "./components/actions/ForceRun.vue"
+    import Kill from "./components/actions/Kill.vue"
+    import Api from "./components/actions/Api.vue"
+    import Delete from "./components/actions/Delete.vue"
 
-    import yaml from "yaml";
-    import YAML_CHART from "./components/main/assets/chart.yaml?raw";
-    import {useValues} from "../../filter/composables/useValues";
+    import yaml from "yaml"
+    import YAML_CHART from "./components/main/assets/chart.yaml?raw"
+    import {useValues} from "../../filter/composables/useValues"
 
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
-    import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
-    import CalendarClock from "vue-material-design-icons/CalendarClock.vue";
-    import Update from "vue-material-design-icons/Update.vue";
-    import TimerSand from "vue-material-design-icons/TimerSand.vue";
-    import History from "vue-material-design-icons/History.vue";
-    import SortVariant from "vue-material-design-icons/SortVariant.vue";
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue"
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
+    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
+    import CalendarClock from "vue-material-design-icons/CalendarClock.vue"
+    import Update from "vue-material-design-icons/Update.vue"
+    import TimerSand from "vue-material-design-icons/TimerSand.vue"
+    import History from "vue-material-design-icons/History.vue"
+    import SortVariant from "vue-material-design-icons/SortVariant.vue"
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
 
-    const emits = defineEmits(["follow"]);
+    const emits = defineEmits(["follow"])
 
-    const execution = computed(() => store.execution);
+    const execution = computed(() => store.execution)
     const general = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
             {
@@ -264,10 +264,10 @@
                 label: t("revision"),
                 value: execution.value.flowRevision,
             },
-        ];
-    });
+        ]
+    })
     const metadata = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
             ...(execution.value.trigger?.id
@@ -278,11 +278,9 @@
                         value: execution.value.trigger.id,
                         to: {
                             name: "admin/triggers",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                            },
+                            params: execution.value.tenantId
+                                ? {tenant: execution.value.tenantId}
+                                : {},
                             query: {
                                 "filters[q][EQUALS]": execution.value.trigger.id,
                             },
@@ -317,21 +315,21 @@
                 icon: TimerSand,
                 label: t("duration"),
                 value: (() => {
-                    const histories = execution.value.state.histories;
+                    const histories = execution.value.state.histories
 
-                    if (!histories || histories.length === 0) return "-";
+                    if (!histories || histories.length === 0) return "-"
 
-                    const timestamp = (d: string) => new Date(d).getTime();
+                    const timestamp = (d: string) => new Date(d).getTime()
 
-                    const start = timestamp(histories[0].date);
-                    const last = histories[histories.length - 1];
-                    const isRunning = State.isRunning(last.state);
+                    const start = timestamp(histories[0].date)
+                    const last = histories[histories.length - 1]
+                    const isRunning = State.isRunning(last.state)
 
-                    const stop = isRunning ? Date.now() : timestamp(last.date);
+                    const stop = isRunning ? Date.now() : timestamp(last.date)
 
-                    const deltaSeconds = (stop - start) / 1000;
+                    const deltaSeconds = (stop - start) / 1000
 
-                    return durationUtils.humanDuration(deltaSeconds);
+                    return durationUtils.humanDuration(deltaSeconds)
                 })(),
             },
             {
@@ -380,12 +378,12 @@
                     },
                 ]
                 : []),
-        ];
-    });
+        ]
+    })
     const actions = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
-        const follow = (event: any) => emits("follow", event);
+        const follow = (event: any) => emits("follow", event)
 
         return [
             {component: Restart, on: {follow}},
@@ -398,29 +396,29 @@
             {component: ForceRun},
             {component: Api},
             {component: Delete},
-        ];
-    });
+        ]
+    })
 
-    const loadExecution = (id: string) => store.loadExecution({id});
+    const loadExecution = (id: string) => store.loadExecution({id})
 
     const matchesStatus = (type: "restarted" | "replayed" | "replay") => {
-        if (!execution.value) return false;
+        if (!execution.value) return false
 
-        const key = `system.${type}`;
+        const key = `system.${type}`
 
         return (
             execution.value?.labels?.some(
                 (label) => label.key === key && String(label.value) === "true",
             ) ?? false
-        );
-    };
+        )
+    }
 
-    const debugProperty = ref<"outputs" | "trigger" | undefined>(undefined);
-    const debugPath = ref<string | undefined>(undefined);
+    const debugProperty = ref<"outputs" | "trigger" | undefined>(undefined)
+    const debugPath = ref<string | undefined>(undefined)
     const onDebugPath = (property: string, path: string) => {
-        debugProperty.value = property as "outputs" | "trigger";
-        debugPath.value = path;
-    };
+        debugProperty.value = property as "outputs" | "trigger"
+        debugPath.value = path
+    }
 
     const cascaders: Element[] = [
         {
@@ -445,15 +443,15 @@
             elements: execution.value?.trigger,
             includeDebug: "trigger",
         },
-    ];
+    ]
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE;
-    const timerange = ref<string>("PT168H"); // Default to last 7 days
+    const options = useValues("executions").VALUES.RELATIVE_DATE
+    const timerange = ref<string>("PT168H") // Default to last 7 days
 
-    const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
-    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART};
+    const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null)
+    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART}
     const filters = computed((): FilterObject[] => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
             {
@@ -471,26 +469,26 @@
                 operation: "EQUALS",
                 value: timerange.value,
             },
-        ];
-    });
+        ]
+    })
 
     onMounted(() => {
-        if (!route.params.id) return;
-        loadExecution(route.params.id as string);
-    });
+        if (!route.params.id) return
+        loadExecution(route.params.id as string)
+    })
 
     // Refresh the chart when execution ID or timerange changes.
     // Debounce to avoid flooding the dashboard generator on rapid SSE updates.
     watchDebounced(
         () => [execution.value?.id, timerange.value],
         () => {
-            if (!chartRef.value || !execution.value) return;
-            chartRef.value?.refresh(filters.value as any);
+            if (!chartRef.value || !execution.value) return
+            chartRef.value?.refresh(filters.value as any)
         },
-        {debounce: 500, maxWait: 1000}
-    );
+        {debounce: 500, maxWait: 1000},
+    )
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 </script>
 
 <style scoped lang="scss">

@@ -1,13 +1,13 @@
-import jsonApiToDuckdb from "./json-api-to-duckdb.yaml?raw";
-import ansibleInstallNginx from "./ansible-install-nginx.yaml?raw";
-import buildDbtPipeline from "./build-dbt-pipeline.yaml?raw";
-import convertCsvToExcel from "./convert-csv-to-excel.yaml?raw";
-import etlWorkflow from "./etl-workflow.yaml?raw";
-import manualApproval from "./manual-approval.yaml?raw";
-import microservicesApis from "./microservices-apis.yaml?raw";
-import runDockerImage from "./run-docker-image.yaml?raw";
-import scheduledPdfReports from "./scheduled-pdf-reports.yaml?raw";
-import weeklySalesKpisToSlack from "./weekly-sales-kpis-to-slack.yaml?raw";
+import jsonApiToDuckdb from "./json-api-to-duckdb.yaml?raw"
+import ansibleInstallNginx from "./ansible-install-nginx.yaml?raw"
+import buildDbtPipeline from "./build-dbt-pipeline.yaml?raw"
+import convertCsvToExcel from "./convert-csv-to-excel.yaml?raw"
+import etlWorkflow from "./etl-workflow.yaml?raw"
+import manualApproval from "./manual-approval.yaml?raw"
+import microservicesApis from "./microservices-apis.yaml?raw"
+import runDockerImage from "./run-docker-image.yaml?raw"
+import scheduledPdfReports from "./scheduled-pdf-reports.yaml?raw"
+import weeklySalesKpisToSlack from "./weekly-sales-kpis-to-slack.yaml?raw"
 
 export const flowExamples = {
     jsonApiToDuckdb: {
@@ -60,7 +60,7 @@ export const flowExamples = {
         labelKey: "welcome_copilot.flows.weeklySalesKpisToSlack.label",
         promptKey: "welcome_copilot.flows.weeklySalesKpisToSlack.prompt",
     },
-} as const;
+} as const
 
 export const labels: Array<keyof typeof flowExamples> = [
     "jsonApiToDuckdb",
@@ -73,4 +73,4 @@ export const labels: Array<keyof typeof flowExamples> = [
     "convertCsvToExcel",
     "scheduledPdfReports",
     "weeklySalesKpisToSlack",
-];
+]

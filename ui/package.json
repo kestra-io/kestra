@@ -14,14 +14,14 @@
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",
         "check:types": "vue-tsc --noEmit",
-        "test:lint": "eslint",
+        "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./src/translations/check.js",
-        "lint": "eslint --fix",
+        "lint": "oxlint --fix src packages && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks || true",
@@ -30,6 +30,7 @@
     "dependencies": {
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
+        "@kestra-io/kestra-sdk": "^2.0.0-dev.466a185d.e60fb995",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",
         "@vue-flow/background": "^1.3.2",
@@ -55,7 +56,7 @@
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^5.7.284",
         "pinia": "^3.0.4",
-        "posthog-js": "^1.372.9",
+        "posthog-js": "^1.372.10",
         "rapidoc": "^9.3.8",
         "remark-directive": "^4.0.0",
         "remark-frontmatter": "^5.0.0",
@@ -74,7 +75,6 @@
     "devDependencies": {
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
-        "@eslint/js": "^9.39.4",
         "@playwright/test": "^1.59.1",
         "@rushstack/eslint-patch": "^1.16.1",
         "@storybook/addon-themes": "^10.3.3",
@@ -84,7 +84,7 @@
         "@types/humanize-duration": "^3.27.4",
         "@types/js-yaml": "^4.0.9",
         "@types/moment": "^2.13.0",
-        "@types/node": "^25.6.0",
+        "@types/node": "^25.6.2",
         "@types/nprogress": "^0.2.3",
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.7.1",
@@ -96,13 +96,11 @@
         "@vitest/browser": "^4.1.5",
         "@vitest/browser-playwright": "^4.1.5",
         "@vitest/coverage-v8": "^4.1.5",
-        "@vue/eslint-config-prettier": "^10.2.0",
         "@vue/test-utils": "^2.4.10",
         "@vueuse/router": "^14.3.0",
         "change-case": "5.4.4",
         "cross-env": "^10.1.0",
         "eslint": "^9.39.4",
-        "eslint-plugin-storybook": "^10.3.3",
         "eslint-plugin-vue": "^9.33.0",
         "globals": "^17.6.0",
         "husky": "^9.1.7",
@@ -110,6 +108,7 @@
         "lint-staged": "^16.4.0",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
+        "oxlint": "^1.63.0",
         "patch-package": "^8.0.1",
         "playwright": "^1.59.1",
         "prettier": "^3.8.3",
@@ -120,7 +119,6 @@
         "storybook-vue3-router": "^7.0.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.59.2",
         "uuid": "^14.0.0",
         "vite": "^8.0.11",
         "vitest": "^4.1.5",
@@ -151,6 +149,9 @@
         }
     },
     "lint-staged": {
-        "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"
+        "**/*.{js,mjs,cjs,ts,vue}": [
+            "oxlint --fix",
+            "eslint --fix"
+        ]
     }
 }

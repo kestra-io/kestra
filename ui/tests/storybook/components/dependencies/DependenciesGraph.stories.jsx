@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file */
 import {defineComponent, onMounted, ref} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 

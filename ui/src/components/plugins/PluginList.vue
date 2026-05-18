@@ -71,18 +71,18 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import PluginUnified from "./PluginUnified.vue";
-    import PluginDocumentation from "./PluginDocumentation.vue";
-    import SearchField from "../layout/SearchField.vue";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useScrollMemory} from "../../composables/useScrollMemory";
-    import {capitalize, formatPluginTitle} from "../../utils/global";
-    import {useMiscStore} from "override/stores/misc";
+    import {ref, computed, onMounted, watch} from "vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import PluginUnified from "./PluginUnified.vue"
+    import PluginDocumentation from "./PluginDocumentation.vue"
+    import SearchField from "../layout/SearchField.vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
+    import {capitalize, formatPluginTitle} from "../../utils/global"
+    import {useMiscStore} from "override/stores/misc"
 
     interface Props {
         plugins: any[];
@@ -94,35 +94,35 @@
         data: any;
     }
 
-    const props = defineProps<Props>();
+    const props = defineProps<Props>()
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const currentGroup = ref<string>("");
-    const currentSubgroup = ref<string>();
-    const searchQuery = ref<string>("");
-    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({});
-    const navigationStack = ref<NavigationItem[]>([]);
-    const currentDocumentationPlugin = ref<any>(null);
-    const currentView = ref<"list" | "group" | "documentation">("documentation");
-    const listRef = ref<HTMLDivElement | null>(null);
-    const groupRef = ref<HTMLDivElement | null>(null);
-    const docRef = ref<HTMLDivElement | null>(null);
-    const scrollKeyBase = "plugins:documentation";
+    const currentGroup = ref<string>("")
+    const currentSubgroup = ref<string>()
+    const searchQuery = ref<string>("")
+    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({})
+    const navigationStack = ref<NavigationItem[]>([])
+    const currentDocumentationPlugin = ref<any>(null)
+    const currentView = ref<"list" | "group" | "documentation">("documentation")
+    const listRef = ref<HTMLDivElement | null>(null)
+    const groupRef = ref<HTMLDivElement | null>(null)
+    const docRef = ref<HTMLDivElement | null>(null)
+    const scrollKeyBase = "plugins:documentation"
 
-    const listScrollKey = computed(() => `${scrollKeyBase}:list`);
-    const groupScrollKey = computed(() => `${scrollKeyBase}:group`);
-    const docScrollKey = computed(() => `${scrollKeyBase}:documentation`);
+    const listScrollKey = computed(() => `${scrollKeyBase}:list`)
+    const groupScrollKey = computed(() => `${scrollKeyBase}:group`)
+    const docScrollKey = computed(() => `${scrollKeyBase}:documentation`)
 
-    useScrollMemory(listScrollKey, listRef);
-    useScrollMemory(groupScrollKey, groupRef);
-    useScrollMemory(docScrollKey, docRef);
+    useScrollMemory(listScrollKey, listRef)
+    useScrollMemory(groupScrollKey, groupRef)
+    useScrollMemory(docScrollKey, docRef)
 
-    const getSimpleType = (item: string) => item.split(".").pop() || item;
+    const getSimpleType = (item: string) => item.split(".").pop() || item
 
     const pushNavigationItem = (title: string, type: NavigationItem["type"], data: any) => {
-        navigationStack.value.push({title, type, data});
-    };
+        navigationStack.value.push({title, type, data})
+    }
 
     const getPluginElements = (plugin: any): string[] =>
         Object.entries(plugin ?? {})
@@ -130,190 +130,190 @@
             .flatMap(([, elements]) =>
                 Array.isArray(elements)
                     ? elements.filter(({deprecated}) => !deprecated).map(({cls}) => cls)
-                    : []
-            );
+                    : [],
+            )
 
     const getPluginDisplayName = (plugin: any): string => {
-        return plugin?.manifest?.["X-Kestra-Title"];
-    };
+        return plugin?.manifest?.["X-Kestra-Title"]
+    }
 
     const isPluginVisible = (plugin: any): boolean => {
-        if (!plugin) return false;
-        return getPluginElements(plugin).length > 0;
-    };
+        if (!plugin) return false
+        return getPluginElements(plugin).length > 0
+    }
 
     const resetToListView = () => {
-        currentView.value = "list";
-        navigationStack.value = [];
-        currentGroup.value = "";
-        currentSubgroup.value = undefined;
-        currentDocumentationPlugin.value = null;
-    };
+        currentView.value = "list"
+        navigationStack.value = []
+        currentGroup.value = ""
+        currentSubgroup.value = undefined
+        currentDocumentationPlugin.value = null
+    }
 
     const basePlugins = computed(() => {
         const grouped = (props.plugins ?? []).reduce((acc: Record<string, any[]>, plugin: any) => {
-            (acc[plugin.group] ??= []).push(plugin);
-            return acc;
-        }, {});
+            (acc[plugin.group] ??= []).push(plugin)
+            return acc
+        }, {})
 
         const filtered = Object.values(grouped).flatMap(group =>
-            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup)
-        );
+            group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup),
+        )
 
         return filtered
             .filter((plugin, index, self) =>
-                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group)
+                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group),
             )
             .filter(isPluginVisible)
             .sort((a, b) => {
-                const nameA = (getPluginDisplayName(a) ?? "").toLowerCase();
-                const nameB = (getPluginDisplayName(b) ?? "").toLowerCase();
-                return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
-            });
-    });
+                const nameA = (getPluginDisplayName(a) ?? "").toLowerCase()
+                const nameB = (getPluginDisplayName(b) ?? "").toLowerCase()
+                return nameA < nameB ? -1 : nameA > nameB ? 1 : 0
+            })
+    })
 
     const sortedPlugins = computed(() => {
-        if (!searchQuery.value) return basePlugins.value;
-        return basePlugins.value.filter(plugin => isPluginMatched(plugin, searchQuery.value));
-    });
+        if (!searchQuery.value) return basePlugins.value
+        return basePlugins.value.filter(plugin => isPluginMatched(plugin, searchQuery.value))
+    })
 
     const loadPluginIcons = async () => {
-        icons.value = await pluginsStore.groupIcons() ?? {};
-    };
+        icons.value = await pluginsStore.groupIcons() ?? {}
+    }
 
     const openGroup = (plugin: any) => {
-        searchQuery.value = "";
-        currentGroup.value = plugin.group;
-        currentView.value = "group";
-        currentDocumentationPlugin.value = null;
+        searchQuery.value = ""
+        currentGroup.value = plugin.group
+        currentView.value = "group"
+        currentDocumentationPlugin.value = null
 
         if (plugin.subGroup && plugin.subGroup !== plugin.group) {
-            currentSubgroup.value = plugin.subGroup;
-            const groupPlugin = props.plugins.find(p => p.group === plugin.group && !p.subGroup);
-            pushNavigationItem(formatPluginTitle(groupPlugin?.title) ?? capitalize(getSimpleType(plugin.group)), "group", {group: plugin.group});
-            pushNavigationItem(formatPluginTitle(plugin.title) ?? formatPluginTitle(getSimpleType(plugin.subGroup)) ?? capitalize(getSimpleType(plugin.subGroup)), "subgroup", {subgroup: plugin.subGroup});
+            currentSubgroup.value = plugin.subGroup
+            const groupPlugin = props.plugins.find(p => p.group === plugin.group && !p.subGroup)
+            pushNavigationItem(formatPluginTitle(groupPlugin?.title) ?? capitalize(getSimpleType(plugin.group)), "group", {group: plugin.group})
+            pushNavigationItem(formatPluginTitle(plugin.title) ?? formatPluginTitle(getSimpleType(plugin.subGroup)) ?? capitalize(getSimpleType(plugin.subGroup)), "subgroup", {subgroup: plugin.subGroup})
         } else {
-            currentSubgroup.value = undefined;
-            pushNavigationItem(formatPluginTitle(plugin.title) ?? capitalize(getSimpleType(plugin.group)), "group", plugin);
+            currentSubgroup.value = undefined
+            pushNavigationItem(formatPluginTitle(plugin.title) ?? capitalize(getSimpleType(plugin.group)), "group", plugin)
         }
-    };
+    }
 
     const goToStep = (stepIndex: number) => {
-        if (stepIndex === -1) return resetToListView();
+        if (stepIndex === -1) return resetToListView()
 
-        const targetStep = navigationStack.value[stepIndex];
-        navigationStack.value = navigationStack.value.slice(0, stepIndex + 1);
+        const targetStep = navigationStack.value[stepIndex]
+        navigationStack.value = navigationStack.value.slice(0, stepIndex + 1)
 
         const actions = {
             group: () => {
-                currentGroup.value = targetStep.data.group;
-                currentSubgroup.value = undefined;
-                currentView.value = "group";
-                currentDocumentationPlugin.value = null;
+                currentGroup.value = targetStep.data.group
+                currentSubgroup.value = undefined
+                currentView.value = "group"
+                currentDocumentationPlugin.value = null
             },
             subgroup: () => {
-                currentSubgroup.value = targetStep.data.subgroup;
-                currentView.value = "group";
-                currentDocumentationPlugin.value = null;
+                currentSubgroup.value = targetStep.data.subgroup
+                currentView.value = "group"
+                currentDocumentationPlugin.value = null
             },
             element: () => {
                 pluginsStore.load?.({cls: targetStep.data.cls}).then(pluginData => {
-                    currentDocumentationPlugin.value = pluginData ? {cls: targetStep.data.cls, ...pluginData} : null;
-                });
-                currentView.value = "documentation";
-            }
-        };
+                    currentDocumentationPlugin.value = pluginData ? {cls: targetStep.data.cls, ...pluginData} : null
+                })
+                currentView.value = "documentation"
+            },
+        }
 
-        actions[targetStep.type]?.();
-    };
+        actions[targetStep.type]?.()
+    }
 
     const goBack = () => {
         if (navigationStack.value.length > 1) {
-            goToStep(navigationStack.value.length - 2);
+            goToStep(navigationStack.value.length - 2)
         } else {
-            goToStep(-1);
+            goToStep(-1)
         }
-    };
+    }
 
     const getSubgroupTitle = (group: string, subgroup: string): string => {
         const subgroupPlugin = props.plugins.find(p =>
-            p.group === group && (p.subGroup === subgroup || p.subGroup?.endsWith(`.${subgroup}`))
-        );
-        return formatPluginTitle(subgroupPlugin?.title) ?? formatPluginTitle(subgroup) ?? subgroup;
-    };
+            p.group === group && (p.subGroup === subgroup || p.subGroup?.endsWith(`.${subgroup}`)),
+        )
+        return formatPluginTitle(subgroupPlugin?.title) ?? formatPluginTitle(subgroup) ?? subgroup
+    }
 
     const handleSubgroupNavigation = (subgroup: string) => {
-        currentSubgroup.value = subgroup;
-        pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroup), "subgroup", {subgroup});
-        currentView.value = "group";
-        currentDocumentationPlugin.value = null;
-    };
+        currentSubgroup.value = subgroup
+        pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroup), "subgroup", {subgroup})
+        currentView.value = "group"
+        currentDocumentationPlugin.value = null
+    }
 
     const handleElementNavigation = async (cls: string) => {
-        pushNavigationItem(getSimpleType(cls), "element", {cls});
-        const pluginData = await pluginsStore.load({cls});
-        currentDocumentationPlugin.value = pluginData ? {cls, ...pluginData} : null;
-        currentView.value = "documentation";
-    };
+        pushNavigationItem(getSimpleType(cls), "element", {cls})
+        const pluginData = await pluginsStore.load({cls})
+        currentDocumentationPlugin.value = pluginData ? {cls, ...pluginData} : null
+        currentView.value = "documentation"
+    }
 
-    const hasIcon = (cls: string) => !!icons.value?.[cls];
+    const hasIcon = (cls: string) => !!icons.value?.[cls]
 
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
-    const miscStore = useMiscStore();
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
+    const miscStore = useMiscStore()
 
     const navigateToEditorPlugin = async (editorPlugin: {cls: string, version?: string}) => {
-        if (!editorPlugin?.cls) return;
+        if (!editorPlugin?.cls) return
 
-        const pluginCls = editorPlugin.cls;
-        const pluginVersion = editorPlugin.version;
-        const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls));
+        const pluginCls = editorPlugin.cls
+        const pluginVersion = editorPlugin.version
+        const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls))
 
         if (!matchingPlugin) {
-            currentDocumentationPlugin.value = editorPlugin;
-            currentView.value = "documentation";
-            return;
+            currentDocumentationPlugin.value = editorPlugin
+            currentView.value = "documentation"
+            return
         }
 
-        navigationStack.value = [];
-        currentGroup.value = matchingPlugin.group;
-        pushNavigationItem(formatPluginTitle(matchingPlugin.title) ?? capitalize(getSimpleType(matchingPlugin.group)), "group", matchingPlugin);
+        navigationStack.value = []
+        currentGroup.value = matchingPlugin.group
+        pushNavigationItem(formatPluginTitle(matchingPlugin.title) ?? capitalize(getSimpleType(matchingPlugin.group)), "group", matchingPlugin)
 
-        const subgroupName = findSubgroupForPlugin(matchingPlugin, pluginCls);
+        const subgroupName = findSubgroupForPlugin(matchingPlugin, pluginCls)
         if (subgroupName) {
-            currentSubgroup.value = subgroupName;
-            pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroupName), "subgroup", {subgroup: subgroupName});
+            currentSubgroup.value = subgroupName
+            pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroupName), "subgroup", {subgroup: subgroupName})
         } else {
-            currentSubgroup.value = undefined;
+            currentSubgroup.value = undefined
         }
 
-        pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls});
-        currentView.value = "documentation";
-        const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value});
-        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
-    };
+        pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls})
+        currentView.value = "documentation"
+        const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value})
+        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin
+    }
 
     const findSubgroupForPlugin = (plugin: any, pluginCls: string) => {
-        if (plugin?.subGroup && plugin.subGroup !== plugin.group) return plugin.subGroup;
-        const parts = pluginCls.split(".");
-        const possibleSubgroup = parts[parts.length - 2];
-        return (parts.length >= 3 && possibleSubgroup && possibleSubgroup !== plugin?.group) ? possibleSubgroup : null;
-    };
+        if (plugin?.subGroup && plugin.subGroup !== plugin.group) return plugin.subGroup
+        const parts = pluginCls.split(".")
+        const possibleSubgroup = parts[parts.length - 2]
+        return (parts.length >= 3 && possibleSubgroup && possibleSubgroup !== plugin?.group) ? possibleSubgroup : null
+    }
 
     watch(() => pluginsStore.editorPlugin, async (newPlugin) => {
         if (newPlugin?.cls) {
-            await navigateToEditorPlugin(newPlugin);
+            await navigateToEditorPlugin(newPlugin)
         } else {
-            currentDocumentationPlugin.value = null;
-            currentView.value = "documentation";
-            navigationStack.value = [];
-            currentGroup.value = "";
-            currentSubgroup.value = undefined;
+            currentDocumentationPlugin.value = null
+            currentView.value = "documentation"
+            navigationStack.value = []
+            currentGroup.value = ""
+            currentSubgroup.value = undefined
         }
-    }, {immediate: true, deep: true});
+    }, {immediate: true, deep: true})
 
     onMounted(async () => {
-        await loadPluginIcons();
-    });
+        await loadPluginIcons()
+    })
 </script>
 
 <style scoped lang="scss">

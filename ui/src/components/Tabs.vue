@@ -47,11 +47,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs} from "vue";
-    import {useRoute} from "vue-router";
-    import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
-    import type {RouterTab} from "@kestra-io/design-system";
+    import {ref, computed, useAttrs} from "vue"
+    import {useRoute} from "vue-router"
+    import EnterpriseBadge from "./EnterpriseBadge.vue"
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
+    import type {RouterTab} from "@kestra-io/design-system"
 
     interface Tab extends RouterTab {
         locked?: boolean;
@@ -72,7 +72,7 @@
         top: true,
         embedActiveTab: undefined,
         namespace: null,
-    });
+    })
 
     const emit = defineEmits<{
         /**
@@ -80,47 +80,47 @@
          * @property {Object} newTab the new active tab
          */
         changed: [tab: Tab];
-    }>();
+    }>()
 
-    const attrs = useAttrs();
-    const route = useRoute();
+    const attrs = useAttrs()
+    const route = useRoute()
 
-    const selectedBlueprintId = ref<string | undefined>(undefined);
+    const selectedBlueprintId = ref<string | undefined>(undefined)
 
     const activeTab = computed<Tab>(() => {
-        const key = props.embedActiveTab ?? (route?.params?.tab as string | undefined);
-        return props.tabs.find(t => t.name === key) ?? props.tabs[0];
-    });
+        const key = props.embedActiveTab ?? (route?.params?.tab as string | undefined)
+        return props.tabs.find(t => t.name === key) ?? props.tabs[0]
+    })
 
     const isEditorActiveTab = (tab: Tab): boolean => {
-        const TAB = tab.name;
-        const ROUTE = route?.name as string;
+        const TAB = tab.name
+        const ROUTE = route?.name as string
 
         if (["flows/update", "flows/create"].includes(ROUTE)) {
-            return TAB === "edit";
+            return TAB === "edit"
         } else if (["namespaces/update", "namespaces/create"].includes(ROUTE)) {
-            if (TAB === "files") return true;
+            if (TAB === "files") return true
         }
 
-        return false;
-    };
+        return false
+    }
 
     const attrsWithoutClass = computed(() => {
         return Object.fromEntries(
-            Object.entries(attrs).filter(([key]) => key !== "class")
-        );
-    });
+            Object.entries(attrs).filter(([key]) => key !== "class"),
+        )
+    })
 
     const getNamespaceToForward = (tab: Tab) => {
-        return tab.props?.namespace ?? props.namespace;
+        return tab.props?.namespace ?? props.namespace
         // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
         // in this case this.props.namespace will be used
-    };
+    }
 
     const containerClass = computed(() => {
-        if (activeTab.value.locked) return {"px-0": true};
-        return {"container": true, "mt-4": true};
-    });
+        if (activeTab.value.locked) return {"px-0": true}
+        return {"container": true, "mt-4": true}
+    })
 </script>
 
 <style scoped lang="scss">

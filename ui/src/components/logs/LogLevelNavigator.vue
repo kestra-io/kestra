@@ -12,27 +12,27 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import Close from "vue-material-design-icons/Close.vue";
+    import {computed} from "vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Close from "vue-material-design-icons/Close.vue"
 
-    const emit = defineEmits(["previous", "next", "close"]);
+    const emit = defineEmits(["previous", "next", "close"])
 
     const props = defineProps<{
         cursorIdx?: number;
         totalCount: number;
         level: string;
-    }>();
+    }>()
 
-    const isSelected = computed(() => props.cursorIdx !== undefined);
-    const forwardEvent = (eventName: "previous" | "next" | "close") => emit(eventName);
-    const circle = (level: string) => ({backgroundColor: `var(--ks-log-border-${level.toLowerCase()})`});
-    const closeButton = (level: string) => ({color: `var(--ks-log-content-${level.toLowerCase()})`});
+    const isSelected = computed(() => props.cursorIdx !== undefined)
+    const forwardEvent = (eventName: "previous" | "next" | "close") => emit(eventName)
+    const circle = (level: string) => ({backgroundColor: `var(--ks-log-border-${level.toLowerCase()})`})
+    const closeButton = (level: string) => ({color: `var(--ks-log-content-${level.toLowerCase()})`})
     const wrapperStyle = (level: string) =>
         isSelected.value
             ? {border: `1px solid var(--ks-log-border-${level.toLowerCase()})`}
-            : {};
+            : {}
 </script>
 <style scoped lang="scss">
 .kel-select__wrapper {

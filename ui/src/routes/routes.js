@@ -76,7 +76,7 @@ export default [
     {name: "settings", path: "/:tenant?/settings", component: () => import("override/components/settings/Settings.vue")},
 
     //Admin
-    {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: () => import("../components/admin/Triggers.vue")},
+    {name: "admin/triggers", path: "/:tenant?/admin/triggers/:tab?", component: () => import("../components/admin/triggers/Triggers.vue")},
     {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue")},
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
     {name: "admin/mcp-servers", path: "/:tenant?/admin/mcp-servers", component: () => import("../components/admin/McpServers.vue")},
@@ -97,4 +97,4 @@ export default [
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
-];
+]

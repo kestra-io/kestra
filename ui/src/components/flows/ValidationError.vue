@@ -89,10 +89,10 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref} from "vue";
-    import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-    import Alert from "vue-material-design-icons/Alert.vue";
+    import {nextTick, ref} from "vue"
+    import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+    import Alert from "vue-material-design-icons/Alert.vue"
 
     defineOptions({
         inheritAttrs: false,
@@ -111,20 +111,20 @@
 
     function onResize(maxWidth: number) {
         if(rootContainer.value === undefined) {
-            return;
+            return
         }
-        const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label");
+        const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label")
 
         buttonLabels.forEach(el => el.classList.remove("d-none"))
         nextTick(() => {
             if(rootContainer.value && rootContainer.value.offsetLeft + rootContainer.value.offsetWidth > maxWidth) {
                 buttonLabels.forEach(el => el.classList.add("d-none"))
             }
-        });
+        })
     }
 
     defineExpose({
-        onResize
+        onResize,
     })
 
 </script>

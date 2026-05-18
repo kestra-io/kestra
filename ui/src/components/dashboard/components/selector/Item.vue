@@ -13,10 +13,10 @@
 </template>
 
 <script setup lang="ts">
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import Home from "vue-material-design-icons/Home.vue";
-    import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import Home from "vue-material-design-icons/Home.vue"
+    import HomeOutline from "vue-material-design-icons/HomeOutline.vue"
 
     const props = defineProps<{
         dashboard: {id: string, title: string, isDefault: boolean},

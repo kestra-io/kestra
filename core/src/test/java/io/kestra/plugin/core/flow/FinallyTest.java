@@ -200,7 +200,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -224,11 +224,11 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution).stream().allMatch(e -> e.getState().isTerminated()),
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
             Duration.ofMillis(100),
             Duration.ofSeconds(30)
         );
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -250,7 +250,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -274,11 +274,11 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution).stream().allMatch(e -> e.getState().isTerminated()),
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
             Duration.ofMillis(100),
             Duration.ofSeconds(30)
         );
-        var subExecutions = executionRepository.findLoopSubExecutions(execution);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
         assertThat(subExecutions.size()).isEqualTo(3);
 
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);

@@ -2,7 +2,7 @@ import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {useAxios} from "../../../../src/utils/axios.js";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "inputs/InputsForm",
@@ -21,7 +21,7 @@ const meta = {
 export default meta;
 
 const Sut = defineComponent((props) => {
-    const axios = useAxios()
+    const axios = {}
 
     axios.post = (uri) => {
         if (!uri.endsWith("/validate")) {
@@ -37,6 +37,7 @@ const Sut = defineComponent((props) => {
             }
         })}
 
+    setMockClient(axios);
 
     const values = ref({});
     return () => (<>

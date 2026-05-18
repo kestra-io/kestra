@@ -75,19 +75,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref, useTemplateRef} from "vue";
-    import {useBlockComponent} from "./useBlockComponent";
-    import {INLINE_TASK_MODE_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {computed, inject, ref, useTemplateRef} from "vue"
+    import {useBlockComponent} from "./useBlockComponent"
+    import {INLINE_TASK_MODE_INJECTION_KEY, BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
 
-    import ClearButton from "./ClearButton.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
-    import Help from "vue-material-design-icons/Information.vue";
-    import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
-    import TaskObjectListInline from "../../../plugins/plugin-default/TaskObjectListInline.vue";
-    import TaskObjectTaskInline from "../../../plugins/plugin-default/TaskObjectTaskInline.vue";
+    import ClearButton from "./ClearButton.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import Help from "vue-material-design-icons/Information.vue"
+    import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
+    import TaskObjectListInline from "../../../plugins/plugin-default/TaskObjectListInline.vue"
+    import TaskObjectTaskInline from "../../../plugins/plugin-default/TaskObjectTaskInline.vue"
 
 
-    const modelValue = defineModel<any>();
+    const modelValue = defineModel<any>()
 
     const props = defineProps<{
         schema: any;
@@ -98,10 +98,10 @@
         disabled?: boolean;
     }>()
 
-    const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
+    const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
+        return !props.disabled && props.required?.includes(props.fieldKey)// && props.schema.$required;
     })
 
     const hasSelectedASchema = ref(false)
@@ -111,54 +111,54 @@
         return {
             modelValue: modelValue.value,
             "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
-                modelValue.value = value;
+                modelValue.value = value
             },
             "onUpdate:selectedSchema": (value: any) => {
-                hasSelectedASchema.value = value !== undefined;
+                hasSelectedASchema.value = value !== undefined
             },
             task: props.task,
             root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
-            required: isRequired.value
+            required: isRequired.value,
         }
     })
 
     const hasTooltip = computed(() => {
-        return props.schema?.title || props.schema?.description;
+        return props.schema?.title || props.schema?.description
     })
 
     const helpText = computed(() => {
-        const schema = props.schema;
-        if (!schema) return "";
+        const schema = props.schema
+        if (!schema) return ""
 
         return (
             (schema.title ? "**" + schema.title + "**" : "") +
             (schema.title && schema.description ? "\n" : "") +
             (schema.description ? schema.description : "")
-        );
+        )
     })
 
     const isAnyOf = computed(() => {
-        return Boolean(props.schema?.anyOf);
+        return Boolean(props.schema?.anyOf)
     })
 
     const isBoolean = computed(() => {
-        return type.value === "boolean";
+        return type.value === "boolean"
     })
 
     const simpleType = computed(() => {
-        return type.value.ksTaskName;
+        return type.value.ksTaskName
     })
 
-    const {getBlockComponent} = useBlockComponent();
+    const {getBlockComponent} = useBlockComponent()
 
     const type = computed(() => {
         return getBlockComponent.value(props.schema ?? {}, props.fieldKey)
     })
 
     /** Whether the component is rendered in inline mode (used for Plugin Defaults) */
-    const inlineMode = inject(INLINE_TASK_MODE_INJECTION_KEY, false);
-    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
+    const inlineMode = inject(INLINE_TASK_MODE_INJECTION_KEY, false)
+    const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
     /**
      * Resolves the JSON schema path for the current field.
@@ -166,16 +166,16 @@
      */
     const taskSchemaPath = computed(() => {
         if (props.schema?.items?.$ref) {
-            return props.schema.items.$ref;
+            return props.schema.items.$ref
         }
 
         if (props.schema?.$ref) {
-            return props.schema.$ref;
+            return props.schema.$ref
         }
 
-        const itemsSuffix = simpleType.value === "list" ? ["items"] : [];
-        return [blockSchemaPathInjected.value, "properties", props.fieldKey, ...itemsSuffix].join("/");
-    });
+        const itemsSuffix = simpleType.value === "list" ? ["items"] : []
+        return [blockSchemaPathInjected.value, "properties", props.fieldKey, ...itemsSuffix].join("/")
+    })
 </script>
 
 <style scoped lang="scss">

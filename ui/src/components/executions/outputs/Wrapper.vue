@@ -156,72 +156,72 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted, watch} from "vue";
-    import {CascaderOption, CascaderProps}from "element-plus";
-    import {useExecutionsStore} from "../../../stores/executions";
-    import {usePluginsStore} from "../../../stores/plugins";
+    import {ref, computed, shallowRef, onMounted, watch} from "vue"
+    import {CascaderOption, CascaderProps}from "element-plus"
+    import {useExecutionsStore} from "../../../stores/executions"
+    import {usePluginsStore} from "../../../stores/plugins"
 
-    import {useI18n} from "vue-i18n";
-    import {apiUrl} from "override/utils/route";
+    import {useI18n} from "vue-i18n"
+    import {apiUrl} from "override/utils/route"
 
-    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system";
+    import {KsTaskIcon, KsSplitter, KsSplitterPanel, KsCascaderPanel, KsCollapse, KsCollapseItem, KsAlert, KsButton} from "@kestra-io/design-system"
 
-    import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-    import Editor from "../../inputs/Editor.vue";
-    import VarValue from "../VarValue.vue";
-    import SubFlowLink from "../../flows/SubFlowLink.vue";
-    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-    import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
-    import {useAxios} from "../../../utils/axios";
-    import {useMediaQuery} from "@vueuse/core";
-    import Utils from "../../../utils/utils";
+    import CopyToClipboard from "../../layout/CopyToClipboard.vue"
+    import Editor from "../../inputs/Editor.vue"
+    import VarValue from "../VarValue.vue"
+    import SubFlowLink from "../../flows/SubFlowLink.vue"
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue"
+    import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue"
+    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useMediaQuery} from "@vueuse/core"
+    import * as Utils from "../../../utils/utils"
 
-    const {t} = useI18n({useScope: "global"});
+    const {t} = useI18n({useScope: "global"})
 
-    const editorValue = ref<string>("");
-    const debugCollapse = ref<string>("");
-    const debugExpression = ref<string>("");
+    const editorValue = ref<string>("")
+    const debugCollapse = ref<string>("")
+    const debugExpression = ref<string>("")
 
     function isValidVariable(path: string){
-        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(path);
+        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(path)
     }
 
     const formatTask = (tsk: string) => {
-        return isValidVariable(tsk) ? `.${tsk}` : `["${tsk}"]`;
-    };
+        return isValidVariable(tsk) ? `.${tsk}` : `["${tsk}"]`
+    }
 
     const computedDebugValue = computed(() => {
-        let task = selectedTask.value?.taskId;
-        if (!task) return "";
+        let task = selectedTask.value?.taskId
+        if (!task) return ""
 
-        let path = expandedValue.value;
-        if (!path) return `{{ outputs${formatTask(task)} }}`;
+        let path = expandedValue.value
+        if (!path) return `{{ outputs${formatTask(task)} }}`
 
-        return `{{ outputs${path} }}`;
-    });
+        return `{{ outputs${path} }}`
+    })
 
-    const debugError = ref("");
-    const debugStackTrace = ref("");
-    const isJSON = ref(false);
+    const debugError = ref("")
+    const debugStackTrace = ref("")
+    const isJSON = ref(false)
     const selectedTask = computed(() => {
         const filter = selected.value?.length
             ? selected.value[0]
-            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined);
-        const taskRunList = [...execution.value?.taskRunList ?? []];
-        return taskRunList.find((e) => e.taskId === filter);
-    });
+            : (cascader.value?.cascader?.getCheckedNodes(false)?.[0]?.label as string | undefined)
+        const taskRunList = [...execution.value?.taskRunList ?? []]
+        return taskRunList.find((e) => e.taskId === filter)
+    })
 
     async function getTaskRunOutputs(id?: string, path?: string): Promise<TransformedTask[]> {
         if(!id || !execution.value?.id) {
-            return [];
+            return []
         }
         const {data, status} = await axios.get(`${apiUrl()}/outputs/${execution.value.id}/${id}`, {
-            validateStatus: (status) => status === 200 || status === 404,
+            validateStatus: (s) => s === 200 || s === 404,
         })
         if(status === 200) {
-            return transform(data, true, path);
+            return transform(data, true, path)
         } else {
-            return [];
+            return []
         }
 
     }
@@ -229,18 +229,18 @@
     const cascaderProps: CascaderProps = {
         lazy: true,
         lazyLoad(node, resolve) {
-            const {level} = node;
-            const data = node.data as TransformedTask;
+            const {level} = node
+            const data = node.data as TransformedTask
             if(level === 0) {
-                resolve(outputs.value);
-                return;
+                resolve(outputs.value)
+                return
             }
 
             if(level === 1) {
                 getTaskRunOutputs(data.id, data.path).then((outputs) => {
-                    resolve(outputs);
-                });
-                return;
+                    resolve(outputs)
+                })
+                return
             }
 
             if(level > 1) {
@@ -250,47 +250,47 @@
                         value: data.value,
                         leaf: true,
                     },
-                ] : []);
-                return;
+                ] : [])
+                return
             }
 
-            resolve([]);
+            resolve([])
         },
     }
 
-    const axios = useAxios();
+    const axios = useClient()
     const onDebugExpression = (expression?: string) => {
-        const taskRun = selectedTask.value;
+        const taskRun = selectedTask.value
 
-        if (!taskRun) return;
+        if (!taskRun) return
 
-        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
+        const URL = `${apiUrl()}/executions/${taskRun?.executionId}/actions/eval/${taskRun.id}`
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
             .then((response) => {
                 try {
-                    const parsedResult = JSON.parse(response.data.result);
-                    const debugOutput = JSON.stringify(parsedResult, null, 2);
-                    debugExpression.value = debugOutput;
+                    const parsedResult = JSON.parse(response.data.result)
+                    const debugOutput = JSON.stringify(parsedResult, null, 2)
+                    debugExpression.value = debugOutput
 
                     if (response.status === 200 && debugOutput !== null && debugOutput !== undefined) {
-                        selected.value.push(debugOutput);
+                        selected.value.push(debugOutput)
                     }
-                    isJSON.value = true;
+                    isJSON.value = true
                 } catch {
-                    debugExpression.value = response.data.result;
+                    debugExpression.value = response.data.result
 
                     // Parsing failed, therefore, copy raw result
                     if (response.status === 200 && response.data.result !== null && response.data.result !== undefined)
-                        selected.value.push(response.data.result);
+                        selected.value.push(response.data.result)
                 }
 
-                debugError.value = response.data.error;
-                debugStackTrace.value = response.data.stackTrace;
-            });
-    };
+                debugError.value = response.data.error
+                debugStackTrace.value = response.data.stackTrace
+            })
+    }
 
-    const cascader = ref<InstanceType<typeof KsCascaderPanel> | null>(null);
+    const cascader = ref<InstanceType<typeof KsCascaderPanel> | null>(null)
     const scrollRight = () =>
         setTimeout(
             () =>
@@ -298,68 +298,68 @@
                     cascader.value as any
                 ).$el.offsetWidth),
             10,
-        );
+        )
     const multipleSelected = computed(
         () => (cascader.value as any)?.menus?.length > 1,
-    );
+    )
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
-    const execution = computed(() => executionsStore.execution);
+    const execution = computed(() => executionsStore.execution)
 
     function isValidURL(url: string) {
         try {
-            new URL(url);
-            return true;
+            URL.canParse(url)
+            return true
         } catch {
-            return false;
+            return false
         }
     }
 
     const processedValue = (data: TransformedTask) => {
-        const regular = false;
+        const regular = false
 
         if(!data.leaf || data.taskId) {
-            return {label: "", regular};
+            return {label: "", regular}
         }
 
         // Check if the value is a valid URL and not an internal "kestra:///" link
         if (isValidURL(data.value)) {
             return data.value.startsWith("kestra:///")
                 ? {label: "Internal link", regular}
-                : {label: "External link", regular};
+                : {label: "External link", regular}
         }
 
-        return {label: trim(data.value), regular: true};
-    };
+        return {label: trim(data.value), regular: true}
+    }
 
-    const expandedValue = ref("");
-    const selected = ref<(string | {uri: string})[]>([]);
+    const expandedValue = ref("")
+    const selected = ref<(string | {uri: string})[]>([])
 
     onMounted(() => {
-        debugCollapse.value = "debug";
-    });
+        debugCollapse.value = "debug"
+    })
 
     const selectedValue = computed(() => {
         if (selected.value?.length)
-            return selected.value[selected.value.length - 1];
-        return undefined;
-    });
+            return selected.value[selected.value.length - 1]
+        return undefined
+    })
 
     watch(selectedValue, () => {
-        debugError.value = "";
-        debugStackTrace.value = "";
-    });
+        debugError.value = ""
+        debugStackTrace.value = ""
+    })
 
     const selectedNode = () => {
-        const node = cascader.value?.cascader?.getCheckedNodes(false);
+        const node = cascader.value?.cascader?.getCheckedNodes(false)
 
-        if (!node?.length) return {label: undefined, value: undefined};
+        if (!node?.length) return {label: undefined, value: undefined}
 
-        const {label, value} = node[0];
+        const {label, value} = node[0]
 
-        return {label, value: value as string};
-    };
+        return {label, value: value as string}
+    }
 
     interface TransformedTask extends CascaderOption{
         component?: any;
@@ -372,11 +372,11 @@
 
     const transform = (o: any, isFirstPass: boolean, path = "") => {
         const result: TransformedTask[] = Object.keys(o).map((key) => {
-            const value = o[key];
-            const isObject = typeof value === "object" && value !== null;
+            const value = o[key]
+            const isObject = typeof value === "object" && value !== null
 
-            const keyStep = isValidVariable(key) ? `.${key}` : `["${key}"]`;
-            const currentPath = `${path}${keyStep}`;
+            const keyStep = isValidVariable(key) ? `.${key}` : `["${key}"]`
+            const currentPath = `${path}${keyStep}`
 
             // If the value is an array with exactly one element, use that element as the value
             if (Array.isArray(value) && value.length === 1) {
@@ -386,7 +386,7 @@
                     children: [],
                     leaf: true,
                     path: currentPath,
-                };
+                }
             }
 
             return {
@@ -395,8 +395,8 @@
                 children: isObject ? transform(value, false, currentPath) : [],
                 leaf: !isObject,
                 path: currentPath,
-            };
-        });
+            }
+        })
 
         if (isFirstPass) {
             const OUTPUTS: TransformedTask = {
@@ -406,25 +406,25 @@
                 isFirstPass: true,
                 path: path,
                 leaf: true,
-            };
-            result.unshift(OUTPUTS);
+            }
+            result.unshift(OUTPUTS)
         }
 
-        return result;
-    };
+        return result
+    }
 
-    const tasksWithOutputs = ref<string[] | undefined>(undefined);
+    const tasksWithOutputs = ref<string[] | undefined>(undefined)
 
     watch(
         () => executionsStore.execution?.id,
         async (id) => {
             if(id) {
-                const {data, status} = await axios.get(`${apiUrl()}/outputs/${id}`);
+                const {data, status} = await axios.get(`${apiUrl()}/outputs/${id}`)
                 if(status === 200 && data) {
-                    tasksWithOutputs.value = [];
+                    tasksWithOutputs.value = []
                     for(const task of data){
                         if(task.taskId){
-                            tasksWithOutputs.value?.push(task.taskId);
+                            tasksWithOutputs.value?.push(task.taskId)
                         }
                     }
                 }
@@ -432,7 +432,7 @@
             }
         },
         {immediate: true},
-    );
+    )
 
     const outputs = computed<TransformedTask[] | undefined>(() => {
         const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
@@ -444,8 +444,8 @@
                 icon: true,
                 leaf: !tasksWithOutputs.value?.includes(task.taskId), // Only mark tasks with outputs as non-leaf to trigger lazy loading
                 path: isValidVariable(task.taskId) ? `.${task.taskId}` : `["${task.taskId}"]`,
-            };
-        });
+            }
+        })
 
         if(!tasks?.length) {
             return undefined
@@ -456,42 +456,42 @@
             heading: true,
             component: shallowRef(TimelineTextOutline),
             leaf: true,
-        } as any;
+        } as any
 
-        tasks.unshift(HEADING);
+        tasks.unshift(HEADING)
 
-        return tasks;
-    });
+        return tasks
+    })
 
     watch(outputs, (o) => {
-        if(o?.some(t => t.leaf === false)) {
-            const task = o?.filter(t => t.leaf === false)[0];
-            if (!task) return;
+        if(o?.some(item => item.leaf === false)) {
+            const task = o?.filter(item => item.leaf === false)[0]
+            if (!task) return
 
             const selectedLocal = [task.value]
-            let expandedValueLocal = task.path;
+            let expandedValueLocal = task.path
 
             getTaskRunOutputs(task.id, task.path).then((children) => {
-                let child: TransformedTask | undefined = children.filter(t => t.leaf === false)[0];
+                let child: TransformedTask | undefined = children.filter(item => item.leaf === false)[0]
 
                 do {
-                    selectedLocal.push(child.value);
+                    selectedLocal.push(child.value)
                     if(child?.path) {
-                        expandedValueLocal = child.path;
+                        expandedValueLocal = child.path
                     }
 
-                    child = child.children?.filter(t => !t.heading)[0];
+                    child = child.children?.filter(item => !item.heading)[0]
                 } while(child?.path)
 
-                selected.value = selectedLocal;
+                selected.value = selectedLocal
                 if(expandedValueLocal){
-                    expandedValue.value = expandedValueLocal;
+                    expandedValue.value = expandedValueLocal
                 }
             })
         }
     })
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
@@ -501,33 +501,33 @@
             tasks?: any[];
         }[], mapped: Record<string, string>) => {
             tasks.forEach((task) => {
-                mapped[task.id] = task.type;
+                mapped[task.id] = task.type
                 if (task.tasks && task.tasks.length > 0) {
-                    getTaskIcons(task.tasks, mapped);
+                    getTaskIcons(task.tasks, mapped)
                 }
-            });
-        };
+            })
+        }
 
-        const mapped:Record<string, string> = {};
+        const mapped:Record<string, string> = {}
 
-        getTaskIcons(executionsStore?.flow?.tasks || [], mapped);
-        getTaskIcons(executionsStore?.flow?.errors || [], mapped);
-        getTaskIcons(executionsStore?.flow?.finally || [], mapped);
+        getTaskIcons(executionsStore?.flow?.tasks || [], mapped)
+        getTaskIcons(executionsStore?.flow?.errors || [], mapped)
+        getTaskIcons(executionsStore?.flow?.finally || [], mapped)
 
-        return mapped;
-    });
+        return mapped
+    })
 
     const trim = (value: any) =>
         typeof value !== "string" || value.length < 16
             ? value
-            : `${value.substring(0, 16)}...`;
+            : `${value.substring(0, 16)}...`
 
     const displayVarValue = () =>
         Utils.isFile(selectedValue.value) ||
-        selectedValue.value !== debugExpression.value;
+        selectedValue.value !== debugExpression.value
 
-    const leftWidth = ref("70%");
-    const isMobile = useMediaQuery("(max-width: 768px)");
+    const leftWidth = ref("70%")
+    const isMobile = useMediaQuery("(max-width: 768px)")
 </script>
 
 <style scoped lang="scss">

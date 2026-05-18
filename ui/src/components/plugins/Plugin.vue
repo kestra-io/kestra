@@ -83,33 +83,33 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import SchemaToHtml from "./schema/SchemaToHtml.vue";
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system";
-    import DocsLayout from "../docs/DocsLayout.vue";
-    import PluginHome from "./PluginHome.vue";
-    import Toc from "./Toc.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import GitHub from "vue-material-design-icons/Github.vue";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "override/stores/misc";
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {ref, computed, onMounted, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import SchemaToHtml from "./schema/SchemaToHtml.vue"
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import DocsLayout from "../docs/DocsLayout.vue"
+    import PluginHome from "./PluginHome.vue"
+    import Toc from "./Toc.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import GitHub from "vue-material-design-icons/Github.vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useMiscStore} from "override/stores/misc"
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const pluginsStore = usePluginsStore();
-    const miscStore = useMiscStore();
+    const pluginsStore = usePluginsStore()
+    const miscStore = useMiscStore()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const isLoading = ref<boolean>(false);
-    const version = ref<string | undefined>(undefined);
-    const pluginType = ref<string | undefined>(undefined);
-    const filteredPlugins = ref<any[] | undefined>(undefined);
+    const isLoading = ref<boolean>(false)
+    const version = ref<string | undefined>(undefined)
+    const pluginType = ref<string | undefined>(undefined)
+    const filteredPlugins = ref<any[] | undefined>(undefined)
 
     const routeInfo = computed(() => ({
         title: pluginType.value ?? t("plugins.names"),
@@ -122,76 +122,76 @@
                         link: {name: "plugins/list"},
                     },
                 ],
-    }));
+    }))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
 
     const pluginName = computed(() => {
-        const split = pluginType.value?.split(".");
-        return split ? split[split.length - 1] : undefined;
-    });
+        const split = pluginType.value?.split(".")
+        return split ? split[split.length - 1] : undefined
+    })
 
-    const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
+    const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value))
 
     const isPluginList = computed(
-        () => typeof route.name === "string" && route.name === "plugins/list"
-    );
+        () => typeof route.name === "string" && route.name === "plugins/list",
+    )
 
     function loadToc() {
-        pluginsStore.listWithSubgroup({includeDeprecated: false});
+        pluginsStore.listWithSubgroup({includeDeprecated: false})
     }
 
     function selectVersion(ver: string | undefined) {
         router.push({
             name: "plugins/view",
             params: {cls: pluginType.value, version: ver},
-        });
+        })
     }
 
     async function loadPlugin() {
         if (route.params.version) {
-            version.value = route.params.version as string;
+            version.value = route.params.version as string
         } else {
-            version.value = undefined;
+            version.value = undefined
         }
 
-        const clsParam = route.params.cls as string | undefined;
+        const clsParam = route.params.cls as string | undefined
         if (!clsParam) {
-            return;
+            return
         }
 
         const loadParams = {
             version: version.value,
             hash: hash.value,
             cls: clsParam,
-        };
+        }
 
-        isLoading.value = true;
+        isLoading.value = true
         try {
             await Promise.all([
                 pluginsStore.load(loadParams),
                 pluginsStore.loadVersions(loadParams).then((data) => {
                     if (data.versions?.length > 0) {
-                        if (!version.value) version.value = data.versions[0];
+                        if (!version.value) version.value = data.versions[0]
                     }
                 }),
-            ]);
+            ])
         } finally {
-            isLoading.value = false;
-            pluginType.value = clsParam;
+            isLoading.value = false
+            pluginType.value = clsParam
         }
     }
 
     function onRouterChange() {
-        window.scroll({top: 0, behavior: "smooth"});
-        loadPlugin();
+        window.scroll({top: 0, behavior: "smooth"})
+        loadPlugin()
     }
 
     function openReleaseNotes() {
         if (releaseNotesUrl.value) {
-            window.open(releaseNotesUrl.value, "_blank");
+            window.open(releaseNotesUrl.value, "_blank")
         }
     }
 
@@ -199,15 +199,15 @@
         [() => route.name, () => route.params],
         ([newName]) => {
             if (newName === "plugins/list") {
-                pluginType.value = undefined;
-                version.value = undefined;
+                pluginType.value = undefined
+                version.value = undefined
             }
             if (typeof newName === "string" && newName.startsWith("plugins/")) {
-                onRouterChange();
+                onRouterChange()
             }
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     watch(
         () => pluginsStore.plugins,
@@ -218,16 +218,16 @@
                 "charts",
                 "dataFilters",
                 "dataFiltersKPI",
-            ]);
+            ])
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     onMounted(() => {
-        miscStore.loadConfigs();
-        loadToc();
-        loadPlugin();
-    });
+        miscStore.loadConfigs()
+        loadToc()
+        loadPlugin()
+    })
 </script>
 
 <style scoped lang="scss">

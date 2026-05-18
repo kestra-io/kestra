@@ -21,21 +21,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue";
-    import {useMounted, useStorage} from "@vueuse/core";
-    import FileExplorer from "../../inputs/FileExplorer.vue";
-    import MultiPanelTabs from "../../MultiPanelTabs.vue";
-    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
-    import {useFlowStore} from "../../../stores/flow";
-    import {useStoredPanels} from "../../../composables/useStoredPanels";
+    import {computed, watch} from "vue"
+    import {useMounted, useStorage} from "@vueuse/core"
+    import FileExplorer from "../../inputs/FileExplorer.vue"
+    import MultiPanelTabs from "../../MultiPanelTabs.vue"
+    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels"
+    import {useFlowStore} from "../../../stores/flow"
+    import {useStoredPanels} from "../../../composables/useStoredPanels"
 
     const mounted = useMounted()
 
     const props = defineProps<{
         namespace: string
-    }>();
+    }>()
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     watch(() => props.namespace, (newVal) => {
         flowStore.flow = {
@@ -43,7 +43,7 @@
             id: "",
             revision: 0,
             source: `namespace: ${newVal}\n`,
-            errors: []
+            errors: [],
         }
     }, {immediate: true})
 
@@ -65,14 +65,14 @@
                     // not a file tab
                     return
                 }
-                const tabProps = getTabPropsFromFilePath(value, false);
+                const tabProps = getTabPropsFromFilePath(value, false)
                 if(!tabProps) return
 
                 return getTabFromFilesTab(tabProps)
-            }
-        }]
+            },
+        }],
 
-    );
+    )
 
     useFilesPanels(panels, computed(() => props.namespace))
 </script>

@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import {KsMarkdown} from "@kestra-io/design-system";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
 
     defineProps<{
         title: string;
@@ -34,7 +34,7 @@
         link?: string;
         icon?: any;
         showIcon?: boolean;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

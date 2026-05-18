@@ -39,10 +39,11 @@ jobs:
 
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: kestra-io/actions/composite/checkout-and-auth@main
         with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           fetch-depth: 0
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
           ref: ${{ steps.parse-and-check-inputs.outputs.release_branch }}
 
       # Configure
@@ -53,8 +54,6 @@ jobs:
 
       # Execute
       - name: Start release by updating version and pushing a new tag
-        env:
-          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
           # Update version
           sed -i "s/^version=.*/version=$RELEASE_VERSION/" ./gradle.properties

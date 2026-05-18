@@ -28,33 +28,33 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import {
         COMPARATOR_DESCRIPTIONS,
         COMPARATOR_LABELS,
-        Comparators
-    } from "../utils/filterTypes";
+        Comparators,
+    } from "../utils/filterTypes"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = defineProps<{
         shouldShowComparator: boolean;
         selectedComparator: Comparators;
         filterKey: {comparators: Comparators[]};
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:selectedComparator": [value: Comparators];
-    }>();
+    }>()
 
     const comparatorModel = computed({
         get: () => props.selectedComparator,
-        set: (value: Comparators) => emits("update:selectedComparator", value)
-    });
+        set: (value: Comparators) => emits("update:selectedComparator", value),
+    })
 
-    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator];
-    const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator]);
+    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator]
+    const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator])
 </script>
 
 <style lang="scss" scoped>

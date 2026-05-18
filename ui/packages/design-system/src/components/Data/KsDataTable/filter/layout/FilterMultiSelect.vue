@@ -68,9 +68,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {Magnify, InformationOutline} from "../utils/icons";
-    import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue";
+    import {computed, ref} from "vue"
+    import {Magnify, InformationOutline} from "../utils/icons"
+    import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
 
     const props = defineProps<{
         label?: string;
@@ -79,60 +79,60 @@
         searchable?: boolean;
         placeholder?: string;
         options: {value: string; label: string}[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "apply": [];
         "reset": [];
         "update:modelValue": [value: string[]];
-    }>();
+    }>()
 
-    const searchQuery = ref("");
+    const searchQuery = ref("")
 
     const filteredOptions = computed(() => {
-        const query = searchQuery.value.trim().toLowerCase();
+        const query = searchQuery.value.trim().toLowerCase()
         return query
             ? props.options.filter(option =>
                 option.label.toLowerCase().includes(query) ||
-                option.value.toLowerCase().includes(query)
+                option.value.toLowerCase().includes(query),
             )
-            : props.options;
-    });
+            : props.options
+    })
 
     const allSelected = computed(
         () =>
             filteredOptions.value.length > 0 &&
-            filteredOptions.value.every(option => props.modelValue.includes(option.value))
-    );
+            filteredOptions.value.every(option => props.modelValue.includes(option.value)),
+    )
 
     const isPartiallySelected = computed(() => {
-        const options = filteredOptions.value;
-        if (!options.length) return false;
-        const selectedCount = options.filter(opt => props.modelValue.includes(opt.value)).length;
-        return selectedCount > 0 && selectedCount < options.length;
-    });
+        const options = filteredOptions.value
+        if (!options.length) return false
+        const selectedCount = options.filter(opt => props.modelValue.includes(opt.value)).length
+        return selectedCount > 0 && selectedCount < options.length
+    })
 
     const handleSelectAllChange = (checked: boolean) => {
-        const values = new Set(props.modelValue);
+        const values = new Set(props.modelValue)
         filteredOptions.value.forEach(opt =>
-            checked ? values.add(opt.value) : values.delete(opt.value)
-        );
-        emits("update:modelValue", [...values]);
-    };
+            checked ? values.add(opt.value) : values.delete(opt.value),
+        )
+        emits("update:modelValue", [...values])
+    }
 
     const handleDeselectAllChange = (checked: boolean) => {
         if (checked) {
-            const values = new Set(props.modelValue);
-            filteredOptions.value.forEach(opt => values.delete(opt.value));
-            emits("update:modelValue", [...values]);
+            const values = new Set(props.modelValue)
+            filteredOptions.value.forEach(opt => values.delete(opt.value))
+            emits("update:modelValue", [...values])
         }
-    };
+    }
 
     const handleOptionChange = (value: string, checked: boolean) =>
         emits(
             "update:modelValue",
-            checked ? [...props.modelValue, value] : props.modelValue.filter(v => v !== value)
-        );
+            checked ? [...props.modelValue, value] : props.modelValue.filter(v => v !== value),
+        )
 </script>
 
 <style lang="scss" scoped>

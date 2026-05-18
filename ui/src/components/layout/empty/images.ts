@@ -1,15 +1,15 @@
-import announcements from "./assets/visuals/announcements.png";
-import apps from "./assets/visuals/apps.png";
-import testSuites from "./assets/visuals/testSuites.png";
-import concurrency_executions from "./assets/visuals/concurrency_executions.png";
-import concurrency_limit from "./assets/visuals/concurrency_limit.png";
-import dependencies from "./assets/visuals/dependencies.png";
-import plugins from "./assets/visuals/plugins.png";
-import triggers from "./assets/visuals/triggers.png";
-import versionPlugin from "./assets/visuals/versionPlugin.png";
-import panels from "./assets/visuals/panels.png";
-import assets from "./assets/visuals/assets.png";
-import pluginDefaults from "./assets/visuals/pluginDefaults.png";
+import announcements from "./assets/visuals/announcements.png"
+import apps from "./assets/visuals/apps.png"
+import testSuites from "./assets/visuals/testSuites.png"
+import concurrency_executions from "./assets/visuals/concurrency_executions.png"
+import concurrency_limit from "./assets/visuals/concurrency_limit.png"
+import dependencies from "./assets/visuals/dependencies.png"
+import plugins from "./assets/visuals/plugins.png"
+import triggers from "./assets/visuals/triggers.png"
+import versionPlugin from "./assets/visuals/versionPlugin.png"
+import panels from "./assets/visuals/panels.png"
+import assets from "./assets/visuals/assets.png"
+import pluginDefaults from "./assets/visuals/pluginDefaults.png"
 
 export const images: Record<string, string> = {
     announcements,
@@ -26,5 +26,5 @@ export const images: Record<string, string> = {
     versionPlugin,
     panels,
     assets,
-    pluginDefaults
-};
+    pluginDefaults,
+}

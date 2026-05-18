@@ -9,24 +9,24 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {Handle, Position} from "@vue-flow/core";
-    import CircleIcon from "vue-material-design-icons/Circle.vue";
-    import Utils from "../utils/utils";
+    import {computed} from "vue"
+    import {Handle, Position} from "@vue-flow/core"
+    import CircleIcon from "vue-material-design-icons/Circle.vue"
+    import * as Utils from "../utils/utils"
 
-    defineOptions({name: "Dot", inheritAttrs: false});
+    defineOptions({name: "Dot", inheritAttrs: false})
 
     const {data, sourcePosition, targetPosition} = defineProps<{
         data: any;
         sourcePosition: Position;
         targetPosition: Position;
         label?: string;
-    }>();
+    }>()
 
     const classes = computed(() => ({
         "unused-path": data.unused,
         [Utils.afterLastDot(data.node.type) as string]: true,
-    }));
+    }))
 </script>
 
 <style scoped>

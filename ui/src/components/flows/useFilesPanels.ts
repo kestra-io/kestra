@@ -1,12 +1,12 @@
 import {h, markRaw, provide, Ref} from "vue"
-import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
-import TypeIcon from "../utils/icons/Type.vue";
-import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
-import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
-import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
-import {useFlowStore} from "../../stores/flow";
+import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue"
+import TypeIcon from "../utils/icons/Type.vue"
+import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
+import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
+import {useFlowStore} from "../../stores/flow"
 
 export const CODE_PREFIX = "code"
 
@@ -34,7 +34,7 @@ export function getTabPropsFromFilePath(filePath: string, flow: boolean = false)
         path: filePath,
         extension: filePath.split(".").pop()!,
         flow,
-        dirty: false
+        dirty: false,
     }
 }
 
@@ -48,14 +48,14 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
     const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!
     codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
-    function setupInitialCodeTab(tab: string, codeElement: EditorElement){
+    function setupInitialCodeTab(tab: string, element: EditorElement){
         const flow = CODE_PREFIX === tab
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
         }
         const filePath = flow ? "Flow.yaml" : tab.substring(5)
         const editorTab = getTabPropsFromFilePath(filePath, flow)
-        return flow ? codeElement : getTabFromFilesTab(editorTab)
+        return flow ? element : getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}
@@ -64,12 +64,12 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
 export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | undefined>) {
     function focusTab(tabValue: string){
         for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.uid === tabValue);
-            if(t) panel.activeTab = t;
+            const t = panel.tabs.find(e => e.uid === tabValue)
+            if(t) panel.activeTab = t
         }
     }
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     provide(FILES_OPEN_TAB_INJECTION_KEY, (tab) => {
         if(!tab.path){
@@ -100,12 +100,12 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid));
+            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid))
             
             if (tabIndex > -1) {
                 // if the closed tab is the active one, 
                 // we need to set a new active tab
-                panel.tabs.splice(tabIndex, 1);
+                panel.tabs.splice(tabIndex, 1)
                 if (panel.tabs.length === 0) {
                     // if no tabs left, remove the panel
                     continue
@@ -113,9 +113,9 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                 panel.activeTab = panel.tabs[
                     Math.min(
                         tabIndex, 
-                        panel.tabs.length - 1
+                        panel.tabs.length - 1,
                     )
-                ];
+                ]
             }
         }
     })
@@ -137,7 +137,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         }
     })
 
-    const namespacesStore = useNamespacesStore();
+    const namespacesStore = useNamespacesStore()
 
     // on save all files, save all namespace files
     // and set all tabs as not dirty
@@ -145,7 +145,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         const files:{
             file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
             tab: TabLiveWithContent
-        }[] = [];
+        }[] = []
         for(const panel of panels.value){
             for(const tab of panel.tabs as TabLiveWithContent[]){
                 if(!tab.uid.startsWith(`${CODE_PREFIX}-`) || !tab.content || !tab.path || !tab.dirty){
@@ -158,10 +158,10 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                     file:{
                         namespace: namespace.value,
                         path: tab.path,
-                        content: tab.content
+                        content: tab.content,
                     },
-                    tab
-                });
+                    tab,
+                })
             }
         }
         if(files.length > 0){
@@ -169,10 +169,10 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
             await Promise.all(
                 files.map(file => namespacesStore.saveOrCreateFile(file.file)
                     // only remove the dirty flag once the file was saved
-                    .then(() => file.tab.dirty = false))
-            );
+                    .then(() => file.tab.dirty = false)),
+            )
         }
-    });
+    })
 
-    const defaultSize = usePanelDefaultSize(panels);
+    const defaultSize = usePanelDefaultSize(panels)
 }

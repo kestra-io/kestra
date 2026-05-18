@@ -96,7 +96,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             TriggerContext triggerContext = triggerContext(trigger, flow);
             ConditionContext conditionContext = conditionContext(trigger, flow);
 
-            return pollingTrigger.evaluate(conditionContext, triggerContext);
+            return pollingTrigger.eval(conditionContext, triggerContext).map(eval -> eval.toExecution(triggerContext));
         } else {
             throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
         }

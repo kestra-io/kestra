@@ -1,5 +1,5 @@
-import {deepMerge} from "./ksChartUtils.ts";
-import {cssVar} from "../../utils/css.ts";
+import {deepMerge} from "./ksChartUtils.ts"
+import {cssVar} from "../../utils/css.ts"
 
 export default () => {
     const axis = {
@@ -11,34 +11,34 @@ export default () => {
             show: true,
             lineStyle: {
                 width: 0.5,
-                color: cssVar("--kel-text-color-placeholder")
-            }
+                color: cssVar("--kel-text-color-placeholder"),
+            },
         },
         axisTick: {
             show: false,
             lineStyle: {
-                color: cssVar("--kel-text-color-placeholder")
-            }
+                color: cssVar("--kel-text-color-placeholder"),
+            },
         },
         axisLabel: {
             show: true,
-            color: cssVar("--ks-content-primary")
+            color: cssVar("--ks-content-primary"),
         },
         splitLine: {
             show: false,
             lineStyle: {
                 width: 0.2,
-                color: cssVar("--kel-text-color-disabled")
-            }
+                color: cssVar("--kel-text-color-disabled"),
+            },
         },
         splitArea: {
             show: false,
             areaStyle: {
                 color: [cssVar("--ks-gray-500", 0.00), cssVar("--ks-gray-inverted-900", 0.5)],
-                shadowBlur: 0
-            }
-        }
-    };
+                shadowBlur: 0,
+            },
+        },
+    }
 
     return  {
         animation: false,
@@ -66,11 +66,11 @@ export default () => {
         },
         title: {
             textStyle: {
-                color: cssVar("--ks-content-primary")
+                color: cssVar("--ks-content-primary"),
             },
             subtextStyle: {
-                color: cssVar("--ks-gray-400")
-            }
+                color: cssVar("--ks-gray-400"),
+            },
         },
         line: {
             lineStyle: {
@@ -78,20 +78,20 @@ export default () => {
             },
             symbolSize: 3,
             symbol: "circle",
-            smooth: true
+            smooth: true,
         },
 
         bar: {
             itemStyle: {
                 borderWidth: 0,
-            }
+            },
         },
         pie: {
             label: {
                 show: false,
             },
             itemStyle: {
-                borderWidth: 0
+                borderWidth: 0,
             },
         },
         graph: {
@@ -130,11 +130,11 @@ export default () => {
                 align: "right",
             },
             axisLine: {
-                show: false
+                show: false,
             },
             splitLine: {
                 show: true,
-            }
+            },
         }),
         logAxis: axis,
         timeAxis: deepMerge(axis, {
@@ -157,9 +157,9 @@ export default () => {
             extraCssText: "box-shadow: var(--kel-box-shadow);",
             axisPointer: {
                 shadowStyle: {
-                    color: cssVar("--ks-purple-900", 0.1)
-                }
-            }
+                    color: cssVar("--ks-purple-900", 0.1),
+                },
+            },
         },
         legend: {
             textStyle: {
@@ -170,6 +170,6 @@ export default () => {
             top: 0,
             bottom: 10,
             icon: "circle",
-        }
+        },
     }
 }

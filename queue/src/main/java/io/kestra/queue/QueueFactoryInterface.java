@@ -57,5 +57,5 @@ public interface QueueFactoryInterface<D> {
 
     BroadcastQueueInterface<ClusterEvent> clusterEventQueue(D dependencies);
 
-    DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue(D dependencies);
+    DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue(D dependencies);
 }

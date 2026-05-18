@@ -72,25 +72,25 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue";
-    import {useI18n} from "vue-i18n";
-    import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
-    import HistoryIcon from "vue-material-design-icons/History.vue";
-    import Backspace from "vue-material-design-icons/Backspace.vue";
-    import CloseIcon from "vue-material-design-icons/Close.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import Gantt from "../executions/Gantt.vue";
+    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
+    import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue"
+    import HistoryIcon from "vue-material-design-icons/History.vue"
+    import Backspace from "vue-material-design-icons/Backspace.vue"
+    import CloseIcon from "vue-material-design-icons/Close.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import Gantt from "../executions/Gantt.vue"
     // @ts-expect-error no types on logs
-    import Logs from "../executions/Logs.vue";
-    import ExecutionOutput from "../executions/outputs/Wrapper.vue";
-    import ExecutionMetric from "../executions/ExecutionMetric.vue";
-    import PlaygroundLog from "./playground/PlaygroundLog.vue";
-    import {usePlaygroundStore} from "../../stores/playground";
+    import Logs from "../executions/Logs.vue"
+    import ExecutionOutput from "../executions/outputs/Wrapper.vue"
+    import ExecutionMetric from "../executions/ExecutionMetric.vue"
+    import PlaygroundLog from "./playground/PlaygroundLog.vue"
+    import {usePlaygroundStore} from "../../stores/playground"
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
-    import {useExecutionsStore} from "../../stores/executions";
-    import Kill from "../executions/overview/components/actions/Kill.vue";
+    import {useExecutionsStore} from "../../stores/executions"
+    import Kill from "../executions/overview/components/actions/Kill.vue"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const tabs = computed(() => ([
         {
@@ -112,29 +112,29 @@
             name: "metrics",
             title: t("metrics"),
             component: markRaw(ExecutionMetric),
-        }
-    ]));
+        },
+    ]))
 
-    const playgroundStore = usePlaygroundStore();
-    const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore()
+    const executionsStore = useExecutionsStore()
 
     watch(() => playgroundStore.latestExecution?.id, (newValue, oldValue) => {
         if (newValue && newValue !== oldValue) {
-            executionsStore.followExecution(playgroundStore.latestExecution, t);
+            executionsStore.followExecution(playgroundStore.latestExecution, t)
         }
-    });
+    })
 
-    const activeTab = ref(tabs.value[0]);
+    const activeTab = ref(tabs.value[0])
 
     onMounted(() => {
-        playgroundStore.runFromQuery();
-    });
+        playgroundStore.runFromQuery()
+    })
 
     onUnmounted(() => {
-        executionsStore.closeSSE();
-    });
+        executionsStore.closeSSE()
+    })
 
-    const historyVisible = ref(false);
+    const historyVisible = ref(false)
 </script>
 
 <style scoped lang="scss">

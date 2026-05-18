@@ -29,78 +29,78 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, onMounted, onUnmounted, ref} from "vue";
-    import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes";
-    import FilterEditPopper from "./FilterEditPopper.vue";
+    import {nextTick, onMounted, onUnmounted, ref} from "vue"
+    import type {AppliedFilter, FilterKeyConfig} from "../utils/filterTypes"
+    import FilterEditPopper from "./FilterEditPopper.vue"
 
     defineProps<{
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
         shouldShowComparatorInPopper?: boolean;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         update: [filter: AppliedFilter];
         remove: [filterId: string];
-    }>();
+    }>()
 
-    const containerRef = ref<HTMLElement | null>(null);
-    const positionStyle = ref({});
-    const isDialogVisible = ref(false);
+    const containerRef = ref<HTMLElement | null>(null)
+    const positionStyle = ref({})
+    const isDialogVisible = ref(false)
 
     const updatePosition = () => {
-        if (!containerRef.value) return;
+        if (!containerRef.value) return
 
-        const chipElement = containerRef.value.closest(".chip");
-        if (!chipElement) return;
+        const chipElement = containerRef.value.closest(".chip")
+        if (!chipElement) return
 
-        const chipRect = chipElement.getBoundingClientRect();
-        const scrollY = window.scrollY;
-        const scrollX = window.scrollX;
-        const popupWidth = 300;
+        const chipRect = chipElement.getBoundingClientRect()
+        const scrollY = window.scrollY
+        const scrollX = window.scrollX
+        const popupWidth = 300
 
         positionStyle.value = {
             position: "absolute",
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
-            width: `${popupWidth}px`
-        };
-    };
+            width: `${popupWidth}px`,
+        }
+    }
 
     const toggleDialog = () => {
-        isDialogVisible.value = !isDialogVisible.value;
-        if (isDialogVisible.value) nextTick(updatePosition);
-    };
+        isDialogVisible.value = !isDialogVisible.value
+        if (isDialogVisible.value) nextTick(updatePosition)
+    }
 
     const closeDialog = () => {
-        isDialogVisible.value = false;
-    };
+        isDialogVisible.value = false
+    }
 
     const handleUpdate = (updatedFilter: AppliedFilter) => {
-        emits("update", updatedFilter);
-        closeDialog();
-    };
+        emits("update", updatedFilter)
+        closeDialog()
+    }
 
     const handleRemove = (filterId: string) => {
-        emits("remove", filterId);
-        closeDialog();
-    };
+        emits("remove", filterId)
+        closeDialog()
+    }
 
     onMounted(() => {
         const handleResize = () => {
-            if (isDialogVisible.value) updatePosition();
-        };
+            if (isDialogVisible.value) updatePosition()
+        }
 
-        window.addEventListener("resize", handleResize);
-        window.addEventListener("scroll", handleResize, true);
+        window.addEventListener("resize", handleResize)
+        window.addEventListener("scroll", handleResize, true)
 
         onUnmounted(() => {
-            window.removeEventListener("resize", handleResize);
-            window.removeEventListener("scroll", handleResize, true);
-        });
-    });
+            window.removeEventListener("resize", handleResize)
+            window.removeEventListener("scroll", handleResize, true)
+        })
+    })
 
-    defineExpose({toggleDialog, isDialogVisible});
+    defineExpose({toggleDialog, isDialogVisible})
 </script>
 <style lang="scss" scoped>
 .edit-container {

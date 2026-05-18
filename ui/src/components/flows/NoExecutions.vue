@@ -30,8 +30,8 @@
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
+    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue"
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
     import noexecutionimg from "../../assets/onboarding/noexecution.svg"
     import {useFlowStore} from "../../stores/flow"
     //@ts-expect-error no declaration file
@@ -42,7 +42,7 @@
         isNamespace: false,
     })
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
     const flow = computed(() => flowStore.flow)
 </script>
 

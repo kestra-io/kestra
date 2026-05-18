@@ -632,9 +632,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .details(DockerTaskRunnerDetailResult.builder().containerId(runContainerId).build())
                     .build();
             } finally {
+                // Clear the interrupted flag so Docker HTTP cleanup calls are not rejected.
+                boolean wasInterrupted = Thread.interrupted();
                 try {
-                    // kill container if it's still running, this means there was an exception and the container didn't
-                    // come to a normal end.
                     kill();
 
                     if (Boolean.TRUE.equals(renderedDelete)) {
@@ -653,6 +653,10 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     }
                 } catch (Exception ignored) {
 
+                } finally {
+                    if (wasInterrupted) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         } catch (RuntimeException e) {

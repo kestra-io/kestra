@@ -38,6 +38,8 @@ import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
+import io.kestra.controller.grpc.services.WorkerJobDispatcher;
+
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 
@@ -65,6 +67,9 @@ class WorkerTest {
 
     @Inject
     private RunContextFactory runContextFactory;
+
+    @Inject
+    private WorkerJobDispatcher workerJobDispatcher;
 
     private Controller controller;
 
@@ -148,7 +153,6 @@ class WorkerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldKillTasksWhenExecutionKillEventReceived() throws InterruptedException, QueueException {
         // Given
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -164,13 +168,16 @@ class WorkerTest {
         try (Worker worker = applicationContext.createBean(Worker.class)) {
             worker.start(1, null);
 
+            await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofMillis(100))
+                .until(() -> workerJobDispatcher.getActiveWorkerCount() > 0);
+
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
-
-            Thread.sleep(500);
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()

@@ -10,7 +10,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
@@ -35,9 +34,6 @@ public class RestartCaseTest {
 
     @Inject
     private ExecutionService executionService;
-
-    @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
 
     public void restartFailedThenSuccess() throws Exception {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart_last_failed").orElseThrow();
@@ -147,9 +143,7 @@ public class RestartCaseTest {
 
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // wait
         Execution restartedExec = executionService.replay(firstExecution, flow, null, null, Optional.empty());
-        executionQueue.emit(restartedExec);
 
         assertThat(restartedExec.getState().getCurrent()).isEqualTo(Type.CREATED);
         assertThat(restartedExec.getState().getHistories()).hasSize(1);
@@ -176,9 +170,7 @@ public class RestartCaseTest {
 
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // wait
         Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunsByTaskId("log").getFirst().getId(), null, Optional.empty());
-        executionQueue.emit(restartedExec);
 
         assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restartedExec.getState().getHistories()).hasSize(4);
@@ -207,9 +199,7 @@ public class RestartCaseTest {
 
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // wait
         Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null, Optional.empty());
-        executionQueue.emit(restartedExec);
 
         assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restartedExec.getState().getHistories()).hasSize(4);
@@ -498,9 +488,7 @@ public class RestartCaseTest {
         Execution replayedExecution = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null, Optional.empty());
         assertThat(replayedExecution.getState().getCurrent()).isEqualTo(Type.RESTARTED);
         assertThat(replayedExecution.getId()).isNotEqualTo(firstExecution.getId());
-        executionQueue.emit(replayedExecution);
-
-        Execution finalReplayedExecution = runnerUtils.awaitExecution(
+        Execution finalReplayedExecution = runnerUtils.emitAndAwaitExecution(
             execution -> execution.getState().isTerminated(),
             replayedExecution
         );

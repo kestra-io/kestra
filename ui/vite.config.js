@@ -128,6 +128,7 @@ export default defineConfig(({mode}) => {
                 "@vue-flow/background",
                 "@vue-flow/controls",
                 "html-to-image",
+                "js-yaml",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

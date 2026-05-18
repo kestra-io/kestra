@@ -1,17 +1,25 @@
 package io.kestra.worker.stores;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.controller.grpc.BooleanResponse;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.TenantAndNamespace;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.runners.DefaultFlowMetaStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
+import io.kestra.core.worker.MetaStoreCacheConfig;
+import io.kestra.core.worker.MetadataChangePayload;
+import io.kestra.core.worker.WorkerMetadataChangeHandler;
 import io.kestra.core.worker.models.WorkerInfo;
 
 import io.micronaut.context.annotation.Replaces;
@@ -29,36 +37,71 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Only methods required by {@link io.kestra.core.services.DefaultNamespaceService} are implemented.
  * All other methods throw {@link UnsupportedOperationException}.
+ * <p>
+ * {@link #isNamespaceExists} results are cached locally to spare the controller a gRPC
+ * round-trip on every task. Entries are normally evicted by push invalidation events
+ * (see {@link io.kestra.core.worker.WorkerMetadataChangeHandler}); the cache TTL is a
+ * safety bound only.
  */
 @Singleton
 @Slf4j
 @Requires(property = "kestra.server-type", value = "WORKER")
 @Replaces(DefaultFlowMetaStore.class)
-public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface {
+public class GrpcWorkerFlowMetaStore implements FlowMetaStoreInterface, WorkerMetadataChangeHandler {
 
     private final WorkerInfo workerInfo;
-
     private final WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreStub;
+    private final Cache<TenantAndNamespace, Boolean> namespaceExistsCache;
 
     @Inject
     public GrpcWorkerFlowMetaStore(WorkerFlowMetaStoreServiceBlockingStub workerFlowMetaStoreStub,
-        WorkerInfo workerInfo) {
+        WorkerInfo workerInfo,
+        MetaStoreCacheConfig cacheConfig) {
         this.workerFlowMetaStoreStub = workerFlowMetaStoreStub;
         this.workerInfo = workerInfo;
+        this.namespaceExistsCache = Caffeine.newBuilder()
+            .maximumSize(Objects.requireNonNull(cacheConfig).maximumSize())
+            .expireAfterAccess(cacheConfig.expireAfterAccess())
+            .build();
     }
 
     @Override
     public boolean isNamespaceExists(String tenant, String namespace) {
-        log.debug("Checking namespace exists via gRPC: tenant={}, namespace={}", tenant, namespace);
+        return namespaceExistsCache.get(new TenantAndNamespace(tenant, namespace), this::fetchNamespaceExists);
+    }
+
+    private boolean fetchNamespaceExists(TenantAndNamespace key) {
+        log.debug("Checking namespace exists via gRPC: tenant={}, namespace={}", key.tenantId(), key.namespace());
 
         NamespaceRequest request = NamespaceRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId()))
-            .setTenantId(tenant)
-            .setNamespace(namespace)
+            .setTenantId(key.tenantId())
+            .setNamespace(key.namespace())
             .build();
 
         BooleanResponse namespaceExists = workerFlowMetaStoreStub.isNamespaceExists(request);
         return namespaceExists.getValue();
+    }
+
+    public void invalidateNamespace(String tenant, String namespace) {
+        namespaceExistsCache.invalidate(new TenantAndNamespace(tenant, namespace));
+    }
+
+    public void invalidateAll() {
+        namespaceExistsCache.invalidateAll();
+    }
+
+    @Override
+    public void onMetadataChange(MetadataChangePayload payload) {
+        if (payload.type() == MetadataChangePayload.Type.FLOW) {
+            invalidateNamespace(payload.tenantId(), payload.namespace());
+        }
+    }
+
+    @Override
+    public void onReconnect() {
+        log.debug("gRPC stream (re)connected — invalidating flow metastore cache");
+        invalidateAll();
     }
 
     @Override

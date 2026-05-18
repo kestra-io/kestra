@@ -46,6 +46,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.worker.MetadataChangePayload;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 
 import io.micronaut.core.annotation.Nullable;
@@ -133,6 +134,11 @@ public class WorkerJobDispatcher {
      */
     private volatile QueueSubscriber<ClusterEvent> clusterEventSubscriber;
 
+    /**
+     * Listener that subscribes to metastore broadcast queues and forwards changes here.
+     */
+    private final MetadataChangeListener metadataChangeListener;
+
     @Inject
     public WorkerJobDispatcher(
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
@@ -141,12 +147,14 @@ public class WorkerJobDispatcher {
         @Nullable BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
         DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
         TriggerEventQueue triggerEventQueue,
-        MetricRegistry metricRegistry) {
+        MetricRegistry metricRegistry,
+        MetadataChangeListener metadataChangeListener) {
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
+        this.metadataChangeListener = metadataChangeListener;
 
         // Construct broadcast subscribers and gauges with cleanup on partial failure.
         // @PreDestroy is not invoked when bean construction fails, so any subscriber that has
@@ -179,6 +187,8 @@ public class WorkerJobDispatcher {
                 });
             }
 
+            this.metadataChangeListener.start(this::onMetadataChanged);
+
             // Register global gauges
             this.metricRegistry.gauge(
                 MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_ALL,
@@ -193,6 +203,11 @@ public class WorkerJobDispatcher {
                     .sum()
             );
         } catch (Throwable t) {
+            try {
+                metadataChangeListener.stop();
+            } catch (Exception e) {
+                log.warn("Error stopping metadata change listener during failure recovery: {}", e.getMessage());
+            }
             closeBroadcastSubscribersQuietly();
             throw t;
         }
@@ -252,6 +267,23 @@ public class WorkerJobDispatcher {
         }
         log.info("Received cluster event: type={}, message={}", event.eventType(), event.message());
         broadcastEvent(new WorkerBroadcastEvent.ClusterBroadcast(event), "cluster event");
+    }
+
+    /**
+     * Broadcasts a {@link WorkerBroadcastEvent} to all connected workers via the events field of
+     * the existing long-lived gRPC stream. Used both for internally-sourced events (kill, cluster)
+     * and by EE publishers that subscribe to additional broadcast queues (e.g. metastore changes).
+     */
+    public void broadcastToAllWorkers(WorkerBroadcastEvent event) {
+        broadcastEvent(event, event.getClass().getSimpleName());
+    }
+
+    /**
+     * Broadcasts a metastore metadata change to every connected worker so worker-side caches can
+     * invalidate the affected entries. Convenience wrapper around {@link #broadcastToAllWorkers}.
+     */
+    public void onMetadataChanged(MetadataChangePayload payload) {
+        broadcastToAllWorkers(new WorkerBroadcastEvent.MetadataChangeEvent(payload));
     }
 
     /**
@@ -797,6 +829,13 @@ public class WorkerJobDispatcher {
         }
 
         log.info("Closing WorkerJobDispatcher with {} active workers", activeStreams.size());
+
+        // Stop metastore change subscriptions first so no more events arrive while we tear down streams.
+        try {
+            metadataChangeListener.stop();
+        } catch (Exception e) {
+            log.warn("Error stopping metadata change listener: {}", e.getMessage());
+        }
 
         // Close broadcast subscriptions (kill queue, cluster event queue)
         closeBroadcastSubscribersQuietly();

@@ -107,7 +107,7 @@
     import {useApiStore} from "../../../../stores/api"
 
     import {canCreate} from "override/composables/blueprintsPermissions"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     const props = withDefaults(defineProps<{
         blueprintId: string;

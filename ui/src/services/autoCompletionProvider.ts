@@ -1,4 +1,4 @@
-import {YamlElement} from "@kestra-io/design-system"
+import {YamlElement} from "@kestra-io/topology"
 import {apiUrlWithoutTenants} from "../override/utils/route"
 import {useClient} from "@kestra-io/kestra-sdk"
 

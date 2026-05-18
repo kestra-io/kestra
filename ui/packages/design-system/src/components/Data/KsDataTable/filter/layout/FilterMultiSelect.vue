@@ -11,7 +11,7 @@
                 />
             </div>
             <div class="controls-section">
-                <div class="check-border">
+                <div class="control-wrapper">
                     <KsCheckbox
                         v-model="allSelected"
                         size="default"
@@ -21,13 +21,14 @@
                         {{ $t('filter.select all') }}
                     </KsCheckbox>
                 </div>
-                <div class="check-border">
-                    <KsCheckbox
-                        size="default"
-                        @change="handleDeselectAllChange"
+                <div class="control-wrapper control-button">
+                    <KsButton
+                        type="default"
+                        size="small"
+                        @click="handleDeselectAll"
                     >
                         {{ $t('filter.deselect all') }}
-                    </KsCheckbox>
+                    </KsButton>
                 </div>
             </div>
         </div>
@@ -120,12 +121,10 @@
         emits("update:modelValue", [...values])
     }
 
-    const handleDeselectAllChange = (checked: boolean) => {
-        if (checked) {
-            const values = new Set(props.modelValue)
-            filteredOptions.value.forEach(opt => values.delete(opt.value))
-            emits("update:modelValue", [...values])
-        }
+    const handleDeselectAll = () => {
+        const values = new Set(props.modelValue)
+        filteredOptions.value.forEach(opt => values.delete(opt.value))
+        emits("update:modelValue", [...values])
     }
 
     const handleOptionChange = (value: string, checked: boolean) =>
@@ -162,11 +161,11 @@
             padding: 0.25rem 1rem;
             margin-bottom: 8px;
 
-            .check-border {
+            .control-wrapper {
                 border: 1px solid var(--ks-border-primary);
                 border-radius: 4px;
-                padding: 0 12px;
                 width: calc(50% - 0.5rem);
+                padding: 0 12px;
 
                 :deep(.kel-checkbox__label) {
                     font-size: var(--ks-font-size-xs);
@@ -175,6 +174,16 @@
 
                 :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
                     color: var(--ks-content-primary);
+                }
+            }
+
+            .control-button {
+                padding: 0;
+
+                :deep(.kel-button) {
+                    height: var(--kel-button-height, 32px);
+                    width: 100%;
+                    border: none;
                 }
             }
         }

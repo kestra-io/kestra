@@ -52,16 +52,13 @@ public class JdbcQueueCleaner {
     public long deleteQueue() {
         LongAdder totalDeleted = new LongAdder();
         broadcastQueues.forEach(queue ->
-        {
-            Integer queueType = JdbcQueueClient.queueNameToType(queue.queueName());
             dslContextWrapper.transaction(configuration ->
             {
-                var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queueType));
+                var condition = CREATED_FIELD.lessOrEqual(period(configuration, retention)).and(TYPE_FIELD.eq(queue.queueName()));
                 int deleted = delete(configuration, condition);
                 log.info("Cleaned {} records for the '{}' queue", deleted, queue.queueName());
                 totalDeleted.add(deleted);
-            });
-        });
+            }));
 
         return totalDeleted.longValue();
     }

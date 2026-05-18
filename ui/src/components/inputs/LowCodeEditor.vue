@@ -172,7 +172,7 @@
 
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
-    const {RemoteComponent:TaskDrawerRemote} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
 
 
     const customActions = computed(() => {
@@ -218,9 +218,10 @@
             taskTypesReParsed.push({cls, version: version === "null" ? undefined : version})
         }
 
-        // get the manifest of the all the tasks we will 
-        // have in the graph
-        await resolveRemoteComponent(taskTypesReParsed)
+        await Promise.all([
+            resolveRemoteComponent(taskTypesReParsed),
+            resolveDrawerComponent(taskTypesReParsed),
+        ])
     }
 
     watch(
@@ -257,6 +258,18 @@
             expandedSubflows: () => [],
             animated: true,
         })
+
+    watch(
+        () => props.flowGraph,
+        async (flowGraph) => {
+            if (flowStore.flowParsed?.tasks?.length) return
+            const tasks = (flowGraph?.nodes ?? [])
+                .filter((n: any) => n.task?.type)
+                .map((n: any) => ({type: n.task.type, version: n.task.version}))
+            await resolveTaskTopologyDetails(tasks)
+        },
+        {immediate: true},
+    )
 
     const emit = defineEmits([
         "follow",

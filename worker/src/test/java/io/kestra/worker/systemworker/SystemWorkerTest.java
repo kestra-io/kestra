@@ -33,7 +33,7 @@ class SystemWorkerTest {
             mock(ApplicationEventPublisher.class),
             mock(WorkerJobExecutor.class),
             mock(DirectQueueJobFetcher.class),
-            List.<WorkerIOSender>of(),
+            List.of(),
             mock(MaintenanceService.class),
             mock(MetricRegistry.class),
             mock(ServerConfig.class)
@@ -47,7 +47,7 @@ class SystemWorkerTest {
             ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
             WorkerJobExecutor workerJobExecutor,
             DirectQueueJobFetcher directQueueJobFetcher,
-            List<WorkerIOSender> workerIOSenders,
+            List<DirectQueueWorkerIOSender<?>> workerIOSenders,
             MaintenanceService maintenanceService,
             MetricRegistry metricRegistry,
             ServerConfig serverConfig

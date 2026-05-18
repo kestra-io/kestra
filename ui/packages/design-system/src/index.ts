@@ -13,7 +13,6 @@ import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
-import KsBreadcrumbItem from "./components/Navigation/KsBreadcrumb/KsBreadcrumbItem.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
@@ -110,6 +109,7 @@ export {setMomentInstance, setDateFormatter} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
 export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
+export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
@@ -155,7 +155,6 @@ const components: Record<string, Component> = {
     KsAvatar,
     KsBadge,
     KsBreadcrumb,
-    KsBreadcrumbItem,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -244,7 +243,6 @@ export {
     KsAvatar,
     KsBadge,
     KsBreadcrumb,
-    KsBreadcrumbItem,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -353,7 +351,6 @@ declare module "vue" {
         KsAvatar: typeof KsAvatar
         KsBadge: typeof KsBadge
         KsBreadcrumb: typeof KsBreadcrumb
-        KsBreadcrumbItem: typeof KsBreadcrumbItem
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard

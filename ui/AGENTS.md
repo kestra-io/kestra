@@ -250,7 +250,7 @@ If your `<style>` block needs to exist:
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
 | `KsTopNavBar` | Top navigation bar |
-| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
+| `KsBreadcrumb` | Breadcrumb: items + title + auto-collapse to `...` past 4 items. Set `showLeading` for the top-nav variant (Kestra monogram linked to `leadingTo`, default `/`) |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
 ### Kestra-specific

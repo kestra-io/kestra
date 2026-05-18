@@ -10,12 +10,18 @@
         </KsIconButton>
         <div class="title-section">
             <div class="d-flex align-items-center gap-2">
-                <Breadcrumb :items="store.breadcrumb" :title="store.title" :mainIcon="activeMenuIcon">
+                <KsBreadcrumb
+                    :items="store.breadcrumb"
+                    :title="store.title"
+                    :mainIcon="activeMenuIcon"
+                    showLeading
+                >
                     <template #title>
-                        <div id="topnav-title-slot" v-show="store.hasTitleSlot" class="d-inline-flex" />
-                        <template v-if="!store.hasTitleSlot">{{ store.title }}</template>
+                        <span id="topnav-title-slot">
+                            <template v-if="!store.hasTitleSlot">{{ store.title }}</template>
+                        </span>
                     </template>
-                </Breadcrumb>
+                </KsBreadcrumb>
                 <KsTooltip v-if="store.description" :content="store.description">
                     <Information class="ms-2 icon" />
                 </KsTooltip>
@@ -62,14 +68,13 @@
     import GlobalSearch from "./GlobalSearch.vue"
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
     import StarIcon from "vue-material-design-icons/Star.vue"
-    import Information from "vue-material-design-icons/Information.vue"
+    import Information from "vue-material-design-icons/InformationOutline.vue"
     import Menu from "vue-material-design-icons/Menu.vue"
     import Badge from "../global/Badge.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
     import {useRouteTabsStore} from "../../stores/routeTabs"
-    import Breadcrumb from "./Breadcrumb.vue"
     import {useLeftMenu, type MenuItem} from "override/components/useLeftMenu"
 
     const route = useRoute()
@@ -131,17 +136,12 @@
 
     const activeMenuIcon = computed(() => activeMenuItem.value?.icon?.element)
 
-    const currentFavURI = computed(() => {
-        if (route) {
-            return (
-                window.location.pathname +
-                window.location.search
-                    .replace(/&?page=[^&]*/gi, "")
-                    .replace(/\?&/, "?")
-            )
-        }
-        return ""
-    })
+    const currentFavURI = computed(() =>
+        route.fullPath
+            .replace(/[&?]page=[^&]*/gi, "")
+            .replace(/\?&/, "?")
+            .replace(/\?$/, ""),
+    )
 
     const bookmarked = computed(() =>
         bookmarksStore.pages.some((page) => page.path === currentFavURI.value),

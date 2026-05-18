@@ -13,14 +13,14 @@
 <script setup lang="ts">
     import {nextTick, onMounted, onUnmounted, useSlots, watchEffect} from "vue"
     import {useTopNavStore} from "../../stores/topNav"
-    import type {BreadcrumbItem} from "./breadcrumbTypes"
+    import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         title: string;
         description?: string;
-        breadcrumb?: BreadcrumbItem[];
+        breadcrumb?: KsBreadcrumbItem[];
         beta?: boolean;
     }>()
 

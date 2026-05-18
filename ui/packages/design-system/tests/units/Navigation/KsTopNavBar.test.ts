@@ -36,11 +36,11 @@ describe("KsTopNavBar", () => {
             },
             global: globalConfig,
         })
-        const items = wrapper.findAll(".kel-breadcrumb__item")
+        const items = wrapper.findAll(".ks-breadcrumb__item")
         expect(items.length).toBe(2)
     })
 
-    test("disabled breadcrumb item renders as anchor without link", () => {
+    test("disabled breadcrumb item renders as a static span", () => {
         const wrapper = mount(KsTopNavBar, {
             props: {
                 title: "my-flow",
@@ -48,8 +48,10 @@ describe("KsTopNavBar", () => {
             },
             global: globalConfig,
         })
-        expect(wrapper.find(".pe-none").exists()).toBe(true)
-        expect(wrapper.find(".pe-none a").exists()).toBe(true)
+        const item = wrapper.find(".ks-breadcrumb__item")
+        expect(item.exists()).toBe(true)
+        expect(item.find("a").exists()).toBe(false)
+        expect(item.text()).toContain("Namespace")
     })
 
     test("renders description tooltip icon when description prop provided", () => {

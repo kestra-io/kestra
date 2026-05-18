@@ -4,18 +4,10 @@
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden ks-top-title">
             <div class="d-flex align-items-end gap-2">
                 <div class="d-flex flex-column gap-2">
-                    <KsBreadcrumb v-if="breadcrumb">
-                        <KsBreadcrumbItem
-                            v-for="(item, x) in breadcrumb"
-                            :key="x"
-                            :class="{'pe-none': item.disabled}"
-                        >
-                            <a v-if="item.disabled || !item.link">{{ item.label }}</a>
-                            <component v-else :is="RouterLink" :to="item.link">
-                                {{ item.label }}
-                            </component>
-                        </KsBreadcrumbItem>
-                    </KsBreadcrumb>
+                    <KsBreadcrumb
+                        v-if="breadcrumb"
+                        :items="breadcrumb"
+                    />
                     <h1 class="h5 fw-semibold m-0 d-inline-flex">
                         <slot name="title">
                             {{ title }}
@@ -68,13 +60,12 @@
 </template>
 
 <script setup lang="ts">
-    import {resolveComponent} from "vue"
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
     import StarIcon from "vue-material-design-icons/Star.vue"
-    import Information from "vue-material-design-icons/Information.vue"
+    import Information from "vue-material-design-icons/InformationOutline.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
-    import KsBreadcrumbItem from "../KsBreadcrumb/KsBreadcrumbItem.vue"
+    import type {KsBreadcrumbItem} from "../KsBreadcrumb/types"
     import KsButton from "../../Basic/KsButton/KsButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
@@ -82,11 +73,7 @@
         title: string
         description?: string
         longDescription?: string
-        breadcrumb?: {
-            label: string
-            link?: any
-            disabled?: boolean
-        }[]
+        breadcrumb?: KsBreadcrumbItem[]
         beta?: boolean
         isBookmarked?: boolean
     }>()
@@ -105,8 +92,6 @@
         "more-actions"?(): unknown
         "actions"?(): unknown
     }>()
-
-    const RouterLink = resolveComponent("RouterLink")
 </script>
 
 <style scoped lang="scss">
@@ -118,7 +103,7 @@
         border-bottom: 1px solid var(--ks-border-default);
         background: var(--ks-bg-surface);
 
-        .ks-top-title, h1, .kel-breadcrumb {
+        .ks-top-title, h1, .ks-breadcrumb {
             white-space: nowrap;
             max-width: 100%;
             text-overflow: ellipsis;
@@ -173,17 +158,6 @@
             &.active {
                 color: var(--ks-text-link);
             }
-        }
-
-        :deep(.kel-breadcrumb__item) {
-            display: inline-block;
-        }
-
-        :deep(.kel-breadcrumb__inner) {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
         }
 
         .side {

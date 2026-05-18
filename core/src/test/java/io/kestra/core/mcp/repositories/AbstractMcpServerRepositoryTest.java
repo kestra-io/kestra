@@ -279,8 +279,6 @@ public abstract class AbstractMcpServerRepositoryTest {
         assertThat(tenantCount).isEqualTo(1);
     }
 
-    // ── CrudEvent publishing ─────────────────────────────────────────────────
-
     @Test
     void givenNewMcp_whenSave_thenCreateEventPublished() {
         // Given

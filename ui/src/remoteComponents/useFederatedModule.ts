@@ -80,14 +80,13 @@ export function useFederatedModule(slotName: keyof typeof KnownSlotsPropNames) {
                         manifest.styles.forEach((style: string) => addCSSLinkIfNotAlreadyPresent(`${basePath}${style}`))
                     }
 
+                    const sourceHash = manifest.sourceHash ?? Math.random().toString(36).substring(7)
+
                     registerRemotes([
                         {
                             type: "module",
                             name: remoteName,
-                            // FIXME: avoid caching by always providing a new url, 
-                            // we need to store the hash of the dist folder in the manifest 
-                            // and use it here instead of a random string
-                            entry: `${basePath}plugin-ui.js?${Math.random().toString(36).substring(7)}`,
+                            entry: `${basePath}plugin-ui.js?${sourceHash}`,
                         },
                     ])
 

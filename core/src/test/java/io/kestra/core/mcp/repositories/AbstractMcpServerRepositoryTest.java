@@ -178,7 +178,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerRepository.save(null, createMcpServer(tenant));
 
         // When
-        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 10), tenant);
+        ArrayListTotal<McpServer> results = mcpServerRepository.find(Pageable.from(1, 10), tenant);
 
         // Then
         assertThat(results.size()).isEqualTo(2);
@@ -194,7 +194,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerRepository.delete(tenant, toDelete.id());
 
         // When
-        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 10), tenant);
+        ArrayListTotal<McpServer> results = mcpServerRepository.find(Pageable.from(1, 10), tenant);
 
         // Then
         assertThat(results.size()).isEqualTo(1);
@@ -209,8 +209,8 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerRepository.save(null, createMcpServer(tenant2));
 
         // When / Then
-        assertThat(mcpServerRepository.listAll(Pageable.from(1, 10), tenant1).size()).isEqualTo(1);
-        assertThat(mcpServerRepository.listAll(Pageable.from(1, 10), tenant2).size()).isEqualTo(1);
+        assertThat(mcpServerRepository.find(Pageable.from(1, 10), tenant1).size()).isEqualTo(1);
+        assertThat(mcpServerRepository.find(Pageable.from(1, 10), tenant2).size()).isEqualTo(1);
     }
 
     @Test
@@ -240,7 +240,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerService.createDefaultMcpServerIfNotExist(tenant);
 
         // Then — exactly one default server, no duplicate
-        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 100), tenant);
+        ArrayListTotal<McpServer> results = mcpServerRepository.find(Pageable.from(1, 100), tenant);
         long defaultCount = results.stream().filter(McpServer::isDefault).count();
         assertThat(defaultCount).isEqualTo(1);
     }
@@ -254,7 +254,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerRepository.save(null, createMcpServer(tenant2));
 
         // When
-        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 100));
+        ArrayListTotal<McpServer> results = mcpServerRepository.findForAllTenants(Pageable.from(1, 100));
 
         // Then — both tenants' servers are present
         long tenant1Count = results.stream().filter(s -> tenant1.equals(s.tenantId())).count();
@@ -272,7 +272,7 @@ public abstract class AbstractMcpServerRepositoryTest {
         mcpServerRepository.delete(tenant, toDelete.id());
 
         // When
-        ArrayListTotal<McpServer> results = mcpServerRepository.listAll(Pageable.from(1, 100));
+        ArrayListTotal<McpServer> results = mcpServerRepository.findForAllTenants(Pageable.from(1, 100));
 
         // Then — deleted record is excluded
         long tenantCount = results.stream().filter(s -> tenant.equals(s.tenantId())).count();

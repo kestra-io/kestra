@@ -57,6 +57,14 @@
         <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
             <GlobalSearch class="trigger-flow-guided-step" />
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <KsIconButton
+                class="dock-toggle"
+                :class="{'is-open': miscStore.contextInfoBarOpenTab}"
+                :ariaLabel="t('Toggle panel')"
+                @click="togglePanel"
+            >
+                <DockRight />
+            </KsIconButton>
         </div>
     </nav>
 </template>
@@ -71,10 +79,12 @@
     import Information from "vue-material-design-icons/InformationOutline.vue"
     import Menu from "vue-material-design-icons/Menu.vue"
     import Badge from "../global/Badge.vue"
+    import DockRight from "vue-material-design-icons/DockRight.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
     import {useRouteTabsStore} from "../../stores/routeTabs"
+    import {useMiscStore} from "override/stores/misc"
     import {useLeftMenu, type MenuItem} from "override/components/useLeftMenu"
 
     const route = useRoute()
@@ -83,8 +93,13 @@
     const bookmarksStore = useBookmarksStore()
     const store = useTopNavStore()
     const routeTabsStore = useRouteTabsStore()
+    const miscStore = useMiscStore()
     const {menu} = useLeftMenu()
     const {t} = useI18n()
+
+    function togglePanel() {
+        miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
+    }
 
     const activeTabValue = computed(() => {
         // Tabs that bring their own `route` override (e.g. blueprints sub-pages
@@ -213,6 +228,24 @@
 
         &.active {
             color: var(--ks-text-link);
+        }
+    }
+
+    .dock-toggle {
+        border: none;
+        color: var(--ks-text-dim);
+
+        &:deep(svg) {
+            fill: currentColor;
+            stroke: currentColor;
+        }
+
+        &.is-open {
+            color: var(--ks-icon-default);
+        }
+
+        @media (max-width: 767px) {
+            display: none;
         }
     }
 

@@ -14,12 +14,10 @@
 <script setup lang="ts">
     import {useTemplateRef} from "vue"
     import {ElCascaderPanel} from "element-plus"
-    import Node from "element-plus/es/components/cascader-panel/src/node"
+
     import {useFilteredProps} from "../../utils/filteredProps"
 
-    const cascader = useTemplateRef<{
-        getCheckedNodes: (leafOnly: boolean) => Node[]
-    }>("cascaderPanelRef")
+    const cascader = useTemplateRef("cascaderPanelRef")
 
     defineOptions({inheritAttrs: false})
 

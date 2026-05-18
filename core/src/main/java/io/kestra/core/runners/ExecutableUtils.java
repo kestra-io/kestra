@@ -72,8 +72,7 @@ public final class ExecutableUtils {
         Map<String, Object> inputs,
         List<Label> labels,
         boolean inheritLabels,
-        Property<ZonedDateTime> scheduleDate,
-        Map<String, Object> outputMap) throws InternalException {
+        Property<ZonedDateTime> scheduleDate) throws InternalException {
 
         // extract a trace context for propagation
         final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
@@ -217,9 +216,6 @@ public final class ExecutableUtils {
                         "taskId", currentTaskRun.getTaskId()
                     )
                 );
-                if (outputMap != null) {
-                    variables.put("taskRunOutputs", outputMap);
-                }
                 if (currentTaskRun.getValue() != null) {
                     variables.put("taskRunValue", currentTaskRun.getValue());
                 }
@@ -275,7 +271,6 @@ public final class ExecutableUtils {
                         .parentTask(currentTask)
                         .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
                         .execution(execution)
-                        .outputs(outputMap)
                         .build()
                 );
             })
@@ -299,10 +294,10 @@ public final class ExecutableUtils {
     }
 
     public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask,
-        TaskRun taskRun, Map<String, Object> outputs) {
+        TaskRun taskRun) {
         try {
             return executableTask
-                .createSubflowExecutionResult(runContext, taskRun, flow, execution, outputs)
+                .createSubflowExecutionResult(runContext, taskRun, flow, execution, null)
                 .orElse(null);
         } catch (Exception e) {
             log.error("Unable to create the Subflow Execution Result", e);
@@ -311,7 +306,6 @@ public final class ExecutableUtils {
                 .executionId(execution.getId())
                 .state(State.Type.FAILED)
                 .parentTaskRun(taskRun.withState(State.Type.FAILED).withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.FAILED)).build())))
-                .outputs(outputs)
                 .build();
         }
     }

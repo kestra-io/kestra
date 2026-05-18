@@ -13,7 +13,6 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
-const MF_RUNTIME_STUB = path.resolve(dirname, "plugins/stub-module-federation-runtime.js")
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 // No backend is available during tests — clear the API proxy so Vite doesn't
@@ -40,7 +39,6 @@ export default defineConfig({
         ...resolvedViteConfig.resolve,
         alias: [
             ...resolvedViteConfig.resolve.alias,
-            {find: "module-federation/runtime", replacement: MF_RUNTIME_STUB},
         ],
     },
     coverage: {

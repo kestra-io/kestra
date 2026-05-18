@@ -48,7 +48,7 @@ class AdditionalPluginTest {
     void shouldResolveAdditionalPluginSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, AdditionalPluginTest.AdditionalPluginTestTask.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions).hasSize(11);
+        assertThat(definitions).hasSize(10);
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest1");
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest2");
     }

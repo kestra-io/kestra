@@ -129,7 +129,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 }
             }
         });
-        workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
         assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
         // WHEN - stop first worker. The task is guaranteed to still be running because it is
@@ -241,7 +241,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTrigger, workerQueueId));
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
         // WHEN - stop first worker.
         worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).

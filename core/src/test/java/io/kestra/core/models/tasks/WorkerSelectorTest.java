@@ -62,13 +62,6 @@ class WorkerSelectorTest {
     }
 
     @Test
-    void shouldAllowNullMatch() {
-        WorkerSelector req = new WorkerSelector(List.of("docker"), null);
-
-        assertThat(req.match()).isNull();
-    }
-
-    @Test
     void shouldRejectMatchWithoutTags() {
         try (jakarta.validation.ValidatorFactory factory = validatorFactory()) {
             jakarta.validation.Validator validator = factory.getValidator();

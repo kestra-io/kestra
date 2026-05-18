@@ -77,6 +77,7 @@
     "backfill executions": "Backfill निष्पादन",
     "backfill paused": "Backfill PAUSED",
     "backfill running": "Backfill चल रहा है",
+    "bar": "बार",
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",
+    "chart type": "चार्ट प्रकार",
     "charts": "चार्ट्स",
     "choice": "विकल्प",
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
@@ -824,6 +826,7 @@
     "leave page": "पृष्ठ छोड़ें",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
     "light_version": "लाइट संस्करण",
+    "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
@@ -875,7 +878,7 @@
       "username_password": "यूज़रनेम और पासवर्ड"
     },
     "metric": "मेट्रिक",
-    "metric choice": "कृपया एक मेट्रिक और एकत्रीकरण चुनें",
+    "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
     "metrics": "मेट्रिक्स",
     "min": "न्यूनतम",
     "missingSource": "स्रोत अनुपलब्ध",

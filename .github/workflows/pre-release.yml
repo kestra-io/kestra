@@ -79,23 +79,14 @@ jobs:
       - name: Prepare executable
         run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
 
-      - name: Generate schema
+      - name: Generate and publish schema
         uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
         with:
           kestra-version: ${{ github.ref_name }}
           executable-path: build/executable/kestra
           output-path: oss.json
-
-      - name: GCP - Auth
-        uses: 'google-github-actions/auth@v3'
-        with:
-          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-
-      - name: Upload schema to GCS
-        uses: 'google-github-actions/upload-cloud-storage@v2'
-        with:
-          path: oss.json
-          destination: kestra-api-storage_prd/configuration-schema/${{ github.ref_name }}/
+          gcs-destination: kestra-api-storage_prd/configuration-schema/${{ github.ref_name }}/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Slack - Schema generation failure
         if: failure()
@@ -109,6 +100,4 @@ jobs:
     needs: [build-artifacts, backend-tests, frontend-tests]
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
-    secrets:
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
+    secrets: inherit

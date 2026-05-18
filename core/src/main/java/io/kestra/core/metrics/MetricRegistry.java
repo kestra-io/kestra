@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -487,6 +488,17 @@ public class MetricRegistry {
         };
         var labelTags = getLabelTags(execution.getLabels());
         var tenantTag = getTenantTag(execution.getTenantId());
+        return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
+    }
+
+    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId) {
+        var baseTags = new String[] {
+            TAG_FLOW_ID, triggerId.getFlowId(),
+            TAG_NAMESPACE_ID, triggerId.getNamespace(),
+            TAG_STATE, evaluationResult.stateType().name(),
+        };
+        var labelTags = getLabelTags(evaluationResult.labels() != null ? evaluationResult.labels() : List.of());
+        var tenantTag = getTenantTag(triggerId.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 

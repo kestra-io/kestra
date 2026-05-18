@@ -77,6 +77,7 @@
     "backfill executions": "backfill 실행",
     "backfill paused": "백필 일시 중지됨",
     "backfill running": "백필 실행 중",
+    "bar": "바",
     "before": "이전",
     "behavior": "동작",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
     "chart preview": "차트 미리보기",
+    "chart type": "차트 유형",
     "charts": "차트",
     "choice": "선택",
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
@@ -824,6 +826,7 @@
     "leave page": "페이지 나가기",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
+    "line": "라인",
     "line-by-line": "줄별로",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
     "log expand setting": "기본 Log 표시",
@@ -875,7 +878,7 @@
       "username_password": "사용자 이름 & 비밀번호"
     },
     "metric": "메트릭",
-    "metric choice": "메트릭과 집계를 선택하세요",
+    "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
     "metrics": "메트릭",
     "min": "Min",
     "missingSource": "소스 누락",

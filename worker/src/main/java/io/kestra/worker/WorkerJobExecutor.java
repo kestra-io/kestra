@@ -21,14 +21,18 @@ import io.kestra.worker.processors.WorkerJobProcessorFactory;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 
+import io.micronaut.context.annotation.Prototype;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Components responsible for executing {@link io.kestra.core.runners.WorkerJob}s
+ * Components responsible for executing {@link io.kestra.core.runners.WorkerJob}s.
+ * <p>
+ * Bound as {@link Prototype} so each agent (the regular {@link WorkerAgent}, the
+ * {@code SystemWorker}, ...) receives its own dedicated executor instance with
+ * its own {@link io.kestra.core.worker.models.WorkerContext}.
  */
-@Singleton
+@Prototype
 @Slf4j
 public class WorkerJobExecutor {
 

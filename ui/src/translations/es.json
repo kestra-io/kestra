@@ -77,6 +77,7 @@
     "backfill executions": "Ejecuciones de backfill",
     "backfill paused": "Backfill pausado",
     "backfill running": "Backfill en ejecución",
+    "bar": "Bar",
     "before": "antes",
     "behavior": "Comportamiento",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "Cambiar el estado de ejecución",
     "chart": "Gráfico",
     "chart preview": "Vista previa del gráfico",
+    "chart type": "Tipo de gráfico",
     "charts": "Gráficos",
     "choice": "Opción",
     "choose file": "Elige un archivo o suéltalo aquí...",
@@ -824,6 +826,7 @@
     "leave page": "Salir de la página",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
+    "line": "Línea",
     "line-by-line": "línea por línea",
     "loaded x dependencies": "{count} dependencias cargadas",
     "log expand setting": "Visualización predeterminada del Log",
@@ -875,7 +878,7 @@
       "username_password": "Nombre de usuario y contraseña"
     },
     "metric": "Métrica",
-    "metric choice": "Por favor elige una métrica y una agregación",
+    "metric choice": "No hay métricas disponibles para este flow",
     "metrics": "Métricas",
     "min": "Min",
     "missingSource": "Fuente faltante",

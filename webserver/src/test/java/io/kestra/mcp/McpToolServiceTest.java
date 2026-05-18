@@ -69,7 +69,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenReturnToolSpecForFlow() {
+    void shouldReturnToolSpecWhenFlowHasMcpToolTrigger() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
@@ -82,7 +82,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenAnnotationsAreMapped() {
+    void shouldMapAnnotationsWhenFlowHasMcpToolTrigger() {
         // Given — MCP_TRIGGER_ONE has Annotations(readOnly=true, openWorld=false, destructive=false, idempotent=true)
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
@@ -99,7 +99,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithoutMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowHasNoMcpToolTrigger() {
         // Given
         Schedule scheduleTrigger = Schedule.builder()
             .id("schedule")
@@ -116,7 +116,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithMultipleMcpToolTrigger_whenListToolSpecsForServer_thenToolSpecsReturnedForEachTrigger() {
+    void shouldReturnToolSpecForEachTriggerWhenFlowHasMultipleMcpToolTriggers() {
         // Given
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE, MCP_TRIGGER_TWO))));
 
@@ -131,7 +131,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithToolTrigger_whenListToolSpecsForServerForSameTriggerMultipleTimes_thenCachedToolSpecsReturned() {
+    void shouldReturnCachedToolSpecsWhenListingToolSpecsMultipleTimes() {
         // Given
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
@@ -146,7 +146,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenMultipleFlowsWithMcpToolTrigger_whenListToolSpecsForServer_thenToolSpecsReturnedForEachFlow() {
+    void shouldReturnToolSpecForEachFlowWhenMultipleFlowsHaveMcpToolTrigger() {
         // Given
         FlowWithSource savedFlow1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
         FlowWithSource savedFlow2 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_TWO))));
@@ -161,7 +161,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenDeletedFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowWithMcpToolTriggerIsDeleted() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
         flowRepository.delete(savedFlow);
@@ -174,7 +174,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithDisabledMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenMcpToolTriggerIsDisabled() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(DISABLED_MCP_TRIGGER))));
 
@@ -186,7 +186,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowsWithoutTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowHasNoTriggers() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of())));
         try {

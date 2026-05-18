@@ -16,6 +16,8 @@ logger.warnOnce = (msg, options) => {
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 
+import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
+
 export default defineConfig(({mode}) => {
     process.env = {...process.env, ...loadEnv(mode, process.cwd())}
 
@@ -98,6 +100,17 @@ export default defineConfig(({mode}) => {
                         singleton: true,
                         eager: true,
                     },
+                    // add all exports of @kestra-io/kestra-sdk as shared singletons
+                    ...Object.fromEntries(Object.keys(kestraSdkExports)
+                        .filter((key) => key !== ".")
+                        .map((key) => {
+                            const name = key.replace(/^\.\//, "").replace(/\/index\.js$/, "")
+                            return [`@kestra-io/kestra-sdk/${name}`, {
+                                singleton: true,
+                                eager: true,
+                            }]
+                        }),
+                    ),
                 },
             }),
             commit(),

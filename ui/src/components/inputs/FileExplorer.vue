@@ -725,7 +725,8 @@
             if (node?.data?.leaf === false) {
                 folder = filesStore.getPath(node.data.id)
             } else {
-                const selectedNode = tree.value.getCurrentNode()
+                const selectedKey = tree.value.getCurrentKey ? tree.value.getCurrentKey() : null
+                const selectedNode = selectedKey ? tree.value.getNode(selectedKey) : null
                 if (selectedNode?.leaf === false) {
                     node = selectedNode.id
                     folder = filesStore.getPath(selectedNode.id)

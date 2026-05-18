@@ -39,9 +39,7 @@
                     :key="item"
                     :label="item"
                     :value="item"
-                >
-                    <Markdown :source="item" />
-                </el-option>
+                />
             </el-select>
             <el-radio-group
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
@@ -75,9 +73,7 @@
                     :key="item"
                     :label="item"
                     :value="item"
-                >
-                    <Markdown :source="item" />
-                </el-option>
+                />
             </el-select>
             <el-input
                 type="password"

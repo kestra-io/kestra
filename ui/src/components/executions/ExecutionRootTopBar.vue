@@ -2,11 +2,11 @@
     <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
-            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
+            <Badge v-if="isATestExecution" :label="t('test-badge-text')" :tooltip="t('test-badge-tooltip')" />
         </template>
         <template #actions>
             <slot name="actions" />
-            <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'">
+            <div class="d-flex align-items-center gap-2" v-if="hasVisibleActions && route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
                         <KsButton
@@ -14,7 +14,7 @@
                             :icon="Pencil"
                             @click="editFlow"
                         >
-                            {{ $t("edit flow") }}
+                            {{ t("edit flow") }}
                         </KsButton>
                     </li>
                 </ul>
@@ -22,13 +22,13 @@
                 <KsDropdown class="d-flex d-xl-none align-items-center">
                     <KsButton>
                         <KsIcon><DotsVerticalIcon /></KsIcon>
-                        <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
+                        <span class="d-none d-lg-inline-block">{{ t("more_actions") }}</span>
                     </KsButton>
                     <template #dropdown>
                         <KsDropdownMenu>
                             <KsDropdownItem v-if="isAllowedEdit" @click="editFlow">
                                 <KsIcon><Pencil /></KsIcon>
-                                {{ $t("edit flow") }}
+                                {{ t("edit flow") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
                     </template>
@@ -40,15 +40,15 @@
                             v-if="primaryAction"
                             :is="primaryAction.component"
                             v-bind="primaryAction.props"
-                            :execution="execution"
+                            :execution="execution ?? {}"
                             type="primary"
                         />
 
                         <TriggerFlow
                             v-else-if="fallbackToExecute"
                             type="primary"
-                            :flowId="$route.params.flowId"
-                            :namespace="$route.params.namespace"
+                            :flowId="(route.params.flowId as string)"
+                            :namespace="(route.params.namespace as string)"
                         />
                     </div>
                 </div>
@@ -57,16 +57,14 @@
     </TopNavBar>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import DotsVerticalIcon from "vue-material-design-icons/DotsVertical.vue"
-    import Badge from "../global/Badge.vue"
-</script>
-
-<script>
-    import {mapStores} from "pinia"
     import {State} from "@kestra-io/design-system"
-
+    import Badge from "../global/Badge.vue"
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import Pause from "./overview/components/actions/Pause.vue"
     import Resume from "./overview/components/actions/Resume.vue"
@@ -77,92 +75,93 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
 
-    export default {
-        components: {
-            TriggerFlow,
-            Pause,
-            Resume,
-            Restart,
-            TopNavBar,
-        },
-        props: {
-            routeInfo: {
-                type: Object,
-                required: true,
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            execution() {
-                return this.executionsStore.execution
-            },
-            isAllowedEdit() {
-                return this.execution && this.authStore.user?.isAllowed(resource.FLOW, action.UPDATE, this.execution.namespace)
-            },
-            isAllowedTrigger() {
-                return this.execution && this.authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, this.execution.namespace)
-            },
-            hasVisibleActions() {
-                return this.isAllowedEdit || this.primaryAction || this.fallbackToExecute
-            },
-            fallbackToExecute() {
-                return this.execution && this.isAllowedTrigger && !this.primaryAction
-            },
-            primaryAction() {
-                if (!this.execution?.state) {
-                    return null
-                }
+    const props = defineProps<{
+        routeInfo: { title: string; breadcrumb?: any[] } // FIXME: type breadcrumb properly
+    }>()
 
-                if (State.isPaused(this.execution.state.current)) {
-                    return {
-                        component: Resume,
-                        props: {},
-                    }
-                }
+    const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
+    const router = useRouter()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return {
-                        component: Pause,
-                        props: {},
-                    }
-                }
+    const execution = computed(() => executionsStore.execution)
 
-                if (this.execution.state.current === State.FAILED) {
-                    return {
-                        component: Restart,
-                        props: {},
-                    }
-                }
+    const isAllowedEdit = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
+    )
 
-                if (State.getTerminatedStates().includes(this.execution.state.current)) {
-                    return {
-                        component: Restart,
-                        props: {
-                            isReplay: true,
-                        },
-                    }
-                }
+    const isAllowedTrigger = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, execution.value.namespace),
+    )
 
-                return null
+    const primaryAction = computed(() => {
+        if (!execution.value?.state) {
+            return null
+        }
+
+        if (State.isPaused(execution.value.state.current)) {
+            return {
+                component: Resume,
+                props: {},
+            }
+        }
+
+        if (State.isRunning(execution.value.state.current)) {
+            return {
+                component: Pause,
+                props: {},
+            }
+        }
+
+        if (execution.value.state.current === State.FAILED) {
+            return {
+                component: Restart,
+                props: {},
+            }
+        }
+
+        if (State.getTerminatedStates().includes(execution.value.state.current)) {
+            return {
+                component: Restart,
+                props: {
+                    isReplay: true,
+                },
+            }
+        }
+
+        return null
+    })
+
+    const fallbackToExecute = computed(() =>
+        execution.value && isAllowedTrigger.value && !primaryAction.value,
+    )
+
+    const hasVisibleActions = computed(() =>
+        isAllowedEdit.value || primaryAction.value || fallbackToExecute.value,
+    )
+
+    const isATestExecution = computed(() =>
+        execution.value &&
+        execution.value.labels &&
+        execution.value.labels.some((label: { key: string; value: string }) =>
+            label.key === "system.test" && label.value === "true",
+        ),
+    )
+
+    function editFlow() {
+        router.push({
+            name: "flows/update",
+            params: {
+                namespace: route.params.namespace,
+                id: route.params.flowId,
+                tab: "edit",
+                tenant: route.params.tenant,
             },
-            isATestExecution() {
-                return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true")
-            },
-        },
-        methods: {
-            editFlow() {
-                this.$router.push({
-                    name: "flows/update", params: {
-                        namespace: this.$route.params.namespace,
-                        id: this.$route.params.flowId,
-                        tab: "edit",
-                        tenant: this.$route.params.tenant,
-                    },
-                })
-            },
-        },
+        })
     }
 </script>
+
 <style scoped>
 
 @media (max-width: 575.98px) {

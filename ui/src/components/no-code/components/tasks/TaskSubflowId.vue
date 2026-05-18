@@ -5,8 +5,8 @@
         filterable
         clearable
         allowCreate
-        :placeholder="task.namespace ? 'Select' : 'Select namespace first'"
-        :disabled="!task.namespace"
+        :placeholder="task?.namespace ? 'Select' : 'Select namespace first'"
+        :disabled="!task?.namespace"
     >
         <KsOption
             v-for="item in flowIds"
@@ -16,36 +16,49 @@
         />
     </KsSelect>
 </template>
-<script>
-    import {mapStores} from "pinia"
+
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+    import {collapseEmptyValues} from "./MixinTask"
     import {useFlowStore} from "../../../../stores/flow"
-    import Task from "./MixinTask"
 
-    export default {
-        mixins: [Task],
-        data() {
-            return {
-                flowIds: [],
-            }
-        },
-        watch: {
-            namespace: {
-                immediate: true,
-                async handler() {
-                    this.flowIds = (await this.flowStore.flowsByNamespace(this.namespace))
-                        .map(flow => flow.id)
+    const props = defineProps<{
+        modelValue?: unknown
+        schema?: Record<string, unknown>
+        required?: boolean
+        task?: Record<string, unknown>
+        root?: string
+        definitions?: Record<string, unknown>
+    }>()
 
-                    if (this.namespace === this.flowStore.flow.namespace) {
-                        this.flowIds = this.flowIds.filter(id => id !== this.flowStore.flow.id)
-                    }
-                },
-            },
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-            namespace() {
-                return this.task?.namespace ?? this.flowStore.flow?.namespace
-            },
-        },
+    const emit = defineEmits<{
+        "update:modelValue": [unknown]
+    }>()
+
+    function onInput(value: unknown) {
+        emit("update:modelValue", collapseEmptyValues(value))
     }
+
+    const values = computed(() =>
+        props.modelValue !== undefined ? props.modelValue : props.schema?.default,
+    )
+
+    const flowStore = useFlowStore()
+    const flowIds = ref<string[]>([])
+
+    const namespace = computed<string | undefined>(() =>
+        (props.task?.namespace as string | undefined) ?? flowStore.flow?.namespace,
+    )
+
+    watch(namespace, async () => {
+        if (!namespace.value) {
+            return
+        }
+        flowIds.value = (await flowStore.flowsByNamespace(namespace.value))
+            .map((flow: { id: string }) => flow.id)
+
+        if (namespace.value === flowStore.flow?.namespace) {
+            flowIds.value = flowIds.value.filter(id => id !== flowStore.flow?.id)
+        }
+    }, {immediate: true})
 </script>

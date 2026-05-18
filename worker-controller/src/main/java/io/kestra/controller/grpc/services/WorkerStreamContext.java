@@ -26,6 +26,10 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Connection metadata (workerId, queue subscriptions, etc.)</li>
  * </ul>
  * <p>
+ * Capacity accounting (slot reservation, per-queue bucket math) is delegated
+ * to a {@link WorkerCapacityPolicy} chosen at construction time by
+ * {@link WorkerCapacityPolicyFactory}.
+ * <p>
  * Thread-safe: all operations are safe for concurrent access from multiple threads.
  *
  * @param <T> the response type for the stream observer (WorkerJobResponse after proto compilation)
@@ -39,6 +43,7 @@ public class WorkerStreamContext<T> {
     private volatile List<QueueSubscription> queueSubscriptions;
     private final int maxConcurrency;
     private final StreamObserver<T> responseObserver;
+    private final WorkerCapacityPolicy capacityPolicy;
 
     /**
      * Number of jobs the worker has capacity to receive.
@@ -68,18 +73,7 @@ public class WorkerStreamContext<T> {
     private volatile Instant lastActivity;
 
     /**
-     * Number of slots currently occupied in the shared (unreserved) bucket.
-     */
-    private final AtomicInteger sharedUsed = new AtomicInteger(0);
-
-    /**
-     * Per-Task-Queue counts of slots currently occupied in guaranteed buckets.
-     * Populated lazily on first reserve/release for a Worker Queue.
-     */
-    private final ConcurrentHashMap<String, AtomicInteger> guaranteedUsed = new ConcurrentHashMap<>();
-
-    /**
-     * Creates a new worker stream context.
+     * Creates a new worker stream context with an explicit capacity policy.
      *
      * @param workerId unique identifier for this worker instance
      * @param workerGroupId the resolved worker group ID; the controller normalizes the
@@ -88,18 +82,36 @@ public class WorkerStreamContext<T> {
      * @param queueSubscriptions the Worker Queue subscriptions with reservedPercent values
      * @param maxConcurrency maximum concurrent jobs this worker can handle
      * @param responseObserver gRPC stream observer for sending jobs to the worker
+     * @param capacityPolicy slot reservation policy; must already reflect
+     *                       {@code maxConcurrency} and {@code queueSubscriptions}
+     */
+    public WorkerStreamContext(String workerId,
+        String workerGroupId,
+        List<QueueSubscription> queueSubscriptions,
+        int maxConcurrency,
+        StreamObserver<T> responseObserver,
+        WorkerCapacityPolicy capacityPolicy) {
+        this.workerId = workerId;
+        this.workerGroupId = workerGroupId;
+        this.queueSubscriptions = queueSubscriptions == null ? List.of() : List.copyOf(queueSubscriptions);
+        this.maxConcurrency = maxConcurrency;
+        this.responseObserver = responseObserver;
+        this.capacityPolicy = Objects.requireNonNull(capacityPolicy, "capacityPolicy must not be null");
+        this.lastActivity = Instant.now();
+    }
+
+    /**
+     * Convenience constructor that installs the default
+     * {@link SinglePoolCapacityPolicy}. Used by unit tests; production paths
+     * build the context via {@link WorkerCapacityPolicyFactory}.
      */
     public WorkerStreamContext(String workerId,
         String workerGroupId,
         List<QueueSubscription> queueSubscriptions,
         int maxConcurrency,
         StreamObserver<T> responseObserver) {
-        this.workerId = workerId;
-        this.workerGroupId = workerGroupId;
-        this.queueSubscriptions = queueSubscriptions == null ? List.of() : List.copyOf(queueSubscriptions);
-        this.maxConcurrency = maxConcurrency;
-        this.responseObserver = responseObserver;
-        this.lastActivity = Instant.now();
+        this(workerId, workerGroupId, queueSubscriptions, maxConcurrency, responseObserver,
+            new SinglePoolCapacityPolicy(maxConcurrency));
     }
 
     /**
@@ -112,132 +124,44 @@ public class WorkerStreamContext<T> {
     }
 
     /**
-     * Computes the guaranteed-slot bucket size for the given Worker Queue:
-     * {@code floor(maxConcurrency x reservedPercent / 100)}. Worker Queues with no
-     * reservation get 0.
+     * Slots guaranteed to {@code workerQueueId} by the policy. Single-pool
+     * policies report 0 — the entire pool sits in {@link #sharedCapacity()}.
      */
     public int guaranteedCapacity(String workerQueueId) {
-        String normalized = workerQueueId == null ? "" : workerQueueId;
-        return queueSubscriptions.stream()
-            .filter(s -> Objects.equals(s.normalizedWorkerQueueId(), normalized))
-            .findFirst()
-            .map(s -> s.hasReservation() ? (maxConcurrency * s.reservedPercent()) / 100 : 0)
-            .orElse(0);
+        return capacityPolicy.allocated(workerQueueId);
     }
 
-
-    /**
-     * Total guaranteed slots across all subscriptions.
-     */
-    public int totalGuaranteed() {
-        return queueSubscriptions.stream()
-            .mapToInt(s -> s.hasReservation() ? (maxConcurrency * s.reservedPercent()) / 100 : 0)
-            .sum();
-    }
-
-    /** Size of the shared bucket: {@code maxConcurrency - totalGuaranteed}. */
+    /** Size of the shared (unreserved) pool. */
     public int sharedCapacity() {
-        return maxConcurrency - totalGuaranteed();
+        return capacityPolicy.sharedAllocated();
     }
 
-    /** Free slots currently available in the shared bucket. */
+    /** Free slots currently available in the shared pool. */
     public int sharedFree() {
-        return sharedCapacity() - sharedUsed.get();
+        return capacityPolicy.sharedAllocated() - capacityPolicy.sharedUsed();
     }
 
-    /** Free slots currently available in the given Worker Queue's guaranteed bucket. */
+    /** Free slots currently available in {@code workerQueueId}'s guaranteed bucket. */
     public int guaranteedFree(String workerQueueId) {
-        AtomicInteger used = guaranteedUsed.get(workerQueueId);
-        int u = used == null ? 0 : used.get();
-        return guaranteedCapacity(workerQueueId) - u;
+        return capacityPolicy.allocated(workerQueueId) - capacityPolicy.used(workerQueueId);
+    }
+
+    /** Slots currently used in {@code workerQueueId}'s guaranteed bucket. */
+    public int guaranteedUsed(String workerQueueId) {
+        return capacityPolicy.used(workerQueueId);
+    }
+
+    /** Slots currently used in the shared pool. */
+    public int sharedUsed() {
+        return capacityPolicy.sharedUsed();
     }
 
     /**
-     * Attempts to atomically reserve a slot for the given Worker Queue.
-     * <p>
-     * Reservation order:
-     * <ol>
-     *   <li>The Worker Queue's own guaranteed bucket — reserved capacity is honored first.</li>
-     *   <li>The shared (unreserved) bucket.</li>
-     *   <li>Any other {@link QueueSubscription.Mode#ELASTIC} subscription's guaranteed
-     *       bucket that has idle slots. The borrower's own mode does <em>not</em> affect
-     *       this — only the lender opts in by being ELASTIC. The bucket name returned is
-     *       the <em>lender's</em> uid so that {@link #releaseBucket(String)} returns the
-     *       slot to the right counter.</li>
-     * </ol>
-     * Returns {@code null} if no tier has capacity (caller should pause the subscription).
-     *
-     * @param workerQueueId the Worker Queue id the job is being dispatched for
-     * @return the Worker Queue id (own bucket or borrowed lender uid),
-     *         {@link PendingJob#SHARED}, or {@code null}
+     * Attempts to atomically reserve a slot for the given Worker Queue. See
+     * {@link WorkerCapacityPolicy#tryReserve(String)} for tier ordering.
      */
     public String tryReserveBucket(String workerQueueId) {
-        AtomicInteger counter = guaranteedUsed.computeIfAbsent(workerQueueId, k -> new AtomicInteger(0));
-        if (tryIncrement(counter, guaranteedCapacity(workerQueueId))) {
-            return workerQueueId;
-        }
-        if (tryIncrement(sharedUsed, sharedCapacity())) {
-            return PendingJob.SHARED;
-        }
-        String borrowed = tryBorrowFromElasticLender(workerQueueId);
-        if (borrowed != null) {
-            return borrowed;
-        }
-        return null;
-    }
-
-    /**
-     * Attempts to borrow a slot from another {@link QueueSubscription.Mode#ELASTIC}
-     * subscription's guaranteed bucket. Iterates other subscriptions on this worker;
-     * for each elastic one with free guaranteed slots, CAS-increments its counter
-     * and returns the lender's uid. Returns {@code null} if no lender has capacity.
-     * <p>
-     * Only the lender's mode is checked — any borrower may attempt to borrow from any
-     * ELASTIC lender. The lender's STRICT mode is the load-bearing protection.
-     */
-    private String tryBorrowFromElasticLender(String borrowerUid) {
-        String normalizedBorrower = borrowerUid == null || borrowerUid.isEmpty() ? "" : borrowerUid;
-        for (QueueSubscription lender : queueSubscriptions) {
-            String lenderUid = lender.normalizedWorkerQueueId();
-            if (normalizedBorrower.equals(lenderUid)) {
-                continue;
-            }
-            if (!lender.isElastic() || !lender.hasReservation()) {
-                continue;
-            }
-            int capacity = guaranteedCapacity(lenderUid);
-            if (capacity <= 0) {
-                continue;
-            }
-            AtomicInteger counter = guaranteedUsed.computeIfAbsent(lenderUid, k -> new AtomicInteger(0));
-            if (tryIncrement(counter, capacity)) {
-                return lenderUid;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns {@code true} if any other {@link QueueSubscription.Mode#ELASTIC}
-     * subscription on this worker has idle guaranteed slots that {@code borrowerUid}
-     * could borrow. Used by {@link #hasCapacityForQueue(String)} so the dispatcher
-     * doesn't pause an elastic subscription that could otherwise borrow.
-     */
-    private boolean anyElasticLenderHasFree(String borrowerUid) {
-        String normalizedBorrower = borrowerUid == null || borrowerUid.isEmpty() ? "" : borrowerUid;
-        for (QueueSubscription lender : queueSubscriptions) {
-            String lenderUid = lender.normalizedWorkerQueueId();
-            if (normalizedBorrower.equals(lenderUid)) {
-                continue;
-            }
-            if (!lender.isElastic() || !lender.hasReservation()) {
-                continue;
-            }
-            if (guaranteedFree(lenderUid) > 0) {
-                return true;
-            }
-        }
-        return false;
+        return capacityPolicy.tryReserve(workerQueueId);
     }
 
     /**
@@ -246,49 +170,26 @@ public class WorkerStreamContext<T> {
      * @param bucket {@link PendingJob#SHARED} or a Worker Queue id
      */
     public void releaseBucket(String bucket) {
-        if (bucket == null) {
-            return;
-        }
-        if (PendingJob.SHARED.equals(bucket)) {
-            sharedUsed.updateAndGet(v -> Math.max(0, v - 1));
-        } else {
-            AtomicInteger counter = guaranteedUsed.get(bucket);
-            if (counter != null) {
-                counter.updateAndGet(v -> Math.max(0, v - 1));
-            }
-        }
+        capacityPolicy.release(bucket);
     }
 
     /**
      * Returns {@code true} if the worker has any available capacity for tasks from
-     * the given Worker Queue — own guaranteed, shared, or borrowable from any ELASTIC
-     * lender's idle reserved slots on this worker.
-     * <p>
-     * The dispatcher uses this to decide whether to pause the subscription; it must
-     * mirror the tiers in {@link #tryReserveBucket(String)}, otherwise a subscription
-     * that could borrow would be paused before ever attempting to.
+     * the given Worker Queue (direct or via policy-internal borrowing).
      */
     public boolean hasCapacityForQueue(String workerQueueId) {
-        if (sharedFree() > 0 || guaranteedFree(workerQueueId) > 0) {
-            return true;
-        }
-        return anyElasticLenderHasFree(workerQueueId);
-    }
-
-    private static boolean tryIncrement(AtomicInteger counter, int limit) {
-        int current;
-        do {
-            current = counter.get();
-            if (current >= limit) return false;
-        } while (!counter.compareAndSet(current, current + 1));
-        return true;
+        return capacityPolicy.hasCapacity(workerQueueId);
     }
 
     /**
-     * Replaces this worker's queue subscriptions (dynamic reconfiguration).
+     * Replaces this worker's queue subscriptions (dynamic reconfiguration) and
+     * forwards the change to the capacity policy. In-flight reservations are
+     * preserved.
      */
     public void replaceQueueSubscriptions(List<QueueSubscription> newSubscriptions) {
-        this.queueSubscriptions = newSubscriptions == null ? List.of() : List.copyOf(newSubscriptions);
+        List<QueueSubscription> resolved = newSubscriptions == null ? List.of() : List.copyOf(newSubscriptions);
+        this.queueSubscriptions = resolved;
+        this.capacityPolicy.replaceSubscriptions(resolved);
     }
 
     /**

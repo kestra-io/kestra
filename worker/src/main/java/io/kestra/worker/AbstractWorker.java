@@ -207,9 +207,12 @@ public abstract class AbstractWorker extends AbstractService {
         );
 
         String ownGroup = WorkerGroups.normalize(this.workerGroupId);
+        // Only expose worker-level (global) gauges in the heartbeat.
         return metrics
             .flatMap(metric -> metricRegistry.findGauges(metric).stream())
             .filter(gauge -> ownGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP)))
+            .filter(gauge -> gauge.getId().getTag(MetricRegistry.TAG_TENANT_ID) == null
+                && gauge.getId().getTag(MetricRegistry.TAG_NAMESPACE_ID) == null)
             .map(Metric::of)
             .collect(Collectors.toSet());
     }

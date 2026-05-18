@@ -62,6 +62,9 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     private WorkerQueueResolver workerQueueResolver;
 
     @Inject
+    private WorkerCapacityPolicyFactory workerCapacityPolicyFactory;
+
+    @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
     /**
@@ -120,9 +123,11 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                         workerId, workerGroupId, subscriptions, maxConcurrency
                     );
 
-                    // Create context for this worker stream
+                    // Create context for this worker stream with the deployment-specific
+                    // capacity policy supplied by the factory bean.
+                    WorkerCapacityPolicy capacityPolicy = workerCapacityPolicyFactory.create(maxConcurrency, subscriptions);
                     WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(
-                        workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver
+                        workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
                     );
                     contextRef.set(context);
 

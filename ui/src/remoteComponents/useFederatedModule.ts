@@ -2,7 +2,8 @@ import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured} from
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {KnownSlotsPropNames, type KnownSlotProps} from "@kestra-io/slot-contracts"
+import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
+import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
 
 
 function wrapWithErrorBoundary(inner: any) {
@@ -37,16 +38,23 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
     }
 }
 
-export function useFederatedModule(slotName: keyof typeof KnownSlotsPropNames) {
+export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(slotName: T) {
 
     const RemoteComponents = shallowReactive<Record<string, any>>({})
-    const taskAdditionalInfoRemote = ref<Record<string, any>>({})
+    const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
 
-    
     async function resolveRemoteComponent(taskTypes: {cls: string, version: string | undefined}[]) {
-        let pluginTaskManifests: Record<string, any[]> = {}
+        
+        // return early if no task is passed
+        if(taskTypes.length === 0){
+            manifestReady.value = true
+            return
+        }
+
+        let pluginTaskManifests: Record<string, PluginUiModuleWithGroup[]> = {}
+
         try {
             // get the manifest of the all the tasks we will
             // have in the graph
@@ -119,11 +127,12 @@ export function useFederatedModule(slotName: keyof typeof KnownSlotsPropNames) {
         }
     }
 
-    const RemoteComponent = defineComponent<KnownSlotProps[typeof slotName]>({
+    const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
-        setup(props) {
-            const Comp = RemoteComponents[props.taskType]
-            return () => Comp ? h(Comp, {...props}) : null
+        setup(props: { taskType: string } & KnownSlotProps[T]) {
+            const {taskType, ...restProps} = props
+            const Comp = RemoteComponents[taskType]
+            return () => Comp ? h(Comp, restProps) : null
         },
     })
 

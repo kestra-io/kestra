@@ -1,4 +1,4 @@
-import {Execution, MetricEntry, Task} from "@kestra-io/kestra-sdk"
+import type {Execution, MetricEntry, Task} from "@kestra-io/kestra-sdk"
 
 export const propNames = ["taskType", "task", "execution", "namespace", "flowId", "metrics"] as const
 
@@ -9,4 +9,9 @@ export interface Props extends Partial<Record<typeof propNames[number], any>> {
     namespace?: string;
     flowId?: string;
     metrics: MetricEntry[];
+}
+
+export interface ManifestAdditionalProperties {
+    heightWithExecution?: number
+    height?: number
 }

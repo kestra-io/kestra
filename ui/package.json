@@ -56,11 +56,11 @@
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^5.7.284",
         "pinia": "^3.0.4",
-        "posthog-js": "^1.372.10",
+        "posthog-js": "^1.374.0",
         "rapidoc": "^9.3.8",
         "remark-directive": "^4.0.0",
         "remark-frontmatter": "^5.0.0",
-        "semver": "^7.7.4",
+        "semver": "^7.8.0",
         "vue": "^3.5.34",
         "vue-echarts": "^8.0.1",
         "vue-gtag": "^3.7.1",
@@ -70,12 +70,12 @@
         "vue-sidebar-menu": "^5.9.1",
         "vue-virtual-scroller": "^3.0.3",
         "xss": "^1.0.15",
-        "yaml": "^2.8.3"
+        "yaml": "^2.9.0"
     },
     "devDependencies": {
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
-        "@playwright/test": "^1.59.1",
+        "@playwright/test": "^1.60.0",
         "@rushstack/eslint-patch": "^1.16.1",
         "@storybook/addon-themes": "^10.3.3",
         "@storybook/addon-vitest": "^10.3.3",

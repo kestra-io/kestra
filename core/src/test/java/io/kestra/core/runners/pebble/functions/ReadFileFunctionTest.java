@@ -329,7 +329,7 @@ class ReadFileFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt");
+        File tempFile = File.createTempFile("file", ".txt", new File("/tmp"));
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

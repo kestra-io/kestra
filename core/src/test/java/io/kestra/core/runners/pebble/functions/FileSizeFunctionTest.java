@@ -282,7 +282,7 @@ public class FileSizeFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("%sfile".formatted(IdUtils.create()), ".txt", new File("/tmp"));
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "%sfile".formatted(IdUtils.create()), ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

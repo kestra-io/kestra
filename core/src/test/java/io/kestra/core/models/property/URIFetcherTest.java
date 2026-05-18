@@ -74,7 +74,7 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromLocalFileWhenAllowedGlobally() throws IOException {
         URI uri = createFile();
-        RunContext runContext = buildRunContext(List.of("/tmp"));
+        RunContext runContext = buildRunContext(List.of(System.getProperty("java.io.tmpdir")));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -85,7 +85,7 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromLocalFileWhenAllowedForPlugin() throws IOException {
         URI uri = createFile();
-        RunContext runContext = buildRunContext(Collections.emptyList(), List.of("/tmp"));
+        RunContext runContext = buildRunContext(Collections.emptyList(), List.of(System.getProperty("java.io.tmpdir")));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -134,7 +134,7 @@ class URIFetcherTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt", new File("/tmp"));
+        File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

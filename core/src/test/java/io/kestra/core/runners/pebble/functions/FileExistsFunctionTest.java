@@ -217,7 +217,7 @@ class FileExistsFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("%s-file".formatted(IdUtils.create()), ".txt", new File("/tmp"));
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "%s-file".formatted(IdUtils.create()), ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

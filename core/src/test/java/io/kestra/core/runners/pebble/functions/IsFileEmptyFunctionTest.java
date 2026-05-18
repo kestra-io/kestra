@@ -215,7 +215,7 @@ class IsFileEmptyFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt", new File("/tmp"));
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "file", ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

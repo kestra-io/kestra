@@ -10,7 +10,7 @@
                 <div class="drawerContent">
                     <div class="tabBar">
                         <KsButton
-                            v-for="(button, key) of buttons"
+                            v-for="(button, key) of contextButtons"
                             :key="key"
                             :type="activeTab === key ? 'primary' : 'default'"
                             :tag="button.url ? 'a' : 'button'"
@@ -31,9 +31,12 @@
                     </div>
 
                     <div class="panelContent">
-                        <KeepAlive>
-                            <ContextDocs v-if="activeTab === 'docs'" />
-                            <ContextNews v-else-if="activeTab === 'news'" />
+                        <KeepAlive v-if="activeTab">
+                            <component
+                                :is="contextButtons[activeTab]?.component"
+                                v-if="contextButtons[activeTab]?.component"
+                                :key="activeTab"
+                            />
                         </KeepAlive>
                     </div>
                 </div>
@@ -43,10 +46,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, ref, watch, type Component, PropType} from "vue"
     import {useStorage, useWindowSize} from "@vueuse/core"
-    import ContextDocs from "./docs/ContextDocs.vue"
-    import ContextNews from "./layout/ContextNews.vue"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import Close from "vue-material-design-icons/Close.vue"
@@ -55,12 +56,26 @@
     import {useMiscStore} from "override/stores/misc"
     import {useContextButtons} from "override/composables/contextButtons"
 
+    const props = defineProps({
+        additionalButtons: {
+            type: Object as PropType<Record<string, {
+                title: string;
+                icon?: Component;
+                component?: Component;
+                url?: string;
+                hasUnreadMarker?: boolean;
+            }>>,
+            default: () => ({}),
+        },
+    })
+
     const {buttons} = useContextButtons()
     const apiStore = useApiStore()
     const miscStore = useMiscStore()
 
     const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
-    const hasButtons = computed(() => Object.keys(buttons).length > 0)
+    const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
+    const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0)
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     const hasUnread = computed(() => {

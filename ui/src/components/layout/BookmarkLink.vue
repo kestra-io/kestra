@@ -1,8 +1,8 @@
 <template>
-    <div class="wrapper vsm--item" :class="{editing}">
+    <div class="bookmark-link" :class="{editing}">
         <div v-if="editing" class="edit-row">
             <KsInput
-                class="vsm--input"
+                class="bookmark-input"
                 ref="titleInput"
                 v-model="updatedTitle"
                 @keyup.enter="renameBookmark"
@@ -12,13 +12,11 @@
         </div>
         <template v-else>
             <a
-                class="vsm--link vsm--link_level-2"
+                class="bookmark-anchor"
                 :href="href"
                 :title="updatedTitle"
             >
-                <div class="vsm--title">
-                    <span>{{ updatedTitle }}</span>
-                </div>
+                <span class="bookmark-title">{{ updatedTitle }}</span>
                 <div class="buttons">
                     <PencilOutline
                         @click.stop.prevent="startEditBookmark"
@@ -82,11 +80,11 @@
 </script>
 
 <style scoped>
-.wrapper {
+.bookmark-link {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0;
     overflow: hidden;
     border-radius: var(--ks-radius-base);
     box-sizing: border-box;
@@ -105,7 +103,7 @@
     z-index: 10;
 }
 
-.vsm--input {
+.bookmark-input {
     flex: 1;
     font-size: var(--ks-font-size-sm);
 }
@@ -122,10 +120,11 @@
     color: var(--ks-text-primary);
 }
 
-.vsm--link {
+.bookmark-anchor {
     position: relative;
     z-index: 1;
     display: inline-flex;
+    align-items: center;
     max-width: 100%;
     width: 100%;
     text-decoration: none;
@@ -133,13 +132,13 @@
     font-size: var(--ks-font-size-sm);
 }
 
-.wrapper:not(.editing) .vsm--link:hover .buttons {
+.bookmark-link:not(.editing) .bookmark-anchor:hover .buttons {
     margin-right: 1rem;
     opacity: 1;
     visibility: visible;
 }
 
-.vsm--title {
+.bookmark-title {
     overflow: hidden;
     white-space: nowrap;
     padding: 0.25rem 0.5rem;

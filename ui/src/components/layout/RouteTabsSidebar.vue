@@ -1,48 +1,58 @@
 <template>
-    <aside v-if="hasTabs" class="route-tabs-sidebar">
-        <nav>
+    <KsSideBar v-if="hasTabs" class="route-tabs-sidebar" aria-label="Tabs">
+        <div class="tabs-list">
             <template v-for="(tab, index) in visibleTabs" :key="tab.name ?? `header-${index}`">
-                <div v-if="tab.header" class="tab-header">
-                    {{ tab.title }}
-                </div>
+                <div v-if="tab.header" class="tab-header">{{ tab.title }}</div>
                 <KsTooltip
                     v-else
                     :content="tooltipFor(tab)"
                     :disabled="!tooltipFor(tab)"
                     placement="right"
                 >
-                    <component
-                        :is="tab.disabled ? 'span' : 'router-link'"
-                        :to="routeFor(tab)"
-                        class="tab-link"
-                        :class="{
-                            active: isActive(tab),
-                            disabled: tab.disabled,
-                            locked: tab.locked,
-                            indented: hasHeader,
-                        }"
+                    <KsSideBarItem
+                        v-if="tab.disabled"
+                        :title="tab.title"
+                        :active="isActive(tab)"
+                        :locked="tab.locked"
+                        disabled
+                        :class="{indented: hasHeader}"
                     >
-                        <span class="label">{{ tab.title }}</span>
-                        <KsBadge
-                            v-if="tab.count !== undefined"
-                            :value="tab.count"
-                            type="primary"
-                            class="count"
-                        />
-                        <LockOutline v-if="tab.locked" class="lock-icon" />
-                    </component>
+                        <template v-if="tab.count !== undefined" #suffix>
+                            <KsBadge :value="tab.count" type="primary" class="count" />
+                        </template>
+                    </KsSideBarItem>
+                    <router-link
+                        v-else
+                        :to="routeFor(tab)"
+                        custom
+                        v-slot="{href, navigate}"
+                    >
+                        <KsSideBarItem
+                            :title="tab.title"
+                            :href="href"
+                            :active="isActive(tab)"
+                            :locked="tab.locked"
+                            :class="{indented: hasHeader}"
+                            @click="navigate"
+                        >
+                            <template v-if="tab.count !== undefined" #suffix>
+                                <KsBadge :value="tab.count" type="primary" class="count" />
+                            </template>
+                        </KsSideBarItem>
+                    </router-link>
                 </KsTooltip>
             </template>
-        </nav>
-    </aside>
+        </div>
+    </KsSideBar>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import type {RouteLocationRaw} from "vue-router"
     import {storeToRefs} from "pinia"
-    import LockOutline from "vue-material-design-icons/LockOutline.vue"
+    import {KsSideBar, KsSideBarItem} from "@kestra-io/design-system"
     import {useRouteTabsStore, type RouteTab} from "../../stores/routeTabs"
 
     const {t} = useI18n()
@@ -67,12 +77,12 @@
         return (tab.name ?? "default") === (current ?? "default")
     }
 
-    function routeFor(tab: RouteTab) {
+    function routeFor(tab: RouteTab): RouteLocationRaw {
         if (tab.route) return tab.route
         return {
             name: routeName.value || route.name,
             params: {...route.params, tab: tab.name},
-            query: {...tab.query},
+            query: {...tab.query} as Record<string, string>,
         }
     }
 
@@ -88,70 +98,25 @@
 .route-tabs-sidebar {
     width: 200px;
     flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--ks-bg-sidebar);
-    border-right: 1px solid var(--ks-border-default);
-    padding: 32px 18px 16px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    --ks-sidebar-item-font-weight: normal;
 }
 
-nav {
+.tabs-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding: 0 var(--ks-spacing-4);
 }
 
 .tab-header {
-    padding: 6px 10px;
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
     font-size: var(--ks-font-size-xs);
     font-weight: 600;
     color: var(--ks-text-primary);
 }
 
-.tab-link {
-    display: flex;
-    align-items: center;
-    padding: 6px 10px;
-    gap: var(--ks-spacing-4);
-    border-radius: 6px;
-
-    &.indented {
-        margin-left: 10px;
-    }
-    color: var(--ks-text-secondary);
-    text-decoration: none;
-    font-size: var(--ks-font-size-xs);
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-
-    &:hover:not(.disabled):not(.active) {
-        background-color: var(--ks-bg-hover);
-        color: var(--ks-text-secondary);
-    }
-
-    &.active {
-        background-color: var(--ks-bg-active);
-        color: var(--ks-text-link);
-    }
-
-    &.locked {
-        color: var(--ks-text-inactive) !important;
-    }
-
-    &.disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-.label {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.indented {
+    margin-left: var(--ks-spacing-3);
 }
 
 .count {
@@ -161,11 +126,5 @@ nav {
         border: none;
         margin-top: 0;
     }
-}
-
-.lock-icon {
-    flex-shrink: 0;
-    opacity: 0.5;
-    font-size: 0.875rem;
 }
 </style>

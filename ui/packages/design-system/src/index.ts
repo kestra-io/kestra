@@ -67,6 +67,9 @@ import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
 import KsSegmented from "./components/Data/KsSegmented.vue"
 import KsSelect from "./components/Form/KsSelect/KsSelect.vue"
+import KsSideBar from "./components/Navigation/KsSideBar/KsSideBar.vue"
+import KsSideBarItem from "./components/Navigation/KsSideBar/KsSideBarItem.vue"
+import KsSideBarSection from "./components/Navigation/KsSideBar/KsSideBarSection.vue"
 import KsSkeleton from "./components/Data/KsSkeleton.vue"
 import KsSplitter from "./components/Basic/KsSplitter/KsSplitter.vue"
 import KsSplitterPanel from "./components/Basic/KsSplitter/KsSplitterPanel.vue"
@@ -209,6 +212,9 @@ const components: Record<string, Component> = {
     KsScrollbar,
     KsSegmented,
     KsSelect,
+    KsSideBar,
+    KsSideBarItem,
+    KsSideBarSection,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -297,6 +303,9 @@ export {
     KsScrollbar,
     KsSegmented,
     KsSelect,
+    KsSideBar,
+    KsSideBarItem,
+    KsSideBarSection,
     KsSkeleton,
     KsSplitter,
     KsSplitterPanel,
@@ -405,6 +414,9 @@ declare module "vue" {
         KsScrollbar: typeof KsScrollbar
         KsSegmented: typeof KsSegmented
         KsSelect: typeof KsSelect
+        KsSideBar: typeof KsSideBar
+        KsSideBarItem: typeof KsSideBarItem
+        KsSideBarSection: typeof KsSideBarSection
         KsSkeleton: typeof KsSkeleton
         KsSplitter: typeof KsSplitter
         KsSplitterPanel: typeof KsSplitterPanel

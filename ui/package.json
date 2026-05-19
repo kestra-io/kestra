@@ -67,7 +67,6 @@
         "vue-i18n": "^11.4.2",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^5.0.6",
-        "vue-sidebar-menu": "^5.9.1",
         "vue-virtual-scroller": "^3.0.3",
         "xss": "^1.0.15",
         "yaml": "^2.8.3"

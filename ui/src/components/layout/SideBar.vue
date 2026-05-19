@@ -1,42 +1,59 @@
 <template>
-    <SidebarMenu
-        ref="sideBarRef"
-        id="side-menu"
-        :menu
-        @update:collapsed="onToggleCollapse"
-        width="220px"
-        :collapsed="collapsed"
-        linkComponentName="LeftMenuLink"
-        hideToggle
-    >
+    <KsSideBar id="side-menu">
         <template #header>
-            <SidebarToggleButton
-                @toggle="collapsed = onToggleCollapse(!collapsed)"
-            />
+            <div class="header-toolbar">
+                <SidebarToggleButton @toggle="onCollapse(true)" />
+            </div>
             <Environment />
         </template>
+
+        <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
+            <div v-if="!section.child" class="top-level-link">
+                <MenuLink
+                    :item="section"
+                    :active="isItemActive(section)"
+                />
+            </div>
+            <KsSideBarSection
+                v-else
+                :title="section.title"
+                collapsible
+                :defaultCollapsed="!sectionHasActiveChild(section)"
+            >
+                <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
+                    <MenuLink
+                        v-if="!item.hidden"
+                        :item="item"
+                        :active="isItemActive(item)"
+                    />
+                </template>
+            </KsSideBarSection>
+        </template>
+
+        <KsSideBarSection v-if="bookmarksStore.pages?.length" title="Favourites" collapsible>
+            <BookmarkLinkList :pages="bookmarksStore.pages" />
+        </KsSideBarSection>
 
         <template #footer>
             <slot name="footer" />
         </template>
-    </SidebarMenu>
+    </KsSideBar>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, onUpdated, nextTick, computed, h, watch} from "vue"
-    import {useRoute} from "vue-router"
-    import {useMediaQuery} from "@vueuse/core"
-    import {SidebarMenu} from "vue-sidebar-menu"
+    import {computed, h, defineComponent} from "vue"
+    import type {PropType} from "vue"
+    import {useRoute, RouterLink} from "vue-router"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem} from "@kestra-io/design-system"
 
     import Environment from "./Environment.vue"
+    import SidebarToggleButton from "./SidebarToggleButton.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
-    import type {MenuItem} from "override/components/useLeftMenu"
     import {useLayoutStore} from "../../stores/layout"
-    import SidebarToggleButton from "./SidebarToggleButton.vue"
+    import type {MenuItem} from "override/components/useLeftMenu"
 
-
-    const props = withDefaults(defineProps<{
+    withDefaults(defineProps<{
         menu: MenuItem[],
         showLink?: boolean,
         logoTo?: object
@@ -45,110 +62,75 @@
         logoTo: () => ({name: "welcome"}),
     })
 
-    const $emit = defineEmits(["menu-collapse"])
+    const emit = defineEmits<{
+        (e: "menu-collapse", folded: boolean): void
+    }>()
 
     const $route = useRoute()
-
     const layoutStore = useLayoutStore()
-
-    function onToggleCollapse(folded: boolean) {
-        collapsed.value = folded
-        layoutStore.setSideMenuCollapsed(folded)
-        $emit("menu-collapse", folded)
-
-        return folded
-    }
-
-    function disabledCurrentRoute(items: MenuItem[]) {
-        return items
-            .map(r => {
-                if (typeof r.href === "object" && r.href?.path === $route.path) {
-                    r.disabled = true
-                }
-
-                // When `routes` is defined on the item, treat it as authoritative —
-                // otherwise a coarse path prefix can hijack a more specific sibling
-                // (e.g. /apps matching /apps/catalog).
-                const isLeafActive = (item: MenuItem) => {
-                    if (typeof item.href !== "string" || item.href === "/") return false
-                    if (item.routes) return item.routes.includes($route.name)
-                    return $route.path.startsWith(item.href)
-                }
-
-                if (isLeafActive(r)) {
-                    r.class = "vsm--link_active"
-                }
-
-                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(isLeafActive)) {
-                    r.class = "vsm--link_active"
-                    r.child = disabledCurrentRoute(r.child)
-                }
-
-                return r
-            })
-    }
-
-
-    function expandParentIfNeeded() {
-        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active[aria-expanded=\"false\"]").forEach(e => {
-            (e as HTMLElement).click()
-        })
-    }
-
-    onMounted(() => nextTick(expandParentIfNeeded))
-
-    onUpdated(() => {
-        // Required here because in mounted() the menu is not yet rendered
-        expandParentIfNeeded()
-    })
-
     const bookmarksStore = useBookmarksStore()
 
-    const menu = computed(() => {
-        return [
-            ...(props.menu ? disabledCurrentRoute(props.menu) : []),
-            ...(bookmarksStore.pages?.length ? [{
-                title: "Favourites",
-                child: [{
-                    // here we use only one component for all bookmarks
-                    // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
-                }],
-            }] : []),
-        ]
-    })
+    function onCollapse(folded: boolean) {
+        layoutStore.setSideMenuCollapsed(folded)
+        emit("menu-collapse", folded)
+    }
 
-    const collapsed = computed({
-        get: () => layoutStore.sideMenuCollapsed,
-        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
-    })
+    function isItemActive(item: MenuItem): boolean {
+        if (typeof item.href !== "string" || item.href === "/") return false
+        if (item.routes) return item.routes.includes($route.name)
+        return $route.path.startsWith(item.href)
+    }
 
-    const isSmallScreen = useMediaQuery("(max-width: 768px)")
+    function sectionHasActiveChild(section: MenuItem): boolean {
+        return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
+    }
 
-    watch(() => $route.name, (newRoute, oldRoute) => {
-        if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
-            onToggleCollapse(true)
-        }
+    // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation
+    // via <RouterLink custom> when the item has a resolved href.
+    const MenuLink = defineComponent({
+        name: "SideBarMenuLink",
+        props: {
+            item: {type: Object as PropType<MenuItem>, required: true},
+            active: {type: Boolean, default: false},
+        },
+        setup(props) {
+            const hrefString = computed(() => (typeof props.item.href === "string" ? props.item.href : ""))
+            const locked = computed(() => Boolean(props.item.attributes?.locked))
+
+            return () => {
+                const itemNode = (extraProps: Record<string, unknown> = {}) => h(KsSideBarItem, {
+                    title: props.item.title,
+                    icon: props.item.icon?.element,
+                    active: props.active,
+                    locked: locked.value,
+                    ...extraProps,
+                })
+
+                if (!hrefString.value) return itemNode()
+
+                return h(RouterLink, {to: hrefString.value, custom: true}, {
+                    default: ({href, navigate}: {href: string; navigate: (e: MouseEvent) => void}) =>
+                        itemNode({href, onClick: navigate}),
+                })
+            }
+        },
     })
 </script>
 
 <style scoped lang="scss">
-.collapseButton {
-    position: absolute;
-    top: -1.55rem;
-    right: .5rem;
-    z-index: 1;
-
-    #side-menu & {
-        border: none;
-    }
+#side-menu {
+    width: 215px;
+    flex-shrink: 0;
 }
 
-#side-menu {
-    position: static;
-    z-index: 1039;
-    border-right: 1px solid var(--ks-border-default);
-    background-color: var(--ks-bg-sidebar);
-    padding: 32px 0 16px;
+.top-level-link {
+    padding: 0 var(--ks-spacing-2);
+}
+
+.header-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(-1 * var(--ks-spacing-4));
+    margin-bottom: var(--ks-spacing-2);
 }
 </style>

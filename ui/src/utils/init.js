@@ -15,7 +15,6 @@ import "moment/dist/locale/ru"
 import "moment/dist/locale/zh-cn"
 import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range"
-import VueSidebarMenu from "vue-sidebar-menu"
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
@@ -30,7 +29,6 @@ import "./global"
 import {useDocStore} from "../stores/doc"
 
 
-import LeftMenuLink from "../components/LeftMenuLink.vue"
 import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
@@ -112,7 +110,6 @@ export default async (app, routes, _stores, translations, additionalTranslations
     setDateFormatter(dateFilter)
 
     // others plugins
-    app.use(VueSidebarMenu)
     app.use(Toast)
     app.provide("Toast", Toast)
     app.use(VueVirtualScroller)
@@ -127,7 +124,6 @@ export default async (app, routes, _stores, translations, additionalTranslations
     createUnsavedChanged(app, router)
     createEventsRouter(app, router)
 
-    app.component("LeftMenuLink", LeftMenuLink)
     app.component("RouterMd", RouterMd)
     const components = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),

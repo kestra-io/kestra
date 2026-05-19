@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.Namespace;
+import io.kestra.core.utils.RegexUtils;
 import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.context.annotation.Factory;
@@ -32,7 +33,7 @@ public class SearchableFactory {
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.ENDS_WITH,
                 (ns, v) -> ns.getId().endsWith(v.toString()))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.REGEX,
-                (ns, v) -> ns.getId().matches(v.toString()))
+                (ns, v) -> RegexUtils.matches(v.toString(), ns.getId()))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.IN,
                 (ns, v) -> v instanceof List<?> list && list.stream().map(Object::toString).anyMatch(ns.getId()::equals))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.NOT_IN,

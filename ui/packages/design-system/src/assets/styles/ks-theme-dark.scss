@@ -10,13 +10,13 @@ html.dark {
     /* bg */
     #{--ks-bg-active}: $base-gray-500;
     #{--ks-bg-badge}: $base-gray-800;
-    #{--ks-bg-base}: $base-gray-950;
-    #{--ks-bg-body}: $base-gray-950;
+    #{--ks-bg-base}: #111115;
+    #{--ks-bg-body}: #111115;
     #{--ks-bg-elevated}: $base-gray-900;
-    #{--ks-bg-hover}: $base-gray-500;
+    #{--ks-bg-hover}: #23252E;
     #{--ks-bg-hover-elevated}: $base-gray-600;
     #{--ks-bg-input}: $base-gray-1000;
-    #{--ks-bg-overlay}: $base-gray-950;
+    #{--ks-bg-overlay}: #1A1C22;
     #{--ks-bg-scrim}: #14181fcc;
     #{--ks-bg-sidebar}: $base-gray-900;
     #{--ks-bg-surface}: $base-gray-800;

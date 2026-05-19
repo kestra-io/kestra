@@ -701,9 +701,6 @@
     cursor: pointer;
 }
 
-:deep(.flows-table) .kel-scrollbar__thumb {
-    background-color: var(--ks-border-focus) !important;
-}
 .header-actions-list {
     display: flex;
     list-style: none;

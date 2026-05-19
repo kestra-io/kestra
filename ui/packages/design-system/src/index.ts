@@ -30,6 +30,7 @@ import KsCollapseItem from "./components/Data/KsCollapse/KsCollapseItem.vue"
 import KsColorPicker from "./components/Form/KsColorPicker.vue"
 import KsContainer from "./components/Basic/KsContainer/KsContainer.vue"
 import KsHeader from "./components/Basic/KsContainer/KsHeader.vue"
+import KsListingPage from "./components/Basic/KsContainer/KsListingPage.vue"
 import KsMain from "./components/Basic/KsContainer/KsMain.vue"
 import KsDatePicker from "./components/Form/KsDatePicker.vue"
 import KsDialog from "./components/Feedback/KsDialog.vue"
@@ -175,6 +176,7 @@ const components: Record<string, Component> = {
     KsColorPicker,
     KsContainer,
     KsHeader,
+    KsListingPage,
     KsMain,
     KsDatePicker,
     KsDialog,
@@ -266,6 +268,7 @@ export {
     KsColorPicker,
     KsContainer,
     KsHeader,
+    KsListingPage,
     KsMain,
     KsDatePicker,
     KsDialog,
@@ -377,6 +380,7 @@ declare module "vue" {
         KsColorPicker: typeof KsColorPicker
         KsContainer: typeof KsContainer
         KsHeader: typeof KsHeader
+        KsListingPage: typeof KsListingPage
         KsMain: typeof KsMain
         KsDatePicker: typeof KsDatePicker
         KsDialog: typeof KsDialog

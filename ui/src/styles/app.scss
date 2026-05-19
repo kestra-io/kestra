@@ -86,6 +86,12 @@ main {
         padding: 0;
     }
 
+    section.container:has(.ks-data-table-wrapper),
+    section.main-container:has(.ks-data-table-wrapper) {
+        padding-inline: 0;
+    }
+
+
     > section.full-container {
         flex: 1;
         display: flex;
@@ -145,6 +151,7 @@ html.full-screen {
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--ks-bg-base);
         }
 
     }
@@ -170,7 +177,7 @@ html.full-screen {
 }
 
 body{
-    background-color: var(--ks-bg-body);
+    background-color: var(--ks-bg-base);
 }
 
 .no-code-skeleton{

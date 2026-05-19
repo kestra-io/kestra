@@ -169,7 +169,7 @@ public class PluginController {
 
     private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
         io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
-        String title = triggerClass.getSimpleName();
+        String title = buildTriggerDisplayName(registeredPlugin, triggerClass);
         String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
         Boolean deprecated = isDeprecated(triggerClass) ? Boolean.TRUE : null;
 
@@ -182,6 +182,40 @@ public class PluginController {
             triggerClass.getName(),
             deprecated
         );
+    }
+
+    /**
+     * Builds a human-readable display name for a trigger that includes plugin context.
+     * Examples: "Kafka Realtime", "AWS SQS Realtime", "MongoDB Trigger"
+     */
+    private String buildTriggerDisplayName(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+        String simpleName = triggerClass.getSimpleName();
+        String pluginName = registeredPlugin.title();
+        
+        // For core triggers, just use the simple name
+        if ("core".equalsIgnoreCase(pluginName) || "Core".equals(pluginName)) {
+            return simpleName;
+        }
+        
+        // For external plugins, combine plugin name with trigger class name
+        // Remove "Trigger" suffix from simple name if it exists, to avoid duplication
+        String triggerBaseName = simpleName.endsWith("Trigger") 
+            ? simpleName.substring(0, simpleName.length() - 7) 
+            : simpleName;
+        
+        // If the base name is empty or just whitespace, use the full simple name
+        if (triggerBaseName.trim().isEmpty()) {
+            triggerBaseName = simpleName;
+        }
+        
+        // Combine plugin name with trigger name
+        if ("RealtimeTrigger".equals(simpleName)) {
+            return pluginName + " Realtime";
+        } else if ("Trigger".equals(simpleName) || triggerBaseName.isEmpty()) {
+            return pluginName;
+        } else {
+            return pluginName + " " + triggerBaseName;
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu">
+    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
             <div class="header-toolbar">
                 <SidebarToggleButton @toggle="onCollapse(true)" />
@@ -56,10 +56,12 @@
     withDefaults(defineProps<{
         menu: MenuItem[],
         showLink?: boolean,
-        logoTo?: object
+        logoTo?: object,
+        collapsed?: boolean,
     }>(), {
         showLink: true,
         logoTo: () => ({name: "welcome"}),
+        collapsed: false,
     })
 
     const emit = defineEmits<{
@@ -121,6 +123,14 @@
 #side-menu {
     width: 215px;
     flex-shrink: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: width 0.25s ease, border-right-width 0.25s ease;
+
+    &.is-collapsed {
+        width: 0;
+        border-right-width: 0;
+    }
 }
 
 .top-level-link {

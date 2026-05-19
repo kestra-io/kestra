@@ -1,5 +1,5 @@
 <template>
-    <LeftMenu v-if="miscStore.configs && !layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="miscStore.configs" :collapsed="layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
     <RouteTabsSidebar v-if="miscStore.configs" />
     <main>
         <Errors v-if="coreStore.error" :code="coreStore.error" />

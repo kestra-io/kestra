@@ -117,17 +117,22 @@
         gap: var(--ks-spacing-1);
         align-self: stretch;
 
+        &__leading {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        }
+
         &__monogram {
-            width: var(--ks-icon-size-lg);
-            height: var(--ks-icon-size-lg);
+            width: var(--ks-icon-size-xl);
+            height: var(--ks-icon-size-xl);
         }
 
         &__separator {
-            font-size: var(--ks-font-size-xs);
+            font-size: var(--ks-font-size-sm);
             font-weight: var(--ks-font-weight-semibold);
             color: var(--ks-border-strong);
             user-select: none;
-            margin: 0 var(--ks-spacing-1);
         }
 
         &__item {
@@ -163,8 +168,12 @@
         &__icon {
             display: inline-flex;
             align-items: center;
-            font-size: 0.875rem;
-            color: var(--ks-icon-muted);
+            font-size: var(--ks-font-size-lg);
+            color: var(--ks-text-primary);
+
+            :deep(svg) {
+                stroke-width: 1.5;
+            }
         }
 
         &__current {

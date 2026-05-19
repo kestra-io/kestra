@@ -119,16 +119,16 @@
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
         const filterParams = Object.fromEntries(
-            Object.entries(route.query).filter(([key]) => key.startsWith("filters["))
-        );
-        namespaces.value = await useNamespaces(1000, filterParams).all();
-    };
+            Object.entries(route.query).filter(([key]) => key.startsWith("filters[")),
+        )
+        namespaces.value = await useNamespaces(1000, filterParams).all()
+    }
 
     watch(
         () => route.query,
         () => loadData(),
-        {immediate: true, deep: true}
-    );
+        {immediate: true, deep: true},
+    )
 
     const miscStore = useMiscStore()
     const systemNamespace = computed(

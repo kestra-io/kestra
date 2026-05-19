@@ -85,20 +85,25 @@
 </script>
 
 <style scoped lang="scss">
-.label {
-    --ks-bg-tag: #ECEBEF;
+.label.kel-check-tag {
+    --ks-bg-tag: #7b7b7e45;
+;
     --ks-bg-tag-active: #414557;
     --label-text-active: #ffffff;
 
     html.dark & {
-        --ks-bg-tag: #5A6079;
+        --ks-bg-tag: #FFFFFF1A;
+;
         --ks-bg-tag-active: #F2F2F2;
         --label-text-active: var(--ks-text-primary);
     }
 
     background-color: var(--ks-bg-tag);
-    font-weight: normal;
     color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-xs);
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-weight: 400;
     white-space: nowrap;
 }
 

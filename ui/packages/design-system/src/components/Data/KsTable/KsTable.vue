@@ -84,18 +84,20 @@
     @use 'element-plus/theme-chalk/src/table';
 
     .kel-table {
-        --kel-table-border-color: var(--ks-border-default);
-        --kel-table-border: 1px solid var(--ks-border-default);
+        --kel-table-border-color: transparent;
+        --kel-table-border: none;
 
-        --kel-table-header-text-color: var(--ks-text-primary);
-        --kel-table-header-bg-color: var(--ks-bg-active);
+        --kel-table-bg-color: var(--ks-bg-overlay);
+        --kel-table-header-text-color: var(--ks-text-secondary);
+        --kel-table-header-bg-color: var(--ks-bg-overlay);
         --kel-table-row-hover-bg-color: var(--ks-bg-hover);
-        --kel-table-tr-bg-color: var(--ks-bg-surface);
+        --kel-table-tr-bg-color: var(--ks-bg-overlay);
+        --kel-table-current-row-bg-color: var(--ks-bg-overlay);
 
         outline: 1px solid var(--ks-border-default);
-        border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-bg-base);
-        border-bottom-width: 0;
+        border-radius: 0;
+        background-color: var(--ks-bg-overlay);
+        border: none;
         font-size: var(--ks-font-size-sm);
 
         &--striped {
@@ -122,12 +124,25 @@
             color: var(--ks-text-dim) !important;
         }
 
+        .kel-table__body tr:hover > td.kel-table__cell,
+        .kel-table__body tr.hover-row > td.kel-table__cell {
+            background-color: var(--ks-bg-hover);
+        }
+
         th {
             white-space: nowrap;
+            background-color: var(--ks-bg-overlay);
+            border-bottom: 1px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
+            font-weight: 600;
+            font-size: var(--ks-font-size-sm);
 
             div.cell {
                 word-break: normal;
                 white-space: nowrap;
+                font-weight: 600;
+                color: var(--ks-text-secondary);
+                font-size: var(--ks-font-size-sm);
             }
         }
 

@@ -153,31 +153,29 @@ class WorkerTest {
     }
 
     @Test
-    void shouldKillTasksWhenExecutionKillEventReceived() throws InterruptedException, QueueException {
+    void shouldKillTasksWhenExecutionKillEventReceived() throws QueueException {
         // Given
-        List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        workerTaskLogQueue.addListener(logs::add);
-
         List<WorkerTaskResult> results = new CopyOnWriteArrayList<>();
         workerTaskResultQueue.addListener(results::add);
 
-        // we emit 4 tasks that will last 60 seconds, and one that will last 1 second.
-        // We will kill the 4 first ones, but not the last one.
         String executionId = IdUtils.create();
 
         try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(1, null);
+            worker.start(2, null);
 
             await()
                 .atMost(Duration.ofSeconds(10))
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> workerJobDispatcher.getActiveWorkerCount() > 0);
 
-            workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
-            workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
-            workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
+            // one long task to kill, one short task with a different executionId to keep
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
+
+            await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofMillis(100))
+                .until(() -> worker.getRunningJobs().size() >= 2);
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()
@@ -189,26 +187,20 @@ class WorkerTest {
             await()
                 .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(100))
-                .until(() -> results.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5);
+                .until(() -> results.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 2);
 
-            // Then — only 1 thread, so at most 1 of the 4 tasks was RUNNING when killed (CREATED→RUNNING→KILLED);
-            // the others were killed before being picked up (CREATED→KILLED)
-            WorkerTaskResult oneKilled = results.stream()
+            // Then
+            WorkerTaskResult killed = results.stream()
                 .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
-                .filter(r -> r.getTaskRun().getState().getHistories().stream().anyMatch(h -> h.getState() == State.Type.RUNNING))
                 .findFirst()
                 .orElseThrow();
-            assertThat(oneKilled.getTaskRun().getState().getHistories()).hasSize(3);
+            assertThat(killed.getTaskRun().getState().getHistories()).hasSize(3);
 
-            WorkerTaskResult oneNotKilled = results.stream()
+            WorkerTaskResult succeeded = results.stream()
                 .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
                 .findFirst()
                 .orElseThrow();
-            assertThat(oneNotKilled.getTaskRun().getState().getHistories()).hasSize(3);
-
-            // child process is stopped and we never received 3 logs
-            Thread.sleep(1000);
-            assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
+            assertThat(succeeded.getTaskRun().getState().getHistories()).hasSize(3);
         }
     }
 

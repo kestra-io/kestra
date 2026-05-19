@@ -36,7 +36,7 @@
     import {useDashboardFields} from "../composables/useDashboardFields"
     import {useDashboardStore} from "../../../stores/dashboard"
     import {usePluginsStore} from "../../../stores/plugins"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import AiCopilotWrapper from "../../ai/AiCopilotWrapper.vue"
     import {aiGenerationTypes} from "../../../utils/constants"
     import {

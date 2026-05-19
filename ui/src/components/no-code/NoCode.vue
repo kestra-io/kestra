@@ -44,7 +44,7 @@
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue"
 
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {removeNullAndUndefined} from "./utils/cleanUp"
 
     import Task from "./segments/Task.vue"

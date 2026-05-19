@@ -256,7 +256,7 @@
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import * as FILTERS from "../../utils/filters"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 

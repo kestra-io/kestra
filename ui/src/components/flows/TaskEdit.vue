@@ -84,7 +84,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import CodeTags from "vue-material-design-icons/CodeTags.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Editor from "../inputs/Editor.vue"

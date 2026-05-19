@@ -1,4 +1,4 @@
-id: task-when
+id: task-runif
 namespace: io.kestra.tests
 tasks:
   - id: output
@@ -7,22 +7,22 @@ tasks:
       taskrun_data: 1
   - id: executed
     type: io.kestra.plugin.core.log.Log
-    when: "{{ outputs.output['values']['taskrun_data'] == 1 }}"
+    runIf: "{{ outputs.output['values']['taskrun_data'] == 1 }}"
     message:
       - "success"
   - id: notexecuted
     type: io.kestra.plugin.core.log.Log
-    when: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
+    runIf: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
     message:
       - "should not be printed"
   - id: notexecutedflowable
     type: io.kestra.plugin.core.flow.Subflow
-    when: "false"
+    runIf: "false"
     wait: true
     flowId: dummy_flow
     namespace: dummy_namespace
   - id: willfailedtheflow
     type: io.kestra.plugin.core.log.Log
-    when: "{{ outputs.notexists == 2 }}"
+    runIf: "{{ outputs.notexists == 2 }}"
     message:
       - "should failed"

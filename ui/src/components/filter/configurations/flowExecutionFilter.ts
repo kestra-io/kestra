@@ -71,7 +71,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
                         {value: "END_DATE", label: t("filter.timeRange.dateFilter.endDate")},
-                        {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")}
+                        {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")},
                     ],
                     keyLabelProvider: (meta?: Record<string, string>) => {
                         switch (meta?.dateFilter) {
@@ -79,7 +79,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         case "START_OR_END_DATE": return t("filter.timeRange.chip.startOrEnd")
                         default: return t("filter.timeRange.chip.start")
                         }
-                    }
+                    },
                 },
                 {
                     key: "labels",

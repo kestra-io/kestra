@@ -12,10 +12,10 @@ import io.kestra.core.models.flows.State;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
-class TaskWithWhenTest {
+class TaskWithRunIfTest {
 
     @Test
-    @ExecuteFlow("flows/valids/task-when.yml")
+    @ExecuteFlow("flows/valids/task-runif.yml")
     void runnableTask(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(5);
@@ -28,8 +28,8 @@ class TaskWithWhenTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/task-when-workingdirectory.yml")
-    void workingDirectory(Execution execution) {
+    @ExecuteFlow("flows/valids/task-runif-workingdirectory.yml")
+    void runIfWorkingDirectory(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.findTaskRunsByTaskId("log_orders").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -38,7 +38,7 @@ class TaskWithWhenTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/task-when-executionupdating.yml")
+    @ExecuteFlow("flows/valids/task-runif-executionupdating.yml")
     void executionUpdatingTask(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(5);

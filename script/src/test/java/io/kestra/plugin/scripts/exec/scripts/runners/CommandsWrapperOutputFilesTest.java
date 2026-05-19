@@ -51,7 +51,7 @@ class CommandsWrapperOutputFilesTest {
             .withTaskRunner(Process.instance())
             .withOutputFiles(List.of("outfile"))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
-            .withCommands(Property.<List<String>>ofExpression("[\"echo -n {{ outputFiles.outfile }} > outfile\"]"))
+            .withCommands(Property.<List<String>>ofExpression("[\"printf '%s' {{ outputFiles.outfile }} > outfile\"]"))
             .run();
 
         // Then

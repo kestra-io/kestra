@@ -157,6 +157,7 @@ export default defineConfig(({mode}) => {
                 "@vue-flow/controls",
                 "html-to-image",
                 "@module-federation/runtime",
+                "js-yaml",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

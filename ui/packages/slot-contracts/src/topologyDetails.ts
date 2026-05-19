@@ -1,17 +1,21 @@
 import type {Execution, MetricEntry, Task} from "@kestra-io/kestra-sdk"
+import {z} from "zod"
+import {defineArtifactSlot} from "./define-artifact-slot"
 
-export const propNames = ["taskType", "task", "execution", "namespace", "flowId", "metrics"] as const
+export const propsSchema = z.object({
+    taskType: z.string(),
+    task: z.custom<Task>(),
+    execution: z.custom<Execution>().optional(),
+    namespace: z.string().optional(),
+    flowId: z.string().optional(),
+    metrics: z.custom<MetricEntry>().array(),
+})
 
-export interface Props extends Partial<Record<typeof propNames[number], any>> {
-    taskType: string;
-    task: Task;
-    execution?: Execution;
-    namespace?: string;
-    flowId?: string;
-    metrics: MetricEntry[];
-}
-
-export interface ManifestAdditionalProperties {
-    heightWithExecution?: number
-    height?: number
-}
+export default defineArtifactSlot({
+    key: "topology-details",
+    props: propsSchema,
+    manifest: z.object({
+        heightWithExecution: z.number().optional(),
+        height: z.number().optional(),
+    }),
+})

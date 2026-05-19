@@ -450,6 +450,12 @@ public record QueryFilter(
                 return List.of(Field.QUERY, Field.NAME);
             }
         },
+        BLUEPRINT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.TAGS);
+            }
+        },
         BINDING {
             @Override
             public List<Field> supportedField() {

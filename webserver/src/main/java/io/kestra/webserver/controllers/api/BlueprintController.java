@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,8 +10,11 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.annotation.Nullable;
@@ -46,14 +50,17 @@ public class BlueprintController {
     @Get("/{kind}")
     @Operation(tags = { "Blueprints" }, summary = "List all blueprints")
     public PagedResults<ApiBlueprintItem> searchBlueprints(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") Optional<String> q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
-        @Parameter(description = "A tags filter") @Nullable @QueryValue(value = "tags") Optional<List<String>> tags,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) Integer size,
         @Parameter(description = "The blueprint kind") Kind kind,
+        @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
-        return fastForwardToKestraApi(httpRequest, getApiBasePath(kind), Map.of("ee", false), Argument.of(PagedResults.class, ApiBlueprintItem.class));
+
+        Map<String, Object> extraParams = new LinkedHashMap<>(blueprintFilterQueryParams(filters));
+        extraParams.put("ee", false);
+
+        return fastForwardToKestraApi(httpRequest, getApiBasePath(kind), extraParams, Argument.of(PagedResults.class, ApiBlueprintItem.class));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -92,9 +99,64 @@ public class BlueprintController {
     @Operation(tags = { "Blueprint Tags" }, summary = "List blueprint tags matching the filter")
     public List<ApiBlueprintTagItem> listBlueprintTags(
         @Parameter(description = "The blueprint kind") Kind kind,
-        @Parameter(description = "A string filter to get tags with matching blueprints only") @Nullable @QueryValue(value = "q") Optional<String> q,
+        @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
-        return fastForwardToKestraApi(httpRequest, getApiBasePath(kind) + "/tags", Argument.of(List.class, ApiBlueprintTagItem.class));
+
+        return fastForwardToKestraApi(httpRequest, getApiBasePath(kind) + "/tags", blueprintFilterQueryParams(filters), Argument.of(List.class, ApiBlueprintTagItem.class));
+    }
+
+    /**
+     * Translates {@link QueryFilter} entries for the BLUEPRINT resource into the legacy
+     * {@code q} / {@code tags} query string params the downstream community API expects.
+     * Validates field/operation pairs against {@link QueryFilter.Resource#BLUEPRINT}.
+     * Returns an empty map when no relevant filters are present.
+     */
+    protected static Map<String, Object> blueprintFilterQueryParams(@Nullable List<QueryFilter> filters) {
+        QueryFilter.validateQueryFilters(filters, QueryFilter.Resource.BLUEPRINT);
+        String q = parseQueryFiltersForBlueprint(filters);
+        List<String> tags = parseTagsFromQueryFiltersForBlueprint(filters);
+        Map<String, Object> params = new LinkedHashMap<>();
+        if (q != null && !q.isEmpty()) {
+            params.put("q", q);
+        }
+        if (tags != null && !tags.isEmpty()) {
+            params.put("tags", tags);
+        }
+        return params;
+    }
+
+    protected static String parseQueryFiltersForBlueprint(@Nullable List<QueryFilter> queryFilters) {
+        if (queryFilters == null || queryFilters.isEmpty()) {
+            return null;
+        }
+
+        List<QueryFilter> queryFieldFilters = queryFilters.stream()
+            .filter(f -> f.field() == QueryFilter.Field.QUERY)
+            .toList();;
+
+        if (queryFieldFilters.size() > 1) {
+            throw new InvalidQueryFiltersException("Resource: BLUEPRINT does not support multiple conditions on QUERY Field");
+        }
+
+        return queryFieldFilters.isEmpty() ? null : queryFieldFilters.getFirst().value().toString();
+    }
+
+    protected static List<String> parseTagsFromQueryFiltersForBlueprint(@Nullable List<QueryFilter> queryFilters) {
+        if (queryFilters == null || queryFilters.isEmpty()) {
+            return null;
+        }
+
+        return queryFilters.stream()
+            .filter(f -> f.field() == QueryFilter.Field.TAGS)
+            .findFirst()
+            .map(f -> {
+                Object value = f.value();
+                if (value instanceof List<?> list) {
+                    return list.stream().map(Object::toString).toList();
+                }
+                return value == null ? null : List.of(value.toString());
+            })
+            .orElse(null);
     }
 
     private String getApiBasePath(final Kind kind) {
@@ -109,12 +171,18 @@ public class BlueprintController {
         return this.fastForwardToKestraApi(originalRequest, newPath, null, returnType);
     }
 
-    private <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Map<String, Object> additionalQueryParams, Argument<T> returnType) throws URISyntaxException {
+    protected <T> T fastForwardToKestraApi(HttpRequest<?> originalRequest, String newPath, Map<String, Object> additionalQueryParams, Argument<T> returnType) throws URISyntaxException {
         UriBuilder uriBuilder = UriBuilder.of(originalRequest.getUri())
             .replacePath(originalRequest.getUri().getPath().toString().replaceAll("^[^?]*", newPath));
 
         if (additionalQueryParams != null) {
-            additionalQueryParams.forEach(uriBuilder::queryParam);
+            additionalQueryParams.forEach((name, value) -> {
+                if (value instanceof List<?> list) {
+                    uriBuilder.queryParam(name, list.toArray());
+                } else {
+                    uriBuilder.queryParam(name, value);
+                }
+            });
         }
 
         return httpClient

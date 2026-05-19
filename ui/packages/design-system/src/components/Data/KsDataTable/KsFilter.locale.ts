@@ -126,6 +126,10 @@ export default {
                 "label": "Flow ID",
                 "description": "Filter by flow ID",
             },
+            "email" : {
+                "label": "Email",
+                "description": "Filter by email",
+            },
             "kind": {
                 "label": "Kind",
                 "description": "Filter by execution kind",

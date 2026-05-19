@@ -6,6 +6,5 @@ export default defineConfig({
     },
     platform: "browser",
     exports: "ci-only",
-    fromVite: true,
     dts: true,
 })

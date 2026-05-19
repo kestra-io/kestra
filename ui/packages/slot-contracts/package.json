@@ -29,6 +29,9 @@
     "peerDependencies": {
         "@kestra-io/kestra-sdk": "*"
     },
+    "devDependencies": {
+        "tsdown": "^0.22.0"
+    },
     "dependencies": {
         "zod": "^3.25.76"
     }

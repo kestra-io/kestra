@@ -198,6 +198,56 @@ public final class FileSerde {
         }
     }
 
+    // region InputStream-based read methods (compatible with both text and binary ION in 2.0+)
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static Flux<Object> readAll(InputStream inputStream) throws IOException {
+        return readAll(new BufferedReader(new InputStreamReader(inputStream), BUFFER_SIZE));
+    }
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static <T> Flux<T> readAll(InputStream inputStream, TypeReference<T> type) throws IOException {
+        return readAll(new BufferedReader(new InputStreamReader(inputStream), BUFFER_SIZE), type);
+    }
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static <T> Flux<T> readAll(InputStream inputStream, Class<T> type) throws IOException {
+        return readAll(new BufferedReader(new InputStreamReader(inputStream), BUFFER_SIZE), type);
+    }
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static void read(InputStream input, Consumer<Object> consumer) throws IOException {
+        reader(new BufferedReader(new InputStreamReader(input), BUFFER_SIZE), consumer);
+    }
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static boolean read(InputStream input, int maxLines, Consumer<Object> consumer) throws IOException {
+        return reader(new BufferedReader(new InputStreamReader(input), BUFFER_SIZE), maxLines, consumer);
+    }
+
+    // endregion
+
+    // region OutputStream-based write methods (compatible with binary ION in 2.0+)
+
+    /**
+     * For performance, it is advised to wrap the output stream inside a BufferedOutputStream, see {@link #BUFFER_SIZE}.
+     */
+    public static <T> Mono<Long> writeAll(OutputStream outputStream, Flux<T> values) throws IOException {
+        return writeAll(new BufferedWriter(new OutputStreamWriter(outputStream), BUFFER_SIZE), values);
+    }
+
+    // endregion
+
     public static <T> SequenceWriter createSequenceWriter(ObjectMapper objectMapper, Writer writer, TypeReference<T> type) throws IOException {
         return objectMapper.writerFor(type).writeValues(writer);
     }

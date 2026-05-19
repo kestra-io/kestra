@@ -28,5 +28,8 @@
     },
     "peerDependencies": {
         "@kestra-io/kestra-sdk": "*"
+    },
+    "dependencies": {
+        "zod": "^3.25.76"
     }
 }

@@ -39,9 +39,7 @@
                     :key="item"
                     :label="item"
                     :value="item"
-                >
-                    <KsMarkdown :content="item" />
-                </KsOption>
+                />
             </KsSelect>
             <KsRadioGroup
                 v-if="input.type === 'SELECT' && input.isRadio"
@@ -75,9 +73,7 @@
                     :key="item"
                     :label="item"
                     :value="item"
-                >
-                    <KsMarkdown :content="item" />
-                </KsOption>
+                />
             </KsSelect>
             <KsInput
                 type="password"

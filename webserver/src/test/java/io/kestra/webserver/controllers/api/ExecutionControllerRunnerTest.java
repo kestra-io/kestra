@@ -1564,12 +1564,7 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get()).isEqualTo(runningExecution.getId());
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Thread.sleep(250);
-        Execution execution = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/" + runningExecution.getId()),
-            Execution.class
-        );
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        Execution execution = awaitExecution(runningExecution.getId(), State.Type.KILLED);
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
 
@@ -2598,7 +2593,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/failed-first.yaml" })
-    void shouldReturn202WithOperationIdAndTotalItemsWhenRestartExecutionsByIdsCalled() throws InterruptedException {
+    void shouldReturn202WithOperationIdAndTotalItemsWhenRestartExecutionsByIdsCalled() {
         Execution execution = client.toBlocking().retrieve(
             POST(
                 "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
@@ -2607,7 +2602,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(250);
+        awaitExecution(execution.getId());
 
         HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
             POST(
@@ -2728,7 +2723,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/sleep-long.yml" })
-    void shouldReturn202WithOperationIdAndTotalItemsWhenKillExecutionsByIdsCalled() throws InterruptedException {
+    void shouldReturn202WithOperationIdAndTotalItemsWhenKillExecutionsByIdsCalled() {
         Execution execution = client.toBlocking().retrieve(
             POST(
                 "/api/v1/main/executions/" + TESTS_FLOW_NS + "/sleep-long",
@@ -2737,7 +2732,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        Thread.sleep(250);
+        awaitExecution(execution.getId(), exec -> exec.getState().isRunning());
 
         HttpResponse<ApiAsyncOperationResponse> result = client.toBlocking().exchange(
             DELETE(

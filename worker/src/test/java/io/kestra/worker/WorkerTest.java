@@ -10,18 +10,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -39,6 +35,7 @@ import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.kestra.controller.grpc.services.WorkerJobDispatcher;
+import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -60,10 +57,7 @@ class WorkerTest {
     private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
-    private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
-
-    @Inject
-    private DispatchQueueInterface<LogEntry> workerTaskLogQueue;
+    private ExecutionKilledManager executionKilledManager;
 
     @Inject
     private RunContextFactory runContextFactory;
@@ -180,9 +174,8 @@ class WorkerTest {
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()
                 .executionId(executionId)
-                .state(ExecutionKilled.State.EXECUTED)
                 .build();
-            executionKilledQueue.emit(killedExecution);
+            executionKilledManager.onKillReceived(killedExecution);
 
             await()
                 .atMost(Duration.ofSeconds(30))

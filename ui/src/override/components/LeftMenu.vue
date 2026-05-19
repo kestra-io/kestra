@@ -3,6 +3,7 @@
         v-if="menu"
         :menu
         :showLink
+        :collapsed
         @menu-collapse="onCollapse"
         :class="{overlay: verticalLayout}"
     >
@@ -22,8 +23,10 @@
 
     withDefaults(defineProps<{
         showLink?: boolean
+        collapsed?: boolean
     }>(), {
         showLink: true,
+        collapsed: false,
     })
 
     const emit = defineEmits<{

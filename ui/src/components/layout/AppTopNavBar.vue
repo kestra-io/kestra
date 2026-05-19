@@ -1,85 +1,44 @@
 <template>
-    <nav v-show="store.ownerId !== null" class="top-bar d-flex align-items-center w-100">
-        <KsIconButton
-            v-if="layoutStore.sideMenuCollapsed"
-            class="icon"
-            :ariaLabel="t('Toggle menu')"
-            @click="layoutStore.setSideMenuCollapsed(false)"
-        >
-            <Menu />
-        </KsIconButton>
-        <div class="title-section">
-            <div class="d-flex align-items-center gap-2">
-                <KsBreadcrumb
-                    :items="store.breadcrumb"
-                    :title="store.title"
-                    :mainIcon="activeMenuIcon"
-                    showLeading
-                >
-                    <template #title>
-                        <span id="topnav-title-slot">
-                            <template v-if="!store.hasTitleSlot">{{ store.title }}</template>
-                        </span>
-                    </template>
-                </KsBreadcrumb>
-                <KsTooltip v-if="store.description" :content="store.description">
-                    <Information class="ms-2 icon" />
-                </KsTooltip>
-                <Badge v-if="store.beta" label="Beta" />
-                <KsIconButton
-                    class="icon"
-                    :class="{'active': bookmarked}"
-                    :ariaLabel="t('bookmark')"
-                    @click="onStarClick"
-                >
-                    <component :is="bookmarked ? StarIcon : StarOutlineIcon" />
-                </KsIconButton>
-                <KsSelect
-                    v-if="routeTabsStore.hasTabs"
-                    :modelValue="activeTabValue"
-                    class="tab-select"
-                    size="small"
-                    @change="onTabChange"
-                >
-                    <KsOption
-                        v-for="tab in routeTabsStore.visibleTabs"
-                        :key="tab.name ?? 'default'"
-                        :label="tab.title"
-                        :value="tab.name ?? 'default'"
-                        :disabled="tab.disabled"
-                    />
-                </KsSelect>
-            </div>
-            <div v-show="store.hasDescriptionSlot" class="description">
-                <div id="topnav-description-slot" />
-            </div>
-        </div>
-        <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
+    <KsTopNavBar
+        v-show="store.ownerId !== null"
+        :title="store.title"
+        :description="store.description"
+        :breadcrumb="store.breadcrumb"
+        :mainIcon="activeMenuIcon"
+        :beta="store.beta"
+        :isBookmarked="bookmarked"
+        :sidebarCollapsed="layoutStore.sideMenuCollapsed"
+        :tabs="routeTabsStore.visibleTabs"
+        :activeTab="activeTabValue"
+        :showDescription="store.hasDescriptionSlot"
+        :showDockToggle="true"
+        :isDockOpen="!!miscStore.contextInfoBarOpenTab"
+        @sidebar-toggle="layoutStore.setSideMenuCollapsed(false)"
+        @star-click="onStarClick"
+        @tab-change="onTabChange"
+        @dock-toggle="togglePanel"
+    >
+        <template #title>
+            <span id="topnav-title-slot">
+                <template v-if="!store.hasTitleSlot">{{ store.title }}</template>
+            </span>
+        </template>
+        <template #description>
+            <div id="topnav-description-slot" />
+        </template>
+        <template #search>
             <GlobalSearch class="trigger-flow-guided-step" />
+        </template>
+        <template #actions>
             <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
-            <KsIconButton
-                class="dock-toggle"
-                :class="{'is-open': miscStore.contextInfoBarOpenTab}"
-                :ariaLabel="t('Toggle panel')"
-                @click="togglePanel"
-            >
-                <DockRight />
-            </KsIconButton>
-        </div>
-    </nav>
+        </template>
+    </KsTopNavBar>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import GlobalSearch from "./GlobalSearch.vue"
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
-    import StarIcon from "vue-material-design-icons/Star.vue"
-    import Information from "vue-material-design-icons/InformationOutline.vue"
-    import Menu from "vue-material-design-icons/Menu.vue"
-    import Badge from "../global/Badge.vue"
-    import DockRight from "vue-material-design-icons/DockRight.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -95,7 +54,6 @@
     const routeTabsStore = useRouteTabsStore()
     const miscStore = useMiscStore()
     const {menu} = useLeftMenu()
-    const {t} = useI18n()
 
     function togglePanel() {
         miscStore.contextInfoBarOpenTab = miscStore.contextInfoBarOpenTab ? "" : miscStore.lastContextTab
@@ -175,88 +133,3 @@
         }
     }
 </script>
-
-<style lang="scss" scoped>
-    .top-bar {
-        height: 60px;
-        flex-shrink: 0;
-        padding: 0 var(--ks-spacing-6);
-        gap: var(--ks-spacing-4);
-        border-bottom: var(--ks-border-block-primary);
-        background: var(--ks-bg-surface);
-
-        @media (max-width: 992px) {
-            padding: 0 var(--ks-spacing-5);
-        }
-
-        @media (max-width: 768px) {
-            padding: 0 var(--ks-spacing-3);
-        }
-
-        @media (max-width: 664px) {
-            padding: 0 var(--ks-spacing-2);
-        }
-    }
-
-    .title-section {
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow: hidden;
-    }
-
-    .description {
-        font-size: var(--ks-font-size-sm);
-        margin-top: var(--ks-spacing-1);
-        color: var(--ks-text-secondary);
-    }
-
-    .tab-select {
-        width: auto;
-        min-width: 140px;
-        max-width: 220px;
-        flex: 0 0 auto;
-    }
-
-    .icon {
-        border: none;
-        color: var(--ks-text-dim);
-
-        &:deep(svg) {
-            fill: currentColor;
-            stroke: currentColor;
-        }
-
-        &.active {
-            color: var(--ks-text-link);
-        }
-    }
-
-    .dock-toggle {
-        border: none;
-        color: var(--ks-text-dim);
-
-        &:deep(svg) {
-            fill: currentColor;
-            stroke: currentColor;
-        }
-
-        &.is-open {
-            color: var(--ks-icon-default);
-        }
-
-        @media (max-width: 767px) {
-            display: none;
-        }
-    }
-
-    .side {
-        :deep(ul) {
-            display: flex;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            gap: var(--ks-spacing-2);
-            align-items: center;
-        }
-    }
-</style>

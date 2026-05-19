@@ -81,26 +81,23 @@
 
 <style scoped>
 .bookmark-link {
-    position: relative;
     display: flex;
     align-items: center;
     padding: 0.25rem 0;
-    overflow: hidden;
     border-radius: var(--ks-radius-base);
     box-sizing: border-box;
 }
 
 .buttons {
-    position: absolute;
-    right: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
+    align-items: center;
     gap: 0.25rem;
+    margin-left: auto;
+    padding-right: var(--ks-spacing-2);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.15s ease;
-    z-index: 10;
+    flex-shrink: 0;
 }
 
 .bookmark-input {
@@ -121,28 +118,27 @@
 }
 
 .bookmark-anchor {
-    position: relative;
-    z-index: 1;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    max-width: 100%;
     width: 100%;
+    min-width: 0;
     text-decoration: none;
-    color: var(--ks-text-primary);
-    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
 }
 
 .bookmark-link:not(.editing) .bookmark-anchor:hover .buttons {
-    margin-right: 1rem;
     opacity: 1;
     visibility: visible;
 }
 
 .bookmark-title {
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     white-space: nowrap;
     padding: 0.25rem 0.5rem;
     text-overflow: ellipsis;
-    max-width: calc(100% - 2.5rem);
 }
 </style>

@@ -131,26 +131,21 @@ public class QueryFilterUtils {
         return updatedFilters;
     }
 
-    public enum TriggerDateFilter {
-        NEXT_EXECUTION_DATE(QueryFilter.Field.NEXT_EXECUTION_DATE),
-        LAST_TRIGGERED_DATE(QueryFilter.Field.LAST_TRIGGERED_DATE);
+    public static final List<QueryFilter.Field> TRIGGER_DATE_FIELDS = List.of(
+        QueryFilter.Field.NEXT_EXECUTION_DATE,
+        QueryFilter.Field.LAST_TRIGGERED_DATE
+    );
 
-        private final QueryFilter.Field target;
-
-        TriggerDateFilter(QueryFilter.Field target) {
-            this.target = target;
-        }
-
-        public QueryFilter.Field target() {
-            return target;
-        }
-    }
-
-    public static List<QueryFilter> rewriteTriggerDateFilters(List<QueryFilter> filters, TriggerDateFilter dateFilter) {
+    public static List<QueryFilter> rewriteTriggerDateFilters(List<QueryFilter> filters, QueryFilter.Field dateField) {
         if (filters == null) {
             return List.of();
         }
-        QueryFilter.Field target = (dateFilter == null ? TriggerDateFilter.NEXT_EXECUTION_DATE : dateFilter).target();
+        if (dateField != null && !TRIGGER_DATE_FIELDS.contains(dateField)) {
+            throw new IllegalArgumentException(
+                "dateFilter must be one of " + TRIGGER_DATE_FIELDS + " but was " + dateField
+            );
+        }
+        QueryFilter.Field target = dateField == null ? QueryFilter.Field.NEXT_EXECUTION_DATE : dateField;
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();

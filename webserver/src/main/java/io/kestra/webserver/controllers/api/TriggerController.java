@@ -36,7 +36,6 @@ import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
-import io.kestra.webserver.utils.QueryFilterUtils.TriggerDateFilter;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
@@ -104,7 +103,13 @@ public class TriggerController {
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
-        @Parameter(description = "Which trigger date field the time interval is applied to") @Nullable @QueryValue TriggerDateFilter dateFilter
+        @Parameter(
+            description = "Which trigger date field the time interval is applied to",
+            schema = @Schema(
+                type = "string",
+                allowableValues = {"NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE"}
+            )
+        ) @Nullable @QueryValue QueryFilter.Field dateFilter
     ) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),

@@ -737,6 +737,27 @@
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "Aplicación(es)",
+        "tooltip": "Ver aplicaciones que usan este flow"
+      },
+      "dependencies": {
+        "suffix": "Dependencia(s)",
+        "tooltip": "Ver dependencias del flow"
+      },
+      "errors": {
+        "label": "{count} Error(es)"
+      },
+      "revisions": {
+        "suffix": "Revisión(es)",
+        "tooltip": "Ver revisiones de flow"
+      },
+      "tests": {
+        "suffix": "Prueba(s)",
+        "tooltip": "Ver pruebas de flow"
+      }
+    },
     "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
     "flow_outputs": "Salidas del Flow",

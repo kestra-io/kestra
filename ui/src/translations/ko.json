@@ -737,6 +737,27 @@
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "앱(s)",
+        "tooltip": "이 flow를 사용하는 앱 보기"
+      },
+      "dependencies": {
+        "suffix": "종속성",
+        "tooltip": "flow 종속성 보기"
+      },
+      "errors": {
+        "label": "{count} 오류"
+      },
+      "revisions": {
+        "suffix": "수정본",
+        "tooltip": "flow 수정 보기"
+      },
+      "tests": {
+        "suffix": "테스트(s)",
+        "tooltip": "flow 테스트 보기"
+      }
+    },
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
     "flow_outputs": "Flow Outputs",

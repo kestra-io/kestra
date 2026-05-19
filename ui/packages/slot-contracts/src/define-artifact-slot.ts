@@ -1,4 +1,4 @@
-import {z} from "zod"
+import {z as zImported} from "zod"
 
 /**
  * Bundles a slot's props schema and manifest additional-properties schema
@@ -7,6 +7,7 @@ import {z} from "zod"
  * Usage:
  * ```ts
  * const slot = defineArtifactSlot({
+ *   key: "example-slot",
  *   props: z.object({ ... }),
  *   manifest: z.object({ ... }),
  * });
@@ -19,15 +20,20 @@ import {z} from "zod"
  */
 export function defineArtifactSlot<
     TKey extends string,
-    TProps extends z.ZodRawShape,
-    TManifest extends z.ZodRawShape,
->(config: { key: TKey; props: z.ZodObject<TProps>; manifest: z.ZodObject<TManifest> }) {
+    TProps extends  zImported.ZodRawShape,
+    TManifest extends zImported.ZodRawShape,
+>(config: (z: typeof zImported) => { 
+    key: TKey; 
+    props: zImported.ZodObject<TProps>; 
+    manifest: zImported.ZodObject<TManifest> 
+}) {
+    const result = config(zImported)
     return {
-        key: config.key,
-        propsSchema: config.props,
-        propNames: Object.keys(config.props.shape) as Array<
-            keyof z.infer<z.ZodObject<TProps>>
+        key: result.key,
+        propsSchema: result.props,
+        propNames: Object.keys(result.props.shape) as Array<
+            keyof zImported.infer<zImported.ZodObject<TProps>>
         >,
-        manifestSchema: config.manifest,
+        manifestSchema: result.manifest,
     }
 }

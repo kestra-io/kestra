@@ -11,11 +11,11 @@ export const propsSchema = z.object({
     metrics: z.custom<MetricEntry>().array(),
 })
 
-export default defineArtifactSlot({
+export default defineArtifactSlot(() => ({
     key: "topology-details",
     props: propsSchema,
     manifest: z.object({
         heightWithExecution: z.number().optional(),
         height: z.number().optional(),
     }),
-})
+}))

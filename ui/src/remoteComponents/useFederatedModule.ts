@@ -129,10 +129,11 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
-        setup(props: { taskType: string } & KnownSlotProps[T]) {
+        inheritAttrs: false,
+        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
             const {taskType, ...restProps} = props
             const Comp = RemoteComponents[taskType]
-            return () => Comp ? h(Comp, restProps) : null
+            return () => Comp ? h(Comp, {...restProps, ...attrs}) : null
         },
     })
 

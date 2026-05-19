@@ -159,7 +159,7 @@ export async function generateFlatDts() {
 
     const npmImports = collectNpmImports(slotImports.map((s) => s.sourceFile))
 
-    // Probe: re-declare the same slots tuple (so type lookups go through real
+    // Probe: redeclare the same slots tuple (so type lookups go through real
     // modules, not duplicated literals) and pull every npm `import type` into
     // scope so the printer uses short names.
     const probeNpmImportLines = [...npmImports.entries()]

@@ -52,7 +52,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FileDocumentIcon),
-            label: "Documentation",
+            label: "Docs",
         },
         uid: "doc",
         component: markRaw(PluginListWrapper),
@@ -60,7 +60,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(FolderOpenOutline),
-            label: "Namespace Files",
+            label: "Files",
         },
         uid: "files",
         prepend: true,

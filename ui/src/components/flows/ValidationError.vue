@@ -1,9 +1,12 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <KsButton v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
-            <CheckBoldIcon class="success" />
-        </KsButton>
+        <KsCodeStatus
+            v-if="!errors && !warnings && !infos"
+            status="valid"
+            :iconOnly="iconOnly"
+            :label="$t('valid')"
+        />
 
         <!-- Errors -->
         <KsTooltip
@@ -24,9 +27,11 @@
                     <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
                 </KsContainer>
             </template>
-            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
-                <AlertCircle class="error" />
-            </KsButton>
+            <KsCodeStatus
+                status="error"
+                :iconOnly="iconOnly"
+                :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
+            />
         </KsTooltip>
 
         <!-- Warnings -->
@@ -56,9 +61,11 @@
                     </KsMain>
                 </KsContainer>
             </template>
-            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
-                <Alert class="warning" />
-            </KsButton>
+            <KsCodeStatus
+                status="warning"
+                :iconOnly="iconOnly"
+                :label="$t('warning detected')"
+            />
         </KsTooltip>
 
         <!-- Infos -->
@@ -80,17 +87,17 @@
                     <KsMain>{{ infos.join("<\n") }}</KsMain>
                 </KsContainer>
             </template>
-            <KsButton v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <Alert class="info" />
-                <span class="info label">{{ $t("informative notice") }}</span>
-            </KsButton>
+            <KsCodeStatus
+                status="info"
+                :iconOnly="iconOnly"
+                :label="$t('informative notice')"
+            />
         </KsTooltip>
     </span>
 </template>
 
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
-    import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue"
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
     import Alert from "vue-material-design-icons/Alert.vue"
 
@@ -105,6 +112,7 @@
         link?: boolean;
         size?: "default" | "small";
         tooltipPlacement?: string;
+        iconOnly?: boolean;
     }>()
 
     const rootContainer = ref<HTMLSpanElement>()
@@ -126,50 +134,9 @@
     defineExpose({
         onResize,
     })
-
 </script>
 
 <style scoped lang="scss">
-
-    .kel-button.kel-button--default {
-        transition: none;
-
-        &.kel-button--small {
-            padding: 5px;
-            height: fit-content;
-        }
-
-        &:hover, &:focus {
-            background-color: var(--ks-btn-secondary-bg-default);
-        }
-
-        &.success {
-            cursor: default;
-            border-color: var(--ks-border-success);
-
-            &.is-disabled,
-            &.is-disabled:hover,
-            &.is-disabled:focus {
-                opacity: 1;
-                background-color: transparent;
-                border-color: var(--ks-border-success);
-            }
-        }
-
-        &:not(.success) span:not(.material-design-icon) {
-            margin-left: .5rem;
-            font-size: var(--ks-font-size-sm);
-        }
-
-        &.warning {
-            border-color: var(--ks-status-warning);
-        }
-
-        &.error {
-            border-color: var(--ks-border-error);
-        }
-    }
-
     .validation-tooltip {
         padding: 0;
         width: fit-content;
@@ -208,15 +175,6 @@
             min-height: fit-content;
             color: var(--ks-text-primary);
         }
-    }
-
-    .square {
-        width: 32px;
-        height: 32px;
-    }
-
-    .success {
-        color: var(--ks-status-success);
     }
 
     .warning {

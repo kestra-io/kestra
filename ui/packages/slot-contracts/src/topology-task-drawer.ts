@@ -1,5 +1,5 @@
 import {defineArtifactSlot} from "./define-artifact-slot"
-import {propsSchema} from "./topologyDetails"
+import {propsSchema} from "./topology-details"
 
 
 export default defineArtifactSlot((z) => ({

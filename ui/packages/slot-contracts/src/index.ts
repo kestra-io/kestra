@@ -1,12 +1,12 @@
 import {z} from "zod"
-import topologyDetails from "./topologyDetails"
-import topologyTaskDrawer from "./topologyTaskDrawer"
+import topologyDetails from "./topology-details"
+import topologyTaskDrawer from "./topology-task-drawer"
 
 const slots = [topologyDetails, topologyTaskDrawer] as const
 
 type SlotTuple = typeof slots;
 type ByKey<T extends readonly { key: string }[]> = {
-    [S in T[number]as S["key"]]: S;
+    [S in T[number] as S["key"]]: S;
 };
 type Registry = ByKey<SlotTuple>;
 

@@ -737,6 +737,27 @@
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "应用程序",
+        "tooltip": "查看使用此flow的应用程序"
+      },
+      "dependencies": {
+        "suffix": "依赖项",
+        "tooltip": "查看flow依赖关系"
+      },
+      "errors": {
+        "label": "{count} 错误"
+      },
+      "revisions": {
+        "suffix": "版本",
+        "tooltip": "查看flow修订版本"
+      },
+      "tests": {
+        "suffix": "测试",
+        "tooltip": "查看flow测试"
+      }
+    },
     "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
     "flow_outputs": "Flow Outputs",

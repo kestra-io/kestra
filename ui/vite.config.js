@@ -68,6 +68,7 @@ export default defineConfig(({mode}) => {
                 {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
                 {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
                 {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
+                {find: /^@kestra-io\/slot-contracts$/, replacement: path.resolve(__dirname, "packages/slot-contracts/src/index.ts")},
 
 
                 // to be removed when all mdc import are removed

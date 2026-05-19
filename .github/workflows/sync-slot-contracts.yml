@@ -45,7 +45,7 @@ jobs:
           DEST="artifact-sdk/packages/artifact-sdk/src/contracts"
           rm -rf "$DEST"
           mkdir -p "$DEST"
-          cp -r ui/packages/slot-contracts/src/. "$DEST/"
+          cp -r ui/packages/slot-contracts/dist/. "$DEST/"
 
       - name: Add changeset
         working-directory: artifact-sdk

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {useTemplateRef} from "vue"
     import {ElScrollbar} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -22,7 +22,7 @@
         default?(): unknown
     }>()
 
-    const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
+    const scrollbarRef = useTemplateRef<InstanceType<typeof ElScrollbar>>("scrollbarRef")
 
     const filteredProps = useFilteredProps(props)
 
@@ -31,7 +31,6 @@
         setScrollTop: (top: number) => scrollbarRef.value?.setScrollTop(top),
         setScrollLeft: (left: number) => scrollbarRef.value?.setScrollLeft(left),
         update: () => scrollbarRef.value?.update(),
-        wrapRef: scrollbarRef,
     })
 </script>
 

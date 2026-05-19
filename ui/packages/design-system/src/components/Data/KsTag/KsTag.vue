@@ -106,6 +106,7 @@
             &.kel-tag--#{$i} {
                 --kel-tag-bg-color: #{map.get($colors, bg)};
                 --kel-tag-text-color: #{map.get($colors, text)};
+                --kel-tag-border-color: #{map.get($colors, border)};
                 --kel-tag-hover-color: #{map.get($colors, text)};
 
                 a {

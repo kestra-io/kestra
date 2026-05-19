@@ -191,9 +191,11 @@ class WorkerTest {
                 .pollInterval(Duration.ofMillis(100))
                 .until(() -> results.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5);
 
-            // Then
+            // Then — only 1 thread, so at most 1 of the 4 tasks was RUNNING when killed (CREATED→RUNNING→KILLED);
+            // the others were killed before being picked up (CREATED→KILLED)
             WorkerTaskResult oneKilled = results.stream()
                 .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
+                .filter(r -> r.getTaskRun().getState().getHistories().stream().anyMatch(h -> h.getState() == State.Type.RUNNING))
                 .findFirst()
                 .orElseThrow();
             assertThat(oneKilled.getTaskRun().getState().getHistories()).hasSize(3);

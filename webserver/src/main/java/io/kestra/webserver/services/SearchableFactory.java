@@ -20,7 +20,7 @@ public class SearchableFactory {
             .searchableExtractor("id", Namespace::getId)
             .sortableExtractor("id", Namespace::getId)
             .searchableQueryFilterExtractor(QueryFilter.Field.QUERY, QueryFilter.Op.EQUALS,
-                (ns, v) -> ns.getId().toLowerCase().contains(v.toString().toLowerCase()))
+                (ns, v) -> ns.getId().equals(v.toString()))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.EQUALS,
                 (ns, v) -> ns.getId().equals(v.toString()))
             .searchableQueryFilterExtractor(QueryFilter.Field.NAMESPACE, QueryFilter.Op.NOT_EQUALS,

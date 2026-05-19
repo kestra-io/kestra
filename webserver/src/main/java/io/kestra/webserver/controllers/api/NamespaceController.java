@@ -139,6 +139,7 @@ public class NamespaceController<N extends Namespace> {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "Return only existing namespace") @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly,
         @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat List<QueryFilter> filters) throws HttpStatusException {
         List<Namespace> allNamespaces = Stream.concat(
                 flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream(),

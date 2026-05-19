@@ -8,8 +8,11 @@ import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutionResult;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,16 +28,22 @@ import java.util.Map;
 @Requires(property = "kestra.ai.enabled", value = "true", defaultValue = "true")
 public class KestraDocsContextTool implements AutoCloseable {
 
+    private static final Duration MCP_TIMEOUT = Duration.ofSeconds(15);
+
     private final McpClient mcpClient;
 
-    public KestraDocsContextTool() {
+    @Inject
+    public KestraDocsContextTool(
+        @Value("${micronaut.http.services.api.url:https://api.kestra.io}") String apiUrl,
+        VersionProvider versionProvider
+    ) {
         this.mcpClient = new DefaultMcpClient.Builder()
             .transport(StreamableHttpMcpTransport.builder()
-                .url("https://api.kestra.io/v1/mcp")
-                .timeout(Duration.ofSeconds(15))
+                .url(apiUrl + "/v1/mcp")
+                .timeout(MCP_TIMEOUT)
                 .build())
-            .clientName("kestra-copilot")
-            .toolExecutionTimeout(Duration.ofSeconds(15))
+            .clientName("Kestra/" + versionProvider.getVersion())
+            .toolExecutionTimeout(MCP_TIMEOUT)
             .build();
     }
 

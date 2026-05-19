@@ -37,14 +37,20 @@ public class KestraDocsContextTool implements AutoCloseable {
         @Value("${micronaut.http.services.api.url:https://api.kestra.io}") String apiUrl,
         VersionProvider versionProvider
     ) {
-        this.mcpClient = new DefaultMcpClient.Builder()
-            .transport(StreamableHttpMcpTransport.builder()
-                .url(apiUrl + "/v1/mcp")
-                .timeout(MCP_TIMEOUT)
-                .build())
-            .clientName("Kestra/" + versionProvider.getVersion())
-            .toolExecutionTimeout(MCP_TIMEOUT)
-            .build();
+        McpClient client = null;
+        try {
+            client = new DefaultMcpClient.Builder()
+                .transport(StreamableHttpMcpTransport.builder()
+                    .url(apiUrl + "/v1/mcp")
+                    .timeout(MCP_TIMEOUT)
+                    .build())
+                .clientName("Kestra/" + versionProvider.getVersion())
+                .toolExecutionTimeout(MCP_TIMEOUT)
+                .build();
+        } catch (Exception e) {
+            log.warn("Failed to initialize Kestra docs MCP client, documentation context will be unavailable: {}", e.getMessage());
+        }
+        this.mcpClient = client;
     }
 
     /**
@@ -92,6 +98,9 @@ public class KestraDocsContextTool implements AutoCloseable {
     }
 
     private String callMcpTool(String toolName, Map<String, Object> arguments) {
+        if (mcpClient == null) {
+            return null;
+        }
         try {
             ToolExecutionRequest request = ToolExecutionRequest.builder()
                 .name(toolName)
@@ -108,6 +117,9 @@ public class KestraDocsContextTool implements AutoCloseable {
     @Override
     @PreDestroy
     public void close() {
+        if (mcpClient == null) {
+            return;
+        }
         try {
             mcpClient.close();
         } catch (Exception e) {

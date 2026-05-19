@@ -79,7 +79,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     height: 2rem;
     padding: 0.5rem 0.9375rem;
     font-size: var(--ks-font-size-sm);
-    min-width: 7rem;
     gap: 0.375rem;
 
     .ks-execution-status__icon {
@@ -115,7 +114,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
         color: var(--ks-status-#{$status});
-        border-color: var(--ks-status-border-#{$status});
+        border-color: var(--ks-status-#{$status});
         background-color: var(--ks-status-background-#{$status});
     }
 }

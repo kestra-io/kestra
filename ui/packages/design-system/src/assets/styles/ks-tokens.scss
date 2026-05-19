@@ -89,9 +89,9 @@
     --ks-status-success: var(--ks-status-success);
     --ks-status-running: var(--ks-status-running);
     --ks-status-breakpoint: var(--ks-status-running);
-    --ks-status-paused: var(--ks-status-running);
+    --ks-status-paused: var(--ks-status-warning);
     --ks-status-warning: var(--ks-status-warning);
-    --ks-status-retrying: var(--ks-status-pending);
+    --ks-status-retrying: var(--ks-status-warning);
     --ks-status-killing: var(--ks-status-pending);
     --ks-status-cancelled: var(--ks-status-neutral);
     --ks-status-skipped: var(--ks-status-neutral);

@@ -515,7 +515,7 @@
                 width: 100%;
                 overflow: hidden;
 
-                span:not(i span) {
+                span:not(i span):not(.material-design-icon) {
                     display: block;
                     min-width: 0;
                     white-space: nowrap;

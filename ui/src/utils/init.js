@@ -93,7 +93,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
-    registerDesignSystemI18n(i18n)
+    await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
         await loadLocaleMessages(i18n, locale, additionalTranslations)

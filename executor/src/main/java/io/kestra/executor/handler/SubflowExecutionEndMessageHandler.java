@@ -60,7 +60,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
                 );
 
                 SubflowExecutionResult subflowExecutionResult = ExecutableUtils
-                    .subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun, message.outputs());
+                    .subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun);
                 if (subflowExecutionResult != null) {
                     try {
                         this.subflowExecutionResultQueue.emit(subflowExecutionResult);

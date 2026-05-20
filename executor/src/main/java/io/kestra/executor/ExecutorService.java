@@ -40,7 +40,6 @@ import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 
-import io.micronaut.context.ApplicationContext;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;

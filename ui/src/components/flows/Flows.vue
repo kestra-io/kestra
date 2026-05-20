@@ -26,6 +26,8 @@
                 :loadData="loadData"
                 :data="flowStore.flows"
                 :total="flowStore.total"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 :defaultSort="{prop: 'id', order: 'ascending'}"
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 @ready="ready = true"
@@ -425,6 +427,9 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return filters
     })
+
+    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
+    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
 
     watch(filterQuery, () => {
         dataTable.value?.resetAndReload()

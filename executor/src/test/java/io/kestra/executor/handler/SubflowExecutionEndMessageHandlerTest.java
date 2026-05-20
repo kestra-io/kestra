@@ -38,8 +38,7 @@ class SubflowExecutionEndMessageHandlerTest {
             parentExecution.getId(),
             "task",
             "taskRun",
-            State.Type.SUCCESS,
-            Collections.emptyMap()
+            State.Type.SUCCESS
         );
 
         subflowExecutionEndMessageHandler.handle(subflowExecutionEnd);

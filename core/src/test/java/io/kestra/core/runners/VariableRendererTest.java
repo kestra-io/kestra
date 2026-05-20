@@ -158,6 +158,12 @@ class VariableRendererTest {
         assertThat(result).containsKey("key1");
     }
 
+    @Test
+    void shouldRenderMixedFilterAndOperator() throws IllegalVariableEvaluationException {
+        Map<String, Object> variables = Map.of("outputs", Map.of("after", Map.of("value", "300"), "before", Map.of("value", "250")));
+        assertThat(variableRenderer.render("{{ outputs.after.value | number - outputs.before.value | number >= 5 }}", variables)).isEqualTo("true");
+    }
+
     public static class TestVariableRenderer extends VariableRenderer {
 
         public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,

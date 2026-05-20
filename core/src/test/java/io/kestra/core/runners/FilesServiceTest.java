@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest(rebuildContext = true)
 class FilesServiceTest {
@@ -35,6 +36,22 @@ class FilesServiceTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Test
+    void shouldRejectPathTraversalInInputFileNames() {
+        RunContext runContext = runContextFactory.of();
+        assertThatThrownBy(() ->
+            FilesService.inputFiles(runContext, Map.of("../escape.txt", "content"))
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectAbsolutePathInInputFileNames() {
+        RunContext runContext = runContextFactory.of();
+        assertThatThrownBy(() ->
+            FilesService.inputFiles(runContext, Map.of("/etc/passwd", "content"))
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
 
     @Test
     void overrideExistingInputFile() throws Exception {

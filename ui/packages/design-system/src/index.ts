@@ -87,6 +87,14 @@ import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
+import KsPageHeader from "./components/Data/KsPageHeader.vue"
+import KsDescriptions from "./components/Data/KsDescriptions.vue"
+import KsDescriptionsItem from "./components/Data/KsDescriptionsItem.vue"
+import KsCarousel from "./components/Data/KsCarousel.vue"
+import KsCarouselItem from "./components/Data/KsCarouselItem.vue"
+import KsResult from "./components/Feedback/KsResult.vue"
+import KsBacktop from "./components/Others/KsBacktop.vue"
 
 import {vKsLoading} from "./components/Feedback/KsLoading"
 export {vKsLoading} from "./components/Feedback/KsLoading"
@@ -225,6 +233,14 @@ const components = {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
 }
 
 export {
@@ -312,6 +328,14 @@ export {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
 }
 
 const KestraDesignSystem = {

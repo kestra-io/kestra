@@ -76,7 +76,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         loadInit.value = true
 
         if (change) {
-            router.replace({query})
+            router.replace({query}).catch((error) => {
+                // Handle navigation errors gracefully
+                console.error("Error restoring URL navigation:", error)
+            })
         }
     }
 
@@ -87,7 +90,26 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     }
 
     onMounted(() => {
-        if (!loadInit.value) goToRestoreUrl()
+        try {
+            if (!loadInit.value) {
+                goToRestoreUrl()
+            }
+        } catch (error) {
+            // Ensure loadInit is set to true even if goToRestoreUrl fails
+            console.error("Error restoring URL:", error)
+            loadInit.value = true
+        }
+
+        // Safety timeout: ensure loadInit is true after a reasonable delay
+        // This prevents indefinite loading if restoration process hangs
+        const timeoutId = setTimeout(() => {
+            if (!loadInit.value) {
+                console.warn("URL restoration timeout: forcing loadInit to true")
+                loadInit.value = true
+            }
+        }, 3000) // 3 second timeout
+
+        return () => clearTimeout(timeoutId)
     })
 
     // Skip cross-route navigations so leaving a page doesn't clobber another

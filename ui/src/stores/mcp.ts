@@ -3,12 +3,16 @@ import {defineStore} from "pinia"
 import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 
+export type McpAuthType = "BASIC" | "API_TOKEN" | "OAUTH";
+
 export interface McpServer {
     id: string;
     description?: string;
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
-    authType: "BASIC" | "API_TOKEN";
+    authType: McpAuthType;
+    oauthProvider?: string;
+    scopesSupported?: string[];
     disabled: boolean;
     isDefault: boolean;
 }
@@ -18,7 +22,9 @@ export interface McpServerPayload {
     description?: string;
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
-    authType: "BASIC" | "API_TOKEN";
+    authType: McpAuthType;
+    oauthProvider?: string;
+    scopesSupported?: string[];
     disabled: boolean;
 }
 

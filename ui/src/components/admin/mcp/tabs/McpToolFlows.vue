@@ -1,7 +1,6 @@
 <template>
     <div class="mcp-tools">
         <KsDataTable
-            ref="dataTable"
             :data="filteredTools"
             :total="filteredTools.length"
             :loading="loading"
@@ -92,7 +91,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, useTemplateRef, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
@@ -109,7 +108,6 @@
 
     const tools = ref<McpTool[]>([])
     const loading = ref(false)
-    const dataTable = useTemplateRef("dataTable")
 
     const serverId = () => route.params.id as string | undefined
 

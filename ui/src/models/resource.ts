@@ -6,4 +6,5 @@ export default {
     DASHBOARD: "DASHBOARD",
     SECRET: "SECRET",
     COPILOT: "COPILOT",
+    MCP_SERVER: "MCP_SERVER",
 }

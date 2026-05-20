@@ -778,11 +778,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
                     String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");
                     String taskId = (String) execution.getTrigger().getVariables().get("taskId");
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> outputs = (Map<String, Object>) execution.getTrigger().getVariables().get("taskRunOutputs");
-                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(
-                        executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs
-                    );
+                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent());
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
                 }
 

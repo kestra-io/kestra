@@ -335,6 +335,7 @@
         "message": "Kestra Enterprise Edition에서는 조직에만 사용할 수 있는 맞춤형 Blueprints를 생성할 수 있습니다. 이를 모범 사례 템플릿으로 사용하여 팀 내에서 자주 사용하는 workflow를 공유하고, 중앙 집중화하고, 문서화할 수 있습니다.",
         "title": "사용자 정의 Blueprints 추가"
       },
+      "contact_sales": "영업팀에 문의하세요",
       "enterprise_edition": "엔터프라이즈 에디션",
       "get_a_demo_button": "데모 받기",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "테스트",
         "message": "플로우의 로직을 개별적으로 검증하고, 회귀를 조기에 감지하며, 자동화가 변화하고 성장함에 따라 신뢰를 유지하세요.",
         "title": "모든 변경 사항에 대한 신뢰성 보장"
-      }
+      },
+      "watch_the_video": "비디오 보기"
     },
     "dependencies": "종속성",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
@@ -494,6 +496,10 @@
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
+      "concurrency_limits": {
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대한 문서를 참조하세요.",
+        "title": "동시성 제한이 설정되지 않았습니다."
+      },
       "dependencies": {
         "ASSET": {
           "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다.",
@@ -511,6 +517,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
+      },
+      "groups": {
+        "content": "그룹을 사용하면 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전반에 걸쳐 집단적으로 관리할 수 있습니다.",
+        "title": "아직 그룹이 없습니다!"
       },
       "kill_switches": {
         "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "여기에서 Kestra 인스턴스에 설치된 모든 플러그인을 관리할 수 있습니다. 새로 설치된 플러그인은 인스턴스의 구성에 따라 모든 Kestra 서비스에서 즉시 사용 가능하지 않을 수 있습니다.",
         "title": "아직 버전이 지정된 플러그인이 없습니다!"
+      },
+      "workerRegistrationTokens": {
+        "content": "등록 토큰은 원격 worker가 Kestra 인스턴스에 안전하게 인증하고 등록할 수 있도록 합니다. 토큰을 생성한 후 이를 사용하여 새로운 worker를 이 클러스터에 연결하십시오.",
+        "title": "아직 등록 토큰이 없습니다!"
       }
     },
     "empty search": "검색 결과가 없습니다",

@@ -335,6 +335,7 @@
         "message": "В Kestra Enterprise Edition вы можете создавать пользовательские Blueprints, доступные только вашей организации. Вы можете использовать их в качестве шаблонов лучших практик для обмена, централизации и документирования часто используемых рабочих процессов в вашей команде.",
         "title": "Добавить пользовательские Blueprints"
       },
+      "contact_sales": "Связаться с отделом продаж",
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "Тесты",
         "message": "Проверьте логику ваших flow в изоляции, обнаруживайте регрессии на ранних стадиях и поддерживайте уверенность в ваших автоматизациях по мере их изменения и роста.",
         "title": "Обеспечьте надежность с каждым изменением"
-      }
+      },
+      "watch_the_video": "Смотреть видео"
     },
     "dependencies": "Зависимости",
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
@@ -494,6 +496,10 @@
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
         "title": "Для этого flow не установлены ограничения."
       },
+      "concurrency_limits": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "title": "Ограничения на параллельность не установлены."
+      },
       "dependencies": {
         "ASSET": {
           "content": "Этот ресурс не имеет зависимостей вверх или вниз по потоку с flow или другими ресурсами.",
@@ -511,6 +517,10 @@
           "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         }
+      },
+      "groups": {
+        "content": "Группы позволяют объединять пользователей, чтобы управлять разрешениями и привязками ролей коллективно в вашем Mandant.",
+        "title": "У вас еще нет групп!"
       },
       "kill_switches": {
         "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
         "title": "У вас еще нет версионированного плагина!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Токены регистрации позволяют удаленным worker безопасно аутентифицироваться и регистрироваться в вашем экземпляре Kestra. Создайте токен, затем используйте его для подключения новых worker к этому кластеру.",
+        "title": "У вас еще нет токенов регистрации!"
       }
     },
     "empty search": "Результаты поиска пусты",

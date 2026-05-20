@@ -335,6 +335,7 @@
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。",
         "title": "添加自定义蓝图"
       },
+      "contact_sales": "联系销售",
       "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "测试",
         "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
         "title": "确保每次更改的可靠性"
-      }
+      },
+      "watch_the_video": "观看视频"
     },
     "dependencies": "依赖关系",
     "dependencies delete flow": "此流程有依赖关系。删除它将阻止其依赖关系的执行。<br /><br /> 受影响的流程列表如下：",
@@ -494,6 +496,10 @@
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Flow未设置限制。"
       },
+      "concurrency_limits": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">并发限制</a></strong>的信息。",
+        "title": "未设置并发限制。"
+      },
       "dependencies": {
         "ASSET": {
           "content": "此资产与flow或其他资产没有上游或下游依赖关系。",
@@ -511,6 +517,10 @@
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         }
+      },
+      "groups": {
+        "content": "组允许您将用户捆绑在一起，以便您可以在整个租户中集体管理权限和角色绑定。",
+        "title": "您还没有群组！"
       },
       "kill_switches": {
         "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
         "title": "您还没有版本化的插件！"
+      },
+      "workerRegistrationTokens": {
+        "content": "注册令牌允许远程worker安全地进行身份验证并注册到您的Kestra实例。创建一个令牌，然后使用它将新worker连接到此集群。",
+        "title": "您还没有注册令牌！"
       }
     },
     "empty search": "搜索结果为空",

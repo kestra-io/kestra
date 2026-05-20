@@ -21,7 +21,6 @@
         status?: "" | "success" | "exception" | "warning"
         striped?: boolean
         stripedFlow?: boolean
-        strokeLinecap?: "circle" | "square"
     }>(), {
         left: undefined,
         percentage: undefined,

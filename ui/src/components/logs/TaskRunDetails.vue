@@ -14,21 +14,23 @@
                 active: isTaskRunActive,
             }"
         >
-            <KsProgress 
-                v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
-                :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
-                :strokeWidth="24"
-                :textInside="true"
-                stroke-linecap="circle"
-            >
-                <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
-            </KsProgress>
+            
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
+                <KsProgress 
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                    :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                    :strokeWidth="24"
+                    :textInside="true"
+                    class="progress-bar"
+                >
+                    <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                </KsProgress>
+                
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -993,6 +995,10 @@
 
     :deep(.line) {
         padding-left: 0;
+    }
+
+    .progress-bar {
+        margin-bottom: .5rem;
     }
 
     .attempt-wrapper {

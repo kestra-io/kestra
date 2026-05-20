@@ -74,13 +74,13 @@ public class Extension extends AbstractExtension {
     public List<BinaryOperator> getBinaryOperators() {
         List<BinaryOperator> operators = new ArrayList<>();
 
-        operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("isIn", 120, InExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl(">", 120, GreaterThanExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl(">=", 120, GreaterThanEqualsExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("<", 120, LessThanExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("<=", 120, LessThanEqualsExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("??", 30, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("???", 30, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("isIn", 30, InExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">", 30, GreaterThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">=", 30, GreaterThanEqualsExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<", 30, LessThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<=", 30, LessThanEqualsExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }

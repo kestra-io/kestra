@@ -13,7 +13,7 @@
 <script setup lang="ts">
     import {collapseEmptyValues} from "./MixinTask"
     import Editor from "../../../../components/inputs/Editor.vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {computed, ref} from "vue"
 
     const props = defineProps({

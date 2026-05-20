@@ -167,7 +167,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     states:
                       - FAILED
                       - WARNING
-                    when: "{{execution.namespace | startsWith 'company'}}\""""
+                    when: "{{flow.namespace | startsWith('company')}}\""""
         ),
         @Example(
             full = true,
@@ -499,7 +499,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 "_", // avoid possible mismatch between namespace and flowId
                 dependency.flowId,
                 dependency.when != null ? dependency.when.toString() : null,
-                ListUtils.emptyOnNull(dependency.states).stream().sorted().map(Enum::name).collect(Collectors.joining(",")),
+                ListUtils.emptyOnNull(dependency.states).stream().map(Enum::name).sorted().collect(Collectors.joining(",")),
                 MapUtils.emptyOnNull(dependency.labels).entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(","))
             );
         }

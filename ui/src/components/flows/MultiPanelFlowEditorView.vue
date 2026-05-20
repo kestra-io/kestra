@@ -56,7 +56,7 @@
     import {usePlaygroundStore} from "../../stores/playground"
     import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import FlowPlayground from "./FlowPlayground.vue"
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"

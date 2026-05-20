@@ -38,7 +38,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
     import {Schema} from "./getTaskComponent"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
 

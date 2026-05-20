@@ -288,7 +288,7 @@ public class Property<T> {
 
     @Override
     public String toString() {
-        return value != null ? value.toString() : expression;
+        return expression != null ? expression : Objects.toString(value);
     }
 
     @Override

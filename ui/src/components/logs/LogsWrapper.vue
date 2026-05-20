@@ -80,7 +80,7 @@
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
     import {useLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"

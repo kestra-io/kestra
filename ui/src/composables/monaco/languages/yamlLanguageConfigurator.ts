@@ -9,7 +9,7 @@ import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/servi
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import {
     endOfWordColumn,
     NO_SUGGESTIONS,

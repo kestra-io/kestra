@@ -14,6 +14,12 @@
                 active: isTaskRunActive,
             }"
         >
+            <KsProgress 
+                v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop'" 
+                :value="loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0" 
+                :max="loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 0" 
+                style="display:block;width: 100%"
+            />
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
                 :item="currentTaskRun"
@@ -210,6 +216,7 @@
 </script>
 
 <script>
+    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
     import {State} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
@@ -229,6 +236,7 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import {set} from "lodash"
 
     export default {
         name: "TaskRunDetails",
@@ -317,6 +325,8 @@
                 subflowTaskRunDetailsRefs: {},
                 throttledExecutionUpdate: undefined,
                 targetExecution: undefined,
+                loopOutputsByTaskRunId: {},
+                pollingTimer: {},
             }
         },
         watch: {
@@ -579,6 +589,42 @@
             },
         },
         methods: {
+            startPollingLoopStatus(taskRunId) {
+                if(this.pollingTimer[taskRunId]){
+                    return
+                }
+                this.pollingTimer[taskRunId] = setInterval(async () => {
+                    this.updateLoopStatus(taskRunId)
+                }, 500)
+            },
+            stopPollingLoopStatus(taskRunId) {
+                clearInterval(this.pollingTimer[taskRunId])
+                this.pollingTimer[taskRunId] = null
+            },
+            async updateLoopStatus(taskRunId) {
+                if (!this.followedExecution) return
+                for (const taskRun of this.currentTaskRuns) {
+                    if (
+                        this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop"
+                    ) {
+                        this.loopOutputsByTaskRunId[taskRunId] = null
+                        try {
+                            const outputs = await OutputsAPI.taskRunOutputs({
+                                executionId: this.followedExecution.id,
+                                taskRunId,
+                            })
+                            if(outputs?.iterationCount && outputs?.terminatedIterations) {
+                                if(outputs.terminatedIterations >= outputs.iterationCount) {
+                                    this.stopPollingLoopStatus(taskRunId)
+                                }
+                            }
+                            this.loopOutputsByTaskRunId[taskRunId] = outputs
+                        } catch (_) {
+                            // ignore fetch errors
+                        }
+                    }
+                }
+            },
             fileUrl(path) {
                 return `${apiUrl()}/executions/${this.followedExecution.id}/file?path=${path}`
             },
@@ -675,6 +721,17 @@
                         }
                     })
             },
+            refreshLogs(){
+                this.timer = moment()
+                this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
+                for(const taskRun of this.currentTaskRuns) {
+                    if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                        this.startPollingLoopStatus(taskRun.id)
+                    }
+                }
+                this.logsBuffer = []
+                this.scrollToBottomFailedTask()
+            },
             followLogs(executionId) {
                 this.executionsStore.followLogs({id: executionId}).then((sse) => {
                     this.logsSSE = sse
@@ -689,19 +746,13 @@
 
                         clearTimeout(this.timeout)
                         this.timeout = setTimeout(() => {
-                            this.timer = moment()
-                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
-                            this.logsBuffer = []
-                            this.scrollToBottomFailedTask()
+                            this.refreshLogs()
                         }, 100)
 
                         // force at least 1 logs refresh / 500ms
                         if (moment().diff(this.timer, "seconds") > 0.5) {
                             clearTimeout(this.timeout)
-                            this.timer = moment()
-                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
-                            this.logsBuffer = []
-                            this.scrollToBottomFailedTask()
+                            this.refreshLogs()
                         }
                     }
 
@@ -910,6 +961,9 @@
         },
         beforeUnmount() {
             this.closeLogsSSE()
+            for(const taskRunId in this.pollingTimer) {
+                this.stopPollingLoopStatus(taskRunId)
+            }
         },
     }
 </script>

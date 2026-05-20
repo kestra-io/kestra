@@ -25,7 +25,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     private McpSessionRepositoryInterface mcpSessionRepository;
 
     @Test
-    void givenNewSessionWhenSaveThenPersisted() {
+    void shouldPersistSessionWhenSavingNewSession() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession session = createSession(tenant);
@@ -41,7 +41,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenExistingSessionWhenFindThenReturned() {
+    void shouldReturnSessionWhenFindingExistingSession() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession saved = mcpSessionRepository.save(createSession(tenant));
@@ -58,7 +58,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenUnknownSessionIdWhenFindThenEmpty() {
+    void shouldReturnEmptyWhenFindingUnknownSession() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
@@ -72,7 +72,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenMultipleSessionsWhenFindByServerIdThenAllReturned() {
+    void shouldReturnAllSessionsWhenFindingByServerId() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String namespace = "io.kestra.test";
@@ -92,7 +92,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenSessionsAcrossNodesWhenFindBySseNodeThenOnlyMatchingNodeReturned() {
+    void shouldReturnOnlyMatchingNodeSessionsWhenFindingBySseNode() {
         // Given
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -112,7 +112,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenExistingSessionWhenDeleteThenRemovedAndReturnedOnce() {
+    void shouldRemoveAndReturnSessionWhenDeletingExistingSession() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession saved = mcpSessionRepository.save(createSession(tenant));
@@ -128,7 +128,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenUnknownSessionIdWhenDeleteThenEmpty() {
+    void shouldReturnEmptyWhenDeletingUnknownSession() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
@@ -140,7 +140,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenSessionsAcrossTenantsWhenFindByServerIdThenOnlyCurrentTenantReturned() {
+    void shouldReturnOnlyCurrentTenantSessionsWhenFindingByServerId() {
         // Given
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
@@ -156,7 +156,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenExistingSessionWhenSaveAgainThenUpdated() {
+    void shouldUpdateSessionWhenSavingExistingSessionAgain() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession original = mcpSessionRepository.save(createSession(tenant));
@@ -177,7 +177,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenSessionOlderThan48Hours_whenPurgeOlderThan_thenSessionDeleted() {
+    void shouldDeleteSessionWhenSessionIsOlderThan48Hours() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession session = mcpSessionRepository.save(createSession(tenant));
@@ -192,7 +192,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenSessionNewerThan48Hours_whenPurgeOlderThan_thenSessionRetained() {
+    void shouldRetainSessionWhenSessionIsNewerThan48Hours() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession session = mcpSessionRepository.save(createSession(tenant));
@@ -206,7 +206,7 @@ public abstract class AbstractMcpSessionRepositoryTest {
     }
 
     @Test
-    void givenMixedSessions_whenPurgeOlderThan_thenOnlyOldSessionsDeleted() {
+    void shouldDeleteOnlyOldSessionsWhenPurgingOlderThan() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         McpSession old = mcpSessionRepository.save(createSession(tenant));

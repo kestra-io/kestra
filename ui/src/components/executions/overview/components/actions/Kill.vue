@@ -52,7 +52,7 @@
     const user = computed(() => authStore.user)
 
     const enabled = computed(() => {
-        if (!(user.value && user.value.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace))) {
+        if (!(user.value && user.value.isAllowed(resource.EXECUTION, action.KILL, props.execution.namespace))) {
             return false
         }
 

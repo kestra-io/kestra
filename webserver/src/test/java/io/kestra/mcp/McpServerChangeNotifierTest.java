@@ -52,7 +52,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenFlowWithMcpTrigger_whenTriggerRemovedFromFlow_thenStaleToolIsRemovedFromServer() throws DeserializationException {
+    void shouldRemoveStaleToolFromServerWhenTriggerRemovedFromFlow() throws DeserializationException {
         // Given — v1 has a trigger on serverId; init the server so it holds v1's tool
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)
@@ -72,7 +72,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenFlowWithMcpTrigger_whenMcpServerIdChangedInTrigger_thenBothServersAreRefreshed() throws DeserializationException {
+    void shouldRefreshBothServersWhenMcpServerIdChangedInTrigger() throws DeserializationException {
         String serverA = serverId;
         String serverB = UUID.randomUUID().toString();
 
@@ -98,7 +98,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenNewFlow_whenFirstRevisionArrives_thenToolIsAddedToServer() throws DeserializationException {
+    void shouldAddToolToServerWhenFirstRevisionArrives() throws DeserializationException {
         // Given — init the server handler before creating the flow
         mcpServerHandlerTransport.getServerHandler(contextFor(serverId));
 
@@ -113,7 +113,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenFlowWithMcpTrigger_whenFlowIsDisabled_thenToolIsRemovedFromServer() throws DeserializationException {
+    void shouldRemoveToolFromServerWhenFlowIsDisabled() throws DeserializationException {
         // Given — v1 has a trigger on serverId; init the server
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)
@@ -133,7 +133,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenActiveServer_whenServerIsDeleted_thenServerIsEvicted() throws DeserializationException {
+    void shouldEvictServerWhenServerIsDeleted() throws DeserializationException {
         // Given — server is initialised with one tool
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)
@@ -153,7 +153,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenActiveServer_whenServerIsDisabled_thenServerIsEvicted() throws DeserializationException {
+    void shouldEvictServerWhenServerIsDisabled() throws DeserializationException {
         // Given — server is initialised with one tool
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)
@@ -173,7 +173,7 @@ class McpServerChangeNotifierTest {
     }
 
     @Test
-    void givenActiveServer_whenServerIsUpdatedAndStillEnabled_thenNoEviction() throws Exception {
+    void shouldNotEvictServerWhenServerIsUpdatedAndStillEnabled() throws Exception {
         // Given — server is initialised with one tool
         FlowWithSource v1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(
             buildMcpTrigger("t1", serverId)

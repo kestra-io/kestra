@@ -433,7 +433,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
 
     /**
      * Creates a derived loop execution from the current execution and the loop task run
-     * with the given index information (value and index).
+     * with the given iteration information (index, key and value).
      */
     public Execution loopExecution(TaskRun taskRun, int index, @Nullable String key, String value) {
         return new Execution(
@@ -449,11 +449,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.variables,
             this.state,
             this.id,
-            this.originalId,
+            null,
             null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
             this.deleted,
             this.metadata,
-            this.scheduleDate,
+            null,
             this.traceParent,
             this.fixtures,
             ExecutionKind.LOOP,

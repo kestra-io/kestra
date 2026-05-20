@@ -85,7 +85,7 @@
                 <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
                     {{ $t("kill") }}
                 </KsButton>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
@@ -638,7 +638,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value
+        return canDelete.value || canUpdate.value || canKill.value
     })
 
     const canCreate = computed(() => {
@@ -651,6 +651,10 @@
 
     const canDelete = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace)
+    })
+
+    const canKill = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {

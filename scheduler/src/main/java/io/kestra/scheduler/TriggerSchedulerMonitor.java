@@ -15,6 +15,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.Logs;
 
@@ -51,9 +52,14 @@ public class TriggerSchedulerMonitor implements Runnable {
     @Override
     public void run() {
         try {
-            // Retrieve all locked triggers from all corresponding virtual nodes
+            // Retrieve all locked triggers from all corresponding virtual nodes.
+            // Realtime triggers stay locked for their entire processing lifetime and are not bound to a
+            // single execution lifecycle, so they would otherwise be reported as blocked indefinitely.
             ZonedDateTime now = SchedulerClock.now();
-            List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, defaultScheduler.currentVNodesAssignment(), true);
+            List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, defaultScheduler.currentVNodesAssignment(), true)
+                .stream()
+                .filter(state -> !TriggerType.REALTIME.equals(state.getType()))
+                .toList();
             if (CollectionUtils.isEmpty(triggers)) {
                 LOG.debug("No locked triggers. Skip trigger monitoring.");
                 return;

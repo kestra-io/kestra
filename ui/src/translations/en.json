@@ -1930,21 +1930,29 @@
         "bearer_token": "Bearer token authentication",
         "delete_confirm": "Are you sure you want to delete this MCP server?",
         "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
+        "id_placeholder": "e.g. my-mcp-server",
+        "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
+        "main_tenant": "main",
+        "tab_edit": "Edit",
+        "tab_connect": "Connect",
+        "tab_tool_flows": "Tool Flows",
+        "tab_tool_flows_placeholder": "Tool flows management is coming soon.",
+        "tab_connect_placeholder": "Connection details coming soon.",
         "connect_modal": {
-            "title": "Connect to {name}",
-            "server_url": "Server URL",
-            "claude_desktop": "Claude Desktop",
-            "claude_desktop_hint": "Add the following to your claude_desktop_config.json file:",
-            "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
-            "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
-            "claude_code": "Claude Code",
-            "claude_code_hint": "Run the following command in your terminal:",
-            "cursor": "Cursor",
-            "cursor_hint": "Add the following to ~/.cursor/mcp.json:",
-            "codex": "Codex (OpenAI)",
-            "codex_hint": "Add the following to your codex.json MCP configuration:",
-            "done": "Done"
-        }
+              "title": "Connect to {name}",
+              "server_url": "Server URL",
+              "claude_desktop": "Claude Desktop",
+              "claude_desktop_hint": "Add the following to your claude_desktop_config.json file:",
+              "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+              "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+              "claude_code": "Claude Code",
+              "claude_code_hint": "Run the following command in your terminal:",
+              "cursor": "Cursor",
+              "cursor_hint": "Add the following to ~/.cursor/mcp.json:",
+              "codex": "Codex (OpenAI)",
+              "codex_hint": "Add the following to your codex.json MCP configuration:",
+              "done": "Done"
+          }
     }
   }
 }

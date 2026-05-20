@@ -24,7 +24,7 @@ public class IonFileRender extends FileRender {
     private void renderContent(InputStream filestream) throws IOException {
         try (InputStream inputStream = new BufferedInputStream(filestream, FileSerde.BUFFER_SIZE)) {
             List<Object> list = new ArrayList<>();
-            this.truncated = FileSerde.reader(inputStream, this.maxLine, throwConsumer(list::add));
+            this.truncated = FileSerde.read(inputStream, this.maxLine, throwConsumer(list::add));
 
             this.content = list;
         }

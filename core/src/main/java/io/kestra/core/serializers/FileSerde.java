@@ -44,7 +44,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
      */
-    public static void reader(InputStream input, Consumer<Object> consumer) throws IOException {
+    public static void read(InputStream input, Consumer<Object> consumer) throws IOException {
         MappingIterator<Object> iterator = createMappingIterator(DEFAULT_OBJECT_MAPPER, input, DEFAULT_TYPE_REFERENCE);
         try (iterator) {
             while (iterator.hasNext()) {
@@ -56,7 +56,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
      */
-    public static boolean reader(InputStream input, int maxLines, Consumer<Object> consumer) throws IOException {
+    public static boolean read(InputStream input, int maxLines, Consumer<Object> consumer) throws IOException {
         MappingIterator<Object> iterator = createMappingIterator(DEFAULT_OBJECT_MAPPER, input, DEFAULT_TYPE_REFERENCE);
         try (iterator) {
             int nbLines = 0;
@@ -123,8 +123,9 @@ public final class FileSerde {
 
     // endregion
 
-    // region Reader-based read methods (text ION only — kept for backward compatibility)
+    // region Reader-based read methods (text ION only — deprecated, use InputStream-based methods instead)
 
+    @Deprecated(forRemoval = true)
     public static void reader(BufferedReader input, Consumer<Object> consumer) throws IOException {
         String row;
         while ((row = input.readLine()) != null) {
@@ -132,6 +133,7 @@ public final class FileSerde {
         }
     }
 
+    @Deprecated(forRemoval = true)
     public static boolean reader(BufferedReader input, int maxLines, Consumer<Object> consumer) throws IOException {
         String row;
         int nbLines = 0;
@@ -158,6 +160,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static Flux<Object> readAll(Reader reader) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, DEFAULT_TYPE_REFERENCE);
     }
@@ -165,6 +168,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Flux<T> readAll(Reader reader, TypeReference<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
@@ -172,6 +176,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Flux<T> readAll(Reader reader, Class<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
@@ -179,6 +184,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static Flux<Object> readAll(ObjectMapper objectMapper, Reader in) throws IOException {
         return readAll(objectMapper, in, DEFAULT_TYPE_REFERENCE);
     }
@@ -186,6 +192,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -194,6 +201,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -201,11 +209,12 @@ public final class FileSerde {
 
     // endregion
 
-    // region Writer-based write methods (text ION — kept for backward compatibility)
+    // region Writer-based write methods (text ION — deprecated, use OutputStream-based methods instead)
 
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Mono<Long> writeAll(Writer writer, Flux<T> values) throws IOException {
         return writeAll(DEFAULT_OBJECT_MAPPER, writer, values);
     }
@@ -213,6 +222,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      */
+    @Deprecated(forRemoval = true)
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
         SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {
         });
@@ -234,7 +244,7 @@ public final class FileSerde {
         return values
             .filter(Objects::nonNull)
             .doOnNext(throwConsumer(seqWriter::write))
-            .doFinally(throwConsumer(ignored -> seqWriter.flush()))
+            .doFinally(throwConsumer(ignored -> seqWriter.close()))
             .count();
     }
 

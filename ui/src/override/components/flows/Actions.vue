@@ -1,6 +1,6 @@
 <template>
     <FlowPlaygroundToggle
-        v-if="isEditTab && isPlaygroundAllowed && canEdit && !deleted"
+        v-if="isEditTab && isPlaygroundAllowed && editorIsAllowedEdit && !deleted"
     />
     <NavBarActions :loading="tab === 'logs' && logsStore.logs === undefined">
         <Dashboards
@@ -53,20 +53,20 @@
         />
 
         <template #primary>
-            <NavBarAction
-                v-if="showSavePrimary"
-                type="primary"
-                :icon="ContentSave"
-                :label="t('save')"
-                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
-                @click="editorSave"
-            />
             <TriggerFlow
-                v-else-if="flow && !deleted && tab !== 'apps' && canExecute"
+                v-if="shouldShowExecute"
+                :iconOnly="isEditTab"
                 type="primary"
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
+            />
+            <NavBarAction
+                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                type="primary"
+                :label="t('save')"
+                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
+                @click="editorSave"
             />
         </template>
     </NavBarActions>
@@ -81,7 +81,6 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"
-    import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -114,7 +113,7 @@
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
     const tab = computed(() => route.params?.tab as string)
-    const isEditTab = computed(() => tab.value === "edit")
+    const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
     const dashboardStore = useDashboardStore()
@@ -133,13 +132,6 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const showSavePrimary = computed(() =>
-        isEditTab.value
-        && canEdit.value
-        && !deleted.value
-        && (editorCanSave.value || editorHasErrors.value),
-    )
-
     const onSelectDashboard = (value: any) => {
         const key = dashboardStore.getUserDashboardStorageKey(route)
         localStorage.setItem(key, value)
@@ -155,6 +147,14 @@
     const canExecute = computed(() =>
         flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
     )
+
+    const shouldShowExecute = computed(() => {
+        if (!flow.value || deleted.value) return false
+        if (flowStore.isCreating) return false
+        if (!canExecute.value) return false
+        if (!isEditTab.value && tab.value === "apps") return false
+        return true
+    })
 
     const canEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),

@@ -78,6 +78,7 @@
     function refreshStats() {
         const flow = flowStore.flow
         if (!flow?.id || !flow?.namespace) return
+        if (flowStore.isCreating) return
         flowStore.loadFlowStats({namespace: flow.namespace, id: flow.id})
     }
 

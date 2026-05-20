@@ -391,13 +391,17 @@ public class ExecutionService {
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
-        ;
 
-        newExecution = revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;
         if (emitEvent) {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Execution applyNewRevision(Flow flow, Execution newExecution) {
+        return newExecution.withFlowRevision(flow.getRevision())
+            .withVariables(flow.getVariables());
     }
 
     public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {

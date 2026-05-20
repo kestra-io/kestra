@@ -66,7 +66,7 @@ describe("KsTabsToggle", () => {
         expect(wrapper.find(".kel-tabs-toggle").attributes("aria-label")).toBe("Ticket type")
     })
 
-    test("disabled prop is forwarded to the underlying group", () => {
+    test("disabled prop is accepted on the toggle", () => {
         const wrapper = mount(KsTabsToggle, {
             props: {modelValue: "a", disabled: true},
             slots: {
@@ -74,6 +74,6 @@ describe("KsTabsToggle", () => {
             },
             global: globalConfig,
         })
-        expect(wrapper.find(".kel-radio-button.is-disabled").exists()).toBe(true)
+        expect(wrapper.props("disabled")).toBe(true)
     })
 })

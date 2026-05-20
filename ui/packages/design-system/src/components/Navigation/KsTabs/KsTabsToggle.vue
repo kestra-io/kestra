@@ -2,7 +2,8 @@
     <ElRadioGroup
         v-model="model"
         class="kel-tabs-toggle"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        :disabled="disabled"
+        v-bind="$attrs"
         :aria-label="ariaLabel"
         @change="emit('change', $event)"
     >
@@ -12,13 +13,12 @@
 
 <script setup lang="ts">
     import {ElRadioGroup} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
     const model = defineModel<string | number | boolean>()
 
-    const props = defineProps<{
+    defineProps<{
         disabled?: boolean
         ariaLabel?: string
     }>()
@@ -30,8 +30,6 @@
     defineSlots<{
         default?(): unknown
     }>()
-
-    const filteredProps = useFilteredProps(props, ["ariaLabel"])
 </script>
 
 <style lang="scss">

@@ -16,10 +16,12 @@
         >
             <KsProgress 
                 v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop'" 
-                :value="loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0" 
-                :max="loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 0" 
-                style="display:block;width: 100%"
-            />
+                :percentage="(loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100" 
+                :strokeWidth="24"
+                :textInside="true"
+            >
+                {{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}
+            </KsProgress>
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
                 :item="currentTaskRun"
@@ -237,6 +239,7 @@
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
     import {set} from "lodash"
+    import KsProgress from "@kestra-io/design-system/src/components/Data/KsProgress.vue"
 
     export default {
         name: "TaskRunDetails",

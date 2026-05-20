@@ -83,8 +83,10 @@ export default {
             "execution_kind": {
                 "playground":"Playground",
                 "test":"Test",
+                "loop": "Loop",
                 "playground_description": "Executions triggered from Playground mode",
                 "test_description": "Executions triggered by Unit Tests",
+                "loop_description": "Executions triggered by Loop tasks",
             },
             "scope": {
                 "label": "Scope",

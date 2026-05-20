@@ -1205,7 +1205,8 @@ public class ExecutionController {
     }
 
     private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
-        Execution replay = executionService.replay(execution, taskRunId, revision)
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
+        Execution replay = executionService.replay(execution, flow, taskRunId, revision)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
@@ -2787,7 +2788,7 @@ public class ExecutionController {
 
     /**
      * For override purpose.
-     * 
+     *
      * @param execution
      * @return true if the user has the authorization, false else.
      */

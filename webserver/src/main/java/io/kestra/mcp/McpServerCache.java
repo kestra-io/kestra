@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
@@ -39,20 +38,23 @@ public class McpServerCache {
     private final McpServerRepositoryInterface mcpServerRepository;
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
 
-    private final Cache<McpCacheKey, McpServer> cache = Caffeine.newBuilder()
-        .maximumSize(500)
-        .expireAfterAccess(5, TimeUnit.MINUTES)
-        .build();
+    private final Cache<McpCacheKey, McpServer> cache;
     private final List<BiConsumer<String, String>> invalidationListeners = new CopyOnWriteArrayList<>();
     private QueueSubscriber<ClusterEvent> clusterEventSubscriber;
 
     @Inject
     public McpServerCache(
         McpServerRepositoryInterface mcpServerRepository,
-        BroadcastQueueInterface<ClusterEvent> clusterEventQueue
+        BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
+        McpConfig mcpConfig
     ) {
         this.mcpServerRepository = Objects.requireNonNull(mcpServerRepository);
         this.clusterEventQueue = Objects.requireNonNull(clusterEventQueue);
+        McpConfig.ServerCacheConfig serverCacheConfig = mcpConfig.serverCacheConfig();
+        this.cache = Caffeine.newBuilder()
+            .maximumSize(serverCacheConfig.maximumSize())
+            .expireAfterAccess(serverCacheConfig.expireAfterAccess())
+            .build();
     }
 
     @PostConstruct

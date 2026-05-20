@@ -15,7 +15,7 @@
             }"
         >
             <KsProgress 
-                v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop'" 
+                v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
                 :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
                 :strokeWidth="24"
                 :textInside="true"
@@ -435,6 +435,12 @@
             }
 
             this.autoExpandBasedOnSettings()
+
+            for(const taskRun of this.currentTaskRuns) {
+                if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                    this.updateLoopStatus(taskRun.id)
+                }
+            }
         },
         setup(){
             const $http = useClient()

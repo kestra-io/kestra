@@ -335,6 +335,7 @@
         "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe.",
         "title": "Ajouter des Blueprints Personnalisés"
       },
+      "contact_sales": "Contacter le service commercial",
       "enterprise_edition": "Édition Enterprise",
       "get_a_demo_button": "Obtenir une démo",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "Tests",
         "message": "Vérifiez la logique de vos flows de manière isolée, détectez les régressions tôt et maintenez la confiance dans vos automatisations à mesure qu'elles évoluent et se développent.",
         "title": "Assurez la fiabilité à chaque changement"
-      }
+      },
+      "watch_the_video": "Regarder la vidéo"
     },
     "dependencies": "Dépendances",
     "dependencies delete flow": "Ce flow a des dépendances, effacer celui-ci empêchera les dépendances de s'exécuter !<br /><br /> Voici la liste des flows concernés :",
@@ -494,6 +496,10 @@
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
         "title": "Aucune limite n'est définie pour ce flow."
       },
+      "concurrency_limits": {
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
+        "title": "Aucune limite de concurrence n'est définie."
+      },
       "dependencies": {
         "ASSET": {
           "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs.",
@@ -511,6 +517,10 @@
           "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">dépendances de namespace</a> dans notre documentation.",
           "title": "Il n'y a actuellement aucune dépendance."
         }
+      },
+      "groups": {
+        "content": "Les groupes vous permettent de regrouper les utilisateurs afin de gérer les autorisations et les liaisons de rôles collectivement dans votre locataire.",
+        "title": "Vous n'avez pas encore de groupes !"
       },
       "kill_switches": {
         "content": "La fonctionnalité Kill Switch offre un mécanisme basé sur l'interface utilisateur pour arrêter les exécutions problématiques. Elle remplace les commandes <code>--skip-executions</code> et <code>--skip-flows</code> disponibles uniquement en ligne de commande par une interface d'administration complète.",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "Ici, vous pouvez gérer tous les plugins installés sur votre instance Kestra. Les plugins nouvellement installés peuvent ne pas être immédiatement disponibles dans tous les services Kestra, selon la configuration de votre instance.",
         "title": "Vous n'avez pas encore de plugin versionné !"
+      },
+      "workerRegistrationTokens": {
+        "content": "Les jetons d'enregistrement permettent aux workers distants de s'authentifier et de s'enregistrer en toute sécurité avec votre instance Kestra. Créez un jeton, puis utilisez-le pour connecter de nouveaux workers à ce cluster.",
+        "title": "Vous n'avez pas encore de jetons d'enregistrement !"
       }
     },
     "empty search": "Les résultats de recherche sont vides",

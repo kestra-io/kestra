@@ -335,6 +335,7 @@
         "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。",
         "title": "カスタムBlueprintの追加"
       },
+      "contact_sales": "営業に連絡する",
       "enterprise_edition": "エンタープライズエディション",
       "get_a_demo_button": "デモを取得",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "テスト",
         "message": "フローのロジックを個別に検証し、リグレッションを早期に検出し、変更や成長に伴う自動化に自信を持ち続けましょう。",
         "title": "すべての変更で信頼性を確保"
-      }
+      },
+      "watch_the_video": "ビデオを見る"
     },
     "dependencies": "依存関係",
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",
@@ -494,6 +496,10 @@
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには制限が設定されていません。"
       },
+      "concurrency_limits": {
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "title": "同時実行制限は設定されていません。"
+      },
       "dependencies": {
         "ASSET": {
           "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。",
@@ -511,6 +517,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
         }
+      },
+      "groups": {
+        "content": "グループを使用すると、ユーザーをまとめてバンドルし、テナント全体で権限とロールバインディングを一括管理できます。",
+        "title": "まだグループがありません！"
       },
       "kill_switches": {
         "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
         "title": "まだバージョン管理されたプラグインがありません！"
+      },
+      "workerRegistrationTokens": {
+        "content": "登録トークンは、リモートworkerが安全に認証し、Kestraインスタンスに登録することを可能にします。トークンを作成し、それを使用して新しいworkerをこのクラスターに接続します。",
+        "title": "登録トークンがまだありません！"
       }
     },
     "empty search": "検索結果がありません",

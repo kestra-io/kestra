@@ -335,6 +335,7 @@
         "message": "Kestra एंटरप्राइज एडिशन में, आप अपनी संस्था के लिए केवल उपलब्ध कस्टम Blueprints बना सकते हैं। आप इन्हें अपनी टीम में साझा करने, केंद्रीकृत करने और सामान्य रूप से उपयोग किए जाने वाले workflows को दस्तावेज़ करने के लिए सर्वोत्तम-प्रथाओं के टेम्पलेट के रूप में उपयोग कर सकते हैं।",
         "title": "कस्टम Blueprints जोड़ें"
       },
+      "contact_sales": "सेल्स से संपर्क करें",
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "टेस्ट्स",
         "message": "अपने flows की लॉजिक को अलग-अलग सत्यापित करें, जल्दी से रिग्रेशन का पता लगाएं, और जैसे-जैसे आपके ऑटोमेशन बदलते और बढ़ते हैं, उन पर विश्वास बनाए रखें।",
         "title": "हर परिवर्तन के साथ विश्वसनीयता सुनिश्चित करें"
-      }
+      },
+      "watch_the_video": "वीडियो देखें"
     },
     "dependencies": "निर्भरताएँ",
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
@@ -494,6 +496,10 @@
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
       },
+      "concurrency_limits": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "कोई concurrency सीमाएँ निर्धारित नहीं हैं।"
+      },
       "dependencies": {
         "ASSET": {
           "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।",
@@ -511,6 +517,10 @@
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
+      },
+      "groups": {
+        "content": "समूह आपको उपयोगकर्ताओं को एक साथ जोड़ने की अनुमति देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।",
+        "title": "आपके पास अभी तक कोई समूह नहीं है!"
       },
       "kill_switches": {
         "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
         "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
+      },
+      "workerRegistrationTokens": {
+        "content": "पंजीकरण टोकन दूरस्थ workers को सुरक्षित रूप से प्रमाणित और आपके Kestra instance के साथ पंजीकृत करने की अनुमति देते हैं। एक टोकन बनाएं, फिर इसे इस क्लस्टर से नए workers को जोड़ने के लिए उपयोग करें।",
+        "title": "आपके पास अभी तक कोई पंजीकरण टोकन नहीं है!"
       }
     },
     "empty search": "खोज परिणाम खाली हैं",

@@ -335,6 +335,7 @@
         "message": "In der Kestra Enterprise Edition können Sie benutzerdefinierte Blueprints erstellen, die nur für Ihre Organisation verfügbar sind. Sie können diese als Best-Practice-Vorlagen verwenden, um häufig genutzte Workflows in Ihrem Team zu teilen, zu zentralisieren und zu dokumentieren.",
         "title": "Benutzerdefinierte Blueprints hinzufügen"
       },
+      "contact_sales": "Vertrieb kontaktieren",
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Demo anfordern",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "Tests",
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
-      }
+      },
+      "watch_the_video": "Sehen Sie sich das Video an"
     },
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
@@ -494,6 +496,10 @@
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
+      "concurrency_limits": {
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "title": "Es sind keine Nebenläufigkeitsgrenzen festgelegt."
+      },
       "dependencies": {
         "ASSET": {
           "content": "Dieses Asset hat keine Upstream- oder Downstream-Abhängigkeiten mit flows oder anderen Assets.",
@@ -511,6 +517,10 @@
           "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
+      },
+      "groups": {
+        "content": "Gruppen ermöglichen es Ihnen, Benutzer zusammenzufassen, sodass Sie Berechtigungen und Rollenbindungen kollektiv über Ihren Mandanten verwalten können.",
+        "title": "Sie haben noch keine Gruppen!"
       },
       "kill_switches": {
         "content": "Die Kill Switch-Funktion bietet einen UI-basierten Mechanismus, um problematische Ausführungen zu stoppen. Sie ersetzt die nur CLI-basierten Befehle <code>--skip-executions</code> und <code>--skip-flows</code> durch eine umfassende Verwaltungsoberfläche.",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
         "title": "Sie haben noch kein versioniertes Plugin!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Registrierungstoken ermöglichen es entfernten Workern, sich sicher zu authentifizieren und bei Ihrer Kestra-Instanz zu registrieren. Erstellen Sie ein Token und verwenden Sie es, um neue Worker mit diesem Cluster zu verbinden.",
+        "title": "Sie haben noch keine Registrierungstoken!"
       }
     },
     "empty search": "Suchergebnisse sind leer",

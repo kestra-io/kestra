@@ -335,6 +335,7 @@
         "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprints dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych workflow w Twoim zespole.",
         "title": "Dodaj niestandardowe Blueprints"
       },
+      "contact_sales": "Skontaktuj się z działem sprzedaży",
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Uzyskaj Demo",
       "instance": {
@@ -392,7 +393,8 @@
         "label": "Testy",
         "message": "Zweryfikuj logikę swoich flow w izolacji, wcześnie wykrywaj regresje i utrzymuj pewność w swoich automatyzacjach, gdy się zmieniają i rozwijają.",
         "title": "Zapewnij niezawodność przy każdej zmianie"
-      }
+      },
+      "watch_the_video": "Obejrzyj wideo"
     },
     "dependencies": "Zależności",
     "dependencies delete flow": "Ten flow ma zależności. Usunięcie go uniemożliwi wykonanie ich zależności.<br /><br /> Oto lista dotkniętych flows:",
@@ -494,6 +496,10 @@
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limitach Nebenläufigkeit</a></strong> w naszej dokumentacji.",
         "title": "Dla tego flow nie ustawiono żadnych limitów."
       },
+      "concurrency_limits": {
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limitach Równoczesności</a></strong> w naszej dokumentacji.",
+        "title": "Nie ustawiono limitów współbieżności."
+      },
       "dependencies": {
         "ASSET": {
           "content": "Ten zasób nie ma zależności w górę ani w dół z flow lub innymi zasobami.",
@@ -511,6 +517,10 @@
           "content": "Dowiedz się więcej o <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">zależnościach Namespace</a> w naszej dokumentacji.",
           "title": "Obecnie nie ma zależności."
         }
+      },
+      "groups": {
+        "content": "Grupy pozwalają na łączenie użytkowników, aby można było zarządzać uprawnieniami i powiązaniami ról zbiorczo w ramach Twojego tenant.",
+        "title": "Nie masz jeszcze grup!"
       },
       "kill_switches": {
         "content": "Funkcja Kill Switch zapewnia mechanizm w interfejsie użytkownika do zatrzymywania problematycznych wykonania. Zastępuje polecenia CLI <code>--skip-executions</code> i <code>--skip-flows</code> kompleksowym interfejsem administracyjnym.",
@@ -539,6 +549,10 @@
       "versionPlugin": {
         "content": "Tutaj możesz zarządzać wszystkimi pluginami zainstalowanymi na Twojej instancji Kestra. Nowo zainstalowane pluginy mogą nie być od razu dostępne we wszystkich usługach Kestra, w zależności od konfiguracji Twojej instancji.",
         "title": "Nie masz jeszcze wersjonowanego pluginu!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Tokeny rejestracyjne pozwalają zdalnym workerom na bezpieczne uwierzytelnianie i rejestrowanie się w Twojej instancji Kestra. Utwórz token, a następnie użyj go, aby połączyć nowych workerów z tym klastrem.",
+        "title": "Nie masz jeszcze tokenów rejestracyjnych!"
       }
     },
     "empty search": "Wyniki wyszukiwania są puste",

@@ -40,7 +40,6 @@
                     :label="item"
                     :value="item"
                 >
-                    <KsMarkdown :content="item" />
                 </KsOption>
             </KsSelect>
             <KsRadioGroup
@@ -76,7 +75,6 @@
                     :label="item"
                     :value="item"
                 >
-                    <KsMarkdown :content="item" />
                 </KsOption>
             </KsSelect>
             <KsInput

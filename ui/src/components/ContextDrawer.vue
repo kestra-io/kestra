@@ -9,21 +9,27 @@
             <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
                 <div class="drawerContent">
                     <div class="tabBar">
-                        <KsButton
-                            v-for="(button, key) of contextButtons"
-                            :key="key"
-                            :type="activeTab === key ? 'primary' : 'default'"
-                            :tag="button.url ? 'a' : 'button'"
-                            :href="button.url"
-                            @click="() => { if (!button.url) { setActiveTab(key as string) } }"
-                            :target="button.url ? '_blank' : undefined"
+                        <KsTabs
+                            class="context-tabs"
+                            :modelValue="activeTab"
+                            type="box"
+                            :beforeLeave="handleBeforeLeave"
                         >
-                            <component :is="button.icon" class="tab-icon" />{{ button.title }}
-                            <OpenInNew v-if="button.url" class="open-in-new" />
-                            <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                        </KsButton>
-
-                        <div style="flex: 1" />
+                            <KsTabPane
+                                v-for="(button, key) of contextButtons"
+                                :key="key"
+                                :name="key as string"
+                            >
+                                <template #label>
+                                    <span class="tab-label">
+                                        <component :is="button.icon" class="tab-icon" />
+                                        {{ button.title }}
+                                        <OpenInNew v-if="button.url" class="open-in-new" />
+                                        <span v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+                                    </span>
+                                </template>
+                            </KsTabPane>
+                        </KsTabs>
 
                         <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
                             <Close />
@@ -100,6 +106,18 @@
         miscStore.contextInfoBarOpenTab = tab
     }
 
+    // URL entries open in a new tab without becoming the active pane.
+    function handleBeforeLeave(newName: string | number) {
+        const key = String(newName)
+        const button = contextButtons.value[key]
+        if (button?.url) {
+            window.open(button.url, "_blank", "noopener,noreferrer")
+            return false
+        }
+        setActiveTab(key)
+        return true
+    }
+
 </script>
 
 <style scoped lang="scss">
@@ -152,55 +170,44 @@
 
     .tabBar {
         flex-shrink: 0;
-        padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--ks-border-default);
         display: flex;
         flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: var(--ks-font-size-sm);
-        overflow-x: auto;
+        align-items: stretch;
+        background-color: var(--ks-bg-input);
 
-        &::-webkit-scrollbar {
-            height: 0;
+        .context-tabs {
+            flex: 1;
+            min-width: 0;
         }
-        scrollbar-width: none;
 
-        .kel-button {
-            font-size: var(--ks-font-size-sm);
-            height: auto;
-            padding: 5px 10px;
+        .tab-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
             position: relative;
         }
 
-        .kel-button + .kel-button {
-            margin-left: 0;
-        }
-
-        .tab-icon {
-            margin-right: 0.25rem;
-        }
-
         .open-in-new {
-            margin-left: 0.25rem;
-            opacity: 0.25;
+            opacity: 0.5;
         }
 
         .close-btn {
+            align-self: center;
+            margin-right: 0.5rem;
             border: none;
             color: var(--ks-text-dim);
+            flex-shrink: 0;
         }
 
         .newsDot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background-color: var(--ks-status-error);
-            border: 2px solid var(--ks-btn-secondary-bg-default);
+            border: 2px solid var(--ks-bg-input);
             border-radius: 50%;
-            display: block;
             position: absolute;
-            bottom: -4px;
-            right: -4px;
+            top: -3px;
+            right: -5px;
         }
     }
 

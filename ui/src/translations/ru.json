@@ -751,6 +751,27 @@
     "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "Приложение(я)",
+        "tooltip": "Просмотреть приложения, использующие этот flow"
+      },
+      "dependencies": {
+        "suffix": "Зависимость(и)",
+        "tooltip": "Просмотр зависимостей flow"
+      },
+      "errors": {
+        "label": "{count} Ошибка(и)"
+      },
+      "revisions": {
+        "suffix": "Ревизия(и)",
+        "tooltip": "Просмотр версий flow"
+      },
+      "tests": {
+        "suffix": "Тест(ы)",
+        "tooltip": "Просмотр тестов flow"
+      }
+    },
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
     "flow_outputs": "Выходы Flow",

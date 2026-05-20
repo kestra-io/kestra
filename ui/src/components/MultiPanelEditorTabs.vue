@@ -39,39 +39,14 @@
 </script>
 
 <style scoped lang="scss">
-    @use "@kestra-io/design-system/src/assets/styles/_color-palette" as colorPalette;
-
     .tabs-wrapper {
         display: flex;
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-default);
         background: var(--ks-bg-surface);
-        background-size: 250% 100%;
-        background-position: 100% 0;
-        transition: background-position .2s;
         overflow-x: auto;
         scrollbar-width: none;
-
-        .dark & {
-            background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-700 35%,
-                rgba(colorPalette.$base-blue-700, .1) 55%,
-                rgba(colorPalette.$base-blue-700, 0) 100%
-            );
-        }
-
-        .playgroundMode & {
-            background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-500 0%,
-                colorPalette.$base-blue-500 35%,
-                rgba(colorPalette.$base-blue-500, .1) 55%,
-                rgba(colorPalette.$base-blue-500, 0) 100%
-            );
-        }
     }
 
     .tabs {
@@ -97,21 +72,12 @@
 
             &:hover {
                 background-color: var(--ks-bg-body);
-                .playgroundMode & {
-                    background-color: transparent;
-                    background-color: color-mix(in srgb, var(--ks-bg-body) 20%, transparent);
-                }
             }
 
             &.active {
                 background-color: var(--ks-btn-secondary-bg-active);
                 color: var(--ks-text-link);
                 opacity: 1;
-                .playgroundMode & {
-                    background-color: transparent;
-                    border-color: color-mix(in srgb, var(--ks-border-default) 60%, transparent);
-                    background-color: color-mix(in srgb, var(--ks-bg-body) 30%, transparent);
-                }
             }
         }
     }

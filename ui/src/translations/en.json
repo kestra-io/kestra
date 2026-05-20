@@ -1959,6 +1959,27 @@
             "codex_hint": "Add the following to your codex.json MCP configuration:",
             "done": "Done"
         }
+    },
+    "flow_editor_stats": {
+      "revisions": {
+        "suffix": "Revision(s)",
+        "tooltip": "View flow revisions"
+      },
+      "dependencies": {
+        "suffix": "Dependencie(s)",
+        "tooltip": "View flow dependencies"
+      },
+      "apps": {
+        "suffix": "App(s)",
+        "tooltip": "View apps using this flow"
+      },
+      "tests": {
+        "suffix": "Test(s)",
+        "tooltip": "View flow tests"
+      },
+      "errors": {
+        "label": "{count} Error(s)"
+      }
     }
   }
 }

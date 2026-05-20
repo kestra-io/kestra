@@ -1,12 +1,20 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <KsButton v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
-            {{ $t("playground.run_all_tasks") }}
-        </KsButton>
-        <span v-else data-onboarding-target="flow-execute-button">
+        <span data-onboarding-target="flow-execute-button">
             <KsButton
+                v-if="iconOnly"
+                :id="actionId"
+                class="execute-icon-only"
+                type="success"
+                :icon="icon.PlayOutline"
+                :disabled="actionDisabled"
+                :aria-label="actionLabel"
+                @click="runAction()"
+            />
+            <KsButton
+                v-else
                 id="execute-button"
-                :icon="icon.Play"
+                :icon="icon.PlayOutline"
                 :type="type"
                 :disabled="isDisabled()"
                 @click="onClick()"
@@ -80,7 +88,7 @@
 
 <script>
     import FlowRun from "./FlowRun.vue"
-    import Play from "vue-material-design-icons/Play.vue"
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
     import {shallowRef} from "vue"
     import {useMediaQuery} from "@vueuse/core"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
@@ -115,6 +123,10 @@
                 type: String,
                 default: null,
             },
+            iconOnly: {
+                type: Boolean,
+                default: false,
+            },
         },
         data() {
             return {
@@ -124,7 +136,7 @@
                 localNamespace: undefined,
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
-                    Play: shallowRef(Play),
+                    PlayOutline: shallowRef(PlayOutline),
                 },
             }
         },
@@ -185,9 +197,30 @@
                 this.reset()
                 done()
             },
+            runAction() {
+                if (this.playgroundStore.enabled) {
+                    this.playgroundStore.runUntilTask()
+                } else {
+                    this.onClick()
+                }
+            },
         },
         computed: {
             ...mapStores(useApiStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            actionId() {
+                return this.playgroundStore.enabled ? "run-all-button" : "execute-button"
+            },
+            actionDisabled() {
+                if (this.playgroundStore.enabled) {
+                    return this.isDisabled() || !this.playgroundStore.readyToStart
+                }
+                return this.isDisabled()
+            },
+            actionLabel() {
+                return this.playgroundStore.enabled
+                    ? this.$t("playground.run_all_tasks")
+                    : this.$t("execute")
+            },
             dialogWidth() {
                 return this.isLargeScreen ? "50%" : "90%"
             },
@@ -251,5 +284,11 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
+    }
+
+    .execute-icon-only {
+        aspect-ratio: 1 / 1;
+        padding-left: 0;
+        padding-right: 0;
     }
 </style>

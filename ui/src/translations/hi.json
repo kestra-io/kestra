@@ -751,6 +751,27 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "ऐप(s)",
+        "tooltip": "इस flow का उपयोग करने वाले ऐप्स देखें"
+      },
+      "dependencies": {
+        "suffix": "Dependencies",
+        "tooltip": "flow निर्भरताओं को देखें"
+      },
+      "errors": {
+        "label": "{count} त्रुटि(याँ)"
+      },
+      "revisions": {
+        "suffix": "संशोधन(संशोधन)",
+        "tooltip": "flow संशोधन देखें"
+      },
+      "tests": {
+        "suffix": "परीक्षण(परीक्षण)",
+        "tooltip": "flow परीक्षण देखें"
+      }
+    },
     "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flow_outputs": "फ्लो Outputs",

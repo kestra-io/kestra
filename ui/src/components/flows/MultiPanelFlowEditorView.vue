@@ -2,7 +2,6 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
-            :class="{playgroundMode}"
             :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
@@ -11,10 +10,7 @@
             @set-tab-value="setTabValue"
         >
             <template #actions>
-                <EditorButtonsWrapper
-                    :haveChange
-                    :showSaveAndExecute="isOnboardingCreate"
-                />
+                <FlowEditorStats />
             </template>
             <template #bottom-panel>
                 <FlowPlayground v-if="playgroundMode" />
@@ -58,7 +54,7 @@
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import FlowPlayground from "./FlowPlayground.vue"
-    import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue"
+    import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
     import NoCode from "../no-code/NoCode.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
@@ -207,10 +203,6 @@
         }))
     }
 
-    const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
-        panel.tabs.some(tab => tab.dirty),
-    ))
-
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
@@ -262,13 +254,6 @@
 </script>
 
 <style lang="scss" scoped>
-
-    .playgroundMode :deep(.tabs-wrapper) {
-        #{--kel-color-primary}: var(--ks-btn-primary-bg-default);
-        color: var(--ks-btn-primary-text);
-        background-position: 10% 0;
-    }
-
     .flow-editor-shell {
         position: relative;
         height: 100%;

@@ -751,6 +751,27 @@
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "アプリケーション",
+        "tooltip": "このflowを使用しているアプリを表示"
+      },
+      "dependencies": {
+        "suffix": "依存関係",
+        "tooltip": "フローの依存関係を表示"
+      },
+      "errors": {
+        "label": "{count} エラー"
+      },
+      "revisions": {
+        "suffix": "リビジョン",
+        "tooltip": "フローのリビジョンを表示"
+      },
+      "tests": {
+        "suffix": "テスト",
+        "tooltip": "フローテストを表示"
+      }
+    },
     "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
     "flow_outputs": "フロー出力",

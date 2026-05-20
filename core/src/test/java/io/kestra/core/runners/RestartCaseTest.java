@@ -170,7 +170,7 @@ public class RestartCaseTest {
             firstExecution,
             throwRunnable(() ->
             {
-                Execution restartedExec = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
+                Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
                 executionQueue.emit(restartedExec);
 
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(Type.RESTARTED);
@@ -368,7 +368,7 @@ public class RestartCaseTest {
         assertThat(lastRestarted1.getDate().plus(3, ChronoUnit.SECONDS)).isBefore(lastState1.getDate());
 
         // replaying case
-        Execution replayedExecution = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null);
+        Execution replayedExecution = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("loop_test", List.of()).getId(), null);
         assertThat(replayedExecution.getState().getCurrent()).isEqualTo(Type.RESTARTED);
         assertThat(replayedExecution.getId()).isNotEqualTo(firstExecution.getId());
 

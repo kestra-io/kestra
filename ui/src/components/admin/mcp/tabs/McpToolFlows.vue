@@ -115,7 +115,7 @@
 
     async function load() {
         const id = serverId()
-        if (!id) return;
+        if (!id) return
         loading.value = true
         try {
             tools.value = await mcpStore.listTools(id)
@@ -139,7 +139,7 @@
         const value = queryParam?.value
         if (!value) return ""
         return Array.isArray(value) ? value.join(" ").trim() : value.trim()
-    });
+    })
 
     const filteredTools = computed<McpTool[]>(() => {
         if (!searchQuery.value) return tools.value
@@ -153,8 +153,8 @@
                 tool.namespace,
                 tool.flowId,
             ].some((field) => field && field.toLowerCase().includes(needle))
-        });
-    });
+        })
+    })
 
     const storageKey = storageKeys.DISPLAY_MCP_TOOLS_COLUMNS
 
@@ -164,28 +164,28 @@
         {label: t("mcp.tools.description"), prop: "description", default: false},
         {label: t("mcp.tools.annotations"), prop: "annotations", default: true},
         {label: t("mcp.tools.flow"), prop: "flow", default: true},
-    ]);
+    ])
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
         storageKey,
         initialVisibleColumns: optionalColumns.value.filter((c) => c.default).map((c) => c.prop),
-    });
+    })
 
     const visibleColumns = computed<ColumnConfig[]>(() =>
         displayColumns.value
             .map((prop) => optionalColumns.value.find((c) => c.prop === prop))
-            .filter(Boolean) as ColumnConfig[]
-    );
+            .filter(Boolean) as ColumnConfig[],
+    )
 
     const ANNOTATION_KEYS: (keyof McpToolAnnotations)[] = [
         "readOnly", "openWorld", "destructive", "idempotent", "returnDirect",
-    ];
+    ]
 
     function activeAnnotations(a: McpToolAnnotations): string[] {
         return ANNOTATION_KEYS
             .filter((k) => a[k])
-            .map((k) => k.replace(/([A-Z])/g, "_$1").toLowerCase());
+            .map((k) => k.replace(/([A-Z])/g, "_$1").toLowerCase())
     }
 
     function flowRouteFor(tool: McpTool) {
@@ -197,7 +197,7 @@
                 tab: "source",
                 ...(route.params.tenant ? {tenant: route.params.tenant} : {}),
             },
-        };
+        }
     }
 </script>
 

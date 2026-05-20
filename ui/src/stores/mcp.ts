@@ -81,7 +81,7 @@ export const useMcpStore = defineStore("mcp", () => {
     const listTools = async (id: string): Promise<McpTool[]> => {
         const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}/tools`, {withCredentials: true})
         return data
-    };
+    }
 
     return {server, list, load, create, update, remove, toggle, listTools}
-});
+})

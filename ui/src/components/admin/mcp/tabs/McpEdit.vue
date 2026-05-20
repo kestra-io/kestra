@@ -163,7 +163,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {FormInstance} from "element-plus"
@@ -195,7 +195,6 @@
 
     const isUpdate = computed(() => !!route.params.id)
 
-    const authStore = useAuthStore()
     const canSave = computed(() =>
         isUpdate.value
             ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
@@ -215,7 +214,7 @@
         disabled: boolean;
     }
 
-    const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"];
+    const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"]
 
     const AUTH_OPTIONS = [
         {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
@@ -258,9 +257,9 @@
 
     onMounted(() => {
         if (!authStore.auths) {
-            authStore.loadAuths({});
+            authStore.loadAuths({})
         }
-    });
+    })
 
     const save = async (): Promise<void> => {
         if (!formRef.value) return

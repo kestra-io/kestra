@@ -52,7 +52,7 @@
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {KsMarkdown, KsSegmented} from "@kestra-io/design-system"
-    import {useMcpStore} from "../../../../stores/mcp";
+    import {useMcpStore} from "../../../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
     import {baseUrl} from "override/utils/route"
     import claudeDesktopLogo from "../../../../assets/icons/mcp-clients/claude-desktop.svg"
@@ -77,7 +77,7 @@
         const path = `${baseUrl}/api/v1/${tenant.value}/mcp/${serverId.value}`
         const base = configured || window.location.origin
         return new URL(path, base).toString()
-    });
+    })
 
     // Falls back to BASIC / PRIVATE while the server is loading or if absent.
     const authType = computed<AuthType>(() => mcpStore.server?.authType ?? "BASIC")
@@ -97,7 +97,7 @@
         {label: t("mcp.connect_tab.claude_code"), value: "claude_code"},
         {label: t("mcp.connect_tab.cursor"), value: "cursor"},
         {label: t("mcp.connect_tab.codex"), value: "codex"},
-    ]);
+    ])
 
     const authHeaderValue = computed<string | null>(() => {
         if (isPublic.value) return null
@@ -114,7 +114,7 @@
 
     // ── Per-client snippet builders ──────────────────────────────────────────
     const claudeDesktopConfig = computed(() => {
-        const args: string[] = ["-y", "mcp-remote", serverUrl.value];
+        const args: string[] = ["-y", "mcp-remote", serverUrl.value]
         if (authHeaderValue.value) {
             args.push("--header", `Authorization: ${authHeaderValue.value}`)
         }
@@ -123,7 +123,7 @@
                 [serverId.value]: {command: "npx", args},
             },
         }, null, 2)
-    });
+    })
 
     const claudeCodeCommand = computed(() => {
         const lines: string[] = [`claude mcp add ${serverId.value} ${serverUrl.value}`, "--transport http"]
@@ -134,7 +134,7 @@
             lines.push(`--header "Authorization: ${authHeaderValue.value}"`)
         }
         return lines.join(" \\\n  ")
-    });
+    })
 
     // Cursor (~/.cursor/mcp.json) — JSON
     const cursorConfig = computed(() => {
@@ -147,7 +147,7 @@
                 [serverId.value]: config,
             },
         }, null, 2)
-    });
+    })
 
     // Codex (~/.codex/config.toml) — TOML
     const codexConfig = computed(() => {
@@ -155,13 +155,13 @@
             "[[mcp_servers]]",
             `name = "${serverId.value}"`,
             `url = "${serverUrl.value}"`,
-        ];
+        ]
         if (authHeaderValue.value) {
             lines.push("[mcp_servers.headers]")
             lines.push(`Authorization = "${authHeaderValue.value}"`)
         }
         return lines.join("\n")
-    });
+    })
 
     function fence(lang: string, code: string) {
         return `\`\`\`${lang}\n${code}\n\`\`\``
@@ -177,11 +177,11 @@
         case "codex": return fence("toml", codexConfig.value)
         default: return ""
         }
-    });
+    })
 
     // ── Auth-specific hint shown under the snippet ───────────────────────────
     const authHintKey = computed<string | null>(() => {
-        if (isPublic.value) return null;
+        if (isPublic.value) return null
         if (authType.value === "BASIC") {
             return "mcp.connect_tab.auth_basic_hint"
         }
@@ -194,7 +194,7 @@
             return "mcp.connect_tab.auth_oauth_client_id_hint"
         }
         return "mcp.connect_tab.auth_oauth_browser_hint"
-    });
+    })
 
     function brandLogo(client: ClientId): string {
         switch (client) {

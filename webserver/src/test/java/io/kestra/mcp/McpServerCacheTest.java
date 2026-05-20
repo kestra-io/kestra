@@ -41,7 +41,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenSavedServer_whenGet_thenReturnsServer() {
+    void shouldReturnServerWhenGettingSavedServer() {
         // Given
         McpServer saved = mcpServerRepository.save(null, buildServer(serverId));
 
@@ -54,7 +54,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenUnknownServer_whenGet_thenReturnsEmpty() {
+    void shouldReturnEmptyWhenGettingUnknownServer() {
         // When
         Optional<McpServer> result = cache.get(TENANT, "does-not-exist-" + IdUtils.create());
 
@@ -63,7 +63,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenCachedServer_whenInvalidate_thenSubsequentGetReFetchesFromRepository() {
+    void shouldReFetchFromRepositoryWhenGettingAfterInvalidate() {
         // Given — populate the cache, then mutate the repository directly so the cached entry diverges
         McpServer saved = mcpServerRepository.save(null, buildServer(serverId));
         Optional<McpServer> cachedFirst = cache.get(TENANT, saved.id());
@@ -81,7 +81,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenInvalidationListener_whenInvalidate_thenListenerNotified() {
+    void shouldNotifyListenerWhenInvalidating() {
         // Given
         AtomicInteger calls = new AtomicInteger();
         cache.addInvalidationListener((tenantId, sid) -> {
@@ -98,7 +98,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenListenerThatThrows_whenInvalidate_thenSubsequentListenersStillNotified() {
+    void shouldStillNotifySubsequentListenersWhenAListenerThrows() {
         // Given
         AtomicInteger reached = new AtomicInteger();
         cache.addInvalidationListener((t, s) -> {
@@ -120,7 +120,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenCachedServer_whenRepositoryEmitsMcpServerChangedEvent_thenCacheInvalidatedAndListenersNotified() {
+    void shouldInvalidateCacheAndNotifyListenersWhenRepositoryEmitsChangedEvent() {
         // Given — server saved + cached + listener registered
         McpServer saved = mcpServerRepository.save(null, buildServer(serverId));
         cache.get(TENANT, saved.id()); // populate
@@ -146,7 +146,7 @@ class McpServerCacheTest {
     }
 
     @Test
-    void givenCachedServer_whenRepositoryDeletesServer_thenCacheInvalidated() {
+    void shouldInvalidateCacheWhenRepositoryDeletesServer() {
         // Given
         McpServer saved = mcpServerRepository.save(null, buildServer(serverId));
         assertThat(cache.get(TENANT, saved.id())).isPresent();

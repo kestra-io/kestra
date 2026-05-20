@@ -16,11 +16,12 @@
         >
             <KsProgress 
                 v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop'" 
-                :percentage="(loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100" 
+                :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
                 :strokeWidth="24"
                 :textInside="true"
+                stroke-linecap="circle"
             >
-                {{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}
+                <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
             </KsProgress>
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
@@ -610,16 +611,19 @@
                     if (
                         this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop"
                     ) {
-                        this.loopOutputsByTaskRunId[taskRunId] = null
                         try {
                             const outputs = await OutputsAPI.taskRunOutputs({
                                 executionId: this.followedExecution.id,
                                 taskRunId,
                             })
-                            if(outputs?.iterationCount && outputs?.terminatedIterations) {
-                                if(outputs.terminatedIterations >= outputs.iterationCount) {
-                                    this.stopPollingLoopStatus(taskRunId)
-                                }
+                            if(outputs === null 
+                                || !outputs.iterationCount 
+                                || !outputs.terminatedIterations) {
+                                return
+                            }
+
+                            if(outputs.terminatedIterations >= outputs.iterationCount) {
+                                this.stopPollingLoopStatus(taskRunId)
                             }
                             this.loopOutputsByTaskRunId[taskRunId] = outputs
                         } catch (_) {

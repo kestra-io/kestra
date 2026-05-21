@@ -1,6 +1,8 @@
 <template>
     <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
-        <Empty v-if="!panels.length" type="panels" />
+        <div v-if="!panels.length" class="empty-panels">
+            <Empty type="panels" />
+        </div>
         <template v-else>
             <KsSplitterPanel
                 v-for="(panel, panelIndex) in panels"
@@ -860,6 +862,12 @@
         position: relative;
         height: 100%;
         overflow: auto;
+    }
+
+    .empty-panels {
+        flex: 1;
+        display: flex;
+        justify-content: center;
     }
 
     .kel-splitter-panel{

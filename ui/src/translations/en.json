@@ -168,6 +168,7 @@
     "display flow {id} executions": "Display flow {id} executions",
     "actions": "Actions",
     "select datetime": "Select a date",
+    "select view": "Select view",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
     "is required": "{field} is required",

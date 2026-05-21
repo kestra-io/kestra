@@ -53,6 +53,14 @@
         />
 
         <template #primary>
+            <NavBarAction
+                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                type="primary"
+                :label="t('save')"
+                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
+                @click="editorSave"
+            />
+
             <TriggerFlow
                 v-if="shouldShowExecute"
                 :iconOnly="isEditTab"
@@ -60,13 +68,6 @@
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
-            />
-            <NavBarAction
-                v-if="isEditTab && editorIsAllowedEdit && !deleted"
-                type="primary"
-                :label="t('save')"
-                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
-                @click="editorSave"
             />
         </template>
     </NavBarActions>

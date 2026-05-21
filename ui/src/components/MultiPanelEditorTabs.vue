@@ -1,6 +1,6 @@
 <template>
     <div class="tabs-wrapper">
-        <div class="tabs">
+        <div v-if="!isMobile" class="tabs">
             <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
@@ -17,12 +17,40 @@
                 </button>
             </KsTooltip>
         </div>
+        <KsDropdown
+            v-else
+            trigger="click"
+            :hideOnClick="false"
+            class="mobile-tabs-dropdown"
+        >
+            <KsButton>
+                {{ $t("select view") }}
+                <ChevronDown class="chevron" />
+            </KsButton>
+            <template #dropdown>
+                <KsDropdownMenu>
+                    <KsDropdownItem
+                        v-for="element of tabs"
+                        :key="element.uid"
+                        :class="{active: openTabs.includes(element.uid)}"
+                        @click="setTabValue(element.uid)"
+                    >
+                        <component class="tabs-icon" :is="element.button.icon" />
+                        <span class="tab-label">{{ element.button.label }}</span>
+                        <Check v-if="openTabs.includes(element.uid)" class="check-icon" />
+                    </KsDropdownItem>
+                </KsDropdownMenu>
+            </template>
+        </KsDropdown>
         <slot />
     </div>
 </template>
 
 <script setup lang="ts">
     import {Tab} from "../utils/multiPanelTypes"
+    import {useMediaQuery} from "@vueuse/core"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import Check from "vue-material-design-icons/Check.vue"
 
     defineProps<{
         tabs: Tab[],
@@ -32,6 +60,8 @@
     const emit = defineEmits<{
         (e: "update:tabs", tabValue: string): void;
     }>()
+
+    const isMobile = useMediaQuery("(max-width: 768px)")
 
     function setTabValue(tabValue: string) {
         emit("update:tabs", tabValue)
@@ -88,8 +118,18 @@
         flex-shrink: 0;
     }
 
+    .mobile-tabs-dropdown {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+
+        .chevron {
+            margin-left: var(--ks-spacing-1);
+            display: inline-flex;
+            align-items: center;
+        }
+    }
+
     @media (max-width: 1200px) {
-        .tab-label {
+        .tabs .tab-label {
             display: none;
         }
 

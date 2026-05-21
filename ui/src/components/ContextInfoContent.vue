@@ -1,8 +1,8 @@
 <template>
     <div class="wrapper">
-        <div class="title">
+        <div v-if="title || $slots['back-button']" class="title">
             <slot name="back-button" />
-            <h2>{{ title }}</h2>
+            <h2 v-if="title">{{ title }}</h2>
         </div>
         <div class="content" ref="contentRef">
             <slot />
@@ -13,7 +13,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
 
-    defineProps<{title:string}>()
+    defineProps<{title?: string}>()
 
     const contentRef = ref<HTMLDivElement | null>(null)
 

@@ -494,7 +494,9 @@
     "execution labels": "Execution labels",
     "wrong labels": "Empty key or value is not allowed in labels",
     "feeds": {
-      "title": "What's new at Kestra"
+      "title": "What's new at Kestra",
+      "heading": "All things Kestra.",
+      "subheading": "The latest updates, guides and stories"
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",

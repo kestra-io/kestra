@@ -29,12 +29,26 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * The {@link PluginDeserializer} uses the {@link PluginRegistry} to found the plugin class corresponding to
  * a plugin type.
+ * <p>
+ * When multiple versions of the same plugin JAR coexist in the registry (e.g. v1.12.3 and v1.12.4), the
+ * registry may return classes from different ClassLoaders for the outer Task and its nested
+ * {@code AdditionalPlugin} fields. This causes a {@link IllegalArgumentException} at Jackson's
+ * reflection-based field assignment because {@code ModelProvider_CLv3.isAssignableFrom(GoogleGemini_CLv4)}
+ * is {@code false}. A thread-local tracks the ClassLoader of the first (outermost) plugin resolved in a
+ * deserialization chain so that all nested plugin lookups prefer the same ClassLoader.
  */
 @Slf4j
 public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
     private static final String TYPE = "type";
     private static final String VERSION = "version";
+
+    /**
+     * Tracks the ClassLoader of the outermost plugin being deserialized in the current thread.
+     * Set on the first (root) plugin resolution and cleared once that root deserialization completes.
+     * All nested plugin lookups then prefer this ClassLoader to avoid cross-CL type mismatches.
+     */
+    private static final ThreadLocal<ClassLoader> CURRENT_PLUGIN_CLASS_LOADER = new ThreadLocal<>();
 
     private volatile PluginRegistry pluginRegistry;
 
@@ -93,7 +107,9 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                 "Looking for Plugin for: {}",
                 identifier
             );
-            pluginType = pluginRegistry.findClassByIdentifier(identifier);
+            // Prefer the ClassLoader of the outermost plugin in the current deserialization chain
+            // to avoid ClassLoader identity mismatches when multiple versions of the same plugin JAR coexist.
+            pluginType = pluginRegistry.findClassByIdentifier(identifier, CURRENT_PLUGIN_CLASS_LOADER.get());
 
             if (pluginType == null) {
                 pluginType = fallbackClass();
@@ -110,7 +126,10 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
             );
 
             if (DataChart.class.isAssignableFrom(pluginType)) {
-                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"), pluginRegistry.isVersioningSupported()));
+                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(
+                    extractPluginRawIdentifier(node.get("data"), pluginRegistry.isVersioningSupported()),
+                    CURRENT_PLUGIN_CLASS_LOADER.get()
+                );
                 ParameterizedType genericDataFilterClass = (ParameterizedType) dataFilterClass.getGenericSuperclass();
                 Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
                 TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
@@ -134,9 +153,21 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
                 );
             }
 
-            // Note that if the provided plugin is not annotated with `@JsonDeserialize()` then
-            // the following method will end up to a StackOverflowException as the `PluginDeserializer` will be re-invoked.
-            return (T) jp.getCodec().treeToValue(node, pluginType);
+            // Track the outermost plugin's ClassLoader so nested AdditionalPlugin lookups resolve
+            // from the same ClassLoader, preventing cross-version type mismatches.
+            boolean isRoot = CURRENT_PLUGIN_CLASS_LOADER.get() == null;
+            if (isRoot) {
+                CURRENT_PLUGIN_CLASS_LOADER.set(pluginType.getClassLoader());
+            }
+            try {
+                // Note that if the provided plugin is not annotated with `@JsonDeserialize()` then
+                // the following method will end up to a StackOverflowException as the `PluginDeserializer` will be re-invoked.
+                return (T) jp.getCodec().treeToValue(node, pluginType);
+            } finally {
+                if (isRoot) {
+                    CURRENT_PLUGIN_CLASS_LOADER.remove();
+                }
+            }
         }
 
         // should not happen.

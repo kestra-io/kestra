@@ -74,6 +74,25 @@ public interface PluginRegistry {
     Class<? extends Plugin> findClassByIdentifier(String identifier);
 
     /**
+     * Finds the Java class corresponding to the given plugin identifier, preferring the class loaded
+     * by the given {@code preferredClassLoader}. This prevents ClassLoader identity mismatches when
+     * multiple versions of the same plugin JAR are simultaneously present in the registry (e.g. during
+     * a rolling upgrade): nested {@code AdditionalPlugin} types should be resolved from the same
+     * ClassLoader as the outer Task or Trigger that contains them.
+     *
+     * <p>If no class from {@code preferredClassLoader} matches the identifier, the method falls back
+     * to the standard {@link #findClassByIdentifier(String)} lookup.</p>
+     *
+     * @param identifier           The raw plugin identifier - must not be {@code null}.
+     * @param preferredClassLoader The ClassLoader to prefer - may be {@code null}, in which case the
+     *                             method behaves identically to {@link #findClassByIdentifier(String)}.
+     * @return the {@link Class} of the plugin or {@code null} if no plugin can be found.
+     */
+    default Class<? extends Plugin> findClassByIdentifier(String identifier, ClassLoader preferredClassLoader) {
+        return findClassByIdentifier(identifier);
+    }
+
+    /**
      * Finds the Java class and metadata corresponding to the given identifier.
      *
      * @param identifier The raw plugin identifier - must not be {@code null}.

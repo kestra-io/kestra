@@ -497,7 +497,7 @@
         "title": "Nessun limite è impostato per questo Flow."
       },
       "concurrency_limits": {
-        "content": "Per saperne di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limiti di Concurrency</a></strong> nella nostra documentazione.",
+        "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun limite di concorrenza è impostato."
       },
       "dependencies": {
@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "I gruppi ti permettono di raggruppare gli utenti in modo da gestire i permessi e i ruoli collettivamente all'interno del tuo tenant.",
+        "content": "I gruppi ti permettono di raggruppare gli utenti in modo da poter gestire i permessi e i ruoli collettivamente all'interno del tuo tenant.",
         "title": "Non hai ancora gruppi!"
       },
       "kill_switches": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
     "feeds": {
+      "heading": "Tutto su Kestra.",
+      "subheading": "Gli ultimi aggiornamenti, guide e storie",
       "title": "Novità su Kestra"
     },
     "file preview truncated": "Il contenuto visualizzato è stato troncato",
@@ -765,7 +767,7 @@
       },
       "revisions": {
         "suffix": "Revisioni",
-        "tooltip": "Visualizza revisioni del flow"
+        "tooltip": "Visualizza le revisioni del flow"
       },
       "tests": {
         "suffix": "Test(s)",

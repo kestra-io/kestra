@@ -497,7 +497,7 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "concurrency_limits": {
-        "content": "Saiba mais sobre os <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre os <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum limite de concorrência está definido."
       },
       "dependencies": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
     "feeds": {
+      "heading": "Tudo sobre Kestra.",
+      "subheading": "As últimas atualizações, guias e histórias",
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
@@ -754,11 +756,11 @@
     "flow_editor_stats": {
       "apps": {
         "suffix": "App(s)",
-        "tooltip": "Ver aplicativos usando este flow"
+        "tooltip": "Visualizar aplicativos usando este flow"
       },
       "dependencies": {
         "suffix": "Dependência(s)",
-        "tooltip": "Visualizar dependências do flow"
+        "tooltip": "Ver dependências do flow"
       },
       "errors": {
         "label": "{count} Erro(s)"

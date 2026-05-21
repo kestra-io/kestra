@@ -335,7 +335,7 @@
         "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe.",
         "title": "Ajouter des Blueprints Personnalisés"
       },
-      "contact_sales": "Contacter le service commercial",
+      "contact_sales": "Contactez les ventes",
       "enterprise_edition": "Édition Enterprise",
       "get_a_demo_button": "Obtenir une démo",
       "instance": {
@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "Les groupes vous permettent de regrouper les utilisateurs afin de gérer les autorisations et les liaisons de rôles collectivement dans votre locataire.",
+        "content": "Les groupes vous permettent de regrouper des utilisateurs afin de gérer les autorisations et les liaisons de rôles collectivement dans votre locataire.",
         "title": "Vous n'avez pas encore de groupes !"
       },
       "kill_switches": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Impossible de rendre l'aperçu PDF",
     "false": "Faux",
     "feeds": {
+      "heading": "Tout sur Kestra.",
+      "subheading": "Les dernières mises à jour, guides et histoires",
       "title": "Quoi de neuf sur Kestra"
     },
     "file preview truncated": "Displayed content has been truncated",

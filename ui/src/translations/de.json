@@ -394,7 +394,7 @@
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
       },
-      "watch_the_video": "Sehen Sie sich das Video an"
+      "watch_the_video": "Sieh dir das Video an"
     },
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "Gruppen ermöglichen es Ihnen, Benutzer zusammenzufassen, sodass Sie Berechtigungen und Rollenbindungen kollektiv über Ihren Mandanten verwalten können.",
+        "content": "Gruppen ermöglichen es Ihnen, Benutzer zusammenzufassen, sodass Sie Berechtigungen und Rollenbindungen gemeinsam über Ihren Mandanten verwalten können.",
         "title": "Sie haben noch keine Gruppen!"
       },
       "kill_switches": {
@@ -551,7 +551,7 @@
         "title": "Sie haben noch kein versioniertes Plugin!"
       },
       "workerRegistrationTokens": {
-        "content": "Registrierungstoken ermöglichen es entfernten Workern, sich sicher zu authentifizieren und bei Ihrer Kestra-Instanz zu registrieren. Erstellen Sie ein Token und verwenden Sie es, um neue Worker mit diesem Cluster zu verbinden.",
+        "content": "Registrierungstoken ermöglichen es Remote-Workern, sich sicher zu authentifizieren und bei Ihrer Kestra-Instanz zu registrieren. Erstellen Sie ein Token und verwenden Sie es, um neue Worker mit diesem Cluster zu verbinden.",
         "title": "Sie haben noch keine Registrierungstoken!"
       }
     },
@@ -662,6 +662,8 @@
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
     "feeds": {
+      "heading": "Alles rund um Kestra.",
+      "subheading": "Die neuesten Updates, Anleitungen und Geschichten",
       "title": "Was gibt's Neues bei Kestra"
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",

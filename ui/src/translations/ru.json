@@ -498,7 +498,7 @@
       },
       "concurrency_limits": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
-        "title": "Ограничения на параллельность не установлены."
+        "title": "Пределы на параллельность не установлены."
       },
       "dependencies": {
         "ASSET": {
@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "Группы позволяют объединять пользователей, чтобы управлять разрешениями и привязками ролей коллективно в вашем Mandant.",
+        "content": "Группы позволяют объединять пользователей, чтобы вы могли управлять разрешениями и привязками ролей коллективно в рамках вашего арендатора.",
         "title": "У вас еще нет групп!"
       },
       "kill_switches": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",
     "feeds": {
+      "heading": "Все о Kestra.",
+      "subheading": "Последние обновления, руководства и истории",
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
@@ -754,7 +756,7 @@
     "flow_editor_stats": {
       "apps": {
         "suffix": "Приложение(я)",
-        "tooltip": "Просмотреть приложения, использующие этот flow"
+        "tooltip": "Просмотр приложений, использующих этот flow"
       },
       "dependencies": {
         "suffix": "Зависимость(и)",

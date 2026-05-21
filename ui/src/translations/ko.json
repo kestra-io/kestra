@@ -497,7 +497,7 @@
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "concurrency_limits": {
-        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대한 문서를 참조하세요.",
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대해 더 읽어보세요.",
         "title": "동시성 제한이 설정되지 않았습니다."
       },
       "dependencies": {
@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "그룹을 사용하면 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전반에 걸쳐 집단적으로 관리할 수 있습니다.",
+        "content": "그룹은 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전체에서 집합적으로 관리할 수 있도록 합니다.",
         "title": "아직 그룹이 없습니다!"
       },
       "kill_switches": {
@@ -551,7 +551,7 @@
         "title": "아직 버전이 지정된 플러그인이 없습니다!"
       },
       "workerRegistrationTokens": {
-        "content": "등록 토큰은 원격 worker가 Kestra 인스턴스에 안전하게 인증하고 등록할 수 있도록 합니다. 토큰을 생성한 후 이를 사용하여 새로운 worker를 이 클러스터에 연결하십시오.",
+        "content": "등록 토큰은 원격 worker가 Kestra 인스턴스에 안전하게 인증하고 등록할 수 있도록 합니다. 토큰을 생성한 후 이를 사용하여 새로운 worker를 이 클러스터에 연결하세요.",
         "title": "아직 등록 토큰이 없습니다!"
       }
     },
@@ -662,6 +662,8 @@
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
     "feeds": {
+      "heading": "Kestra의 모든 것.",
+      "subheading": "최신 업데이트, 가이드 및 스토리",
       "title": "Kestra의 새로운 기능"
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
@@ -764,11 +766,11 @@
         "label": "{count} 오류"
       },
       "revisions": {
-        "suffix": "수정본",
+        "suffix": "리비전(s)",
         "tooltip": "flow 수정 보기"
       },
       "tests": {
-        "suffix": "테스트(s)",
+        "suffix": "테스트",
         "tooltip": "flow 테스트 보기"
       }
     },

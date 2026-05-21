@@ -1498,6 +1498,7 @@
     "seeing old revision": "Você está vendo uma revisão antiga: {revision}",
     "select": "Selecione sua {{section}}",
     "select datetime": "Selecione uma data",
+    "select view": "Selecionar visualização",
     "selected": "Selecionado",
     "selection": {
       "all": "Selecionar todos ({count})",

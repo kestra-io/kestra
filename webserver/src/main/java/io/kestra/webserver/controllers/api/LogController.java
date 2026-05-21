@@ -10,6 +10,7 @@ import io.kestra.webserver.utils.QueryFilterUtils;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.runners.FollowLogEvent;
@@ -73,7 +74,7 @@ public class LogController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
-        ) @Nullable @QueryFilterFormat List<QueryFilter> filters)
+        ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
         return PagedResults.of(
             logRepository.find(

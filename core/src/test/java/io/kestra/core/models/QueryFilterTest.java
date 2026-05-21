@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -620,6 +621,63 @@ public class QueryFilterTest {
                 )
             )
         ).flatMap(s -> s);
+    }
+
+    @Test
+    void should_allow_leaf_construction() {
+        assertDoesNotThrow(() ->
+            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
+        );
+    }
+
+    @Test
+    void should_allow_node_construction() {
+        QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
+        assertDoesNotThrow(() ->
+            QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
+        );
+    }
+
+    @Test
+    void should_reject_mixed_leaf_and_node_shape() {
+        QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
+        assertThrows(IllegalArgumentException.class, () ->
+            QueryFilter.builder()
+                .field(Field.STATE)
+                .operation(Op.EQUALS)
+                .logical(Logical.OR)
+                .children(List.of(leaf))
+                .build()
+        );
+    }
+
+    @Test
+    void should_reject_empty_node_children() {
+        assertThrows(IllegalArgumentException.class, () ->
+            QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
+        );
+    }
+
+    @Test
+    void should_reject_leaf_missing_operation() {
+        assertThrows(IllegalArgumentException.class, () ->
+            QueryFilter.builder().field(Field.STATE).build()
+        );
+    }
+
+    @Test
+    void should_validate_recursively_through_node_children() {
+        QueryFilter invalidLeaf = QueryFilter.builder()
+            .field(Field.START_DATE)
+            .operation(Op.IN)
+            .build();
+        QueryFilter node = QueryFilter.builder()
+            .logical(Logical.OR)
+            .children(List.of(invalidLeaf))
+            .build();
+        assertThrows(InvalidQueryFiltersException.class, () ->
+            QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
+        );
     }
 
     @Test

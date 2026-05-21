@@ -1498,6 +1498,7 @@
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
     "select datetime": "एक तिथि चुनें",
+    "select view": "दृश्य चुनें",
     "selected": "चयनित",
     "selection": {
       "all": "सभी का चयन करें ({count})",

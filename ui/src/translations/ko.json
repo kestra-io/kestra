@@ -1498,6 +1498,7 @@
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
     "select datetime": "날짜 선택",
+    "select view": "보기 선택",
     "selected": "선택됨",
     "selection": {
       "all": "모두 선택 ({count})",

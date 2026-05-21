@@ -1498,6 +1498,7 @@
     "seeing old revision": "古いリビジョンを表示しています: {revision}",
     "select": "{{section}}を選択してください",
     "select datetime": "日付を選択",
+    "select view": "ビューを選択",
     "selected": "選択済み",
     "selection": {
       "all": "すべて選択 ({count})",

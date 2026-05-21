@@ -1498,6 +1498,7 @@
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "select": "选择您的{{section}}",
     "select datetime": "选择日期",
+    "select view": "选择视图",
     "selected": "已选择",
     "selection": {
       "all": "选择所有 ({count})",

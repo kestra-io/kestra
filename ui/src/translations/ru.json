@@ -1498,6 +1498,7 @@
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "select": "Выберите ваш {{section}}",
     "select datetime": "Выберите дату",
+    "select view": "Выберите вид",
     "selected": "Выбрано",
     "selection": {
       "all": "Выбрать все ({count})",

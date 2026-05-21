@@ -204,7 +204,7 @@
         padding: 1.5rem;
 
         &__mono {
-            font-family: var(--bs-font-monospace);
+            font-family: var(--ks-font-family-mono);
             font-size: 0.8125rem;
             color: var(--ks-content-primary);
             background: transparent;
@@ -240,7 +240,7 @@
         }
 
         &__flow-id {
-            font-family: var(--bs-font-monospace);
+            font-family: var(--ks-font-family-mono);
             font-size: 0.8125rem;
         }
     }

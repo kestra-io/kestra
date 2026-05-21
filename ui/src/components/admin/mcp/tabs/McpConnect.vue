@@ -242,7 +242,7 @@
             font-size: 0.8125rem;
             color: var(--ks-content-secondary);
             margin: 0;
-            font-family: var(--bs-font-monospace);
+            font-family: var(--ks-font-family-mono);
         }
 
         &__code {

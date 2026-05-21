@@ -101,26 +101,26 @@
                 prop="oauthProvider"
                 :rules="[{required: true, message: t('mcp.oauth_provider_required'), trigger: 'change'}]"
             >
-                <el-select
+                <KsSelect
                     v-model="form.oauthProvider"
                     :placeholder="t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
                     class="mcp-edit__provider-select"
                 >
-                    <el-option
+                    <KsOption
                         v-for="provider in oauthProviders"
                         :key="provider"
                         :label="provider"
                         :value="provider"
                     />
-                </el-select>
+                </KsSelect>
             </el-form-item>
 
             <el-form-item
                 v-if="form.serverType === 'PRIVATE' && form.authType === 'OAUTH'"
                 :label="t('mcp.scopes_supported')"
             >
-                <el-select
+                <KsSelect
                     v-model="form.scopesSupported"
                     multiple
                     filterable

@@ -316,6 +316,47 @@ public class DefaultPluginRegistry implements PluginRegistry {
 
     /**
      * {@inheritDoc}
+     *
+     * <p>Searches {@code pluginClassByIdentifier} for all entries whose class was loaded by
+     * {@code preferredClassLoader} and whose class name matches the unversioned {@code identifier}.
+     * This handles the case where a versioned registry (e.g. EE) stores entries under
+     * {@code "type:version"} keys: by scanning all values we can find the entry for the right CL
+     * even when the lookup key carries no version.</p>
+     **/
+    @Override
+    public Class<? extends Plugin> findClassByIdentifier(final String identifier, final ClassLoader preferredClassLoader) {
+        if (preferredClassLoader == null) {
+            return findClassByIdentifier(identifier);
+        }
+        requireNonNull(identifier, "Cannot found plugin for null identifier");
+
+        // Extract the bare type name (strip any ":version" suffix that may be present in EE registries).
+        var typeName = PluginIdentifier.parseIdentifier(identifier).getLeft();
+
+        lock.lock();
+        try {
+            // Fast path: direct key lookup first (covers the non-versioned OSS case).
+            var direct = pluginClassByIdentifier.get(ClassTypeIdentifier.create(identifier));
+            if (direct != null && direct.type().getClassLoader() == preferredClassLoader) {
+                return direct.type();
+            }
+
+            // Slow path: scan all registered classes for a match from the preferred ClassLoader.
+            // This is needed when the registry stores versioned keys ("type:version") and the
+            // identifier carries no version, or when the fast-path CL does not match.
+            var preferred = pluginClassByIdentifier.values().stream()
+                .map(PluginClassAndMetadata::type)
+                .filter(cls -> cls.getClassLoader() == preferredClassLoader && cls.getName().equals(typeName))
+                .findFirst()
+                .orElse(null);
+            return preferred != null ? preferred : findClassByIdentifier(identifier);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
      **/
     @Override
     public Optional<PluginClassAndMetadata<? extends Plugin>> findMetadataByIdentifier(final String identifier) {

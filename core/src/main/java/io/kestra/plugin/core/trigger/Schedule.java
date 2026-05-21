@@ -16,6 +16,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
+import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -208,6 +209,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private Boolean withSeconds = false;
 
     @PluginProperty
+    @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 

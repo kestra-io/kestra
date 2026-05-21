@@ -21,7 +21,7 @@
                                 :name="key as string"
                             >
                                 <template #label>
-                                    <span class="tab-label">
+                                    <span class="tab-label" :class="{'tab-label--active': key === activeTab}">
                                         <component :is="button.icon" class="tab-icon" />
                                         {{ button.title }}
                                         <OpenInNew v-if="button.url" class="open-in-new" />
@@ -185,6 +185,10 @@
             align-items: center;
             gap: 0.25rem;
             position: relative;
+
+            &--active .tab-icon {
+                color: var(--ks-icon-active);
+            }
         }
 
         .open-in-new {

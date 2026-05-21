@@ -8,3 +8,9 @@ declare module "*.png" {
     const url: string
     export default url
 }
+
+declare module "xss" {
+    const xss: any
+    export const escapeAttrValue: (value: string) => string
+    export default xss
+}

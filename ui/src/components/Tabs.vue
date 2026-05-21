@@ -53,7 +53,7 @@
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import type {RouterTab} from "@kestra-io/design-system"
 
-    interface Tab extends RouterTab {
+    export interface Tab extends RouterTab {
         locked?: boolean;
         props?: any;
     }

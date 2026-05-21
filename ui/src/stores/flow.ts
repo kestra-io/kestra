@@ -27,7 +27,7 @@ const textYamlHeader = {
 
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 
-interface Trigger {
+export interface Trigger {
     id: string;
     type: string;
     backfill?: {
@@ -48,7 +48,7 @@ export interface Input {
     defaults?: any;
 }
 
-interface FlowValidations {
+export interface FlowValidations {
     constraints?: string;
     outdated?: boolean;
     infos?: string[];

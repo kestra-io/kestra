@@ -335,7 +335,7 @@
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。",
         "title": "添加自定义蓝图"
       },
-      "contact_sales": "联系销售",
+      "contact_sales": "联系我们的销售团队",
       "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
       "instance": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
     "feeds": {
+      "heading": "所有关于Kestra的内容。",
+      "subheading": "最新更新、指南和故事",
       "title": "Kestra的最新动态"
     },
     "file preview truncated": "显示的内容已被截断",

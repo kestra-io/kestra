@@ -335,7 +335,7 @@
         "message": "Na Kestra Enterprise Edition, você pode criar Blueprints personalizados disponíveis apenas para sua organização. Você pode usá-los como modelos de melhores práticas para compartilhar, centralizar e documentar fluxos de trabalho comumente usados em sua equipe.",
         "title": "Adicionar Blueprints Personalizados"
       },
-      "contact_sales": "Contatar Vendas",
+      "contact_sales": "Entre em Contato com Vendas",
       "enterprise_edition": "Edição Enterprise",
       "get_a_demo_button": "Obter uma Demonstração",
       "instance": {
@@ -497,8 +497,8 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "concurrency_limits": {
-        "content": "Leia mais sobre os <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
-        "title": "Nenhum limite de concorrência foi definido."
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "title": "Nenhum limite de concorrência está definido."
       },
       "dependencies": {
         "ASSET": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
     "feeds": {
+      "heading": "Tudo sobre Kestra.",
+      "subheading": "As últimas atualizações, guias e histórias",
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
@@ -758,14 +760,14 @@
       },
       "dependencies": {
         "suffix": "Dependência(s)",
-        "tooltip": "Ver dependências do flow"
+        "tooltip": "Visualizar dependências do flow"
       },
       "errors": {
         "label": "{count} Erro(s)"
       },
       "revisions": {
         "suffix": "Revisão(ões)",
-        "tooltip": "Ver revisões do flow"
+        "tooltip": "Visualizar revisões do flow"
       },
       "tests": {
         "suffix": "Testes",

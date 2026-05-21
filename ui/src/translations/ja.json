@@ -335,7 +335,7 @@
         "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。",
         "title": "カスタムBlueprintの追加"
       },
-      "contact_sales": "営業に連絡する",
+      "contact_sales": "営業に問い合わせる",
       "enterprise_edition": "エンタープライズエディション",
       "get_a_demo_button": "デモを取得",
       "instance": {
@@ -497,7 +497,7 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "concurrency_limits": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "同時実行制限は設定されていません。"
       },
       "dependencies": {
@@ -551,7 +551,7 @@
         "title": "まだバージョン管理されたプラグインがありません！"
       },
       "workerRegistrationTokens": {
-        "content": "登録トークンは、リモートworkerが安全に認証し、Kestraインスタンスに登録することを可能にします。トークンを作成し、それを使用して新しいworkerをこのクラスターに接続します。",
+        "content": "登録トークンを使用すると、リモートworkerが安全に認証し、Kestraインスタンスに登録できます。トークンを作成し、それを使用して新しいworkerをこのクラスターに接続します。",
         "title": "登録トークンがまだありません！"
       }
     },
@@ -662,6 +662,8 @@
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
     "feeds": {
+      "heading": "すべてのKestraに関すること。",
+      "subheading": "最新の更新情報、ガイド、ストーリー",
       "title": "Kestraの新機能"
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",

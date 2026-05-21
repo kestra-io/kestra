@@ -519,7 +519,7 @@
         }
       },
       "groups": {
-        "content": "Grupy pozwalają na łączenie użytkowników, aby można było zarządzać uprawnieniami i powiązaniami ról zbiorczo w ramach Twojego tenant.",
+        "content": "Grupy pozwalają na łączenie użytkowników, aby można było zarządzać uprawnieniami i przypisaniami ról zbiorczo w całym Twoim mandancie.",
         "title": "Nie masz jeszcze grup!"
       },
       "kill_switches": {
@@ -662,6 +662,8 @@
     "failed to render pdf": "Nie udało się wygenerować podglądu PDF",
     "false": "Fałsz",
     "feeds": {
+      "heading": "Wszystko o Kestra.",
+      "subheading": "Najnowsze aktualizacje, przewodniki i historie",
       "title": "Co nowego w Kestra"
     },
     "file preview truncated": "Wyświetlana zawartość została skrócona",

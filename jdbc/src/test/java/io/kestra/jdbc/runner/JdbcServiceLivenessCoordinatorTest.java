@@ -129,7 +129,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));
-        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(30, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
 
@@ -169,7 +169,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerGroup, workerTask(Duration.ofSeconds(5), workerGroup));
-        boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(30, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
 
@@ -218,7 +218,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask);
-        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(30, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close();
 

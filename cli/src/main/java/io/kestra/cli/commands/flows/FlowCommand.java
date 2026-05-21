@@ -29,3 +29,4 @@ public class FlowCommand extends AbstractCommand {
         return Kestra.runCli(new String[] { "flow", "--help" });
     }
 }
+

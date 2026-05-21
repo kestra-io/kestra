@@ -166,10 +166,17 @@ class WorkerTest {
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(60), executionId), null));
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
 
+            // Wait until both jobs are running AND the kill target has transitioned to RUNNING
+            // state. getRunningJobs() is satisfied before the task-run state is updated, so
+            // sending the kill without the second condition races and produces [CREATED, KILLED]
+            // instead of [CREATED, RUNNING, KILLED].
             await()
                 .atMost(Duration.ofSeconds(10))
                 .pollInterval(Duration.ofMillis(100))
-                .until(() -> worker.getRunningJobs().size() >= 2);
+                .until(() -> worker.getRunningJobs().size() >= 2
+                    && results.stream().anyMatch(r ->
+                        r.getTaskRun().getExecutionId().equals(executionId)
+                        && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING));
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()

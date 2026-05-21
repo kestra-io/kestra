@@ -13,7 +13,7 @@
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "preview": "vite preview",
-        "check:types": "vue-tsc --noEmit",
+        "check:types": "vue-tsc --project tsconfig.app.json && vue-tsc --project tsconfig.test.json",
         "test:lint": "oxlint src packages && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",

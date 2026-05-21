@@ -305,6 +305,42 @@ class FileSerdeTest {
         }
     }
 
+    @Test
+    void readAll_withObjectMapper_typeReference_fromInputStream() throws IOException {
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            FileSerde.write(outputStream, new SimpleEntry(1, "value1"));
+            FileSerde.write(outputStream, new SimpleEntry(2, "value2"));
+        }
+
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(tempFile), FileSerde.BUFFER_SIZE)) {
+            List<SimpleEntry> results = FileSerde.readAll(JacksonMapper.ofIon(), inputStream, new TypeReference<SimpleEntry>() {
+            }).collectList().block();
+
+            assertThat(results).hasSize(2);
+            assertThat(results.getFirst()).isEqualTo(new SimpleEntry(1, "value1"));
+            assertThat(results.get(1)).isEqualTo(new SimpleEntry(2, "value2"));
+        }
+    }
+
+    @Test
+    void readAll_withObjectMapper_class_fromInputStream() throws IOException {
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            FileSerde.write(outputStream, new SimpleEntry(1, "value1"));
+            FileSerde.write(outputStream, new SimpleEntry(2, "value2"));
+        }
+
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(tempFile), FileSerde.BUFFER_SIZE)) {
+            List<SimpleEntry> results = FileSerde.readAll(JacksonMapper.ofIon(), inputStream, SimpleEntry.class)
+                .collectList().block();
+
+            assertThat(results).hasSize(2);
+            assertThat(results.getFirst()).isEqualTo(new SimpleEntry(1, "value1"));
+            assertThat(results.get(1)).isEqualTo(new SimpleEntry(2, "value2"));
+        }
+    }
+
     private static Path createTempFile() throws IOException {
         return Files.createTempFile(FileSerdeTest.class.getSimpleName().toLowerCase() + "_", ".ion");
     }

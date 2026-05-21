@@ -12,7 +12,7 @@ type DependencyOptions = {
     subtype?: Types;
 };
 
-import {getRandomID} from "../../../scripts/id"
+import {getRandomID} from "../utils/id"
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"]
 

@@ -382,12 +382,6 @@
         .kel-tabs__nav-wrap{
             border-radius: 8px;
         }
-        .kel-tabs__nav{
-            padding-inline: 0;
-        }
-        .kel-tabs__nav-scroll{
-            padding-inline: .5rem;
-        }
     }
 
     .right-align{

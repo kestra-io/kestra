@@ -1,5 +1,6 @@
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
+import {h} from "vue"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "../../../src/index"
 import KsPluginCard from "../../../src/components/Data/KsPluginCard.vue"
@@ -9,8 +10,10 @@ const i18n = createI18n({
     locale: "en",
     messages: {
         en: {
-            pluginCard_tasks: "tasks",
-            pluginCard_blueprints: "blueprints",
+            ks_plugin_card: {
+                tasks: "task | tasks",
+                blueprints: "blueprint | blueprints",
+            },
         },
     },
 })
@@ -61,6 +64,25 @@ describe("KsPluginCard", () => {
         const counts = wrapper.findAll(".ks-plugin-card__count")
         expect(counts).toHaveLength(1)
         expect(counts[0].find(".ks-plugin-card__count-value").text()).toBe("12")
+        expect(counts[0].find(".ks-plugin-card__count-label").text()).toBe("tasks")
+    })
+
+    test("pluralizes count label correctly for 1", () => {
+        const wrapper = mount(KsPluginCard, {
+            props: {title: "BigQuery", taskCount: 1, blueprintCount: 1},
+            global: globalConfig,
+        })
+        const labels = wrapper.findAll(".ks-plugin-card__count-label")
+        expect(labels[0].text()).toBe("task")
+        expect(labels[1].text()).toBe("blueprint")
+    })
+
+    test("pluralizes count label correctly for 0", () => {
+        const wrapper = mount(KsPluginCard, {
+            props: {title: "BigQuery", taskCount: 0},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-plugin-card__count-label").text()).toBe("tasks")
     })
 
     test("renders task and blueprint counts together", () => {
@@ -106,12 +128,22 @@ describe("KsPluginCard", () => {
         expect(wrapper.find(".ks-plugin-card").classes()).toContain("ks-plugin-card--clickable")
     })
 
-    test("renders icon when iconCls provided", () => {
+    test("renders icon block when iconCls provided", () => {
         const wrapper = mount(KsPluginCard, {
             props: {title: "BigQuery", iconCls: "io.kestra.plugin.gcp.bigquery"},
             global: globalConfig,
         })
         expect(wrapper.find(".ks-plugin-card__logo").exists()).toBe(true)
+    })
+
+    test("renders icon block when #icon slot provided (without iconCls)", () => {
+        const wrapper = mount(KsPluginCard, {
+            props: {title: "BigQuery"},
+            slots: {icon: () => h("svg", {class: "custom-icon"})},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-plugin-card__logo").exists()).toBe(true)
+        expect(wrapper.find(".custom-icon").exists()).toBe(true)
     })
 
     test("omits icon block when no iconCls and no icon slot", () => {
@@ -120,5 +152,16 @@ describe("KsPluginCard", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".ks-plugin-card__logo").exists()).toBe(false)
+    })
+
+    test("chevron is purely decorative (not a button)", () => {
+        const wrapper = mount(KsPluginCard, {
+            props: {title: "BigQuery"},
+            global: globalConfig,
+        })
+        const chevron = wrapper.find(".ks-plugin-card__chevron")
+        expect(chevron.exists()).toBe(true)
+        expect(chevron.attributes("aria-hidden")).toBe("true")
+        expect(wrapper.find(".ks-plugin-card__chevron[role='button']").exists()).toBe(false)
     })
 })

@@ -55,7 +55,7 @@ export const TaskCountOnly: Story = {
     args: {
         title: "Subflow",
         description: "Trigger a subflow from this flow.",
-        taskCount: 3,
+        taskCount: 1,
     },
     render: (args) => ({
         components: {KsPluginCard},

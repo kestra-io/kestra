@@ -39,11 +39,11 @@
         <footer v-if="hasFooter" class="ks-plugin-card__footer">
             <span v-if="hasTaskCount" class="ks-plugin-card__count">
                 <span class="ks-plugin-card__count-value">{{ taskCount }}</span>
-                <span class="ks-plugin-card__count-label">{{ t("pluginCard_tasks") }}</span>
+                <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.tasks", taskCount ?? 0) }}</span>
             </span>
             <span v-if="hasBlueprintCount" class="ks-plugin-card__count">
                 <span class="ks-plugin-card__count-value">{{ blueprintCount }}</span>
-                <span class="ks-plugin-card__count-label">{{ t("pluginCard_blueprints") }}</span>
+                <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.blueprints", blueprintCount ?? 0) }}</span>
             </span>
             <ChevronRight
                 v-if="clickable && showChevron"
@@ -55,13 +55,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, useSlots} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import KsTag from "./KsTag/KsTag.vue"
     import KsTaskIcon from "../Kestra/KsTaskIcon.vue"
+    import locale from "./KsPluginCard.locale"
 
-    const {t} = useI18n()
+    const {t} = useI18n({
+        useScope: "local",
+        inheritLocale: true,
+        messages: locale,
+    })
+    const slots = useSlots()
 
     const props = withDefaults(defineProps<{
         iconCls?: string
@@ -93,7 +99,7 @@
         icon?(): unknown
     }>()
 
-    const hasIcon = computed(() => Boolean(props.iconCls))
+    const hasIcon = computed(() => Boolean(props.iconCls) || Boolean(slots.icon))
     const hasTaskCount = computed(() => typeof props.taskCount === "number")
     const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number")
     const hasCounts = computed(() => hasTaskCount.value || hasBlueprintCount.value)

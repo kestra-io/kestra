@@ -1,54 +1,80 @@
 export default {
     en: {
-        pluginCard_tasks: "tasks",
-        pluginCard_blueprints: "blueprints",
+        ks_plugin_card: {
+            tasks: "task | tasks",
+            blueprints: "blueprint | blueprints",
+        },
     },
     de: {
-        pluginCard_tasks: "Aufgaben",
-        pluginCard_blueprints: "Vorlagen",
+        ks_plugin_card: {
+            tasks: "Aufgabe | Aufgaben",
+            blueprints: "Vorlage | Vorlagen",
+        },
     },
     es: {
-        pluginCard_tasks: "tareas",
-        pluginCard_blueprints: "plantillas",
+        ks_plugin_card: {
+            tasks: "tarea | tareas",
+            blueprints: "plantilla | plantillas",
+        },
     },
     fr: {
-        pluginCard_tasks: "tâches",
-        pluginCard_blueprints: "blueprints",
+        ks_plugin_card: {
+            tasks: "tâche | tâches",
+            blueprints: "blueprint | blueprints",
+        },
     },
     hi: {
-        pluginCard_tasks: "कार्य",
-        pluginCard_blueprints: "ब्लूप्रिंट",
+        ks_plugin_card: {
+            tasks: "कार्य | कार्य",
+            blueprints: "ब्लूप्रिंट | ब्लूप्रिंट",
+        },
     },
     it: {
-        pluginCard_tasks: "attività",
-        pluginCard_blueprints: "blueprint",
+        ks_plugin_card: {
+            tasks: "attività | attività",
+            blueprints: "blueprint | blueprint",
+        },
     },
     ja: {
-        pluginCard_tasks: "タスク",
-        pluginCard_blueprints: "ブループリント",
+        ks_plugin_card: {
+            tasks: "タスク | タスク",
+            blueprints: "ブループリント | ブループリント",
+        },
     },
     ko: {
-        pluginCard_tasks: "작업",
-        pluginCard_blueprints: "블루프린트",
+        ks_plugin_card: {
+            tasks: "작업 | 작업",
+            blueprints: "블루프린트 | 블루프린트",
+        },
     },
     pl: {
-        pluginCard_tasks: "zadania",
-        pluginCard_blueprints: "szablony",
+        ks_plugin_card: {
+            tasks: "zadanie | zadania",
+            blueprints: "szablon | szablony",
+        },
     },
     pt: {
-        pluginCard_tasks: "tarefas",
-        pluginCard_blueprints: "blueprints",
+        ks_plugin_card: {
+            tasks: "tarefa | tarefas",
+            blueprints: "blueprint | blueprints",
+        },
     },
     pt_BR: {
-        pluginCard_tasks: "tarefas",
-        pluginCard_blueprints: "blueprints",
+        ks_plugin_card: {
+            tasks: "tarefa | tarefas",
+            blueprints: "blueprint | blueprints",
+        },
     },
     ru: {
-        pluginCard_tasks: "задачи",
-        pluginCard_blueprints: "шаблоны",
+        ks_plugin_card: {
+            tasks: "задача | задачи",
+            blueprints: "шаблон | шаблоны",
+        },
     },
     zh_CN: {
-        pluginCard_tasks: "任务",
-        pluginCard_blueprints: "蓝图",
+        ks_plugin_card: {
+            tasks: "任务 | 任务",
+            blueprints: "蓝图 | 蓝图",
+        },
     },
 }

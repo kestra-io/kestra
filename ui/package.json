@@ -107,7 +107,7 @@
         "lint-staged": "^16.4.0",
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
-        "oxlint": "^1.63.0",
+        "oxlint": "^1.66.0",
         "patch-package": "^8.0.1",
         "playwright": "^1.59.1",
         "prettier": "^3.8.3",

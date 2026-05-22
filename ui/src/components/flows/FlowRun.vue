@@ -10,44 +10,49 @@
             </KsAlert>
         </div>
         <KsForm labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm
-                ref="inputsFormRef"
-                :initialInputs="flow.inputs"
-                :selectedTrigger="selectedTrigger"
-                :flow="flow"
-                v-model="inputs"
-                :executeClicked="executeClicked"
-                @confirm="onSubmit"
-                @update:model-value-no-default="values => inputsNoDefaults=values"
-                @update:checks="onChecksUpdate"
-            />
-
-            <div>
-                <KsFormItem
-                    :label="$t('execution labels')"
-                >
-                    <LabelInput
-                        :key="executionLabelsKey"
-                        v-model:labels="executionLabels"
+            <KsTabs v-model="openTab" type="box">
+                <KsTabPane name="inputs" :label="$t('inputs')" class="execution-pane">
+                    <InputsForm
+                        v-if="flow.inputs?.length"
+                        ref="inputsFormRef"
+                        :initialInputs="flow.inputs"
+                        :selectedTrigger="selectedTrigger"
+                        :flow="flow"
+                        v-model="inputs"
+                        :executeClicked="executeClicked"
+                        @confirm="onSubmit"
+                        @update:model-value-no-default="values => inputsNoDefaults=values"
+                        @update:checks="onChecksUpdate"
                     />
-                </KsFormItem>
-                <KsFormItem
-                    :label="$t('scheduleDate')"
-                >
-                    <KsDatePicker
-                        v-model="scheduleDate"
-                        type="datetime"
-                    />
-                </KsFormItem>
-            </div>
-
-            <div>
-                <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
-            </div>
-            
-            <div v-if="hasWebhookTriggers" >
-                <WebhookCurl :flow="flow" />
-            </div>
+                    <KsText v-else type="info">
+                        {{ $t('no inputs') }}
+                    </KsText>
+                </KsTabPane>
+                <KsTabPane name="labels" :label="$t('advanced')" class="execution-pane">
+                    <KsFormItem
+                        :label="$t('execution labels')"
+                    >
+                        <LabelInput
+                            :key="executionLabelsKey"
+                            v-model:labels="executionLabels"
+                        />
+                    </KsFormItem>
+                    <KsFormItem
+                        :label="$t('scheduleDate')"
+                    >
+                        <KsDatePicker
+                            v-model="scheduleDate"
+                            type="datetime"
+                        />
+                    </KsFormItem>
+                </KsTabPane>
+                <KsTabPane name="curl" :label="$t('curl command')" class="execution-pane">
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
+                </KsTabPane>
+                <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook curl command')" class="execution-pane">
+                    <WebhookCurl :flow="flow" />
+                </KsTabPane>
+            </KsTabs>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">
@@ -106,6 +111,7 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
+    import {KsTabs, KsTabPane} from "@kestra-io/design-system"
 
     interface Check {
         message: string
@@ -113,11 +119,14 @@
         behavior: string
     }
 
+    
     type AlertType = "success" | "warning" | "info" | "error"
-
+    
     function toAlertType(style: string): AlertType {
         return style.toLowerCase() as AlertType
     }
+    
+    const openTab = ref("inputs")
 
     interface ReplaySubmitOptions {
         formRef: FormInstance
@@ -368,5 +377,25 @@
         100% {
             box-shadow: 0px 0px 50px 2px #8405FF;
         }
+    }
+
+    :deep(.kel-tabs--box ) {
+        .kel-tabs__nav-wrap{
+            border-radius: 8px;
+        }
+        .kel-tabs__nav{
+            padding-inline: 0;
+        }
+        .kel-tabs__nav-scroll{
+            padding-inline: .5rem;
+        }
+    }
+
+    .right-align{
+        text-align: right;
+    }
+
+    .execution-pane {
+        margin-top: 1rem;
     }
 </style>

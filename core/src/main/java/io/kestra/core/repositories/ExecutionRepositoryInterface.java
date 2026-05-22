@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
 
-public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Executions.Fields> {
+public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Executions.Fields>, DistinctFieldValuesQueryInterface {
     default Optional<Execution> findById(String tenantId, String id) {
         return findById(tenantId, id, false);
     }

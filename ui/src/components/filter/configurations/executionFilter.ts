@@ -4,6 +4,7 @@ import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {useAuthStore} from "override/stores/auth"
+import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
@@ -55,13 +56,26 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
                     comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
                     ],
-                    valueType: "text",
+                    valueType: "multi-select" as const,
+                    valueProvider: async (options?: {search?: string}) => {
+                        const search = options?.search?.trim()
+                        const ids = await useExecutionsStore().findDistinctFieldValues({
+                            field: "FLOW_ID",
+                            filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
+                            size: 100,
+                        })
+                        return ids.map(id => ({label: id, value: id}))
+                    },
+                    searchable: true,
+                    showComparatorSelection: true,
                 }] : []) as any,
                 {
                     key: "kind",

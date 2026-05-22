@@ -439,10 +439,10 @@
         gap: 0.25rem;
         font-weight: 600;
         .asterisk {
-            color: var(--ks-content-alert);
+            color: var(--ks-status-error);
         }
         code {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 

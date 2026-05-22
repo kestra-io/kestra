@@ -611,7 +611,7 @@
                 }
 
                 > .th {
-                    background-color: var(--ks-tag-background-hover);
+                    background-color: var(--ks-bg-tag-hover);
                 }
 
                 > :not(.th) {
@@ -628,7 +628,7 @@
 
                     .timeline-start, .timeline-end {
                         font-size: var(--ks-font-size-sm);
-                        color: var(--ks-content-primary);
+                        color: var(--ks-text-primary);
                     }
                 }
             }
@@ -645,11 +645,11 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--ks-background-body);
+                    background: var(--ks-bg-body);
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--ks-border-primary);
+                    background: var(--ks-border-default);
                     border-radius: 5px;
                 }
             }
@@ -678,7 +678,7 @@
 
                     code {
                         font-size: var(--ks-font-size-sm);
-                        color: var(--ks-content-primary);
+                        color: var(--ks-text-primary);
                     }
                 }
 
@@ -691,7 +691,7 @@
 
                     code {
                         font-size: var(--ks-font-size-sm);
-                        color: var(--ks-content-primary);
+                        color: var(--ks-text-primary);
                     }
 
                     small {
@@ -721,7 +721,7 @@
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         margin-bottom: 10px;
 
         &:last-child {

@@ -33,7 +33,7 @@
     display: block;
     width: 100%;
     padding: 0 9px;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     border-radius: 4px;
 }
 </style>

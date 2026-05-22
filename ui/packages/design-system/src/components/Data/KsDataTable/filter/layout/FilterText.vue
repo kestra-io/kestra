@@ -22,7 +22,7 @@
 <style lang="scss" scoped>
     :deep(.kel-input__inner) {
         &::placeholder {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-sm);
         }
     }

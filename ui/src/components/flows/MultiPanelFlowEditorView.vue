@@ -2,7 +2,6 @@
     <div class="flow-editor-shell">
         <MultiPanelGenericEditorView
             ref="editorView"
-            :class="{playgroundMode}"
             :editorElements="EDITOR_ELEMENTS"
             :defaultActiveTabs="tabs"
             :saveKey
@@ -11,10 +10,7 @@
             @set-tab-value="setTabValue"
         >
             <template #actions>
-                <EditorButtonsWrapper
-                    :haveChange
-                    :showSaveAndExecute="isOnboardingCreate"
-                />
+                <FlowEditorStats />
             </template>
             <template #bottom-panel>
                 <FlowPlayground v-if="playgroundMode" />
@@ -58,7 +54,7 @@
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import FlowPlayground from "./FlowPlayground.vue"
-    import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue"
+    import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
     import NoCode from "../no-code/NoCode.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
@@ -207,10 +203,6 @@
         }))
     }
 
-    const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
-        panel.tabs.some(tab => tab.dirty),
-    ))
-
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,
         editorView,
@@ -262,13 +254,6 @@
 </script>
 
 <style lang="scss" scoped>
-
-    .playgroundMode :deep(.tabs-wrapper) {
-        #{--kel-color-primary}: var(--ks-playground-bg-color);
-        color: var(--ks-button-content-primary);
-        background-position: 10% 0;
-    }
-
     .flow-editor-shell {
         position: relative;
         height: 100%;
@@ -304,7 +289,7 @@
         border: 1px solid transparent;
         border-radius: 0.75rem;
         background:
-            linear-gradient(var(--ks-background-card), var(--ks-background-card)) padding-box,
+            linear-gradient(var(--ks-bg-surface), var(--ks-bg-surface)) padding-box,
             var(--hint-gradient) border-box;
         box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.06);
         pointer-events: auto;
@@ -314,7 +299,7 @@
     .onboarding-execute-hint__content {
         h3 {
             margin: 0 0 0.75rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.15;
@@ -322,14 +307,21 @@
 
         p {
             margin: 0;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             line-height: 1.45;
         }
     }
 
     .onboarding-execute-hint__close {
-        color: var(--ks-content-tertiary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--ks-text-dim);
+        cursor: pointer;
         flex-shrink: 0;
     }
 
@@ -379,4 +371,3 @@
         initial-value: 0turn;
     }
 </style>
-

@@ -33,6 +33,7 @@ const preview: Preview = {
             themes: {
                 light: "",
                 dark: "dark",
+                "dark-2": "dark dark-2",
             },
             defaultTheme: "light",
         }),

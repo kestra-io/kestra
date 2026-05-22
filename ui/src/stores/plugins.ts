@@ -4,7 +4,7 @@ import {trackPluginDocumentationView} from "../utils/tabTracking"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import semver from "semver"
 import {useApiStore} from "./api"
-import InitialFlowSchema from "./flow-schema.json"
+import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient} from "@kestra-io/kestra-sdk"

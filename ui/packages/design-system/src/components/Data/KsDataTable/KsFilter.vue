@@ -183,15 +183,11 @@
     .top {
         display: flex;
         align-items: flex-start;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         gap: 0.5rem;
 
         &.options {
             padding-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            flex-wrap: wrap;
         }
     }
 }

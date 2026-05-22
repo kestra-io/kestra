@@ -92,16 +92,19 @@
         </template>
 
         <Controls v-if="controlsShown" :showInteractive="false" :showFitView="false">
-            <ControlButton @click="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
+            <ControlButton @click.stop="showExtraDetails = !showExtraDetails" :class="{'active': showExtraDetails}">
                 <Information />
             </ControlButton>
-            <ControlButton @click="fitView()">
+            <ControlButton @click.stop="fitView()">
                 <svg viewBox="0 0 32 32" style="width:12px;height:12px"><path d="M3.692 4.63c0-.53.4-.938.939-.938h5.215V0H4.708C2.13 0 0 2.054 0 4.63v5.216h3.692V4.631zM27.354 0h-5.2v3.692h5.17c.53 0 .984.4.984.939v5.215H32V4.631A4.624 4.624 0 0 0 27.354 0zm.954 24.83c0 .532-.4.94-.939.94h-5.215v3.768h5.215c2.577 0 4.631-2.13 4.631-4.707v-5.139h-3.692v5.139zm-23.677.94a.919.919 0 0 1-.939-.94v-5.138H0v5.139c0 2.577 2.13 4.707 4.708 4.707h5.138V25.77H4.631z" fill="currentColor" /></svg>
             </ControlButton>
-            <ControlButton @click="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
+            <ControlButton @click.stop="uncollapseAll()" v-if="collapsed.size > 0">
+                <ArrowExpandAll />
+            </ControlButton>
+            <ControlButton @click.stop="emit('toggle-orientation', $event)" v-if="toggleOrientationButton">
                 <component :is="isHorizontal ? SplitCellsHorizontal : SplitCellsVertical" />
             </ControlButton>
-            <ControlButton @click="toggleDropdown">
+            <ControlButton @click.stop="toggleDropdown">
                 <Download />
             </ControlButton>
             <ul v-if="isDropdownOpen" class="exporting">
@@ -132,6 +135,7 @@
     import SplitCellsHorizontal from "./assets/icons/SplitCellsHorizontal.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Information from "vue-material-design-icons/Information.vue"
+    import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import {cssVar as cssVariable} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
     import * as flowYamlUtils from "./utils/flowYamlUtils"
@@ -483,6 +487,14 @@
     }
 
 
+    const uncollapseAll = () => {
+        collapsed.value = new Set()
+        hiddenNodes.value = []
+        edgeReplacer.value = {}
+        clusterToNode.value = []
+        generateGraph()
+    }
+
     const controlsShown = ref(true)
     const isDropdownOpen = ref(false)
     const toggleDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
@@ -500,8 +512,18 @@
 </script>
 
 <style scoped lang="scss">
-    .material-design-icon.download-icon {
+    .material-design-icon.download-icon,
+    .material-design-icon.information-icon,
+    .material-design-icon.arrow-expand-all-icon {
         max-width: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            width: 12px;
+            height: 12px;
+        }
     }
 
     :deep(.unused-path) {
@@ -516,7 +538,7 @@
         margin: 0;
         z-index: 1000;
         list-style-type: none;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-primary);
         box-shadow: 0 12px 12px rgba(130, 103, 158, 0.1019607843);
         border-radius: 5px;
@@ -525,7 +547,7 @@
         & .item {
             padding: 5px 8px;
             cursor: pointer;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: 12px;
             width: 110px;
 

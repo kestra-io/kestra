@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vitest"]
+  },
+  "include": [
+    ".storybook/preview.*",
+    "scripts/**/*.ts",  
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/fixtures/**/*.ts",
+    "tests/unit/**/*.ts",
+    "tests/unit/**/*.tsx",
+    "tests/unit/**/*.jsx",
+    "tests/unit/**/*.vue",
+    "tests/storybook/**/*.ts",
+    "tests/storybook/**/*.tsx",
+    "tests/storybook/**/*.jsx",
+    "tests/storybook/**/*.vue"
+  ]
+}

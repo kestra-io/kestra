@@ -28,8 +28,8 @@
     display: flex;
     align-items: stretch;
     justify-content: stretch;
-    border-radius: 0.25rem;
-    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
     width: 100%;
 
     :deep(.kel-input__wrapper),

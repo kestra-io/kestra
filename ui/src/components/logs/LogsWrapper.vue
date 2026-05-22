@@ -282,14 +282,14 @@
 <style scoped lang="scss">
 
     .shadow {
-        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+        box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
     }
 
     .log-panel {
         > div.log-content {
             margin-bottom: 1rem;
             .navbar {
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
             }
 
             .kel-empty {
@@ -303,15 +303,15 @@
             overflow: hidden;
             padding: 1rem;
             padding-top: .5rem;
-            background-color: var(--ks-background-card);
-            border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-bg-surface);
+            border: 1px solid var(--ks-border-default);
 
             html.dark & {
-                background-color: var(--ks-background-left-menu);
+                background-color: var(--ks-bg-sidebar);
             }
 
             > * + * {
-                border-top: 1px solid var(--ks-border-primary);
+                border-top: 1px solid var(--ks-border-default);
             }
         }
     }

@@ -20,6 +20,7 @@ const config: StorybookConfig = {
         return mergeConfig(viteConfig, {
             define: {"process.env": {}},
             css: {
+                devSourcemap: true,
                 preprocessorOptions: {
                     scss: {
                         loadPaths: [srcDir],

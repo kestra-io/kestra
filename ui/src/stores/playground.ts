@@ -12,7 +12,7 @@ import {Flow, useFlowStore} from "./flow"
 import {useFileExplorerStore} from "./fileExplorer"
 import isEqual from "lodash/isEqual"
 
-interface ExecutionWithGraph extends Execution {
+export interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
 }
 

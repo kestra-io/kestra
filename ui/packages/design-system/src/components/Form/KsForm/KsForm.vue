@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {ElForm} from "element-plus"
+    import {ElForm, type FormValidateCallback} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -35,7 +35,7 @@
     const filteredProps = useFilteredProps(props)
 
     defineExpose({
-        validate: (...args: Parameters<NonNullable<InstanceType<typeof ElForm>>["validate"]>) => formRef.value?.validate(...args),
+        validate: (callback: FormValidateCallback) => formRef.value?.validate(callback),
         resetFields: (...args: any[]) => formRef.value?.resetFields(...args),
         clearValidate: (...args: any[]) => formRef.value?.clearValidate(...args),
         validateField: (...args: any[]) => formRef.value?.validateField(...args),
@@ -48,6 +48,14 @@
     @use 'element-plus/theme-chalk/src/form';
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
+    .kel-form {
+        &.kel-form--small {
+            &.kel-form--label-top .kel-form-item__label {
+                margin-bottom: 0;
+            }
+        }
+
+    }
     form.ks-horizontal {
         .kel-form-item {
             @include res(xs) {

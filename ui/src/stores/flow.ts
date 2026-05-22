@@ -27,7 +27,7 @@ const textYamlHeader = {
 
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 
-interface Trigger {
+export interface Trigger {
     id: string;
     type: string;
     backfill?: {
@@ -48,7 +48,7 @@ export interface Input {
     defaults?: any;
 }
 
-interface FlowValidations {
+export interface FlowValidations {
     constraints?: string;
     outdated?: boolean;
     infos?: string[];
@@ -97,6 +97,10 @@ export const useFlowStore = defineStore("flow", () => {
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
     const revisions = ref<any[]>()
+    const revisionsCount = ref<number>()
+    const dependenciesCount = ref<number>()
+    const filesSaveAll = ref<(() => Promise<void>) | null>(null)
+    const hasDirtyEditorFiles = ref<boolean>(false)
     const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
     const metrics = ref<any[]>()
@@ -511,9 +515,12 @@ export const useFlowStore = defineStore("flow", () => {
 
     function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${!onlyCount}`).then(response => {
+            const totalNodes = response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0
+            const count = Math.max(0, totalNodes - 1)
+            dependenciesCount.value = count
             return {
                 ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
-                count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0,
+                count,
             }
         })
     }
@@ -648,8 +655,21 @@ function deleteFlowAndDependencies() {
             if (options.store !== false) {
                 revisions.value = response.data
             }
+            revisionsCount.value = Array.isArray(response.data) ? response.data.length : 0
             return response.data
         })
+    }
+
+    function loadFlowStats(options: { namespace: string, id: string }) {
+        return Promise.allSettled([
+            loadRevisions({namespace: options.namespace, id: options.id, store: false}),
+            loadDependencies({namespace: options.namespace, id: options.id, subtype: "FLOW"}, true),
+        ])
+    }
+
+    function clearFlowStats() {
+        revisionsCount.value = undefined
+        dependenciesCount.value = undefined
     }
 
     function exportFlowByIds(options: { ids: string[] }) {
@@ -936,6 +956,10 @@ function deleteFlowAndDependencies() {
         flowGraph,
         invalidGraph,
         revisions,
+        revisionsCount,
+        dependenciesCount,
+        filesSaveAll,
+        hasDirtyEditorFiles,
         flowValidation,
         taskError,
         metrics,
@@ -976,6 +1000,8 @@ function deleteFlowAndDependencies() {
         loadGraphFromSource,
         getGraphFromSourceResponse,
         loadRevisions,
+        loadFlowStats,
+        clearFlowStats,
         exportFlowByIds,
         exportFlowByQuery,
         exportFlowAsCSV,

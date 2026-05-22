@@ -95,7 +95,7 @@
 
     .kel-input {
         :deep(.kel-input__prefix), :deep(input)::placeholder {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 </style>

@@ -27,6 +27,11 @@ const axiosGet = vi.fn()
 const axiosPost = vi.fn().mockResolvedValue({data: {}})
 const axiosPut = vi.fn().mockResolvedValue({data: {}})
 
+// Each `it` re-imports the dashboard store after `vi.resetModules()` (see
+// beforeEach). The first cold import under full-suite contention can exceed
+// the 5s default, so allow extra headroom.
+const TEST_TIMEOUT_MS = 20_000
+
 describe("dashboard store dirty tracking", () => {
     beforeEach(() => {
         vi.resetModules()
@@ -42,7 +47,7 @@ describe("dashboard store dirty tracking", () => {
         setActivePinia(createPinia())
     })
 
-    it("haveChange is false when source matches origin", async () => {
+    it("haveChange is false when source matches origin", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()
 
@@ -54,7 +59,7 @@ describe("dashboard store dirty tracking", () => {
         expect(dashboardStore.haveChange).toBe(false)
     })
 
-    it("haveChange is true when source diverges from origin", async () => {
+    it("haveChange is true when source diverges from origin", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()
 
@@ -64,7 +69,7 @@ describe("dashboard store dirty tracking", () => {
         expect(dashboardStore.haveChange).toBe(true)
     })
 
-    it("syncs unsavedChange to unsavedChangesStore when source changes", async () => {
+    it("syncs unsavedChange to unsavedChangesStore when source changes", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const {useUnsavedChangesStore} = await import("../../../src/stores/unsavedChanges")
         const dashboardStore = useDashboardStore()
@@ -81,7 +86,7 @@ describe("dashboard store dirty tracking", () => {
         expect(unsavedChangesStore.unsavedChange).toBe(false)
     })
 
-    it("load seeds sourceCodeOrigin so haveChange stays false after fetch", async () => {
+    it("load seeds sourceCodeOrigin so haveChange stays false after fetch", {timeout: TEST_TIMEOUT_MS}, async () => {
         axiosGet.mockResolvedValueOnce({status: 200, data: {id: "d1", sourceCode: "id: d1"}})
 
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
@@ -94,7 +99,7 @@ describe("dashboard store dirty tracking", () => {
         expect(dashboardStore.haveChange).toBe(false)
     })
 
-    it("update resets sourceCodeOrigin so haveChange clears post-save", async () => {
+    it("update resets sourceCodeOrigin so haveChange clears post-save", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()
 

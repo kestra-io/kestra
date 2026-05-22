@@ -1,185 +1,146 @@
 <template>
-    <SidebarMenu
-        ref="sideBarRef"
-        id="side-menu"
-        :menu
-        @update:collapsed="onToggleCollapse"
-        width="280px"
-        :collapsed="collapsed"
-        linkComponentName="LeftMenuLink"
-        hideToggle
-        showOneChild
-    >
+    <KsSideBar id="side-menu" :class="{'is-collapsed': collapsed}">
         <template #header>
-            <SidebarToggleButton
-                @toggle="collapsed = onToggleCollapse(!collapsed)"
-            />
-            <div class="logo">
-                <component :is="props.showLink ? 'router-link' : 'div'" :to="props.logoTo">
-                    <span class="img" />
-                </component>
+            <div class="header-toolbar">
+                <SidebarToggleButton @toggle="onCollapse(true)" />
             </div>
             <Environment />
         </template>
 
+        <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
+            <div v-if="!section.child" class="top-level-link">
+                <MenuLink
+                    :item="section"
+                    :active="isItemActive(section)"
+                />
+            </div>
+            <KsSideBarSection
+                v-else
+                :title="section.title"
+                collapsible
+                :defaultCollapsed="!sectionHasActiveChild(section)"
+            >
+                <template v-for="(item, iIdx) in section.child" :key="item.id ?? `i-${iIdx}`">
+                    <MenuLink
+                        v-if="!item.hidden"
+                        :item="item"
+                        :active="isItemActive(item)"
+                    />
+                </template>
+            </KsSideBarSection>
+        </template>
+
+        <KsSideBarSection v-if="bookmarksStore.pages?.length" title="Favourites" collapsible>
+            <BookmarkLinkList :pages="bookmarksStore.pages" />
+        </KsSideBarSection>
+
         <template #footer>
             <slot name="footer" />
         </template>
-    </SidebarMenu>
+    </KsSideBar>
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, computed, h, watch} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
-    import {useMediaQuery} from "@vueuse/core"
-    import {SidebarMenu} from "vue-sidebar-menu"
-    import StarOutline from "vue-material-design-icons/StarOutline.vue"
+    import {computed, h, defineComponent} from "vue"
+    import type {PropType} from "vue"
+    import {useRoute, RouterLink} from "vue-router"
+    import {KsSideBar, KsSideBarSection, KsSideBarItem} from "@kestra-io/design-system"
 
     import Environment from "./Environment.vue"
+    import SidebarToggleButton from "./SidebarToggleButton.vue"
     import BookmarkLinkList from "./BookmarkLinkList.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
-    import type {MenuItem} from "override/components/useLeftMenu"
     import {useLayoutStore} from "../../stores/layout"
-    import SidebarToggleButton from "./SidebarToggleButton.vue"
+    import type {MenuItem} from "override/components/useLeftMenu"
 
-
-    const props = withDefaults(defineProps<{
+    withDefaults(defineProps<{
         menu: MenuItem[],
         showLink?: boolean,
-        logoTo?: object
+        logoTo?: object,
+        collapsed?: boolean,
     }>(), {
         showLink: true,
         logoTo: () => ({name: "welcome"}),
+        collapsed: false,
     })
 
-    const $emit = defineEmits(["menu-collapse"])
+    const emit = defineEmits<{
+        (e: "menu-collapse", folded: boolean): void
+    }>()
 
     const $route = useRoute()
-    const {t} = useI18n({useScope: "global"})
-
     const layoutStore = useLayoutStore()
-
-    function onToggleCollapse(folded: boolean) {
-        collapsed.value = folded
-        layoutStore.setSideMenuCollapsed(folded)
-        $emit("menu-collapse", folded)
-
-        return folded
-    }
-
-    function disabledCurrentRoute(items: MenuItem[]) {
-        return items
-            .map(r => {
-                if (typeof r.href === "object" && r.href?.path === $route.path) {
-                    r.disabled = true
-                }
-
-                // route hack is still needed for blueprints
-                if (typeof r.href === "string" && r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
-                    r.class = "vsm--link_active"
-                }
-
-                if ((!r.href || typeof r.href === "string") && r.child && r.child.some(c => typeof c.href === "string" && $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
-                    r.class = "vsm--link_active"
-                    r.child = disabledCurrentRoute(r.child)
-                }
-
-                return r
-            })
-    }
-
-
-    function expandParentIfNeeded() {
-        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
-            (e as HTMLElement).click()
-        })
-    }
-
-    onUpdated(() => {
-        // Required here because in mounted() the menu is not yet rendered
-        expandParentIfNeeded()
-    })
-
     const bookmarksStore = useBookmarksStore()
 
-    const menu = computed(() => {
-        return [
-            ...(bookmarksStore.pages?.length ? [{
-                title: t("bookmark"),
-                icon: {
-                    element: StarOutline,
-                    class: "menu-icon",
-                },
-                child: [{
-                    // here we use only one component for all bookmarks
-                    // so when one edits the bookmark, it will be updated without closing the section
-                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
-                }],
-            }] : []),
-            ...(props.menu ? disabledCurrentRoute(props.menu) : []),
-        ]
-    })
+    function onCollapse(folded: boolean) {
+        layoutStore.setSideMenuCollapsed(folded)
+        emit("menu-collapse", folded)
+    }
 
-    const collapsed = computed({
-        get: () => layoutStore.sideMenuCollapsed,
-        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
-    })
+    function isItemActive(item: MenuItem): boolean {
+        if (typeof item.href !== "string" || item.href === "/") return false
+        if (item.routes) return item.routes.includes($route.name)
+        return $route.path.startsWith(item.href)
+    }
 
-    const isSmallScreen = useMediaQuery("(max-width: 768px)")
+    function sectionHasActiveChild(section: MenuItem): boolean {
+        return Boolean(section.child?.some((child) => !child.hidden && isItemActive(child)))
+    }
 
-    watch(() => $route.name, (newRoute, oldRoute) => {
-        if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
-            onToggleCollapse(true)
-        }
+    // Inline adapter: maps a MenuItem to <KsSideBarItem>, wiring vue-router navigation
+    // via <RouterLink custom> when the item has a resolved href.
+    const MenuLink = defineComponent({
+        name: "SideBarMenuLink",
+        props: {
+            item: {type: Object as PropType<MenuItem>, required: true},
+            active: {type: Boolean, default: false},
+        },
+        setup(props) {
+            const hrefString = computed(() => (typeof props.item.href === "string" ? props.item.href : ""))
+            const locked = computed(() => Boolean(props.item.attributes?.locked))
+
+            return () => {
+                const itemNode = (extraProps: Record<string, unknown> = {}) => h(KsSideBarItem, {
+                    title: props.item.title,
+                    icon: props.item.icon?.element,
+                    active: props.active,
+                    locked: locked.value,
+                    ...extraProps,
+                })
+
+                if (!hrefString.value) return itemNode()
+
+                return h(RouterLink, {to: hrefString.value, custom: true}, {
+                    default: ({href, navigate}: {href: string; navigate: (e: MouseEvent) => void}) =>
+                        itemNode({href, onClick: navigate}),
+                })
+            }
+        },
     })
 </script>
 
 <style scoped lang="scss">
-.collapseButton {
-    position: absolute;
-    top: .75rem;
-    right: .5rem;
-    z-index: 1;
+#side-menu {
+    width: 215px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: width 0.25s ease, border-right-width 0.25s ease;
 
-    #side-menu & {
-        border: none;
+    &.is-collapsed {
+        width: 0;
+        border-right-width: 0;
     }
 }
 
-#side-menu {
-    position: static;
-    z-index: 1039;
-    border-right: 1px solid var(--ks-border-primary);
-    background-color: var(--ks-background-left-menu);
+.top-level-link {
+    padding: 0 var(--ks-spacing-2);
+}
 
-    .logo {
-        overflow: hidden;
-        padding: 35px 0;
-        height: 112px;
-        position: relative;
-
-        > * {
-            transition: 0.2s all;
-            position: absolute;
-            left: 37px;
-            display: block;
-            height: 55px;
-            width: 100%;
-            overflow: hidden;
-
-            span.img {
-                height: 100%;
-                background: url(../../assets/logo.svg) 0 0 no-repeat;
-                background-size: 179px 55px;
-                display: block;
-                transition: 0.2s all;
-
-                html.dark & {
-                    background-image: url(../../assets/logo-white.svg);
-                }
-            }
-        }
-    }
+.header-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(-1 * var(--ks-spacing-4));
+    margin-bottom: var(--ks-spacing-2);
 }
 </style>

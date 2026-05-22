@@ -215,7 +215,6 @@
                 type="primary"
                 @click="addNewTrigger"
                 :icon="Plus"
-                class="mt-3"
             >
                 {{ $t('no_code.creation.triggers') }}
             </KsButton>

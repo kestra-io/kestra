@@ -1,9 +1,14 @@
 <template>
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
-    <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
-        <router-view />
-    </component>
+    <div id="app-shell">
+        <AppTopNavBar  v-if="shouldRenderApp && route?.name && !route.meta?.anonymous"  />
+        <div id="app-body">
+            <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+                <router-view />
+            </component>
+        </div>
+    </div>
     <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
 </template>
@@ -25,6 +30,7 @@
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
+    import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import {usePluginsStore} from "./stores/plugins"

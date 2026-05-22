@@ -118,7 +118,7 @@ export class ExecutionsPage extends BasePage {
         await visibleDropdown.waitFor({state: "visible", timeout: 500})
 
         // Find and click the matching option
-        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size}/page`})
+        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`})
         await option.waitFor({state: "visible", timeout: 500})
         await option.click()
     }

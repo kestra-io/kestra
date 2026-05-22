@@ -170,15 +170,15 @@
         align-items: center;
 
         &--required {
-            color: var(--ks-content-error);
+            color: var(--ks-status-error);
         }
 
         &--info {
-            color: var(--ks-content-info);
+            color: var(--ks-status-info);
         }
 
         &--warning {
-            color: var(--ks-content-warning);
+            color: var(--ks-status-warning);
         }
     }
 
@@ -202,8 +202,8 @@
     }
 
     .type-box {
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
+        background-color: var(--ks-bg-tag-active);
+        color: var(--ks-text-primary);
         font-size: 12px;
         padding: 0 8px 2px;
         border-radius: 8px;
@@ -218,9 +218,9 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-info);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         background: transparent;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
 
         .ref-type + * {
             margin-left: 0.625rem;
@@ -245,15 +245,15 @@
 
     .properties-list {
         overflow: hidden;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 0.5rem;
         margin-top: 0.75rem;
     }
 
     .property {
         gap: 0 !important;
-        background-color: var(--ks-dropdown-background);
-        border-bottom: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-overlay);
+        border-bottom: 1px solid var(--ks-border-default);
 
         &:last-child {
             border-bottom: 0;
@@ -263,12 +263,12 @@
             padding: .75rem 1rem;
 
             &:not(.collapsed) {
-                border-bottom: 1px solid var(--collapsible-border-color, var(--ks-border-primary));
+                border-bottom: 1px solid var(--collapsible-border-color, var(--ks-border-default));
             }
         }
 
         :deep(.property-detail) {
-            background-color: var(--ks-background-body);
+            background-color: var(--ks-bg-body);
             padding: 1rem 0;
 
             > * {
@@ -277,7 +277,7 @@
             }
 
             button:hover {
-                background-color: var(--ks-dropdown-background-hover);
+                background-color: var(--ks-bg-hover);
             }
         }
     }

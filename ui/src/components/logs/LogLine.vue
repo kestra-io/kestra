@@ -119,7 +119,7 @@
         const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
             "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
-            "color": `var(--ks-log-content-${lowerCaseLevel})`,
+            "color": `var(--ks-log-${lowerCaseLevel})`,
             "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
         }
     })
@@ -130,7 +130,7 @@
 
     const iconColor = computed(() => {
         const logLevel = props.log.level?.toLowerCase()
-        return `var(--ks-log-content-${logLevel}) !important`
+        return `var(--ks-log-${logLevel}) !important`
     })
 
     const message = computed(() => {
@@ -172,7 +172,7 @@ div.line {
     border-left-style: solid;
     border-left-color: transparent;
 
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 
     // hack for class containing 0
     &[class*="-0"] {
@@ -264,7 +264,7 @@ div.line {
 
     .log-level {
         padding: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         user-select: none;
     }
 

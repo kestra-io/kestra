@@ -15,7 +15,7 @@
                     {{ item.value }}
                 </KsText>
                 <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
-                    <KsButton class="wh-15" :icon="TextSearchVariant" link />
+                    <KsButton :icon="TextSearchVariant" link />
                 </router-link>
             </div>
             <slot name="additional-usages" />
@@ -156,9 +156,9 @@
     background-color: transparent;
     // min-height: 432px;
     padding: 1.5rem;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     border-radius: 8px;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
+    box-shadow: 0 2px 4px var(--ks-shadow-element);
 
     .usage-card-header {
         display: flex;
@@ -204,21 +204,21 @@
 
             :deep(.material-design-icon__svg) {
                 font-size: var(--ks-font-size-xl);
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 vertical-align: middle;
             }
         }
 
         .usage-label {
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             line-height: 1.2;
         }
 
         .usage-divider {
             flex: 1;
             height: 1px;
-            border-top: 1px dashed var(--ks-border-primary);
+            border-top: 1px dashed var(--ks-border-default);
         }
 
         .usage-value {
@@ -228,7 +228,7 @@
         }
 
         .kel-button {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             display: flex;
             align-items: center;
             flex-shrink: 0;
@@ -237,6 +237,6 @@
 }
 
 :deep(.text-search-variant-icon) {
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
 }
 </style>

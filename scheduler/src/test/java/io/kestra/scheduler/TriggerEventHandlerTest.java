@@ -353,6 +353,32 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldPreserveCurrentDateGivenAdvancedBackfillWhenPaused() {
+        // GIVEN: a backfill that has progressed past its start date
+        ZonedDateTime start = ZonedDateTime.now(CLOCK).minusDays(10);
+        ZonedDateTime end = ZonedDateTime.now(CLOCK);
+        ZonedDateTime advanced = start.plusDays(4);
+        Backfill backfill = Backfill.builder()
+            .start(start)
+            .end(end)
+            .currentDate(advanced)
+            .paused(false)
+            .build();
+        triggerStateStore.save(triggerState.backfill(CLOCK, backfill));
+        handler = newTriggerEventHandler(List.of());
+        SetPauseBackfillTrigger event = new SetPauseBackfillTrigger(triggerId, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: currentDate is preserved (progress bar must not reset)
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).get()
+            .extracting(t -> t.getBackfill().getCurrentDate())
+            .isEqualTo(advanced);
+    }
+
+    @Test
     void shouldCompleteTriggerGivenTriggerCompletedEventWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);

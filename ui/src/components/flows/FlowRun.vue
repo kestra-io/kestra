@@ -28,7 +28,7 @@
                         {{ $t('no inputs') }}
                     </KsText>
                 </KsTabPane>
-                <KsTabPane name="labels" :label="$t('advanced')" class="execution-pane">
+                <KsTabPane name="labels" :label="$t('advanced configuration')" class="execution-pane">
                     <KsFormItem
                         :label="$t('execution labels')"
                     >
@@ -46,10 +46,10 @@
                         />
                     </KsFormItem>
                 </KsTabPane>
-                <KsTabPane name="curl" :label="$t('curl command')" class="execution-pane">
+                <KsTabPane name="curl" :label="$t('curl.command')" class="execution-pane">
                     <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
                 </KsTabPane>
-                <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook curl command')" class="execution-pane">
+                <KsTabPane v-if="hasWebhookTriggers" name="webhookCurl" :label="$t('webhook.curl_command')" class="execution-pane">
                     <WebhookCurl :flow="flow" />
                 </KsTabPane>
             </KsTabs>

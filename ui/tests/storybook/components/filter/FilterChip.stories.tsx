@@ -1,6 +1,6 @@
 import {ref} from "vue";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import FilterChip from "@kestra-io/design-system/src/components/Data/KsDataTable/filter/layout/FilterChip.vue";
+import FilterChip from "@kestra-io/design-system/components/Data/KsDataTable/filter/layout/FilterChip.vue";
 import {useValues} from "../../../../src/components/filter/composables/useValues";
 import type {AppliedFilter, FilterKeyConfig, FilterValue} from "@kestra-io/design-system";
 import {Comparators} from "@kestra-io/design-system";

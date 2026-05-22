@@ -94,8 +94,8 @@ export default defineConfig(({mode}) => {
             federation({
                 name: "host",
                 shared: {
-                    vue: { 
-                        singleton: true, 
+                    vue: {
+                        singleton: true,
                         eager: true,
                         requiredVersion: "^3",
                     },
@@ -138,6 +138,7 @@ export default defineConfig(({mode}) => {
         optimizeDeps: {
             entries: [
                 "tests/storybook/**/*.stories.{js,jsx,ts,tsx}",
+                "packages/design-system/src/**/*.{ts,vue}",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
             ],
             include: [

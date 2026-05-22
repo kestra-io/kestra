@@ -378,6 +378,7 @@
 
     :deep(.kel-tabs--box ) {
         .kel-tabs__nav-wrap{
+            flex: initial;
             border-radius: 8px;
         }
     }

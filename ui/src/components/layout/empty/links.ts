@@ -28,6 +28,10 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=XhICXP_GXic",
         learnMore: "https://kestra.io/docs/enterprise/governance/assets",
     },
+    apiTokens: {
+        video: "https://www.youtube.com/watch?v=g-740VZLRdA",
+        learnMore: "https://kestra.io/docs/enterprise/auth/api-tokens",
+    },
     panels: {
         video: "https://www.youtube.com/watch?v=SGlzRmJqFBI",
         learnMore: "https://kestra.io/docs/ui/flows",

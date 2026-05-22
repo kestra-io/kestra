@@ -57,6 +57,7 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_and_close": "Copy and close",
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
@@ -1538,6 +1539,10 @@
       "assets": {
         "title": "You have no Assets yet!",
         "content": "Add assets to track and manage your data assets, services, and infrastructure."
+      },
+      "apiTokens": {
+        "title": "Manage your API Tokens",
+        "content": "API tokens are used anytime you want to grant programmatic access to the Kestra API."
       },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",

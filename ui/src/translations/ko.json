@@ -205,6 +205,7 @@
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
+    "copy_and_close": "복사하고 닫기",
     "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
@@ -479,6 +480,10 @@
       "announcements": {
         "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단에 대해 알릴 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요.",
         "title": "아직 공지가 없습니다!"
+      },
+      "apiTokens": {
+        "content": "API 토큰은 Kestra API에 대한 프로그래매틱 접근을 허용하고자 할 때 사용됩니다.",
+        "title": "API 토큰 관리"
       },
       "apps": {
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",

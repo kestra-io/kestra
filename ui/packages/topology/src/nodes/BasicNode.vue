@@ -181,7 +181,12 @@
         }
 
         &.with-task-runner {
-            border: 2px solid var(--ks-topology-task-runner-border);
+            // Pre-execution: purple accent.
+            // Post-execution: the inline `border-color` style set by BasicNode (driven
+            // by `state`) overrides this rule, so success/failed/running keep their
+            // semantic color while the ring stays 2px thick to mark the runner.
+            border-color: var(--ks-topology-task-runner-border);
+            border-width: 2px;
         }
 
         .icon {

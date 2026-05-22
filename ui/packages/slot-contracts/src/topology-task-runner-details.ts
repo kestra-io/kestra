@@ -4,9 +4,13 @@ import {defineArtifactSlot} from "./define-artifact-slot"
 
 export const propsSchema = z.object({
     taskType: z.string(),
-    taskRunnerType: z.string(),
     task: z.custom<Task>(),
-    taskRunner: z.record(z.string(), z.unknown()),
+    // Optional even though the LowCodeEditor only mounts the federated module
+    // when `task.taskRunner` is set — keeping them optional aligns the prop
+    // shape with the other slots so `KnownSlotProps[T]` stays structurally
+    // compatible across the registry.
+    taskRunnerType: z.string().optional(),
+    taskRunner: z.record(z.string(), z.unknown()).optional(),
     execution: z.custom<Execution>().optional(),
     taskRun: z.record(z.string(), z.unknown()).optional(),
     taskRunnerDetail: z.record(z.string(), z.unknown()).optional(),

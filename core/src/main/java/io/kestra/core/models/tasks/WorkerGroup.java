@@ -9,6 +9,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class WorkerGroup {
 
+    /**
+     * Reserved routing key for tasks marked with {@link SystemTask}.
+     * <p>Worker groups with this key cannot be created by users; the key is
+     * always reported as available so that {@code SystemTask} jobs are
+     * dispatched to the SystemWorker hosted in the webserver / standalone
+     * process.</p>
+     */
+    public static final String SYSTEM_KEY = "system";
+
     private String key;
 
     private Fallback fallback;

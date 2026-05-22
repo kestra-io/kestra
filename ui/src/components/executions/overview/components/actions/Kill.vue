@@ -52,7 +52,7 @@
     const user = computed(() => authStore.user)
 
     const enabled = computed(() => {
-        if (!(user.value && user.value.isAllowed(resource.EXECUTION, action.DELETE, props.execution.namespace))) {
+        if (!(user.value && user.value.isAllowed(resource.EXECUTION, action.KILL, props.execution.namespace))) {
             return false
         }
 
@@ -83,7 +83,7 @@
 
         :deep(.kel-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
-            color: var(--ks-content-error) !important;
+            color: var(--ks-status-error) !important;
         }
     }
 </style>

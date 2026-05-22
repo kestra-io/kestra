@@ -12,13 +12,23 @@ jobs:
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
+    - name: Generate GitHub App token for kestra-ee dispatch
+      id: ee-token
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      uses: actions/create-github-app-token@v3
+      with:
+        app-id: ${{ secrets.GH_BOT_APP_ID }}
+        private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+        owner: kestra-io
+        repositories: kestra-ee
+
     # PR pre-check: skip if PR from a fork OR EE already has a branch with same name
     - name: Check EE repo for branch with same name
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
       id: check-ee-branch
       uses: actions/github-script@v9
       with:
-        github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        github-token: ${{ steps.ee-token.outputs.token }}
         script: |
           const pr = context.payload.pull_request;
           if (!pr) {
@@ -46,7 +56,7 @@ jobs:
         && github.event.pull_request.head.repo.fork == false
         && steps.check-ee-branch.outputs.exists == 'false' }}
       with:
-        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-updated"
         client-payload: >-
@@ -59,7 +69,7 @@ jobs:
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false }}
       with:
-        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
         client-payload: >-

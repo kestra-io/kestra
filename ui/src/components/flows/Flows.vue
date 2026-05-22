@@ -26,6 +26,8 @@
                 :loadData="loadData"
                 :data="flowStore.flows"
                 :total="flowStore.total"
+                :currentPage="urlPage"
+                :pageSize="urlSize"
                 :defaultSort="{prop: 'id', order: 'ascending'}"
                 @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
                 @ready="ready = true"
@@ -256,7 +258,7 @@
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import * as FILTERS from "../../utils/filters"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useFlowFilter} from "../filter/configurations"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
@@ -426,6 +428,9 @@
         return filters
     })
 
+    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
+    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+
     watch(filterQuery, () => {
         dataTable.value?.resetAndReload()
     }, {deep: true})
@@ -442,7 +447,7 @@
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
-    const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})))
+    const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
 
     interface ChartDefinition {
         id: string;
@@ -678,7 +683,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 :deep(nav .dropdown-menu) {
@@ -701,9 +706,6 @@
     cursor: pointer;
 }
 
-:deep(.flows-table) .kel-scrollbar__thumb {
-    background-color: var(--ks-border-active) !important;
-}
 .header-actions-list {
     display: flex;
     list-style: none;

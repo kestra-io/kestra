@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
     import {computed, ref, useTemplateRef, watch} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards"
     import {processFlowYaml} from "./composables/useDashboards"

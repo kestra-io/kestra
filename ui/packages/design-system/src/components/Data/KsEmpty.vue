@@ -49,11 +49,11 @@
     @use 'element-plus/theme-chalk/src/empty' as *;
 
     .kel-empty {
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
     }
 
     .kel-empty__description {
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

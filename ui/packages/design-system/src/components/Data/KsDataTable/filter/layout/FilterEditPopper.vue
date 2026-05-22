@@ -109,6 +109,11 @@
         props.filterKey?.valueType === "key-value",
     )
 
+    // Server-side search is opted into by declaring an `options` param on valueProvider.
+    const supportsServerSideSearch = computed(() =>
+        (props.filterKey?.valueProvider?.length ?? 0) > 0,
+    )
+
     const valueComponent = computed(() => {
         if (isTextOp.value) {
             return {
@@ -170,9 +175,11 @@
                     searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey?.key,
+                    serverSideSearch: supportsServerSideSearch.value,
                 },
                 events: {
                     "update:modelValue": (value: string[]) => (state.keyValuePair = value),
+                    "update:search": (value: string) => onSearchChange(value),
                 },
             },
             date: {
@@ -403,10 +410,10 @@
         }
     }
 
-    const loadValueOptions = async () => {
+    const loadValueOptions = async (search?: string) => {
         if (!props.filterKey?.valueProvider) return
 
-        state.valueOptions = await props.filterKey.valueProvider()
+        state.valueOptions = await props.filterKey.valueProvider({search})
 
         if (
             props.filterKey?.key === "timeRange" &&
@@ -423,6 +430,15 @@
                 })
             }
         }
+    }
+
+    let searchDebounceHandle: ReturnType<typeof setTimeout> | null = null
+    const onSearchChange = (search: string) => {
+        if (!supportsServerSideSearch.value) return
+        if (searchDebounceHandle) clearTimeout(searchDebounceHandle)
+        searchDebounceHandle = setTimeout(() => {
+            loadValueOptions(search)
+        }, 250)
     }
 
     const initializeFilter = async () => {

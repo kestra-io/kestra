@@ -8,7 +8,7 @@
 .kel-input-file.custom-upload {
     font-size: var(--ks-font-size-base);
     border-radius: var(--kel-border-radius-base);
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     white-space: nowrap;
 
     form {
@@ -40,8 +40,8 @@
     }
 
     &:hover {
-        border-color: var(--ks-border-active);
-        background-color: var(--ks-button-background-primary-hover);
+        border-color: var(--ks-border-focus);
+        background-color: var(--ks-btn-primary-bg-hover);
         outline: none;
     }
 
@@ -66,8 +66,8 @@
     }
 
     .kel-input__inner::file-selector-button {
-        background: var(--ks-button-background-primary);
-        color: var(--ks-button-content-primary);
+        background: var(--ks-btn-primary-bg-default);
+        color: var(--ks-btn-primary-text);
         border: 0;
         margin: 2px 10px 0 4px;
         border-radius: var(--kel-border-radius-base);
@@ -76,7 +76,7 @@
     &.custom-upload {
         font-size: var(--ks-font-size-base);
         border-radius: var(--kel-border-radius-base);
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         white-space: nowrap;
 
         .kel-input__wrapper {
@@ -103,8 +103,8 @@
         }
 
         &:hover {
-            border-color: var(--ks-border-active);
-            background-color: var(--ks-background-button-primary-hover);
+            border-color: var(--ks-border-focus);
+            background-color: var(--ks-btn-primary-bg-hover);
             outline: none;
         }
 
@@ -120,5 +120,5 @@
 }
 
 .kel-scrollbar__thumb {
-    background-color: var(--ks-border-primary) !important;
+    background-color: var(--ks-border-default) !important;
 }

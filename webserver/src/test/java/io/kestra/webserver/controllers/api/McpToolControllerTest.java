@@ -90,7 +90,7 @@ class McpToolControllerTest {
     BroadcastQueueInterface<FlowInterface> flowQueue;
 
     @Test
-    void givenUnknownServer_whenConnect_thenNotFoundReturned() {
+    void shouldReturnNotFoundWhenConnectingToUnknownServer() {
         // Given
         String nonExistentName = IdUtils.create();
 
@@ -103,7 +103,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenDisabledServer_whenConnect_thenServiceUnavailableReturned() {
+    void shouldReturnServiceUnavailableWhenConnectingToDisabledServer() {
         // Given
         String serverId = saveServer(true, null);
 
@@ -116,7 +116,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenPostWithoutAcceptHeaders_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenPostingWithoutAcceptHeaders() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -132,7 +132,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenPostWithEmptyBody_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenPostingWithEmptyBody() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -145,7 +145,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenPostWithMalformedJson_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenPostingWithMalformedJson() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -158,7 +158,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenNonInitializePostWithoutSessionId_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenNonInitializePostWithoutSessionId() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -171,7 +171,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenGetWithoutSessionId_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenGettingWithoutSessionId() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -187,7 +187,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenEnabledServer_whenDeleteWithoutSessionId_thenBadRequestReturned() {
+    void shouldReturnBadRequestWhenDeletingWithoutSessionId() {
         // Given
         String serverId = saveServer(false, null);
 
@@ -204,7 +204,7 @@ class McpToolControllerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void givenEnabledServerWithInstructions_whenInitialize_thenSessionCreatedWithServerInfo() {
+    void shouldCreateSessionWithServerInfoWhenInitializingServerWithInstructions() {
         // Given
         String instructions = "You are a helpful Kestra assistant.";
         String serverId = saveServer(false, instructions);
@@ -224,7 +224,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenInitializedSession_whenInitializedNotificationSent_thenAccepted() {
+    void shouldAcceptInitializedNotificationWhenSessionIsInitialized() {
         // Given
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -239,7 +239,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenInitializedSession_whenToolsListRequested_thenEmptyToolsListReturnedViaSse() {
+    void shouldReturnEmptyToolsListViaSseWhenToolsListRequested() {
         // Given
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -255,7 +255,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenInitializedSession_whenDeleteSession_thenOk() {
+    void shouldReturnOkWhenDeletingInitializedSession() {
         // Given
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -276,7 +276,7 @@ class McpToolControllerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    void givenFlowWithMcpTrigger_whenToolsListRequested_thenToolAppearsInList() {
+    void shouldIncludeToolInListWhenFlowHasMcpTrigger() {
         // Given — flow must exist before session init so the server picks it up when built
         String serverId = saveServer(false, null);
         String toolName = saveFlowWithTool(serverId);
@@ -293,7 +293,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenUnknownToolName_whenToolCallSent_thenMcpErrorReturnedViaSse() {
+    void shouldReturnMcpErrorViaSseWhenToolCallSentForUnknownTool() {
         // Given — server with no registered tools
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -317,7 +317,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenPersistentSseConnection_whenFlowWithMcpToolIsDeleted_thenToolListChangeNotificationReceived() throws Exception {
+    void shouldReceiveToolListChangeNotificationWhenFlowWithMcpToolIsDeleted() throws Exception {
         // Given
         String serverId = saveServer(false, null);
         String flowId = IdUtils.create();
@@ -354,7 +354,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenPersistentSseConnection_whenFlowAssociatedToTheMcpServerAreUpdated_thenToolListChangeNotificationReceived() throws Exception {
+    void shouldReceiveToolListChangeNotificationWhenAssociatedFlowIsUpdated() throws Exception {
         // Given
         String serverId = saveServer(false, null);
         String toolName = saveFlowWithTool(serverId);
@@ -387,7 +387,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenPersistentSseConnection_whenMcpServerIsDeleted_thenConnectionIsClosed() throws Exception {
+    void shouldCloseConnectionWhenMcpServerIsDeleted() throws Exception {
         // Given
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -414,7 +414,7 @@ class McpToolControllerTest {
     }
 
     @Test
-    void givenPersistentSseConnection_whenMcpServerIsDisabled_thenConnectionIsClosed() throws Exception {
+    void shouldCloseConnectionWhenMcpServerIsDisabled() throws Exception {
         // Given
         String serverId = saveServer(false, null);
         String sessionId = initialize(serverId);
@@ -452,10 +452,10 @@ class McpToolControllerTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    /** Saves an MCP server record directly to the repository and returns its name. */
+    /** Saves an MCP server record directly to the repository and returns its id. */
     private String saveServer(boolean disabled, String instructions) {
-        String serverName = "server-" + IdUtils.create();
-        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverName,
+        String serverId = "server-" + IdUtils.create();
+        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverId,
             "A test MCP server", instructions, null, null, disabled, false, false, null, null);
         return mcpServerRepository.save(null, mcpServer).id();
     }

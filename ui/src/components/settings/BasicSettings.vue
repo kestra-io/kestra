@@ -351,7 +351,7 @@
                 defaultPreferences: {
                     theme: "syncWithSystem",
                     logsFontSize: 12,
-                    editorFontFamily: "'Source Code Pro', monospace",
+                    editorFontFamily: "'JetBrains Mono', monospace",
                     editorFontSize: 12,
                     autofoldTextEditor: false,
                     hoverTextEditor: false,
@@ -415,7 +415,7 @@
             this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true"
             this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT
             this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12
-            this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace"
+            this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace"
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab"
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt"
             this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview"
@@ -806,6 +806,10 @@
                 // Array of font family that contains arabic language and japanese, chinese, korean languages compatible font family
                 return [
                     {
+                        value: "'JetBrains Mono', monospace",
+                        text: "JetBrains Mono",
+                    },
+                    {
                         value: "'Source Code Pro', monospace",
                         text: "Source Code Pro",
                     },
@@ -926,13 +930,13 @@
         max-width: 20vw;
 
         & .kel-input__suffix {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
     }
 
     .kel-input__count {
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
 
         .kel-input__count-inner {
             background: none !important;

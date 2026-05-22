@@ -344,9 +344,9 @@
 </script>
 <style scoped lang="scss">
 .gray-700 {
-    color: var(--ks-content-secondary-color);
+    color: var(--ks-text-secondary-color);
 }
 .body-color {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 </style>

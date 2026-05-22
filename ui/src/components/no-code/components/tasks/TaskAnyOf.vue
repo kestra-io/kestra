@@ -38,7 +38,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
     import {Schema} from "./getTaskComponent"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
 
@@ -362,32 +362,32 @@
         .kel-radio__inner {
             width: 24px;
             height: 24px;
-            border: 2px solid var(--ks-content-link);
+            border: 2px solid var(--ks-text-link);
             background: transparent;
 
             &::after {
                 width: 12px;
                 height: 12px;
-                background-color: var(--ks-content-link);
+                background-color: var(--ks-text-link);
             }
         }
 
         &.is-checked {
             .kel-radio__label {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
             }
             .kel-radio__inner {
-                border-color: var(--ks-content-link);
+                border-color: var(--ks-text-link);
                 background: transparent;
             }
         }
 
         &:hover {
             .kel-radio__label {
-                color: var(--ks-content-link-hover);
+                color: var(--ks-text-link);
             }
             .kel-radio__inner {
-                border-color: var(--ks-content-link-hover);
+                border-color: var(--ks-text-link);
             }
         }
     }

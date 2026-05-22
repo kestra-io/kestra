@@ -601,7 +601,7 @@
 <style scoped lang="scss">
     .namespace-tag {
         background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-log-content-debug);
+        color: var(--ks-status-info);
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 

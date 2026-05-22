@@ -51,7 +51,7 @@ public class McpServerController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) {
         return PagedResults.of(
-            mcpServerRepository.listAll(PageableUtils.from(page, size, sort), tenantService.resolveTenant())
+            mcpServerRepository.find(PageableUtils.from(page, size, sort), tenantService.resolveTenant())
                 .map(ApiMcpServer::from)
         );
     }

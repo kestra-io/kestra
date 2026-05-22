@@ -218,11 +218,11 @@ export function colorClass() {
 }
 
 export function color() {
-    return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`))
+    return mapValues(STATES, (state) => cssVar(`--ks-status-${state.name.toLowerCase()}`))
 }
 
 export function getStateColor(state:string) {
-    return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`)
+    return cssVar(`--ks-status-${STATES[state].name.toLowerCase()}`)
 }
 
 export function icon() {

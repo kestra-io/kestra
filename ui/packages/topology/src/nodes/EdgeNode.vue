@@ -97,6 +97,6 @@
 <style scoped>
     .stroke-danger { stroke: var(--ks-border-error); }
     .stroke-error { stroke: var(--ks-border-error); }
-    .stroke-warning { stroke: var(--ks-border-warning); }
+    .stroke-warning { stroke: var(--ks-status-warning); }
     .vue-flow__edge-path { stroke-dasharray: 3 5; }
 </style>

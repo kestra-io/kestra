@@ -1,5 +1,6 @@
 <template>
     <KsSelect
+        class="auth-selector"
         placement="right-end"
         :popperOffset="20"
         :showArrow="false"
@@ -8,7 +9,7 @@
         popperClass="user-select border border-0"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
+            <img src="../../../assets/ks-logo-small.svg" width="24" height="24" alt="Kestra" class="user-avatar">
         </template>
         <template #header>
             <KsOption :value="{}" class=" list-unstyled">
@@ -82,23 +83,34 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 
     .menu-icon {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xl);
+    }
+}
+
+:deep(.kel-select__wrapper) {
+    padding: 8px 16px !important;
+    height: 30px;
+    font-size: var(--ks-font-size-xs);
+
+    &.is-hovering:not(.is-focused) {
+        box-shadow: 0 0 0 1px var(--ks-border-subtle) inset;
     }
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
 <style lang="scss">
 .user-select  {
     &.kel-select-dropdown {
         width: 328px;
-        background: var(--ks-select-background);
-        box-shadow: 2px 3px 3px var(--ks-card-shadow);
+        background: var(--ks-bg-input);
+        box-shadow: 2px 3px 3px var(--ks-shadow-element);
         border-radius: var(--kel-border-radius-base);
-        border: 1px solid var(--ks-border-primary) !important;
+        border: 1px solid var(--ks-border-default) !important;
         margin-bottom: -2px;
 
         .kel-select-dropdown__item {
@@ -131,14 +143,7 @@
     }
 }
 
-.kel-select {
-    >.kel-select__wrapper {
-        padding: 2px 8px;
-        padding-left: 6px !important;
-    }
-}
-
-html.menu-collapsed {
+html.menu-collapsed .auth-selector {
     .kel-select__suffix {
         display: none;
     }
@@ -146,7 +151,6 @@ html.menu-collapsed {
 
 .user-avatar {
     padding: 0.25rem;
-    border-radius: 0.25rem;
-
+    border-radius: var(--ks-radius-base);
 }
 </style>

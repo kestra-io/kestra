@@ -85,7 +85,7 @@
                 <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
                     {{ $t("kill") }}
                 </KsButton>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
@@ -372,7 +372,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
 
     import Delete from "vue-material-design-icons/Delete.vue"
@@ -638,7 +638,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value
+        return canDelete.value || canUpdate.value || canKill.value
     })
 
     const canCreate = computed(() => {
@@ -651,6 +651,10 @@
 
     const canDelete = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace)
+    })
+
+    const canKill = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {
@@ -913,7 +917,6 @@
                 title: t("execution-warn-title"),
                 description: t("execution-warn-deleting-still-running"),
                 type: "warning",
-                showIcon: true,
                 closable: false,
             }) : null,
             h(KsCheckbox, {
@@ -1036,7 +1039,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .padding-bottom {
@@ -1044,13 +1047,13 @@
 }
 
 .custom-warning {
-    border: 1px solid var(--ks-chart-border-warning);
+    border: 1px solid var(--ks-status-warning);
     border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
+    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
 
     :deep(.kel-alert__title) {
         font-size: var(--ks-font-size-base);
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
         font-weight: bold;
     }
 
@@ -1059,12 +1062,12 @@
     }
 
     :deep(.kel-alert__icon) {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
     }
 }
 
 .code-text {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 
 :deep(.executions-table) .kel-table__row {
@@ -1072,6 +1075,6 @@
 }
 
 :deep(a.execution-id) code {
-    color: var(--ks-content-link);
+    color: var(--ks-text-link);
 }
 </style>

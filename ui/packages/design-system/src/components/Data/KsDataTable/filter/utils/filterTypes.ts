@@ -33,7 +33,14 @@ export interface FilterKeyConfig {
     searchable?: boolean;
     comparators: Comparators[];
     showComparatorSelection?: boolean;
-    valueProvider?: () => Promise<FilterValue[]>;
+    /**
+     * Returns the dropdown options for a filter.
+     * Declare an `options` parameter (any name) to opt into server-side search:
+     * the multi-select will call `valueProvider({search})` on user input instead
+     * of filtering the loaded list client-side. Server-side support is detected
+     * via `valueProvider.length > 0`, so avoid default-valued or rest params.
+     */
+    valueProvider?: (options?: {search?: string}) => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);

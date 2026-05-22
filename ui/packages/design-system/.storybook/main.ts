@@ -17,6 +17,10 @@ const config: StorybookConfig = {
         options: {},
     },
     async viteFinal(viteConfig) {
+        viteConfig.plugins = [
+            ...(viteConfig.plugins ?? []),
+            (await import("@vitejs/plugin-vue-jsx")).default(),
+        ]
         return mergeConfig(viteConfig, {
             define: {"process.env": {}},
             css: {

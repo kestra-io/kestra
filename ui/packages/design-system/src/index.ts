@@ -93,6 +93,7 @@ import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+import KsFilterChip from "./components/Data/KsDataTable/filter/layout/FilterChip.vue"
 
 import {vKsLoading} from "./components/Feedback/KsLoading"
 export {vKsLoading} from "./components/Feedback/KsLoading"
@@ -331,6 +332,7 @@ export {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsFilterChip,
 }
 
 const KestraDesignSystem = {

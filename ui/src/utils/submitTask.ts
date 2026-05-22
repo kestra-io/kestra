@@ -1,8 +1,15 @@
 import _cloneDeep from "lodash/cloneDeep"
 import {useExecutionsStore} from "../stores/executions"
 import {useOnboardingV2Store} from "../stores/onboardingV2"
+import {Router, type useRoute} from "vue-router"
+import {Flow} from "../stores/flow"
 
-export const inputsToFormData = (submitor, inputsList, values) => {
+export const inputsToFormData = (
+    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } }, 
+    inputsList: {id:string, type?: string}[] | undefined, 
+    values: Record<string, any>,
+) => {
+
     let inputValuesCloned = _cloneDeep(values)
 
     for (const input of inputsList || []) {
@@ -36,7 +43,18 @@ export const inputsToFormData = (submitor, inputsList, values) => {
     return formData
 }
 
-export const executeTask = (submitor, flow, values, options) => {
+export const executeTask = (
+    submitor: { 
+        $router: Router, 
+        $route: ReturnType<typeof useRoute>, 
+        $toast: () => { success: (message: string) => void }, 
+        $t: (key: string, params?: Record<string, any>) => string, 
+        $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } 
+    }, 
+    flow: Flow, 
+    values: Record<string, any>,
+    options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
+) => {
     const formData = inputsToFormData(submitor, flow.inputs, values)
     const executionsStore = useExecutionsStore()
     const onboardingV2Store = useOnboardingV2Store()
@@ -44,6 +62,7 @@ export const executeTask = (submitor, flow, values, options) => {
     executionsStore
         .triggerExecution({
             ...options,
+            kind: "NORMAL",
             formData,
         })
         .then(response => {

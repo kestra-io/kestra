@@ -221,6 +221,36 @@ export const Empty: Story = {
     }),
 }
 
+export const ForceExpandedRows: Story = {
+    name: "Force-expanded rows",
+    parameters: {
+        docs: {
+            description: {
+                story: "Rows whose key is listed in `forceExpandedRowKeys` are pre-expanded and have their chevron hidden so users cannot collapse them.",
+            },
+        },
+    },
+    render: () => ({
+        components: {KsDataTable, KsTableColumn},
+        setup() {
+            return {data: SAMPLE_DATA.slice(0, 5), forced: ["flow-002", "flow-004"]}
+        },
+        template: `
+            <div style="padding: 24px">
+                <ks-data-table :data="data" :total="data.length" :force-expanded-row-keys="forced" row-key="id">
+                    <ks-table-column type="expand">
+                        <template #default="{row}">
+                            <div style="padding: 12px">Expanded content for {{ row.id }}</div>
+                        </template>
+                    </ks-table-column>
+                    <ks-table-column prop="id" label="ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                </ks-data-table>
+            </div>
+        `,
+    }),
+}
+
 export const CustomContent: Story = {
     name: "Custom #table Slot",
     render: () => ({

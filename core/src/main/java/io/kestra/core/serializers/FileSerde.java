@@ -125,7 +125,7 @@ public final class FileSerde {
 
     // region Reader-based read methods (text ION only — deprecated, use InputStream-based methods instead)
 
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static void reader(BufferedReader input, Consumer<Object> consumer) throws IOException {
         String row;
         while ((row = input.readLine()) != null) {
@@ -133,7 +133,7 @@ public final class FileSerde {
         }
     }
 
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static boolean reader(BufferedReader input, int maxLines, Consumer<Object> consumer) throws IOException {
         String row;
         int nbLines = 0;
@@ -160,7 +160,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static Flux<Object> readAll(Reader reader) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, DEFAULT_TYPE_REFERENCE);
     }
@@ -168,7 +168,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Flux<T> readAll(Reader reader, TypeReference<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
@@ -176,7 +176,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Flux<T> readAll(Reader reader, Class<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
@@ -184,7 +184,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static Flux<Object> readAll(ObjectMapper objectMapper, Reader in) throws IOException {
         return readAll(objectMapper, in, DEFAULT_TYPE_REFERENCE);
     }
@@ -192,7 +192,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -201,7 +201,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -214,7 +214,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Mono<Long> writeAll(Writer writer, Flux<T> values) throws IOException {
         return writeAll(DEFAULT_OBJECT_MAPPER, writer, values);
     }
@@ -222,7 +222,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
         SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {
         });

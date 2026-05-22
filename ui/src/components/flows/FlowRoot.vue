@@ -139,7 +139,7 @@
                     },
                 ]
 
-                if (this.user.hasAny(resource.EXECUTION)) {
+                if (this.user?.hasAny(resource.EXECUTION)) {
                     tabs[0].name = "topology"
 
                     tabs = [

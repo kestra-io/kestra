@@ -124,8 +124,6 @@
     function toAlertType(style: string): AlertType {
         return style.toLowerCase() as AlertType
     }
-    
-    const openTab = ref("inputs")
 
     interface ReplaySubmitOptions {
         formRef: FormInstance
@@ -174,11 +172,11 @@
     const executionsStore = useExecutionsStore()
     usePlaygroundStore()
 
+    const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
     const inputsNoDefaults = ref<Record<string, unknown>>({})
     const executionLabels = ref<Label[]>([])
     const scheduleDate = ref<string | undefined>(undefined)
-    const collapseName = ref<string | undefined>(undefined)
     const newTab = ref(localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB)
     const executeClicked = ref(false)
     const checks = ref<Check[]>([])

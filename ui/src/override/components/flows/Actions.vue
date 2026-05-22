@@ -89,7 +89,6 @@
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
-    // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"

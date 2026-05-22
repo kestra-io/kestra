@@ -127,7 +127,7 @@ export const ValuesAsObjects: Story = {
                             }} onUpdate:modelValue={val => model.value = val}/>
                         }}
                     </Wrapper>
-                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>
                         {JSON.stringify(model.value, null, 2)}
                     </pre>
                 </div>
@@ -169,10 +169,10 @@ export const ValuesAsTaskLists: Story = {
                                 additionalProperties: {
                                     type: "array",
                                     items: {
-                                        anyOf: [   
-                                            "Python", 
-                                            "Bash", 
-                                            "JavaScript", 
+                                        anyOf: [
+                                            "Python",
+                                            "Bash",
+                                            "JavaScript",
                                         ].map(lang => ({
                                             type: "object",
                                             properties: {
@@ -185,7 +185,7 @@ export const ValuesAsTaskLists: Story = {
                             }} onUpdate:modelValue={val => model.value = val}/>
                         }}
                     </Wrapper>
-                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-bg-surface)", padding: "10px", borderRadius: "4px", width: "100%"}}>
                         {JSON.stringify(model.value, null, 2)}
                     </pre>
                 </div>

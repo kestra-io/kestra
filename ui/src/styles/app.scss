@@ -5,7 +5,6 @@
 // element-plus
 @use "layout/element-plus-overload";
 
-@use "components/sidebar-menu";
 @use "components/markdown";
 
 html, body, #app, #app-container {
@@ -42,17 +41,17 @@ html {
     }
 
     ::-webkit-scrollbar-track {
-        background: var(--ks-background-body) !important;
+        background: var(--ks-bg-body) !important;
     }
 
     ::-webkit-scrollbar-thumb {
-        background: var(--ks-border-primary) !important;
+        background: var(--ks-border-default) !important;
         border-radius: 8px !important;
-        border: 4px solid var(--ks-background-body) !important;
+        border: 4px solid var(--ks-bg-body) !important;
     }
 
     ::-webkit-scrollbar-corner {
-        background: var(--ks-background-body) !important;
+        background: var(--ks-bg-body) !important;
     }
 }
 
@@ -82,6 +81,17 @@ main {
         }
     }
 
+    section.container.tabs-flush-top:has(> section.empty) {
+        margin: 0;
+        padding: 0;
+    }
+
+    section.container:has(.ks-data-table-wrapper),
+    section.main-container:has(.ks-data-table-wrapper) {
+        padding-inline: 0;
+    }
+
+
     > section.full-container {
         flex: 1;
         display: flex;
@@ -103,7 +113,7 @@ main {
     .kel-button.status-#{$key} {
         cursor: default;
         border: 0.5px solid $value;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
 
         .material-design-icon {
             color: $value;
@@ -141,6 +151,7 @@ html.full-screen {
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--ks-bg-base);
         }
 
     }
@@ -166,12 +177,12 @@ html.full-screen {
 }
 
 body{
-    background-color: var(--ks-background-body);
+    background-color: var(--ks-bg-base);
 }
 
 .no-code-skeleton{
-    color: var(--ks-content-secondary);
-    background-color: var(--ks-background-card);
+    color: var(--ks-text-secondary);
+    background-color: var(--ks-bg-surface);
     width: 100%;
     border-radius: 4px;
     padding: 0 .5rem;
@@ -227,6 +238,19 @@ body{
     height: 100vh;
     overflow: hidden;
 }
+#app-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+#app-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
 #app main {
     flex: 1;
     overflow: auto;
@@ -238,5 +262,3 @@ body{
     left: 0;
     z-index: 10000;
 }
-
-

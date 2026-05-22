@@ -52,7 +52,7 @@ const AppTableBlockRender = () => ({
                     border: "1px solid var(--ks-border-primary)",
                     borderRadius: "4px",
                     padding: "2px",
-                    background: "var(--ks-background-card)"
+                    background: "var(--ks-bg-surface)"
                 }} data-testid="resulting-object">{JSON.stringify(model.value, null, 2)}</pre>
             </div>
         </div>

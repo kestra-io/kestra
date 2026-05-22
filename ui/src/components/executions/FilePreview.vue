@@ -16,7 +16,7 @@
             {{ $t("preview.label") }}
         </template>
         <template #default>
-            <KsAlert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
+            <KsAlert v-if="preview.truncated" type="warning" :closable="false" class="mb-2">
                 {{ $t('file preview truncated') }}
             </KsAlert>
             <KsForm class="ks-horizontal max-size mt-3">

@@ -1,5 +1,5 @@
 <template>
-    <span v-if="props.labels.length" class="d-flex gap-1 labels-container">
+    <span v-if="props.labels.length" class="d-flex gap-1 labels-container" :class="{wrap}">
         <KsCheckTag
             v-for="(label, index) in props.labels"
             :key="index"
@@ -30,12 +30,14 @@
         defineProps<{
             labels?: Label[];
             readOnly?: boolean;
-            filterType?: "labels" | "metadata" | "type";
+            filterType?: "labels" | "metadata" | "type" | "details";
+            wrap?: boolean;
         }>(),
         {
             labels: () => [],
             readOnly: false,
             filterType: "labels",
+            wrap: false,
         },
     )
 
@@ -83,20 +85,25 @@
 </script>
 
 <style scoped lang="scss">
-.label {
-    --ks-tag-background: #ECEBEF;
-    --ks-tag-content: var(--ks-content-primary);
-    --ks-tag-background-active: #414557;
-    --ks-tag-content-active: var(--ks-content-inverse);
+.label.kel-check-tag {
+    --ks-bg-tag: #7b7b7e45;
+;
+    --ks-bg-tag-active: #414557;
+    --label-text-active: #ffffff;
 
     html.dark & {
-        --ks-tag-background: #5A6079;
-        --ks-tag-background-active: #F2F2F2;
+        --ks-bg-tag: #FFFFFF1A;
+;
+        --ks-bg-tag-active: #F2F2F2;
+        --label-text-active: var(--ks-text-primary);
     }
 
-    background-color: var(--ks-tag-background);
-    font-weight: normal;
-    color: var(--ks-tag-content);
+    background-color: var(--ks-bg-tag);
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-xs);
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-weight: 400;
     white-space: nowrap;
 }
 
@@ -104,10 +111,20 @@
     overflow: hidden;
     flex-wrap: nowrap;
     min-width: 0;
+
+    &.wrap {
+        flex-wrap: wrap;
+        overflow: visible;
+    }
 }
 
 .label.kel-check-tag.is-checked {
-    background-color: var(--ks-tag-background-active);
-    color: var(--ks-tag-content-active);
+    background-color: var(--ks-bg-tag-active);
+    color: var(--ks-black);
+    font-weight: var( --ks-font-weight-medium);
+
+    html.light & {
+        color: var(--label-text-active);
+    }
 }
 </style>

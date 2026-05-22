@@ -1,4 +1,7 @@
 <template>
+    <FlowPlaygroundToggle
+        v-if="isEditTab && isPlaygroundAllowed && editorIsAllowedEdit && !deleted"
+    />
     <NavBarActions :loading="tab === 'logs' && logsStore.logs === undefined">
         <Dashboards
             v-if="showDashboards"
@@ -11,7 +14,7 @@
             @click="restoreFlow"
         />
         <NavBarAction
-            v-if="canEdit && !deleted && tab !== 'edit'"
+            v-if="canEdit && !deleted && !isEditTab"
             :icon="Pencil"
             :label="t('edit flow')"
             @click="editFlow"
@@ -23,9 +26,44 @@
             @click="deleteLogs"
         />
 
+        <NavBarAction
+            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating && editorHaveChange"
+            :icon="PlayBoxOutline"
+            :label="t('save_and_execute')"
+            :disabled="editorHasErrors || editorIsReadOnly"
+            @click="editorSaveAndExecute"
+        />
+        <NavBarAction
+            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
+            :icon="ContentCopy"
+            :label="t('copy')"
+            @click="editorCopyFlow"
+        />
+        <NavBarAction
+            v-if="isEditTab && editorIsAllowedEdit && !deleted"
+            :icon="Download"
+            :label="t('flow_export')"
+            @click="editorExportYaml"
+        />
+        <NavBarAction
+            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
+            :icon="Delete"
+            :label="t('delete')"
+            @click="confirmDeleteFlow"
+        />
+
         <template #primary>
+            <NavBarAction
+                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                type="primary"
+                :label="t('save')"
+                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
+                @click="editorSave"
+            />
+
             <TriggerFlow
-                v-if="flow && !deleted && tab !== 'apps' && canExecute"
+                v-if="shouldShowExecute"
+                :iconOnly="isEditTab"
                 type="primary"
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
@@ -44,8 +82,13 @@
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
     import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import PlayBoxOutline from "vue-material-design-icons/PlayBoxOutline.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
+    import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
@@ -57,6 +100,7 @@
     import {useDashboardStore} from "../../../stores/dashboard.ts"
     import {useLogsStore} from "../../../stores/logs"
     import {useToast} from "../../../utils/toast"
+    import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
 
     const {t} = useI18n({useScope: "global"})
 
@@ -70,9 +114,24 @@
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
     const tab = computed(() => route.params?.tab as string)
+    const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
     const dashboardStore = useDashboardStore()
+
+    const {
+        haveChange: editorHaveChange,
+        canSave: editorCanSave,
+        hasErrors: editorHasErrors,
+        isReadOnly: editorIsReadOnly,
+        isAllowedEdit: editorIsAllowedEdit,
+        isPlaygroundAllowed,
+        save: editorSave,
+        saveAndExecute: editorSaveAndExecute,
+        exportYaml: editorExportYaml,
+        copyFlow: editorCopyFlow,
+        deleteFlow: editorDeleteFlow,
+    } = useFlowEditorActions()
 
     const onSelectDashboard = (value: any) => {
         const key = dashboardStore.getUserDashboardStorageKey(route)
@@ -89,6 +148,14 @@
     const canExecute = computed(() =>
         flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
     )
+
+    const shouldShowExecute = computed(() => {
+        if (!flow.value || deleted.value) return false
+        if (flowStore.isCreating) return false
+        if (!canExecute.value) return false
+        if (!isEditTab.value && tab.value === "apps") return false
+        return true
+    })
 
     const canEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),
@@ -130,5 +197,12 @@
             unsavedChangesStore.unsavedChange = false
             router.go(0)
         })
+    }
+
+    function confirmDeleteFlow() {
+        toast.confirm(
+            t("delete confirm", {name: flow.value?.id ?? ""}),
+            () => editorDeleteFlow(),
+        )
     }
 </script>

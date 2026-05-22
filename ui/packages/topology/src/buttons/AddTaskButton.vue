@@ -24,7 +24,7 @@
     width: 25px;
     height: 25px;
     border: 0.4px solid var(--ks-border-primary);
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
     cursor: pointer;
 
     &.text-danger {

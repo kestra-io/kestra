@@ -8,7 +8,7 @@ const meta: Meta<typeof KsTabs> = {
     component: KsTabs,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["", "card", "border-card"]},
+        type: {control: "select", options: ["", "box", "card", "border-card"]},
     },
     parameters: {
         docs: {description: {component: "KsTabs is the Kestra design-system abstraction over `ElTabs` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
@@ -26,7 +26,7 @@ export const Default: Story = {
         },
         template: `
             <div style="padding:24px">
-                <ks-tabs v-model="active" v-bind="args">
+                <ks-tabs v-model="active" type="box" v-bind="args">
                     <ks-tab-pane label="Overview" name="overview">Overview content</ks-tab-pane>
                     <ks-tab-pane label="Logs" name="logs">Logs content</ks-tab-pane>
                     <ks-tab-pane label="Metrics" name="metrics">Metrics content</ks-tab-pane>
@@ -52,23 +52,6 @@ export const Box: Story = {
                     <ks-tab-pane label="Tab 6" name="tab6">Tab 6</ks-tab-pane>
                     <ks-tab-pane label="Tab 7" name="tab7">Tab 7</ks-tab-pane>
                     <ks-tab-pane label="Tab 8" name="tab8">Tab 8</ks-tab-pane>
-                </ks-tabs>
-            </div>
-        `,
-    }),
-}
-
-export const Card: Story = {
-    render: () => ({
-        components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("tab1")} },
-        template: `
-            <div style="padding:24px">
-                <ks-tabs v-model="active" type="card">
-                    <ks-tab-pane label="Tab 1" name="tab1">Tab 1</ks-tab-pane>
-                    <ks-tab-pane label="Tab 2" name="tab2">Tab 2</ks-tab-pane>
-                    <ks-tab-pane label="Tab 3" name="tab3">Tab 3</ks-tab-pane>
-                    <ks-tab-pane label="Tab 4" name="tab4" disabled>Tab 4</ks-tab-pane>
                 </ks-tabs>
             </div>
         `,
@@ -131,17 +114,3 @@ export const CustomLabel: Story = {
     }),
 }
 
-export const BorderCard: Story = {
-    render: () => ({
-        components: {KsTabs, KsTabPane},
-        setup() { return {active: ref("tab1")} },
-        template: `
-            <div style="padding:24px">
-                <ks-tabs v-model="active" type="border-card">
-                    <ks-tab-pane label="Tab 1" name="tab1">Tab 1 content</ks-tab-pane>
-                    <ks-tab-pane label="Tab 2" name="tab2">Tab 2 content</ks-tab-pane>
-                </ks-tabs>
-            </div>
-        `,
-    }),
-}

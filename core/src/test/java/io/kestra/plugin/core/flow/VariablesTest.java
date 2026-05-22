@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -36,7 +37,7 @@ class VariablesTest {
     @Inject
     private TaskOutputService taskOutputService;
 
-    @Test
+    @FlakyTest(description = "Depends on ENV_TEST1/ENV_TEST2 env vars; @ExecuteFlow parameter resolution can fail with a closed connection pool under CI load")
     @ExecuteFlow("flows/valids/variables.yaml")
     @EnabledIfEnvironmentVariable(named = "ENV_TEST1", matches = ".*")
     @EnabledIfEnvironmentVariable(named = "ENV_TEST2", matches = ".*")

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.opentest4j.TestAbortedException;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.models.executions.Execution;
@@ -39,6 +40,9 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
         loadApplicationContext(extensionContext);
+        if (!context.isRunning()) {
+            throw new TestAbortedException("Application context is no longer running — skipping test");
+        }
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         String tenantId = executeFlow.tenantId();

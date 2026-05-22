@@ -138,7 +138,7 @@
 
 <style lang="scss" scoped>
 .filter-container {
-    --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
+    --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     display: flex;
     align-items: center;
@@ -147,7 +147,7 @@
     gap: .5rem;
     row-gap: 0.5rem;
     flex: 1;
-    min-width: 0;
+    min-width: 7rem;
 
     &.filter-grow {
         flex-wrap: nowrap;
@@ -156,17 +156,17 @@
 }
 
 .customize-button {
-    background-color: var(--ks-button-background-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
     font-size: var(--ks-font-size-xs);
     flex-shrink: 0;
     box-shadow: var(--ks-box-shadow);
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     :deep(svg) {
-        color: var(--ks-content-tertiary) !important;
+        color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
 }
@@ -174,10 +174,10 @@
 .refresh-btn {
     margin: 0 !important;
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
 
     &:hover {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         text-decoration: underline;
     }
 
@@ -203,7 +203,7 @@
 
 .filter-chip {
     flex-shrink: 0;
-    box-shadow: 0 1px 2px var(--ks-card-shadow);
+    box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     &.filters-hidden {
         display: none;

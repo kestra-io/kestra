@@ -240,7 +240,7 @@ export function useDependencies(
                 }
 
                 const baseItemStyle = {color: bgColor, borderColor, borderWidth: 2, opacity}
-                const labelColor    = cssVar("--ks-content-primary", isDimmed ? 0.35 : isFaded ? 0.75 : undefined)
+                const labelColor    = cssVar("--ks-text-primary", isDimmed ? 0.35 : isFaded ? 0.75 : undefined)
 
                 return {
                     id:         node.id,
@@ -255,13 +255,13 @@ export function useDependencies(
                             borderWidth: 2,
                             opacity:     1,
                         },
-                        label: {color: cssVar("--ks-content-primary")},
+                        label: {color: cssVar("--ks-text-primary")},
                     },
                     // Blur = same as base so selection colours survive when another node is hovered.
                     // Label uses full opacity so text doesn't dim when a neighbour is hovered.
                     blur: {
                         itemStyle: baseItemStyle,
-                        label:     {color: cssVar("--ks-content-primary")},
+                        label:     {color: cssVar("--ks-text-primary")},
                     },
                     label: {
                         show:            true,

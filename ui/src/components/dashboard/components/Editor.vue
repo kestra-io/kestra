@@ -266,7 +266,7 @@
 
     .main-editor {
         padding: .5rem 0px;
-        background: var(--ks-background-body);
+        background: var(--ks-bg-body);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;
@@ -300,9 +300,9 @@
 
                 & > div {
                     height: 100%;
-                    background: var(--ks-background-card);
-                    border: 1px solid var(--ks-border-primary);
-                    border-radius: 0.25rem;
+                    background: var(--ks-bg-surface);
+                    border: 1px solid var(--ks-border-default);
+                    border-radius: var(--ks-radius-base);
                 }
             }
         }
@@ -326,7 +326,7 @@
 
         &.enhance-readability {
             padding: calc(1rem * 1.5);
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 
@@ -356,7 +356,7 @@
     .view-buttons {
         .kel-button {
             &.kel-button--primary {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
                 opacity: 1;
             }
 

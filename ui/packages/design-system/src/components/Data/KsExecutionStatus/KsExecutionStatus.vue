@@ -29,7 +29,7 @@
         icon?: boolean;
         size?: "large" | "default" | "small";
     }>(), {
-        icon: false,
+        icon: true,
         size: "default",
         title: undefined,
     })
@@ -43,7 +43,7 @@
     })
 
     const displayText = computed(() => {
-        return props.title ?? props.status
+        return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
     })
 
     const classes = computed(() => [
@@ -72,13 +72,13 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     user-select: none;
     vertical-align: middle;
     appearance: none;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
+    border: 1px solid var(--ks-border-default);
+    border-radius: 100px;
+    background: var(--ks-bg-badge);
     font-family: inherit;
     height: 2rem;
     padding: 0.5rem 0.9375rem;
     font-size: var(--ks-font-size-sm);
-    min-width: 7rem;
     gap: 0.375rem;
 
     .ks-execution-status__icon {
@@ -90,7 +90,6 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     .ks-execution-status__text {
         display: inline-flex;
         align-items: center;
-        text-transform: uppercase;
     }
 
     &::-moz-focus-inner {
@@ -114,9 +113,9 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
-        color: var(--ks-content-#{$status});
-        border-color: var(--ks-border-#{$status});
-        background-color: var(--ks-background-#{$status});
+        color: var(--ks-status-#{$status});
+        border-color: var(--ks-status-#{$status});
+        background-color: var(--ks-status-background-#{$status});
     }
 }
 </style>

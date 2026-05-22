@@ -23,7 +23,7 @@ Under the hood, the design system wraps Element Plus under the `kel` namespace a
 These rules are what keep the UI maintainable as it grows. Treat any deviation as a bug.
 
 1. **Use a `Ks*` component if one exists.** Check the tables below before writing anything custom or importing from `element-plus`. New screens that mix `<el-button>` and `<KsButton>` are a regression.
-2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.scss` / `ks-theme-dark.scss` — do not pick a one-off color.
+2. **Colors come from `--ks-*` tokens. Always.** No hex codes, no `rgb(...)`, no Element Plus tokens (`--el-*`), no Bootstrap variables, no SCSS color variables in component code. If the token you need does not exist, talk to design and add it to `ks-theme-light.scss` / `ks-theme-dark.scss` / `ks-theme-dark-2.scss` — do not pick a one-off color.
 3. **Typography comes from `KsText` or typography tokens.** Use `<KsText>` (with `size`, `type`, `tag`, `truncated`, `lineClamp`) for body copy. For headings or one-off needs, use the `$font-family-*` and `$font-size-*` SCSS variables only inside the design-system package — feature code should not redefine them.
 4. **No `:deep()` selectors.** Reaching into a child component's internals breaks encapsulation and silently shatters when the design system is upgraded. If you need to style something inside a `Ks*` component, add a prop, a slot, or a CSS variable to the component upstream.
 5. **No SCSS variables (`$...`) in feature components.** Use `var(--ks-*)` CSS custom properties inside `<style>` blocks. SCSS variables don't react to dark mode, can't be overridden at runtime, and bind your component to a specific theme. SCSS variables are only acceptable inside `ui/packages/design-system/` itself, in mixins, or for math at build time.
@@ -157,8 +157,8 @@ If your `<style>` block needs to exist:
 ```scss
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
-    background: var(--ks-background-card);
-    color: var(--ks-content-primary);
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
     border: 1px solid var(--ks-border-primary);
 }
 ```
@@ -231,6 +231,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color |
+| `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
 
 ### Charts
@@ -249,6 +250,7 @@ If your `<style>` block needs to exist:
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
 | `KsTopNavBar` | Top navigation bar |
+| `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
@@ -279,28 +281,28 @@ If your `<style>` block needs to exist:
 
 ## Design tokens
 
-Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/design-system/src/assets/styles/ks-theme-light.scss) and [`ks-theme-dark.scss`](packages/design-system/src/assets/styles/ks-theme-dark.scss). Each token is **semantic** — it describes *what the value means*, not what color it is. That is what makes dark mode and rebrands trivial.
+Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/design-system/src/assets/styles/ks-theme-light.scss), [`ks-theme-dark.scss`](packages/design-system/src/assets/styles/ks-theme-dark.scss) and  [`ks-theme-dark-2.scss`](packages/design-system/src/assets/styles/ks-theme-dark-2.scss). Each token is **semantic** — it describes *what the value means*, not what color it is. That is what makes dark mode and rebrands trivial.
 
 **Always use `var(--ks-*)` in component `<style>` blocks** — not SCSS variables, not hex codes, not `--el-*`, not `--bs-*`.
 
 Token families currently exposed:
 
-- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-background-success`, `--ks-background-failed`, …)
+- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
 - `--ks-border-*` — primary / secondary borders, plus per-state borders
 - `--ks-content-*` — text colors (primary, inverse, link, link-hover, per-state)
 - `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
 - `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
-- `--ks-chart-*` — palette for charts; pair with `cssVar("--ks-chart-success")` in JS
-- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-playground-*`, `--ks-dots-*` — domain-specific surfaces
+- `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS
+- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-dots-*` — domain-specific surfaces
 
-When a needed token is missing, **add it** to both `ks-theme-light.scss` and `ks-theme-dark.scss` (and review with design) rather than picking a raw color.
+When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
 
 **SCSS variables — only inside `ui/packages/design-system/`, never in feature code:**
 
 - **Brand:** `$base-purple-500` (primary, `#8405FF`)
 - **Status palette:** `$base-green-500` (success), `$base-red-500` (danger), `$base-orange-500` (warning), `$base-blue-500` (info)
 - **Grays:** `$base-gray-50` … `$base-gray-950`
-- **Typography:** `$font-family-sans-serif` (Public Sans), `$font-family-monospace` (Source Code Pro)
+- **Typography:** `$font-family-sans-serif` (Inter), `$font-family-monospace` (JetBrains Mono)
 - **Font sizes:** `$font-size-xs` / `sm` / `md` / `lg` / `xl` / `2xl` / `3xl` / `4xl`
 - **Radii:** `$border-radius` (0.25rem), `$border-radius-sm` (0.15rem), `$border-radius-lg` (0.5rem)
 

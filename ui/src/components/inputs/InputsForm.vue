@@ -238,7 +238,7 @@
         </div>
     </template>
 
-    <KsAlert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </KsAlert>
 </template>
@@ -767,13 +767,13 @@
 
 .hint {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
 }
 
 .text-description {
     width: 100%;
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
 }
 
 :deep(.boolean-inputs) {
@@ -783,24 +783,24 @@
     .kel-radio-button {
         &.is-active {
             .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
-                color: var(--ks-content-primary);
-                background-color: var(--ks-button-background-secondary-active);
-                box-shadow: 0 0 0 0 var(--ks-border-active);
+                color: var(--ks-text-primary);
+                background-color: var(--ks-btn-secondary-bg-active);
+                box-shadow: 0 0 0 0 var(--ks-border-focus);
             }
         }
 
         .kel-radio-button__inner {
-            border: var(--ks-border-primary);
+            border: var(--ks-border-default);
             transition: 0.3s ease-in-out;
 
             &:hover {
-                color: var(--ks-content-secondary);
-                border-color: var(--ks-border-active);
-                background-color: var(--ks-background-card);
+                color: var(--ks-text-secondary);
+                border-color: var(--ks-border-focus);
+                background-color: var(--ks-bg-surface);
             }
 
             &:first-child {
-                border-left: var(--ks-border-primary);
+                border-left: var(--ks-border-default);
             }
         }
     }
@@ -827,8 +827,8 @@
 
     .tags {
         flex: 1;
-        background: var(--ks-background-input);
-        border: 1px solid var(--ks-border-primary);
+        background: var(--ks-bg-input);
+        border: 1px solid var(--ks-border-default);
         border-radius: 4px;
         display: flex;
         flex-wrap: wrap;
@@ -840,8 +840,8 @@
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
-            background-color: var(--ks-tag-background);
-            color: var(--ks-content-tag);
+            background-color: var(--ks-bg-tag);
+            color: var(--ks-text-primary);
         }
     }
 }
@@ -854,7 +854,7 @@
         .array-cell {
             :deep(.kel-input__wrapper) {
                 box-shadow: none;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
                 border-radius: 5px;
             }
 
@@ -875,11 +875,11 @@
             transform: translateY(-50%);
             padding: 4px;
             border: none;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             background: transparent;
 
             &:hover {
-                color: var(--ks-content-error);
+                color: var(--ks-status-error);
             }
         }
 
@@ -889,20 +889,20 @@
             top: 50%;
             transform: translateY(-50%);
             padding: 3px;
-            border-left: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-secondary);
+            border-left: 1px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
             background: transparent;
         }
     }
 
     .add-new {
         padding: 5px 8px;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         background: none;
 
         &:hover {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 }
@@ -911,8 +911,8 @@
     &:has(.edit_input) {
         padding: 1rem;
         border-radius: 8px;
-        border: 1px solid var(--ks-border-primary);
-        background-color: var(--ks-dropdown-background-active);
+        border: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-active);
     }
 }
 
@@ -951,7 +951,7 @@
 
   .file-placeholder {
     margin-left: 8px;
-    color: var(--ks-content-secondary) !important;
+    color: var(--ks-text-secondary) !important;
     font-size: 0.9em;
     flex: 1;
     max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */

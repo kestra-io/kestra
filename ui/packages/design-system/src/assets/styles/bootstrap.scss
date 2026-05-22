@@ -21,20 +21,20 @@ $prefix: 'kbs-';
     --kbs-body-line-height: #{$line-height-base};
     --kbs-body-text-align: #{$body-text-align};
 
-    --kbs-body-color: var(--ks-content-primary);
-    --kbs-body-bg: var(--ks-background-body);
+    --kbs-body-color: var(--ks-text-primary);
+    --kbs-body-bg: var(--ks-bg-body);
 
-    --kbs-heading-color: var(--ks-content-primary);
+    --kbs-heading-color: var(--ks-text-primary);
 
-    --kbs-code-color: var(--ks-content-link);
+    --kbs-code-color: var(--ks-text-link);
     --kbs-highlight-color: #{$mark-color};
     --kbs-highlight-bg: #{$mark-bg};
 }
 
 a {
-    color: var(--ks-content-link);
+    color: var(--ks-text-link);
 }
 
 a:hover {
-    color: var(--ks-content-link-hover);
+    color: var(--ks-text-link);
 }

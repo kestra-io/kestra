@@ -58,7 +58,7 @@
 
         .kel-input-group__append, .kel-input-group__prepend {
             background-color: transparent;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 </style>

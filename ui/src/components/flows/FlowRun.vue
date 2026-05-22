@@ -111,7 +111,6 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-    import {KsTabs, KsTabPane} from "@kestra-io/design-system"
 
     interface Check {
         message: string

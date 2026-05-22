@@ -91,7 +91,7 @@ export default defineConfig(({mode}) => {
                     },
                 },
             }),
-            federation({
+            !process.env.STORYBOOK && federation({
                 name: "host",
                 shared: {
                     vue: {

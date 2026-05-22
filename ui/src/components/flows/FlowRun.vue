@@ -22,32 +22,32 @@
                 @update:checks="onChecksUpdate"
             />
 
-            <KsCollapse v-model="collapseName">
-                <KsCollapseItem :title="$t('advanced configuration')" name="advanced">
-                    <KsFormItem
-                        :label="$t('execution labels')"
-                    >
-                        <LabelInput
-                            :key="executionLabelsKey"
-                            v-model:labels="executionLabels"
-                        />
-                    </KsFormItem>
-                    <KsFormItem
-                        :label="$t('scheduleDate')"
-                    >
-                        <KsDatePicker
-                            v-model="scheduleDate"
-                            type="datetime"
-                        />
-                    </KsFormItem>
-                </KsCollapseItem>
-                <KsCollapseItem :title="$t('curl.command')" name="curl">
-                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
-                </KsCollapseItem>
-                <KsCollapseItem v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
-                    <WebhookCurl :flow="flow" />
-                </KsCollapseItem>
-            </KsCollapse>
+            <div>
+                <KsFormItem
+                    :label="$t('execution labels')"
+                >
+                    <LabelInput
+                        :key="executionLabelsKey"
+                        v-model:labels="executionLabels"
+                    />
+                </KsFormItem>
+                <KsFormItem
+                    :label="$t('scheduleDate')"
+                >
+                    <KsDatePicker
+                        v-model="scheduleDate"
+                        type="datetime"
+                    />
+                </KsFormItem>
+            </div>
+
+            <div>
+                <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
+            </div>
+            
+            <div v-if="hasWebhookTriggers" >
+                <WebhookCurl :flow="flow" />
+            </div>
 
             <div class="bottom-buttons" v-if="!embed">
                 <div class="left-align">

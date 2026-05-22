@@ -13,7 +13,7 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
     import {useBlueprintsStore} from "../../stores/blueprints"
-    import {getRandomID} from "../utils/id"
+    import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import useRouteContext from "../../composables/useRouteContext"

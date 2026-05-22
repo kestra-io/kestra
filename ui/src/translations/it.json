@@ -205,6 +205,7 @@
     "copy": "Copia",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
+    "copy_and_close": "Copia e chiudi",
     "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
@@ -479,6 +480,10 @@
       "announcements": {
         "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di manutenzione programmata. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
         "title": "Non hai ancora annunci!"
+      },
+      "apiTokens": {
+        "content": "I token API vengono utilizzati ogni volta che si desidera concedere l'accesso programmatico all'API di Kestra.",
+        "title": "Gestisci i tuoi Token API"
       },
       "apps": {
         "content": "Inizia a creare App per interagire con Kestra dal mondo esterno.",

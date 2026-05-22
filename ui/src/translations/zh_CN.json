@@ -205,6 +205,7 @@
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
+    "copy_and_close": "复制并关闭",
     "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
@@ -479,6 +480,10 @@
       "announcements": {
         "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
+      },
+      "apiTokens": {
+        "content": "API令牌用于在您希望授予程序化访问Kestra API时使用。",
+        "title": "管理您的API Tokens"
       },
       "apps": {
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",

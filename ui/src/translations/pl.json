@@ -205,6 +205,7 @@
     "copy": "Kopiuj",
     "copy logs": "Kopiuj logs",
     "copy url": "Kopiuj URL",
+    "copy_and_close": "Skopiuj i zamknij",
     "copy_to_clipboard": "Kopiuj do schowka",
     "create": "Utwórz",
     "create first task": "Stwórz swój pierwszy task",
@@ -479,6 +480,10 @@
       "announcements": {
         "content": "Ogłoszenia pozwalają powiadomić użytkowników o wszelkich zmianach lub poinformować ich o planowanej przerwie konserwacyjnej. Wystarczy wybrać typ ogłoszenia, zakres dat, w którym ma być wyświetlane, i napisać treść ogłoszenia.",
         "title": "Nie masz jeszcze ogłoszeń!"
+      },
+      "apiTokens": {
+        "content": "Tokeny API są używane za każdym razem, gdy chcesz przyznać programowy dostęp do API Kestra.",
+        "title": "Zarządzaj swoimi tokenami API"
       },
       "apps": {
         "content": "Rozpocznij tworzenie aplikacji do interakcji z Kestra ze świata zewnętrznego.",

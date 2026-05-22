@@ -205,6 +205,7 @@
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_and_close": "コピーして閉じる",
     "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
@@ -479,6 +480,10 @@
       "announcements": {
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
         "title": "お知らせはまだありません！"
+      },
+      "apiTokens": {
+        "content": "APIトークンは、Kestra APIへのプログラムによるアクセスを許可したいときに使用されます。",
+        "title": "APIトークンを管理する"
       },
       "apps": {
         "content": "外部からKestraと連携するアプリを作成し始めましょう。",

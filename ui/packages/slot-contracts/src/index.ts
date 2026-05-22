@@ -1,8 +1,9 @@
 import {z} from "zod"
 import topologyDetails from "./topology-details"
 import topologyTaskDrawer from "./topology-task-drawer"
+import topologyTaskRunnerDetails from "./topology-task-runner-details"
 
-const slots = [topologyDetails, topologyTaskDrawer] as const
+const slots = [topologyDetails, topologyTaskDrawer, topologyTaskRunnerDetails] as const
 
 type SlotTuple = typeof slots;
 type ByKey<T extends readonly { key: string }[]> = {

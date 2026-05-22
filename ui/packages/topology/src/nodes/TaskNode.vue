@@ -16,6 +16,10 @@
         <template #details>
             <Transition name="details-slide">
                 <div v-if="globalShowExtraDetails" class="details-wrapper">
+                    <slot
+                        v-if="data.node.task?.taskRunner"
+                        name="taskRunnerDetails"
+                    />
                     <slot name="details" />
                     <div v-if="actionConfig && data.node.task" class="view-details-action">
                         <button
@@ -159,6 +163,7 @@
         };
         namespace?: string;
         flowId?: string;
+        taskRunner?: Record<string, unknown>;
     }
 
     interface NodeData {

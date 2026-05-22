@@ -50,6 +50,9 @@
                 <template #details>
                     <slot name="taskDetails" v-bind="taskProps" />
                 </template>
+                <template #taskRunnerDetails>
+                    <slot name="taskRunnerDetails" v-bind="taskProps" />
+                </template>
             </TaskNode>
         </template>
 

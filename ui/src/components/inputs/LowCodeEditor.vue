@@ -49,6 +49,22 @@
                     />
                 </slot>
             </template>
+            <template #taskRunnerDetails="taskProps">
+                <slot name="taskRunnerDetails" v-bind="taskProps">
+                    <TopologyTaskRunnerDetailsRemote
+                        v-if="taskProps.data.node?.task?.taskRunner"
+                        :taskType="taskProps.data.node?.task?.type"
+                        :taskRunnerType="taskProps.data.node?.task?.taskRunner?.type"
+                        :task="taskProps.data.node?.task"
+                        :taskRunner="taskProps.data.node?.task?.taskRunner"
+                        :execution="execution"
+                        :taskRun="resolveTaskRun(taskProps.data.node?.task?.id)"
+                        :taskRunnerDetail="resolveTaskRunnerDetail(taskProps.data.node?.task?.id)"
+                        :namespace="props.namespace"
+                        :flowId="props.flowId"
+                    />
+                </slot>
+            </template>
         </Topology>
 
         <KsDrawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
@@ -173,6 +189,7 @@
 
     const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
     const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent:TopologyTaskRunnerDetailsRemote} = useFederatedModule("topology-task-runner-details")
 
 
     const customActions = computed(() => {
@@ -188,6 +205,15 @@
 
     const taskMetrics = (taskId: string | undefined) =>
         executionsStore.metrics.filter((m) => m.taskId === taskId)
+
+    const resolveTaskRun = (taskId: string | undefined) => {
+        if (!taskId) return undefined
+        const list = executionsStore.execution?.taskRunList as any[] | undefined
+        return list?.filter((tr) => tr.taskId === taskId).at(-1)
+    }
+
+    const resolveTaskRunnerDetail = (taskId: string | undefined) =>
+        resolveTaskRun(taskId)?.outputs?.taskRunner as Record<string, unknown> | undefined
 
     function getNodeDimensions(node: any, getNodeWidth: (node: any) => number, getNodeHeight: (node: any) => number) {
         const taskType = node?.task?.type

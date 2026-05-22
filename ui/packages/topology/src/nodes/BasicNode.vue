@@ -120,11 +120,14 @@
         return !["default", "danger"].includes(props.data.color) ? props.data.color : ""
     })
 
+    const hasTaskRunner = computed(() => Boolean(props.data.node?.task?.taskRunner))
+
     const classes = computed(() => {
         return [
             {
                 "unused-path": props.data.unused,
                 disabled: node.value?.disabled || props.data.parent?.taskNode?.task?.disabled,
+                "with-task-runner": hasTaskRunner.value,
             },
             props.class,
         ]
@@ -175,6 +178,10 @@
                 color: var(--ks-text-secondary);
                 text-decoration: line-through;
             }
+        }
+
+        &.with-task-runner {
+            border: 2px solid var(--ks-topology-task-runner-border);
         }
 
         .icon {

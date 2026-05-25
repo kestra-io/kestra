@@ -45,7 +45,7 @@
                 'read-only': filter.readOnly?.value
             }"
         >
-            <SearchInput
+            <FilterQuery
                 :modelValue="filter.searchQuery?.value"
                 @update:model-value="debouncedUpdateSearch"
                 :placeholder="filter.configuration?.value?.searchPlaceholder"
@@ -93,7 +93,7 @@
     import {FilterOutline} from "./utils/icons"
 
     import FilterChip from "./layout/FilterChip.vue"
-    import SearchInput from "./layout/SearchInput.vue"
+    import FilterQuery from "./layout/FilterQuery.vue"
     import CustomizeFilters from "./segments/CustomizeFilters.vue"
 
     import type {AppliedFilter} from "./utils/filterTypes"

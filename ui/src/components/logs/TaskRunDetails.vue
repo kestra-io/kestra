@@ -21,15 +21,31 @@
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
             >
-                <KsProgress 
+                <div 
                     v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
-                    :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
-                    :strokeWidth="24"
-                    :textInside="true"
-                    class="progress-bar"
+                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
                 >
-                    <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
-                </KsProgress>
+                    <KsButton
+                        :tag="RouterLink"
+                        :to="{
+                            name: 'executions/list', 
+                            query: {
+                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                'filters[kind][EQUALS]': 'LOOP',
+                            }        
+                        }"
+                    >
+                        Iterations
+                    </KsButton>
+                    <KsProgress 
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                        :strokeWidth="24"
+                        :textInside="true"
+                        class="progress-bar"
+                    >
+                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                    </KsProgress>
+                </div>
                 
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
@@ -218,6 +234,7 @@
 
 <script setup>
     import Download from "vue-material-design-icons/Download.vue"
+    import {RouterLink} from "vue-router"
 </script>
 
 <script>
@@ -242,7 +259,8 @@
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
     import {set} from "lodash"
-    import KsProgress from "@kestra-io/design-system/src/components/Data/KsProgress.vue"
+    import KsProgress from "@kestra-io/design-system/components/Data/KsProgress.vue"
+    import KsLink from "@kestra-io/design-system/components/Basic/KsLink.vue"
 
     export default {
         name: "TaskRunDetails",
@@ -999,6 +1017,7 @@
 
     .progress-bar {
         margin-bottom: .5rem;
+        flex: 1;
     }
 
     .attempt-wrapper {

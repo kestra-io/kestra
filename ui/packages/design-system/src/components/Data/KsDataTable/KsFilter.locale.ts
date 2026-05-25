@@ -116,7 +116,7 @@ export default {
             },
             "member": {
                 "label": "Member",
-                "description": "Filter by member"
+                "description": "Filter by member",
             },
             "group": {
                 "label": "Group",

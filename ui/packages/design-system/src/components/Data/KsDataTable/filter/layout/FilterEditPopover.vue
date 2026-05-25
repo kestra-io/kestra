@@ -64,8 +64,8 @@
             top: `${chipRect.bottom + scrollY + 8}px`,
             left: `${chipRect.left + scrollX}px`,
             "min-width": `${popupWidth}px`,
-        };
-    };
+        }
+    }
 
     const toggleDialog = () => {
         isDialogVisible.value = !isDialogVisible.value

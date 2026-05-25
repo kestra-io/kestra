@@ -419,6 +419,10 @@ export default {
                 "description": "Nach flow-ID filtern",
                 "label": "Flow-ID",
             },
+            "email": {
+                "description": "Nach E-Mail filtern",
+                "label": "E-Mail",
+            },
             "footer_apply": "Anwenden",
             "group": {
                 "description": "Nach Gruppe filtern",
@@ -602,6 +606,7 @@ export default {
             "timeRange": {
                 "description": "Nach Ausführungszeit filtern",
                 "label": "Intervall",
+                "applyTo": "Anwenden auf",
                 "chip": {
                     "end": "Beendet",
                     "start": "Gestartet",
@@ -758,6 +763,10 @@ export default {
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID de Flow",
+            },
+            "email": {
+                "description": "Filtrar por correo electrónico",
+                "label": "Correo electrónico",
             },
             "footer_apply": "Aplicar",
             "group": {
@@ -942,6 +951,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tiempo de ejecución",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -1098,6 +1108,10 @@ export default {
             "flowId": {
                 "description": "Filtrer par flow ID",
                 "label": "ID de flow",
+            },
+            "email": {
+                "description": "Filtrer par e-mail",
+                "label": "E-mail",
             },
             "footer_apply": "Appliquer",
             "group": {
@@ -1282,6 +1296,7 @@ export default {
             "timeRange": {
                 "description": "Filtrer par temps d'exécution",
                 "label": "Intervalle",
+                "applyTo": "Appliquer à",
                 "chip": {
                     "end": "Terminé",
                     "start": "Démarré",
@@ -1438,6 +1453,10 @@ export default {
             "flowId": {
                 "description": "flow ID द्वारा फ़िल्टर करें",
                 "label": "Flow ID",
+            },
+            "email": {
+                "description": "ईमेल द्वारा फ़िल्टर करें",
+                "label": "ईमेल",
             },
             "footer_apply": "लागू करें",
             "group": {
@@ -1622,6 +1641,7 @@ export default {
             "timeRange": {
                 "description": "कार्य समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+                "applyTo": "इस पर लागू करें",
                 "chip": {
                     "end": "समाप्त",
                     "start": "शुरू हुआ",
@@ -1778,6 +1798,10 @@ export default {
             "flowId": {
                 "description": "Filtra per flow ID",
                 "label": "ID del flow",
+            },
+            "email": {
+                "description": "Filtra per email",
+                "label": "Email",
             },
             "footer_apply": "Applica",
             "group": {
@@ -1962,6 +1986,7 @@ export default {
             "timeRange": {
                 "description": "Filtra per tempo di esecuzione",
                 "label": "Intervallo",
+                "applyTo": "Applica a",
                 "chip": {
                     "end": "Terminato",
                     "start": "Iniziato",
@@ -2118,6 +2143,10 @@ export default {
             "flowId": {
                 "description": "flow IDでフィルター",
                 "label": "Flow ID",
+            },
+            "email": {
+                "description": "メールでフィルター",
+                "label": "メール",
             },
             "footer_apply": "適用",
             "group": {
@@ -2302,6 +2331,7 @@ export default {
             "timeRange": {
                 "description": "実行時間でフィルター",
                 "label": "インターバル",
+                "applyTo": "適用先",
                 "chip": {
                     "end": "終了しました",
                     "start": "開始しました",
@@ -2458,6 +2488,10 @@ export default {
             "flowId": {
                 "description": "flow ID로 필터링",
                 "label": "Flow ID",
+            },
+            "email": {
+                "description": "이메일로 필터링",
+                "label": "이메일",
             },
             "footer_apply": "적용",
             "group": {
@@ -2642,6 +2676,7 @@ export default {
             "timeRange": {
                 "description": "실행 시간으로 필터링",
                 "label": "간격",
+                "applyTo": "적용 대상",
                 "chip": {
                     "end": "종료됨",
                     "start": "시작됨",
@@ -2798,6 +2833,10 @@ export default {
             "flowId": {
                 "description": "Filtruj według flow ID",
                 "label": "Identyfikator flow",
+            },
+            "email": {
+                "description": "Filtruj według e-mail",
+                "label": "E-mail",
             },
             "footer_apply": "Zastosuj",
             "group": {
@@ -2982,6 +3021,7 @@ export default {
             "timeRange": {
                 "description": "Filtruj według czasu wykonania",
                 "label": "Interwał",
+                "applyTo": "Zastosuj do",
                 "chip": {
                     "end": "Zakończono",
                     "start": "Rozpoczęto",
@@ -3138,6 +3178,10 @@ export default {
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID do Flow",
+            },
+            "email": {
+                "description": "Filtrar por e-mail",
+                "label": "E-mail",
             },
             "footer_apply": "Aplicar",
             "group": {
@@ -3322,6 +3366,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -3478,6 +3523,10 @@ export default {
             "flowId": {
                 "description": "Filtrar por flow ID",
                 "label": "ID do Flow",
+            },
+            "email": {
+                "description": "Filtrar por e-mail",
+                "label": "E-mail",
             },
             "footer_apply": "Aplicar",
             "group": {
@@ -3662,6 +3711,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -3818,6 +3868,10 @@ export default {
             "flowId": {
                 "description": "Фильтр по flow ID",
                 "label": "Идентификатор flow",
+            },
+            "email": {
+                "description": "Фильтр по электронной почте",
+                "label": "Электронная почта",
             },
             "footer_apply": "Применить",
             "group": {
@@ -4002,6 +4056,7 @@ export default {
             "timeRange": {
                 "description": "Фильтр по времени выполнения",
                 "label": "Интервал",
+                "applyTo": "Применить к",
                 "chip": {
                     "end": "Завершено",
                     "start": "Начато",
@@ -4158,6 +4213,10 @@ export default {
             "flowId": {
                 "description": "按 flow ID 筛选",
                 "label": "Flow ID",
+            },
+            "email": {
+                "description": "按邮箱筛选",
+                "label": "邮箱",
             },
             "footer_apply": "应用",
             "group": {
@@ -4342,6 +4401,7 @@ export default {
             "timeRange": {
                 "description": "按执行时间筛选",
                 "label": "间隔",
+                "applyTo": "应用于",
                 "chip": {
                     "end": "结束",
                     "start": "已启动",

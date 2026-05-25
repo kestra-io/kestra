@@ -63,30 +63,12 @@ public class QueryFilterUtilsTest {
     }
 
     private static List<QueryFilter> timeRangeFilter() {
-        return List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.TIME_RANGE)
-            .operation(QueryFilter.Op.EQUALS)
-            .value("PT24H")
-            .build());
-    }
-
-    private List<QueryFilter> getFiltersWithStartAndEndDate(ZonedDateTime start, ZonedDateTime end) {
-        return RequestUtils.getFiltersOrDefaultToLegacyMapping(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            start,
-            end,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
+        return List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.TIME_RANGE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("PT24H")
+                .build()
         );
     }
 }

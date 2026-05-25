@@ -3,8 +3,8 @@
 // non-browser builds" — a false-positive from the esm-bundler Vue build that
 // sets __BROWSER__=false even in browser environments.
 // Suppress it so test output stays clean.
-const _warn = console.warn.bind(console)
+const origWarn = console.warn.bind(console)
 console.warn = (...args) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
-    _warn(...args)
+    origWarn(...args)
 }

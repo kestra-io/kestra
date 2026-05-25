@@ -61,7 +61,7 @@
     const routeTabsStore = useRouteTabsStore()
     const {hasTabs, visibleTabs, routeName, embedActiveTab} = storeToRefs(routeTabsStore)
 
-    const hasHeader = computed(() => visibleTabs.value.some((t) => t.header))
+    const hasHeader = computed(() => visibleTabs.value.some((tab) => tab.header))
 
     const activeTabName = computed<string | undefined>(() => {
         if (embedActiveTab.value !== undefined) return embedActiveTab.value

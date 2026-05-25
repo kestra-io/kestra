@@ -356,6 +356,20 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.TYPE, Resource.USER,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.EMAIL, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS
@@ -1097,6 +1111,17 @@ public class QueryFilterTest {
                     Op.REGEX,
                     Op.PREFIX,
                     Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.TYPE, Resource.USER,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
                 )
             ),
 

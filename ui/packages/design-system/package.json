@@ -83,6 +83,7 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^25.6.2",
     "@vitejs/plugin-vue": "^6.0.6",
+    "@vitejs/plugin-vue-jsx":"^5.1.5",
     "@vitest/browser": "^4.1.5",
     "@vitest/browser-playwright": "^4.1.5",
     "@vitest/coverage-v8": "^4.1.5",

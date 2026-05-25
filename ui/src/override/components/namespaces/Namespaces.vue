@@ -78,7 +78,7 @@
 
     import {useRoute} from "vue-router"
     import useRouteContext from "../../../composables/useRouteContext"
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces"
+    import useNamespaces from "../../../composables/useNamespaces"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
 
@@ -92,6 +92,7 @@
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
     import {useAuthStore} from "override/stores/auth"
+    import {Namespace} from "@kestra-io/kestra-sdk"
 
     const namespacesFilter = useNamespacesFilter()
 

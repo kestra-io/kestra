@@ -1,13 +1,8 @@
 import {EntityIterator} from "./entityIterator"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {storageKeys} from "../utils/constants"
+import {Namespace} from "@kestra-io/kestra-sdk"
 
-export interface Namespace {
-    id: string;
-    disabled: boolean;
-    deleted: boolean;
-    description?: string;
-}
 
 export class NamespaceIterator extends EntityIterator<Namespace>{
     // oxlint-disable-next-line no-useless-constructor
@@ -15,7 +10,7 @@ export class NamespaceIterator extends EntityIterator<Namespace>{
         super(fetchSize, options)
     }
 
-    fetchCall(): Promise<{ total: number; results: Namespace[] }> {
+    async fetchCall() {
         const namespacesStore = useNamespacesStore()
         return namespacesStore.search(this.fetchOptions())
     }

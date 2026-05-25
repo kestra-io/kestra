@@ -54,12 +54,12 @@
             gap: 8px;
             border-radius: 8px;
             background-color: var(--ks-bg-input);
-            border: 1px solid var(--ks-border-strong);
+            border: 1px solid var(--ks-border-subtle);
             box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
             transition: border-color 0.2s ease;
 
             &:hover {
-                border: 1px solid var(--ks-border-strong);
+                border: 1px solid var(--ks-border-subtle);
                 box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
             }
 

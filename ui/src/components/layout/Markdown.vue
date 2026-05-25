@@ -38,6 +38,7 @@
             permalink?: boolean;
             fontSizeVar?: string;
             html?: boolean;
+            linkify?: boolean;
             showSearch?: boolean;
             collapseExamples?: boolean;
             variant?: "default" | "enhanced";
@@ -48,6 +49,7 @@
             permalink: false,
             fontSizeVar: "font-size-sm",
             html: true,
+            linkify: true,
             showSearch: false, // good default for OSS docs
             collapseExamples: false,
             variant: "enhanced",
@@ -126,6 +128,7 @@
             html: props.html,
             variant: props.variant,
             showCopyButtons: props.showCopyButtons,
+            linkify: props.linkify,
         });
 
         await nextTick();

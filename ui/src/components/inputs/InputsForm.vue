@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <Markdown :source="item" :linkify="false" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <Markdown :source="item" />
+                    <Markdown :source="item" :linkify="false" />
                 </el-option>
             </el-select>
             <el-input

@@ -26,6 +26,7 @@ interface RenderOptions {
     html?: boolean;
     variant?: RenderVariant;
     showCopyButtons?: boolean;
+    linkify?: boolean;
 }
 
 export async function render(markdown: string, options: RenderOptions = {}) {
@@ -79,7 +80,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
         html: options.html,
         xhtmlOut: true,
         breaks: true,
-        linkify: true,
+        linkify: options.linkify ?? true,
         typographer: true,
         langPrefix: "language-",
         quotes: "“”‘’",

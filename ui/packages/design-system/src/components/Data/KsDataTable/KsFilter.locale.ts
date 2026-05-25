@@ -85,12 +85,10 @@ export default {
                 "playground":"Playground",
                 "loop": "Loop",
                 "test":"Test",
-                "loop": "Loop",
                 "normal_description": "Regular executions",
                 "playground_description": "Executions triggered from Playground mode",
                 "loop_description": "Executions created by the Loop task",
                 "test_description": "Executions triggered by Unit Tests",
-                "loop_description": "Executions triggered by Loop tasks",
             },
             "scope": {
                 "label": "Scope",

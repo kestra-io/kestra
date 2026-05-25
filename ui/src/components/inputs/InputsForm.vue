@@ -244,6 +244,7 @@
 </template>
 
 <script setup lang="ts">
+    import moment from "moment-timezone"
     import {KsMessage} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
@@ -254,8 +255,6 @@
     import Editor from "../../components/inputs/Editor.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
     import {normalize, type InputType} from "../../utils/inputs"
-
-    // @ts-expect-error no types for it yet
     import {inputsToFormData} from "../../utils/submitTask"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
     import PencilIcon from "vue-material-design-icons/Pencil.vue"
@@ -527,7 +526,7 @@
 
         const inputsValuesNoDefault = inputsValuesWithNoDefault()
 
-        const formData = inputsToFormData(instance?.proxy, inputsMetaData.value, inputsValuesNoDefault)
+        const formData = inputsToFormData({$moment: moment}, inputsMetaData.value, inputsValuesNoDefault)
 
         const metadataCallback = (response: ValidationResponse): void => {
             emit("update:checks", response.checks || [])

@@ -25,9 +25,9 @@
                     <li>
                         <TriggerFlow
                             v-if="flowStore.flow"
-                            :disabled="flowStore.flow?.disabled || isReadOnly"
-                            :flowId="flowStore.flow?.id"
-                            :namespace="flowStore.flow?.namespace"
+                            :disabled="flowStore.flow.disabled ?? isReadOnly"
+                            :flowId="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -403,7 +403,6 @@
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-    //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 

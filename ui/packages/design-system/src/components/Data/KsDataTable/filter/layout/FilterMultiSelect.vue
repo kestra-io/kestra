@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {Magnify, InformationOutline} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
 
@@ -78,17 +78,27 @@
         searchable?: boolean;
         placeholder?: string;
         options: {value: string; label: string}[];
+        /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
+        serverSideSearch?: boolean;
     }>()
 
     const emits = defineEmits<{
         "apply": [];
         "reset": [];
         "update:modelValue": [value: string[]];
+        "update:search": [search: string];
     }>()
 
     const searchQuery = ref("")
 
+    watch(searchQuery, (value) => {
+        if (props.serverSideSearch) {
+            emits("update:search", value)
+        }
+    })
+
     const filteredOptions = computed(() => {
+        if (props.serverSideSearch) return props.options
         const query = searchQuery.value.trim().toLowerCase()
         return query
             ? props.options.filter(option =>

@@ -57,6 +57,22 @@ html.dark {
     #{--ks-btn-secondary-border-hover}: $base-gray-cool-400;
     #{--ks-btn-secondary-border-inactive}: $base-gray-cool-700;
 
+    /* dependencies */
+    #{--ks-dependencies-edge-default}: $base-gray-cool-200;
+    #{--ks-dependencies-edge-faded}: $base-gray-cool-400;
+    #{--ks-dependencies-edge-hovered}: $base-gray-cool-white;
+    #{--ks-dependencies-edge-selected}: $base-primary-200;
+    #{--ks-dependencies-node-background-assets}: $base-blue-300;
+    #{--ks-dependencies-node-background-default}: $base-gray-cool-500;
+    #{--ks-dependencies-node-background-faded}: $base-gray-cool-700;
+    #{--ks-dependencies-node-background-hovered}: $base-gray-cool-300;
+    #{--ks-dependencies-node-background-selected}: $base-primary-400;
+    #{--ks-dependencies-node-border-assets}: $base-blue-200;
+    #{--ks-dependencies-node-border-default}: $base-gray-cool-400;
+    #{--ks-dependencies-node-border-faded}: $base-gray-cool-500;
+    #{--ks-dependencies-node-border-hovered}: $base-gray-cool-200;
+    #{--ks-dependencies-node-border-selected}: $base-primary-200;
+
     /* dropdown */
     #{--ks-dropdown-bg}: $base-gray-cool-900;
     #{--ks-dropdown-bg-active}: $base-gray-cool-800;

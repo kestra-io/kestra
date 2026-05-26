@@ -585,6 +585,90 @@
             "rootAlias": "gray-neutral/50"
           },
           {
+            "name": "ks/dependencies-edge-default",
+            "value": "#adadbf",
+            "var": "gray-neutral/300",
+            "rootAlias": "gray-neutral/300"
+          },
+          {
+            "name": "ks/dependencies-edge-faded",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/dependencies-edge-hovered",
+            "value": "#7e7e9b",
+            "var": "gray-neutral/400",
+            "rootAlias": "gray-neutral/400"
+          },
+          {
+            "name": "ks/dependencies-edge-selected",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/dependencies-node-background-assets",
+            "value": "#718bfe",
+            "var": "blue/300",
+            "rootAlias": "blue/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-default",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
+          },
+          {
+            "name": "ks/dependencies-node-background-faded",
+            "value": "#e9e9ee",
+            "var": "gray-neutral/100",
+            "rootAlias": "gray-neutral/100"
+          },
+          {
+            "name": "ks/dependencies-node-background-hovered",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
+          },
+          {
+            "name": "ks/dependencies-node-background-selected",
+            "value": "#cdb6fb",
+            "var": "primary/200",
+            "rootAlias": "primary/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-assets",
+            "value": "#4f6df7",
+            "var": "blue/400",
+            "rootAlias": "blue/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-default",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-faded",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-hovered",
+            "value": "#7e7e9b",
+            "var": "gray-neutral/400",
+            "rootAlias": "gray-neutral/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-selected",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
             "name": "ks/dropdown-bg",
             "value": "#ffffff",
             "var": "",
@@ -1783,6 +1867,90 @@
             "rootAlias": "gray-cool/700"
           },
           {
+            "name": "ks/dependencies-edge-default",
+            "value": "#cfd3d6",
+            "var": "gray-cool/200",
+            "rootAlias": "gray-cool/200"
+          },
+          {
+            "name": "ks/dependencies-edge-faded",
+            "value": "#404559",
+            "var": "gray-cool/400",
+            "rootAlias": "gray-cool/400"
+          },
+          {
+            "name": "ks/dependencies-edge-hovered",
+            "value": "#ffffff",
+            "var": "gray-cool/white",
+            "rootAlias": "gray-cool/white"
+          },
+          {
+            "name": "ks/dependencies-edge-selected",
+            "value": "#cdb6fb",
+            "var": "primary/200",
+            "rootAlias": "primary/200"
+          },
+          {
+            "name": "ks/dependencies-node-background-assets",
+            "value": "#718bfe",
+            "var": "blue/300",
+            "rootAlias": "blue/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-default",
+            "value": "#2f3342",
+            "var": "gray-cool/500",
+            "rootAlias": "gray-cool/500"
+          },
+          {
+            "name": "ks/dependencies-node-background-faded",
+            "value": "#262a35",
+            "var": "gray-cool/700",
+            "rootAlias": "gray-cool/700"
+          },
+          {
+            "name": "ks/dependencies-node-background-hovered",
+            "value": "#9797a6",
+            "var": "gray-cool/300",
+            "rootAlias": "gray-cool/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-selected",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-assets",
+            "value": "#a9b5fe",
+            "var": "blue/200",
+            "rootAlias": "blue/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-default",
+            "value": "#404559",
+            "var": "gray-cool/400",
+            "rootAlias": "gray-cool/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-faded",
+            "value": "#2f3342",
+            "var": "gray-cool/500",
+            "rootAlias": "gray-cool/500"
+          },
+          {
+            "name": "ks/dependencies-node-border-hovered",
+            "value": "#cfd3d6",
+            "var": "gray-cool/200",
+            "rootAlias": "gray-cool/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-selected",
+            "value": "#cdb6fb",
+            "var": "primary/200",
+            "rootAlias": "primary/200"
+          },
+          {
             "name": "ks/dropdown-bg",
             "value": "#1e202a",
             "var": "gray-cool/900",
@@ -2979,6 +3147,90 @@
             "value": "#424256",
             "var": "gray-neutral/600",
             "rootAlias": "gray-neutral/600"
+          },
+          {
+            "name": "ks/dependencies-edge-default",
+            "value": "#adadbf",
+            "var": "gray-neutral/300",
+            "rootAlias": "gray-neutral/300"
+          },
+          {
+            "name": "ks/dependencies-edge-faded",
+            "value": "#424256",
+            "var": "gray-neutral/600",
+            "rootAlias": "gray-neutral/600"
+          },
+          {
+            "name": "ks/dependencies-edge-hovered",
+            "value": "#ffffff",
+            "var": "gray-neutral/white",
+            "rootAlias": "gray-neutral/white"
+          },
+          {
+            "name": "ks/dependencies-edge-selected",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-assets",
+            "value": "#718bfe",
+            "var": "blue/300",
+            "rootAlias": "blue/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-default",
+            "value": "#424256",
+            "var": "gray-neutral/600",
+            "rootAlias": "gray-neutral/600"
+          },
+          {
+            "name": "ks/dependencies-node-background-faded",
+            "value": "#23252e",
+            "var": "gray-neutral/800",
+            "rootAlias": "gray-neutral/800"
+          },
+          {
+            "name": "ks/dependencies-node-background-hovered",
+            "value": "#adadbf",
+            "var": "gray-neutral/300",
+            "rootAlias": "gray-neutral/300"
+          },
+          {
+            "name": "ks/dependencies-node-background-selected",
+            "value": "#7738f5",
+            "var": "primary/400",
+            "rootAlias": "primary/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-assets",
+            "value": "#a9b5fe",
+            "var": "blue/200",
+            "rootAlias": "blue/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-default",
+            "value": "#7e7e9b",
+            "var": "gray-neutral/400",
+            "rootAlias": "gray-neutral/400"
+          },
+          {
+            "name": "ks/dependencies-node-border-faded",
+            "value": "#2e2e3c",
+            "var": "gray-neutral/700",
+            "rootAlias": "gray-neutral/700"
+          },
+          {
+            "name": "ks/dependencies-node-border-hovered",
+            "value": "#d0d0da",
+            "var": "gray-neutral/200",
+            "rootAlias": "gray-neutral/200"
+          },
+          {
+            "name": "ks/dependencies-node-border-selected",
+            "value": "#9869f7",
+            "var": "primary/300",
+            "rootAlias": "primary/300"
           },
           {
             "name": "ks/dropdown-bg",

@@ -115,14 +115,14 @@
     import {useI18n} from "vue-i18n"
     import moment from "moment"
     import {useLogExecutionsFilter} from "../filter/configurations"
-    import TaskRunDetails, {LOG_LEVEL} from "../logs/TaskRunDetails.vue"
+    import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
-    import {KsIconButton, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsIconButton, KsFilter as KSFilter,type LOG_LEVEL_TYPE} from "@kestra-io/design-system"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -155,15 +155,15 @@
     const executionsStore = useExecutionsStore()
 
     const logExecutionsFilter = useLogExecutionsFilter()
-    const defaultLogLevel = computed<LOG_LEVEL>(
-        () => localStorage.getItem("defaultLogLevel") as LOG_LEVEL || "INFO",
+    const defaultLogLevel = computed<LOG_LEVEL_TYPE>(
+        () => localStorage.getItem("defaultLogLevel") as LOG_LEVEL_TYPE || "INFO",
     )
 
     const {
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-    } = useRouteFilterPolicy<LOG_LEVEL>({
+    } = useRouteFilterPolicy<LOG_LEVEL_TYPE>({
         defaultValue: () => defaultLogLevel.value,
         applyDefaultIfMissing: () => true,
         fallbackValue: () => "TRACE",

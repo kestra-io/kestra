@@ -235,7 +235,7 @@
     import {RouterLink} from "vue-router"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
-    import {State} from "@kestra-io/design-system"
+    import {LOG_LEVEL_TYPE, State} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
     import _groupBy from "lodash/groupBy"
     import moment from "moment"
@@ -257,12 +257,10 @@
     import {useI18n} from "vue-i18n"
     import type {Log} from "../../stores/logs"
 
-    export type LOG_LEVEL = "INFO" | "ERROR" | "WARN" | "DEBUG" | "TRACE"
-
     export interface Props {
         logCursor?: string
         levelToHighlight?: string
-        level?: LOG_LEVEL
+        level?: LOG_LEVEL_TYPE
         filter?: string
         taskRunId?: string
         excludeMetas?: (keyof Log)[]
@@ -279,7 +277,7 @@
     const props = withDefaults(defineProps<Props>(), {
         logCursor: undefined,
         levelToHighlight: undefined,
-        level: "INFO" as "INFO" | "ERROR" | "WARN" | "DEBUG" | "TRACE",
+        level: "INFO",
         filter: "",
         taskRunId: undefined,
         excludeMetas: () => [],

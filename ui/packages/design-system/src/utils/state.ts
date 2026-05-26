@@ -24,6 +24,8 @@ interface StateModel {
 
 export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const
 
+export type LOG_LEVEL_TYPE = typeof LOG_LEVELS[number]
+
 export const STATES:Record<string, StateModel> = Object.freeze({
     CREATED: {
         name: "CREATED",

@@ -1,14 +1,11 @@
-import {LOG_LEVELS} from "@kestra-io/design-system"
+import {type LOG_LEVEL_TYPE, LOG_LEVELS} from "@kestra-io/design-system"
 import {cssVar} from "@kestra-io/design-system"
-
-export type LevelKey = typeof LOG_LEVELS[number];
-
 
 export function color() {
     return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVar("--log-chart-" + level.toLowerCase())]))
 }
 
-export function graphColors(state: LevelKey) {
+export function graphColors(state: LOG_LEVEL_TYPE) {
     const COLORS = {
         ERROR: "#AB0009",
         WARN: "#DD5F00",
@@ -20,7 +17,7 @@ export function graphColors(state: LevelKey) {
     return COLORS[state]
 }
 
-export function chartColorFromLevel(level: LevelKey, alpha = 1) {
+export function chartColorFromLevel(level: LOG_LEVEL_TYPE, alpha = 1) {
     const hex = color()[level]
     if (!hex) {
         return null
@@ -50,8 +47,8 @@ export function index(based: readonly string[], value: string) {
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx
 }
 
-export function levelOrLower(level: LevelKey) {
-    const levels: LevelKey[] = []
+export function levelOrLower(level: LOG_LEVEL_TYPE) {
+    const levels: LOG_LEVEL_TYPE[] = []
     for (const currentLevel of LOG_LEVELS) {
         levels.push(currentLevel)
         if (currentLevel === level) {

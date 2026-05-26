@@ -2,10 +2,10 @@ import {defineStore} from "pinia"
 import {apiUrl} from "override/utils/route"
 import {ref} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
-import {LevelKey} from "../utils/logs"
+import {LOG_LEVEL_TYPE} from "@kestra-io/design-system"
 
 export interface Log{
-    level: LevelKey;
+    level: LOG_LEVEL_TYPE;
     namespace: string;
     flowId: string;
     executionId: string;
@@ -23,7 +23,7 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
-    const level = ref<LevelKey>("INFO")
+    const level = ref<LOG_LEVEL_TYPE>("INFO")
 
     const axios = useClient()
 

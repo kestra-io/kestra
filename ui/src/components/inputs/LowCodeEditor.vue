@@ -138,12 +138,12 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    import TaskRunDetails, {LOG_LEVEL} from "../logs/TaskRunDetails.vue"
+    import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
     import Editor from "./Editor.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, KsMarkdown} from "@kestra-io/design-system"
+    import {SECTIONS, KsMarkdown, LOG_LEVEL_TYPE} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
@@ -292,7 +292,7 @@
     const taskEditDomElement = ref()
     const isShowLogsOpen = ref(false)
     const logFilter = ref("")
-    const logLevel = ref<LOG_LEVEL>(localStorage.getItem("defaultLogLevel") as LOG_LEVEL || "INFO")
+    const logLevel = ref<LOG_LEVEL_TYPE>(localStorage.getItem("defaultLogLevel") as LOG_LEVEL_TYPE || "INFO")
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -459,7 +459,7 @@
         logFilter.value = search
     }
 
-    const onLevelChange = (level: LOG_LEVEL) => {
+    const onLevelChange = (level: LOG_LEVEL_TYPE) => {
         logLevel.value = level
     }
 

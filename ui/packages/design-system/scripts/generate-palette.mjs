@@ -50,11 +50,12 @@ for (const [index, mode] of modes.entries()) {
     }
 
     const theme = toThemeKeyword(modeName)
-    const selector = getSelector(modeName, index === 0, theme)
+    const normalizedTheme = (theme === "dark-1-0") ? "dark" : theme.replace(/-0$/g, "")
+    const selector = getSelector(modeName, index === 0, normalizedTheme)
     const semantic = mode.color.filter(c => !isPaletteColor(c))
 
     fs.writeFileSync(
-        path.resolve(STYLES_DIR, `ks-theme-${theme}.scss`),
+        path.resolve(STYLES_DIR, `ks-theme-${normalizedTheme}.scss`),
         renderTheme(semantic, paletteIndex, valueIndex, selector),
     )
 }
@@ -189,30 +190,30 @@ function renderPalette(palette) {
 
 /**
  * @param {FigmaColor[]} tokens
- * @param {ColorIndex} paletteIndex
- * @param {ColorIndex} valueIndex
+ * @param {ColorIndex} localPaletteIndex
+ * @param {ColorIndex} localValueIndex
  * @param {string} selector
  */
-function renderTheme(tokens, paletteIndex, valueIndex, selector) {
+function renderTheme(tokens, localPaletteIndex, localValueIndex, selector) {
     let prev = ""
     const body = tokens.map(c => {
         const category = c.name.replace(/^ks\//, "").split("-")[0]
         const heading = category !== prev ? `\n${INDENT}/* ${category} */\n` : ""
         prev = category
         const varName = c.name.replace(/\//g, "-")
-        return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, paletteIndex, valueIndex)};`
+        return `${heading}${INDENT}#{--${varName}}: ${resolveValue(c, localPaletteIndex, localValueIndex)};`
     }).join("\n").trim()
     return `${HEADER}\n@use "color-palette" as *;\n\n${selector} {\n${INDENT}${body}\n}\n`
 }
 
 /**
  * @param {FigmaColor} color
- * @param {ColorIndex} paletteIndex
- * @param {ColorIndex} valueIndex
+ * @param {ColorIndex} localPaletteIndex
+ * @param {ColorIndex} localValueIndex
  */
-function resolveValue(color, paletteIndex, valueIndex) {
+function resolveValue(color, localPaletteIndex, localValueIndex) {
     const alias = normalizeTokenName(color.var)
-    const aliasVar = alias ? paletteIndex[alias] : undefined
+    const aliasVar = alias ? localPaletteIndex[alias] : undefined
     if (aliasVar) {
         return `$base-${aliasVar}`
     }
@@ -220,7 +221,7 @@ function resolveValue(color, paletteIndex, valueIndex) {
     const normalizedValue = normalizeHex(color.value)
 
     // Exact palette colour match.
-    const directMatch = valueIndex[normalizedValue]
+    const directMatch = localValueIndex[normalizedValue]
     if (directMatch) {
         return `$base-${directMatch}`
     }
@@ -228,7 +229,7 @@ function resolveValue(color, paletteIndex, valueIndex) {
     // 8-digit hex (#RRGGBBAA) → rgba($base-*, alpha) when the base colour is known
     if (normalizedValue.length === 9) {
         const alpha = Math.round(parseInt(normalizedValue.slice(7), 16) / 2.55) / 100
-        const base = valueIndex[normalizedValue.slice(0, 7)]
+        const base = localValueIndex[normalizedValue.slice(0, 7)]
         if (base) return `rgba($base-${base}, ${alpha})`
     }
 

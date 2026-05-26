@@ -248,4 +248,86 @@ describe("KsDataTable", () => {
 
         expect(loadCallCount).toBe(2)
     })
+
+    // ── Hardening: garbage page/size from the URL must never reach loadData ──
+    // The parent computes currentPage/pageSize from route.query; a hostile or
+    // careless URL can carry negatives, fractions, Infinity, or absurd sizes.
+    // KsDataTable is the single chokepoint feeding both loadData and the
+    // paginator, so it clamps here for every caller at once.
+
+    type Load = {page: number; size: number; sort?: string}
+    const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+    const lastLoad = (loads: Load[]): Load => loads[loads.length - 1]
+
+    // Returns the array of loadData calls so the test can assert what reached
+    // the backend after clamping.
+    const mountWithSpy = (props: Record<string, any>): Load[] => {
+        const loads: Load[] = []
+        mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                loadData: async (p: Load) => { loads.push(p) },
+                ...props,
+            },
+            global: globalConfig,
+        })
+        return loads
+    }
+
+    test("clamps negative currentPage to 1", async () => {
+        const loads = mountWithSpy({currentPage: -5, pageSize: 25})
+        await tick()
+        expect(lastLoad(loads).page).toBe(1)
+    })
+
+    test("floors a fractional currentPage", async () => {
+        const loads = mountWithSpy({currentPage: 2.9, pageSize: 25})
+        await tick()
+        expect(lastLoad(loads).page).toBe(2)
+    })
+
+    test("falls back to page 1 for NaN / Infinity currentPage", async () => {
+        const nan = mountWithSpy({currentPage: Number.NaN, pageSize: 25})
+        const inf = mountWithSpy({currentPage: Number.POSITIVE_INFINITY, pageSize: 25})
+        await tick()
+        expect(lastLoad(nan).page).toBe(1)
+        expect(lastLoad(inf).page).toBe(1)
+    })
+
+    test("treats currentPage=0 as page 1", async () => {
+        const loads = mountWithSpy({currentPage: 0, pageSize: 25})
+        await tick()
+        expect(lastLoad(loads).page).toBe(1)
+    })
+
+    test("caps an absurdly large pageSize (DoS guard)", async () => {
+        const loads = mountWithSpy({currentPage: 1, pageSize: 10_000_000})
+        await tick()
+        // Must not forward a 10M-row request to the backend.
+        expect(lastLoad(loads).size).toBeLessThanOrEqual(1000)
+        expect(lastLoad(loads).size).toBeGreaterThan(0)
+    })
+
+    test("falls back to default size for negative / zero / NaN pageSize", async () => {
+        const neg = mountWithSpy({currentPage: 1, pageSize: -10})
+        const zero = mountWithSpy({currentPage: 1, pageSize: 0})
+        const nan = mountWithSpy({currentPage: 1, pageSize: Number.NaN})
+        await tick()
+        expect(lastLoad(neg).size).toBe(25)
+        expect(lastLoad(zero).size).toBe(25)
+        expect(lastLoad(nan).size).toBe(25)
+    })
+
+    test("floors a fractional pageSize", async () => {
+        const loads = mountWithSpy({currentPage: 1, pageSize: 49.9})
+        await tick()
+        expect(lastLoad(loads).size).toBe(49)
+    })
+
+    test("keeps a legitimate page/size pair untouched", async () => {
+        const loads = mountWithSpy({currentPage: 3, pageSize: 50})
+        await tick()
+        expect(lastLoad(loads)).toEqual({page: 3, size: 50, sort: undefined})
+    })
 })

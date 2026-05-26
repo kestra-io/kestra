@@ -38,6 +38,7 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
         components: {KsDataTable},
         setup() {
             const dataTable = ref<any>(null)
+            const setDataTable = (el: any) => { dataTable.value = el }
 
             const loadData = async ({page, size}: {page: number; size: number}) => {
                 loadCalls.push({page, size})
@@ -60,11 +61,11 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
                 routeQuery.size = String(size)
             }
 
-            return {dataTable, loadData, urlPage, urlSize, onPageChanged}
+            return {setDataTable, loadData, urlPage, urlSize, onPageChanged}
         },
         template: `
             <KsDataTable
-                ref="dataTable"
+                :ref="setDataTable"
                 :loadData="loadData"
                 :currentPage="urlPage"
                 :pageSize="urlSize"
@@ -125,5 +126,30 @@ describe("LogsWrapper-style pagination wiring", () => {
         await flushPromises()
 
         expect(filterResets.count).toBe(baseline + 1)
+    })
+
+    test("filter change while on page > 1 ends on page 1 with a fresh fetch", async () => {
+        const {Harness, routeQuery, loadCalls} = makeHarness({
+            page: "3",
+            size: "25",
+            "filters[level][EQUALS]": "INFO",
+        })
+
+        mount(Harness, {global: globalConfig})
+        await flushPromises()
+        loadCalls.length = 0
+
+        // Change a filter the way useFilters.updateRoute(true) does: it drops
+        // `page` from the URL (back to 1) AND changes filter content in the
+        // same navigation.
+        delete routeQuery.page
+        routeQuery["filters[level][EQUALS]"] = "DEBUG"
+        await flushPromises()
+
+        // The fetch that hits the backend is page 1 with the new filter — never
+        // a stale page-3 request left over from before the filter changed.
+        expect(loadCalls.length).toBeGreaterThan(0)
+        expect(loadCalls.every((c) => c.page === 1)).toBe(true)
+        expect(loadCalls[loadCalls.length - 1]).toEqual({page: 1, size: 25})
     })
 })

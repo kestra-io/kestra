@@ -80,6 +80,12 @@
 
     defineOptions({inheritAttrs: false})
 
+    const DEFAULT_PAGE_SIZE = 25
+    // Upper bound for page size — a hostile URL like `?size=10000000` must not
+    // turn into a 10M-row backend request. 1000 is far above any real UI need
+    // (the largest preset option is 100) and far below a memory/latency cliff.
+    const MAX_PAGE_SIZE = 1000
+
     const props = withDefaults(defineProps<{
         data?: any[]
         total?: number
@@ -142,8 +148,21 @@
     // parent (typically bound to URL). Use v-model:currentPage / v-model:pageSize
     // to opt into two-way binding, or :currentPage="..." + @page-changed for
     // one-way URL-driven control.
-    const currentPageValue = computed(() => props.currentPage ?? 1)
-    const currentSizeValue = computed(() => props.pageSize ?? 25)
+    //
+    // Values come from the URL, so they can be hostile or malformed (negative,
+    // fractional, Infinity, absurdly large). This is the single chokepoint
+    // feeding both loadData and the paginator, so clamp here for every caller.
+    const normalizePage = (value: number | undefined): number => {
+        const page = Math.floor(Number(value))
+        return Number.isFinite(page) && page >= 1 ? page : 1
+    }
+    const normalizeSize = (value: number | undefined): number => {
+        const size = Math.floor(Number(value))
+        if (!Number.isFinite(size) || size < 1) return DEFAULT_PAGE_SIZE
+        return Math.min(size, MAX_PAGE_SIZE)
+    }
+    const currentPageValue = computed(() => normalizePage(props.currentPage))
+    const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
     const tableRef = ref<InstanceType<typeof KsTable>>()

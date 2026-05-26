@@ -6,3 +6,6 @@ tests/e2e/.env
 tests/e2e/data/application-secrets.yml
 generated/
 packages/*/package-lock.json
+
+# module federation build files
+.__mf__temp

@@ -1,16 +1,30 @@
 <template>
-    <ElPagination
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @update:current-page="emit('update:currentPage', $event)"
-        @update:page-size="emit('update:pageSize', $event)"
-        @current-change="emit('currentChange', $event)"
-        @size-change="emit('sizeChange', $event)"
-    />
+    <ElConfigProvider :locale="paginationLocale" namespace="kel">
+        <ElPagination
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            @update:current-page="emit('update:currentPage', $event)"
+            @update:page-size="emit('update:pageSize', $event)"
+            @current-change="emit('currentChange', $event)"
+            @size-change="emit('sizeChange', $event)"
+        />
+    </ElConfigProvider>
 </template>
 
 <script setup lang="ts">
-    import {ElPagination} from "element-plus"
+    import {ElConfigProvider, ElPagination} from "element-plus"
+    import en from "element-plus/es/locale/lang/en"
     import {useFilteredProps} from "../../utils/filteredProps"
+
+    const paginationLocale = {
+        ...en,
+        el: {
+            ...en.el,
+            pagination: {
+                ...en.el.pagination,
+                pagesize: " per page",
+            },
+        },
+    }
 
     defineOptions({inheritAttrs: false})
 
@@ -40,17 +54,39 @@
     @use 'element-plus/theme-chalk/src/pagination';
 
     .kel-pagination {
-        --kel-pagination-bg-color: transparent;
-        --kel-pagination-text-color: var(--ks-content-primary);
-        --kel-pagination-button-color: var(--ks-content-link);
-        --kel-pagination-hover-color: var(--ks-content-link-hover);
+        --kel-pagination-bg-color: var(--ks-bg-base);
+        --kel-pagination-text-color: var(--ks-text-primary);
+        --kel-pagination-button-color: var(--ks-text-link);
+        --kel-pagination-hover-color: var(--ks-text-link);
 
-        li, button {
-            border: 1px solid var(--ks-border-inactive);
-            margin-right: 3px;
+        background-color: var(--ks-bg-base);
+        gap: 8px;
+
+        li, button, .btn-prev, .btn-next {
+            border-radius: 4px;
+        }
+
+        .kel-pager {
+            gap: 8px;
+        }
+
+        .kel-pagination__sizes {
+            .kel-select {
+                width: auto;
+                min-width: 110px;
+            }
+        }
+
+        .kel-pager li {
+            border: 1px solid var(--ks-border-subtle);
+            margin: 0;
+            color: var(--ks-text-primary);
+            font-weight: 400;
+            font-size: var(--ks-font-size-xs);
 
             &.is-active {
-                border: 1px solid var(--ks-border-active);
+                background: var(--ks-btn-secondary-bg-active);
+                border: 1px solid var(--ks-border-focus);
             }
         }
     }

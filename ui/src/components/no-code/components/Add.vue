@@ -28,7 +28,7 @@ button {
 
 .adding {
     cursor: pointer;
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
     font-size: $code-font-sm;
 }
 </style>

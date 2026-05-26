@@ -120,8 +120,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                 executionQueue.emit(loopExecution);
                             }
                         }
+
                         // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                        followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                        if (execution.getLoopRun() != null) {
+                            followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution.getLoopRun().parent(), ExecutionEventType.UPDATED));
+                        }
                         return null;
                     } else {
                         // All iterations have been started — save the decremented counts and either
@@ -133,7 +136,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                         } else {
                             // Some iterations are still running — wait for them.
                             // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                            followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                            if (execution.getLoopRun() != null) {
+                                followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution.getLoopRun().parent(), ExecutionEventType.UPDATED));
+                            }
                             return null;
                         }
                     }

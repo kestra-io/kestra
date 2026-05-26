@@ -2,7 +2,7 @@ package io.kestra.repository.postgres.migration;
 
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
-import io.micronaut.context.annotation.Requires;
+import io.kestra.repository.postgres.PostgresQueueEnabled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -15,7 +15,7 @@ import javax.sql.DataSource;
  * Update the {@code queues} by replacing two indices by a single one and switching the type column to a VARCHAR
  */
 @Singleton
-@Requires(property = "kestra.queue.type", pattern = "postgres|memory")
+@PostgresQueueEnabled
 public class V2_0QueueIndexAndType extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "2.0.1-queue-index-and-type";

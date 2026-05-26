@@ -384,14 +384,14 @@
             width: 100%;
             gap: .5rem;
             flex-wrap: wrap;
-            --kel-button-bg-color: var(--ks-background-card);
+            --kel-button-bg-color: var(--ks-bg-surface);
 
             & > * {
                 max-width: 50%;
 
                 :deep(span) {
                     border-radius: 0.25rem !important;
-                    border: 1px solid var(--ks-border-primary);
+                    border: 1px solid var(--ks-border-default);
                     width: 100%;
                     font-size: var(--ks-font-size-xs);
                     box-shadow: none;
@@ -400,8 +400,8 @@
                 }
 
                 &:hover :deep(span) {
-                    color: var(--ks-content-link-hover);
-                    background-color: var(--ks-button-background-secondary-hover);
+                    color: var(--ks-text-link);
+                    background-color: var(--ks-btn-secondary-bg-hover);
                 }
             }
         }
@@ -420,17 +420,17 @@
 
     .blueprint-card {
         cursor: pointer;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 0.25rem;
-        background-color: var(--ks-background-card);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background-color: var(--ks-bg-surface);
         transition: all 0.2s ease;
         display: flex;
-        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
         min-height: 200px;
 
         &:hover {
             transform: scale(1.02);
-            box-shadow: 0 0.5rem 1rem 0 var(--ks-card-shadow);
+            box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
         }
 
         :deep(.icon) {
@@ -457,12 +457,12 @@
         gap: 0.25rem;
 
         .tag-item {
-            border: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-primary);
-            border-radius: 0.25rem;
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-text-primary);
+            border-radius: var(--ks-radius-base);
             padding: 0.25rem 0.5rem;
             font-size: var(--ks-font-size-xs);
-            background: var(--ks-tag-background-active);
+            background: var(--ks-bg-tag-active);
         }
     }
 
@@ -473,7 +473,7 @@
         .title {
             font-size: var(--ks-font-size-base);
             font-weight: 600;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             line-height: 22px;
             overflow-wrap: break-word;
         }

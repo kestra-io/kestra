@@ -1,8 +1,8 @@
 <template>
     <div class="wrapper">
-        <div class="title">
+        <div v-if="title || $slots['back-button']" class="title">
             <slot name="back-button" />
-            <h2>{{ title }}</h2>
+            <h2 v-if="title">{{ title }}</h2>
         </div>
         <div class="content" ref="contentRef">
             <slot />
@@ -13,7 +13,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
 
-    defineProps<{title:string}>()
+    defineProps<{title?: string}>()
 
     const contentRef = ref<HTMLDivElement | null>(null)
 
@@ -27,7 +27,7 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         .content {
             overflow-y: auto;
         }
@@ -38,7 +38,7 @@
         padding: 1rem;
         padding-left: 1.6rem;
         padding-right: 3rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         align-items: center;
         gap: 1rem;
 

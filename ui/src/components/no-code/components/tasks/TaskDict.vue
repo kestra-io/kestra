@@ -3,7 +3,6 @@
         v-if="duplicatedKeys?.length"
         :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
         type="error"
-        showIcon
         :closable="false"
         class="mb-2"
     />
@@ -184,7 +183,7 @@
         currentValue.value.push(["", undefined])
         const newIndex = currentValue.value.length - 1
         emitUpdate()
-        
+
         // Focus the key input field after the new row is rendered
         nextTick(() => {
             setTimeout(() => {
@@ -213,23 +212,23 @@
 }
 
 .remove-entry{
-    color: var(--ks-content-secondary);
-    background-color: var(--ks-button-background-secondary);
+    color: var(--ks-text-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
     border: none;
     display: flex;
     align-items: center;
-    gap: .5rem; 
+    gap: .5rem;
     opacity: 0.7;
     padding: 0;
     height: .75rem;
     &:hover {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         opacity: 1;
     }
 }
 
 .item-wrapper {
     margin: .25rem 0;
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
 }
 </style>

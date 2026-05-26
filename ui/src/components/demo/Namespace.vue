@@ -1,21 +1,21 @@
 <template>
-    <Layout
-        :title="$t(`demos.namespace.${props.tab}.title`)"
+    <Empty
         type="namespace"
-        :image="{source: sourceImg, alt: $t(`demos.namespace.${props.tab}.title`)}"
+        demoCta
+        :title="$t(`demos.namespace.${props.tab}.title`)"
         :video="videoSource"
+        learnMore="https://kestra.io/docs/enterprise/governance/namespace-management"
     >
-        <template #message>
+        <template #description>
             {{ $t(`demos.namespace.${props.tab}.message`) }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import Layout from "./Layout.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import {useDocStore} from "../../stores/doc"
-    import sourceImg from "../../assets/demo/namespace.png"
 
     const docStore = useDocStore()
 
@@ -35,7 +35,7 @@
         "audit-logs": "https://www.youtube.com/embed/Qz24gBPGZHs",
     }
 
-    const videoSource = computed(() => ({
-        source: videos[props.tab as keyof typeof videos] ?? "",
-    }))
+    const videoSource = computed(
+        () => videos[props.tab as keyof typeof videos] ?? "",
+    )
 </script>

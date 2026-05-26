@@ -133,6 +133,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public List<String> findDistinctFieldValues(String tenantId, QueryFilter.Field field, List<QueryFilter> filters, Pageable pageable) {
+        return findDistinctFieldValues(tenantId, field, filters, pageable, QueryFilter.Resource.EXECUTION);
+    }
+
+    @Override
     public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted) {
         return findById(tenantId, id, allowDeleted, true);
     }

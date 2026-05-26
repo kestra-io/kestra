@@ -43,16 +43,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         
-      - name: Get OIDC Token
-        env:
-          AUDIENCE: "npm:registry.npmjs.org"
-        run: |
-          TOKEN_JSON=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")
-          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -r .value)
-          echo "$TOKEN_JSON"
-          echo "NODE_AUTH_TOKEN=$ID_TOKEN" >> "$GITHUB_ENV"
-          echo "$ID_TOKEN" | awk -F. '{print $2}' | base64 -d 2>/dev/null | jq -r
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:

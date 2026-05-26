@@ -15,7 +15,7 @@
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
-            @update:model-value="(v) => onInput(v instanceof Date ? v.toISOString() : '')"
+            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <KsInputNumber
             v-if="!pebble && showDurationDays"
@@ -190,7 +190,7 @@
 <style scoped lang="scss">
 :deep(.kel-input__inner) {
     &::placeholder {
-        color: var(--ks-content-inactive) !important;
+        color: var(--ks-text-inactive) !important;
     }
 }
 :deep(.placeholder) {
@@ -201,8 +201,8 @@
     display: flex;
     align-items: stretch;
     justify-content: stretch;
-    border-radius: 0.25rem;
-    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
     width: 100%;
 
     :deep(.disabled-field) {
@@ -225,7 +225,7 @@
     }
 
     .ks-pebble:deep(span:hover){
-        color: var(--ks-content-link-hover) ;
+        color: var(--ks-text-link) ;
     }
 
     .ks-pebble * {
@@ -235,7 +235,7 @@
 }
 
 .duration-unit{
-    color: var(--ks-content-inactive);
+    color: var(--ks-text-inactive);
     font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;

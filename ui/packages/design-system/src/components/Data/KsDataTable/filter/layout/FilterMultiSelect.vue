@@ -54,7 +54,6 @@
             <KsAlert
                 v-if="filteredOptions.length === 0"
                 type="info"
-                showIcon
                 :closable="false"
                 class="no-options"
             >
@@ -68,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, watch} from "vue"
     import {Magnify, InformationOutline} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
 
@@ -79,17 +78,27 @@
         searchable?: boolean;
         placeholder?: string;
         options: {value: string; label: string}[];
+        /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
+        serverSideSearch?: boolean;
     }>()
 
     const emits = defineEmits<{
         "apply": [];
         "reset": [];
         "update:modelValue": [value: string[]];
+        "update:search": [search: string];
     }>()
 
     const searchQuery = ref("")
 
+    watch(searchQuery, (value) => {
+        if (props.serverSideSearch) {
+            emits("update:search", value)
+        }
+    })
+
     const filteredOptions = computed(() => {
+        if (props.serverSideSearch) return props.options
         const query = searchQuery.value.trim().toLowerCase()
         return query
             ? props.options.filter(option =>
@@ -143,7 +152,7 @@
     flex-direction: column;
 
     .panel-header {
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
         top: 0;
@@ -163,18 +172,18 @@
             margin-bottom: 8px;
 
             .check-border {
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
                 border-radius: 4px;
                 padding: 0 12px;
                 width: calc(50% - 0.5rem);
 
                 :deep(.kel-checkbox__label) {
                     font-size: var(--ks-font-size-xs);
-                    color: var(--ks-content-secondary);
+                    color: var(--ks-text-secondary);
                 }
 
                 :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
-                    color: var(--ks-content-primary);
+                    color: var(--ks-text-primary);
                 }
             }
         }
@@ -187,7 +196,7 @@
         scrollbar-color: transparent transparent;
 
         &:hover {
-            scrollbar-color: var(--ks-border-secondary) transparent;
+            scrollbar-color: var(--ks-border-subtle) transparent;
         }
 
         .option-item {
@@ -197,14 +206,14 @@
             padding: 0.5rem 1rem;
             transition: all 0.2s ease;
             cursor: pointer;
-            border-bottom: 1px solid var(--ks-border-secondary);
+            border-bottom: 1px solid var(--ks-border-subtle);
 
             &:last-child {
                 border-bottom: none;
             }
 
             &:hover {
-                background-color: var(--ks-dropdown-background-hover);
+                background-color: var(--ks-bg-hover-elevated);
             }
 
             .option-content {
@@ -222,11 +231,11 @@
 
         .no-options {
             text-align: center;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-sm);
 
             :deep(.kel-alert__icon) {
-                color: var(--ks-content-info);
+                color: var(--ks-text-info);
                 font-size: var(--ks-font-size-xl);
             }
         }
@@ -236,7 +245,7 @@
         font-size: var(--ks-font-size-sm);
 
         &::placeholder {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
     }
 }

@@ -300,6 +300,21 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const findDistinctFieldValues = async (options: {
+        field: string;
+        filters?: Record<string, string>;
+        size?: number;
+    }): Promise<string[]> => {
+        const response = await axios.get(`${apiUrl()}/executions/distinct-field-values`, {
+            params: {
+                field: options.field,
+                ...(options.filters ?? {}),
+                size: options.size ?? 100,
+            },
+        })
+        return response.data as string[]
+    }
+
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
         return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
@@ -798,6 +813,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryPauseExecution,
         loadExecution,
         findExecutions,
+        findDistinctFieldValues,
         validateExecution,
         triggerExecution,
         deleteExecution,

@@ -152,7 +152,7 @@
         width: 100%;
     }
     .kel-input__wrapper {
-        background-color: var(--ks-background-input);
+        background-color: var(--ks-bg-input);
         box-shadow: 0 0 0 1px var(--ks-border-color);
         border-radius: 6px;
         padding: 0.5rem;
@@ -164,14 +164,14 @@
     }
 
     .kel-input__inner {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
         height: 1.25rem;
         background: transparent;
     }
 
     .kel-input__inner::placeholder {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     .kel-input__prefix {
@@ -180,7 +180,7 @@
 
     .search-icon {
         font-size: var(--ks-font-size-base);
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .loading-indicator {
@@ -188,7 +188,7 @@
         right: 2rem;
         top: 60%;
         transform: translateY(-50%);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
     }
 
@@ -197,7 +197,7 @@
         top: 100%;
         left: 26px;
         right: 26px;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: 6px;
         margin-top: 4px;
         max-height: 400px;
@@ -213,11 +213,11 @@
         display: block;
         text-decoration: none;
         color: inherit;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         transition: background-color 0.2s;
 
         &:hover {
-            background: var(--ks-background-hover);
+            background: var(--ks-bg-hover);
             text-decoration: none;
             color: inherit;
         }
@@ -229,21 +229,21 @@
 
         .result-title {
             font-weight: 400;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             margin-bottom: 2px;
             font-size: var(--ks-font-size-sm);
         }
 
         .result-preview {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
             opacity: 0.8;
         }
     }
 
     .no-results {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         text-align: center;
         cursor: default;
         padding: 6px 12px;

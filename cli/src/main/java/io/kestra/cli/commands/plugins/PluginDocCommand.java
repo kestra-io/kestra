@@ -30,7 +30,7 @@ public class PluginDocCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Parameters(index = "0", description = "Path to write documentation files")
+    @CommandLine.Parameters(index = "0", arity = "0..1", description = "Path to write documentation files (default: ${DEFAULT-VALUE})")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
 
     @CommandLine.Option(names = { "--core" }, description = "Also write core tasks docs files")

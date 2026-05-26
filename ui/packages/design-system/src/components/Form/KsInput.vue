@@ -56,12 +56,20 @@
     @use 'element-plus/theme-chalk/src/input';
 
     .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-primary);
-        --kel-input-bg-color: var(--ks-background-input);
+        --kel-input-border-color: var(--ks-border-default);
+        --kel-input-bg-color: var(--ks-bg-input);
     }
 
     .kel-input {
-        background-color: var(--ks-background-body);
         width: 100%;
+        &.kel-input--small {
+            .kel-input__wrapper {
+                border-radius: var(--ks-radius-sm);
+            }
+        }
+
+        .kel-input-group__append, .kel-input-group__prepend {
+            color: var(--ks-text-dim);
+        }
     }
 </style>

@@ -61,8 +61,13 @@ public abstract class AbstractJdbcMcpServerRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public ArrayListTotal<McpServer> listAll(Pageable pageable, String tenantId) {
+    public ArrayListTotal<McpServer> find(Pageable pageable, String tenantId) {
         return findPage(pageable, tenantId, DSL.noCondition());
+    }
+
+    @Override
+    public ArrayListTotal<McpServer> findForAllTenants(Pageable pageable) {
+        return findPage(pageable, defaultFilter(), DSL.noCondition());
     }
 
     @Override

@@ -69,7 +69,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPrivateServer_whenRequestWithNoCredentials_thenUnauthorized() {
+    void shouldReturnUnauthorizedWhenNoCredentialsProvidedForPrivateServer() {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PRIVATE);
 
@@ -83,7 +83,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPrivateServer_whenRequestWithValidCredentials_thenAllowedThrough() {
+    void shouldAllowThroughWhenValidCredentialsProvidedForPrivateServer() {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PRIVATE);
 
@@ -99,7 +99,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPrivateServer_whenRequestWithWrongCredentials_thenUnauthorized() {
+    void shouldReturnUnauthorizedWhenWrongCredentialsProvidedForPrivateServer() {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PRIVATE);
 
@@ -114,7 +114,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPublicServer_whenRequestWithNoCredentials_thenAllowedThrough() {
+    void shouldAllowThroughWhenNoCredentialsProvidedForPublicServer() {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PUBLIC);
 
@@ -128,7 +128,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenDisabledPrivateServer_whenRequestWithNoCredentials_thenUnauthorized() {
+    void shouldReturnUnauthorizedWhenNoCredentialsProvidedForDisabledPrivateServer() {
         // Given
         String serverId = saveServer(true, McpServer.ServerType.PRIVATE);
 
@@ -141,7 +141,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenDisabledPrivateServer_whenRequestWithValidCredentials_thenServiceUnavailable() {
+    void shouldReturnServiceUnavailableWhenValidCredentialsProvidedForDisabledPrivateServer() {
         // Given — auth passes but the controller rejects because the server is disabled
         String serverId = saveServer(true, McpServer.ServerType.PRIVATE);
 
@@ -157,7 +157,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenDisabledPublicServer_whenRequestWithNoCredentials_thenServiceUnavailable() {
+    void shouldReturnServiceUnavailableForDisabledPublicServer() {
         // Given
         String serverId = saveServer(true, McpServer.ServerType.PUBLIC);
 
@@ -170,7 +170,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenNonExistentServer_whenRequestWithCredentials_thenNotFound() {
+    void shouldReturnNotFoundWhenServerDoesNotExist() {
         // Given
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
@@ -183,7 +183,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPublicServer_whenServerTypeChangedToPrivate_thenAuthRequiredAfterCacheUpdate() throws InterruptedException {
+    void shouldRequireAuthAfterCacheUpdateWhenServerTypeChangedFromPublicToPrivate() throws InterruptedException {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PUBLIC);
         client.toBlocking().exchange(mcpPost(serverId, INITIALIZE_REQUEST), Map.class);
@@ -200,7 +200,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPrivateServer_whenServerDeleted_thenRequestPassesThroughAfterCacheInvalidation() throws InterruptedException {
+    void shouldPassThroughAfterCacheInvalidationWhenPrivateServerIsDeleted() throws InterruptedException {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PRIVATE);
         client.toBlocking().exchange(
@@ -221,7 +221,7 @@ class McpServerAuthenticationFilterTest {
     }
 
     @Test
-    void givenPublicServer_whenServerDisabled_thenServiceUnavailableWithoutAuthAfterCacheUpdate() throws InterruptedException {
+    void shouldReturnServiceUnavailableAfterCacheUpdateWhenPublicServerIsDisabled() throws InterruptedException {
         // Given
         String serverId = saveServer(false, McpServer.ServerType.PUBLIC);
         client.toBlocking().exchange(mcpPost(serverId, INITIALIZE_REQUEST), Map.class);

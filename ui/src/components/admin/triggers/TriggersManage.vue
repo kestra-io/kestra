@@ -331,7 +331,6 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
 
-    //@ts-expect-error No declaration file
     import FlowRun from "../../flows/FlowRun.vue"
     import LogsWrapper from "../../logs/LogsWrapper.vue"
     import TriggerAvatar from "../../flows/TriggerAvatar.vue"
@@ -357,7 +356,7 @@
     const triggers = ref<any[]>([])
     const triggerToUnlock = ref()
     const isBackfillOpen = ref(false)
-    const selectedTrigger = ref(null)
+    const selectedTrigger = ref()
     const backfill = ref<{
         start: Date | null;
         end: Date | null;

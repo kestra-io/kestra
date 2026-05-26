@@ -59,8 +59,8 @@
 
 .switch-label {
     align-items: center;
-    background-color: var(--ks-background-body);
-    border: 1px solid var(--ks-border-primary);
+    background-color: var(--ks-bg-base);
+    border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-font-size-lg);
     cursor: pointer;
     display: flex;
@@ -73,7 +73,7 @@
 }
 
 .switch-option {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
     font-size: var(--ks-font-size-xs);
     font-weight: 500;
     padding: 6px 16px;
@@ -84,7 +84,7 @@
 }
 
 .switch-slider {
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     height: calc(100% - 8px);

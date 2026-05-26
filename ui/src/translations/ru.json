@@ -205,6 +205,7 @@
     "copy": "Копировать",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
+    "copy_and_close": "Копировать и закрыть",
     "copy_to_clipboard": "Копировать в буфер обмена",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
@@ -335,6 +336,7 @@
         "message": "В Kestra Enterprise Edition вы можете создавать пользовательские Blueprints, доступные только вашей организации. Вы можете использовать их в качестве шаблонов лучших практик для обмена, централизации и документирования часто используемых рабочих процессов в вашей команде.",
         "title": "Добавить пользовательские Blueprints"
       },
+      "contact_sales": "Связаться с отделом продаж",
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
       "instance": {
@@ -392,7 +394,8 @@
         "label": "Тесты",
         "message": "Проверьте логику ваших flow в изоляции, обнаруживайте регрессии на ранних стадиях и поддерживайте уверенность в ваших автоматизациях по мере их изменения и роста.",
         "title": "Обеспечьте надежность с каждым изменением"
-      }
+      },
+      "watch_the_video": "Смотреть видео"
     },
     "dependencies": "Зависимости",
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
@@ -478,6 +481,10 @@
         "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
         "title": "У вас пока нет объявлений!"
       },
+      "apiTokens": {
+        "content": "Токены API используются всякий раз, когда вы хотите предоставить программный доступ к API Kestra.",
+        "title": "Управление вашими API Tokens"
+      },
       "apps": {
         "content": "Начните создавать приложения для взаимодействия с Kestra из внешнего мира.",
         "title": "У вас пока нет приложений!"
@@ -493,6 +500,10 @@
       "concurrency_limit": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
         "title": "Для этого flow не установлены ограничения."
+      },
+      "concurrency_limits": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "title": "Пределы на параллельность не установлены."
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +522,10 @@
           "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         }
+      },
+      "groups": {
+        "content": "Группы позволяют объединять пользователей, чтобы вы могли управлять разрешениями и привязками ролей коллективно в рамках вашего арендатора.",
+        "title": "У вас еще нет групп!"
       },
       "kill_switches": {
         "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
@@ -539,6 +554,10 @@
       "versionPlugin": {
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
         "title": "У вас еще нет версионированного плагина!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Токены регистрации позволяют удаленным worker безопасно аутентифицироваться и регистрироваться в вашем экземпляре Kestra. Создайте токен, затем используйте его для подключения новых worker к этому кластеру.",
+        "title": "У вас еще нет токенов регистрации!"
       }
     },
     "empty search": "Результаты поиска пусты",
@@ -648,6 +667,8 @@
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",
     "feeds": {
+      "heading": "Все о Kestra.",
+      "subheading": "Последние обновления, руководства и истории",
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
@@ -737,6 +758,27 @@
     "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "Приложение(я)",
+        "tooltip": "Просмотр приложений, использующих этот flow"
+      },
+      "dependencies": {
+        "suffix": "Зависимость(и)",
+        "tooltip": "Просмотр зависимостей flow"
+      },
+      "errors": {
+        "label": "{count} Ошибка(и)"
+      },
+      "revisions": {
+        "suffix": "Ревизия(и)",
+        "tooltip": "Просмотр версий flow"
+      },
+      "tests": {
+        "suffix": "Тест(ы)",
+        "tooltip": "Просмотр тестов flow"
+      }
+    },
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
     "flow_outputs": "Выходы Flow",
@@ -865,7 +907,10 @@
       "copy_url": "Скопировать URL",
       "create": "Создать сервер",
       "delete_confirm": "Вы уверены, что хотите удалить этот MCP сервер?",
+      "id_invalid": "ID должен начинаться с строчной буквы или цифры и содержать только строчные буквы, цифры, дефисы или подчеркивания",
+      "id_placeholder": "например, my-mcp-server",
       "instructions": "Инструкции",
+      "main_tenant": "главная",
       "no_servers": "Серверы MCP не найдены. Создайте первый сервер, чтобы предоставить триггеры MCP Tool внешним AI-агентам.",
       "page_description": "Предоставьте ваши Kestra flows как инструменты для MCP-совместимых AI агентов",
       "private": "Частный",
@@ -874,6 +919,11 @@
       "server": "Сервер MCP",
       "server_type": "Тип сервера",
       "servers": "Серверы MCP",
+      "tab_connect": "Подключиться",
+      "tab_connect_placeholder": "Детали подключения скоро появятся.",
+      "tab_edit": "Редактировать",
+      "tab_tool_flows": "Инструменты Flow",
+      "tab_tool_flows_placeholder": "Управление flow инструментами скоро появится.",
       "url_copied": "URL скопирован!",
       "username_password": "Имя пользователя и пароль"
     },
@@ -1402,6 +1452,7 @@
     "row count": "Количество строк",
     "run task in playground": "Запустить task в playground",
     "runners": "Запуски",
+    "running": "RUNNING",
     "running duration": "Время выполнения",
     "save": "Сохранить",
     "save draft": {
@@ -1455,6 +1506,7 @@
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "select": "Выберите ваш {{section}}",
     "select datetime": "Выберите дату",
+    "select view": "Выберите вид",
     "selected": "Выбрано",
     "selection": {
       "all": "Выбрать все ({count})",

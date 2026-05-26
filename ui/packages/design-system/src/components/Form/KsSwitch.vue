@@ -46,7 +46,7 @@
 
     .kel-switch {
         .kel-switch__label {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 </style>

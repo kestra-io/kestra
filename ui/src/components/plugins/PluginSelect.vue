@@ -187,7 +187,7 @@
 
             .title {
                 font-size: var(--ks-font-size-xs);
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 line-height: 1.2;
                 white-space: normal;
             }

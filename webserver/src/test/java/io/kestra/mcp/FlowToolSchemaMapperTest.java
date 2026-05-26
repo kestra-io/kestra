@@ -31,7 +31,7 @@ class FlowToolSchemaMapperTest {
 
     @ParameterizedTest
     @FieldSource("inputConversionTestCases")
-    void givenInput_whenConvert_thenCorrectJsonSchemaReturned(InputConversionTestCase testCase) {
+    void shouldReturnCorrectJsonSchemaWhenConvertingInput(InputConversionTestCase testCase) {
         assertThat(mapper.convert(testCase.input())).isEqualTo(testCase.expectedSchema());
     }
 
@@ -148,7 +148,7 @@ class FlowToolSchemaMapperTest {
     private record InputConversionTestCase(Input<?> input, Map<String, Object> expectedSchema) {}
 
     @Test
-    void givenJsonInputWithInvalidJsonSchema_whenConvert_thenThrowsIllegalArgumentException() {
+    void shouldThrowIllegalArgumentExceptionWhenConvertingJsonInputWithInvalidJsonSchema() {
         JsonInput input = JsonInput.builder().type(Type.JSON).jsonSchema("not valid json").build();
 
         assertThatThrownBy(() -> mapper.convert(input))
@@ -157,7 +157,7 @@ class FlowToolSchemaMapperTest {
     }
 
     @Test
-    void givenInputWithDescription_whenConvert_thenDescriptionIncludedInSchema() {
+    void shouldIncludeDescriptionInSchemaWhenConvertingInputWithDescription() {
         StringInput input = StringInput.builder().type(Type.STRING).description("A test input").build();
 
         assertThat(mapper.convert(input)).containsEntry("description", "A test input");
@@ -165,7 +165,7 @@ class FlowToolSchemaMapperTest {
 
     @ParameterizedTest
     @FieldSource("outputConversionTestCases")
-    void givenOutput_whenConvert_thenCorrectJsonSchemaReturned(OutputConversionTestCase testCase) {
+    void shouldReturnCorrectJsonSchemaWhenConvertingOutput(OutputConversionTestCase testCase) {
         assertThat(mapper.convert(testCase.output())).isEqualTo(testCase.expectedSchema());
     }
 
@@ -248,7 +248,7 @@ class FlowToolSchemaMapperTest {
     private record OutputConversionTestCase(Output output, Map<String, Object> expectedSchema) {}
 
     @Test
-    void givenAnnotations_whenBuildTool_thenAllHintsMappedCorrectly() {
+    void shouldMapAllHintsCorrectlyWhenBuildingToolWithAnnotations() {
         McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(true, false, false, true, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
@@ -261,7 +261,7 @@ class FlowToolSchemaMapperTest {
     }
 
     @Test
-    void givenTriggerMetadata_whenBuildTool_thenNameAndTitleSetOnTool() {
+    void shouldSetNameAndTitleWhenBuildingToolWithTriggerMetadata() {
         McpToolTrigger trigger = buildTrigger(new McpToolTrigger.Annotations(false, false, false, false, false));
 
         McpSchema.Tool tool = mapper.buildTool(buildFlow(List.of()), trigger);
@@ -271,7 +271,7 @@ class FlowToolSchemaMapperTest {
     }
 
     @Test
-    void givenFlowWithInputs_whenBuildTool_thenInputSchemaReflectsAllInputs() {
+    void shouldReflectAllInputsInSchemaWhenBuildingToolForFlowWithInputs() {
         List<Input<?>> inputs = List.of(
             StringInput.builder().id("name").type(Type.STRING).required(true).build(),
             IntInput.builder().id("count").type(Type.INT).required(false).build()

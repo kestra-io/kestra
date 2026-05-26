@@ -112,7 +112,7 @@
 
 <style lang="scss" scoped>
 .filter-container {
-    --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
+    --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     display: flex;
     align-items: center;
@@ -139,11 +139,11 @@
 
         .saved-count {
             margin-left: 0.375rem;
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
             &:hover {
-                background-color: var(--ks-tag-background-hover);
+                background-color: var(--ks-bg-tag-hover);
             }
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             border-radius: 0.35rem;
             font-size: 0.625rem;
             padding: 0.5rem 0.5625rem;
@@ -154,9 +154,9 @@
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 
     .refresh-button {
@@ -168,11 +168,11 @@
         font-size: var(--ks-font-size-xs);
 
         :deep(svg) {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         &:hover {
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 }

@@ -12,7 +12,7 @@ describe("KsExecutionStatus", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".ks-execution-status").exists()).toBe(true)
-        expect(wrapper.text()).toContain("SUCCESS")
+        expect(wrapper.text()).toContain("Success")
     })
 
     test("applies status class", () => {

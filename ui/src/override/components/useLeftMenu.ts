@@ -25,11 +25,7 @@ import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
-import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue"
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue"
-
-// Blueprints icons
-import Wrench from "vue-material-design-icons/Wrench.vue"
 
 // Tenant Administration icons
 import Monitor from "vue-material-design-icons/Monitor.vue"
@@ -43,6 +39,7 @@ import McpIcon from "../../components/McpIcon.vue"
 export type MenuItem = {
     id?: string; // Generated at the end of menu computation
     title: string;
+    header?: boolean;
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
     icon?: {
@@ -112,184 +109,140 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
-                title: t("ai.flow.title"),
-                routes: routeStartWith("welcome"),
-                href: {
-                    name: "welcome",
-                },
-                icon: {
-                    element: AiMenuIcon,
-                },
-            },
-            {
-                title: t("dashboards.labels.plural"),
-                routes: routeStartWith("home"),
-                href: {
-                    name: "home",
-                },
-                icon: {
-                    element: ChartLineVariant,
-                },
-            },
-            {
-                title: t("flows"),
-                routes: routeStartWith("flows"),
-                href: {
-                    name: "flows/list",
-                },
-                icon: {
-                    element: FileTreeOutline,
-                },
-            },
-            {
-                title: t("apps"),
-                routes: routeStartWith("apps"),
-                href: {
-                    name: "apps/list",
-                },
-                icon: {
-                    element: LayersTripleOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("executions"),
-                routes: routeStartWith("executions"),
-                href: {
-                    name: "executions/list",
-                },
-                icon: {
-                    element: PlayOutline,
-                },
-            },
-            {
-                title: t("logs"),
-                routes: routeStartWith("logs"),
-                href: {
-                    name: "logs/list",
-                },
-                icon: {
-                    element: FileDocumentOutline,
-                },
-            },
-            {
-                title: t("demos.tests.label"),
-                routes: routeStartWith("tests"),
-                href: {
-                    name: "tests/list",
-                },
-                icon: {
-                    element: FlaskOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("demos.assets.label"),
-                routes: routeStartWith("assets"),
-                href: {
-                    name: "assets/list",
-                },
-                icon: {
-                    element: PackageVariantClosed,
-                },
-                attributes: {
-                    locked: true,
-                },
-            },
-            {
-                title: t("namespaces"),
-                routes: routeStartWith("namespaces"),
-                href: {
-                    name: "namespaces/list",
-                },
-                icon: {
-                    element: FolderOpenOutline,
-                },
-            },
-            {
-                title: t("plugins.names"),
-                routes: routeStartWith("plugins"),
-                href: {
-                    name: "plugins/list",
-                },
-                icon: {
-                    element: PuzzleOutline,
-                },
-            },
-            {
-                title: t("blueprints.title"),
-                icon: {
-                    element: ShapePlusOutline,
-                },
+                title: "Workspace",
                 child: [
                     {
-                        title: t("blueprints.custom"),
-                        routes: routeStartWith("blueprints/flow/custom"),
+                        title: t("dashboards.labels.plural"),
+                        routes: routeStartWith("home"),
                         href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "flow",
-                                tab: "custom",
-                            },
+                            name: "home",
                         },
                         icon: {
-                            element: Wrench,
-                        },
-                        attributes: {
-                            locked: true,
+                            element: ChartLineVariant,
                         },
                     },
                     {
-                        title: t("blueprints.flows"),
-                        routes: routeStartWith("blueprints/flow/community"),
+                        title: t("ai.flow.title"),
+                        routes: routeStartWith("welcome"),
                         href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "flow",
-                                tab: "community",
-                            },
+                            name: "welcome",
+                        },
+                        icon: {
+                            element: AiMenuIcon,
+                        },
+                    },
+                    {
+                        title: t("flows"),
+                        routes: routeStartWith("flows"),
+                        href: {
+                            name: "flows/list",
                         },
                         icon: {
                             element: FileTreeOutline,
                         },
                     },
                     {
-                        title: t("blueprints.dashboards"),
-                        routes: routeStartWith("blueprints/dashboard"),
+                        title: t("executions"),
+                        routes: routeStartWith("executions"),
+                        href: {
+                            name: "executions/list",
+                        },
+                        icon: {
+                            element: PlayOutline,
+                        },
+                    },
+                    {
+                        title: t("logs"),
+                        routes: routeStartWith("logs"),
+                        href: {
+                            name: "logs/list",
+                        },
+                        icon: {
+                            element: FileDocumentOutline,
+                        },
+                    },
+                    {
+                        title: t("apps"),
+                        routes: routeStartWith("apps"),
+                        href: {
+                            name: "apps/list",
+                        },
+                        icon: {
+                            element: LayersTripleOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        title: t("demos.tests.label"),
+                        routes: routeStartWith("tests"),
+                        href: {
+                            name: "tests/list",
+                        },
+                        icon: {
+                            element: FlaskOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                ],
+            },
+            {
+                title: "Resources",
+                child: [
+                    {
+                        title: t("namespaces"),
+                        routes: routeStartWith("namespaces"),
+                        href: {
+                            name: "namespaces/list",
+                        },
+                        icon: {
+                            element: FolderOpenOutline,
+                        },
+                    },
+                    {
+                        title: t("demos.assets.label"),
+                        routes: routeStartWith("assets"),
+                        href: {
+                            name: "assets/list",
+                        },
+                        icon: {
+                            element: PackageVariantClosed,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        title: t("plugins.names"),
+                        routes: routeStartWith("plugins"),
+                        href: {
+                            name: "plugins/list",
+                        },
+                        icon: {
+                            element: PuzzleOutline,
+                        },
+                    },
+                    {
+                        title: t("blueprints.title"),
+                        routes: routeStartWith("blueprints"),
                         href: {
                             name: "blueprints",
                             params: {
-                                kind: "dashboard",
+                                kind: "flow",
                                 tab: "community",
                             },
                         },
                         icon: {
-                            element: ChartLineVariant,
+                            element: ShapePlusOutline,
                         },
                     },
                 ],
             },
             {
                 title: t("tenant.name"),
-                routes: [
-                    "admin/stats",
-                    "kv",
-                    "secrets",
-                    "admin/triggers",
-                    "admin/mcp-servers",
-                    "admin/auditlogs",
-                    "admin/iam",
-                    "admin/concurrency-limits",
-                ]
-                    .map(routeStartWith)
-                    .find((routes) => routes.length > 0),
-                icon: {
-                    element: OfficeBuildingOutline,
-                },
                 child: [
                     {
                         title: t("system overview"),

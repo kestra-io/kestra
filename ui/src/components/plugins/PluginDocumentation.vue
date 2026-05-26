@@ -112,8 +112,8 @@
     }
 
     .release-notes-btn {
-        background-color: var(--ks-background-info);
-        color: var(--ks-content-info);
+        background-color: var(--ks-bg-info);
+        color: var(--ks-status-info);
         border: 1px solid var(--ks-border-info);
         white-space: nowrap;
 

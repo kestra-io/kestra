@@ -131,7 +131,7 @@
 
             .form-label {
                 display: block;
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 500;
                 margin-bottom: 0.25rem;
@@ -183,12 +183,12 @@
 
 :deep(.kel-date-editor) {
     .kel-input__inner::placeholder {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
     }
 
     .kel-input__prefix .kel-input__icon {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
     }
 }

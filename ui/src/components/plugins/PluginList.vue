@@ -7,25 +7,7 @@
             aria-label="Go back"
             :icon="ChevronLeft"
         />
-        <KsBreadcrumb separator="/">
-            <KsBreadcrumbItem>
-                <a :class="{'fw-bold ps-2': navigationStack.length === 0}" href="#" @click.prevent="goToStep(-1)">{{ $t('plugins.names') }}</a>
-            </KsBreadcrumbItem>
-            <KsBreadcrumbItem
-                v-for="(item, index) in navigationStack"
-                :key="index"
-                :class="{'is-active': index === navigationStack.length - 1}"
-            >
-                <a
-                    v-if="index < navigationStack.length - 1"
-                    href="#"
-                    @click.prevent="goToStep(index)"
-                >
-                    {{ item.title }}
-                </a>
-                <span v-else>{{ item.title }}</span>
-            </KsBreadcrumbItem>
-        </KsBreadcrumb>
+        <KsBreadcrumb :items="breadcrumbItems" :title="breadcrumbTitle" />
         <SearchField
             v-if="navigationStack.length === 0"
             class="search-field"
@@ -72,7 +54,8 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
+    import {KsTaskIcon, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -96,6 +79,7 @@
 
     const props = defineProps<Props>()
 
+    const {t} = useI18n()
     const pluginsStore = usePluginsStore()
 
     const currentGroup = ref<string>("")
@@ -180,6 +164,21 @@
     const loadPluginIcons = async () => {
         icons.value = await pluginsStore.groupIcons() ?? {}
     }
+
+    const breadcrumbItems = computed<KsBreadcrumbItem[]>(() => {
+        if (navigationStack.value.length === 0) return []
+        return [
+            {label: t("plugins.names"), onClick: () => goToStep(-1)},
+            ...navigationStack.value.slice(0, -1).map((step, i) => ({
+                label: step.title,
+                onClick: () => goToStep(i),
+            })),
+        ]
+    })
+
+    const breadcrumbTitle = computed(() =>
+        navigationStack.value.at(-1)?.title ?? t("plugins.names"),
+    )
 
     const openGroup = (plugin: any) => {
         searchQuery.value = ""
@@ -319,8 +318,8 @@
 <style scoped lang="scss">
 .breadcrumb {
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid var(--ks-border-primary);
-    background-color: var(--ks-background-panel);
+    border-bottom: 1px solid var(--ks-border-default);
+    background-color: var(--ks-bg-surface);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -350,7 +349,7 @@
             font-size: var(--ks-font-size-sm);
 
             &::placeholder {
-                color: var(--ks-content-tertiary) !important;
+                color: var(--ks-text-dim) !important;
             }
         }
     }
@@ -363,18 +362,18 @@
 
         :deep(.kel-breadcrumb__item .kel-breadcrumb__inner) {
             text-transform: none !important;
-            color: var(--ks-content-secondary) !important;
+            color: var(--ks-text-secondary) !important;
             font-weight: 500 !important;
         }
 
         :deep(.kel-breadcrumb__item .kel-breadcrumb__inner a) {
-            color: var(--ks-content-secondary) !important;
+            color: var(--ks-text-secondary) !important;
             font-weight: 500 !important;
         }
 
         :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner),
         :deep(.kel-breadcrumb__item:last-child .kel-breadcrumb__inner a) {
-            color: var(--ks-content-primary) !important;
+            color: var(--ks-text-primary) !important;
             font-weight: 600 !important;
         }
     }
@@ -390,9 +389,9 @@
         align-items: center;
         justify-content: space-between;
         padding: 0.5rem 1.5rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         cursor: pointer;
-        background-color: var(--ks-background-primary);
+        background-color: var(--ks-bg-elevated);
 
         .content {
             display: flex;
@@ -407,14 +406,14 @@
             }
 
             .name {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-base);
                 line-height: 1.5;
             }
         }
 
         .chevron-right-icon {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-xl);
         }
     }

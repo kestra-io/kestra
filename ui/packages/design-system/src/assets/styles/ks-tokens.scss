@@ -1,4 +1,5 @@
 @use "variables" as v;
+@use "./color-palette" as palette;
 
 :root {
     // base colors
@@ -8,6 +9,7 @@
     // typography
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};
+    --ks-font-size-2xs: #{v.$font-size-2xs};
     --ks-font-size-xs: #{v.$font-size-xs};
     --ks-font-size-sm: #{v.$font-size-sm};
     --ks-font-size-base: #{v.$font-size-base};
@@ -19,6 +21,7 @@
     --ks-font-size-4xl: #{v.$font-size-4xl};
 
     // radius
+    --ks-radius-xs: #{v.$border-radius-xs};
     --ks-radius-sm: #{v.$border-radius-sm};
     --ks-radius-base: #{v.$border-radius};
     --ks-radius-lg: #{v.$border-radius-lg};
@@ -67,9 +70,9 @@
     --ks-border-width-thick: 4px;
 
     // composite borders
-    --ks-border-block-primary: var(--ks-border-width-thin) solid var(--ks-border-primary);
-    --ks-border-block-secondary: var(--ks-border-width-thin) solid var(--ks-border-secondary);
-    --ks-border-block-active: var(--ks-border-width-thin) solid var(--ks-border-active);
+    --ks-border-block-primary: var(--ks-border-width-thin) solid var(--ks-border-default);
+    --ks-border-block-secondary: var(--ks-border-width-thin) solid var(--ks-border-subtle);
+    --ks-border-block-active: var(--ks-border-width-thin) solid var(--ks-border-focus);
 
     // icon sizes
     --ks-icon-size-xs: 0.75rem;
@@ -77,4 +80,193 @@
     --ks-icon-size-base: 1.25rem;
     --ks-icon-size-lg: 1.5rem;
     --ks-icon-size-xl: 2rem;
+
+    // status
+    --ks-status-created: var(--ks-status-info);
+    --ks-status-restarted: var(--ks-status-info);
+    --ks-status-retried: var(--ks-status-info);
+    --ks-status-failed: var(--ks-status-error);
+    --ks-status-killed: var(--ks-status-error);
+    --ks-status-success: var(--ks-status-success);
+    --ks-status-running: var(--ks-status-running);
+    --ks-status-breakpoint: var(--ks-status-running);
+    --ks-status-paused: var(--ks-status-warning);
+    --ks-status-warning: var(--ks-status-warning);
+    --ks-status-retrying: var(--ks-status-warning);
+    --ks-status-killing: var(--ks-status-pending);
+    --ks-status-cancelled: var(--ks-status-neutral);
+    --ks-status-skipped: var(--ks-status-neutral);
+    --ks-status-queued: var(--ks-status-neutral);
+
+    --ks-status-border-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-body) 80%);
+    --ks-status-border-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-body) 80%);
+    --ks-status-border-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-body) 80%);
+    --ks-status-border-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-body) 80%);
+    --ks-status-border-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-body) 80%);
+    --ks-status-border-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-body) 80%);
+    --ks-status-border-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 80%);
+    --ks-status-border-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-body) 80%);
+    --ks-status-border-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-body) 80%);
+    --ks-status-border-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 80%);
+    --ks-status-border-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-body) 80%);
+    --ks-status-border-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-body) 80%);
+    --ks-status-border-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-body) 80%);
+    --ks-status-border-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-body) 80%);
+    --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-body) 80%);
+
+    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-body) 95%);
+    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-body) 95%);
+    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-body) 95%);
+    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-body) 95%);
+    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-body) 95%);
+    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-body) 95%);
+    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 95%);
+    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-body) 95%);
+    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-body) 95%);
+    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 95%);
+    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-body) 95%);
+    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-body) 95%);
+    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-body) 95%);
+    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-body) 95%);
+    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-body) 95%);
+
+    // logs
+    --ks-log-trace: var(--ks-status-neutral);
+    --ks-log-debug: var(--ks-status-running);
+    --ks-log-info: var(--ks-status-info);
+    --ks-log-warn: var(--ks-status-warning);
+    --ks-log-error: var(--ks-status-error);
+
+    --ks-log-border-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-body) 80%);
+    --ks-log-border-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 80%);
+    --ks-log-border-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-body) 80%);
+    --ks-log-border-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 80%);
+    --ks-log-border-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-body) 80%);
+
+    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-trace), var(--ks-bg-body) 95%);
+    --ks-log-background-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 95%);
+    --ks-log-background-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-body) 95%);
+    --ks-log-background-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 95%);
+    --ks-log-background-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-body) 95%);
+}
+
+:root {
+    #{--ks-black}: palette.$base-black;
+    #{--ks-white}: palette.$base-white;
+    #{--ks-blue-25}: palette.$base-blue-25;
+    #{--ks-blue-50}: palette.$base-blue-50;
+    #{--ks-blue-100}: palette.$base-blue-100;
+    #{--ks-blue-200}: palette.$base-blue-200;
+    #{--ks-blue-300}: palette.$base-blue-300;
+    #{--ks-blue-400}: palette.$base-blue-400;
+    #{--ks-blue-500}: palette.$base-blue-500;
+    #{--ks-blue-600}: palette.$base-blue-600;
+    #{--ks-blue-700}: palette.$base-blue-700;
+    #{--ks-blue-800}: palette.$base-blue-800;
+    #{--ks-blue-900}: palette.$base-blue-900;
+    #{--ks-blue-950}: palette.$base-blue-950;
+    #{--ks-blue-1000}: palette.$base-blue-1000;
+    #{--ks-gray-25}: palette.$base-gray-25;
+    #{--ks-gray-50}: palette.$base-gray-50;
+    #{--ks-gray-100}: palette.$base-gray-100;
+    #{--ks-gray-200}: palette.$base-gray-200;
+    #{--ks-gray-300}: palette.$base-gray-300;
+    #{--ks-gray-400}: palette.$base-gray-400;
+    #{--ks-gray-500}: palette.$base-gray-500;
+    #{--ks-gray-600}: palette.$base-gray-600;
+    #{--ks-gray-700}: palette.$base-gray-700;
+    #{--ks-gray-800}: palette.$base-gray-800;
+    #{--ks-gray-900}: palette.$base-gray-900;
+    #{--ks-gray-950}: palette.$base-gray-950;
+    #{--ks-gray-1000}: palette.$base-gray-1000;
+    #{--ks-gray-neutral-25}: palette.$base-gray-neutral-25;
+    #{--ks-gray-neutral-50}: palette.$base-gray-neutral-50;
+    #{--ks-gray-neutral-100}: palette.$base-gray-neutral-100;
+    #{--ks-gray-neutral-200}: palette.$base-gray-neutral-200;
+    #{--ks-gray-neutral-300}: palette.$base-gray-neutral-300;
+    #{--ks-gray-neutral-400}: palette.$base-gray-neutral-400;
+    #{--ks-gray-neutral-500}: palette.$base-gray-neutral-500;
+    #{--ks-gray-neutral-600}: palette.$base-gray-neutral-600;
+    #{--ks-gray-neutral-700}: palette.$base-gray-neutral-700;
+    #{--ks-gray-neutral-800}: palette.$base-gray-neutral-800;
+    #{--ks-gray-neutral-900}: palette.$base-gray-neutral-900;
+    #{--ks-gray-neutral-950}: palette.$base-gray-neutral-950;
+    #{--ks-gray-neutral-1000}: palette.$base-gray-neutral-1000;
+    #{--ks-green-25}: palette.$base-green-25;
+    #{--ks-green-50}: palette.$base-green-50;
+    #{--ks-green-100}: palette.$base-green-100;
+    #{--ks-green-200}: palette.$base-green-200;
+    #{--ks-green-300}: palette.$base-green-300;
+    #{--ks-green-400}: palette.$base-green-400;
+    #{--ks-green-500}: palette.$base-green-500;
+    #{--ks-green-600}: palette.$base-green-600;
+    #{--ks-green-700}: palette.$base-green-700;
+    #{--ks-green-800}: palette.$base-green-800;
+    #{--ks-green-900}: palette.$base-green-900;
+    #{--ks-green-950}: palette.$base-green-950;
+    #{--ks-green-1000}: palette.$base-green-1000;
+    #{--ks-orange-25}: palette.$base-orange-25;
+    #{--ks-orange-50}: palette.$base-orange-50;
+    #{--ks-orange-100}: palette.$base-orange-100;
+    #{--ks-orange-200}: palette.$base-orange-200;
+    #{--ks-orange-300}: palette.$base-orange-300;
+    #{--ks-orange-400}: palette.$base-orange-400;
+    #{--ks-orange-500}: palette.$base-orange-500;
+    #{--ks-orange-600}: palette.$base-orange-600;
+    #{--ks-orange-700}: palette.$base-orange-700;
+    #{--ks-orange-800}: palette.$base-orange-800;
+    #{--ks-orange-900}: palette.$base-orange-900;
+    #{--ks-orange-950}: palette.$base-orange-950;
+    #{--ks-orange-1000}: palette.$base-orange-1000;
+    #{--ks-primary-25}: palette.$base-primary-25;
+    #{--ks-primary-50}: palette.$base-primary-50;
+    #{--ks-primary-100}: palette.$base-primary-100;
+    #{--ks-primary-200}: palette.$base-primary-200;
+    #{--ks-primary-300}: palette.$base-primary-300;
+    #{--ks-primary-400}: palette.$base-primary-400;
+    #{--ks-primary-500}: palette.$base-primary-500;
+    #{--ks-primary-600}: palette.$base-primary-600;
+    #{--ks-primary-700}: palette.$base-primary-700;
+    #{--ks-primary-800}: palette.$base-primary-800;
+    #{--ks-primary-900}: palette.$base-primary-900;
+    #{--ks-primary-950}: palette.$base-primary-950;
+    #{--ks-primary-1000}: palette.$base-primary-1000;
+    #{--ks-purple-25}: palette.$base-purple-25;
+    #{--ks-purple-50}: palette.$base-purple-50;
+    #{--ks-purple-100}: palette.$base-purple-100;
+    #{--ks-purple-200}: palette.$base-purple-200;
+    #{--ks-purple-300}: palette.$base-purple-300;
+    #{--ks-purple-400}: palette.$base-purple-400;
+    #{--ks-purple-500}: palette.$base-purple-500;
+    #{--ks-purple-600}: palette.$base-purple-600;
+    #{--ks-purple-700}: palette.$base-purple-700;
+    #{--ks-purple-800}: palette.$base-purple-800;
+    #{--ks-purple-900}: palette.$base-purple-900;
+    #{--ks-purple-1000}: palette.$base-purple-1000;
+    #{--ks-red-25}: palette.$base-red-25;
+    #{--ks-red-50}: palette.$base-red-50;
+    #{--ks-red-100}: palette.$base-red-100;
+    #{--ks-red-200}: palette.$base-red-200;
+    #{--ks-red-300}: palette.$base-red-300;
+    #{--ks-red-400}: palette.$base-red-400;
+    #{--ks-red-500}: palette.$base-red-500;
+    #{--ks-red-600}: palette.$base-red-600;
+    #{--ks-red-700}: palette.$base-red-700;
+    #{--ks-red-800}: palette.$base-red-800;
+    #{--ks-red-900}: palette.$base-red-900;
+    #{--ks-red-950}: palette.$base-red-950;
+    #{--ks-red-1000}: palette.$base-red-1000;
+    #{--ks-yellow-25}: palette.$base-yellow-25;
+    #{--ks-yellow-50}: palette.$base-yellow-50;
+    #{--ks-yellow-100}: palette.$base-yellow-100;
+    #{--ks-yellow-200}: palette.$base-yellow-200;
+    #{--ks-yellow-300}: palette.$base-yellow-300;
+    #{--ks-yellow-400}: palette.$base-yellow-400;
+    #{--ks-yellow-500}: palette.$base-yellow-500;
+    #{--ks-yellow-600}: palette.$base-yellow-600;
+    #{--ks-yellow-700}: palette.$base-yellow-700;
+    #{--ks-yellow-800}: palette.$base-yellow-800;
+    #{--ks-yellow-900}: palette.$base-yellow-900;
+    #{--ks-yellow-950}: palette.$base-yellow-950;
+    #{--ks-yellow-1000}: palette.$base-yellow-1000;
 }

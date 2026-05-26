@@ -1,15 +1,19 @@
 import type {Component} from "vue"
-import PauseCircle from "vue-material-design-icons/PauseCircle.vue"
-import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-import PlayCircle from "vue-material-design-icons/PlayCircle.vue"
-import CloseCircle from "vue-material-design-icons/CloseCircle.vue"
+import Pause from "vue-material-design-icons/Pause.vue"
+import PauseOctagon from "vue-material-design-icons/PauseOctagon.vue"
+import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
+import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline.vue"
+import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
 import StopCircle from "vue-material-design-icons/StopCircle.vue"
-import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue"
-import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
-import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue"
-import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue"
-import Refresh from "vue-material-design-icons/Refresh.vue"
+import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue"
+import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
+import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
+import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+import Restore from "vue-material-design-icons/Restore.vue"
 import Cancel from "vue-material-design-icons/Cancel.vue"
+import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
+import ClockTimeFourOutline from "vue-material-design-icons/ClockTimeFourOutline.vue"
+import Restart from "vue-material-design-icons/Restart.vue"
 
 export interface ExecutionStatusModel {
     name: string;
@@ -22,35 +26,35 @@ export interface ExecutionStatusModel {
 export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.freeze({
     CREATED: {
         name: "CREATED",
-        icon: DotsVerticalCircle,
+        icon: PlusCircleOutline,
         isRunning: true,
         isKillable: true,
         isFailed: false,
     },
     RESTARTED: {
         name: "RESTARTED",
-        icon: SkipPreviousCircle,
+        icon: BackupRestore,
         isRunning: false,
         isKillable: true,
         isFailed: false,
     },
     SUCCESS: {
         name: "SUCCESS",
-        icon: CheckCircle,
+        icon: CheckCircleOutline,
         isRunning: false,
         isKillable: false,
         isFailed: false,
     },
     RUNNING: {
         name: "RUNNING",
-        icon: PlayCircle,
+        icon: PlayCircleOutline,
         isRunning: true,
         isKillable: true,
         isFailed: false,
     },
     KILLING: {
         name: "KILLING",
-        icon: CloseCircle,
+        icon: StopCircleOutline,
         isRunning: true,
         isKillable: true,
         isFailed: true,
@@ -64,21 +68,21 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
     },
     WARNING: {
         name: "WARNING",
-        icon: AlertCircle,
+        icon: AlertOutline,
         isRunning: false,
         isKillable: false,
         isFailed: true,
     },
     FAILED: {
         name: "FAILED",
-        icon: CloseCircle,
+        icon: CloseCircleOutline,
         isRunning: false,
         isKillable: false,
         isFailed: true,
     },
     PAUSED: {
         name: "PAUSED",
-        icon: PauseCircle,
+        icon: Pause,
         isRunning: true,
         isKillable: true,
         isFailed: false,
@@ -92,35 +96,35 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
     },
     SKIPPED: {
         name: "SKIPPED",
-        icon: Cancel,
+        icon: SkipNextCircleOutline,
         isRunning: false,
         isKillable: false,
         isFailed: true,
     },
     QUEUED: {
         name: "QUEUED",
-        icon: MotionPauseOutline,
+        icon: ClockTimeFourOutline,
         isRunning: false,
         isKillable: false,
         isFailed: false,
     },
     RETRYING: {
         name: "RETRYING",
-        icon: Refresh,
+        icon: Restart,
         isRunning: false,
         isKillable: true,
         isFailed: false,
     },
     RETRIED: {
         name: "RETRIED",
-        icon: Refresh,
+        icon: Restore,
         isRunning: false,
         isKillable: false,
         isFailed: false,
     },
     BREAKPOINT: {
         name: "BREAKPOINT",
-        icon: PauseCircle,
+        icon: PauseOctagon,
         isRunning: false,
         isKillable: false,
         isFailed: false,

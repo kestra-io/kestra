@@ -131,9 +131,9 @@ public abstract class AbstractTaskRunnerTest {
                     "cat " + wdir + "{{internalStorageFile}} && echo",
                     "cat " + wdir + "hello.txt && echo",
                     "cat " + wdir + "hello.txt > " + wdir + "output.txt",
-                    "echo -n 'file from output dir' > {{outputDir}}/file.txt",
+                    "printf '%s' 'file from output dir' > {{outputDir}}/file.txt",
                     "mkdir {{outputDir}}/nested",
-                    "echo -n 'nested file from output dir' > {{outputDir}}/nested/file.txt",
+                    "printf '%s' 'nested file from output dir' > {{outputDir}}/nested/file.txt",
                     "echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'"
                 )
             ),

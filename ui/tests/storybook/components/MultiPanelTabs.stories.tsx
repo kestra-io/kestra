@@ -35,7 +35,7 @@ const render: Story["render"] = ({modelValue}) => ({
             padding: "0 1rem"
         };
 
-        return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
+        return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-bg-body)">
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
             <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
             <MultiPanelTabs modelValue={modelValueRef.value} />
@@ -250,14 +250,19 @@ export const TabReorderTest: Story = {
             // Find the tab elements in the first panel
             const firstTab = canvas.getByText("Tab 2");
             const tabList = canvas.getByRole("tablist");
+            const targetTab = canvas.getAllByText("Tab 1")[0];
 
             // Perform drag operation
             await fireEvent.dragStart(firstTab);
 
-            await fireEvent.dragOver(tabList, {clientX: 250});
+            // Aim just inside the left edge of Tab 1 so the insertion point
+            // lands between Tab 3 (now at index 1) and Tab 1 (now at index 2),
+            // independent of tab width / padding tokens.
+            const targetRect = (targetTab.closest(".editor-tab") ?? targetTab).getBoundingClientRect();
+            await fireEvent.dragOver(tabList, {clientX: targetRect.left + 2});
 
             // Perform drop operation at the calculated position
-            await fireEvent.drop(canvas.getAllByText("Tab 1")[0]);
+            await fireEvent.drop(targetTab);
 
             // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));

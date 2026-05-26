@@ -151,7 +151,7 @@
 
 <style lang="scss" scoped>
     .node-wrapper {
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: var(--ks-border-radius-lg);
         margin: 0;
         z-index: 150000;
@@ -167,12 +167,12 @@
         }
 
         &.execution-no-taskrun, &.disabled {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-surface);
         }
 
         &.disabled {
             .task-title {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 text-decoration: line-through;
             }
         }
@@ -211,7 +211,7 @@
 
     .description-button {
         margin-left: 0.5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: pointer;
     }
 
@@ -230,7 +230,7 @@
         white-space: nowrap;
         font-size: 0.75rem;
         font-weight: 700;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         flex-grow: 1;
     }
 
@@ -254,12 +254,12 @@
             bottom: -1px;
             border-radius: .55rem;
             background: conic-gradient(from calc(var(--border-angle-running)) at 50% 50%,
-                var(--ks-border-running) 0%,
-                var(--ks-border-running) 10%,
+                var(--ks-status-border-running) 0%,
+                var(--ks-status-border-running) 10%,
                 var(--ks-border-primary) 40%,
                 var(--ks-border-primary) 60%,
-                var(--ks-border-running) 90%,
-                var(--ks-border-running) 100%);
+                var(--ks-status-border-running) 90%,
+                var(--ks-status-border-running) 100%);
             animation: running-border 3s linear infinite;
         }
     }

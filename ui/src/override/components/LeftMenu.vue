@@ -3,6 +3,7 @@
         v-if="menu"
         :menu
         :showLink
+        :collapsed
         @menu-collapse="onCollapse"
         :class="{overlay: verticalLayout}"
     >
@@ -22,8 +23,10 @@
 
     withDefaults(defineProps<{
         showLink?: boolean
+        collapsed?: boolean
     }>(), {
         showLink: true,
+        collapsed: false,
     })
 
     const emit = defineEmits<{
@@ -40,16 +43,10 @@
 <style scoped lang="scss">
 #side-menu {
     .kel-select {
-        padding: 0 30px;
+        padding: 0 18px;
         padding-bottom: 15px;
         transition: all 0.2s ease;
         background-color: transparent;
-    }
-    &.vsm_collapsed {
-        .kel-select {
-            padding-left: 5px;
-            padding-right: 5px;
-        }
     }
 }
 </style>

@@ -20,33 +20,7 @@
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
-            >
-                <div 
-                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
-                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
-                >
-                    <KsButton
-                        :tag="RouterLink"
-                        :to="{
-                            name: 'executions/list', 
-                            query: {
-                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
-                                'filters[kind][EQUALS]': 'LOOP',
-                            }        
-                        }"
-                    >
-                        Iterations
-                    </KsButton>
-                    <KsProgress 
-                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
-                        :strokeWidth="24"
-                        :textInside="true"
-                        class="progress-bar"
-                    >
-                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
-                    </KsProgress>
-                </div>
-                
+            >   
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -67,6 +41,31 @@
                             <div id="buttons" />
                         </template>
                     </TaskRunLine>
+                    <div 
+                        v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                        style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
+                    >
+                        <KsButton
+                            :tag="RouterLink"
+                            :to="{
+                                name: 'executions/list', 
+                                query: {
+                                    'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                    'filters[kind][EQUALS]': 'LOOP',
+                                }        
+                            }"
+                        >
+                            Iterations
+                        </KsButton>
+                        <KsProgress 
+                            :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                            :strokeWidth="24"
+                            :textInside="true"
+                            class="progress-bar"
+                        >
+                            <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                        </KsProgress>
+                    </div>
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="

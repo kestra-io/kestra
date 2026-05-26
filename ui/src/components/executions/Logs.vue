@@ -164,7 +164,8 @@
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
+                logCursor: undefined,
+                logsLoading: false,
             };
         },
         created() {
@@ -172,9 +173,19 @@
             this.filter = (this.$route.query.q || undefined);
         },
         watch:{
+            "executionsStore.execution": {
+                immediate: true,
+                handler(execution, oldExecution) {
+                    if (execution && !oldExecution && this.raw_view && !this.logsLoading && !this.executionsStore.logs?.length) {
+                        this.loadLogs()
+                    }
+                },
+            },
             level: {
                 handler() {
-                    if (this.raw_view) {
+                    if (this.raw_view && this.executionsStore.execution) {
+                        this.executionsStore.logs = {total: 0, results: []}
+                        this.logsLoading = false
                         this.loadLogs();
                     }
                 }
@@ -254,11 +265,15 @@
         },
         methods: {
             loadLogs(){
+                if (this.logsLoading) return
+                this.logsLoading = true
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
                         minLevel: this.level
                     }
+                }).finally(() => {
+                    this.logsLoading = false
                 })
             },
             downloadContent() {
@@ -343,7 +358,7 @@
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
-                this.$refs.logScroller.scrollToItem(index);
+                this.$refs.logScroller?.scrollToItem(index);
             }
         }
     };
@@ -371,9 +386,13 @@
         .line {
             padding: .5rem;
         }
+
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
+        }
     }
 
-    .temporal {
+    .log-lines.temporal {
         .line {
             align-items: flex-start;
         }

@@ -81,10 +81,13 @@
     defineOptions({inheritAttrs: false})
 
     const DEFAULT_PAGE_SIZE = 25
-    // Upper bound for page size — a hostile URL like `?size=10000000` must not
-    // turn into a 10M-row backend request. 1000 is far above any real UI need
-    // (the largest preset option is 100) and far below a memory/latency cliff.
+    // Upper bounds for page/size. A hostile URL (`?size=10000000`, `?page=1e308`)
+    // must not become a 10M-row request or a garbage offset string sent to the
+    // backend. 1000 is far above any real page size (largest preset is 100);
+    // 1e6 pages is far beyond any real deep-link and keeps page*size a sane,
+    // finite integer rather than `1e+308`.
     const MAX_PAGE_SIZE = 1000
+    const MAX_PAGE = 1_000_000
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -154,7 +157,8 @@
     // feeding both loadData and the paginator, so clamp here for every caller.
     const normalizePage = (value: number | undefined): number => {
         const page = Math.floor(Number(value))
-        return Number.isFinite(page) && page >= 1 ? page : 1
+        if (!Number.isFinite(page) || page < 1) return 1
+        return Math.min(page, MAX_PAGE)
     }
     const normalizeSize = (value: number | undefined): number => {
         const size = Math.floor(Number(value))

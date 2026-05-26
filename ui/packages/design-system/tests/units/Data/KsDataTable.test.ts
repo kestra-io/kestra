@@ -287,6 +287,14 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads).page).toBe(2)
     })
 
+    test("caps an absurdly large currentPage (finite offset guard)", async () => {
+        const loads = mountWithSpy({currentPage: 1e308, pageSize: 25})
+        await tick()
+        // Must not forward `1e+308` as a page — keep it a sane finite integer.
+        expect(lastLoad(loads).page).toBeLessThanOrEqual(1_000_000)
+        expect(Number.isInteger(lastLoad(loads).page)).toBe(true)
+    })
+
     test("falls back to page 1 for NaN / Infinity currentPage", async () => {
         const nan = mountWithSpy({currentPage: Number.NaN, pageSize: 25})
         const inf = mountWithSpy({currentPage: Number.POSITIVE_INFINITY, pageSize: 25})

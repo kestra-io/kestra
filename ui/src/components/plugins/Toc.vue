@@ -1,7 +1,7 @@
 <template>
     <div class="plugins-list">
-        <KsInput
-            class="p-2 bg-transparent search"
+        <KsSearch
+            class="search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable

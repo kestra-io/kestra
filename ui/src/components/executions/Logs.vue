@@ -4,7 +4,7 @@
             :configuration="logExecutionsFilter"
             :tableOptions="{
                 chart: {shown: false},
-                columns: {shown: false}, 
+                columns: {shown: false},
                 refresh: {shown: true, callback: loadLogs}
             }"
             @search="filter = $event"
@@ -78,13 +78,19 @@
             :targetFlow="executionsStore.flow"
             :showProgressBar="false"
         />
-        <el-card v-else class="attempt-wrapper">
+        <el-card v-else class="attempt-wrapper" style="--kel-card-padding: 0">
+            <el-empty
+                v-if="Array.isArray(executionsStore.logs) && temporalLogs.length === 0"
+                :description="$t('no_logs_data_description')"
+            />
             <DynamicScroller
+                v-if="temporalLogs.length > 0"
                 ref="logScroller"
                 :items="temporalLogs"
                 :minItemSize="50"
                 keyField="index"
                 class="log-lines temporal"
+                :style="{maxHeight: 'calc(100vh - 335px)', marginTop: '0.5rem'}"
                 :buffer="200"
                 :prerender="20"
             >
@@ -114,7 +120,7 @@
 
 <script setup>
     import {useLogExecutionsFilter} from "../filter/configurations";
-    
+
     const logExecutionsFilter = useLogExecutionsFilter();
 </script>
 <script>
@@ -159,7 +165,8 @@
                 openedTaskrunsCount: 0,
                 raw_view: false,
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
+                logCursor: undefined,
+                logsLoading: false,
             };
         },
         created() {
@@ -167,9 +174,19 @@
             this.filter = (this.$route.query.q || undefined);
         },
         watch:{
+            "executionsStore.execution": {
+                immediate: true,
+                handler(execution, oldExecution) {
+                    if (execution && !oldExecution && this.raw_view && !this.logsLoading && !this.executionsStore.logs?.length) {
+                        this.loadLogs()
+                    }
+                },
+            },
             level: {
                 handler() {
-                    if (this.raw_view) {
+                    if (this.raw_view && this.executionsStore.execution) {
+                        this.executionsStore.logs = {total: 0, results: []}
+                        this.logsLoading = false
                         this.loadLogs();
                     }
                 }
@@ -243,9 +260,15 @@
         },
         methods: {
             loadLogs(){
+                if (this.logsLoading) return
+                this.logsLoading = true
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
-                    minLevel: this.level
+                    params: {
+                        minLevel: this.level,
+                    },
+                }).finally(() => {
+                    this.logsLoading = false
                 })
             },
             downloadContent() {
@@ -327,7 +350,7 @@
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
-                this.$refs.logScroller.scrollToItem(index);
+                this.$refs.logScroller?.scrollToItem(index)
             }
         }
     };
@@ -348,16 +371,16 @@
     }
 
     .log-lines {
-        max-height: calc(100vh - 335px);
-        transition: max-height 0.2s ease-out;
-        margin-top: .5rem;
-
         .line {
             padding: .5rem;
         }
+
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
+        }
     }
 
-    .temporal {
+    .log-lines.temporal {
         .line {
             align-items: flex-start;
         }

@@ -55,8 +55,8 @@
 
             <KsPagination
                 v-if="total && total > 0"
-                :currentPage="internalPage"
-                :pageSize="internalSize"
+                :currentPage="currentPageValue"
+                :pageSize="currentSizeValue"
                 :total
                 layout="sizes, prev, pager, next, total"
                 size="small"
@@ -110,6 +110,8 @@
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
+        "update:currentPage": [page: number]
+        "update:pageSize": [size: number]
         "sort-change": [sort: {column: any; prop: string; order: string | null}]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
@@ -135,8 +137,13 @@
     const isLoading = ref(props.loading)
     const isReady = ref(false)
 
-    const internalPage = ref(props.currentPage)
-    const internalSize = ref(props.pageSize)
+    // page/size are derived from props. No local mirror — `props.currentPage`
+    // and `props.pageSize` are the single source of truth, controlled by the
+    // parent (typically bound to URL). Use v-model:currentPage / v-model:pageSize
+    // to opt into two-way binding, or :currentPage="..." + @page-changed for
+    // one-way URL-driven control.
+    const currentPageValue = computed(() => props.currentPage ?? 1)
+    const currentSizeValue = computed(() => props.pageSize ?? 25)
     const internalSort = ref<string>()
 
     const tableRef = ref<InstanceType<typeof KsTable>>()
@@ -243,8 +250,8 @@
         isLoading.value = true
         try {
             await props.loadData({
-                page: internalPage.value,
-                size: internalSize.value,
+                page: currentPageValue.value,
+                size: currentSizeValue.value,
                 sort: internalSort.value,
             })
         } finally {
@@ -261,8 +268,14 @@
     const reload = () => callLoad()
 
     const resetAndReload = () => {
-        internalPage.value = 1
-        callLoad()
+        if (currentPageValue.value !== 1) {
+            // Ask the parent to set page back to 1. The resulting prop change
+            // triggers callLoad through the watcher below.
+            emit("update:currentPage", 1)
+            emit("page-changed", {page: 1, size: currentSizeValue.value})
+        } else {
+            callLoad()
+        }
     }
 
     onMounted(() => {
@@ -297,20 +310,21 @@
     }, {immediate: true})
 
     watch(() => props.loading, (val) => { isLoading.value = val })
-    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1 })
-    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25 })
+
+    // Reload whenever the controlling parent updates page/size. This is the
+    // single trigger path for pagination loads — user clicks only emit; the
+    // parent updates state (URL or local ref) which propagates back here.
+    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
-        internalPage.value = page
-        emit("page-changed", {page, size: internalSize.value})
-        callLoad()
+        emit("update:currentPage", page)
+        emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
-        internalPage.value = 1
-        internalSize.value = size
+        emit("update:currentPage", 1)
+        emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
-        callLoad()
     }
 
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {

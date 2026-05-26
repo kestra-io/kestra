@@ -195,4 +195,57 @@ describe("KsDataTable", () => {
         ;(wrapper.vm as any).isLoading = true
         expect((wrapper.vm as any).isLoading).toBe(true)
     })
+
+    test("emits update:currentPage on page change (v-model contract)", async () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
+            global: globalConfig,
+        })
+        await (wrapper.vm as any).onPageChange(4)
+        expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([4])
+    })
+
+    test("emits update:currentPage and update:pageSize on size change", async () => {
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 3},
+            global: globalConfig,
+        })
+        await (wrapper.vm as any).onSizeChange(50)
+        expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
+        expect(wrapper.emitted("update:pageSize")?.[0]).toEqual([50])
+    })
+
+    test("loadData only fires when controlling prop changes — no internal page state", async () => {
+        let loadCallCount = 0
+        const loadDataSpy = async () => { loadCallCount++ }
+
+        const wrapper = mount(KsDataTable, {
+            props: {
+                data: SAMPLE_DATA,
+                total: 100,
+                pageSize: 10,
+                currentPage: 1,
+                loadData: loadDataSpy,
+            },
+            global: globalConfig,
+        })
+
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(loadCallCount).toBe(1) // initial mount load
+
+        // Simulate a user click without the parent updating the prop.
+        await (wrapper.vm as any).onPageChange(3)
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+        // Without the parent honoring the emit and changing the prop, no
+        // additional load fires — proves there is no internal page mirror
+        // driving callLoad.
+        expect(loadCallCount).toBe(1)
+
+        // Now have the parent honor the contract: update the prop.
+        await wrapper.setProps({currentPage: 3})
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+        expect(loadCallCount).toBe(2)
+    })
 })

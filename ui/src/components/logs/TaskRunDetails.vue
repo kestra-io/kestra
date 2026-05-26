@@ -257,10 +257,12 @@
     import {useI18n} from "vue-i18n"
     import type {Log} from "../../stores/logs"
 
+    export type LOG_LEVEL = "INFO" | "ERROR" | "WARN" | "DEBUG" | "TRACE"
+
     export interface Props {
         logCursor?: string
         levelToHighlight?: string
-        level?: "INFO" | "ERROR" | "WARN" | "DEBUG" | "TRACE"
+        level?: LOG_LEVEL
         filter?: string
         taskRunId?: string
         excludeMetas?: (keyof Log)[]

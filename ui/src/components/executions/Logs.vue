@@ -115,7 +115,7 @@
     import {useI18n} from "vue-i18n"
     import moment from "moment"
     import {useLogExecutionsFilter} from "../filter/configurations"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import TaskRunDetails, {LOG_LEVEL} from "../logs/TaskRunDetails.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
@@ -163,7 +163,7 @@
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-    } = useRouteFilterPolicy({
+    } = useRouteFilterPolicy<LOG_LEVEL>({
         defaultValue: () => defaultLogLevel.value,
         applyDefaultIfMissing: () => true,
         fallbackValue: () => "TRACE",

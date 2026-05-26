@@ -138,7 +138,7 @@
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import TaskRunDetails, {LOG_LEVEL} from "../logs/TaskRunDetails.vue"
     import Collapse from "../layout/Collapse.vue"
     import Editor from "./Editor.vue"
 
@@ -292,7 +292,7 @@
     const taskEditDomElement = ref()
     const isShowLogsOpen = ref(false)
     const logFilter = ref("")
-    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
+    const logLevel = ref<LOG_LEVEL>(localStorage.getItem("defaultLogLevel") as LOG_LEVEL || "INFO")
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)

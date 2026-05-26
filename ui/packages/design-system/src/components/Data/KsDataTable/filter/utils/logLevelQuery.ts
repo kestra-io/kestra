@@ -24,12 +24,12 @@ const firstStringValue = (
     return typeof value === "string" ? value : undefined
 }
 
-export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) => {
+export function readRouteLevelFilter<T extends string> (query: LocationQuery | LocationQueryRaw) {
     const value =
         firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]) ??
         firstStringValue(query[LEGACY_LEVEL_FILTER_KEY])
 
-    return value && value.length > 0 ? value : undefined
+    return value && value.length > 0 ? (value as T) : undefined
 }
 
 export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw) =>

@@ -136,7 +136,7 @@
     import moment from "moment"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import TaskRunDetails, {LOG_LEVEL} from "../logs/TaskRunDetails.vue"
     import {State, durationUtils} from "@kestra-io/design-system"
     import Duration from "../layout/Duration.vue"
     import * as FlowUtils from "../../utils/flowUtils"
@@ -252,8 +252,8 @@
     const onboardingAnimationPlayed = ref(false)
 
     // Log level filter policy
-    const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
-    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<string>({
+    const defaultLogLevel = computed<LOG_LEVEL>(() => localStorage.getItem("defaultLogLevel") as LOG_LEVEL || "INFO")
+    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<LOG_LEVEL>({
         defaultValue: () => defaultLogLevel.value,
         applyDefaultIfMissing: () => true,
         fallbackValue: () => "TRACE",

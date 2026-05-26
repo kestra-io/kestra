@@ -14,7 +14,6 @@
                 active: isTaskRunActive,
             }"
         >
-            
             <DynamicScrollerItem
                 v-if="uniqueTaskRunDisplayFilter(currentTaskRun)"
                 :item="currentTaskRun"
@@ -41,31 +40,6 @@
                             <div id="buttons" />
                         </template>
                     </TaskRunLine>
-                    <div 
-                        v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
-                        style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
-                    >
-                        <KsButton
-                            :tag="RouterLink"
-                            :to="{
-                                name: 'executions/list', 
-                                query: {
-                                    'filters[parentId][EQUALS]': currentTaskRun.executionId,
-                                    'filters[kind][EQUALS]': 'LOOP',
-                                }        
-                            }"
-                        >
-                            Iterations
-                        </KsButton>
-                        <KsProgress 
-                            :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
-                            :strokeWidth="24"
-                            :textInside="true"
-                            class="progress-bar"
-                        >
-                            <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
-                        </KsProgress>
-                    </div>
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="
@@ -226,6 +200,31 @@
                         </template>
                     </DynamicScroller>
                 </KsCard>
+                <div 
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
+                >
+                    <KsButton
+                        :tag="RouterLink"
+                        :to="{
+                            name: 'executions/list', 
+                            query: {
+                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                'filters[kind][EQUALS]': 'LOOP',
+                            }        
+                        }"
+                    >
+                        Iterations
+                    </KsButton>
+                    <KsProgress 
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                        :strokeWidth="24"
+                        :textInside="true"
+                        class="progress-bar"
+                    >
+                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                    </KsProgress>
+                </div>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>
@@ -257,7 +256,6 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
-    import {set} from "lodash"
     import KsProgress from "@kestra-io/design-system/components/Data/KsProgress.vue"
     import KsLink from "@kestra-io/design-system/components/Basic/KsLink.vue"
 
@@ -349,7 +347,6 @@
                 throttledExecutionUpdate: undefined,
                 targetExecution: undefined,
                 loopOutputsByTaskRunId: {},
-                pollingTimer: {},
             }
         },
         watch: {
@@ -618,43 +615,22 @@
             },
         },
         methods: {
-            startPollingLoopStatus(taskRunId) {
-                if(this.pollingTimer[taskRunId]){
-                    return
-                }
-                this.pollingTimer[taskRunId] = setInterval(async () => {
-                    this.updateLoopStatus(taskRunId)
-                }, 500)
-            },
-            stopPollingLoopStatus(taskRunId) {
-                clearInterval(this.pollingTimer[taskRunId])
-                this.pollingTimer[taskRunId] = null
-            },
             async updateLoopStatus(taskRunId) {
                 if (!this.followedExecution) return
-                for (const taskRun of this.currentTaskRuns) {
-                    if (
-                        this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop"
-                    ) {
-                        try {
-                            const outputs = await OutputsAPI.taskRunOutputs({
-                                executionId: this.followedExecution.id,
-                                taskRunId,
-                            })
-                            if(outputs === null 
-                                || !outputs.iterationCount 
-                                || !outputs.terminatedIterations) {
-                                return
-                            }
-
-                            if(outputs.terminatedIterations >= outputs.iterationCount) {
-                                this.stopPollingLoopStatus(taskRunId)
-                            }
-                            this.loopOutputsByTaskRunId[taskRunId] = outputs
-                        } catch (_) {
-                            // ignore fetch errors
-                        }
+                try {
+                    const outputs = await OutputsAPI.taskRunOutputs({
+                        executionId: this.followedExecution.id,
+                        taskRunId,
+                    })
+                    if(outputs === null 
+                        || !outputs.iterationCount 
+                        || !outputs.terminatedIterations) {
+                        return
                     }
+
+                    this.loopOutputsByTaskRunId[taskRunId] = outputs
+                } catch {
+                    // ignore fetch errors
                 }
             },
             fileUrl(path) {
@@ -758,7 +734,7 @@
                 this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
                 for(const taskRun of this.currentTaskRuns) {
                     if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
-                        this.startPollingLoopStatus(taskRun.id)
+                        this.updateLoopStatus(taskRun.id)
                     }
                 }
                 this.logsBuffer = []
@@ -993,9 +969,6 @@
         },
         beforeUnmount() {
             this.closeLogsSSE()
-            for(const taskRunId in this.pollingTimer) {
-                this.stopPollingLoopStatus(taskRunId)
-            }
         },
     }
 </script>
@@ -1015,7 +988,7 @@
     }
 
     .progress-bar {
-        margin-bottom: .5rem;
+        margin-block: .5rem;
         flex: 1;
     }
 

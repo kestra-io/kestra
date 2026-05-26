@@ -69,8 +69,8 @@ public class MetadataMigrationService {
         );
     }
 
-    public void kvMigration() throws IOException {
-        this.namespacesPerTenant().entrySet().stream()
+    public void kvMigration(String tenantFilter) throws IOException {
+        filterTenants(this.namespacesPerTenant(), tenantFilter).entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant ->
             {
@@ -105,8 +105,8 @@ public class MetadataMigrationService {
             }));
     }
 
-    public void nsFilesMigration(boolean verbose) throws IOException {
-        this.namespacesPerTenant().entrySet().stream()
+    public void nsFilesMigration(boolean verbose, String tenantFilter) throws IOException {
+        filterTenants(this.namespacesPerTenant(), tenantFilter).entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant ->
             {
@@ -126,8 +126,18 @@ public class MetadataMigrationService {
             }));
     }
 
-    public void secretMigration() throws Exception {
+    public void secretMigration(String tenantFilter) throws Exception {
         throw new UnsupportedOperationException("Secret migration is not needed in the OSS version");
+    }
+
+    protected static Map<String, List<String>> filterTenants(Map<String, List<String>> namespacesPerTenant, String tenantFilter) {
+        if (tenantFilter == null) {
+            return namespacesPerTenant;
+        }
+        if (!namespacesPerTenant.containsKey(tenantFilter)) {
+            throw new IllegalArgumentException("Tenant '" + tenantFilter + "' not found. Available tenants: " + namespacesPerTenant.keySet());
+        }
+        return Map.of(tenantFilter, namespacesPerTenant.get(tenantFilter));
     }
 
     private static List<PathAndAttributes> listAllFromStorage(StorageInterface storage, Function<String, String> prefixFunction, String tenant, String namespace) throws IOException {

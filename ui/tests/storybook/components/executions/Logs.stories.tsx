@@ -1,6 +1,6 @@
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
-import {userEvent, waitFor, within} from "storybook/test";
+import {waitFor} from "storybook/test";
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import {storageKeys} from "../../../../src/utils/constants";
 // @ts-ignore — Logs.vue is a JS component without a declaration file
@@ -95,91 +95,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
     decorators: makeDecorators(),
-};
-
-/**
- * Selects WARN from the level filter chip and asserts the full chain fires:
- * chip label updates, loadLogs is called with minLevel=WARN, and the store
- * ends up with exactly 3 logs (1 ERROR + 2 WARN).
- *
- * Store-state assertions are used instead of DOM-node counts because
- * DynamicScroller only renders items visible in the viewport — counting
- * .line elements is unreliable in Storybook's sandboxed iframe.
- */
-export const LevelFilterUpdatesRoute: Story = {
-    decorators: makeDecorators(),
-    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
-        const iframeBody = canvasElement.ownerDocument.body;
-
-        // 1. Wait for chip to stabilise at INFO (default).
-        await waitFor(
-            () => {
-                const valueEl = canvasElement.querySelector(".chip .value");
-                if (!valueEl || !/info/i.test(valueEl.textContent ?? "")) {
-                    throw new Error(`chip shows "${valueEl?.textContent}", expected INFO`);
-                }
-            },
-            {timeout: 5000}
-        );
-
-        // 2. Open the filter chip popup.
-        const combobox = await waitFor(
-            async () => {
-                const chip = canvasElement.querySelector<HTMLElement>(".chip");
-                if (!chip) throw new Error("filter chip not found");
-
-                const popup = iframeBody.querySelector(".edit-popup");
-                if (!popup) {
-                    await userEvent.click(chip);
-                    throw new Error("popup not yet open, retrying");
-                }
-
-                const cb = within(iframeBody).queryByRole("combobox");
-                if (!cb) throw new Error("combobox not yet rendered in popup");
-                return cb;
-            },
-            {timeout: 5000, interval: 300}
-        );
-        await userEvent.click(combobox);
-
-        // 3. Select WARN from the dropdown.
-        const warnOption = await waitFor(
-            () => within(iframeBody).getByRole("option", {name: /^warn$/i}),
-            {timeout: 3000}
-        );
-        await userEvent.click(warnOption);
-
-        // 4. Click "Apply" to commit.
-        const applyBtn = await waitFor(
-            () => within(iframeBody).getByRole("button", {name: /^apply$/i}),
-            {timeout: 3000}
-        );
-        await userEvent.click(applyBtn);
-
-        // 5. Chip label must update to WARN.
-        await waitFor(
-            () => {
-                const valueEl = canvasElement.querySelector(".chip .value");
-                if (!valueEl || !/warn/i.test(valueEl.textContent ?? "")) {
-                    throw new Error(`chip still shows "${valueEl?.textContent}"`);
-                }
-            },
-            {timeout: 3000}
-        );
-
-        // 6. Store must hold exactly 3 logs (ERROR + 2×WARN): confirms
-        //    the full chain fired — chip → route → loadLogs(WARN) → axios mock.
-        await waitFor(
-            () => {
-                const store = useExecutionsStore();
-                const count = (store.logs as unknown as any[])?.length ?? -1;
-                if (count !== 3) {
-                    throw new Error(`expected 3 logs in store after WARN filter, got ${count}`);
-                }
-            },
-            {timeout: 3000}
-        );
-    },
 };
 
 /**

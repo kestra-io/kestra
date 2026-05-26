@@ -33,20 +33,19 @@
             <div
                 ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="renderedMarkdown"
+                v-html="renderedHtml"
             />
         </div>
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, nextTick} from "vue";
+    import {computed, nextTick, ref, watch} from "vue";
     import Convert from "ansi-to-html";
     import {useStorage} from "@vueuse/core";
     import xss from "xss";
-    import * as Markdown from "../../utils/markdown";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import linkify from "./linkify";
+    import linkify, {processLinkTags} from "./linkify";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import {LevelKey} from "../../utils/logs";
     import {Log} from "../../stores/logs";
@@ -64,11 +63,10 @@
     }>();
 
     // State
-    const renderedMarkdown = ref<string | undefined>(undefined);
     const logsFontSize = useStorage<number>("logsFontSize", 12);
-    const lineContent = ref<HTMLElement>();
-
     const convert = new Convert();
+    const lineContent = ref<HTMLElement>();
+    const router = useRouter();
 
     // Computed
     const logLineStyle = computed(() => ({
@@ -135,38 +133,28 @@
         return `var(--ks-log-content-${logLevel}) !important`;
     });
 
-    const message = computed(() => {
-        let logMessage = !props.log.message
-            ? ""
-            : convert.toHtml(
-                xss(props.log.message, {
-                    allowList: {span: ["style"]},
-                })
-            );
-        logMessage = logMessage.replaceAll(
+    const renderedHtml = computed(() => {
+        const raw = props.log.message ?? ""
+        let html = convert.toHtml(
+            xss(raw, {
+                allowList: {span: ["style"]},
+            }),
+        )
+
+        html = processLinkTags(html)
+        html = html.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-            "$1<a href='$2' target='_blank'>$2</a>$3"
-        );
-        return logMessage;
-    });
+            "$1<a href='$2' target='_blank'>$2</a>$3",
+        )
 
-    const router = useRouter()
-    onMounted(() => {
-        setTimeout(() => {
-            linkify(lineContent.value, router);
-        }, 200);
-    });
+        return html
+    })
 
-    watch(renderedMarkdown, () => {
+    watch(renderedHtml, () => {
         nextTick(() => {
             linkify(lineContent.value, router);
         });
     });
-
-    // Initial markdown render
-    (async () => {
-        renderedMarkdown.value = await Markdown.render(message.value, {onlyLink: true, html: true});
-    })();
 </script>
 <style scoped lang="scss">
 div.line {

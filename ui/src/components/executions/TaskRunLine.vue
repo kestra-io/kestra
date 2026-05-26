@@ -291,7 +291,7 @@
         if (task === undefined && parentTaskRunId) {
             return taskType(taskRunById.value[parentTaskRunId])
         }
-        return task ? task.type : undefined
+        return task ? task.type as string | undefined : undefined
     }
 
     function downloadContent(currentTaskRunId: string) {

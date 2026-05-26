@@ -9,7 +9,7 @@ import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {useClient} from "@kestra-io/kestra-sdk"
 import * as ExecutionUtils from "../utils/executionUtils"
 
-interface LogsState {
+export interface LogsState {
     total: number;
     results: any[];
 }

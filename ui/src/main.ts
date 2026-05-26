@@ -102,13 +102,13 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
 
     // axios
     const axiosInstance = configureAxios({}, {
-        authStore,
+        authStore: authStore as any, // FIXME: type this properly — authStore.logout returns Promise<boolean> but SDK expects Promise<void>
         coreStore,
         oss: true,
         router,
         beforeLogout,
         onAuthTimeout: beforeLogout,
-        isImpersonating: () => window.sessionStorage.getItem("impersonate"),
+        isImpersonating: () => !!window.sessionStorage.getItem("impersonate"),
     })
 
     piniaStore.use(({store: piniaStoreLocal}) => {

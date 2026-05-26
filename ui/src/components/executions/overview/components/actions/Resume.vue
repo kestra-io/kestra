@@ -68,7 +68,7 @@
 
         const findTaskById = FlowUtils.findTaskById(executionsStore.flow, (findTaskRunByState[0] as any).taskId)
 
-        return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs : []
+        return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs as any[] : []
     })
 
     const needInputs = computed(() => inputsList.value?.length > 0)

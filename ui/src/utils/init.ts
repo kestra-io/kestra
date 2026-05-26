@@ -5,17 +5,29 @@ import type {Pinia} from "pinia"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
 import moment from "moment-timezone"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/de"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/es"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/fr"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/hi"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/it"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/ja"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/ko"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/pl"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/pt"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/ru"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/zh-cn"
+// @ts-ignore — moment locale files lack type declarations
 import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range"
 import VueVirtualScroller from "vue-virtual-scroller"
@@ -73,7 +85,7 @@ export default async (
     })
 
     router.afterEach((to) => {
-        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
+        window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", {detail: to}))
     })
 
     // avoid loading router in storybook
@@ -94,21 +106,21 @@ export default async (
 
     let i18n = setupI18n({
         locale: "en",
-        messages: translations,
+        ...(translations ? {messages: translations} : {}), // FIXME: type this properly — messages not in strict i18n options type
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
-    })
+    } as any)
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
     await registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
-        await loadLocaleMessages(i18n, locale, additionalTranslations)
-        await setI18nLanguage(i18n, locale)
+        await loadLocaleMessages(i18n, locale as any, additionalTranslations as any)
+        await setI18nLanguage(i18n, locale as any)
     }
-    setDesignSystemLocale(locale)
+    setDesignSystemLocale(locale as any)
     app.use(i18n)
 
     // moment
@@ -117,7 +129,8 @@ export default async (
     const momentExtended: any = extendMoment(moment)
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
-    setDateFormatter(dateFilter)
+    // dateFilter accepts string, DateFormatterFn accepts string | Date — cast to satisfy the type
+    setDateFormatter(dateFilter as any)
 
     // others plugins
     app.use(Toast)

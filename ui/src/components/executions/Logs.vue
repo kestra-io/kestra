@@ -265,7 +265,7 @@
     )
 
     watch(() => executionsStore.execution, (execution, oldExecution) => {
-        if (execution && !oldExecution && raw_view.value && !logsLoading.value && !executionsStore.logs?.length) {
+        if (execution && !oldExecution && raw_view.value && !logsLoading.value && !executionsStore.logs?.total) {
             loadLogs()
         }
     }, {immediate: true})

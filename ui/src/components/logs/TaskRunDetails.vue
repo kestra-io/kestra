@@ -220,7 +220,7 @@
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore} from "../../stores/executions"
     import TaskRunLine from "../executions/TaskRunLine.vue"
-    import * as FlowUtils from "../../utils/flowUtils"
+
     import FilePreview from "../executions/FilePreview.vue"
     import {apiUrl} from "override/utils/route"
     import * as Utils from "../../utils/utils"

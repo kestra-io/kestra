@@ -437,8 +437,6 @@
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = (base: any) => {
-        // logsPage/logsSize belong to the embedded LogsWrapper in the expand
-        // rows — exclude them so they never leak into the triggers search query.
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...restQuery} = route.query as Record<string, any>
         const queryFilter: Record<string, any> = {...restQuery}
 
@@ -477,14 +475,7 @@
     const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
     const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
 
-    // Stringify so the watcher fires on actual filter content changes only.
-    // A `computed` returning a fresh object via spread compares unequal by
-    // reference each evaluation, and `watch(..., {deep: true})` does not
-    // perform structural equality — it would fire on every route.query
-    // change, including page/size updates.
     const filterQueryKey = computed(() => {
-        // Exclude the embedded LogsWrapper's logsPage/logsSize so paginating a
-        // trigger's logs doesn't reset the outer triggers table.
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
         return JSON.stringify(filters)
     })

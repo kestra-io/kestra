@@ -1,19 +1,3 @@
-/**
- * Regression test for the logs pagination wiring bug.
- *
- * Bug: navigating to /logs?page=2 rendered page 1 because LogsWrapper did
- * not bind `currentPage` to the URL, and the `filterQuery` watcher fired on
- * every route.query change (including page-only updates) and called
- * `resetAndReload()`, which forced internalPage back to 1.
- *
- * This test exercises the same wiring pattern in isolation (without the
- * heavy LogsWrapper deps) and verifies that:
- *   1. KsDataTable.internalPage tracks the URL page on mount.
- *   2. The filter-change watcher does NOT fire when only `page`/`size`
- *      change in the URL.
- *   3. A real filter change still triggers exactly one reset.
- */
-
 import {describe, test, expect} from "vitest"
 import {defineComponent, computed, watch, reactive, ref} from "vue"
 import {mount, flushPromises} from "@vue/test-utils"
@@ -25,10 +9,6 @@ const globalConfig = {
     plugins: [createI18n({legacy: false, locale: "en"}), KestraDesignSystem],
 }
 
-// Minimal harness that mirrors the LogsWrapper wiring (after the fix):
-//   - urlPage/urlSize bound to a reactive route.query mock
-//   - filterQueryKey watcher (stringified) that triggers resetAndReload
-//   - @page-changed handler that mutates route.query (simulates router.push)
 function makeHarness(initialQuery: Record<string, string> = {}) {
     const routeQuery = reactive<Record<string, string>>({...initialQuery})
     const filterResets = {count: 0}
@@ -104,8 +84,6 @@ describe("LogsWrapper-style pagination wiring", () => {
         await flushPromises()
         const baseline = filterResets.count
 
-        // Simulate the router.push that LogsWrapper does in @page-changed:
-        // only page and size move, filters untouched.
         routeQuery.page = "5"
         routeQuery.size = "25"
         await flushPromises()
@@ -139,15 +117,10 @@ describe("LogsWrapper-style pagination wiring", () => {
         await flushPromises()
         loadCalls.length = 0
 
-        // Change a filter the way useFilters.updateRoute(true) does: it drops
-        // `page` from the URL (back to 1) AND changes filter content in the
-        // same navigation.
         delete routeQuery.page
         routeQuery["filters[level][EQUALS]"] = "DEBUG"
         await flushPromises()
 
-        // The fetch that hits the backend is page 1 with the new filter — never
-        // a stale page-3 request left over from before the filter changed.
         expect(loadCalls.length).toBeGreaterThan(0)
         expect(loadCalls.every((c) => c.page === 1)).toBe(true)
         expect(loadCalls[loadCalls.length - 1]).toEqual({page: 1, size: 25})

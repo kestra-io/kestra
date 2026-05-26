@@ -81,11 +81,6 @@
     defineOptions({inheritAttrs: false})
 
     const DEFAULT_PAGE_SIZE = 25
-    // Upper bounds for page/size. A hostile URL (`?size=10000000`, `?page=1e308`)
-    // must not become a 10M-row request or a garbage offset string sent to the
-    // backend. 1000 is far above any real page size (largest preset is 100);
-    // 1e6 pages is far beyond any real deep-link and keeps page*size a sane,
-    // finite integer rather than `1e+308`.
     const MAX_PAGE_SIZE = 1000
     const MAX_PAGE = 1_000_000
 
@@ -146,15 +141,6 @@
     const isLoading = ref(props.loading)
     const isReady = ref(false)
 
-    // page/size are derived from props. No local mirror — `props.currentPage`
-    // and `props.pageSize` are the single source of truth, controlled by the
-    // parent (typically bound to URL). Use v-model:currentPage / v-model:pageSize
-    // to opt into two-way binding, or :currentPage="..." + @page-changed for
-    // one-way URL-driven control.
-    //
-    // Values come from the URL, so they can be hostile or malformed (negative,
-    // fractional, Infinity, absurdly large). This is the single chokepoint
-    // feeding both loadData and the paginator, so clamp here for every caller.
     const normalizePage = (value: number | undefined): number => {
         const page = Math.floor(Number(value))
         if (!Number.isFinite(page) || page < 1) return 1
@@ -292,8 +278,6 @@
 
     const resetAndReload = () => {
         if (currentPageValue.value !== 1) {
-            // Ask the parent to set page back to 1. The resulting prop change
-            // triggers callLoad through the watcher below.
             emit("update:currentPage", 1)
             emit("page-changed", {page: 1, size: currentSizeValue.value})
         } else {
@@ -334,9 +318,6 @@
 
     watch(() => props.loading, (val) => { isLoading.value = val })
 
-    // Reload whenever the controlling parent updates page/size. This is the
-    // single trigger path for pagination loads — user clicks only emit; the
-    // parent updates state (URL or local ref) which propagates back here.
     watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {

@@ -349,11 +349,6 @@
     const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
     const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
 
-    // Stringify so the watcher fires on actual filter content changes only.
-    // A `computed` returning a fresh object via spread compares unequal by
-    // reference each evaluation, and `watch(..., {deep: true})` does not
-    // perform structural equality — it would fire on every route.query
-    // change, including page/size updates.
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return JSON.stringify(filters)

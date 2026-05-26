@@ -231,36 +231,23 @@ describe("KsDataTable", () => {
         })
 
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
-        expect(loadCallCount).toBe(1) // initial mount load
+        expect(loadCallCount).toBe(1)
 
-        // Simulate a user click without the parent updating the prop.
         await (wrapper.vm as any).onPageChange(3)
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-        // Without the parent honoring the emit and changing the prop, no
-        // additional load fires — proves there is no internal page mirror
-        // driving callLoad.
         expect(loadCallCount).toBe(1)
 
-        // Now have the parent honor the contract: update the prop.
         await wrapper.setProps({currentPage: 3})
         await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
         expect(loadCallCount).toBe(2)
     })
 
-    // ── Hardening: garbage page/size from the URL must never reach loadData ──
-    // The parent computes currentPage/pageSize from route.query; a hostile or
-    // careless URL can carry negatives, fractions, Infinity, or absurd sizes.
-    // KsDataTable is the single chokepoint feeding both loadData and the
-    // paginator, so it clamps here for every caller at once.
-
     type Load = {page: number; size: number; sort?: string}
     const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
     const lastLoad = (loads: Load[]): Load => loads[loads.length - 1]
 
-    // Returns the array of loadData calls so the test can assert what reached
-    // the backend after clamping.
     const mountWithSpy = (props: Record<string, any>): Load[] => {
         const loads: Load[] = []
         mount(KsDataTable, {
@@ -290,7 +277,6 @@ describe("KsDataTable", () => {
     test("caps an absurdly large currentPage (finite offset guard)", async () => {
         const loads = mountWithSpy({currentPage: 1e308, pageSize: 25})
         await tick()
-        // Must not forward `1e+308` as a page — keep it a sane finite integer.
         expect(lastLoad(loads).page).toBeLessThanOrEqual(1_000_000)
         expect(Number.isInteger(lastLoad(loads).page)).toBe(true)
     })
@@ -312,7 +298,6 @@ describe("KsDataTable", () => {
     test("caps an absurdly large pageSize (DoS guard)", async () => {
         const loads = mountWithSpy({currentPage: 1, pageSize: 10_000_000})
         await tick()
-        // Must not forward a 10M-row request to the backend.
         expect(lastLoad(loads).size).toBeLessThanOrEqual(1000)
         expect(lastLoad(loads).size).toBeGreaterThan(0)
     })

@@ -3,6 +3,7 @@
         <KsIconButton
             v-if="sidebarCollapsed"
             class="icon-btn"
+            data-testid="topnav-sidebar-toggle"
             :ariaLabel="t('topnav_sidebar_toggle')"
             @click="$emit('sidebar-toggle')"
         >

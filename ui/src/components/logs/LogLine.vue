@@ -46,8 +46,8 @@
     import xss from "xss"
     import MenuRight from "vue-material-design-icons/MenuRight.vue"
     import linkify, {processLinkTags} from "./linkify"
+    import type {LOG_LEVEL_TYPE} from "@kestra-io/design-system"
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
-    import {LevelKey} from "../../utils/logs"
     import {Log} from "../../stores/logs"
     import {useRouter} from "vue-router"
     import * as Filters from "../../utils/filters"
@@ -57,7 +57,7 @@
         cursor?: boolean,
         log: Log,
         filter?: string,
-        level?: LevelKey,
+        level?: LOG_LEVEL_TYPE,
         excludeMetas?: (keyof Log)[],
         title?: boolean
     }>()

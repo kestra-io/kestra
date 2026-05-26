@@ -63,14 +63,6 @@ export default defineConfig(({mode}) => {
             alias: [
                 {find: "override", replacement: path.resolve(__dirname, "src/override/")},
                 {find: "kestra-api", replacement: path.resolve(__dirname, "src/generated/kestra-api/")},
-                {find: "@storybook/addon-actions", replacement: "storybook/actions"},
-
-                {find: /^@kestra-io\/topology\/vue-flow-utils$/, replacement: path.resolve(__dirname, "packages/topology/src/vue-flow-utils.ts")},
-                {find: /^@kestra-io\/topology\/(.*)/, replacement: path.resolve(__dirname, "packages/topology") + "/$1"},
-                {find: /^@kestra-io\/topology$/, replacement: path.resolve(__dirname, "packages/topology/src/index.ts")},
-                {find: /^@kestra-io\/design-system\/(.*)/, replacement: path.resolve(__dirname, "packages/design-system") + "/$1"},
-                {find: /^@kestra-io\/design-system$/, replacement: path.resolve(__dirname, "packages/design-system/src/index.ts")},
-                {find: /^@kestra-io\/slot-contracts$/, replacement: path.resolve(__dirname, "packages/slot-contracts/src/index.ts")},
 
                 // to be removed when all mdc import are removed
                 // Rolldown failed to resolve import "#imports" from "kestra/ui/node_modules/@nuxtjs/mdc/dist/runtime/components/prose/ProseH3.vue".

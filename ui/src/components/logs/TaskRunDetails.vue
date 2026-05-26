@@ -19,7 +19,7 @@
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
-            >
+            >   
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -200,6 +200,31 @@
                         </template>
                     </DynamicScroller>
                 </KsCard>
+                <div 
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
+                >
+                    <KsButton
+                        :tag="RouterLink"
+                        :to="{
+                            name: 'executions/list', 
+                            query: {
+                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                'filters[kind][EQUALS]': 'LOOP',
+                            }        
+                        }"
+                    >
+                        Iterations
+                    </KsButton>
+                    <KsProgress 
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                        :strokeWidth="24"
+                        :textInside="true"
+                        class="progress-bar"
+                    >
+                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                    </KsProgress>
+                </div>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>
@@ -210,6 +235,8 @@
     import {useI18n} from "vue-i18n"
     import moment from "moment"
     import Download from "vue-material-design-icons/Download.vue"
+    import {RouterLink} from "vue-router"
+    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
     import {State} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
@@ -227,6 +254,8 @@
     import * as LogUtils from "../../utils/logs"
     import throttle from "lodash/throttle"
     import {useClient} from "@kestra-io/kestra-sdk"
+    import KsProgress from "@kestra-io/design-system/components/Data/KsProgress.vue"
+    import KsLink from "@kestra-io/design-system/components/Basic/KsLink.vue"
 
     // self-reference for recursive usage
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -497,6 +526,11 @@
         throttledExecutionUpdate.value = throttle((executionEvent: MessageEvent) => {
             targetExecution.value = JSON.parse(executionEvent.data)
         }, 500)
+        for(const taskRun of this.currentTaskRuns) {
+            if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                this.updateLoopStatus(taskRun.id)
+             }
+         }
 
         if (props.targetExecutionId) {
             followExecution(props.targetExecutionId)
@@ -873,6 +907,11 @@
 
     :deep(.line) {
         padding-left: 0;
+    }
+
+    .progress-bar {
+        margin-block: .5rem;
+        flex: 1;
     }
 
     .attempt-wrapper {

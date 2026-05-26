@@ -1089,7 +1089,7 @@
                     width: 13px !important;
                     background: var(--ks-border-default) !important;
                     border-radius: 8px !important;
-                    border: 4px solid var(--ks-bg-body) !important;
+                    border: 4px solid var(--ks-bg-base) !important;
                 }
             }
 

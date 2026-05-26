@@ -98,37 +98,37 @@
     --ks-status-skipped: var(--ks-status-neutral);
     --ks-status-queued: var(--ks-status-neutral);
 
-    --ks-status-border-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-body) 80%);
-    --ks-status-border-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-body) 80%);
-    --ks-status-border-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-body) 80%);
-    --ks-status-border-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-body) 80%);
-    --ks-status-border-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-body) 80%);
-    --ks-status-border-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-body) 80%);
-    --ks-status-border-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 80%);
-    --ks-status-border-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-body) 80%);
-    --ks-status-border-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-body) 80%);
-    --ks-status-border-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 80%);
-    --ks-status-border-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-body) 80%);
-    --ks-status-border-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-body) 80%);
-    --ks-status-border-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-body) 80%);
-    --ks-status-border-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-body) 80%);
-    --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-body) 80%);
+    --ks-status-border-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-base) 80%);
+    --ks-status-border-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-base) 80%);
+    --ks-status-border-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-base) 80%);
+    --ks-status-border-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-base) 80%);
+    --ks-status-border-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-base) 80%);
+    --ks-status-border-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-base) 80%);
+    --ks-status-border-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 80%);
+    --ks-status-border-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-base) 80%);
+    --ks-status-border-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-base) 80%);
+    --ks-status-border-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 80%);
+    --ks-status-border-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-base) 80%);
+    --ks-status-border-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-base) 80%);
+    --ks-status-border-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-base) 80%);
+    --ks-status-border-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-base) 80%);
+    --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 80%);
 
-    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-body) 95%);
-    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-body) 95%);
-    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-body) 95%);
-    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-body) 95%);
-    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-body) 95%);
-    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-body) 95%);
-    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 95%);
-    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-body) 95%);
-    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-body) 95%);
-    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 95%);
-    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-body) 95%);
-    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-body) 95%);
-    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-body) 95%);
-    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-body) 95%);
-    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-body) 95%);
+    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-base) 95%);
+    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-base) 95%);
+    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-base) 95%);
+    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-base) 95%);
+    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-base) 95%);
+    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-base) 95%);
+    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 95%);
+    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-base) 95%);
+    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-base) 95%);
+    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 95%);
+    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-base) 95%);
+    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-base) 95%);
+    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-base) 95%);
+    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-base) 95%);
+    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 95%);
 
     // logs
     --ks-log-trace: var(--ks-status-neutral);
@@ -137,17 +137,17 @@
     --ks-log-warn: var(--ks-status-warning);
     --ks-log-error: var(--ks-status-error);
 
-    --ks-log-border-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-body) 80%);
-    --ks-log-border-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 80%);
-    --ks-log-border-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-body) 80%);
-    --ks-log-border-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 80%);
-    --ks-log-border-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-body) 80%);
+    --ks-log-border-trace: color-mix(in srgb, var(--ks-status-neutral), var(--ks-bg-base) 80%);
+    --ks-log-border-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 80%);
+    --ks-log-border-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-base) 80%);
+    --ks-log-border-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 80%);
+    --ks-log-border-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-base) 80%);
 
-    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-trace), var(--ks-bg-body) 95%);
-    --ks-log-background-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-body) 95%);
-    --ks-log-background-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-body) 95%);
-    --ks-log-background-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-body) 95%);
-    --ks-log-background-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-body) 95%);
+    --ks-log-background-trace: color-mix(in srgb, var(--ks-status-trace), var(--ks-bg-base) 95%);
+    --ks-log-background-debug: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 95%);
+    --ks-log-background-info: color-mix(in srgb, var(--ks-status-info), var(--ks-bg-base) 95%);
+    --ks-log-background-warn: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 95%);
+    --ks-log-background-error: color-mix(in srgb, var(--ks-status-error), var(--ks-bg-base) 95%);
 }
 
 :root {

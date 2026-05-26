@@ -101,7 +101,7 @@ export {vKsLoading} from "./components/Feedback/KsLoading"
 export {KsMessage} from "./components/Feedback/KsMessage"
 export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
-
+// FIXME do not merge this test comment
 export {cssVar} from "./utils/css"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"

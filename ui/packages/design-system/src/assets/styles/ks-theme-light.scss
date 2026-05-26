@@ -19,6 +19,7 @@
     #{--ks-bg-error}: $base-red-50;
     #{--ks-bg-hover}: $base-gray-neutral-100;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-50;
+    #{--ks-bg-inactive}: $base-gray-neutral-50;
     #{--ks-bg-info}: $base-blue-50;
     #{--ks-bg-input}: $base-gray-neutral-white;
     #{--ks-bg-overlay}: $base-gray-neutral-white;
@@ -26,7 +27,10 @@
     #{--ks-bg-sidebar}: $base-gray-neutral-white;
     #{--ks-bg-success}: $base-green-50;
     #{--ks-bg-surface}: $base-gray-neutral-white;
+    #{--ks-bg-tag}: $base-gray-neutral-100;
     #{--ks-bg-tag-active}: $base-primary-200;
+    #{--ks-bg-tag-hover}: $base-primary-100;
+    #{--ks-bg-tag-inactive}: $base-gray-neutral-50;
     #{--ks-bg-warning}: $base-orange-50;
 
     /* border */
@@ -113,13 +117,6 @@
     #{--ks-status-success}: $base-green-600;
     #{--ks-status-warning}: $base-orange-700;
 
-    /* tabs */
-    #{--ks-tabs-bg}: $base-gray-neutral-50;
-
-    /* tag */
-    #{--ks-tag-bg}: $base-gray-neutral-100;
-    #{--ks-tag-bg-hover}: $base-primary-100;
-
     /* text */
     #{--ks-text-blue}: $base-blue-400;
     #{--ks-text-dim}: $base-gray-neutral-600;
@@ -134,12 +131,12 @@
     #{--ks-text-success}: $base-green-500;
     #{--ks-text-warning}: $base-orange-500;
 
-    /* toogle */
-    #{--ks-toogle-bg-active}: $base-primary-400;
-    #{--ks-toogle-bg-default}: $base-gray-neutral-100;
-    #{--ks-toogle-bg-hover}: $base-gray-neutral-200;
-    #{--ks-toogle-bg-inactive}: $base-gray-neutral-50;
-    #{--ks-toogle-bg-playground}: $base-blue-500;
+    /* toggle */
+    #{--ks-toggle-active}: $base-primary-400;
+    #{--ks-toggle-default}: $base-gray-neutral-100;
+    #{--ks-toggle-hover}: $base-gray-neutral-200;
+    #{--ks-toggle-inactive}: $base-gray-neutral-50;
+    #{--ks-toggle-playground}: $base-blue-500;
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-neutral-100;

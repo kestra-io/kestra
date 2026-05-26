@@ -19,6 +19,7 @@ html.dark {
     #{--ks-bg-error}: $base-gray-cool-950;
     #{--ks-bg-hover}: $base-gray-cool-500;
     #{--ks-bg-hover-elevated}: $base-gray-cool-600;
+    #{--ks-bg-inactive}: $base-gray-cool-700;
     #{--ks-bg-info}: $base-gray-cool-950;
     #{--ks-bg-input}: $base-gray-cool-950;
     #{--ks-bg-overlay}: $base-gray-cool-800;
@@ -26,7 +27,10 @@ html.dark {
     #{--ks-bg-sidebar}: $base-gray-cool-900;
     #{--ks-bg-success}: $base-gray-cool-950;
     #{--ks-bg-surface}: $base-gray-cool-800;
+    #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.1);
     #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
+    #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
+    #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.05);
     #{--ks-bg-warning}: $base-gray-cool-950;
 
     /* border */
@@ -113,13 +117,6 @@ html.dark {
     #{--ks-status-success}: $base-green-300;
     #{--ks-status-warning}: $base-orange-300;
 
-    /* tabs */
-    #{--ks-tabs-bg}: $base-gray-cool-950;
-
-    /* tag */
-    #{--ks-tag-bg}: rgba($base-gray-cool-white, 0.1);
-    #{--ks-tag-bg-hover}: rgba($base-primary-300, 0.2);
-
     /* text */
     #{--ks-text-blue}: $base-blue-200;
     #{--ks-text-dim}: $base-gray-cool-300;
@@ -134,12 +131,12 @@ html.dark {
     #{--ks-text-success}: $base-green-100;
     #{--ks-text-warning}: $base-orange-300;
 
-    /* toogle */
-    #{--ks-toogle-bg-active}: $base-primary-400;
-    #{--ks-toogle-bg-default}: $base-gray-cool-700;
-    #{--ks-toogle-bg-hover}: $base-gray-cool-400;
-    #{--ks-toogle-bg-inactive}: $base-gray-cool-800;
-    #{--ks-toogle-bg-playground}: $base-blue-500;
+    /* toggle */
+    #{--ks-toggle-active}: $base-primary-400;
+    #{--ks-toggle-default}: $base-gray-cool-700;
+    #{--ks-toggle-hover}: $base-gray-cool-400;
+    #{--ks-toggle-inactive}: $base-gray-cool-800;
+    #{--ks-toggle-playground}: $base-blue-500;
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-cool-600;

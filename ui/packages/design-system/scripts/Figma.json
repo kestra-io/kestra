@@ -387,6 +387,12 @@
             "rootAlias": "gray-neutral/50"
           },
           {
+            "name": "ks/bg-inactive",
+            "value": "#f7f7f8",
+            "var": "gray-neutral/50",
+            "rootAlias": "gray-neutral/50"
+          },
+          {
             "name": "ks/bg-info",
             "value": "#eff4ff",
             "var": "blue/50",
@@ -429,10 +435,28 @@
             "rootAlias": "gray-neutral/white"
           },
           {
+            "name": "ks/bg-tag",
+            "value": "#e9e9ee",
+            "var": "gray-neutral/100",
+            "rootAlias": "gray-neutral/100"
+          },
+          {
             "name": "ks/bg-tag-active",
             "value": "#cdb6fb",
             "var": "primary/200",
             "rootAlias": "primary/200"
+          },
+          {
+            "name": "ks/bg-tag-hover",
+            "value": "#eee7fe",
+            "var": "primary/100",
+            "rootAlias": "primary/100"
+          },
+          {
+            "name": "ks/bg-tag-inactive",
+            "value": "#f7f7f8",
+            "var": "gray-neutral/50",
+            "rootAlias": "gray-neutral/50"
           },
           {
             "name": "ks/bg-warning",
@@ -837,24 +861,6 @@
             "rootAlias": "orange/700"
           },
           {
-            "name": "ks/tabs-bg",
-            "value": "#f7f7f8",
-            "var": "gray-neutral/50",
-            "rootAlias": "gray-neutral/50"
-          },
-          {
-            "name": "ks/tag-bg",
-            "value": "#e9e9ee",
-            "var": "gray-neutral/100",
-            "rootAlias": "gray-neutral/100"
-          },
-          {
-            "name": "ks/tag-bg-hover",
-            "value": "#eee7fe",
-            "var": "primary/100",
-            "rootAlias": "primary/100"
-          },
-          {
             "name": "ks/text-blue",
             "value": "#4f6df7",
             "var": "blue/400",
@@ -927,31 +933,31 @@
             "rootAlias": "orange/500"
           },
           {
-            "name": "ks/toogle-bg-active",
+            "name": "ks/toggle-active",
             "value": "#7738f5",
             "var": "primary/400",
             "rootAlias": "primary/400"
           },
           {
-            "name": "ks/toogle-bg-default",
+            "name": "ks/toggle-default",
             "value": "#e9e9ee",
             "var": "gray-neutral/100",
             "rootAlias": "gray-neutral/100"
           },
           {
-            "name": "ks/toogle-bg-hover",
+            "name": "ks/toggle-hover",
             "value": "#d0d0da",
             "var": "gray-neutral/200",
             "rootAlias": "gray-neutral/200"
           },
           {
-            "name": "ks/toogle-bg-inactive",
+            "name": "ks/toggle-inactive",
             "value": "#f7f7f8",
             "var": "gray-neutral/50",
             "rootAlias": "gray-neutral/50"
           },
           {
-            "name": "ks/toogle-bg-playground",
+            "name": "ks/toggle-playground",
             "value": "#1761fd",
             "var": "blue/500",
             "rootAlias": "blue/500"
@@ -1669,6 +1675,12 @@
             "rootAlias": "gray-cool/600"
           },
           {
+            "name": "ks/bg-inactive",
+            "value": "#262a35",
+            "var": "gray-cool/700",
+            "rootAlias": "gray-cool/700"
+          },
+          {
             "name": "ks/bg-info",
             "value": "#14181f",
             "var": "gray-cool/950",
@@ -1711,8 +1723,26 @@
             "rootAlias": "gray-cool/800"
           },
           {
+            "name": "ks/bg-tag",
+            "value": "#ffffff1a",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
             "name": "ks/bg-tag-active",
             "value": "#9869f766",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/bg-tag-hover",
+            "value": "#9869f733",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/bg-tag-inactive",
+            "value": "#ffffff0d",
             "var": "",
             "rootAlias": ""
           },
@@ -2119,24 +2149,6 @@
             "rootAlias": "orange/300"
           },
           {
-            "name": "ks/tabs-bg",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
-          },
-          {
-            "name": "ks/tag-bg",
-            "value": "#ffffff1a",
-            "var": "",
-            "rootAlias": ""
-          },
-          {
-            "name": "ks/tag-bg-hover",
-            "value": "#9869f733",
-            "var": "",
-            "rootAlias": ""
-          },
-          {
             "name": "ks/text-blue",
             "value": "#a9b5fe",
             "var": "blue/200",
@@ -2209,31 +2221,31 @@
             "rootAlias": "orange/300"
           },
           {
-            "name": "ks/toogle-bg-active",
+            "name": "ks/toggle-active",
             "value": "#7738f5",
             "var": "primary/400",
             "rootAlias": "primary/400"
           },
           {
-            "name": "ks/toogle-bg-default",
+            "name": "ks/toggle-default",
             "value": "#262a35",
             "var": "gray-cool/700",
             "rootAlias": "gray-cool/700"
           },
           {
-            "name": "ks/toogle-bg-hover",
+            "name": "ks/toggle-hover",
             "value": "#404559",
             "var": "gray-cool/400",
             "rootAlias": "gray-cool/400"
           },
           {
-            "name": "ks/toogle-bg-inactive",
+            "name": "ks/toggle-inactive",
             "value": "#20232d",
             "var": "gray-cool/800",
             "rootAlias": "gray-cool/800"
           },
           {
-            "name": "ks/toogle-bg-playground",
+            "name": "ks/toggle-playground",
             "value": "#1761fd",
             "var": "blue/500",
             "rootAlias": "blue/500"
@@ -2951,6 +2963,12 @@
             "rootAlias": "gray-neutral/700"
           },
           {
+            "name": "ks/bg-inactive",
+            "value": "#23252e",
+            "var": "gray-neutral/800",
+            "rootAlias": "gray-neutral/800"
+          },
+          {
             "name": "ks/bg-info",
             "value": "#111115",
             "var": "gray-neutral/950",
@@ -2993,8 +3011,26 @@
             "rootAlias": "gray-neutral/900"
           },
           {
+            "name": "ks/bg-tag",
+            "value": "#ffffff0d",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
             "name": "ks/bg-tag-active",
             "value": "#9869f766",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/bg-tag-hover",
+            "value": "#9869f733",
+            "var": "",
+            "rootAlias": ""
+          },
+          {
+            "name": "ks/bg-tag-inactive",
+            "value": "#ffffff08",
             "var": "",
             "rootAlias": ""
           },
@@ -3401,24 +3437,6 @@
             "rootAlias": "orange/300"
           },
           {
-            "name": "ks/tabs-bg",
-            "value": "#08090a",
-            "var": "gray-neutral/1000",
-            "rootAlias": "gray-neutral/1000"
-          },
-          {
-            "name": "ks/tag-bg",
-            "value": "#ffffff0d",
-            "var": "",
-            "rootAlias": ""
-          },
-          {
-            "name": "ks/tag-bg-hover",
-            "value": "#9869f733",
-            "var": "",
-            "rootAlias": ""
-          },
-          {
             "name": "ks/text-blue",
             "value": "#a9b5fe",
             "var": "blue/200",
@@ -3491,31 +3509,31 @@
             "rootAlias": "orange/300"
           },
           {
-            "name": "ks/toogle-bg-active",
+            "name": "ks/toggle-active",
             "value": "#7738f5",
             "var": "primary/400",
             "rootAlias": "primary/400"
           },
           {
-            "name": "ks/toogle-bg-default",
+            "name": "ks/toggle-default",
             "value": "#424256",
             "var": "gray-neutral/600",
             "rootAlias": "gray-neutral/600"
           },
           {
-            "name": "ks/toogle-bg-hover",
+            "name": "ks/toggle-hover",
             "value": "#5f5f7c",
             "var": "gray-neutral/500",
             "rootAlias": "gray-neutral/500"
           },
           {
-            "name": "ks/toogle-bg-inactive",
+            "name": "ks/toggle-inactive",
             "value": "#23252e",
             "var": "gray-neutral/800",
             "rootAlias": "gray-neutral/800"
           },
           {
-            "name": "ks/toogle-bg-playground",
+            "name": "ks/toggle-playground",
             "value": "#1761fd",
             "var": "blue/500",
             "rootAlias": "blue/500"

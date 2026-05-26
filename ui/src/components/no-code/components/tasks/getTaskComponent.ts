@@ -62,8 +62,10 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
             return "dict"
         }
 
-        // for dag tasks
-        if (property.anyOf.length > 10 || key === "taskRunner") {
+        // for dag tasks and task-runner properties: use the single-task editor
+        // Note: avoid matching by anyOf.length — AdditionalPlugin subtypes (e.g. ToolProvider)
+        // can also have many anyOf entries and must render as "any-of", not "task".
+        if (key === "tasks" || key === "taskRunner") {
             return "task"
         }
         return "any-of"
@@ -97,7 +99,10 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
 
     if (property.type === "array") {
         const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items
-        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || LIST_FIELDS.includes(key ?? "")) {
+        // Note: avoid matching by items.anyOf.length — AdditionalPlugin subtypes (e.g. ToolProvider, ModelProvider)
+        // can have many anyOf entries and must render as "array" so the no-code editor surfaces a type-selector
+        // for each item. Section fields (tasks, triggers, …) are already covered by LIST_FIELDS.
+        if (items?.anyOf?.length === 0 || LIST_FIELDS.includes(key ?? "")) {
             return "list"
         }
 

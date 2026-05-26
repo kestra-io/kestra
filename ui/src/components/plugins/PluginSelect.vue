@@ -66,7 +66,10 @@
     })
 
     onBeforeMount(() => {
-        if (blockType === "pluginDefaults" || isPluginBlock) {
+        // Load plugin list for known plugin-block properties, pluginDefaults, and any schema-driven
+        // anyOf property (e.g. AdditionalPlugin subtypes such as ToolProvider, ModelProvider).
+        const hasAnyOfOptions = (fieldDefinition.value?.anyOf?.length ?? 0) > 0
+        if (blockType === "pluginDefaults" || isPluginBlock || hasAnyOfOptions) {
             pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
     })

@@ -8,6 +8,7 @@
                 refresh: {shown: true, callback: loadLogs}
             }"
             @search="filter = $event"
+            @filter="syncFromAppliedFilters"
         />
         <Collapse>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
@@ -72,12 +73,21 @@
             :showProgressBar="false"
         />
         <el-card v-else class="attempt-wrapper">
+            <el-empty
+                v-if="Array.isArray(executionsStore.logs) && temporalLogs.length === 0"
+            >
+                <template #description>
+                    <span v-html="$t('no_logs_data_description')" />
+                </template>
+            </el-empty>
             <DynamicScroller
+                v-if="temporalLogs.length > 0"
                 ref="logScroller"
                 :items="temporalLogs"
                 :minItemSize="50"
                 keyField="uid"
                 class="log-lines temporal"
+                :style="{maxHeight: 'calc(100vh - 335px)', marginTop: '0.5rem'}"
                 :buffer="200"
                 :prerender="20"
             >
@@ -134,7 +144,8 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        readRouteLevelFilter
+        readAppliedLevelFilter,
+        readRouteLevelFilter,
     } from "../filter/utils/logLevelQuery";
     import {useRouteFilterPolicy} from "../filter/composables/useRouteFilterPolicy";
 
@@ -162,6 +173,7 @@
             const {
                 routeValue: routeLevel,
                 effectiveValue: effectiveLevel,
+                syncFromAppliedFilters,
             } = useRouteFilterPolicy({
                 defaultValue: () => defaultLogLevel.value,
                 applyDefaultIfMissing: () => true,
@@ -169,12 +181,14 @@
                 readFromRoute: readRouteLevelFilter,
                 writeToRoute: normalizeRouteLevelFilter,
                 hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
+                readFromAppliedFilters: readAppliedLevelFilter,
             });
 
             return {
                 logExecutionsFilter,
                 routeLevel,
-                effectiveLevel
+                effectiveLevel,
+                syncFromAppliedFilters,
             };
         },
         data() {
@@ -184,19 +198,30 @@
                 openedTaskrunsCount: 0,
                 raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
-                logCursor: undefined
+                logCursor: undefined,
+                logsLoading: false,
             };
         },
         created() {
             this.filter = (this.$route.query.q || undefined);
         },
         watch:{
+            "executionsStore.execution": {
+                immediate: true,
+                handler(execution, oldExecution) {
+                    if (execution && !oldExecution && this.raw_view && !this.logsLoading && !this.executionsStore.logs?.length) {
+                        this.loadLogs()
+                    }
+                },
+            },
             routeLevel: {
                 handler() {
-                    if (this.raw_view) {
-                        this.loadLogs();
+                    if (this.raw_view && this.executionsStore.execution) {
+                        this.executionsStore.logs = {total: 0, results: []}
+                        this.logsLoading = false
+                        this.loadLogs()
                     }
-                }
+                },
             },
             logCursor(newValue) {
                 if (newValue !== undefined && this.raw_view) {
@@ -276,11 +301,15 @@
         },
         methods: {
             loadLogs(){
+                if (this.logsLoading) return
+                this.logsLoading = true
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
                     params: {
-                        minLevel: this.effectiveLevel
-                    }
+                        minLevel: this.effectiveLevel,
+                    },
+                }).finally(() => {
+                    this.logsLoading = false
                 })
             },
             downloadContent() {
@@ -357,7 +386,7 @@
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
-                this.$refs.logScroller.scrollToItem(index);
+                this.$refs.logScroller?.scrollToItem(index)
             }
         }
     };
@@ -378,16 +407,16 @@
     }
 
     .log-lines {
-        max-height: calc(100vh - 335px);
-        transition: max-height 0.2s ease-out;
-        margin-top: .5rem;
-
         .line {
             padding: .5rem;
         }
+
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
+        }
     }
 
-    .temporal {
+    .log-lines.temporal {
         .line {
             align-items: flex-start;
         }

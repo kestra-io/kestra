@@ -11,8 +11,6 @@ const globalConfig = {
     stubs: {RouterLink: {template: "<a><slot /></a>"}},
 }
 
-const sidebarToggleSelector = "[data-testid='topnav-sidebar-toggle']"
-
 describe("KsTopNavBar", () => {
     test("renders nav element with the topnavbar class", () => {
         const wrapper = mount(KsTopNavBar, {
@@ -99,7 +97,7 @@ describe("KsTopNavBar", () => {
             props: {title: "Flows", sidebarCollapsed: true},
             global: globalConfig,
         })
-        const toggle = wrapper.find(sidebarToggleSelector)
+        const toggle = wrapper.find("[data-testid='topnav-sidebar-toggle']")
         expect(toggle.exists()).toBe(true)
         await toggle.trigger("click")
         expect(wrapper.emitted("sidebar-toggle")).toBeTruthy()
@@ -110,7 +108,7 @@ describe("KsTopNavBar", () => {
             props: {title: "Flows", sidebarCollapsed: false},
             global: globalConfig,
         })
-        expect(wrapper.find(sidebarToggleSelector).exists()).toBe(false)
+        expect(wrapper.find("[data-testid='topnav-sidebar-toggle']").exists()).toBe(false)
     })
 
     test("renders tab select when tabs are provided", () => {

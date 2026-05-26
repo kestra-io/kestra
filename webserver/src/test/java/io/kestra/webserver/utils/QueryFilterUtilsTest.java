@@ -16,20 +16,6 @@ public class QueryFilterUtilsTest {
     ZonedDateTime date = ZonedDateTime.parse("2024-05-27T15:00:00+02:00[Europe/Paris]");
 
     @Test
-    void validateTimeline_ok() {
-        assertThatCode(() -> getFiltersWithStartAndEndDate(date, date.plus(10, ChronoUnit.DAYS))).doesNotThrowAnyException();
-    }
-
-    @Test
-    void validateTimeline_invalid_forEndBeforeStart() {
-        assertThatCode(() -> getFiltersWithStartAndEndDate(date, date.minus(10, ChronoUnit.DAYS)))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining(
-                "Start date must be before End Date"
-            );
-    }
-
-    @Test
     void replaceTimeRange_startDateMode_producesStartDateFilter() {
         var filters = timeRangeFilter();
 

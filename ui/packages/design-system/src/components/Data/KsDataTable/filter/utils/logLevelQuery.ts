@@ -39,7 +39,7 @@ export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | Locati
             (key.startsWith(LEVEL_FILTER_PREFIX) && key !== LEVEL_EQUALS_FILTER_KEY),
     )
 
-export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
+export function readAppliedLevelFilter<T extends string>(filters: AppliedFilter[]) {
     const levelFilter = filters.find((filter) => filter.key === "level")
     if (!levelFilter) {
         return undefined
@@ -47,11 +47,11 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
 
     if (Array.isArray(levelFilter.value)) {
         const value = levelFilter.value[0]
-        return typeof value === "string" && value.length > 0 ? value : undefined
+        return typeof value === "string" && value.length > 0 ? (value as T) : undefined
     }
 
     return typeof levelFilter.value === "string" && levelFilter.value.length > 0
-        ? levelFilter.value
+        ? (levelFilter.value as T)
         : undefined
 }
 

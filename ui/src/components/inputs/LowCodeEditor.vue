@@ -459,7 +459,7 @@
         logFilter.value = search
     }
 
-    const onLevelChange = (level: string) => {
+    const onLevelChange = (level: LOG_LEVEL) => {
         logLevel.value = level
     }
 

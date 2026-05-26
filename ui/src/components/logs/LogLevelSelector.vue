@@ -16,10 +16,11 @@
     </KsSelect>
 </template>
 <script setup lang="ts">
-    const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()
+    import type {LOG_LEVEL} from "./TaskRunDetails.vue"
+    const emit = defineEmits<{(e: "update:modelValue", value: LOG_LEVEL): void;}>()
 
     withDefaults(defineProps<{
-        value?: string,
+        value?: LOG_LEVEL,
         router?: boolean
     }>(), {
         value: "INFO",

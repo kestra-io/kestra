@@ -155,8 +155,8 @@
     const executionsStore = useExecutionsStore()
 
     const logExecutionsFilter = useLogExecutionsFilter()
-    const defaultLogLevel = computed(
-        () => localStorage.getItem("defaultLogLevel") || "INFO",
+    const defaultLogLevel = computed<LOG_LEVEL>(
+        () => localStorage.getItem("defaultLogLevel") as LOG_LEVEL || "INFO",
     )
 
     const {

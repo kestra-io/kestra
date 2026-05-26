@@ -154,7 +154,7 @@
         nextTick(() => {
             linkify(lineContent.value, router);
         });
-    });
+    }, {immediate: true});
 </script>
 <style scoped lang="scss">
 div.line {

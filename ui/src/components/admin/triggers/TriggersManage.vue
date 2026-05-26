@@ -437,7 +437,9 @@
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
+        // logsPage/logsSize belong to the embedded LogsWrapper in the expand
+        // rows — exclude them so they never leak into the triggers search query.
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...restQuery} = route.query as Record<string, any>
         const queryFilter: Record<string, any> = {...restQuery}
 
         const timeRange = queryFilter["filters[timeRange][EQUALS]"]
@@ -481,7 +483,9 @@
     // perform structural equality — it would fire on every route.query
     // change, including page/size updates.
     const filterQueryKey = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        // Exclude the embedded LogsWrapper's logsPage/logsSize so paginating a
+        // trigger's logs doesn't reset the outer triggers table.
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
         return JSON.stringify(filters)
     })
 

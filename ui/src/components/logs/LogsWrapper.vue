@@ -8,7 +8,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 @ready="ready = true"
-                @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+                @page-changed="onPageChanged"
                 :total="logsStore.total"
             >
                 <template #navbar v-if="!embed || showFilters">
@@ -203,7 +203,7 @@
     ])
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
         if (isFlowEdit.value) {
@@ -251,16 +251,30 @@
         syncLevelFromAppliedFilters(filters)
     }
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+    // Embedded tables share the host route's query string with a sibling
+    // URL-bound table (e.g. LogsWrapper inside a TriggersManage expand row).
+    // Both keeping their page in the URL is the goal (shareable/restorable),
+    // but they must not collide on the same `page` key. So an embedded
+    // instance namespaces its keys to `logsPage`/`logsSize`; standalone owns
+    // the canonical `page`/`size`. The host table must exclude logsPage/logsSize
+    // from its own filter/query parsing (TriggersManage does).
+    const pageKey = props.embed ? "logsPage" : "page"
+    const sizeKey = props.embed ? "logsSize" : "size"
+    const urlPage = computed(() => Number(route.query[pageKey] ?? 1) || 1)
+    const urlSize = computed(() => Number(route.query[sizeKey] ?? 25) || 25)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
+    }
 
     // Stringify so the watcher fires on actual filter content changes only.
     // A `computed` returning a fresh object via spread compares unequal by
     // reference each evaluation, and `watch(..., {deep: true})` does not
     // perform structural equality — it would fire on every route.query
-    // change, including page/size updates.
+    // change, including page/size updates. Both key sets are excluded so a
+    // sibling embedded log table paginating (writing logsPage) never resets us.
     const filterQueryKey = computed(() => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query
         return JSON.stringify(filters)
     })
     watch(filterQueryKey, () => {

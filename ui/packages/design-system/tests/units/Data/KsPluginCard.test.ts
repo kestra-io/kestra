@@ -44,8 +44,9 @@ describe("KsPluginCard", () => {
         })
         const tags = wrapper.find(".ks-plugin-card__tags")
         expect(tags.exists()).toBe(true)
-        expect(tags.text()).toContain("Database")
-        expect(tags.text()).toContain("Cloud")
+        expect(tags.text()).toContain("DATABASE")
+        expect(tags.text()).toContain("CLOUD")
+        expect(wrapper.findAll(".ks-plugin-card__category")).toHaveLength(2)
     })
 
     test("omits tags block when categories empty", () => {

@@ -30,7 +30,7 @@
 
         <div v-if="categories?.length" class="ks-plugin-card__tags">
             <KsTag v-for="category in categories" :key="category">
-                {{ formatCategory(category) }}
+                <span class="ks-plugin-card__category">{{ category }}</span>
             </KsTag>
         </div>
 
@@ -46,7 +46,7 @@
                 <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.blueprints", blueprintCount ?? 0) }}</span>
             </span>
             <ChevronRight
-                v-if="clickable && showChevron"
+                v-if="clickable"
                 class="ks-plugin-card__chevron"
                 aria-hidden="true"
             />
@@ -78,7 +78,6 @@
         taskCount?: number | null
         blueprintCount?: number | null
         clickable?: boolean
-        showChevron?: boolean
     }>(), {
         iconCls: undefined,
         icons: () => ({}),
@@ -87,7 +86,6 @@
         taskCount: null,
         blueprintCount: null,
         clickable: true,
-        showChevron: true,
     })
 
     const emit = defineEmits<{
@@ -95,7 +93,6 @@
     }>()
 
     defineSlots<{
-        /** Override the default KsTaskIcon. */
         icon?(): unknown
     }>()
 
@@ -104,14 +101,7 @@
     const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number")
     const hasCounts = computed(() => hasTaskCount.value || hasBlueprintCount.value)
     const hasDivider = computed(() => hasCounts.value)
-    const hasFooter = computed(
-        () => hasCounts.value || (props.clickable && props.showChevron),
-    )
-
-    function formatCategory(category: string): string {
-        if (!category) return ""
-        return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()
-    }
+    const hasFooter = computed(() => hasCounts.value || props.clickable)
 
     function onClick(event: Event) {
         if (!props.clickable) return
@@ -199,6 +189,15 @@
             display: flex;
             flex-wrap: wrap;
             gap: var(--ks-spacing-2);
+        }
+
+        &__category {
+            display: inline-block;
+            text-transform: lowercase;
+
+            &::first-letter {
+                text-transform: uppercase;
+            }
         }
 
         &__divider {

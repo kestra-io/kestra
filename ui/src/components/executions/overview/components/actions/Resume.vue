@@ -32,11 +32,9 @@
     import {useToast} from "../../../../../utils/toast"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    // @ts-ignore - no type declarations for JS utility
     import * as FlowUtils from "../../../../../utils/flowUtils"
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
-    // @ts-ignore - no type declarations for JS utility
     import {inputsToFormData} from "../../../../../utils/submitTask"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"

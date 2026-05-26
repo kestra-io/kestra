@@ -1,4 +1,5 @@
 import {createApp} from "vue"
+import type {RouteLocationNormalized} from "vue-router"
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -16,7 +17,7 @@ import {useMiscStore} from "override/stores/misc"
 
 const app = createApp(App)
 
-const handleAuthError = (error, to) => {
+const handleAuthError = (error: Error, to: RouteLocationNormalized): {name: string; query?: Record<string, string>} => {
     if (error.message?.includes("401")) {
         BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
@@ -79,7 +80,7 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
             }
         } catch (error) {
             console.error("Error during authentication check:", error)
-            return handleAuthError(error, to)
+            return handleAuthError(error as Error, to)
         }
     })
 
@@ -108,13 +109,14 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
         beforeLogout,
         onAuthTimeout: beforeLogout,
         isImpersonating: () => window.sessionStorage.getItem("impersonate"),
-    }) 
-
-    piniaStore.use(({store: piniaStoreLocal}) => {
-        piniaStoreLocal.$http = axiosInstance
     })
 
-    
+    piniaStore.use(({store: piniaStoreLocal}) => {
+        // FIXME: type this properly
+        (piniaStoreLocal as any).$http = axiosInstance
+    })
+
+
     // mount
     router.isReady().then(() => app.mount("#app"))
 })

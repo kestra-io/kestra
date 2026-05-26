@@ -39,7 +39,7 @@
       }
     },
     {
-      "files": ["src/translations/check.js", "**/tests/**"],
+      "files": ["src/translations/check.ts", "**/tests/**"],
       "rules": {
         "no-console": "off"
       }

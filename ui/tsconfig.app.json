@@ -18,5 +18,8 @@
     "src/**/*.vue",
     "src/**/*.json",
     "tests/fixtures/**/*.ts"
+  ],
+  "exclude": [
+    "src/translations/check.ts"
   ]
 }

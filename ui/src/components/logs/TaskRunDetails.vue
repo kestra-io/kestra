@@ -220,7 +220,6 @@
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore} from "../../stores/executions"
     import TaskRunLine from "../executions/TaskRunLine.vue"
-    // @ts-ignore - no type declarations for JS utility
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreview.vue"
     import {apiUrl} from "override/utils/route"

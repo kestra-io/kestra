@@ -180,7 +180,6 @@
     import {State, KsExecutionStatus, KsTaskIcon} from "@kestra-io/design-system"
     import {date, humanizeDuration} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
-    // @ts-ignore - no type declarations for JS utility
     import * as FlowUtils from "../../utils/flowUtils"
     import _groupBy from "lodash/groupBy"
     import resource from "../../models/resource"

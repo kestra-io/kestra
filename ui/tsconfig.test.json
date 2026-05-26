@@ -21,5 +21,8 @@
     "tests/storybook/**/*.tsx",
     "tests/storybook/**/*.jsx",
     "tests/storybook/**/*.vue"
+  ],
+  "exclude": [
+    "src/translations/check.ts"
   ]
 }

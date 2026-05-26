@@ -1,4 +1,7 @@
 import {createRouter, createWebHistory} from "vue-router"
+import type {Router, RouteRecordRaw} from "vue-router"
+import type {App} from "vue"
+import type {Pinia} from "pinia"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
 import moment from "moment-timezone"
@@ -33,11 +36,17 @@ import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
 
-export default async (app, routes, _stores, translations, additionalTranslations = {}) => {
+export default async (
+    app: App,
+    routes: RouteRecordRaw[],
+    _stores: null,
+    translations: Record<string, unknown>,
+    additionalTranslations: Record<string, unknown> = {},
+): Promise<{router: Router; piniaStore: Pinia}> => {
     // router
     const router = createRouter({
         // make e2e tests pass in dev mode
-        history: createWebHistory(import.meta.env.DEV ? "/ui" : window.KESTRA_UI_PATH),
+        history: createWebHistory(import.meta.env.DEV ? "/ui" : (window as any).KESTRA_UI_PATH), // FIXME: type this properly
         routes,
     })
 
@@ -74,9 +83,9 @@ export default async (app, routes, _stores, translations, additionalTranslations
     }
 
     // Google Analytics
-    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
+    if ((window as any).KESTRA_GOOGLE_ANALYTICS !== null) { // FIXME: type this properly
         configure({
-            tagId: window.KESTRA_GOOGLE_ANALYTICS,
+            tagId: (window as any).KESTRA_GOOGLE_ANALYTICS, // FIXME: type this properly
         })
     }
 
@@ -104,7 +113,8 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // moment
     moment.locale(locale)
-    const momentExtended = extendMoment(moment)
+    // FIXME: type this properly
+    const momentExtended: any = extendMoment(moment)
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
     setDateFormatter(dateFilter)
@@ -125,18 +135,19 @@ export default async (app, routes, _stores, translations, additionalTranslations
     createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
-    const components = {
+    // FIXME: type this properly
+    const components: Record<string, {default: any}> = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
         ...(import.meta.glob("../../node_modules/@kestra-io/ui-libs/src/components/content/*.vue", {eager: true})),
         ...(import.meta.glob("../components/content/*.vue", {eager: true})),
     }
-    const componentsByName = Object.entries(components)
+    const componentsByName: [string, any][] = Object.entries(components)
         .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default])
     const componentsNames = componentsByName.map(([name]) => name)
     componentsByName.filter(([name], index) => componentsNames.lastIndexOf(name) === index)
         .forEach(([name, component]) => app.component(name, component))
 
-    app.config.globalProperties.append = (path, pathToAppend) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
+    app.config.globalProperties.append = (path: string, pathToAppend: string) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 
     return {router, piniaStore}
 }

@@ -66,7 +66,7 @@
                                 )
                             ] ?? []
                         "
-                        :minItemSize="1"
+                        :minItemSize="32"
                         keyField="index"
                         class="log-lines"
                         :class="{'single-line': currentTaskRuns.length === 1}"
@@ -1008,6 +1008,10 @@
     .log-lines {
         transition: max-height 0.2s ease-out;
         max-height: 50vh;
+
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
+        }
 
         &.single-line {
             max-height: calc(100vh - 250px);

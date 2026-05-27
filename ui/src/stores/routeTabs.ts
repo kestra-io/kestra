@@ -14,6 +14,8 @@ export interface RouteTab {
     props?: Record<string, any>;
     "v-on"?: Record<string, any>;
     locked?: boolean;
+    icon?: Component;
+    excludeFromScope?: boolean;
     maximized?: boolean;
     noOverflow?: boolean;
     /**

@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "add_new_item": "添加新项目",
     "additionalPlugins": "附加插件",
+    "admin": "管理员",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -174,6 +175,7 @@
     "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "commit_id": "提交 id",
     "common": {
       "back": "返回"
     },
@@ -880,6 +882,7 @@
       "raw": "时间视图",
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
+    "main_configuration": "主配置",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",

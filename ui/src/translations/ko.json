@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
     "additionalPlugins": "추가 플러그인",
+    "admin": "관리자",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flow에서 비활성화됨",
     "collapse": "축소",
     "collapse all": "모두 축소",
+    "commit_id": "커밋 id",
     "common": {
       "back": "뒤로"
     },
@@ -880,6 +882,7 @@
       "raw": "Temporal 보기",
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
+    "main_configuration": "주요 설정",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",

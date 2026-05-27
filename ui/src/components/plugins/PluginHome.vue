@@ -122,26 +122,32 @@
     const nameAscComparator: Comparator = (a, b) =>
         a.manifest["X-Kestra-Title"].localeCompare(b.manifest["X-Kestra-Title"])
 
+    /** Sort by most-recently-released; ties fall back to name ascending. */
+    const newestComparator: Comparator = (a, b) => {
+        const infoA = pluginInfoMap.value[pluginInfoKey(a)]
+        const infoB = pluginInfoMap.value[pluginInfoKey(b)]
+        const dateA = infoA?.lastReleasedAt ? new Date(infoA.lastReleasedAt).getTime() : 0
+        const dateB = infoB?.lastReleasedAt ? new Date(infoB.lastReleasedAt).getTime() : 0
+        // Null/missing dates sort last
+        if (dateA === 0 && dateB === 0) return nameAscComparator(a, b)
+        if (dateA === 0) return 1
+        if (dateB === 0) return -1
+        return dateB - dateA || nameAscComparator(a, b)
+    }
+
+    /** Sort by descending usage count; ties fall back to name ascending. */
+    const mostUsedComparator: Comparator = (a, b) => {
+        const usageA = pluginInfoMap.value[pluginInfoKey(a)]?.usageCount ?? 0
+        const usageB = pluginInfoMap.value[pluginInfoKey(b)]?.usageCount ?? 0
+        return usageB - usageA || nameAscComparator(a, b)
+    }
+
     /** Comparator map keyed by sortBy value. */
     const comparators: Record<string, Comparator> = {
         "name-asc": nameAscComparator,
         "name-desc": (a, b) => nameAscComparator(b, a),
-        "newest": (a, b) => {
-            const infoA = pluginInfoMap.value[pluginInfoKey(a)]
-            const infoB = pluginInfoMap.value[pluginInfoKey(b)]
-            const dateA = infoA?.lastReleasedAt ? new Date(infoA.lastReleasedAt).getTime() : 0
-            const dateB = infoB?.lastReleasedAt ? new Date(infoB.lastReleasedAt).getTime() : 0
-            // Null/missing dates sort last
-            if (dateA === 0 && dateB === 0) return nameAscComparator(a, b)
-            if (dateA === 0) return 1
-            if (dateB === 0) return -1
-            return dateB - dateA || nameAscComparator(a, b)
-        },
-        "most-used": (a, b) => {
-            const usageA = pluginInfoMap.value[pluginInfoKey(a)]?.usageCount ?? 0
-            const usageB = pluginInfoMap.value[pluginInfoKey(b)]?.usageCount ?? 0
-            return usageB - usageA || nameAscComparator(a, b)
-        },
+        "newest": newestComparator,
+        "most-used": mostUsedComparator,
     }
 
     const pluginsList = computed(() => {

@@ -1370,7 +1370,7 @@
       "alt": "Иконка плагинов",
       "search": "Поиск среди {count}+ плагинов",
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
-      "title2": "Ищите tasks и triggers для создания вашего flow."
+      "title2": "Ищите tasks и triggers для создания вашего flow.",
     },
     "plugin_default_already_exists": "Плагин по умолчанию для <code>{type}</code> уже существует.",
     "plugins": {

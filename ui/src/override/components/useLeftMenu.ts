@@ -25,7 +25,6 @@ import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
-import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue"
 
 // Tenant Administration icons
 import Monitor from "vue-material-design-icons/Monitor.vue"
@@ -335,19 +334,6 @@ export function useLeftMenu() {
                         },
                     },
                 ],
-            },
-            {
-                title: t("instance"),
-                routes: routeStartWith("admin/instance"),
-                href: {
-                    name: "admin/instance",
-                },
-                icon: {
-                    element: ServerNetworkOutline,
-                },
-                attributes: {
-                    locked: true,
-                },
             },
         ]
 

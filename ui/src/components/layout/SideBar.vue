@@ -134,7 +134,7 @@
 }
 
 .top-level-link {
-    padding: 0 var(--ks-spacing-4);
+    padding: 0 var(--ks-spacing-2);
 }
 
 .header-toolbar {

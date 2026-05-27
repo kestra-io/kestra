@@ -26,7 +26,7 @@ const handleAuthError = (error, to) => {
 }
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
-    router.beforeEach(async (to, from) => {
+    router.beforeResolve(async (to, from) => {
         if(to.path === from.path && to.query === from.query) {
             return // Prevent navigation if the path and query are the same
         }

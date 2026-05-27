@@ -33,7 +33,7 @@ import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
 
-export default async (app, routes, _stores, translations, additionalTranslations = {}) => {
+export default async (app, routes, _stores, translations, additionalTranslations = {}, guards = {}) => {
     // router
     const router = createRouter({
         // make e2e tests pass in dev mode
@@ -62,6 +62,18 @@ export default async (app, routes, _stores, translations, additionalTranslations
             return {path: to.path, query: {...to.query, showDocId: from.query["showDocId"]}}
         }
     })
+
+    if(guards.beforeEach){
+        router.beforeEach(guards.beforeEach.bind(null, router))
+    }
+
+    if(guards.beforeResolve){
+        router.beforeResolve(guards.beforeResolve.bind(null, router))
+    }
+
+    if(guards.afterEach){
+        router.afterEach(guards.afterEach.bind(null, router))
+    }
 
     router.afterEach((to) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))

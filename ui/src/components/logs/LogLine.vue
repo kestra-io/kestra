@@ -33,14 +33,14 @@
             <pre
                 ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="message"
+                v-html="renderedHtml"
             />
         </div>
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, nextTick} from "vue"
+    import {computed, nextTick, ref, watch} from "vue"
     import Convert from "ansi-to-html"
     import {useStorage} from "@vueuse/core"
     import xss from "xss"
@@ -64,9 +64,9 @@
 
     // State
     const logsFontSize = useStorage<number>("logsFontSize", 12)
-    const lineContent = ref<HTMLElement>()
-
     const convert = new Convert()
+    const lineContent = ref<HTMLElement>()
+    const router = useRouter()
 
     // Computed
     const logLineStyle = computed(() => ({
@@ -133,24 +133,24 @@
         return `var(--ks-log-${logLevel}) !important`
     })
 
-    const message = computed(() => {
-        let logMessage = !props.log.message
-            ? ""
-            : convert.toHtml(
-                xss(props.log.message, {
-                    allowList: {span: ["style"]},
-                }),
-            )
-        logMessage = logMessage.replaceAll(
+    const renderedHtml = computed(() => {
+        const raw = props.log.message ?? ""
+        let html = convert.toHtml(
+            xss(raw, {
+                allowList: {span: ["style"]},
+            }),
+        )
+
+        html = processLinkTags(html)
+        html = html.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
             "$1<a href='$2' target='_blank'>$2</a>$3",
         )
-        logMessage = processLinkTags(logMessage)
-        return logMessage
+
+        return html
     })
 
-    const router = useRouter()
-    watch(message, () => {
+    watch(renderedHtml, () => {
         nextTick(() => {
             linkify(lineContent.value, router)
         })

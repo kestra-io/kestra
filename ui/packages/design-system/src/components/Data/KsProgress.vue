@@ -1,5 +1,7 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)" />
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)">
+        <slot/>
+    </ElProgress>
 </template>
 
 <script setup lang="ts">
@@ -27,6 +29,7 @@
         color: undefined,
         showText: undefined,
         status: undefined,
+        strokeLinecap: "square",
     })
 
     const left = computed(() => `${props.left ?? 0}%`)

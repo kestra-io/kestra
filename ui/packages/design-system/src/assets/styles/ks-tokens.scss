@@ -151,8 +151,8 @@
 }
 
 :root {
-    #{--ks-black}: palette.$base-black;
-    #{--ks-white}: palette.$base-white;
+    #{--ks-black}: palette.$base-gray-neutral-black;
+    #{--ks-white}: palette.$base-gray-neutral-white;
     #{--ks-blue-25}: palette.$base-blue-25;
     #{--ks-blue-50}: palette.$base-blue-50;
     #{--ks-blue-100}: palette.$base-blue-100;
@@ -166,19 +166,18 @@
     #{--ks-blue-900}: palette.$base-blue-900;
     #{--ks-blue-950}: palette.$base-blue-950;
     #{--ks-blue-1000}: palette.$base-blue-1000;
-    #{--ks-gray-25}: palette.$base-gray-25;
-    #{--ks-gray-50}: palette.$base-gray-50;
-    #{--ks-gray-100}: palette.$base-gray-100;
-    #{--ks-gray-200}: palette.$base-gray-200;
-    #{--ks-gray-300}: palette.$base-gray-300;
-    #{--ks-gray-400}: palette.$base-gray-400;
-    #{--ks-gray-500}: palette.$base-gray-500;
-    #{--ks-gray-600}: palette.$base-gray-600;
-    #{--ks-gray-700}: palette.$base-gray-700;
-    #{--ks-gray-800}: palette.$base-gray-800;
-    #{--ks-gray-900}: palette.$base-gray-900;
-    #{--ks-gray-950}: palette.$base-gray-950;
-    #{--ks-gray-1000}: palette.$base-gray-1000;
+    #{--ks-gray-cool-50}: palette.$base-gray-cool-50;
+    #{--ks-gray-cool-100}: palette.$base-gray-cool-100;
+    #{--ks-gray-cool-200}: palette.$base-gray-cool-200;
+    #{--ks-gray-cool-300}: palette.$base-gray-cool-300;
+    #{--ks-gray-cool-400}: palette.$base-gray-cool-400;
+    #{--ks-gray-cool-500}: palette.$base-gray-cool-500;
+    #{--ks-gray-cool-600}: palette.$base-gray-cool-600;
+    #{--ks-gray-cool-700}: palette.$base-gray-cool-700;
+    #{--ks-gray-cool-800}: palette.$base-gray-cool-800;
+    #{--ks-gray-cool-900}: palette.$base-gray-cool-900;
+    #{--ks-gray-cool-950}: palette.$base-gray-cool-950;
+    #{--ks-gray-cool-1000}: palette.$base-gray-cool-1000;
     #{--ks-gray-neutral-25}: palette.$base-gray-neutral-25;
     #{--ks-gray-neutral-50}: palette.$base-gray-neutral-50;
     #{--ks-gray-neutral-100}: palette.$base-gray-neutral-100;

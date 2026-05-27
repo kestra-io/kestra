@@ -5,8 +5,8 @@ $node-default: #7081b9;
 $statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
 
 :root {
-    --ks-topology-edge-color: #9A8EB4;
-    --ks-topology-dot-color: #{$base-gray-300};
+    --ks-topology-edge-color: hsl(259, 20%, 63%);
+    --ks-topology-dot-color: #{$base-gray-neutral-300};
 
     --ks-border-radius:      0.25rem;
     --ks-border-radius-lg:   0.5rem;
@@ -30,10 +30,10 @@ $node-colors: (
 }
 
 html.dark {
-    --ks-node-default: #{$base-gray-400};
+    --ks-node-default: #{$base-gray-neutral-400};
 }
 
-.bg-white { background-color: $base-white; }
+.bg-white { background-color: $base-gray-neutral-white; }
 
 .text-danger { color: $base-red-500; }
 

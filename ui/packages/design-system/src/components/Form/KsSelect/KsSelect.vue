@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="selectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" @change="emit('change', $event)">
+    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, nextTick, onMounted, onBeforeUnmount, type Component} from "vue"
+    import {type Component} from "vue"
     import {ElSelect} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -82,48 +82,8 @@
 
     const filteredProps = useFilteredProps(props, ["fit"])
 
-    /**
-     * Content-sizing ("fit" mode). Element Plus renders the selected value as an
-     * absolutely-positioned overlay, so the box never shrinks to its content on
-     * its own. Instead of overriding its internal layout (which breaks vertical
-     * centering, height and focus), we measure the displayed value and set the
-     * select's width. Native rendering, centering, focus and filtering stay intact.
-     */
-    const selectRef = ref<InstanceType<typeof ElSelect>>()
-
-    function fitWidth() {
-        if (!props.fit) return
-        const root = selectRef.value?.$el as HTMLElement | undefined
-        if (!root) return
-
-        const wrapper = root.querySelector<HTMLElement>(".kel-select__wrapper")
-        const display = root.querySelector<HTMLElement>(".kel-select__placeholder")
-        if (!wrapper || !display) return
-
-        const range = document.createRange()
-        range.selectNodeContents(display)
-        const textWidth = range.getBoundingClientRect().width
-
-        const caret = root.querySelector<HTMLElement>(".kel-select__suffix")
-        const styles = getComputedStyle(wrapper)
-        const extra =
-            parseFloat(styles.paddingLeft) +
-            parseFloat(styles.paddingRight) +
-            (parseFloat(styles.columnGap || styles.gap) || 0) +
-            (caret?.offsetWidth ?? 0)
-
-        root.style.width = `${Math.ceil(textWidth + extra) + 1}px`
-    }
-
-    if (props.fit) {
-        watch(model, () => nextTick(fitWidth))
-        onMounted(() => {
-            nextTick(fitWidth)
-            document.fonts?.ready?.then(fitWidth)
-            window.addEventListener("resize", fitWidth)
-        })
-        onBeforeUnmount(() => window.removeEventListener("resize", fitWidth))
-    }
+    // "fit" mode (content-sizing) is handled purely in CSS — see `.kel-select--fit`
+    // in the style block below. No JS measurement.
 </script>
 
 <style lang="scss">
@@ -136,6 +96,30 @@
 
         &.fit-text .kel-select__input {
             width: fit-content !important;
+        }
+
+        // "fit" mode: shrink the select to its selected value. Element Plus renders
+        // the value as an absolutely-positioned overlay, so un-absolute ONLY the
+        // value (.kel-select__placeholder) to give the box intrinsic content width;
+        // keep the search input wrapper absolute so it never forces full width.
+        &.kel-select--fit {
+            width: fit-content;
+
+            .kel-select__wrapper {
+                width: fit-content;
+            }
+
+            .kel-select__placeholder {
+                position: static;
+                // EP centers the absolute value via translateY(-50%); reset that
+                // leftover transform so the now in-flow value centers via flex.
+                transform: none;
+                top: auto;
+            }
+
+            .kel-select__input-wrapper {
+                position: absolute;
+            }
         }
 
 

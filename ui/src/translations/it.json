@@ -1519,6 +1519,16 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "",
+            "default_namespace": "",
+            "editor_type": "",
+            "execute_default_tab": "",
+            "execute_flow": "",
+            "flow_default_tab": "",
+            "log_display": "",
+            "log_level": ""
+          },
           "fields": {
             "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
             "default_namespace": "Namespace predefinito",
@@ -1542,6 +1552,11 @@
           "label": "Esporta"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "",
+            "language": "",
+            "time_zone": ""
+          },
           "fields": {
             "date_format": "Formato Data",
             "time_zone": "Fuso Orario"
@@ -1557,12 +1572,27 @@
           "unsaved_warning": "Hai modifiche non salvate. Vuoi salvarle prima di uscire?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Chiaro",
+            "sync": "Sincronizza con il sistema"
+          },
+          "descriptions": {
+            "color_mode": "",
+            "editor_folding_stratgy": "",
+            "editor_font_family": "",
+            "editor_font_size": "",
+            "editor_hover_description": "",
+            "logs_font_size": ""
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Classico",
               "kestra": "Kestra",
               "label": "Schema Colori Grafico"
             },
+            "color_mode": "Modalità colore",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
@@ -1573,10 +1603,11 @@
             "logs_font_size": "Dimensione Font dei Log",
             "theme": "Modello"
           },
-          "label": "Preferenze del Tema"
+          "label": "Aspetto"
         }
       },
-      "label": "Impostazioni"
+      "label": "Impostazioni",
+      "updated": "{name} aggiornato"
     },
     "setup": {
       "config": {

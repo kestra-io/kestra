@@ -1519,6 +1519,16 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "",
+            "default_namespace": "",
+            "editor_type": "",
+            "execute_default_tab": "",
+            "execute_flow": "",
+            "flow_default_tab": "",
+            "log_display": "",
+            "log_level": ""
+          },
           "fields": {
             "auto_refresh_interval": "Intervalo de Atualização Automática",
             "default_namespace": "Namespace Padrão",
@@ -1542,6 +1552,11 @@
           "label": "Exportar"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "",
+            "language": "",
+            "time_zone": ""
+          },
           "fields": {
             "date_format": "Formato de Data",
             "time_zone": "Fuso Horário"
@@ -1557,12 +1572,27 @@
           "unsaved_warning": "Você tem alterações não salvas. Deseja salvá-las antes de sair?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Claro",
+            "sync": "Sincronizar com o sistema"
+          },
+          "descriptions": {
+            "color_mode": "",
+            "editor_folding_stratgy": "",
+            "editor_font_family": "",
+            "editor_font_size": "",
+            "editor_hover_description": "",
+            "logs_font_size": ""
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Clássico",
               "kestra": "Kestra",
               "label": "Esquema de Cores do Gráfico"
             },
+            "color_mode": "Modo de cor",
             "editor_folding_stratgy": "Dobramento Automático de Código no Editor",
             "editor_font_family": "Família de Fonte do Editor",
             "editor_font_size": "Tamanho da Fonte do Editor",
@@ -1573,10 +1603,11 @@
             "logs_font_size": "Tamanho da Fonte dos Logs",
             "theme": "Tema"
           },
-          "label": "Preferências de Tema"
+          "label": "Aparência"
         }
       },
-      "label": "Configurações"
+      "label": "Configurações",
+      "updated": "{name} atualizado"
     },
     "setup": {
       "config": {

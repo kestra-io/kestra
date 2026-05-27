@@ -1,5 +1,5 @@
 <template>
-    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" @change="emit('change', $event)">
+    <ElSelect ref="selectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import {ref, watch, nextTick, onMounted, onBeforeUnmount, type Component} from "vue"
     import {ElSelect} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -49,6 +49,12 @@
         popperClass?: string
         showArrow?: boolean
         suffixIcon?: Component | string
+        /**
+         * Sizing mode. `false` (default, "classic") fills the container / honours an
+         * explicit width. `true` ("fit") shrinks the select to its content (the
+         * selected value), like the compact selects in the 2.0 design.
+         */
+        fit?: boolean
     }>(), {
         placeholder: undefined,
         size: undefined,
@@ -74,7 +80,50 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["fit"])
+
+    /**
+     * Content-sizing ("fit" mode). Element Plus renders the selected value as an
+     * absolutely-positioned overlay, so the box never shrinks to its content on
+     * its own. Instead of overriding its internal layout (which breaks vertical
+     * centering, height and focus), we measure the displayed value and set the
+     * select's width. Native rendering, centering, focus and filtering stay intact.
+     */
+    const selectRef = ref<InstanceType<typeof ElSelect>>()
+
+    function fitWidth() {
+        if (!props.fit) return
+        const root = selectRef.value?.$el as HTMLElement | undefined
+        if (!root) return
+
+        const wrapper = root.querySelector<HTMLElement>(".kel-select__wrapper")
+        const display = root.querySelector<HTMLElement>(".kel-select__placeholder")
+        if (!wrapper || !display) return
+
+        const range = document.createRange()
+        range.selectNodeContents(display)
+        const textWidth = range.getBoundingClientRect().width
+
+        const caret = root.querySelector<HTMLElement>(".kel-select__suffix")
+        const styles = getComputedStyle(wrapper)
+        const extra =
+            parseFloat(styles.paddingLeft) +
+            parseFloat(styles.paddingRight) +
+            (parseFloat(styles.columnGap || styles.gap) || 0) +
+            (caret?.offsetWidth ?? 0)
+
+        root.style.width = `${Math.ceil(textWidth + extra) + 1}px`
+    }
+
+    if (props.fit) {
+        watch(model, () => nextTick(fitWidth))
+        onMounted(() => {
+            nextTick(fitWidth)
+            document.fonts?.ready?.then(fitWidth)
+            window.addEventListener("resize", fitWidth)
+        })
+        onBeforeUnmount(() => window.removeEventListener("resize", fitWidth))
+    }
 </script>
 
 <style lang="scss">
@@ -89,9 +138,10 @@
             width: fit-content !important;
         }
 
+
         &:not(.kel-select--small),
         &:not(.kel-select--large) {
-            font-size: var(--ks-font-size-base);
+            font-size: var(--ks-font-size-xs);
         }
 
         .kel-select__wrapper {
@@ -115,7 +165,10 @@
 
         .kel-select__wrapper {
             background-color: var(--ks-bg-input);
-            min-height: 32px;
+            min-height: 30px;
+            padding: 4px 8px 4px 16px;
+            font-size: var(--ks-font-size-xs);
+            box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 
             &:hover {
                 background-color: var(--ks-bg-hover);

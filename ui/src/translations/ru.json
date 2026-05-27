@@ -1519,6 +1519,16 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "",
+            "default_namespace": "",
+            "editor_type": "",
+            "execute_default_tab": "",
+            "execute_flow": "",
+            "flow_default_tab": "",
+            "log_display": "",
+            "log_level": ""
+          },
           "fields": {
             "auto_refresh_interval": "Интервал автоматического обновления",
             "default_namespace": "Namespace по умолчанию",
@@ -1542,6 +1552,11 @@
           "label": "Экспорт"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "",
+            "language": "",
+            "time_zone": ""
+          },
           "fields": {
             "date_format": "Формат даты",
             "time_zone": "Часовой пояс"
@@ -1557,12 +1572,27 @@
           "unsaved_warning": "У вас есть несохраненные изменения. Хотите сохранить их перед выходом?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Светлая",
+            "sync": "Синхронизировать с системой"
+          },
+          "descriptions": {
+            "color_mode": "",
+            "editor_folding_stratgy": "",
+            "editor_font_family": "",
+            "editor_font_size": "",
+            "editor_hover_description": "",
+            "logs_font_size": ""
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Классический",
               "kestra": "Kestra",
               "label": "Цветовая схема диаграммы"
             },
+            "color_mode": "Цветовой режим",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
             "editor_font_family": "Шрифт редактора",
             "editor_font_size": "Размер шрифта редактора",
@@ -1573,10 +1603,11 @@
             "logs_font_size": "Размер шрифта Logs",
             "theme": "Тема"
           },
-          "label": "Настройки темы"
+          "label": "Внешний вид"
         }
       },
-      "label": "Настройки"
+      "label": "Настройки",
+      "updated": "{name} обновлено"
     },
     "setup": {
       "config": {

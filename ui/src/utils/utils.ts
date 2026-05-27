@@ -167,22 +167,22 @@ export function switchTheme(miscStore: any, theme?: string) {
     // class name
     const htmlClass = document.getElementsByTagName("html")[0].classList
 
+    const themeClasses = ["dark", "light", "syncWithSystem", "dark-2"]
     function removeClasses() {
-        htmlClass.forEach((cls) => {
-            if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
-                htmlClass.remove(cls)
-            }
-        })
+        themeClasses.forEach((cls) => htmlClass.remove(cls))
     }
     removeClasses()
 
     if (theme === "syncWithSystem") {
-        removeClasses()
         const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
         htmlClass.add(theme, systemTheme)
     }
+    else if (theme === "dark-2") {
+        // dark-2 is a dark variant: keep the `dark` class so Element Plus and
+        // `.dark` styles apply, then layer the 2.0 palette on top via `dark-2`.
+        htmlClass.add("dark", "dark-2")
+    }
     else {
-        removeClasses()
         htmlClass.add(theme)
     }
 
@@ -191,14 +191,26 @@ export function switchTheme(miscStore: any, theme?: string) {
     localStorage.setItem("theme", theme)
 }
 
+export type SelectedTheme = "syncWithSystem" | "dark" | "dark-2" | "light"
+
+/**
+ * The raw theme the user selected, including `dark-2` and `syncWithSystem`.
+ * Use this for the settings picker; use {@link getTheme} when only the
+ * effective light/dark value matters.
+ */
+export function getSelectedTheme(): SelectedTheme {
+    return (localStorage.getItem("theme") as SelectedTheme | null) ?? "syncWithSystem"
+}
+
 export function getTheme(): "light" | "dark" {
-    let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light"
+    let theme = getSelectedTheme()
 
     if (theme === "syncWithSystem") {
-        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
 
-    return theme
+    // dark and dark-2 are both dark variants
+    return theme === "light" ? "light" : "dark"
 }
 
 export function getLang() {

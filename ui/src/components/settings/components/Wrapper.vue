@@ -1,19 +1,16 @@
 <template>
-    <KsRow class="my-5 settings-wrapper">
-        <KsCol
-            :xs="layout(24, 0)"
-            :sm="layout(20, 2)"
-            :md="layout(18, 3)"
-            :lg="layout(16, 4)"
-            :xl="layout(14, 5)"
-        >
-            <slot />
-        </KsCol>
-    </KsRow>
+    <div class="settings-wrapper">
+        <slot />
+    </div>
 </template>
 
-<script setup lang="ts">
-    const layout = (span: number, offset: number) => {
-        return {span, offset}
+<style scoped lang="scss">
+    .settings-wrapper {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
     }
-</script>
+</style>

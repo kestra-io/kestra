@@ -1519,6 +1519,16 @@
     "settings": {
       "blocks": {
         "configuration": {
+          "descriptions": {
+            "auto_refresh_interval": "",
+            "default_namespace": "",
+            "editor_type": "",
+            "execute_default_tab": "",
+            "execute_flow": "",
+            "flow_default_tab": "",
+            "log_display": "",
+            "log_level": ""
+          },
           "fields": {
             "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "default_namespace": "Standard-Namespace",
@@ -1542,6 +1552,11 @@
           "label": "Exportieren"
         },
         "localization": {
+          "descriptions": {
+            "date_format": "",
+            "language": "",
+            "time_zone": ""
+          },
           "fields": {
             "date_format": "Datumsformat",
             "time_zone": "Zeitzone"
@@ -1557,12 +1572,27 @@
           "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
         "theme": {
+          "color_modes": {
+            "dark_1": "Dark 1.0",
+            "dark_2": "Dark 2.0",
+            "light": "Hell",
+            "sync": "Mit System synchronisieren"
+          },
+          "descriptions": {
+            "color_mode": "",
+            "editor_folding_stratgy": "",
+            "editor_font_family": "",
+            "editor_font_size": "",
+            "editor_hover_description": "",
+            "logs_font_size": ""
+          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Klassisch",
               "kestra": "Kestra",
               "label": "Diagramm-Farbschema"
             },
+            "color_mode": "Farbmodus",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_font_size": "Editor-Schriftgröße",
@@ -1573,10 +1603,11 @@
             "logs_font_size": "Logs Schriftgröße",
             "theme": "Modus"
           },
-          "label": "Modus-Einstellungen"
+          "label": "Darstellung"
         }
       },
-      "label": "Einstellungen"
+      "label": "Einstellungen",
+      "updated": "{name} aktualisiert"
     },
     "setup": {
       "config": {

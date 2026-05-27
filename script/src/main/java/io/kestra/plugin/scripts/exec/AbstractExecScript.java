@@ -43,15 +43,12 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
 
     @Schema(
         title = "The task runner to use.",
-        description = "Task runners are provided by plugins, each have their own properties."
+        description = "Task runners are provided by plugins, each have their own properties.",
+        defaultValue = "{type: io.kestra.plugin.scripts.runner.docker.Docker, pullPolicy: IF_NOT_PRESENT}"
     )
     @PluginProperty
-    @Builder.Default
     @Valid
-    protected TaskRunner<?> taskRunner = Docker.builder()
-        .type(Docker.class.getName())
-        .pullPolicy(Property.ofValue(PullPolicy.IF_NOT_PRESENT))
-        .build();
+    protected TaskRunner<?> taskRunner;
 
     @Schema(
         title = "A list of commands that will run before the `commands`, allowing to set up the environment e.g. `pip install -r requirements.txt`."
@@ -148,8 +145,16 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     }
 
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
-        if (this.getRunner() == null) {
-            runContext.logger().debug("Using task runner '{}'", this.getTaskRunner().getType());
+        TaskRunner<?> effectiveTaskRunner = this.getTaskRunner();
+        if (effectiveTaskRunner == null && this.getRunner() == null) {
+            // No taskRunner and no legacy runner set: fall back to the historical default Docker runner.
+            effectiveTaskRunner = Docker.builder()
+                .type(Docker.class.getName())
+                .pullPolicy(Property.ofValue(PullPolicy.IF_NOT_PRESENT))
+                .build();
+        }
+        if (effectiveTaskRunner != null && this.getRunner() == null) {
+            runContext.logger().debug("Using task runner '{}'", effectiveTaskRunner.getType());
         }
 
         Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);
@@ -157,7 +162,7 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
             .withEnv(renderedEnv.isEmpty() ? new HashMap<>() : renderedEnv)
             .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
-            .withTaskRunner(this.getTaskRunner())
+            .withTaskRunner(effectiveTaskRunner)
             .withDockerOptions(this.getDocker() != null ? this.injectDefaults(runContext, this.getDocker()) : null)
             .withNamespaceFiles(this.getNamespaceFiles())
             .withInputFiles(this.getInputFiles())

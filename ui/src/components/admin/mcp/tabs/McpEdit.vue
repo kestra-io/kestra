@@ -272,9 +272,9 @@
             transition: all 0.15s;
 
             &--active {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.08);
-                color: $base-purple-400;
+                border-color: $base-primary-400;
+                background: rgba($base-primary-400, 0.08);
+                color: $base-primary-400;
             }
 
             &:hover:not(.mcp-edit__type-btn--active) {
@@ -304,8 +304,8 @@
             transition: border-color 0.15s;
 
             &--selected {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.04);
+                border-color: $base-primary-400;
+                background: rgba($base-primary-400, 0.04);
             }
 
             &--disabled {
@@ -328,7 +328,7 @@
         }
 
         &__toggle {
-            --el-switch-on-color: #{$base-purple-400};
+            --el-switch-on-color: #{$base-primary-400};
         }
 
         &__actions {

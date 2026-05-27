@@ -299,7 +299,7 @@ When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-the
 
 **SCSS variables — only inside `ui/packages/design-system/`, never in feature code:**
 
-- **Brand:** `$base-purple-500` (primary, `#8405FF`)
+- **Brand:** `$base-primary-500` (primary, `#8405FF`)
 - **Status palette:** `$base-green-500` (success), `$base-red-500` (danger), `$base-orange-500` (warning), `$base-blue-500` (info)
 - **Grays:** `$base-gray-50` … `$base-gray-950`
 - **Typography:** `$font-family-sans-serif` (Inter), `$font-family-monospace` (JetBrains Mono)

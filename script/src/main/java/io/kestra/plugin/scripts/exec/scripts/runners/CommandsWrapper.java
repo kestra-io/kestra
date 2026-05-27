@@ -218,6 +218,16 @@ public class CommandsWrapper implements TaskCommands {
 
     @SuppressWarnings("unchecked")
     public <T extends TaskRunnerDetailResult> TaskRunner<T> getTaskRunner() {
+        // User-explicit taskRunner takes precedence over the deprecated runnerType (fixes PluginDefault precedence
+        // where a non-forced default sets `runner` but the flow explicitly sets `taskRunner`).
+        if (taskRunner != null) {
+            // special case to take into account the deprecated dockerOptions if set
+            if (taskRunner instanceof Docker && dockerOptions != null) {
+                return (TaskRunner<T>) Docker.from(dockerOptions);
+            }
+            return (TaskRunner<T>) taskRunner;
+        }
+
         if (runnerType != null) {
             return switch (runnerType) {
                 case DOCKER -> (TaskRunner<T>) Docker.from(dockerOptions);
@@ -225,18 +235,14 @@ public class CommandsWrapper implements TaskCommands {
             };
         }
 
-        // special case to take into account the deprecated dockerOptions if set
-        if (taskRunner instanceof Docker && dockerOptions != null) {
-            return (TaskRunner<T>) Docker.from(dockerOptions);
-        }
-
-        return (TaskRunner<T>) taskRunner;
+        return null;
     }
 
     public Boolean getEnableOutputDirectory() {
         if (this.enableOutputDirectory == null) {
-            // For compatibility reasons, if legacy runnerType property is used, we enable the output directory
-            return this.runnerType != null;
+            // For compatibility reasons, if legacy runnerType property is used (and no explicit taskRunner overrides it),
+            // we enable the output directory. Mirrors getTaskRunner() precedence: taskRunner wins over runnerType.
+            return this.runnerType != null && this.taskRunner == null;
         }
 
         return this.enableOutputDirectory;

@@ -106,6 +106,7 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
         oss: true,
         router,
         beforeLogout,
+        isLoggedIn: () => BasicAuth.isLoggedIn(),
         onAuthTimeout: beforeLogout,
         isImpersonating: () => window.sessionStorage.getItem("impersonate"),
     }) 

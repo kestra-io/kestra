@@ -202,12 +202,13 @@
     }
 
     .type-box {
-        background-color: var(--ks-bg-tag-active);
+        background-color: var(--ks-bg-tag);
         color: var(--ks-text-primary);
-        font-size: 12px;
-        padding: 0 8px 2px;
-        border-radius: 8px;
+        line-height: 1.25rem;
+        padding: 0 var(--ks-spacing-2);
+        border-radius: var(--ks-radius-lg);
         text-transform: capitalize;
+        border: 1px solid var(--ks-border-default);
     }
 
     .ref-type-box {

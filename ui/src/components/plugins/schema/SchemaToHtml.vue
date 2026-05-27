@@ -9,10 +9,7 @@
                 </p>
             </div>
 
-            <div v-if="schema.properties?.title" class="plugin-title markdown">
-                <slot name="markdown" :content="normalizeColons(schema.properties.title)" />
-            </div>
-            <div v-if="schema.properties?.description" class="markdown">
+            <div v-if="schema.properties?.description" class="markdown plugin-description">
                 <slot name="markdown" :content="normalizeColons(schema.properties.description)" />
             </div>
 
@@ -304,12 +301,9 @@
         }
     }
 
-    .plugin-title {
-        font-size: var(--ks-font-size-lg);
-
-        :deep(p) {
-            font-size: var(--ks-font-size-base);
-        }
+    .plugin-description :deep(p),
+    .plugin-description :deep(li) {
+        color: var(--ks-text-secondary);
     }
 
     .examples-list {
@@ -385,7 +379,7 @@
         }
 
         [id$="-body"]:not(#examples-body) span {
-            font-size: var(--ks-font-size-sm);
+            font-size: var(--ks-font-size-xs);
             font-weight: 400;
         }
     }

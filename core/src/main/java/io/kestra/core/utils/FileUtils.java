@@ -3,7 +3,6 @@ package io.kestra.core.utils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.net.URI;
 import java.util.Optional;
 
@@ -63,16 +62,39 @@ public final class FileUtils {
     }
 
     /**
-     * Check if the provided URI does not contain relative parent path traversal (i.e., "..").
+     * Check if the provided URI contains a relative parent path traversal segment (i.e., "..").
      *
      * @param uri the URI to validate
      * @return true if there is a relative parent path traversal
      */
     public static boolean isParentTraversal(URI uri) {
-        if (uri == null) {
+        return uri != null && isParentTraversal(uri.getPath());
+    }
+
+    /**
+     * Check if the provided path contains a relative parent path traversal segment (i.e., "..").
+     * <p>
+     * Both {@code /} and {@code \} are treated as path separators so that Windows-style backslash
+     * payloads (e.g. {@code "..\..\"}) cannot bypass the check. Only forward slashes were previously
+     * matched, allowing backslash payloads to slip through on Linux/containers before being
+     * canonicalized (GHSA-qw4v-6w32-xx9h).
+     * <p>
+     * The {@code path} argument must already be percent-decoded. {@link URI#getPath()} performs this
+     * decoding automatically, so callers that obtain the path via a URI do not need to decode it
+     * manually. Callers that pass a raw URL string should decode it first.
+     *
+     * @param path the path to validate (must be percent-decoded)
+     * @return true if there is a relative parent path traversal
+     */
+    public static boolean isParentTraversal(String path) {
+        if (path == null) {
             return false;
         }
-        var path = uri.getPath();
-        return path != null && (path.contains(".." + File.separator) || path.contains(File.separator + "..") || path.equals(".."));
+        // Normalize both separators to '/' so the check is platform- and payload-agnostic.
+        String normalized = path.replace('\\', '/');
+        return normalized.equals("..")
+            || normalized.startsWith("../")
+            || normalized.endsWith("/..")
+            || normalized.contains("/../");
     }
 }

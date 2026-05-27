@@ -35,7 +35,6 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
     "additionalPlugins": "Дополнительные плагины",
-    "admin": "Администратор",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -175,7 +174,6 @@
     "codeDisabled": "Отключено в flow",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
-    "commit_id": "Идентификатор коммита",
     "common": {
       "back": "Назад"
     },
@@ -882,7 +880,6 @@
       "raw": "Временной вид",
       "raw_details": "Показать полные task logs и flow логи в формате необработанных временных меток"
     },
-    "main_configuration": "Основная конфигурация",
     "management port": "Порт управления",
     "mark as": "Пометить как <code>{status}</code>",
     "max": "Макс",

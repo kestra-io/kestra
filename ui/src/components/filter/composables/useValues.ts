@@ -53,13 +53,9 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
     }
 
     const VALUES = {
-        EXECUTION_STATES: (() => {
-            const states = State.arrayAllStates().map((state: { name: string }) => state.name)
-            if (!states.includes("SUBMITTED")) {
-                states.push("SUBMITTED")
-            }
-            return buildFromArray(states)
-        })(),
+        EXECUTION_STATES: buildFromArray(
+            State.arrayAllStates().map((state: { name: string }) => state.name),
+        ),
         SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),

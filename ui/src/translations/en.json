@@ -855,8 +855,8 @@
       "search": "Search across {count}+ plugins",
       "alt": "Plugins Icon",
       "sort": {
-        "name_asc": "A → Z",
-        "name_desc": "Z → A",
+        "name_asc": "Name A-Z",
+        "name_desc": "Name Z-A",
         "newest": "Newest",
         "most_used": "Most used"
       }

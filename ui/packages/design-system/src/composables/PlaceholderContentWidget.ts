@@ -9,9 +9,7 @@ export default class PlaceholderContentWidget implements monaco.editor.IContentW
         private readonly placeholder: string,
         private readonly editor: monaco.editor.ICodeEditor,
     ) {
-        // register a listener for editor code changes
         editor.onDidChangeModelContent(() => this.onDidChangeModelContent())
-        // ensure that on initial load the placeholder is shown
         this.onDidChangeModelContent()
     }
 

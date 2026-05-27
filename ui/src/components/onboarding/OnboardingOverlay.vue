@@ -299,8 +299,8 @@
                 return
             }
             highlightRetryCount.value = 0
-            const isEditorWrapperTarget = target.id === "editorWrapper"
-            if (!isEditorWrapperTarget) {
+            const isFlowFileEditorTabTarget = target.id === "flowFileEditorTab"
+            if (!isFlowFileEditorTabTarget) {
                 if (highlightedElement.value !== target) {
                     highlightedElement.value?.classList.remove("onboarding-v2-highlight")
                     highlightedElement.value?.classList.remove("onboarding-v2-highlight-static")

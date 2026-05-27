@@ -13,21 +13,25 @@
                 :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
                 class="image-preview"
             >
-            <Editor
+            <KsEditor
                 v-else
-                id="editorWrapper"
+                v-bind="editorBindings"
+                id="flowFileEditorTab"
                 ref="editorRefElement"
                 class="flex-1"
                 :modelValue="hasDraft ? draftSource : source"
                 :schemaType="flow ? 'flow': undefined"
                 :lang="lang"
-                :extension="extension"
                 :navbar="false"
                 :readOnly="flow && flowStore.isReadOnly"
-                :creating="isCreating"
                 :path="path"
-                :diffOverviewBar="false"
-                :scrollKey="editorScrollKey"
+                :options="{
+                    creating: isCreating,
+                    diffOverviewBar: false,
+                    scrollKey: editorScrollKey,
+                    diffSideBySide: false,
+                    editor: flow ? {padding: {top: 16}} : undefined,
+                }"
                 @update:model-value="editorUpdate"
                 @cursor="updatePluginDocumentation"
                 @save="flow ? saveFlowYaml(): saveFileContent()"
@@ -35,7 +39,6 @@
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
                 :original="hasDraft ? source : undefined"
-                :diffSideBySide="false"
             >
                 <template #absolute>
                     <AITriggerButton
@@ -52,7 +55,7 @@
                 <template #buttons>
                     <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
                 </template>
-            </Editor>
+            </KsEditor>
         </template>
     </AiCopilotWrapper>
 </template>
@@ -80,6 +83,7 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
+    import {useDocStore} from "../../stores/doc"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
@@ -88,8 +92,9 @@
     import {aiGenerationTypes} from "../../utils/constants"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
 
-    import Editor from "./Editor.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue"
     import AITriggerButton from "../ai/AITriggerButton.vue"
@@ -104,6 +109,7 @@
 
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
+    const editorBindings = useEditorBindings()
 
     const cursor = ref()
 
@@ -194,6 +200,7 @@
     })
 
     onMounted(() => {
+        useDocStore().docId = "flowEditor"
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"})
         }
@@ -244,7 +251,7 @@
         pluginsStore.editorPlugin = undefined
     })
 
-    const editorRefElement = ref<InstanceType<typeof Editor>>()
+    const editorRefElement = ref<InstanceType<typeof KsEditor>>()
 
     const namespace = computed(() => flowStore.flow?.namespace)
     const isCreating = computed(() => flowStore.isCreating)
@@ -320,8 +327,7 @@
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value)
-        const editorRef = editorRefElement.value
-        if(!editorRef?.$refs.monacoEditor) return
+        if(!editorRefElement.value?.getEditor()) return
 
         const creating = flowStore.isCreating
 

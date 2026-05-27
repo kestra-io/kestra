@@ -12,9 +12,10 @@
             <template #label>
                 <KsMarkdown :content="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
                 :data-testid="`input-form-${input.id}`"
@@ -206,19 +207,20 @@
                     </div>
                 </div>
             </div>
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <Editor
-                :fullHeight="false"
-                :input="true"
+            <KsEditor
+                v-bind="editorBindings"
+                :options="{fullHeight: false}"
+                :inline="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
@@ -245,15 +247,14 @@
 
 <script setup lang="ts">
     import moment from "moment-timezone"
-    import {KsMessage} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance} from "vue"
     import {Execution, useExecutionsStore} from "../../stores/executions"
     import {useI18n} from "vue-i18n"
     import debounce from "lodash/debounce"
-    import Editor from "../../components/inputs/Editor.vue"
-    import {KsMarkdown} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
     import {normalize, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
@@ -340,6 +341,7 @@
     const executionsStore = useExecutionsStore()
     const {t} = useI18n()
     const instance = getCurrentInstance()
+    const editorBindings = useEditorBindings()
 
     // Reactive state
     // Using 'any' type for v-model compatibility with various Element Plus components

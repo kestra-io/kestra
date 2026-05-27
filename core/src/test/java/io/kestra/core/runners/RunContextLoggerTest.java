@@ -8,7 +8,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -230,21 +229,22 @@ class RunContextLoggerTest {
         ch.qos.logback.classic.Logger perRunLogger =
             (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
-        // Build and transform the event on a different thread, mirroring the production case
-        // where logger() is initialized on one thread and logs are emitted on a worker thread.
-        // The per-run MDC adapter's thread-local is empty on this worker, so a fix that relies
-        // on event.getMDCPropertyMap() would produce an empty MDC here.
-        ILoggingEvent transformed = Executors.newSingleThreadExecutor().submit(() -> {
-            LoggingEvent original = new LoggingEvent(
-                RunContextLoggerTest.class.getName(),
-                perRunLogger,
-                ch.qos.logback.classic.Level.INFO,
-                "msg",
-                null,
-                null
-            );
-            return new TransformExposingAppender(runContextLogger, perRunLogger).transform(original);
-        }).get();
+        LoggingEvent original = new LoggingEvent(
+            RunContextLoggerTest.class.getName(),
+            perRunLogger,
+            ch.qos.logback.classic.Level.INFO,
+            "msg",
+            null,
+            null
+        );
+        ILoggingEvent transformed = new TransformExposingAppender(runContextLogger, perRunLogger)
+            .transform(original);
+
+        // Clear the per-run MDC adapter so the lazy lookup in getMDCPropertyMap() would
+        // hit an empty map. The only remaining path to non-empty MDC is the eager snapshot
+        // set by lle.setMDCPropertyMap(...) inside transform(). Removing that call makes
+        // this assertion fail.
+        perRunLogger.getLoggerContext().getMDCAdapter().clear();
 
         assertThat(transformed.getMDCPropertyMap())
             .containsEntry("tenantId", logEntry.getTenantId())
@@ -254,37 +254,30 @@ class RunContextLoggerTest {
     }
 
     @Test
-    void initializeLoggerPopulatesGlobalMDC_andResetMDCClearsIt() {
+    void resetMDCClearsThePerRunAdapter() {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
         LogEntry logEntry = LogEntry.of(execution);
 
-        try {
-            RunContextLogger runContextLogger = new RunContextLogger(
-                logEntryEmitter,
-                logEntry,
-                Level.TRACE,
-                false
-            );
-            runContextLogger.logger();
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        var adapter = perRunLogger.getLoggerContext().getMDCAdapter();
 
-            // Global SLF4J MDC must carry the execution context so non-flow loggers
-            // (worker, executor, scheduler) on this thread emit it too. v0.19.5 parity.
-            assertThat(org.slf4j.MDC.get("tenantId")).isEqualTo(logEntry.getTenantId());
-            assertThat(org.slf4j.MDC.get("namespace")).isEqualTo(logEntry.getNamespace());
-            assertThat(org.slf4j.MDC.get("flowId")).isEqualTo(logEntry.getFlowId());
-            assertThat(org.slf4j.MDC.get("executionId")).isEqualTo(logEntry.getExecutionId());
+        assertThat(adapter.getCopyOfContextMap())
+            .containsEntry("tenantId", logEntry.getTenantId())
+            .containsEntry("namespace", logEntry.getNamespace())
+            .containsEntry("flowId", logEntry.getFlowId())
+            .containsEntry("executionId", logEntry.getExecutionId());
 
-            runContextLogger.resetMDC();
+        runContextLogger.resetMDC();
 
-            assertThat(org.slf4j.MDC.get("tenantId")).isNull();
-            assertThat(org.slf4j.MDC.get("namespace")).isNull();
-            assertThat(org.slf4j.MDC.get("flowId")).isNull();
-            assertThat(org.slf4j.MDC.get("executionId")).isNull();
-        } finally {
-            // Safety net in case an assertion failure skipped resetMDC().
-            logEntry.toMap().keySet().forEach(org.slf4j.MDC::remove);
-        }
+        assertThat(adapter.getCopyOfContextMap()).isNullOrEmpty();
     }
 
     /**

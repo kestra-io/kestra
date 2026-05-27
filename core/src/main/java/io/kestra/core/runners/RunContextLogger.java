@@ -199,11 +199,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         Logger newLogger = loggerContext.getLogger(this.loggerName);
 
         if (this.logEntry != null) {
+            // Defensive: populate the per-run LoggerContext's MDC adapter so that any future
+            // code path which reads MDC from the event (rather than from the eager snapshot
+            // set in BaseAppender.transform()) still sees the execution context. Paired with
+            // resetMDC() below on cleanup. Today both are effectively no-ops because the
+            // snapshot in transform() short-circuits event.getMDCPropertyMap().
             loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
-            // Also populate the SLF4J global MDC so logs emitted on this thread by other
-            // loggers (worker, executor, scheduler, third-party libs) inherit the same
-            // execution context. Restores the v0.19.5 behavior. Cleaned up in resetMDC().
-            this.logEntry.toMap().forEach(org.slf4j.MDC::put);
         }
 
         // unit tests don't always have the log queue as we construct a logger directly without it
@@ -242,9 +243,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public void resetMDC() {
         this.logger.getLoggerContext().getMDCAdapter().clear();
-        if (this.logEntry != null) {
-            this.logEntry.toMap().keySet().forEach(org.slf4j.MDC::remove);
-        }
     }
 
     @Override
@@ -342,15 +340,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
-                // Set MDC from the LogEntry directly: the per-run LoggerContext's MDC adapter
-                // is thread-local and only populated on the thread that first called logger(),
-                // so event.getMDCPropertyMap() would be empty for logs emitted from any other
-                // thread (typical worker-pool case).
-                lle.setMDCPropertyMap(
-                    this.runContextLogger.logEntry != null
-                        ? this.runContextLogger.logEntry.toMap()
-                        : event.getMDCPropertyMap()
-                );
+                // The new LoggingEvent has no MDC by default; pull it from the LogEntry so
+                // forwarded events carry it
+                if (this.runContextLogger.logEntry != null) {
+                    lle.setMDCPropertyMap(this.runContextLogger.logEntry.toMap());
+                }
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());
                 }

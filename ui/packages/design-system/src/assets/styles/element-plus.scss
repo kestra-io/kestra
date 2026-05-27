@@ -250,7 +250,7 @@ $fill-color-base: #fafcff;
 
     @each $type in $types {
         .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
-            --kel-notification-icon-color: var(--ks-text-#{$type});
+            --kel-notification-icon-color: var(--ks-icon-#{$type});
             color: var(--kel-notification-icon-color);
         }
     }

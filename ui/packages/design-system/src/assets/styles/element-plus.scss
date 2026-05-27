@@ -247,6 +247,7 @@ $fill-color-base: #fafcff;
     --kel-notification-group-margin-right: var(--ks-spacing-5);
     align-items: flex-start;
     background-color: var(--ks-bg-elevated);
+    border-width: 0.5px; // Figma hairline; EP base hardcodes 1px
 
     @each $type in $types {
         .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
@@ -261,6 +262,7 @@ $fill-color-base: #fafcff;
 
     .kel-notification__title {
         font-weight: 600;
+        line-height: 18px; // Figma; EP base ties title line-height to icon-size
     }
 
     .kel-notification__content {
@@ -268,6 +270,7 @@ $fill-color-base: #fafcff;
         max-height: 200px;
         overflow-y: auto;
         margin-top: var(--ks-spacing-1);
+        line-height: 20px; // Figma; EP base hardcodes 24px
     }
 
     .kel-notification__closeBtn {

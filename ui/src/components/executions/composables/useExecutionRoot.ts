@@ -156,6 +156,7 @@ export function useExecutionRoot() {
         watch(route, () => {
             executionsStore.taskRun = undefined
             if (previousExecutionId.value !== route.params.id) {
+                executionsStore.logs = {total: 0, results: []}
                 flowStore.flow = undefined
                 flowStore.flowGraph = undefined
                 follow()
@@ -166,6 +167,7 @@ export function useExecutionRoot() {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
             executionsStore.execution = undefined
+            executionsStore.logs = {total: 0, results: []}
             flowStore.flow = undefined
             flowStore.flowGraph = undefined
         })

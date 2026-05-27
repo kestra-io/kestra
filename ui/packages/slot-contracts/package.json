@@ -1,0 +1,39 @@
+{
+    "name": "@kestra-io/slot-contracts",
+    "version": "0.0.0-dev",
+    "description": "Kestra slot prop contracts – shared type definitions for federated plugin UI slots",
+    "type": "module",
+    "private": true,
+    "homepage": "https://github.com/kestra-io/kestra#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kestra-io/kestra.git"
+    },
+    "bugs": {
+        "url": "https://github.com/kestra-io/kestra/issues"
+    },
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "typecheck": "vue-tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "peerDependencies": {
+        "@kestra-io/kestra-sdk": "*"
+    },
+    "devDependencies": {
+        "tsdown": "^0.22.0",
+        "ts-morph": "^28.0.0"
+    },
+    "dependencies": {
+        "zod": "^3.25.76"
+    }
+}

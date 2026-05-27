@@ -1,5 +1,6 @@
 import axios from "axios"
 import {defineStore} from "pinia"
+import {ref} from "vue"
 import {apiUrl} from "override/utils/route"
 
 export interface McpServer {
@@ -8,7 +9,7 @@ export interface McpServer {
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
     authType: "BASIC" | "API_TOKEN";
-    enabled: boolean;
+    disabled: boolean;
     isDefault: boolean;
 }
 
@@ -18,13 +19,24 @@ export interface McpServerPayload {
     instructions?: string;
     serverType: "PRIVATE" | "PUBLIC";
     authType: "BASIC" | "API_TOKEN";
-    enabled: boolean;
+    disabled: boolean;
 }
 
 export const useMcpStore = defineStore("mcp", () => {
+    const server = ref<McpServer | null>(null)
+
     const list = async (): Promise<{results: McpServer[], total: number}> => {
         const {data} = await axios.get(`${apiUrl()}/mcp/servers`, {withCredentials: true})
         return data
+    }
+
+    const load = async (id: string): Promise<void> => {
+        try {
+            const {data} = await axios.get(`${apiUrl()}/mcp/servers/${id}`, {withCredentials: true})
+            server.value = data
+        } catch {
+            server.value = null
+        }
     }
 
     const create = async (payload: McpServerPayload): Promise<McpServer> => {
@@ -46,5 +58,5 @@ export const useMcpStore = defineStore("mcp", () => {
         return data
     }
 
-    return {list, create, update, remove, toggle}
+    return {server, list, load, create, update, remove, toggle}
 })

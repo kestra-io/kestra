@@ -23,8 +23,8 @@
 
 <style scoped lang="scss">
     .item {
-        background-color: var(--ks-background-card);
-        border: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
         border-radius: 8px;
         padding: 0.5rem;
 

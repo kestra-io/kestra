@@ -39,7 +39,6 @@
             v-else-if="error"
             type="error"
             :title="error"
-            showIcon
             :closable="false"
         >
             <pre v-if="stackTrace" class="mb-0 stack-trace">{{ stackTrace }}</pre>

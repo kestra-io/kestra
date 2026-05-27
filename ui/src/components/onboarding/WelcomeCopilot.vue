@@ -156,21 +156,21 @@
             cursor: pointer;
             height: 30px;
             margin: calc(1rem / 4);
-            border: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-button-background-secondary);
-            color: var(--ks-content-primary);
+            border: 1px solid var(--ks-border-default);
+            background-color: var(--ks-btn-secondary-bg-default);
+            color: var(--ks-text-primary);
 
             & :deep(.kel-tag__content) {
                 padding: 4px 13px;
             }
 
             &:hover {
-                background-color: var(--ks-button-background-secondary-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
 
             &.kel-tag--primary {
-                border-color: var(--ks-button-background-primary);
-                background-color: var(--ks-button-background-primary);
+                border-color: var(--ks-btn-primary-bg-default);
+                background-color: var(--ks-btn-primary-bg-default);
                 color: var(--ks-white);
             }
         }
@@ -191,7 +191,7 @@
 
         .welcome-help-title {
             margin: 0 0 0.875rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
         }
 

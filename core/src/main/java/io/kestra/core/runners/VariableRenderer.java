@@ -22,6 +22,7 @@ import jakarta.inject.Singleton;
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
+    public static final String RENDER_DEPTH_VAR = "__kestra_render_depth";
 
     private volatile PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
@@ -217,6 +218,14 @@ public class VariableRenderer {
 
         // Return the given object if it cannot be rendered.
         return Optional.ofNullable(object);
+    }
+
+    /**
+     * Renders an object while tracking render() nesting depth to prevent infinite recursion.
+     */
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive, int renderDepth) throws IllegalVariableEvaluationException {
+        variables.put(RENDER_DEPTH_VAR, renderDepth);
+        return renderObject(object, variables, recursive);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {

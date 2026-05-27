@@ -1,6 +1,16 @@
 import path from "node:path"
-import {readdirSync} from "node:fs"
+import {readdirSync, readFileSync} from "node:fs"
 import {defineConfig} from "tsdown"
+
+const svgInlinePlugin = {
+    name: "svg-inline",
+    load(id: string) {
+        if (id.endsWith(".svg")) {
+            const base64 = readFileSync(id).toString("base64")
+            return `export default "data:image/svg+xml;base64,${base64}"`
+        }
+    },
+}
 
 function findVueFiles(dir: string): string[] {
     const results: string[] = []
@@ -28,6 +38,7 @@ export default defineConfig({
         enabled: "ci-only",
         devExports: false,
     },
+    plugins: [svgInlinePlugin],
     fromVite: true,
     dts: {vue: true, tsconfig: "./tsconfig.app.json"},
     entry: {

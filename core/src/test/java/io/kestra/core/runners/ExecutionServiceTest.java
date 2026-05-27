@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.services.FlowService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -52,6 +54,9 @@ class ExecutionServiceTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    FlowService flowService;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -376,6 +381,35 @@ class ExecutionServiceTest {
         assertThat(restart.findTaskRunsByTaskId("item").getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/replay-revision.yaml" }, tenantId = TENANT_1)
+    void replayDifferentRevision() throws Exception {
+        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "replay-revision");
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // update the flow with a new source
+        FlowWithSource flow = flowRepository.findByExecutionWithSource(execution);
+        String newSource = """
+            id: replay-revision
+            namespace: io.kestra.tests
+
+            variables:
+              greeting: "Hello World"
+
+            tasks:
+              - id: print
+                type: io.kestra.plugin.core.log.Log
+                message: "{{ render(vars.greeting) }}"
+            """;
+        FlowWithSource updated = flowService.update(GenericFlow.fromYaml(flow.getTenantId(), newSource), flow);
+        
+        Execution restart = executionService.replay(execution, updated, null, updated.getRevision(), Optional.empty());
+
+        assertThat(restart.getFlowRevision()).isEqualTo(updated.getRevision());
+        assertThat(restart.getVariables()).containsEntry("greeting", "Hello World");
     }
 
     @Test

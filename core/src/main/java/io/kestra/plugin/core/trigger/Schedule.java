@@ -16,6 +16,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
+import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
@@ -122,6 +123,25 @@ import java.util.Optional;
             full = true
         ),
         @Example(
+            title = "Schedule a flow on the last working day of the month at 6:00 AM.",
+            code = """
+                id: monthly_last_working_day
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Running on the last working day of the month!
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 6 * * MON-FRI"
+                    when: "{{ isLastWorkingDay(trigger.date) }}"
+                """,
+            full = true
+        ),
+        @Example(
             title = "Schedule a flow every day at 9:00 AM and pause a schedule trigger after a failed execution using the `stopAfter` property.",
             full = true,
             code = """
@@ -189,6 +209,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private Boolean withSeconds = false;
 
     @PluginProperty
+    @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 

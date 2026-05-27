@@ -22,7 +22,6 @@
                 v-if="externalActionNote"
                 type="info"
                 :closable="false"
-                showIcon
                 class="feedback"
             >
                 <template #title>
@@ -34,7 +33,6 @@
                 :title="feedback.message"
                 :type="feedback.level === 'error' ? 'error' : feedback.level === 'info' ? 'info' : 'warning'"
                 :closable="false"
-                showIcon
                 class="feedback"
             />
             <div v-if="!isFinishStep" class="actions">
@@ -689,8 +687,8 @@
         top: auto;
         left: auto;
         width: min(475px, calc(100vw - 6rem));
-        background: var(--ks-background-card);
-        border: 1px solid var(--ks-border-primary);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.22);
         border-radius: 8px;
         padding: 1rem;
@@ -726,21 +724,21 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        color: var(--ks-content-success);
+        color: var(--ks-status-success);
         font-size: 0.78rem;
         font-weight: 600;
     }
 
     .onboarding-overlay .description {
         margin: 0.75rem 0;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
         line-height: 1.45;
     }
 
     .onboarding-overlay .snippet-wrap {
         margin-bottom: 0.75rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 6px;
         overflow: hidden;
     }
@@ -785,7 +783,7 @@
     }
 
     :global(.onboarding-v2-highlight-static) {
-        --onboarding-static-color: var(--ks-button-background-primary);
+        --onboarding-static-color: var(--ks-btn-primary-bg-default);
         box-shadow:
             0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
             0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
@@ -794,14 +792,14 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
-        --onboarding-static-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
+        --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
         box-shadow:
             0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
             0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
     }
 
     :global(.onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: var(--ks-button-background-primary);
+        --onboarding-pulse-color: var(--ks-btn-primary-bg-default);
         --onboarding-pulse-strong: 50%;
         --onboarding-pulse-soft: 30%;
         --onboarding-pulse-scale: 1.045;
@@ -816,7 +814,7 @@
     }
 
     :global(html.dark .onboarding-v2-highlight-pulse) {
-        --onboarding-pulse-color: color-mix(in srgb, var(--ks-button-background-primary) 70%, white 30%);
+        --onboarding-pulse-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
         --onboarding-pulse-strong: 52%;
         --onboarding-pulse-soft: 34%;
         --onboarding-pulse-scale: 1.04;

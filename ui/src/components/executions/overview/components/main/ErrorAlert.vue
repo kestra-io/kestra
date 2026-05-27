@@ -1,5 +1,5 @@
 <template>
-    <KsAlert id="error" type="error" showIcon :closable="false">
+    <KsAlert id="error" type="error" :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
@@ -89,13 +89,13 @@
                 justify-content: space-between;
                 font-size: var(--kel-alert-title-font-size);
                 line-height: 24px;
-                color: var(--ks-content-error);
+                color: var(--ks-status-error);
 
             }
         }
 
         & .kel-alert__description {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             & .logs {
                 padding-top: calc(1rem * 1.5);
@@ -117,12 +117,12 @@
                 }
 
                 .kel-button {
-                    color: var(--ks-log-content-error);
+                    color: var(--ks-status-error);
                 }
 
                 .link {
                     padding: 1rem 0 calc(1rem / 2) 0;
-                    border-top: 1px solid var(--ks-border-primary);
+                    border-top: 1px solid var(--ks-border-default);
                     text-align: right;
                 }
             }

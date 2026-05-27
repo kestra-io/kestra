@@ -13,6 +13,7 @@ export const useMiscStore = defineStore("misc", () => {
 
     const configs = ref<Record<string, any>>()
     const contextInfoBarOpenTab = ref("")
+    const lastContextTab = ref("news")
     const theme = ref<"light" | "dark">("light")
 
     const axios = useClient()
@@ -72,6 +73,7 @@ export const useMiscStore = defineStore("misc", () => {
     return {
         configs,
         contextInfoBarOpenTab,
+        lastContextTab,
         theme,
         loadConfigs,
         loadBasicAuthValidationErrors,

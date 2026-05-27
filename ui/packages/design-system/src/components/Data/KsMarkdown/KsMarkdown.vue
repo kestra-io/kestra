@@ -459,7 +459,7 @@
     }
 
     .ks-markdown {
-        color: var(--ks-content-default);
+        color: var(--ks-text-primary);
 
         h1, h2, h3, h4, h5, h6 {
             &.ks-markdown__heading {
@@ -493,15 +493,15 @@
         .ks-markdown__blockquote {
             margin: 1rem 0;
             padding: 0.5rem 1rem;
-            border-left: 4px solid var(--ks-border-primary);
-            color: var(--ks-content-secondary);
+            border-left: 4px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
             background-color: var(--kel-bg-color-overlay);
             border-radius: var(--kel-border-radius-base);
         }
 
         .ks-markdown__code-block {
             margin: 1rem 0;
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             position: relative;
@@ -513,7 +513,7 @@
                 align-items: center;
                 justify-content: flex-end;
                 padding: 4px 8px;
-                background-color: var(--ks-background-tertiary);
+                background-color: var(--ks-bg-elevated);
                 gap: 8px;
                 font-size: var(--ks-font-size-xs);
                 font-family: var(--kel-font-family-monospace), monospace;
@@ -529,7 +529,7 @@
                     top: 2px;
                     position: relative;
                     border: 0;
-                    background: var(--ks-background-default);
+                    background: var(--ks-bg-base);
                     cursor: pointer;
                     color: var(--kel-text-color-placeholder);
 
@@ -540,7 +540,7 @@
                     .ks-markdown__copy-btn-ok {
                         transition: opacity 0.15s ease;
                         margin-right: 0.25rem;
-                        color: var(--ks-content-success);
+                        color: var(--ks-text-success);
                         opacity: 0;
                     }
                 }
@@ -566,7 +566,7 @@
             padding: 0.15rem 0.4rem;
             border-radius: var(--kel-border-radius-base);
             background-color: var(--kel-bg-color-overlay);
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
         }
 
         .ks-markdown__list {
@@ -582,7 +582,7 @@
         }
 
         .ks-markdown__link {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
             text-decoration: none;
 
             &:hover { text-decoration: underline; }
@@ -596,7 +596,7 @@
         .ks-markdown__hr {
             margin: 1.5rem 0;
             border: none;
-            border-top: 1px solid var(--ks-border-primary);
+            border-top: 1px solid var(--ks-border-default);
         }
 
         .ks-markdown__mermaid {

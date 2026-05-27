@@ -7,7 +7,7 @@ const mockServer = {
     id: "my-server",
     serverType: "PRIVATE" as const,
     authType: "BASIC" as const,
-    enabled: true,
+    disabled: false,
     isDefault: false,
 }
 
@@ -15,7 +15,7 @@ const axiosGet = vi.fn().mockResolvedValue({data: {results: [mockServer], total:
 const axiosPost = vi.fn().mockResolvedValue({data: mockServer})
 const axiosPut = vi.fn().mockResolvedValue({data: mockServer})
 const axiosDelete = vi.fn().mockResolvedValue({data: undefined})
-const axiosPatch = vi.fn().mockResolvedValue({data: {...mockServer, enabled: false}})
+const axiosPatch = vi.fn().mockResolvedValue({data: {...mockServer, disabled: true}})
 
 vi.mock("axios", () => ({
     default: {
@@ -54,11 +54,33 @@ describe("mcp store", () => {
         expect(result).toEqual({results: [mockServer], total: 1})
     })
 
+    it("load() calls GET /mcp/servers/{id} and sets server", async () => {
+        axiosGet.mockResolvedValueOnce({data: mockServer})
+        const {useMcpStore} = await import("../../../src/stores/mcp")
+        const store = useMcpStore()
+
+        await store.load("my-server")
+
+        expect(axiosGet).toHaveBeenCalledOnce()
+        expect(axiosGet).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server`, {withCredentials: true})
+        expect(store.server).toEqual(mockServer)
+    })
+
+    it("load() sets server to null when server is not found", async () => {
+        axiosGet.mockRejectedValueOnce(new Error("404"))
+        const {useMcpStore} = await import("../../../src/stores/mcp")
+        const store = useMcpStore()
+
+        await store.load("nonexistent")
+
+        expect(store.server).toBeNull()
+    })
+
     it("create() calls POST /mcp/servers with payload and withCredentials and returns server", async () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
-        const payload = {id: "my-server", serverType: "PRIVATE" as const, authType: "BASIC" as const, enabled: true}
+        const payload = {id: "my-server", serverType: "PRIVATE" as const, authType: "BASIC" as const, disabled: false}
         const result = await store.create(payload)
 
         expect(axiosPost).toHaveBeenCalledOnce()
@@ -70,7 +92,7 @@ describe("mcp store", () => {
         const {useMcpStore} = await import("../../../src/stores/mcp")
         const store = useMcpStore()
 
-        const payload = {id: "my-server", serverType: "PUBLIC" as const, authType: "BASIC" as const, enabled: true}
+        const payload = {id: "my-server", serverType: "PUBLIC" as const, authType: "BASIC" as const, disabled: false}
         const result = await store.update("my-server", payload)
 
         expect(axiosPut).toHaveBeenCalledOnce()
@@ -96,6 +118,6 @@ describe("mcp store", () => {
 
         expect(axiosPatch).toHaveBeenCalledOnce()
         expect(axiosPatch).toHaveBeenCalledWith(`${BASE_URL}/mcp/servers/my-server/toggle`, undefined, {withCredentials: true})
-        expect(result).toEqual({...mockServer, enabled: false})
+        expect(result).toEqual({...mockServer, disabled: true})
     })
 })

@@ -304,7 +304,7 @@
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily")
                 ? localStorage.getItem("editorFontFamily")
-                : "'Source Code Pro', monospace",
+                : "'JetBrains Mono', monospace",
             fontSize: settingsEditorFontSize
                 ? parseInt(settingsEditorFontSize)
                 : 12,
@@ -589,7 +589,7 @@
     } = {}
 
     function getHighlightDecoration(range: {start: number, end: number}) {
-        if (!monacoEditor.value) return 
+        if (!monacoEditor.value) return
         const monacoRef = monacoEditor.value.monaco
         return [{
             range: new monacoRef.Range(range.start, 1, range.end, 1),
@@ -771,7 +771,7 @@
     display: flex;
     overflow: hidden;
     .top-nav {
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         padding: 0.5rem;
         border-radius: var(--kel-border-radius-round);
         border-bottom-left-radius: 0;
@@ -783,7 +783,7 @@
         top: 8px;
         right: var(--ks-font-size-lg);
         z-index: 10;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: pointer;
     }
 
@@ -812,14 +812,14 @@
                 var(--kel-border-radius-base)
             );
             transition: var(--kel-transition-box-shadow);
-            box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
+            box-shadow: 0 0 0 1px var(--ks-border-default) inset;
 
             &.custom-dark-vs-theme {
-                background-color: var(--ks-background-input);
+                background-color: var(--ks-bg-input);
             }
 
             &.theme-light {
-                background-color: var(--ks-background-card);
+                background-color: var(--ks-bg-surface);
             }
         }
 
@@ -831,7 +831,7 @@
             padding-right: inherit;
             cursor: text;
             user-select: none;
-            color: var(--ks-content-inactive);
+            color: var(--ks-text-inactive);
         }
 
         .editor-wrapper {
@@ -894,18 +894,18 @@
     .monaco-editor,
     .monaco-editor-background {
         outline: none;
-        background-color: var(--ks-background-input);
-        --vscode-editor-background: var(--ks-background-input);
-        --vscode-breadcrumb-background: var(--ks-background-input);
-        --vscode-editorGutter-background: var(--ks-background-input);
+        background-color: var(--ks-bg-input);
+        --vscode-editor-background: var(--ks-bg-input);
+        --vscode-breadcrumb-background: var(--ks-bg-input);
+        --vscode-editorGutter-background: var(--ks-bg-input);
     }
 
     .monaco-editor .margin {
-        background-color: var(--ks-background-input);
-        --vscode-editorGutter-background: var(--ks-background-input);
-        --vscode-editorLineNumber-activeForeground: var(--ks-content-secondary);
-        --vscode-editorLineNumber-foreground: var(--ks-content-secondary);
-        --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-content-secondary);
+        background-color: var(--ks-bg-input);
+        --vscode-editorGutter-background: var(--ks-bg-input);
+        --vscode-editorLineNumber-activeForeground: var(--ks-text-secondary);
+        --vscode-editorLineNumber-foreground: var(--ks-text-secondary);
+        --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-text-secondary);
     }
 }
 
@@ -928,7 +928,7 @@
 }
 
 .disable-text {
-    color: var(--ks-content-inactive) !important;
+    color: var(--ks-text-inactive) !important;
 }
 
 div.img {

@@ -1,9 +1,9 @@
 // Coloring
-$code-primary: var(--ks-content-link);
-$code-secondary: var(--ks-content-secondary);
-$code-gray: var(--ks-content-primary);
-$code-card-color: var(--ks-background-card);
-$code-border-color: var(--ks-border-primary);
+$code-primary: var(--ks-text-link);
+$code-secondary: var(--ks-text-secondary);
+$code-gray: var(--ks-text-primary);
+$code-card-color: var(--ks-bg-surface);
+$code-border-color: var(--ks-border-default);
 
 // Typography
 $code-font-sm: var(--ks-font-size-sm);
@@ -15,7 +15,7 @@ $code-font-sm: var(--ks-font-size-sm);
 
     :deep(*) {
         --kel-collapse-header-bg-color: initial;
-        --kel-collapse-header-text-color: #{--ks-content-secondary};
+        --kel-collapse-header-text-color: #{--ks-text-secondary};
         --kel-collapse-content-bg-color: initial;
 
         .kel-collapse-item__header,
@@ -58,6 +58,6 @@ $code-font-sm: var(--ks-font-size-sm);
 
 :deep(.is-disabled) {
     .kel-input__inner{
-        -webkit-text-fill-color: var(--ks-content-inactive);
+        -webkit-text-fill-color: var(--ks-text-inactive);
     }
 }

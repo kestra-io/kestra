@@ -226,11 +226,8 @@ export const useApiStore = defineStore("api", {
 
         async pluginsInformation() {
             return axios.get<{byPlugin: Record<string, {lastReleasedAt?: string; usageCount?: number}>}>(
-                `${API_URL}/v1/plugins/pluginsInformation`,
-                {
-                    withCredentials: true,
-                    params: {icons: false},
-                },
+                `${API_URL}/v1/plugins/pluginsInformation?icons=false`,
+                {withCredentials: true},
             )
         },
     },

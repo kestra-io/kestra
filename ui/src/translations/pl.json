@@ -1370,13 +1370,7 @@
       "alt": "Ikona wtyczek",
       "search": "Wyszukaj wśród {count}+ wtyczek",
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
-      "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow.",
-      "sort": {
-        "name_asc": "A → Z",
-        "name_desc": "Z → A",
-        "newest": "Najnowsze",
-        "most_used": "Najczęściej używane"
-      }
+      "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
     },
     "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "plugins": {

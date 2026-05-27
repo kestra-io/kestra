@@ -1370,13 +1370,7 @@
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
-      "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요.",
-      "sort": {
-        "name_asc": "A → Z",
-        "name_desc": "Z → A",
-        "newest": "최신순",
-        "most_used": "사용 많은 순"
-      }
+      "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },
     "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "plugins": {

@@ -1370,13 +1370,7 @@
       "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
-      "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen.",
-      "sort": {
-        "name_asc": "A → Z",
-        "name_desc": "Z → A",
-        "newest": "Neueste",
-        "most_used": "Meistgenutzt"
-      }
+      "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },
     "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "plugins": {

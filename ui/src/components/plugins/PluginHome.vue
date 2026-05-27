@@ -17,11 +17,7 @@
                 @search="handleSearch"
             >
                 <template #extra>
-                    <KsSegmented
-                        :modelValue="sortBy"
-                        :options="sortOptions"
-                        @change="handleSortChange"
-                    />
+                    <KsSegmented v-model="sortBy" :options="sortOptions" />
                 </template>
             </KSFilter>
         </KsRow>
@@ -116,13 +112,37 @@
         searchText.value = query
     }
 
-    const handleSortChange = (value: string | number | boolean) => {
-        sortBy.value = String(value)
-    }
-
     const pluginInfoKey = (plugin: any): string => plugin.subGroup ?? plugin.group
 
     const searchInput = computed(() => searchText.value.toLowerCase())
+
+    type Comparator = (a: any, b: any) => number
+
+    /** Locale-aware name comparison (ascending). */
+    const nameAscComparator: Comparator = (a, b) =>
+        a.manifest["X-Kestra-Title"].localeCompare(b.manifest["X-Kestra-Title"])
+
+    /** Comparator map keyed by sortBy value. */
+    const comparators: Record<string, Comparator> = {
+        "name-asc": nameAscComparator,
+        "name-desc": (a, b) => nameAscComparator(b, a),
+        "newest": (a, b) => {
+            const infoA = pluginInfoMap.value[pluginInfoKey(a)]
+            const infoB = pluginInfoMap.value[pluginInfoKey(b)]
+            const dateA = infoA?.lastReleasedAt ? new Date(infoA.lastReleasedAt).getTime() : 0
+            const dateB = infoB?.lastReleasedAt ? new Date(infoB.lastReleasedAt).getTime() : 0
+            // Null/missing dates sort last
+            if (dateA === 0 && dateB === 0) return nameAscComparator(a, b)
+            if (dateA === 0) return 1
+            if (dateB === 0) return -1
+            return dateB - dateA || nameAscComparator(a, b)
+        },
+        "most-used": (a, b) => {
+            const usageA = pluginInfoMap.value[pluginInfoKey(a)]?.usageCount ?? 0
+            const usageB = pluginInfoMap.value[pluginInfoKey(b)]?.usageCount ?? 0
+            return usageB - usageA || nameAscComparator(a, b)
+        },
+    }
 
     const pluginsList = computed(() => {
         // Show subgroups only if exist, else show main group - GH-8940
@@ -135,42 +155,15 @@
             group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup),
         )
 
+        const comparator = comparators[sortBy.value] ?? nameAscComparator
+
         return filtered
             .filter((plugin, index, self) =>
                 index === self.findIndex(p => p.title === plugin.title && p.group === plugin.group),
             )
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
-            .sort((a, b) => {
-                const nameA = a.manifest["X-Kestra-Title"].toLowerCase()
-                const nameB = b.manifest["X-Kestra-Title"].toLowerCase()
-                const nameAsc = nameA < nameB ? -1 : nameA > nameB ? 1 : 0
-
-                if (sortBy.value === "newest") {
-                    const infoA = pluginInfoMap.value[pluginInfoKey(a)]
-                    const infoB = pluginInfoMap.value[pluginInfoKey(b)]
-                    const dateA = infoA?.lastReleasedAt ? new Date(infoA.lastReleasedAt).getTime() : 0
-                    const dateB = infoB?.lastReleasedAt ? new Date(infoB.lastReleasedAt).getTime() : 0
-                    // Null/missing dates sort last
-                    if (dateA === 0 && dateB === 0) return nameAsc
-                    if (dateA === 0) return 1
-                    if (dateB === 0) return -1
-                    return dateB - dateA || nameAsc
-                }
-
-                if (sortBy.value === "most-used") {
-                    const usageA = pluginInfoMap.value[pluginInfoKey(a)]?.usageCount ?? 0
-                    const usageB = pluginInfoMap.value[pluginInfoKey(b)]?.usageCount ?? 0
-                    return usageB - usageA || nameAsc
-                }
-
-                if (sortBy.value === "name-desc") {
-                    return nameA > nameB ? -1 : nameA < nameB ? 1 : 0
-                }
-
-                // Default: name-asc
-                return nameAsc
-            })
+            .sort(comparator)
     })
 
     const loadPluginInformation = async () => {

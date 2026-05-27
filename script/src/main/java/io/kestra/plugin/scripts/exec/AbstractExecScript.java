@@ -36,7 +36,7 @@ import lombok.experimental.SuperBuilder;
 public abstract class AbstractExecScript extends Task implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
         title = "Deprecated - use the 'taskRunner' property instead.",
-        description = "Only used if the `taskRunner` property is not set",
+        description = "Ignored for task runner selection. The deprecated `runner` property is no longer honored — set `taskRunner` instead.",
         deprecated = true
     )
     @PluginProperty
@@ -45,7 +45,8 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
 
     @Schema(
         title = "The task runner to use.",
-        description = "Task runners are provided by plugins, each have their own properties."
+        description = "Task runners are provided by plugins, each have their own properties.",
+        defaultValue = "{type: io.kestra.plugin.scripts.runner.docker.Docker, pullPolicy: IF_NOT_PRESENT}"
     )
     @PluginProperty
     @Builder.Default

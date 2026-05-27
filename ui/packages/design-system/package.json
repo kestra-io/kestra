@@ -72,11 +72,11 @@
     "xss": "^1.0.15"
   },
   "devDependencies": {
-    "@storybook/addon-a11y": "^10.3.1",
-    "@storybook/addon-docs": "^10.3.1",
-    "@storybook/addon-themes": "^10.3.1",
-    "@storybook/addon-vitest": "^10.3.1",
-    "@storybook/vue3-vite": "^10.3.1",
+    "@storybook/addon-a11y": "^10.4.1",
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/addon-themes": "^10.4.1",
+    "@storybook/addon-vitest": "^10.4.1",
+    "@storybook/vue3-vite": "^10.4.1",
     "@tsdown/css": "^0.22.0",
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",

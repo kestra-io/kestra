@@ -298,6 +298,14 @@ docker compose -f docker-compose-ci.yml down
 
 2. **Access application:** http://localhost:8080
 
+### Worktree setup
+
+When working in an EE worktree (detected by: the working directory is under a `worktrees/` directory):
+```bash
+dev-tools/setup-worktree.sh ../worktrees/foo
+```
+This copies the gitignored `cli/src/main/resources/application-*.yml` files from the main checkout into the worktree. Without this step Kestra cannot boot in the worktree. The script is idempotent — safe to re-run.
+
 ### Security Considerations
 - Use tenant isolation for multi-tenant features
 - Implement proper authorization with `@HasAnyPermission`

@@ -1,9 +1,0 @@
-export default {
-    FLOW: "FLOW",
-    EXECUTION: "EXECUTION",
-    NAMESPACE: "NAMESPACE",
-    KVSTORE: "KVSTORE",
-    DASHBOARD: "DASHBOARD",
-    SECRET: "SECRET",
-    AI_COPILOT: "AI_COPILOT"
-}

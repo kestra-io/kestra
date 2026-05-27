@@ -1,9 +1,8 @@
 package io.kestra.webserver.utils.filepreview;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +22,9 @@ public class IonFileRender extends FileRender {
     }
 
     private void renderContent(InputStream filestream) throws IOException {
-        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(filestream))) {
+        try (InputStream inputStream = new BufferedInputStream(filestream, FileSerde.BUFFER_SIZE)) {
             List<Object> list = new ArrayList<>();
-            this.truncated = FileSerde.reader(inputStream, this.maxLine, throwConsumer(list::add));
+            this.truncated = FileSerde.read(inputStream, this.maxLine, throwConsumer(list::add));
 
             this.content = list;
         }

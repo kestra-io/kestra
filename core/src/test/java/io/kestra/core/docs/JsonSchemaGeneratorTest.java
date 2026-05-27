@@ -36,6 +36,9 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.plugin.core.trigger.Schedule;
+
+import java.time.ZoneId;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -188,6 +191,34 @@ class JsonSchemaGeneratorTest {
                 )
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeAvailableZoneIdsAndOffsetPatternWhenFieldIsAnnotatedWithTimezoneId() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(AbstractTrigger.class, Schedule.class);
+
+        Map<String, Object> timezone = ((Map<String, Map<String, Object>>) generate.get("properties")).get("timezone");
+        assertThat(timezone, is(not(nullValue())));
+
+        // The schema is `anyOf: [{enum: [...zoneIds]}, {pattern: ...offset...}]` so YAML editors get autocomplete
+        // from the enum branch while still accepting offset-style timezones (e.g. `+02:00`, `GMT-05:00`).
+        List<Map<String, Object>> anyOf = (List<Map<String, Object>>) timezone.get("anyOf");
+        assertThat(anyOf, is(not(nullValue())));
+        assertThat(anyOf, hasSize(2));
+
+        List<String> enumValues = (List<String>) anyOf.get(0).get("enum");
+        assertThat(enumValues, hasItems("UTC", "Europe/Paris", "Asia/Tokyo", "America/New_York", "EST"));
+        assertThat(enumValues.size(), greaterThanOrEqualTo(ZoneId.getAvailableZoneIds().size()));
+
+        String pattern = (String) anyOf.get(1).get("pattern");
+        assertThat(pattern, is(not(nullValue())));
+        assertThat("+02:00".matches(pattern), is(true));
+        assertThat("-05:30".matches(pattern), is(true));
+        assertThat("Z".matches(pattern), is(true));
+        assertThat("GMT+01:00".matches(pattern), is(true));
+        assertThat("UTC-05:00".matches(pattern), is(true));
+        assertThat("not-a-timezone".matches(pattern), is(false));
     }
 
     @SuppressWarnings("unchecked")

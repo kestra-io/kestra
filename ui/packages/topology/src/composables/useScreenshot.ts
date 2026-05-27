@@ -1,7 +1,7 @@
-import {ref} from "vue";
-import type {Ref} from "vue";
-import {toJpeg as ElToJpg, toPng as ElToPng} from "html-to-image";
-import type {Options as HTMLToImageOptions} from "html-to-image/es/types";
+import {ref} from "vue"
+import type {Ref} from "vue"
+import {toJpeg as ElToJpg, toPng as ElToPng} from "html-to-image"
+import type {Options as HTMLToImageOptions} from "html-to-image/es/types"
 
 type ImageType = "jpeg" | "png";
 
@@ -26,21 +26,21 @@ interface UseScreenshot {
 }
 
 export function useScreenshot(): UseScreenshot {
-  const dataUrl = ref<string>("");
-  const imgType = ref<ImageType>("png");
-  const error = ref();
+  const dataUrl = ref<string>("")
+  const imgType = ref<ImageType>("png")
+  const error = ref()
 
   async function capture(el: HTMLElement, options: UseScreenshotOptions = {}) {
-    const fileName = options.fileName ?? `flow-graph-${Date.now()}`;
+    const fileName = options.fileName ?? `flow-graph-${Date.now()}`
 
-    el.classList.add("is-exporting");
+    el.classList.add("is-exporting")
 
-    const edgePaths = el.querySelectorAll(".vue-flow__edge-path");
+    const edgePaths = el.querySelectorAll(".vue-flow__edge-path")
     const originalStyles = Array.from(edgePaths).map(edge => {
-      const element = edge as HTMLElement;
-      const original = element.getAttribute("style") || "";
+      const element = edge as HTMLElement
+      const original = element.getAttribute("style") || ""
 
-      const computed = window.getComputedStyle(element);
+      const computed = window.getComputedStyle(element)
 
       element.setAttribute(
         "style",
@@ -50,68 +50,68 @@ export function useScreenshot(): UseScreenshot {
         stroke-width: ${computed.strokeWidth};
         stroke-dasharray: ${computed.strokeDasharray};
         fill: none;
-        `
-      );
+        `,
+      )
 
-      return {element, original};
-    });
+      return {element, original}
+    })
 
     try {
       const data = options.type === "jpeg"
         ? await toJpeg(el, options)
-        : await toPng(el, options);
+        : await toPng(el, options)
 
-      if (options.shouldDownload && fileName) download(fileName);
-      return data;
+      if (options.shouldDownload && fileName) download(fileName)
+      return data
     } finally {
       originalStyles.forEach(({element, original}) =>
-        original ? element.setAttribute("style", original) : element.removeAttribute("style")
-      );
-      el.classList.remove("is-exporting");
+        original ? element.setAttribute("style", original) : element.removeAttribute("style"),
+      )
+      el.classList.remove("is-exporting")
     }
   }
 
   function toJpeg(
     el: HTMLElement,
-    options: HTMLToImageOptions = {quality: 0.95}
+    options: HTMLToImageOptions = {quality: 0.95},
   ) {
-    error.value = null;
+    error.value = null
 
     return ElToJpg(el, options)
       .then((data) => {
-        dataUrl.value = data;
-        imgType.value = "jpeg";
-        return data;
+        dataUrl.value = data
+        imgType.value = "jpeg"
+        return data
       })
-      .catch((error) => {
-        error.value = error;
-        throw new Error(error);
-      });
+      .catch((err) => {
+        error.value = err
+        throw new Error(err)
+      })
   }
 
   function toPng(
     el: HTMLElement,
-    options: HTMLToImageOptions = {quality: 0.95}
+    options: HTMLToImageOptions = {quality: 0.95},
   ) {
-    error.value = null;
+    error.value = null
 
     return ElToPng(el, options)
       .then((data) => {
-        dataUrl.value = data;
-        imgType.value = "png";
-        return data;
+        dataUrl.value = data
+        imgType.value = "png"
+        return data
       })
-      .catch((error) => {
-        error.value = error;
-        throw new Error(error);
-      });
+      .catch((err) => {
+        error.value = err
+        throw new Error(err)
+      })
   }
 
   function download(fileName: string) {
-    const link = document.createElement("a");
-    link.download = `${fileName}.${imgType.value}`;
-    link.href = dataUrl.value;
-    link.click();
+    const link = document.createElement("a")
+    link.download = `${fileName}.${imgType.value}`
+    link.href = dataUrl.value
+    link.click()
   }
 
   return {
@@ -119,5 +119,5 @@ export function useScreenshot(): UseScreenshot {
     download,
     dataUrl,
     error,
-  };
+  }
 }

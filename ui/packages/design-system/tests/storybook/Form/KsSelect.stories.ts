@@ -86,7 +86,7 @@ export const Default: Story = {
         const dropdown = document.querySelector(".kel-select-dropdown")
         await expect(dropdown).toBeTruthy()
         const runningOption = Array.from(document.querySelectorAll(".kel-select-dropdown__item")).find(
-            (el) => el.textContent?.trim() === "Running"
+            (el) => el.textContent?.trim() === "Running",
         ) as HTMLElement | undefined
         if (runningOption) {
             await userEvent.click(runningOption)
@@ -155,8 +155,8 @@ export const Multiple: Story = {
 }
 
 /** Small size – as used in Pagination */
-export const SmallSize: Story = {
-    render: (args) => ({
+export const Sizes: Story = {
+    render: () => ({
         components: {KsSelect, ElOption},
         setup() {
             const value = ref("25")
@@ -166,17 +166,26 @@ export const SmallSize: Story = {
                 {value: "50", label: "50 / page"},
                 {value: "100", label: "100 / page"},
             ]
-            return {args, value, options}
+            return {value, options}
         },
         template: `
-            <div style="padding:24px;min-height:200px">
-                <ks-select v-model="value" v-bind="args" style="width:130px">
+            <div style="padding:12px;">
+                <ks-select v-model="value" size="small" style="width:130px">
+                    <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
+                </ks-select>
+            </div>
+            <div style="padding:12px;">
+                <ks-select v-model="value" style="width:130px">
+                    <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
+                </ks-select>
+            </div>
+            <div style="padding:12px;">
+                <ks-select v-model="value" size="large" style="width:130px">
                     <ks-option v-for="opt in options" :key="opt.value" :value="opt.value" :label="opt.label" />
                 </ks-select>
             </div>
         `,
     }),
-    args: {size: "small"},
 }
 
 /** Disabled state */
@@ -200,7 +209,7 @@ export const Disabled: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await expect(
-            trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true"
+            trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true",
         ).toBe(true)
     },
 }

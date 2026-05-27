@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -33,7 +34,7 @@ class VariableRendererTest {
     VariableRenderer variableRenderer;
 
     @Inject
-    VariableRenderer.VariableConfiguration variableConfiguration;
+    VariableConfiguration variableConfiguration;
 
     @Inject
     private PebbleEngineFactory pebbleEngineFactory;
@@ -155,6 +156,12 @@ class VariableRendererTest {
         assertThat(result.get("key2")).isEqualTo("hello");
         assertThat(result.get("key3")).isEqualTo("static");
         assertThat(result).containsKey("key1");
+    }
+
+    @Test
+    void shouldRenderMixedFilterAndOperator() throws IllegalVariableEvaluationException {
+        Map<String, Object> variables = Map.of("outputs", Map.of("after", Map.of("value", "300"), "before", Map.of("value", "250")));
+        assertThat(variableRenderer.render("{{ outputs.after.value | number - outputs.before.value | number >= 5 }}", variables)).isEqualTo("true");
     }
 
     public static class TestVariableRenderer extends VariableRenderer {

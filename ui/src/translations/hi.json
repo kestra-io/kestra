@@ -77,6 +77,7 @@
     "backfill executions": "Backfill निष्पादन",
     "backfill paused": "Backfill PAUSED",
     "backfill running": "Backfill चल रहा है",
+    "bar": "बार",
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
@@ -164,6 +165,7 @@
     "change state tooltip": "निष्पादन स्थिति बदलें",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",
+    "chart type": "चार्ट प्रकार",
     "charts": "चार्ट्स",
     "choice": "विकल्प",
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
@@ -203,6 +205,7 @@
     "copy": "कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "copy url": "URL कॉपी करें",
+    "copy_and_close": "कॉपी करें और बंद करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
@@ -333,6 +336,7 @@
         "message": "Kestra एंटरप्राइज एडिशन में, आप अपनी संस्था के लिए केवल उपलब्ध कस्टम Blueprints बना सकते हैं। आप इन्हें अपनी टीम में साझा करने, केंद्रीकृत करने और सामान्य रूप से उपयोग किए जाने वाले workflows को दस्तावेज़ करने के लिए सर्वोत्तम-प्रथाओं के टेम्पलेट के रूप में उपयोग कर सकते हैं।",
         "title": "कस्टम Blueprints जोड़ें"
       },
+      "contact_sales": "सेल्स से संपर्क करें",
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
       "instance": {
@@ -390,7 +394,8 @@
         "label": "टेस्ट्स",
         "message": "अपने flows की लॉजिक को अलग-अलग सत्यापित करें, जल्दी से रिग्रेशन का पता लगाएं, और जैसे-जैसे आपके ऑटोमेशन बदलते और बढ़ते हैं, उन पर विश्वास बनाए रखें।",
         "title": "हर परिवर्तन के साथ विश्वसनीयता सुनिश्चित करें"
-      }
+      },
+      "watch_the_video": "वीडियो देखें"
     },
     "dependencies": "निर्भरताएँ",
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
@@ -476,6 +481,10 @@
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
         "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
       },
+      "apiTokens": {
+        "content": "API टोकन का उपयोग तब किया जाता है जब आप Kestra API के लिए प्रोग्रामेटिक एक्सेस प्रदान करना चाहते हैं।",
+        "title": "अपने API Tokens प्रबंधित करें"
+      },
       "apps": {
         "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।",
         "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
@@ -491,6 +500,10 @@
       "concurrency_limit": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
+      },
+      "concurrency_limits": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "कोई concurrency सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
         "ASSET": {
@@ -509,6 +522,10 @@
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
+      },
+      "groups": {
+        "content": "समूह आपको उपयोगकर्ताओं को एक साथ जोड़ने की अनुमति देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।",
+        "title": "आपके पास अभी तक कोई समूह नहीं है!"
       },
       "kill_switches": {
         "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
@@ -537,6 +554,10 @@
       "versionPlugin": {
         "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
         "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
+      },
+      "workerRegistrationTokens": {
+        "content": "पंजीकरण टोकन दूरस्थ workers को सुरक्षित रूप से प्रमाणित और आपके Kestra instance के साथ पंजीकृत करने की अनुमति देते हैं। एक टोकन बनाएं, फिर इसे नए workers को इस क्लस्टर से जोड़ने के लिए उपयोग करें।",
+        "title": "आपके पास अभी तक कोई पंजीकरण टोकन नहीं है!"
       }
     },
     "empty search": "खोज परिणाम खाली हैं",
@@ -646,6 +667,8 @@
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
     "feeds": {
+      "heading": "सभी चीजें Kestra।",
+      "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ",
       "title": "केस्ट्रा में नया क्या है"
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
@@ -735,6 +758,27 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "ऐप(s)",
+        "tooltip": "इस flow का उपयोग करने वाले ऐप्स देखें"
+      },
+      "dependencies": {
+        "suffix": "निर्भरता(एं)",
+        "tooltip": "flow निर्भरता देखें"
+      },
+      "errors": {
+        "label": "{count} त्रुटि(याँ)"
+      },
+      "revisions": {
+        "suffix": "संशोधन(संशोधन)",
+        "tooltip": "flow संशोधन देखें"
+      },
+      "tests": {
+        "suffix": "परीक्षण(परीक्षण)",
+        "tooltip": "flow परीक्षण देखें"
+      }
+    },
     "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flow_outputs": "फ्लो Outputs",
@@ -824,6 +868,7 @@
     "leave page": "पृष्ठ छोड़ें",
     "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
     "light_version": "लाइट संस्करण",
+    "line": "रेखा",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
@@ -838,8 +883,52 @@
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",
+    "mcp": {
+      "api_token": "एपीआई टोकन",
+      "auth_type": "प्रमाणीकरण",
+      "basic_auth": "बेसिक ऑथ",
+      "bearer_token": "बेयर टोकन प्रमाणीकरण",
+      "connect": "कनेक्ट करें",
+      "connect_modal": {
+        "claude_code": "क्लॉड कोड",
+        "claude_code_hint": "अपने टर्मिनल में निम्नलिखित कमांड चलाएँ:",
+        "claude_desktop": "क्लॉड डेस्कटॉप",
+        "claude_desktop_hint": "अपने claude_desktop_config.json फ़ाइल में निम्नलिखित जोड़ें:",
+        "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+        "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "codex": "Codex (OpenAI)",
+        "codex_hint": "अपने codex.json MCP कॉन्फ़िगरेशन में निम्नलिखित जोड़ें:",
+        "cursor": "कर्सर",
+        "cursor_hint": "`~/.cursor/mcp.json` में निम्नलिखित जोड़ें:",
+        "done": "हो गया",
+        "server_url": "सर्वर URL",
+        "title": "{name} से कनेक्ट करें"
+      },
+      "copy_url": "URL कॉपी करें",
+      "create": "सर्वर बनाएं",
+      "delete_confirm": "क्या आप वाकई इस MCP सर्वर को हटाना चाहते हैं?",
+      "id_invalid": "आईडी को एक छोटे अक्षर या अंक से शुरू होना चाहिए, और इसमें केवल छोटे अक्षर, अंक, हाइफन, या अंडरस्कोर शामिल होने चाहिए।",
+      "id_placeholder": "उदा. my-mcp-server",
+      "instructions": "निर्देश",
+      "main_tenant": "मुख्य",
+      "no_servers": "कोई MCP सर्वर नहीं मिला। बाहरी AI एजेंट्स के लिए MCP Tool triggers को एक्सपोज़ करने के लिए अपना पहला सर्वर बनाएं।",
+      "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
+      "private": "निजी",
+      "public": "सार्वजनिक",
+      "save": "परिवर्तनों को सहेजें",
+      "server": "MCP सर्वर",
+      "server_type": "सर्वर प्रकार",
+      "servers": "MCP सर्वर",
+      "tab_connect": "कनेक्ट करें",
+      "tab_connect_placeholder": "कनेक्शन विवरण जल्द ही आ रहे हैं।",
+      "tab_edit": "संपादित करें",
+      "tab_tool_flows": "टूल Flows",
+      "tab_tool_flows_placeholder": "टूल flows प्रबंधन जल्द ही आ रहा है।",
+      "url_copied": "URL कॉपी हो गया!",
+      "username_password": "यूज़रनेम और पासवर्ड"
+    },
     "metric": "मेट्रिक",
-    "metric choice": "कृपया एक मेट्रिक और एकत्रीकरण चुनें",
+    "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
     "metrics": "मेट्रिक्स",
     "min": "न्यूनतम",
     "missingSource": "स्रोत अनुपलब्ध",
@@ -1363,6 +1452,7 @@
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "runners": "धावक",
+    "running": "RUNNING",
     "running duration": "चलने की अवधि",
     "save": "सहेजें",
     "save draft": {
@@ -1416,6 +1506,7 @@
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
     "select datetime": "एक तिथि चुनें",
+    "select view": "दृश्य चुनें",
     "selected": "चयनित",
     "selection": {
       "all": "सभी का चयन करें ({count})",
@@ -1682,6 +1773,37 @@
     "triggered done": "निष्पादन <em>{name}</em> सफलतापूर्वक ट्रिगर किया गया है",
     "triggerflow disabled": "Flow परिभाषा से Trigger अक्षम है",
     "triggers": "Triggers",
+    "triggers_add_card_add": "जोड़ें",
+    "triggers_add_card_add_to_flow": "flow में जोड़ें",
+    "triggers_add_category_app_description": "बाहरी संसाधनों में परिवर्तनों के लिए समय-समय पर जाँच करें।",
+    "triggers_add_category_app_title": "ऐप Triggers",
+    "triggers_add_category_core_description": "अधिकांश workflows के लिए आवश्यक Built-in triggers।",
+    "triggers_add_category_core_title": "कोर Triggers",
+    "triggers_add_category_empty": "इस श्रेणी में कोई triggers नहीं हैं।",
+    "triggers_add_category_realtime_description": "मैसेजिंग सिस्टम से घटनाओं पर तुरंत प्रतिक्रिया दें।",
+    "triggers_add_category_realtime_title": "रीयलटाइम Triggers",
+    "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
+    "triggers_add_empty_hint": "कोई अन्य खोज शब्द आज़माएं या सभी श्रेणियों को ब्राउज़ करें।",
+    "triggers_add_empty_title": "कोई triggers नहीं मिले",
+    "triggers_add_filter_all": "सभी",
+    "triggers_add_filter_app": "ऐप",
+    "triggers_add_filter_core": "कोर",
+    "triggers_add_filter_realtime": "रियलटाइम",
+    "triggers_add_modal_add_button": "Flow में Trigger जोड़ें",
+    "triggers_add_modal_ee_notice": "यह trigger Enterprise Edition की आवश्यकता है।",
+    "triggers_add_modal_flow_placeholder": "किसी flow का चयन करें",
+    "triggers_add_modal_namespace_placeholder": "एक namespace चुनें",
+    "triggers_add_modal_properties_hint": "ट्रिगर जोड़ने के बाद flow संपादक में ट्रिगर गुणों को कॉन्फ़िगर करें।",
+    "triggers_add_modal_tab_documentation": "दस्तावेज़ीकरण",
+    "triggers_add_modal_tab_form": "फॉर्म",
+    "triggers_add_modal_tab_source": "स्रोत",
+    "triggers_add_modal_title": "{name}",
+    "triggers_add_modal_trigger_id": "ट्रिगर ID",
+    "triggers_add_modal_trigger_id_placeholder": "इस trigger के लिए अद्वितीय पहचानकर्ता",
+    "triggers_add_search_placeholder": "ट्रिगर्स खोजें...",
+    "triggers_add_see_less": "कम देखें",
+    "triggers_add_see_more": "और देखें ({count} और)",
+    "triggers_header_description": "अपने flows को स्वचालित करने के लिए triggers को ब्राउज़ करें, जोड़ें और प्रबंधित करें। अपने flow को एक AI टूल के रूप में एक्सपोज़ करने, शेड्यूलिंग, एक webhook trigger जोड़ने, बाहरी ऐप्स में परिवर्तनों के लिए polling करने, या रीयलटाइम इवेंट listeners में से चुनें।",
     "triggers_state": {
       "options": {
         "disabled": "अक्षम",
@@ -1689,6 +1811,8 @@
       },
       "state": "स्थिति"
     },
+    "triggers_tabs_add": "जोड़ें",
+    "triggers_tabs_manage": "प्रबंधित करें",
     "true": "सत्य",
     "type": "प्रकार",
     "unable to generate graph": "ग्राफ़ उत्पन्न करते समय एक समस्या उत्पन्न हुई जिससे टोपोलॉजी प्रदर्शित नहीं हो सकी।",
@@ -1824,7 +1948,7 @@
       },
       "need_help": "मदद चाहिए?",
       "placeholder_prompt": "मुझे सुबह 9 बजे एक दैनिक अभिवादन संदेश भेजें।",
-      "remaining_quota": "आपके पास {count} AI generations शेष हैं",
+      "remaining_quota": "आपके पास {count} AI generations शेष हैं। सीमा प्रतिदिन मध्यरात्रि UTC पर रीसेट होती है।",
       "show_less": "कम प्रॉम्प्ट दिखाएं",
       "show_more": "अधिक प्रॉम्प्ट दिखाएं",
       "success_page": {

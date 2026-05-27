@@ -37,37 +37,37 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import TaskObjectInline from "./TaskObjectInline.vue";
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
+    import {ref} from "vue"
+    import TaskObjectInline from "./TaskObjectInline.vue"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
 
-    const modelValue = defineModel<any[]>();
+    const modelValue = defineModel<any[]>()
 
     defineProps<{
         fieldKey: string;
         root: string;
         taskSchemaPath: string;
-    }>();
+    }>()
 
-    const creationKey = ref(0);
+    const creationKey = ref(0)
 
     const update = (index: number, val: any) => {
-        const newVal = [...(modelValue.value ?? [])];
-        newVal[index] = val;
-        modelValue.value = newVal;
-    };
+        const newVal = [...(modelValue.value ?? [])]
+        newVal[index] = val
+        modelValue.value = newVal
+    }
 
     const add = (val: any) => {
-        if (!val || Object.keys(val).length === 0) return;
-        modelValue.value = [...(modelValue.value ?? []), val];
-        creationKey.value++;
-    };
+        if (!val || Object.keys(val).length === 0) return
+        modelValue.value = [...(modelValue.value ?? []), val]
+        creationKey.value++
+    }
 
     const remove = (index: number) => {
-        const newVal = [...(modelValue.value ?? [])];
-        newVal.splice(index, 1);
-        modelValue.value = newVal.length ? newVal : undefined;
-    };
+        const newVal = [...(modelValue.value ?? [])]
+        newVal.splice(index, 1)
+        modelValue.value = newVal.length ? newVal : undefined
+    }
 </script>
 
 
@@ -75,7 +75,7 @@
 .task-list {
     .label {
         font-family: var(--kel-font-family-monospace);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
         font-weight: 600;
     }
@@ -83,7 +83,7 @@
     .index-tag {
         font-size: var(--ks-font-size-xs);
         font-weight: 700;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         text-transform: uppercase;
     }
 }

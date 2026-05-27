@@ -43,46 +43,46 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {Close, Plus} from "../utils/icons";
+    import {ref, computed, watch} from "vue"
+    import {Close, Plus} from "../utils/icons"
     import type {
         FilterConfiguration,
         FilterKeyConfig,
-        AppliedFilter
-    } from "../utils/filterTypes";
+        AppliedFilter,
+    } from "../utils/filterTypes"
 
     const props = defineProps<{
         configuration: FilterConfiguration;
         appliedFilters: AppliedFilter[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         close: [];
         "add-filter": [filter: AppliedFilter];
         "remove-filter": [id: string];
-    }>();
+    }>()
 
-    const selectedCount = computed(() => selectedKeys.value.size);
-    const totalCount = computed(() => props.configuration.keys.length);
+    const selectedCount = computed(() => selectedKeys.value.size)
+    const totalCount = computed(() => props.configuration.keys.length)
 
     const isSelected = (key: FilterKeyConfig): boolean =>
-        selectedKeys.value.has(key.key);
+        selectedKeys.value.has(key.key)
 
-    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)));
+    const selectedKeys = ref<Set<string>>(new Set(props.appliedFilters.map(f => f.key)))
 
     watch(() => props.appliedFilters, (newAppliedFilters) => {
-        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key));
-    }, {deep: true});
+        selectedKeys.value = new Set(newAppliedFilters.map(f => f.key))
+    }, {deep: true})
 
     const toggleFilter = (key: FilterKeyConfig) => {
         if (selectedKeys.value.has(key.key)) {
-            selectedKeys.value.delete(key.key);
-            const filterToRemove = props.appliedFilters.find(f => f.key === key.key);
+            selectedKeys.value.delete(key.key)
+            const filterToRemove = props.appliedFilters.find(f => f.key === key.key)
             if (filterToRemove) {
-                emits("remove-filter", filterToRemove.id);
+                emits("remove-filter", filterToRemove.id)
             }
         } else {
-            selectedKeys.value.add(key.key);
+            selectedKeys.value.add(key.key)
             const newFilter: AppliedFilter = {
                 id: `${key.key}-${Date.now()}`,
                 key: key.key,
@@ -90,11 +90,11 @@
                 comparator: key.comparators?.[0],
                 comparatorLabel: key.comparators?.[0],
                 value: [],
-                valueLabel: ""
-            };
-            emits("add-filter", newFilter);
+                valueLabel: "",
+            }
+            emits("add-filter", newFilter)
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -107,7 +107,7 @@
 
     small {
         font-size: var(--ks-font-size-xs);
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-weight: 400;
     }
 
@@ -116,8 +116,8 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 0.75rem 1rem 0.5rem;
-        background-color: var(--ks-background-table-header);
-        border-bottom: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-bg-active);
+        border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
         top: 0;
@@ -132,13 +132,13 @@
         }
 
         :deep(.close-icon) {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
             padding-right: 0;
 
             &:hover {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
             }
         }
     }
@@ -150,7 +150,7 @@
         scrollbar-color: transparent transparent;
 
         &:hover {
-            scrollbar-color: var(--ks-border-secondary) transparent;
+            scrollbar-color: var(--ks-border-subtle) transparent;
         }
     }
 
@@ -161,10 +161,10 @@
         padding: 0.5rem 1rem;
         cursor: pointer;
         transition: all 0.2s ease;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
 
         &:hover {
-            background-color: var(--ks-dropdown-background-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
 
         &:last-child {
@@ -182,20 +182,20 @@
                 line-height: 1.375rem;
 
                 &.selected {
-                    color: var(--ks-content-inactive);
+                    color: var(--ks-text-inactive);
                 }
             }
 
             small {
                 &.selected {
-                    color: var(--ks-content-inactive);
+                    color: var(--ks-text-inactive);
                 }
             }
         }
     }
 
     .footer {
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
         bottom: 0;
@@ -206,13 +206,13 @@
 }
 
 :deep(.kel-button.unselected) {
-    color: var(--ks-chart-success);
+    color: var(--ks-status-success);
     user-select: none;
     pointer-events: auto;
     font-size: var(--ks-font-size-lg);
 
     &:hover {
-        color: var(--ks-content-success);
+        color: var(--ks-text-success);
     }
 }
 </style>

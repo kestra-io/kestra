@@ -15,16 +15,16 @@
     </KsSelect>
 </template>
 <script>
-    import Task from "./MixinTask";
+    import Task from "./MixinTask"
     export default {
         mixins: [Task],
-    };
+    }
 </script>
 
 <style scoped lang="scss">
 :deep(.kel-input__inner) {
     &::placeholder {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 }
 

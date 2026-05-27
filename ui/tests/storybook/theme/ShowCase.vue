@@ -84,7 +84,6 @@
                 :key="type"
                 :type="type.toLowerCase()"
                 :title="`${type} Alert`"
-                showIcon
             />
         </div>
 
@@ -231,7 +230,7 @@
     import Message from "vue-material-design-icons/Message.vue"
     import Star from "vue-material-design-icons/Star.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import Upload from "vue-material-design-icons/Upload.vue";
+    import Upload from "vue-material-design-icons/Upload.vue"
     import Tabs from "../../../src/components/Tabs.vue"
 
     const input = ref("")

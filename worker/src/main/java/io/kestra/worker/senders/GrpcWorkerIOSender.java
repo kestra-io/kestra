@@ -26,11 +26,11 @@ import jakarta.annotation.Nullable;
 /**
  * Sends worker data to the controller via gRPC.
  * <p>
- * Instances are created by {@link WorkerIOSenderFactory} with the appropriate
+ * Instances are created by {@link GrpcWorkerIOSenderFactory} with the appropriate
  * event type, gRPC method reference, and {@link SendStrategy}.
  *
  * @param <T> the type of event to send.
- * @see WorkerIOSenderFactory
+ * @see GrpcWorkerIOSenderFactory
  */
 public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender {
 

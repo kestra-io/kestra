@@ -139,9 +139,9 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-invalid-when.yaml"})
-    void invalidWhen() throws Exception {
-        suite.invalidWhen(runnerUtils);
+    @LoadFlows({ "flows/valids/working-directory-invalid-runif.yaml" })
+    void invalidRunIf() throws Exception {
+        suite.invalidRunIf(runnerUtils);
     }
 
     @Singleton
@@ -183,14 +183,14 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution);
+            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
             assertThat(subExecutions).hasSize(1);
 
-            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst());
+            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId());
             assertThat(subExecutions).hasSize(1);
 
 
-            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst());
+            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId());
             assertThat(subSubSubExecutions).hasSize(1);
 
             assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("2_end").getFirst()).get("value")).startsWith("kestra://");
@@ -310,7 +310,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution);
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-taskrun").getFirst()).get("value"))).contains("1");
         }
@@ -321,7 +321,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution);
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-workerparent").getFirst()).get("value")))
                 .contains("{\"task\":{\"id\":\"seq\"}}");
@@ -382,9 +382,9 @@ public class WorkingDirectoryTest {
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("decrypted").getFirst()).get("value")).isEqualTo("Hello World");
         }
 
-        public void invalidWhen(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+        public void invalidRunIf(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(
-                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-when", null,
+                MAIN_TENANT, "io.kestra.tests", "working-directory-invalid-runif", null,
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 

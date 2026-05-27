@@ -13,12 +13,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
 
     const props = defineProps({
         overrides: {type: Object, default: () => {}},
         label: {type: String, default: undefined},
-    });
+    })
 
     const layout = computed(() => {
         return {
@@ -27,8 +27,8 @@
             md: props.overrides?.md || 12,
             lg: props.overrides?.lg || 8,
             xl: props.overrides?.xl || 6,
-        };
-    });
+        }
+    })
 </script>
 
 <style scoped lang="scss">

@@ -9,10 +9,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerService;
+import io.kestra.core.models.triggers.*;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -28,7 +25,7 @@ public class PollingTrigger extends AbstractTrigger implements PollingTriggerInt
     private Long duration = 1000L;
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws IllegalVariableEvaluationException {
+    public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
         // Try catch to avoid flaky test
         try {
             Thread.sleep(duration);
@@ -36,9 +33,9 @@ public class PollingTrigger extends AbstractTrigger implements PollingTriggerInt
             Thread.currentThread().interrupt();
         }
 
-        Execution execution = TriggerService.generateExecution(this, conditionContext, context, Collections.emptyMap());
+        var evaluationResult = TriggerService.generateEvaluationResult(this, conditionContext, Collections.emptyMap());
 
-        return Optional.of(execution);
+        return Optional.of(evaluationResult);
     }
 
     @Override

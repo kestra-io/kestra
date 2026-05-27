@@ -32,9 +32,14 @@ dependencies {
 
     // ai
     implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-mcp")
     implementation("dev.langchain4j:langchain4j-google-ai-gemini")
     implementation("dev.langchain4j:langchain4j-http-client-jdk")
     implementation('org.bouncycastle:bcpkix-jdk18on')
+
+    // mcp
+    api 'io.modelcontextprotocol.sdk:mcp'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     implementation("de.siegmar:fastcsv")
 

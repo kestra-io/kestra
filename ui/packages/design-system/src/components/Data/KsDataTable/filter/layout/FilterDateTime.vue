@@ -13,9 +13,9 @@
     defineProps<{
         label: string;
         dateValue: Date | null;
-    }>();
+    }>()
 
     defineEmits<{
         "update:dateValue": [value: Date | null];
-    }>();
+    }>()
 </script>

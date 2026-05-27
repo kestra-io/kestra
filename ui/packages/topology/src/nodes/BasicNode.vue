@@ -58,14 +58,14 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue";
-    import TaskIcon from "../components/TaskIcon.vue";
-    import {KsTooltip} from "@kestra-io/design-system";
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue";
-    import {EVENTS} from "../utils/constants";
-    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue";
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import Utils from "../utils/utils";
+    import {computed} from "vue"
+    import TaskIcon from "../components/TaskIcon.vue"
+    import {KsTooltip} from "@kestra-io/design-system"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import {EVENTS} from "../utils/constants"
+    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import * as Utils from "../utils/utils"
 
 
     const emit = defineEmits([
@@ -79,12 +79,12 @@
         EVENTS.DELETE,
         EVENTS.ADD_TASK,
         EVENTS.SHOW_DESCRIPTION,
-    ]);
+    ])
 
     defineOptions({
         name: "BasicNode",
         inheritAttrs: false,
-    });
+    })
 
     const props = defineProps<{
         id?: string;
@@ -96,29 +96,29 @@
         icons: any;
         iconComponent: any;
         class?: string | string[] | Record<string, boolean>;
-    }>();
+    }>()
 
     function mouseover() {
-        emit(EVENTS.MOUSE_OVER, props.data.node);
+        emit(EVENTS.MOUSE_OVER, props.data.node)
     }
 
     function mouseleave() {
-        emit(EVENTS.MOUSE_LEAVE);
+        emit(EVENTS.MOUSE_LEAVE)
     }
 
-    const expandable = computed(() => props.data?.expandable || false);
+    const expandable = computed(() => props.data?.expandable || false)
 
     const node = computed(() => {
-        return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null;
-    });
+        return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
+    })
 
-    const description = computed(() => node.value?.description ?? null);
+    const description = computed(() => node.value?.description ?? null)
 
-    const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""));
+    const trimmedId = computed(() => Utils.afterLastDot(props.id ?? ""))
 
     const taskIconBg = computed(() => {
-        return !["default", "danger"].includes(props.data.color) ? props.data.color : "";
-    });
+        return !["default", "danger"].includes(props.data.color) ? props.data.color : ""
+    })
 
     const classes = computed(() => {
         return [
@@ -127,31 +127,31 @@
                 disabled: node.value?.disabled || props.data.parent?.taskNode?.task?.disabled,
             },
             props.class,
-        ];
-    });
+        ]
+    })
 
     const cls = computed(() => {
         if (props.data.node.triggerDeclaration) {
-            return props.data.node.triggerDeclaration.type;
+            return props.data.node.triggerDeclaration.type
         }
-        if (!node.value) return undefined;
-        return node.value?.type;
-    });
+        if (!node.value) return undefined
+        return node.value?.type
+    })
 
     const hoverTooltip = computed(() => {
         if (node.value?.type?.endsWith("SubflowGraphTask")) {
-            const subflowIdContainer = node.value.subflowId ?? node.value;
-            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId;
+            const subflowIdContainer = node.value.subflowId ?? node.value
+            return subflowIdContainer.namespace + " " + subflowIdContainer.flowId
         }
-        return trimmedId.value;
-    });
+        return trimmedId.value
+    })
 
-    const displayTitle = computed(() => props.title ?? trimmedId.value);
+    const displayTitle = computed(() => props.title ?? trimmedId.value)
 </script>
 
 <style lang="scss" scoped>
     .node-wrapper {
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: var(--ks-border-radius-lg);
         margin: 0;
         z-index: 150000;
@@ -167,12 +167,12 @@
         }
 
         &.execution-no-taskrun, &.disabled {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-surface);
         }
 
         &.disabled {
             .task-title {
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 text-decoration: line-through;
             }
         }
@@ -211,7 +211,7 @@
 
     .description-button {
         margin-left: 0.5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: pointer;
     }
 
@@ -230,7 +230,7 @@
         white-space: nowrap;
         font-size: 0.75rem;
         font-weight: 700;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         flex-grow: 1;
     }
 
@@ -254,12 +254,12 @@
             bottom: -1px;
             border-radius: .55rem;
             background: conic-gradient(from calc(var(--border-angle-running)) at 50% 50%,
-                var(--ks-border-running) 0%,
-                var(--ks-border-running) 10%,
+                var(--ks-status-border-running) 0%,
+                var(--ks-status-border-running) 10%,
                 var(--ks-border-primary) 40%,
                 var(--ks-border-primary) 60%,
-                var(--ks-border-running) 90%,
-                var(--ks-border-running) 100%);
+                var(--ks-status-border-running) 90%,
+                var(--ks-status-border-running) 100%);
             animation: running-border 3s linear infinite;
         }
     }

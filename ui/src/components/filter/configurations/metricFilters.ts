@@ -1,12 +1,12 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import {useValues} from "../composables/useValues";
-import {useFlowStore} from "../../../stores/flow";
-import {useI18n} from "vue-i18n";
-import {useExecutionsStore} from "../../../stores/executions";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {useValues} from "../composables/useValues"
+import {useFlowStore} from "../../../stores/flow"
+import {useI18n} from "vue-i18n"
+import {useExecutionsStore} from "../../../stores/executions"
 
 export const useMetricFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -20,22 +20,22 @@ export const useMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const executionsStore = useExecutionsStore();
-                        const taskRuns = executionsStore.execution?.taskRunList ?? [];
+                        const executionsStore = useExecutionsStore()
+                        const taskRuns = executionsStore.execution?.taskRunList ?? []
                         return taskRuns.map(taskRun => ({
                             label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}` : ""),
-                            value: taskRun.id
-                        }));
+                            value: taskRun.id,
+                        }))
                     },
-                    searchable: true
-                }
-            ]
-        };
-    });
-};
+                    searchable: true,
+                },
+            ],
+        }
+    })
+}
 
 export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -53,26 +53,26 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async () => {
                         return (useFlowStore().tasksWithMetrics as string[]).map((value) => ({
                             label: value,
-                            value
-                        }));
+                            value,
+                        }))
                     },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "metric",
                     label: t("filter.metric.label"),
                     description: t("filter.metric.description"),
                     comparators: [
-                        Comparators.EQUALS
+                        Comparators.EQUALS,
                     ],
                     valueType: "select",
                     valueProvider: async () => {
                         return (useFlowStore().metrics as string[]).map((value) => ({
                             label: value,
-                            value
-                        }));
+                            value,
+                        }))
                     },
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "timeRange",
@@ -81,11 +81,11 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("metrics");
-                        return VALUES.RELATIVE_DATE;
-                    }
-                }
-            ]
-        };
-    });
-};
+                        const {VALUES} = useValues("metrics")
+                        return VALUES.RELATIVE_DATE
+                    },
+                },
+            ],
+        }
+    })
+}

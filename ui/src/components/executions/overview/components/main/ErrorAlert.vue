@@ -1,5 +1,5 @@
 <template>
-    <KsAlert id="error" type="error" showIcon :closable="false">
+    <KsAlert id="error" type="error" :closable="false">
         <template #title>
             <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}:</span>
         </template>
@@ -24,22 +24,22 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {onMounted, ref} from "vue"
 
     import {
         Execution,
         useExecutionsStore,
-    } from "../../../../../stores/executions";
-    const store = useExecutionsStore();
+    } from "../../../../../stores/executions"
+    const store = useExecutionsStore()
 
-    import {Log} from "../../../../../stores/logs";
+    import {Log} from "../../../../../stores/logs"
 
-    import LogLine from "../../../../logs/LogLine.vue";
+    import LogLine from "../../../../logs/LogLine.vue"
 
-    const props = defineProps<{ execution: Execution }>();
+    const props = defineProps<{ execution: Execution }>()
 
     function stripBackticks(message: string): string {
-        return message.replace(/`([^`]*)`/g, "$1");
+        return message.replace(/`([^`]*)`/g, "$1")
     }
 
     const to = {
@@ -52,21 +52,26 @@
             tab: "logs",
         },
         query: {"filters[level][EQUALS]": "ERROR"},
-    };
+    }
 
-    const logs = ref<Log[]>([]);
+    const logs = ref<Log[]>([])
 
     onMounted(async () => {
-        const response = await store.loadLogs({
-            store: false,
-            executionId: props.execution.id,
-            params: {minLevel: "ERROR"},
-        });
+        try {
+            const response = await store.loadLogs({
+                store: false,
+                executionId: props.execution.id,
+                params: {minLevel: "ERROR"},
+                showMessageOnError: false,
+            })
 
-        if (!response.length) return;
+            if (!response.length) return
 
-        logs.value = response;
-    });
+            logs.value = response
+        } catch {
+            // User may not have ACCESS_LOGS permission — silently skip
+        }
+    })
 </script>
 <style scoped lang="scss">
 
@@ -84,13 +89,13 @@
                 justify-content: space-between;
                 font-size: var(--kel-alert-title-font-size);
                 line-height: 24px;
-                color: var(--ks-content-error);
+                color: var(--ks-status-error);
 
             }
         }
 
         & .kel-alert__description {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
 
             & .logs {
                 padding-top: calc(1rem * 1.5);
@@ -112,12 +117,12 @@
                 }
 
                 .kel-button {
-                    color: var(--ks-log-content-error);
+                    color: var(--ks-status-error);
                 }
 
                 .link {
                     padding: 1rem 0 calc(1rem / 2) 0;
-                    border-top: 1px solid var(--ks-border-primary);
+                    border-top: 1px solid var(--ks-border-default);
                     text-align: right;
                 }
             }

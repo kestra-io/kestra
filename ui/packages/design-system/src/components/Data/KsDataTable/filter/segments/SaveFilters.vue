@@ -17,7 +17,7 @@
         @close="closeSaveDialog"
     >
         <div class="save-form">
-            <KsAlert v-if="hasDuplicate" type="error" showIcon :closable="false">
+            <KsAlert v-if="hasDuplicate" type="error" :closable="false">
                 {{ $t("filter.save duplicate") }}
                 <template #icon>
                     <CloseCircleOutline />
@@ -79,64 +79,64 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import type {AppliedFilter, SavedFilter} from "../utils/filterTypes";
-    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons";
+    import {ref, computed, watch} from "vue"
+    import type {AppliedFilter, SavedFilter} from "../utils/filterTypes"
+    import {CloseCircleOutline, ContentSaveOutline} from "../utils/icons"
 
     const props = defineProps<{
         disabled: boolean;
         savedFilters: SavedFilter[];
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "close-edit": [];
         save: [name: string, description: string];
         edit: [id: string, name: string, description: string];
-    }>();
+    }>()
 
-    const filterName = ref("");
-    const showSaveDialog = ref(false);
-    const filterDescription = ref("");
+    const filterName = ref("")
+    const showSaveDialog = ref(false)
+    const filterDescription = ref("")
 
-    const isEditMode = computed(() => !!props.editingFilter);
+    const isEditMode = computed(() => !!props.editingFilter)
 
     const hasDuplicate = computed(() => {
-        const name = filterName.value.trim();
-        if (!name) return false;
-        return props.savedFilters.some(f => f.name === name && (!isEditMode.value || f.id !== props.editingFilter?.id));
-    });
+        const name = filterName.value.trim()
+        if (!name) return false
+        return props.savedFilters.some(f => f.name === name && (!isEditMode.value || f.id !== props.editingFilter?.id))
+    })
 
     watch(() => props.editingFilter, (newFilter, oldFilter) => {
         if (newFilter && !oldFilter) {
-            filterName.value = newFilter.name;
-            filterDescription.value = newFilter.description || "";
-            showSaveDialog.value = true;
+            filterName.value = newFilter.name
+            filterDescription.value = newFilter.description || ""
+            showSaveDialog.value = true
         } else if (!newFilter && oldFilter) {
-            closeSaveDialog();
+            closeSaveDialog()
         }
-    }, {immediate: true});
+    }, {immediate: true})
 
     const saveFilter = () => {
-        if (!filterName.value.trim()) return;
+        if (!filterName.value.trim()) return
 
         if (isEditMode.value && props.editingFilter) {
-            emits("edit", props.editingFilter.id, filterName.value.trim(), filterDescription.value.trim());
+            emits("edit", props.editingFilter.id, filterName.value.trim(), filterDescription.value.trim())
         } else {
-            emits("save", filterName.value.trim(), filterDescription.value.trim());
+            emits("save", filterName.value.trim(), filterDescription.value.trim())
         }
-        closeSaveDialog();
-    };
+        closeSaveDialog()
+    }
 
     const closeSaveDialog = () => {
-        showSaveDialog.value = false;
-        filterName.value = "";
-        filterDescription.value = "";
+        showSaveDialog.value = false
+        filterName.value = ""
+        filterDescription.value = ""
         if (isEditMode.value) {
-            emits("close-edit");
+            emits("close-edit")
         }
-    };
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -153,15 +153,15 @@
             margin-bottom: 0.25rem;
             font-weight: 600;
             font-size: var(--ks-font-size-sm);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 
     .filter-summary {
         padding: 0.5rem 0.75rem;
         background-color: var(--ks-surface-secondary);
-        border-radius: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border-radius: var(--ks-radius-base);
+        border: 1px solid var(--ks-border-default);
         min-height: 2rem;
     }
 
@@ -178,17 +178,17 @@
         font-size: var(--ks-font-size-xs);
 
         .key {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 400;
         }
 
         .comparator {
-            color: var(--ks-chart-success);
+            color: var(--ks-status-success);
             font-weight: 400;
         }
 
         .value {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-weight: 700;
         }
     }
@@ -197,14 +197,14 @@
 .no-bg-border {
     margin: 0 !important;
     padding: 0.5rem;
-    border-radius: 0.25rem;
+    border-radius: var(--ks-radius-base);
     font-size: var(--ks-font-size-base);
-    color: var(--ks-content-primary) !important;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
+    color: var(--ks-text-primary) !important;
+    box-shadow: 0 2px 4px var(--ks-shadow-surface);
 }
 
 .kel-button.is-disabled {
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
     cursor: not-allowed !important;
 }
 
@@ -214,7 +214,7 @@
 
 :deep(.kel-input__inner::placeholder),
 :deep(.kel-textarea__inner::placeholder) {
-    color: var(--ks-content-tertiary);
+    color: var(--ks-text-dim);
     font-size: var(--ks-font-size-sm);
 }
 

@@ -9,7 +9,9 @@
         </nav>
 
         <div v-ks-loading="isLoading">
-            <slot name="top" />
+            <div v-if="$slots.top" class="ks-data-table-top">
+                <slot name="top" />
+            </div>
 
             <template v-if="hasTableSlot">
                 <slot name="table" />
@@ -166,7 +168,7 @@
         const isChecked = selection.some(s =>
             typeof rowKey === "function"
                 ? rowKey(s) === rowKey(row)
-                : s[rowKey as string] === row[rowKey as string]
+                : s[rowKey as string] === row[rowKey as string],
         )
 
         if (isShiftPressed.value && lastCheckedIndex.value !== null) {
@@ -243,7 +245,7 @@
             await props.loadData({
                 page: internalPage.value,
                 size: internalSize.value,
-                sort: internalSort.value
+                sort: internalSort.value,
             })
         } finally {
             isLoading.value = false
@@ -340,13 +342,29 @@
 
 <style lang="scss">
     .ks-data-table-wrapper {
+        --ks-data-table-gutter: 24px;
+
+        > .ks-data-table-navbar,
+        .ks-data-table-top {
+            padding-inline: var(--ks-data-table-gutter);
+        }
+
         .kel-pagination {
             display: flex;
+            padding-inline: var(--ks-data-table-gutter);
 
             .kel-pagination__sizes {
                 display: flex;
                 flex: 1;
             }
+        }
+
+        .kel-checkbox__inner {
+            width: 16px;
+            height: 16px;
+            border-radius: 4.8px;
+            background: transparent;
+            border: 0.8px solid var(--ks-border-strong);
         }
     }
 
@@ -358,8 +376,8 @@
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
             width: calc(var(--table-header-width) - 1px);
-            background-color: var(--ks-background-table-header);
-            border-radius: var(--kel-border-radius-round) var(--kel-border-radius-round) 0 0;
+            background-color: var(--ks-bg-overlay);
+            border-radius: 0;
             overflow-x: auto;
 
             & ~ .kel-table {

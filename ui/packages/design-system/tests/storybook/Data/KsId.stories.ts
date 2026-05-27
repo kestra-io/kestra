@@ -44,7 +44,7 @@ export const Clickable: Story = {
         components: {KsId},
         setup() {
             return {
-                handleClick: () => alert("ID clicked!")
+                handleClick: () => alert("ID clicked!"),
             }
         },
         template: `

@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.amazon.ion.util.IonStreamUtils;
+
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
@@ -47,21 +49,30 @@ public class ReadFileFunction extends AbstractFileFunction {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
                 try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
-                    yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    yield readContent(inputStream);
                 }
             }
             case LocalPath.FILE_SCHEME -> {
                 try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
-                    yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    yield readContent(inputStream);
                 }
             }
             case Namespace.NAMESPACE_FILE_SCHEME -> {
                 try (InputStream inputStream = contentInputStream(path, namespace, tenantId, args)) {
-                    yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    yield readContent(inputStream);
                 }
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));
         };
+    }
+
+    // Returns byte[] for binary ION (preserves fidelity for fromIon()), String for everything else
+    private static Object readContent(InputStream inputStream) throws IOException {
+        byte[] bytes = inputStream.readAllBytes();
+        if (IonStreamUtils.isIonBinary(bytes)) {
+            return bytes;
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {

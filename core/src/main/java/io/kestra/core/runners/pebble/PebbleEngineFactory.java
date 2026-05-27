@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -23,11 +24,11 @@ import jakarta.inject.Singleton;
 public class PebbleEngineFactory {
 
     private final ApplicationContext applicationContext;
-    private final VariableRenderer.VariableConfiguration variableConfiguration;
+    private final VariableConfiguration variableConfiguration;
     private final MeterRegistry meterRegistry;
 
     @Inject
-    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableRenderer.VariableConfiguration variableConfiguration, MeterRegistry meterRegistry) {
+    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration, MeterRegistry meterRegistry) {
         this.applicationContext = applicationContext;
         this.variableConfiguration = variableConfiguration;
         this.meterRegistry = meterRegistry;

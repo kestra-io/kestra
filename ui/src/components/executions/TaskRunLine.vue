@@ -173,35 +173,35 @@
 </template>
 
 <script>
-    import Restart from "./overview/components/actions/Restart.vue";
-    import Metrics from "./Metrics.vue";
-    import {State} from "@kestra-io/design-system";
-    import {KsExecutionStatus} from "@kestra-io/design-system";
-    import ChangeStatus from "./ChangeStatus.vue";
-    import TaskEdit from "../flows/TaskEdit.vue";
-    import SubFlowLink from "../flows/SubFlowLink.vue";
-    import Outputs from "./Outputs.vue";
-    import Clock from "vue-material-design-icons/Clock.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import Copy from "vue-material-design-icons/ContentCopy.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import WorkerInfo from "./WorkerInfo.vue";
-    import AiIcon from "../ai/AiIcon.vue";
-    import FlowUtils from "../../utils/flowUtils";
-    import _groupBy from "lodash/groupBy";
-    import {SECTIONS} from "@kestra-io/design-system";
-    import {KsTaskIcon} from "@kestra-io/design-system";
-    import Duration from "../layout/Duration.vue";
-    import Utils from "../../utils/utils";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useCoreStore} from "../../stores/core";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {mapStores} from "pinia";
+    import Restart from "./overview/components/actions/Restart.vue"
+    import Metrics from "./Metrics.vue"
+    import {State} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import ChangeStatus from "./ChangeStatus.vue"
+    import TaskEdit from "../flows/TaskEdit.vue"
+    import SubFlowLink from "../flows/SubFlowLink.vue"
+    import Outputs from "./Outputs.vue"
+    import Clock from "vue-material-design-icons/Clock.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import Copy from "vue-material-design-icons/ContentCopy.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import WorkerInfo from "./WorkerInfo.vue"
+    import AiIcon from "../ai/AiIcon.vue"
+    import * as FlowUtils from "../../utils/flowUtils"
+    import _groupBy from "lodash/groupBy"
+    import {SECTIONS} from "@kestra-io/design-system"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import Duration from "../layout/Duration.vue"
+    import * as Utils from "../../utils/utils"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useCoreStore} from "../../stores/core"
+    import {useExecutionsStore} from "../../stores/executions"
+    import {mapStores} from "pinia"
     import {useAuthStore} from "override/stores/auth"
 
     export default {
@@ -220,24 +220,24 @@
             ChevronDown,
             DotsVertical,
             WorkerInfo,
-            AiIcon
+            AiIcon,
         },
         props: {
             currentTaskRun: {
                 type: Object,
-                required: true
+                required: true,
             },
             followedExecution: {
                 type: Object,
-                required: true
+                required: true,
             },
             flow: {
                 type: Object,
-                default: undefined
+                default: undefined,
             },
             forcedAttemptNumber: {
                 type: Number,
-                default: undefined
+                default: undefined,
             },
             taskRunId: {
                 type: String,
@@ -257,8 +257,8 @@
             },
             filter: {
                 type: String,
-                default: ""
-            }
+                default: "",
+            },
         },
         computed: {
             ...mapStores(usePluginsStore, useCoreStore, useExecutionsStore, useAuthStore),
@@ -266,83 +266,83 @@
                 return SECTIONS
             },
             currentTaskRuns() {
-                return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? [];
+                return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? []
             },
             taskRunById() {
-                return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]));
+                return Object.fromEntries(this.currentTaskRuns.map(taskRun => [taskRun.id, taskRun]))
             },
             logsWithIndexByAttemptUid() {
                 let indexedLogs = this?.logs
                     .filter(logLine => (logLine?.message ?? "").toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId]))
-                    .map((logLine, index) => ({...logLine, index}));
+                    .map((logLine, index) => ({...logLine, index}))
 
                 // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
                 indexedLogs = Array.from(new Set(indexedLogs))
 
-                return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
+                return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
             },
             canReadFlow() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.READ, this.$route.params.namespace)
+                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW, this.$route.params.namespace)
             },
             Copy() {
-                return Copy;
+                return Copy
             },
             Delete() {
-                return Delete;
+                return Delete
             },
             Download() {
-                return Download;
-            }
+                return Download
+            },
         },
         methods: {
             attempts(taskRun) {
                 if (this.followedExecution.state.current === State.RUNNING || this.forcedAttemptNumber === undefined) {
-                    return taskRun.attempts ?? [{state: taskRun.state}];
+                    return taskRun.attempts ?? [{state: taskRun.state}]
                 }
 
-                return taskRun.attempts ? [taskRun.attempts[this.forcedAttemptNumber]] : [];
+                return taskRun.attempts ? [taskRun.attempts[this.forcedAttemptNumber]] : []
             },
             isSubflow(taskRun) {
-                return taskRun.outputs?.executionId;
+                return taskRun.outputs?.executionId
             },
             downloadName(currentTaskRunId) {
                 return `kestra-execution-${this.$moment().format("YYYYMMDDHHmmss")}-${this.followedExecution.id}-${currentTaskRunId}.log`
             },
             selectedAttempt(taskRun) {
-                return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0];
+                return this.attempts(taskRun)[this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
             },
             taskType(taskRun) {
-                if(!taskRun) return undefined;
+                if(!taskRun) return undefined
 
-                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
-                const parentTaskRunId = taskRun.parentTaskRunId;
+                const task = FlowUtils.findTaskById(this.flow, taskRun.taskId)
+                const parentTaskRunId = taskRun.parentTaskRunId
                 if (task === undefined && parentTaskRunId) {
                     return this.taskType(this.taskRunById[parentTaskRunId])
                 }
-                return task ? task.type : undefined;
+                return task ? task.type : undefined
             },
             downloadContent(currentTaskRunId) {
                 const params = this.params
                 this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
+                    params: {...params, taskRunId: currentTaskRunId},
                 }).then((response) => {
-                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
-                });
+                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId))
+                })
             },
             copyContent(currentTaskRunId) {
                 const params = this.params
                 this.executionsStore.downloadLogs({
                     executionId: this.followedExecution.id,
-                    params: {...params, taskRunId: currentTaskRunId}
+                    params: {...params, taskRunId: currentTaskRunId},
                 }).then((response) => {
                     Utils.copy(response).then(() =>{
                         this.coreStore.message = {
                             variant: "success",
                             title: this.$t("success"),
                             message: this.$t("copied_logs_to_clipboard"),
-                        };
-                    });
+                        }
+                    })
                 })
             },
             deleteLogs(currentTaskRunId) {
@@ -352,17 +352,17 @@
                     () => {
                         this.executionsStore.deleteLogs({
                             executionId: this.followedExecution.id,
-                            params: {...params, taskRunId: currentTaskRunId}
+                            params: {...params, taskRunId: currentTaskRunId},
                         }).then((_) => {
                             this.$emit("update-logs", this.followedExecution.id)
-                        });
+                        })
                     },
-                    () => {}
+                    () => {},
                 )
 
             },
             hasWorkerId(currentTaskRun) {
-                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null;
+                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null
             },
             attemptUid(taskRunId, attemptNumber) {
                 return `${taskRunId}-${attemptNumber}`
@@ -374,20 +374,20 @@
                 return this.logsWithIndexByAttemptUid[this.attemptUid(taskRunId, this.selectedAttemptNumberByTaskRunId[taskRunId])]
             },
             fixErrorWithAi(taskRun) {
-                const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0;
-                const attemptUid = this.attemptUid(taskRun.id, attemptNumber);
-                const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? [];
+                const attemptNumber = this.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0
+                const attemptUid = this.attemptUid(taskRun.id, attemptNumber)
+                const logs = this.logsWithIndexByAttemptUid[attemptUid] ?? []
                 const errorLines = (() => {
-                    const errors = logs.filter(l => (l.level || "").toString().toUpperCase() === "ERROR" && (l.message ?? "").length > 0);
-                    if (errors.length > 0) return errors.map(l => l.message).join("\n");
-                    const last = [...logs].reverse().find(l => (l.message ?? "").length > 0);
-                    return last?.message ?? "";
-                })();
-                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`;
+                    const errors = logs.filter(l => (l.level || "").toString().toUpperCase() === "ERROR" && (l.message ?? "").length > 0)
+                    if (errors.length > 0) return errors.map(l => l.message).join("\n")
+                    const last = [...logs].reverse().find(l => (l.message ?? "").length > 0)
+                    return last?.message ?? ""
+                })()
+                const prompt = `Fix the task ${taskRun.taskId} as it generated the following error:\n${errorLines}`
                 try {
-                    window.sessionStorage.setItem("kestra-ai-prompt", prompt);
+                    window.sessionStorage.setItem("kestra-ai-prompt", prompt)
                 } catch (err) {
-                    console.warn("AI prompt not persisted to sessionStorage:", err);
+                    console.warn("AI prompt not persisted to sessionStorage:", err)
                 }
 
                 this.$router.push({
@@ -398,11 +398,11 @@
                         tab: "edit",
                         tenant: this.$route.params?.tenant,
                     },
-                    query: {ai: "open"}
-                });
-            }
+                    query: {ai: "open"},
+                })
+            },
         },
-        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"]
+        emits: ["toggleShowAttempt", "swapDisplayedAttempt", "follow", "update-logs"],
     }
 </script>
 <style scoped lang="scss">
@@ -415,7 +415,7 @@
         display: flex;
         gap: .5rem;
         padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
 
         > * {
             display: flex;
@@ -429,13 +429,13 @@
 
         .task-duration small {
             white-space: nowrap;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
     }
 
     .taskrun-header {
-        background-color: var(--ks-background-table-header);
+        background-color: var(--ks-bg-surface);
         .task-icon {
             width: 36px;
             padding: 6px 6px 6px 0;
@@ -450,7 +450,7 @@
             padding: .375rem 0;
 
             span span {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
 
                 html:not(.dark) & {
@@ -462,7 +462,7 @@
         .task-run-buttons {
             padding: 0 .5rem;
             border: 1px solid rgba(#FFFFFF, .05);
-            background-color: var(--ks-button-background-secondary) !important;
+            background-color: var(--ks-btn-secondary-bg-default) !important;
             // FIXME: what does this mean?
             &:not(:hover) {
                 background: rgba(#FFFFFF, .10);
@@ -484,7 +484,7 @@
         }
 
         .attempt-number {
-            background: var(--ks-tag-background);
+            background: var(--ks-bg-tag);
             padding: .375rem .75rem;
             white-space: nowrap;
         }

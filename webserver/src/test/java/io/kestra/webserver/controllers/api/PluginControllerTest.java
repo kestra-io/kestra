@@ -15,6 +15,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.log.Log;
@@ -255,8 +257,8 @@ class PluginControllerTest {
         assertThat(manifest.manifest()).containsKey("io.kestra.plugin.redis.list.ListPop");
         List<PluginUiModuleWithGroup> pluginUiModules = manifest.manifest().get("io.kestra.plugin.redis.list.ListPop");
         assertThat(pluginUiModules).containsExactly(
-            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css")),
-            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"))
+            new PluginUiModuleWithGroup("topology-details", "io.kestra.plugin.redis", Map.of("height", 80), List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+            new PluginUiModuleWithGroup("log-details", "io.kestra.plugin.redis", null, List.of("assets/style-D6_t4U2l.css"), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
         );
     }
 
@@ -293,5 +295,19 @@ class PluginControllerTest {
             )
         );
         assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void should_list_plugins() {
+        PagedResults<ApiTriggerPlugin> result = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/triggers"),
+            Argument.of(PagedResults.class, PluginController.ApiTriggerPlugin.class)
+
+        );
+
+        assertThat(result.getTotal()).isGreaterThan(0);
+        assertThat(result.getResults())
+            .map(ApiTriggerPlugin::name)
+            .contains("Webhook");
     }
 }

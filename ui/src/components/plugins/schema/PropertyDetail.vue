@@ -42,7 +42,7 @@
                     :content="sanitizeForMarkdown(property.description)"
                 />
                 <div v-if="property['$internalStorageURI']">
-                    <KsAlert type="info" showIcon :closable="false">
+                    <KsAlert type="info" :closable="false">
                         <slot
                             name="markdown"
                             :content="INTERNAL_STORAGE_URI_HINT"
@@ -55,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
-    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils";
-    import {KsAlert, KsButton} from "@kestra-io/design-system";
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+    import {className, extractEnumValues, extractTypeInfo, sanitizeForMarkdown, type JSONProperty} from "./utils/schemaUtils"
+    import {KsAlert, KsButton} from "@kestra-io/design-system"
+    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 
-    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`.";
+    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`."
 
     type ValueRow = {
         key: keyof JSONProperty;
@@ -81,22 +81,22 @@
         {key: "maximum", label: "Maximum", format: (value) => `<= ${value}`},
         {key: "exclusiveMaximum", label: "Maximum", format: (value) => `< ${value}`},
         {key: "format", label: "Format"},
-    ];
+    ]
 
-    const props = defineProps<{property: JSONProperty}>();
+    const props = defineProps<{property: JSONProperty}>()
 
-    const subtype = extractTypeInfo(props.property).subType;
-    const enumValues = extractEnumValues(props.property);
+    const subtype = extractTypeInfo(props.property).subType
+    const enumValues = extractEnumValues(props.property)
 
     const isVisible = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return value !== undefined && (row.show?.(value) ?? true);
-    };
+        const value = props.property[row.key]
+        return value !== undefined && (row.show?.(value) ?? true)
+    }
 
     const formatValue = (row: ValueRow) => {
-        const value = props.property[row.key];
-        return row.format ? row.format(value) : value;
-    };
+        const value = props.property[row.key]
+        return row.format ? row.format(value) : value
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -106,7 +106,7 @@
         align-items: center;
         gap: var(--spacer);
         padding: 1rem 0;
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
 
         span, .property-description:deep(p) {
             line-height: 1.5rem;
@@ -114,12 +114,12 @@
         }
 
         .property-description {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         code {
-            color: var(--ks-content-primary);
-            background: var(--ks-background-card) !important;
+            color: var(--ks-text-primary);
+            background: var(--ks-bg-surface) !important;
         }
 
         &:first-child {
@@ -144,9 +144,9 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--ks-border-info);
-        border-radius: 0.25rem;
+        border-radius: var(--ks-radius-base);
         background: transparent;
-        color: var(--ks-tag-content);
+        color: var(--ks-text-primary);
         cursor: pointer;
     }
 
@@ -155,8 +155,8 @@
         line-height: 1;
         padding: 0.25rem 0.5rem;
         border-radius: 0.5rem;
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
+        background-color: var(--ks-bg-tag-active);
+        color: var(--ks-text-primary);
         text-transform: capitalize;
     }
 
@@ -164,8 +164,8 @@
         font-size: var(--ks-font-size-xs);
         line-height: 1;
         padding: 0.25rem 0.5rem;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 0.25rem;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
     }
 
     .enum-values {

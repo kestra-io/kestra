@@ -44,10 +44,10 @@
         backdrop?: boolean;
     }>(), {
         backdrop: true,
-    });
+    })
     const emit = defineEmits<{
         "update:modelValue": [boolean];
-    }>();
+    }>()
 
     const route = useRoute();
     const router = useRouter();
@@ -57,11 +57,11 @@
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
         params: {tenant: route.params.tenant},
-    }));
+    }))
     const successRoute = computed(() => ({
         name: "welcome/success",
         params: {tenant: route.params.tenant},
-    }));
+    }))
 
     function dismissPopup(action: string) {
         trackOnboarding({
@@ -82,7 +82,7 @@
 
     async function goToTutorial() {
         if (!props.modelValue) {
-            return;
+            return
         }
 
         dismissPopup("success_popup_tutorial_clicked");
@@ -123,9 +123,9 @@
         z-index: 1;
         width: min(100%, 360px);
         padding: 2rem 1.75rem 1.5rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 14px;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
         text-align: center;
 
@@ -137,7 +137,7 @@
 
         h3 {
             margin: 0 0 0.75rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.1;
@@ -145,7 +145,7 @@
 
         p {
             margin: 0 0 1.5rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }

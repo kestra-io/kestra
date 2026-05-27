@@ -1,36 +1,35 @@
 package io.kestra.plugin.core.trigger;
 
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.annotations.VisibleForTesting;
-
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
-
+import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
 import lombok.*;
-import lombok.AccessLevel;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @SuperBuilder
@@ -124,6 +123,25 @@ import lombok.extern.slf4j.Slf4j;
             full = true
         ),
         @Example(
+            title = "Schedule a flow on the last working day of the month at 6:00 AM.",
+            code = """
+                id: monthly_last_working_day
+                namespace: company.team
+
+                tasks:
+                  - id: log_hello_world
+                    type: io.kestra.plugin.core.log.Log
+                    message: Running on the last working day of the month!
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 6 * * MON-FRI"
+                    when: "{{ isLastWorkingDay(trigger.date) }}"
+                """,
+            full = true
+        ),
+        @Example(
             title = "Schedule a flow every day at 9:00 AM and pause a schedule trigger after a failed execution using the `stopAfter` property.",
             full = true,
             code = """
@@ -191,6 +209,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private Boolean withSeconds = false;
 
     @PluginProperty
+    @TimezoneId
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
@@ -311,7 +330,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @Override
-    public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
+    public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime currentDateTimeExecution = convertDateTime(triggerContext.getDate());
@@ -357,7 +376,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                return Optional.of(SchedulableExecutionFactory.createFailedExecution(this, conditionContext, triggerContext));
+                return Optional.of(
+                    SchedulableExecutionFactory.createExecution(this, conditionContext, triggerContext, null, null)
+                        .withState(State.Type.FAILED)
+                );
             }
         }
 
@@ -368,15 +390,13 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             variables = scheduleDates.toMap();
         }
 
-        Execution execution = SchedulableExecutionFactory.createExecution(
+        return Optional.of(SchedulableExecutionFactory.createExecution(
             this,
             conditionContext,
             triggerContext,
             variables,
             null
-        );
-
-        return Optional.of(execution);
+        ));
     }
 
     /**

@@ -213,8 +213,6 @@
     }
 
     function elementCountFor(plugin: Plugin): number {
-        const enriched = enrichmentStore.getEnrichment(plugin)?.elementCount
-        if (typeof enriched === "number") return enriched
         let count = 0
         for (const [key, value] of Object.entries(plugin)) {
             if (isEntryAPluginElementPredicate(key, value)) {

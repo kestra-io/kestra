@@ -6,7 +6,6 @@ import type {Plugin} from "../utils/pluginUtils"
 
 // https://api.kestra.io/v1/plugins/pluginsInformation
 type PluginsInformationEntry = {
-    elementCounts?: number;
     blueprints?: number;
 }
 
@@ -20,7 +19,6 @@ type MetadataEntry = {
 }
 
 export type PluginEnrichment = {
-    elementCount?: number;
     blueprintCount?: number;
     createdBy?: string;
     managedBy?: string;
@@ -70,10 +68,7 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
         pending = Promise.allSettled([informationPromise, metadataPromise]).then(([info, meta]) => {
             if (info.status === "fulfilled") {
                 for (const [key, entry] of Object.entries(info.value.data?.byPlugin ?? {})) {
-                    upsert(key, {
-                        elementCount: entry.elementCounts,
-                        blueprintCount: entry.blueprints,
-                    })
+                    upsert(key, {blueprintCount: entry.blueprints})
                 }
             }
             if (meta.status === "fulfilled") {

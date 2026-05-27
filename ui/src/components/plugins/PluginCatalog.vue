@@ -249,9 +249,7 @@
         return allElementsByTypeEntries(plugin).flatMap(([, classes]) => classes)
     }
 
-    const taskCount = (plugin: Plugin): number => {
-        return enrichmentStore.getEnrichment(plugin)?.elementCount ?? allElements(plugin).length
-    }
+    const taskCount = (plugin: Plugin): number => allElements(plugin).length
 
     const blueprintCount = (plugin: Plugin): number => {
         return enrichmentStore.getEnrichment(plugin)?.blueprintCount ?? 0

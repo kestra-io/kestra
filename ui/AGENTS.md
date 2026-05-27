@@ -121,8 +121,8 @@ Every async surface must render all four states. "Happy path only" is a bug.
 />
 
 <script setup>
-const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+const urlPage = computed(() => Number(route.query.page) || 1)
+const urlSize = computed(() => Number(route.query.size) || 25)
 </script>
 ```
 

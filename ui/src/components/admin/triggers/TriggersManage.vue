@@ -472,8 +472,8 @@
         }
     }
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query

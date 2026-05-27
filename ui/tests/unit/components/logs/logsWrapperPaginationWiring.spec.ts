@@ -24,8 +24,8 @@ function makeHarness(initialQuery: Record<string, string> = {}) {
                 loadCalls.push({page, size})
             }
 
-            const urlPage = computed(() => Number(routeQuery.page ?? 1) || 1)
-            const urlSize = computed(() => Number(routeQuery.size ?? 25) || 25)
+            const urlPage = computed(() => Number(routeQuery.page) || 1)
+            const urlSize = computed(() => Number(routeQuery.size) || 25)
 
             const filterQueryKey = computed(() => {
                 const {page: _p, size: _s, sort: _so, ...filters} = routeQuery

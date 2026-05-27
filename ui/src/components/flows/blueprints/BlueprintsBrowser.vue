@@ -175,8 +175,8 @@
         searchText.value = query
     }
 
-    const urlPage = computed(() => Number(route.query.page ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query.size ?? 25) || 25)
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
         router.push({query: {...route.query, page: String(page), size: String(size)}})

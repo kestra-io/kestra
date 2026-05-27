@@ -253,8 +253,8 @@
 
     const pageKey = props.embed ? "logsPage" : "page"
     const sizeKey = props.embed ? "logsSize" : "size"
-    const urlPage = computed(() => Number(route.query[pageKey] ?? 1) || 1)
-    const urlSize = computed(() => Number(route.query[sizeKey] ?? 25) || 25)
+    const urlPage = computed(() => Number(route.query[pageKey]) || 1)
+    const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
 
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
         router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})

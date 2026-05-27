@@ -856,6 +856,7 @@
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
     "last evaluation date": "最終評価日",
+    "last evaluation date tooltip": "スケジューラによって最後にtriggerが評価された時点、実行が生成されたかどうかに関わらず。",
     "last execution date": "最後の実行日",
     "last execution state": "最終状態",
     "last execution status": "最後の実行ステータス",

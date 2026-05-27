@@ -856,6 +856,7 @@
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} nos últimos {days} dias",
     "last evaluation date": "Data da última avaliação",
+    "last evaluation date tooltip": "Quando o trigger foi avaliado pela última vez pelo scheduler, independentemente de ter produzido uma execução.",
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",

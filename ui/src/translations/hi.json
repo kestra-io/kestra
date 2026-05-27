@@ -856,6 +856,7 @@
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
+    "last evaluation date tooltip": "जब ट्रिगर को शेड्यूलर द्वारा अंतिम बार मूल्यांकित किया गया था, चाहे उसने एक execution उत्पन्न किया हो या नहीं।",
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
     "last execution status": "अंतिम निष्पादन स्थिति",

@@ -17,7 +17,6 @@ import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
-import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.plugin.scripts.runner.docker.PullPolicy;
@@ -35,18 +34,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public abstract class AbstractExecScript extends Task implements NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
-        title = "Deprecated - use the 'taskRunner' property instead.",
-        description = "Ignored for task runner selection. The deprecated `runner` property is no longer honored — set `taskRunner` instead.",
-        deprecated = true
-    )
-    @PluginProperty
-    @Deprecated
-    protected RunnerType runner;
-
-    @Schema(
         title = "The task runner to use.",
-        description = "Task runners are provided by plugins, each have their own properties.",
-        defaultValue = "{type: io.kestra.plugin.scripts.runner.docker.Docker, pullPolicy: IF_NOT_PRESENT}"
+        description = "Task runners are provided by plugins, each have their own properties."
     )
     @PluginProperty
     @Builder.Default

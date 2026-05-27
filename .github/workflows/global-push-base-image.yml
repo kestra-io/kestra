@@ -16,10 +16,6 @@ on:
         required: false
         default: false
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-base-image
-  cancel-in-progress: true
-
 jobs:
   build-and-push:
     name: Build and Push kestra-base
@@ -43,10 +39,10 @@ jobs:
           context: .
           file: Dockerfile.base
           push: ${{ inputs.dry-run != true }}
-          tags: kestra/kestra-base:develop-no-plugins
+          tags: kestra/kestra-base:latest
           build-args: |
             UV_VERSION=${{ inputs.uv-version || '0.6.17' }}
-          cache-from: type=registry,ref=kestra/kestra-base:develop-no-plugins
+          cache-from: type=registry,ref=kestra/kestra-base:latest
           cache-to: type=inline
 
       - name: Slack - Notification

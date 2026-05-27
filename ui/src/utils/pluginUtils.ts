@@ -1,7 +1,16 @@
 export type PluginElement = {
     cls: string;
     deprecated?: boolean;
+    title?: string;
+    description?: string;
 };
+
+export type PluginAuthor = {
+    name: string;
+    avatarUrl?: string;
+};
+
+export type PluginIconMap = Record<string, {icon: string; flowable: boolean}>;
 
 export type Plugin = {
     name: string;
@@ -46,6 +55,9 @@ export function isPluginMatched(plugin: Plugin, search: string): boolean {
     ].some(field => field?.toLowerCase().includes(q)) ||
         Object.values(extractPluginElements(plugin)).flat().some(cls => cls.toLowerCase().includes(q))
 }
+
+export const isEnterpriseEditionPlugin = (classOrGroup?: string | null): boolean =>
+    Boolean(classOrGroup?.includes(".ee."))
 
 export const getPluginReleaseUrl = (pluginClass?: string): string | null => {
     const [, , groupId, pluginType] = pluginClass?.split(".") ?? []

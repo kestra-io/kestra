@@ -1,12 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {getTheme, getSelectedTheme, switchTheme} from "../../../src/utils/utils"
 
-// Regression: dark-2 theme consumers rendered light — /review (adversarial pass).
-// Found by /review on 2026-05-27. getTheme() must collapse the dark-2 / syncWithSystem
-// variants to a concrete light|dark so consumers that branch on "dark" (Monaco editor,
-// plugin docs, API docs) render correctly under the 2.0 dark theme.
-
-// jsdom does not implement matchMedia; stub it (controls the "system" preference).
 function mockSystemPrefersDark(prefersDark: boolean) {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
         matches: prefersDark,

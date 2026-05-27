@@ -230,9 +230,6 @@ $fill-color-base: #fafcff;
 
 // notifications
 .kel-notification {
-    // 2.0 Notification / toast (Figma "KsNotification" 27215:3326): neutral
-    // elevated card with a 16px colour-coded icon, a 14px primary-colour title
-    // and an 11px secondary-colour description — only the icon is tinted per type.
     --kel-notification-border-color: var(--ks-border-strong);
     --kel-notification-title-color: var(--ks-text-primary);
     --kel-notification-title-font-size: var(--ks-font-size-md);
@@ -247,7 +244,7 @@ $fill-color-base: #fafcff;
     --kel-notification-group-margin-right: var(--ks-spacing-5);
     align-items: flex-start;
     background-color: var(--ks-bg-elevated);
-    border-width: 0.5px; // Figma hairline; EP base hardcodes 1px
+    border-width: 0.5px;
 
     @each $type in $types {
         .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
@@ -262,7 +259,7 @@ $fill-color-base: #fafcff;
 
     .kel-notification__title {
         font-weight: 600;
-        line-height: 18px; // Figma; EP base ties title line-height to icon-size
+        line-height: 18px;
     }
 
     .kel-notification__content {
@@ -270,7 +267,7 @@ $fill-color-base: #fafcff;
         max-height: 200px;
         overflow-y: auto;
         margin-top: var(--ks-spacing-1);
-        line-height: 20px; // Figma; EP base hardcodes 24px
+        line-height: 20px;
     }
 
     .kel-notification__closeBtn {

@@ -45,13 +45,6 @@
     @use '../../assets/styles/color-palette' as palette;
     @use 'element-plus/theme-chalk/src/switch';
 
-    /**
-     * 2.0 toggle (Figma "Toggle" component): 42x20 pill, 14px white knob with a
-     * subtle drop-shadow. Track colours come from the shared `--ks-toogle-*`
-     * tokens (declared in ks-theme-{light,dark,dark-2}.scss), so light / dark /
-     * dark-2 theme automatically — no component-local overrides needed.
-     * (Token name keeps the upstream Figma spelling "toogle".)
-     */
     .kel-switch {
         height: 20px;
 
@@ -87,7 +80,6 @@
             }
         }
 
-        /* Hover: the knob widens (stretching toward the direction it would slide). */
         &:hover:not(.is-disabled) .kel-switch__core .kel-switch__action {
             width: 18px;
         }

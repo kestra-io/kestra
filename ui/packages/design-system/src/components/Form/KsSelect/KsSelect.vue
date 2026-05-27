@@ -49,11 +49,6 @@
         popperClass?: string
         showArrow?: boolean
         suffixIcon?: Component | string
-        /**
-         * Sizing mode. `false` (default, "classic") fills the container / honours an
-         * explicit width. `true` ("fit") shrinks the select to its content (the
-         * selected value), like the compact selects in the 2.0 design.
-         */
         fit?: boolean
     }>(), {
         placeholder: undefined,
@@ -81,9 +76,6 @@
     }>()
 
     const filteredProps = useFilteredProps(props, ["fit"])
-
-    // "fit" mode (content-sizing) is handled purely in CSS — see `.kel-select--fit`
-    // in the style block below. No JS measurement.
 </script>
 
 <style lang="scss">
@@ -98,10 +90,6 @@
             width: fit-content !important;
         }
 
-        // "fit" mode: shrink the select to its selected value. Element Plus renders
-        // the value as an absolutely-positioned overlay, so un-absolute ONLY the
-        // value (.kel-select__placeholder) to give the box intrinsic content width;
-        // keep the search input wrapper absolute so it never forces full width.
         &.kel-select--fit {
             width: fit-content;
 
@@ -111,8 +99,6 @@
 
             .kel-select__placeholder {
                 position: static;
-                // EP centers the absolute value via translateY(-50%); reset that
-                // leftover transform so the now in-flow value centers via flex.
                 transform: none;
                 top: auto;
             }

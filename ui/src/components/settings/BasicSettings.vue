@@ -196,8 +196,6 @@
     const THEME = "settings.blocks.theme"
     const LOCALE = "settings.blocks.localization"
 
-    // Maps a persisted storage key to its [label, description] i18n keys so each
-    // change shows a setting-specific toast (title = "<label> updated", body = description).
     const SETTING_TOASTS = {
         defaultNamespace: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
         defaultLogLevel: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
@@ -465,8 +463,6 @@
                 this.settings.lang = value
                 this.persist("lang", value)
 
-                // Language requires loading a new i18n bundle, so reload the page
-                // to apply it (mirrors the existing i18n bootstrap in i18n.ts).
                 document.location.assign(document.location.href)
             },
             onTimezone(value) {

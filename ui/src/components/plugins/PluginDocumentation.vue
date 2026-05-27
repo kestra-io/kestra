@@ -75,7 +75,6 @@
     const miscStore = useMiscStore()
     const pluginsStore = usePluginsStore()
 
-    // treat dark-2 (and syncWithSystem) as dark; reactive on miscStore.theme.
     const isDarkTheme = computed(() => {
         void miscStore.theme
         return getTheme() === "dark"

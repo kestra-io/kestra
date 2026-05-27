@@ -214,8 +214,6 @@
     )
 
     const themeComputed = computed(() => {
-        // dark-2 / syncWithSystem are not Monaco theme names; map to the
-        // effective light|dark value. Reads miscStore.theme for reactivity.
         void useMiscStore().theme
         return getTheme()
     })

@@ -26,7 +26,6 @@
 </template>
 
 <script lang="ts">
-    // Module-scoped counter to give each instance a unique clipPath id.
     let counter = 0
 </script>
 
@@ -35,12 +34,6 @@
 </script>
 
 <style scoped lang="scss">
-    /**
-     * Theme preview swatches intentionally use literal colours (from the Figma DS
-     * assets): each swatch depicts its own theme regardless of the active theme,
-     * so it cannot reference live `--ks-*` tokens. Colours are driven by `--tp-*`
-     * custom properties set by the caller per theme.
-     */
     .theme-window {
         display: block;
         width: 100%;

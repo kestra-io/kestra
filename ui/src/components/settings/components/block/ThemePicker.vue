@@ -43,7 +43,6 @@
 </script>
 
 <style scoped lang="scss">
-    /* Literal preview palettes come from the Figma design-system theme swatches. */
     .theme-picker {
         display: flex;
         gap: 1rem;

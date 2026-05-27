@@ -146,4 +146,7 @@
         font-weight: 400;
         color: var(--ks-text-secondary);
     }
+    :deep(.content) {
+        padding-bottom: 1rem;
+    }
 </style>

@@ -222,7 +222,7 @@
         &__heading {
             font-size: 0.9375rem;
             font-weight: 600;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             margin: 0;
         }
 
@@ -234,13 +234,13 @@
 
         &__hint {
             font-size: 0.875rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
         }
 
         &__path-hint {
             font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
             font-family: var(--ks-font-family-mono);
         }

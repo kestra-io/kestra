@@ -206,7 +206,7 @@
         &__mono {
             font-family: var(--ks-font-family-mono);
             font-size: 0.8125rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             background: transparent;
             padding: 0;
         }
@@ -217,7 +217,7 @@
             line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: 0.875rem;
         }
 
@@ -231,11 +231,11 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-decoration: none;
 
             &:hover {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
             }
         }
 

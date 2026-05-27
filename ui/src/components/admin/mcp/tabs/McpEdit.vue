@@ -140,7 +140,6 @@
                     :modelValue="!form.disabled"
                     :disabled="readOnly"
                     @update:model-value="(val: boolean) => (form.disabled = !val)"
-                    class="mcp-edit__toggle"
                 />
             </el-form-item>
 
@@ -308,8 +307,6 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-
     .mcp-edit {
         &__name-input {
             :deep(input) {
@@ -335,21 +332,21 @@
             align-items: center;
             justify-content: center;
             padding: 0.5rem 1rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 6px;
-            background: var(--ks-background-card);
-            color: var(--ks-content-primary);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            background: var(--ks-bg-surface);
+            color: var(--ks-text-primary);
             cursor: pointer;
             transition: all 0.15s;
 
             &--active {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.08);
-                color: $base-purple-400;
+                border-color: var(--ks-border-focus);
+                background: var(--ks-bg-tag-active);
+                color: var(--ks-text-link);
             }
 
             &:hover:not(.mcp-edit__type-btn--active) {
-                border-color: var(--ks-border-secondary);
+                border-color: var(--ks-border-strong);
             }
 
             &:disabled {
@@ -369,14 +366,17 @@
             display: flex;
             align-items: center;
             padding: 0.625rem 0.75rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 6px;
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            background: var(--ks-bg-surface);
+            color: var(--ks-text-primary);
             cursor: pointer;
-            transition: border-color 0.15s;
+            transition: all 0.15s;
 
             &--selected {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.04);
+                border-color: var(--ks-border-focus);
+                background: var(--ks-bg-tag-active);
+                color: var(--ks-text-link);
             }
 
             &--disabled {
@@ -385,7 +385,7 @@
             }
 
             &:hover:not(.mcp-edit__auth-option--selected):not(.mcp-edit__auth-option--disabled) {
-                border-color: var(--ks-border-secondary);
+                border-color: var(--ks-border-strong);
             }
         }
 
@@ -395,7 +395,7 @@
 
         &__auth-hint {
             font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
 
         &__provider-select {
@@ -404,12 +404,8 @@
 
         &__field-hint {
             font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin-top: 0.25rem;
-        }
-
-        &__toggle {
-            --el-switch-on-color: #{$base-purple-400};
         }
 
         &__actions {

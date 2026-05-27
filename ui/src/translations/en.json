@@ -847,10 +847,53 @@
       }
     },
     "pluginPage": {
-      "title1": "Plugins are building blocks for your workflows.",
+      "title1": "Connect anything to everything",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins",
-      "alt": "Plugins Icon"
+      "search": "Search across 1400+ plugins",
+      "searchTasks": "Search {count} tasks",
+      "alt": "Plugins Icon",
+      "noResults": "No plugins match your search.",
+      "loadError": "Could not load plugins. Please try again.",
+      "notFound": "This plugin could not be found.",
+      "elementType": {
+        "tasks": "Task",
+        "triggers": "Trigger",
+        "conditions": "Condition",
+        "taskRunners": "Task runner",
+        "charts": "Chart",
+        "apps": "App",
+        "logExporters": "Log exporter",
+        "secrets": "Secret"
+      },
+      "sortBy": "Sort by",
+      "sort": {
+        "nameAsc": "Name A-Z",
+        "nameDesc": "Name Z-A"
+      },
+      "group": {
+        "plugins": "Plugins ({count})",
+        "tasks": "Tasks ({count})",
+        "blueprints": "Blueprints ({count})",
+        "noBlueprints": "No blueprints available for this plugin yet."
+      },
+      "overview": {
+        "title": "Overview",
+        "versions": "Versions",
+        "latest": "Latest",
+        "releaseNotes": "Release notes",
+        "previousVersions": "Previous versions",
+        "createdBy": "Created by",
+        "managedBy": "Managed by",
+        "pluginType": "Plugin type",
+        "linksResources": "Links & Resources",
+        "minKestraVersion": "Min. compatible Kestra vers.: {version}",
+        "minKestraVersionShort": "Min. Kestra version {version}"
+      },
+      "header": {
+        "enterpriseEdition": "Enterprise Edition",
+        "certified": "Certified",
+        "back": "Back to plugins"
+      }
     },
     "no inputs": "This flow has no inputs.",
     "settings": {

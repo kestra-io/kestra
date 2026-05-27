@@ -36,7 +36,7 @@ public class ConcurrencyLimitController {
     @Put("/{namespace}/{flowId}")
     @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
     public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body ConcurrencyLimit concurrencyLimit) {
-        var existing = concurrencyLimitService.findById(concurrencyLimit.getTenantId(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
+        var existing = concurrencyLimitService.findById(tenantService.resolveTenant(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
         if (existing.isEmpty()) {
             return HttpResponse.notFound();
         }

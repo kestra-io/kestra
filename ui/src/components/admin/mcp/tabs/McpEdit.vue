@@ -237,7 +237,7 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
+    $base-primary-400: #7738f5;
 
     .mcp-edit {
         &__name-input {

@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "add_new_item": "新しいアイテムを追加",
     "additionalPlugins": "追加プラグイン",
+    "admin": "管理者",
     "administration": "管理",
     "advanced configuration": "他のプロパティ",
     "after": "後",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flowで無効化",
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
+    "commit_id": "コミット id",
     "common": {
       "back": "戻る"
     },
@@ -880,6 +882,7 @@
       "raw": "Temporalビュー",
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
+    "main_configuration": "メイン設定",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",

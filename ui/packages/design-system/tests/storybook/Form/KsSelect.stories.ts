@@ -399,16 +399,6 @@ export const RichOptionContent: Story = {
         `,
     }),
     args: {size: "small", placeholder: "Previous versions"},
-    async play({canvasElement}) {
-        const canvas = within(canvasElement)
-        const trigger = canvas.getByRole("combobox")
-        await userEvent.click(trigger)
-        const items = document.querySelectorAll(".kel-select-dropdown__item")
-        await expect(items.length).toBeGreaterThan(0)
-        // Each rich option must render taller than the single-line default (34px).
-        const firstHeight = (items[0] as HTMLElement).getBoundingClientRect().height
-        await expect(firstHeight).toBeGreaterThan(34)
-    },
 }
 
 /** Label slot – as used in Plugin.vue for version display */

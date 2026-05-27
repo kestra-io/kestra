@@ -117,7 +117,6 @@ describe("LogsWrapper-style pagination wiring", () => {
         await flushPromises()
         loadCalls.length = 0
 
-        delete routeQuery.page
         routeQuery["filters[level][EQUALS]"] = "DEBUG"
         await flushPromises()
 

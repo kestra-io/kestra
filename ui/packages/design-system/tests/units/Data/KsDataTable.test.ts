@@ -215,6 +215,35 @@ describe("KsDataTable", () => {
         expect(wrapper.emitted("update:pageSize")?.[0]).toEqual([50])
     })
 
+    test("resetAndReload on page > 1 emits page 1 and does NOT reload directly", async () => {
+        let loadCount = 0
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 3, loadData: async () => { loadCount++ }},
+            global: globalConfig,
+        })
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(loadCount).toBe(1)
+        ;(wrapper.vm as any).resetAndReload()
+        expect(wrapper.emitted("update:currentPage")?.[0]).toEqual([1])
+        expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 1, size: 25}])
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(loadCount).toBe(1)
+    })
+
+    test("resetAndReload on page 1 reloads directly without emitting page", async () => {
+        let loadCount = 0
+        const wrapper = mount(KsDataTable, {
+            props: {data: SAMPLE_DATA, total: 100, pageSize: 25, currentPage: 1, loadData: async () => { loadCount++ }},
+            global: globalConfig,
+        })
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(loadCount).toBe(1)
+        ;(wrapper.vm as any).resetAndReload()
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        expect(loadCount).toBe(2)
+        expect(wrapper.emitted("update:currentPage")).toBeFalsy()
+    })
+
     test("loadData only fires when controlling prop changes — no internal page state", async () => {
         let loadCallCount = 0
         const loadDataSpy = async () => { loadCallCount++ }
@@ -274,11 +303,19 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads).page).toBe(2)
     })
 
-    test("caps an absurdly large currentPage (finite offset guard)", async () => {
+    test("caps an absurdly large currentPage at exactly 1_000_000 (finite offset guard)", async () => {
         const loads = mountWithSpy({currentPage: 1e308, pageSize: 25})
         await tick()
-        expect(lastLoad(loads).page).toBeLessThanOrEqual(1_000_000)
+        expect(lastLoad(loads).page).toBe(1_000_000)
         expect(Number.isInteger(lastLoad(loads).page)).toBe(true)
+    })
+
+    test("pins the currentPage cap boundary (1_000_000 stays, 1_000_001 clamps)", async () => {
+        const atCap = mountWithSpy({currentPage: 1_000_000, pageSize: 25})
+        const overCap = mountWithSpy({currentPage: 1_000_001, pageSize: 25})
+        await tick()
+        expect(lastLoad(atCap).page).toBe(1_000_000)
+        expect(lastLoad(overCap).page).toBe(1_000_000)
     })
 
     test("falls back to page 1 for NaN / Infinity currentPage", async () => {
@@ -295,11 +332,18 @@ describe("KsDataTable", () => {
         expect(lastLoad(loads).page).toBe(1)
     })
 
-    test("caps an absurdly large pageSize (DoS guard)", async () => {
+    test("caps an absurdly large pageSize at exactly 1000 (DoS guard)", async () => {
         const loads = mountWithSpy({currentPage: 1, pageSize: 10_000_000})
         await tick()
-        expect(lastLoad(loads).size).toBeLessThanOrEqual(1000)
-        expect(lastLoad(loads).size).toBeGreaterThan(0)
+        expect(lastLoad(loads).size).toBe(1000)
+    })
+
+    test("pins the pageSize cap boundary (1000 stays, 1001 clamps)", async () => {
+        const atCap = mountWithSpy({currentPage: 1, pageSize: 1000})
+        const overCap = mountWithSpy({currentPage: 1, pageSize: 1001})
+        await tick()
+        expect(lastLoad(atCap).size).toBe(1000)
+        expect(lastLoad(overCap).size).toBe(1000)
     })
 
     test("falls back to default size for negative / zero / NaN pageSize", async () => {

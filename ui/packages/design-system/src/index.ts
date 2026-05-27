@@ -326,6 +326,7 @@ export {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,

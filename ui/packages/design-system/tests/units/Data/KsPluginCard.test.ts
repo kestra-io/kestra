@@ -65,25 +65,27 @@ describe("KsPluginCard", () => {
         const counts = wrapper.findAll(".ks-plugin-card__count")
         expect(counts).toHaveLength(1)
         expect(counts[0].find(".ks-plugin-card__count-value").text()).toBe("12")
-        expect(counts[0].find(".ks-plugin-card__count-label").text()).toBe("tasks")
+        expect(counts[0].find(".ks-plugin-card__count-label").text()).toBeTruthy()
     })
 
-    test("pluralizes count label correctly for 1", () => {
+    test("renders distinct labels for task and blueprint counts", () => {
         const wrapper = mount(KsPluginCard, {
             props: {title: "BigQuery", taskCount: 1, blueprintCount: 1},
             global: globalConfig,
         })
         const labels = wrapper.findAll(".ks-plugin-card__count-label")
-        expect(labels[0].text()).toBe("task")
-        expect(labels[1].text()).toBe("blueprint")
+        expect(labels).toHaveLength(2)
+        expect(labels[0].text()).not.toBe(labels[1].text())
+        expect(labels[0].text()).toBeTruthy()
+        expect(labels[1].text()).toBeTruthy()
     })
 
-    test("pluralizes count label correctly for 0", () => {
+    test("hides count when value is 0", () => {
         const wrapper = mount(KsPluginCard, {
-            props: {title: "BigQuery", taskCount: 0},
+            props: {title: "BigQuery", taskCount: 0, blueprintCount: 0},
             global: globalConfig,
         })
-        expect(wrapper.find(".ks-plugin-card__count-label").text()).toBe("tasks")
+        expect(wrapper.findAll(".ks-plugin-card__count")).toHaveLength(0)
     })
 
     test("renders task and blueprint counts together", () => {

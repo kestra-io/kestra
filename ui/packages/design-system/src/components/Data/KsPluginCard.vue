@@ -97,8 +97,8 @@
     }>()
 
     const hasIcon = computed(() => Boolean(props.iconCls) || Boolean(slots.icon))
-    const hasTaskCount = computed(() => typeof props.taskCount === "number")
-    const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number")
+    const hasTaskCount = computed(() => typeof props.taskCount === "number" && props.taskCount > 0)
+    const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number" && props.blueprintCount > 0)
     const hasCounts = computed(() => hasTaskCount.value || hasBlueprintCount.value)
     const hasDivider = computed(() => hasCounts.value)
     const hasFooter = computed(() => hasCounts.value || props.clickable)

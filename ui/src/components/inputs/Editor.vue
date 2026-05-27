@@ -85,6 +85,7 @@
     import Help from "vue-material-design-icons/Help.vue"
     import {useDocStore} from "../../stores/doc"
     import {useMiscStore} from "override/stores/misc"
+    import {getTheme} from "../../utils/utils"
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue"
     import Close from "vue-material-design-icons/Close.vue"
     // @ts-expect-error no clean way to have focus on inputs
@@ -213,7 +214,10 @@
     )
 
     const themeComputed = computed(() => {
-        return useMiscStore().theme
+        // dark-2 / syncWithSystem are not Monaco theme names; map to the
+        // effective light|dark value. Reads miscStore.theme for reactivity.
+        void useMiscStore().theme
+        return getTheme()
     })
 
     const containerClass = computed(() => {

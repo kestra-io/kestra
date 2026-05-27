@@ -66,7 +66,7 @@
                 <Suspense v-ks-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
-                        :darkMode="miscStore.theme === 'dark'"
+                        :darkMode="isDarkTheme"
                         :schema="pluginsStore.plugin.schema"
                         :propsInitiallyExpanded="true"
                         :pluginType="pluginType"
@@ -96,10 +96,17 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useMiscStore} from "override/stores/misc"
     import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import {getTheme} from "../../utils/utils"
     import useRouteContext from "../../composables/useRouteContext"
 
     const pluginsStore = usePluginsStore()
     const miscStore = useMiscStore()
+
+    // treat dark-2 (and syncWithSystem) as dark; reactive on miscStore.theme.
+    const isDarkTheme = computed(() => {
+        void miscStore.theme
+        return getTheme() === "dark"
+    })
 
     const route = useRoute()
     const router = useRouter()

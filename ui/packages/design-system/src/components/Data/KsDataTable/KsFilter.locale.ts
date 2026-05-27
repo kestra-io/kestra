@@ -602,6 +602,7 @@ export default {
             "timeRange": {
                 "description": "Nach Ausführungszeit filtern",
                 "label": "Intervall",
+                "applyTo": "Anwenden auf",
                 "chip": {
                     "end": "Beendet",
                     "start": "Gestartet",
@@ -942,6 +943,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tiempo de ejecución",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -1282,6 +1284,7 @@ export default {
             "timeRange": {
                 "description": "Filtrer par temps d'exécution",
                 "label": "Intervalle",
+                "applyTo": "Appliquer à",
                 "chip": {
                     "end": "Terminé",
                     "start": "Démarré",
@@ -1622,6 +1625,7 @@ export default {
             "timeRange": {
                 "description": "कार्य समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+                "applyTo": "लागू करें",
                 "chip": {
                     "end": "समाप्त",
                     "start": "शुरू हुआ",
@@ -1962,6 +1966,7 @@ export default {
             "timeRange": {
                 "description": "Filtra per tempo di esecuzione",
                 "label": "Intervallo",
+                "applyTo": "Applica a",
                 "chip": {
                     "end": "Terminato",
                     "start": "Iniziato",
@@ -2302,6 +2307,7 @@ export default {
             "timeRange": {
                 "description": "実行時間でフィルター",
                 "label": "インターバル",
+                "applyTo": "適用先",
                 "chip": {
                     "end": "終了しました",
                     "start": "開始しました",
@@ -2642,6 +2648,7 @@ export default {
             "timeRange": {
                 "description": "실행 시간으로 필터링",
                 "label": "간격",
+                "applyTo": "적용 대상",
                 "chip": {
                     "end": "종료됨",
                     "start": "시작됨",
@@ -2982,6 +2989,7 @@ export default {
             "timeRange": {
                 "description": "Filtruj według czasu wykonania",
                 "label": "Interwał",
+                "applyTo": "Zastosuj do",
                 "chip": {
                     "end": "Zakończono",
                     "start": "Rozpoczęto",
@@ -3322,6 +3330,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -3662,6 +3671,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -4002,6 +4012,7 @@ export default {
             "timeRange": {
                 "description": "Фильтр по времени выполнения",
                 "label": "Интервал",
+                "applyTo": "Применить к",
                 "chip": {
                     "end": "Завершено",
                     "start": "Начато",
@@ -4342,6 +4353,7 @@ export default {
             "timeRange": {
                 "description": "按执行时间筛选",
                 "label": "间隔",
+                "applyTo": "应用于",
                 "chip": {
                     "end": "结束",
                     "start": "已启动",

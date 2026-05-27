@@ -1,6 +1,6 @@
 <template>
     <section id="filtering">
-        <KsInput
+        <KsSearch
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable

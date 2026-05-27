@@ -45,11 +45,11 @@
                 'read-only': filter.readOnly?.value
             }"
         >
-            <SearchInput
-                :modelValue="filter.searchQuery?.value"
-                @update:model-value="debouncedUpdateSearch"
+            <KsSearch
+                v-model="localSearchQuery"
+                @update:modelValue="(v) => debouncedUpdateSearch(v ?? '')"
                 :placeholder="filter.configuration?.value?.searchPlaceholder"
-                :fullWidth="filter.searchInputFullWidth?.value"
+                clearable
             />
         </div>
 
@@ -87,13 +87,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed} from "vue"
+    import {ref, inject, nextTick, computed, watch} from "vue"
     import {useDebounceFn} from "@vueuse/core"
 
     import {FilterOutline} from "./utils/icons"
 
     import FilterChip from "./layout/FilterChip.vue"
-    import SearchInput from "./layout/SearchInput.vue"
     import CustomizeFilters from "./segments/CustomizeFilters.vue"
 
     import type {AppliedFilter} from "./utils/filterTypes"
@@ -130,6 +129,11 @@
     const handleReset = () => {
         filter.resetToDefaults()
     }
+
+    const localSearchQuery = ref(filter.searchQuery?.value ?? "")
+    watch(() => filter.searchQuery?.value, (v) => {
+        if (v !== localSearchQuery.value) localSearchQuery.value = v ?? ""
+    })
 
     const debouncedUpdateSearch = useDebounceFn((value: string) => {
         filter.searchQuery.value = value

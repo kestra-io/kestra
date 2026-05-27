@@ -99,7 +99,7 @@ public class McpServerController {
         McpServer toSave = new McpServer(tenantId,
             mcpServer.id(), mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
-            mcpServer.scopesSupported(),
+            mcpServer.oauthScopesSupported(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(null, toSave)));
@@ -127,7 +127,7 @@ public class McpServerController {
         McpServer toSave = new McpServer(tenantId, id,
             mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
-            mcpServer.scopesSupported(),
+            mcpServer.oauthScopesSupported(),
             mcpServer.disabled(), false, false, null, null);
 
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(existing.get(), toSave)));
@@ -142,21 +142,21 @@ public class McpServerController {
         }
 
         boolean hasOauthProvider = mcpServer.oauthProvider() != null && !mcpServer.oauthProvider().isBlank();
-        boolean hasScopes = !ListUtils.isEmpty(mcpServer.scopesSupported());
+        boolean hasScopes = !ListUtils.isEmpty(mcpServer.oauthScopesSupported());
 
         if (authType == McpServer.AuthType.OAUTH) {
             if (!hasOauthProvider) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthProvider is required when authType is OAUTH");
             }
             if (!hasScopes) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "scopesSupported is required when authType is OAUTH");
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthScopesSupported is required when authType is OAUTH");
             }
         } else {
             if (hasOauthProvider) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthProvider must not be set when authType is not OAUTH");
             }
             if (hasScopes) {
-                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "scopesSupported must not be set when authType is not OAUTH");
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "oauthScopesSupported must not be set when authType is not OAUTH");
             }
         }
     }
@@ -211,7 +211,7 @@ public class McpServerController {
         McpServer toggled = new McpServer(tenantId, mcpServer.id(),
             mcpServer.description(), mcpServer.instructions(),
             mcpServer.serverType(), mcpServer.authType(), mcpServer.oauthProvider(),
-            mcpServer.scopesSupported(),
+            mcpServer.oauthScopesSupported(),
             !mcpServer.disabled(), false, false, null, null);
         return HttpResponse.ok(ApiMcpServer.from(mcpServerRepository.save(mcpServer, toggled)));
     }

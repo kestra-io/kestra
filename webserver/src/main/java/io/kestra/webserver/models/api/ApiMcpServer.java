@@ -37,7 +37,7 @@ public record ApiMcpServer(
     String oauthProvider,
 
     @Schema(description = "Scopes advertised in the server's RFC 9728 Protected Resource Metadata document. Only meaningful when authType is OAUTH. When null or empty the field is omitted from the PRM document.")
-    List<String> scopesSupported,
+    List<String> oauthScopesSupported,
 
     @Schema(description = "Whether the MCP server is disabled.")
     boolean disabled,
@@ -65,7 +65,7 @@ public record ApiMcpServer(
             mcpServer.serverType(),
             mcpServer.authType(),
             mcpServer.oauthProvider(),
-            mcpServer.scopesSupported(),
+            mcpServer.oauthScopesSupported(),
             mcpServer.disabled(),
             mcpServer.isDefault(),
             mcpServer.created(),

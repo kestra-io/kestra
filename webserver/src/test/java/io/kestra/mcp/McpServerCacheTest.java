@@ -174,7 +174,7 @@ class McpServerCacheTest {
         return new McpServer(
             original.tenantId(), original.id(), description, original.instructions(),
             original.serverType(), original.authType(), original.oauthProvider(),
-            original.scopesSupported(),
+            original.oauthScopesSupported(),
             original.disabled(), original.isDefault(), original.deleted(),
             original.created(), original.updated()
         );

@@ -41,7 +41,7 @@ public record McpServer(
 
     String oauthProvider,
 
-    List<String> scopesSupported,
+    List<String> oauthScopesSupported,
 
     boolean disabled,
 
@@ -127,11 +127,11 @@ public record McpServer(
     @Override
     public McpServer toDeleted() {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, scopesSupported, disabled, isDefault, true, created, updated);
+            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, true, created, updated);
     }
 
     public McpServer withTimestamps(Instant created, Instant updated) {
         return new McpServer(tenantId, id, description, instructions,
-            serverType, authType, oauthProvider, scopesSupported, disabled, isDefault, deleted, created, updated);
+            serverType, authType, oauthProvider, oauthScopesSupported, disabled, isDefault, deleted, created, updated);
     }
 }

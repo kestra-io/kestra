@@ -12,7 +12,7 @@ export interface McpServer {
     serverType: "PRIVATE" | "PUBLIC";
     authType: McpAuthType;
     oauthProvider?: string;
-    scopesSupported?: string[];
+    oauthScopesSupported?: string[];
     disabled: boolean;
     isDefault: boolean;
 }
@@ -24,7 +24,7 @@ export interface McpServerPayload {
     serverType: "PRIVATE" | "PUBLIC";
     authType: McpAuthType;
     oauthProvider?: string;
-    scopesSupported?: string[];
+    oauthScopesSupported?: string[];
     disabled: boolean;
 }
 

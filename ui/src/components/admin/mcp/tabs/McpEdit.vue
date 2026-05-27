@@ -121,7 +121,7 @@
                 :label="t('mcp.scopes_supported')"
             >
                 <KsSelect
-                    v-model="form.scopesSupported"
+                    v-model="form.oauthScopesSupported"
                     multiple
                     filterable
                     allowCreate
@@ -210,7 +210,7 @@
         serverType: "PRIVATE" | "PUBLIC";
         authType: "BASIC" | "API_TOKEN" | "OAUTH";
         oauthProvider: string;
-        scopesSupported: string[];
+        oauthScopesSupported: string[];
         disabled: boolean;
     }
 
@@ -229,7 +229,7 @@
         serverType: "PRIVATE",
         authType: "BASIC",
         oauthProvider: "",
-        scopesSupported: [...DEFAULT_OAUTH_SCOPES],
+        oauthScopesSupported: [...DEFAULT_OAUTH_SCOPES],
         disabled: false,
     })
 
@@ -247,7 +247,7 @@
                 serverType: server.serverType,
                 authType: server.authType,
                 oauthProvider: server.oauthProvider ?? "",
-                scopesSupported: server.scopesSupported ?? [],
+                oauthScopesSupported: server.oauthScopesSupported ?? [],
                 disabled: server.disabled,
             }
         } else if (!isUpdate.value) {
@@ -274,8 +274,8 @@
                     serverType: form.value.serverType,
                     authType: form.value.authType,
                     oauthProvider: form.value.authType === "OAUTH" ? form.value.oauthProvider || undefined : undefined,
-                    scopesSupported: form.value.authType === "OAUTH" && form.value.scopesSupported.length > 0
-                        ? form.value.scopesSupported
+                    oauthScopesSupported: form.value.authType === "OAUTH" && form.value.oauthScopesSupported.length > 0
+                        ? form.value.oauthScopesSupported
                         : undefined,
                     disabled: form.value.disabled,
                 }

@@ -6,7 +6,10 @@
         </header>
         <a
             class="post"
-            :class="{lastPost: index === 0}"
+            :class="{
+                topPost: index === 0,
+                bottomPost: index === feeds.length - 1
+            }"
             v-for="(feed, index) in feeds"
             :key="feed.id"
             :href="feed.href ?? feed.link"
@@ -120,7 +123,7 @@
         }
     }
 
-    .lastPost {
+    .topPost {
         flex-direction: column;
         gap: 0.5rem;
 
@@ -130,6 +133,10 @@
             border: none;
             border-radius: var(--kel-border-radius-round);
         }
+    }
+
+    .bottomPost {
+        margin-bottom: 2rem;
     }
 
     .openInNewIcon {

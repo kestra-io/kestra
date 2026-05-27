@@ -1370,7 +1370,13 @@
       "alt": "Icône des plugins",
       "search": "Rechercher parmi {count}+ plugins",
       "title1": "Les plugins sont des blocs pour vos workflows.",
-      "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."
+      "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux.",
+      "sort": {
+        "name_asc": "A → Z",
+        "name_desc": "Z → A",
+        "newest": "Plus récents",
+        "most_used": "Plus utilisés"
+      }
     },
     "plugin_default_already_exists": "Le plugin par défaut pour <code>{type}</code> existe déjà.",
     "plugins": {

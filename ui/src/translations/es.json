@@ -1370,7 +1370,13 @@
       "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
-      "title2": "Busca tasks y triggers para construir tu flow."
+      "title2": "Busca tasks y triggers para construir tu flow.",
+      "sort": {
+        "name_asc": "A → Z",
+        "name_desc": "Z → A",
+        "newest": "Más reciente",
+        "most_used": "Más usados"
+      }
     },
     "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "plugins": {

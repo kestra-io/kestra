@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="selectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
+    <ElSelect ref="selectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

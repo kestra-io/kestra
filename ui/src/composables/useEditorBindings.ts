@@ -1,5 +1,6 @@
 import {computed, reactive} from "vue"
 import {useI18n} from "vue-i18n"
+import {useRouter} from "vue-router"
 import {useMiscStore} from "override/stores/misc"
 import {getTheme} from "../utils/utils"
 import {usePluginsStore} from "../stores/plugins"
@@ -12,6 +13,7 @@ export function useEditorBindings() {
     const pluginsStore = usePluginsStore()
     const flowStore = useFlowStore()
     const {t} = useI18n()
+    const router = useRouter()
 
     return reactive({
         theme: computed(() => {
@@ -20,6 +22,6 @@ export function useEditorBindings() {
         }),
         pluginIcons: computed((): Record<string, {icon: string; flowable: boolean}> => pluginsStore.icons),
         configureLanguage: (editor: monacoEditor.ICodeEditor | undefined, language: string, schemaType?: string) =>
-            configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType),
+            configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType, router),
     })
 }

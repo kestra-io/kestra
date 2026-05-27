@@ -205,13 +205,14 @@ public final class ScriptService {
         Map<String, String> execution = (Map<String, String>) runContext.getVariables().get("execution");
         Map<String, String> taskrun = (Map<String, String>) runContext.getVariables().get("taskrun");
 
+        // task, execution and taskrun may be absent when labels() is called from a trigger-evaluation context
         return ImmutableMap.of(
             withPrefix("namespace", prefix), normalizeValue(flow.get("namespace"), normalizeValue, lowerCase),
             withPrefix("flow-id", prefix), normalizeValue(flow.get("id"), normalizeValue, lowerCase),
-            withPrefix("task-id", prefix), normalizeValue(task.get("id"), normalizeValue, lowerCase),
-            withPrefix("execution-id", prefix), normalizeValue(execution.get("id"), normalizeValue, lowerCase),
-            withPrefix("taskrun-id", prefix), normalizeValue(taskrun.get("id"), normalizeValue, lowerCase),
-            withPrefix("taskrun-attempt", prefix), normalizeValue(String.valueOf(taskrun.get("attemptsCount")), normalizeValue, lowerCase)
+            withPrefix("task-id", prefix), task != null ? normalizeValue(task.get("id"), normalizeValue, lowerCase) : "",
+            withPrefix("execution-id", prefix), execution != null ? normalizeValue(execution.get("id"), normalizeValue, lowerCase) : "",
+            withPrefix("taskrun-id", prefix), taskrun != null ? normalizeValue(taskrun.get("id"), normalizeValue, lowerCase) : "",
+            withPrefix("taskrun-attempt", prefix), taskrun != null ? normalizeValue(String.valueOf(taskrun.get("attemptsCount")), normalizeValue, lowerCase) : "0"
         );
     }
 

@@ -59,9 +59,9 @@
 
         <section v-else class="px-3 plugins-container">
             <KsTooltip
-                v-for="(plugin, index) in pluginsList"
+                v-for="plugin in pluginsList"
                 :showAfter="1000"
-                :key="`${plugin.name}-${index}`"
+                :key="`${plugin.name}-${plugin.subGroup ?? ''}`"
             >
                 <template #content>
                     <div class="tasks-tooltips">

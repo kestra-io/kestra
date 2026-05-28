@@ -73,7 +73,7 @@ export default [
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},
 
     //Settings
-    {name: "settings", path: "/:tenant?/settings", component: () => import("override/components/settings/Settings.vue")},
+    {name: "preferences", path: "/:tenant?/preferences", component: () => import("override/components/settings/Settings.vue")},
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers/:tab?", component: () => import("../components/admin/triggers/Triggers.vue")},

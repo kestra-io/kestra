@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {useRoute} from "vue-router";
-    import {useDocStore} from "../../stores/doc";
+    import {computed, ref} from "vue"
+    import {useRoute} from "vue-router"
+    import {useDocStore} from "../../stores/doc"
 
     interface ResourceMetadata {
         title: string;
@@ -44,20 +44,20 @@
 
     const props = defineProps<{
         pageUrl?: string;
-    }>();
+    }>()
 
-    const route = useRoute();
-    const docStore = useDocStore();
+    const route = useRoute()
+    const docStore = useDocStore()
 
     const currentPage = computed(() => {
-        const url = props.pageUrl ?? route.path;
-        return url.replace(/^\/?(.*?)\/?$/, "$1");
-    });
+        const url = props.pageUrl ?? route.path
+        return url.replace(/^\/?(.*?)\/?$/, "$1")
+    })
 
-    const resourcesWithMetadata = ref<Record<string, ResourceMetadata>>({});
-    const parentMetadata = ref<Partial<ResourceMetadata>>({});
+    const resourcesWithMetadata = ref<Record<string, ResourceMetadata>>({})
+    const parentMetadata = ref<Partial<ResourceMetadata>>({})
 
-    const parentLevel = computed(() => currentPage.value.split("/").length);
+    const parentLevel = computed(() => currentPage.value.split("/").length)
 
     const navigation = computed(() =>
         Object.entries(resourcesWithMetadata.value)
@@ -66,30 +66,29 @@
             .map(([path, metadata]) => ({
                 path,
                 ...parentMetadata.value,
-                ...metadata
-            }))
+                ...metadata,
+            })),
     );
 
     (async () => {
-        resourcesWithMetadata.value = await docStore.children(currentPage.value);
+        resourcesWithMetadata.value = await docStore.children(currentPage.value)
 
         if (props.pageUrl) {
-            parentMetadata.value = {...resourcesWithMetadata.value[currentPage.value]};
-            delete parentMetadata.value.description;
+            parentMetadata.value = {...resourcesWithMetadata.value[currentPage.value]}
+            delete parentMetadata.value.description
         }
-    })();
+    })()
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .card-title {
-        font-size: $font-size-xl !important;
+        font-size: var(--ks-font-size-xl) !important;
         line-height: 1.375rem !important;
     }
 
     .card-text {
-        font-size: $font-size-sm !important;
+        font-size: var(--ks-font-size-sm) !important;
         line-height: 1rem !important;
     }
 

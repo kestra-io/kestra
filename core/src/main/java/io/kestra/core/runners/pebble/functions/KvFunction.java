@@ -14,6 +14,7 @@ import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +28,7 @@ public class KvFunction implements KestraFunction {
     private static final String NAMESPACE_ARG = "namespace";
 
     @Inject
-    private KVStoreService kvStoreService;
+    private Provider<KVStoreService> kvStoreService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -62,7 +63,7 @@ public class KvFunction implements KestraFunction {
                 value = getValueWithInheritance(flowNamespace, key, flowTenantId);
             } else {
                 // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
-                value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
+                value = kvStoreService.get().get(flowTenantId, namespace, flowNamespace).getValue(key);
             }
         } catch (ResourceExpiredException e) {
             if (errorOnMissing) {
@@ -85,7 +86,7 @@ public class KvFunction implements KestraFunction {
         Optional<KVValue> value = Optional.empty();
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
-            value = kvStoreService.get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
+            value = kvStoreService.get().get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
             if (!inheritedNamespace.contains(".")) {
                 return value;
             }

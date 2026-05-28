@@ -3,13 +3,12 @@ package io.kestra.webserver.controllers.api;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -23,6 +22,7 @@ import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
+import io.kestra.webserver.services.ai.AiServiceManager;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -65,7 +65,10 @@ public class MiscController {
     Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
-    KestraConfig kestraConfig;
+    Optional<AiServiceManager> aiServiceManager = Optional.empty();
+
+    @Inject
+    SystemFlowsConfiguration systemFlowsConfiguration;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
     private String chartDefaultDuration;
@@ -105,10 +108,10 @@ public class MiscController {
     private PluginRegistry pluginRegistry;
 
     @Inject
-    protected EditionProvider editionProvider;
+    private PebbleExpressionService pebbleExpressionService;
 
     @Inject
-    PebbleExpressionService pebbleExpressionService;
+    protected EditionProvider editionProvider;
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -131,8 +134,9 @@ public class MiscController {
                     .build()
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
+            .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
             .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
-            .systemNamespace(kestraConfig.getSystemFlowNamespace())
+            .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
@@ -234,6 +238,8 @@ public class MiscController {
         List<String> hiddenLabelsPrefixes;
 
         Boolean isAiEnabled;
+
+        Boolean isAiApiKeyConfigured;
 
         Boolean isBasicAuthInitialized;
 

@@ -24,7 +24,6 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -45,8 +44,7 @@ public class PluginScanner {
     ClassLoader parent;
 
     private static final String UI_MANIFEST_PATH = "plugin-ui/manifest.json";
-    private static final TypeReference<Map<String, List<PluginUiModule>>> PLUGIN_UI_MANIFEST_TYPE = new TypeReference<>() {
-    };
+    private static final String SOURCE_HASH_KEY = "sourceHash";
 
     public PluginScanner(final ClassLoader parent) {
         this.parent = parent;
@@ -120,7 +118,6 @@ public class PluginScanner {
         Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
         List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
-        List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner<?>>> taskRunners = new ArrayList<>();
@@ -156,10 +153,6 @@ public class PluginScanner {
                     case AbstractTrigger trigger -> {
                         log.debug("Loading Trigger plugin: '{}'", plugin.getClass());
                         triggers.add(trigger.getClass());
-                    }
-                    case Condition condition -> {
-                        log.debug("Loading Condition plugin: '{}'", plugin.getClass());
-                        conditions.add(condition.getClass());
                     }
                     case StorageInterface storage -> {
                         log.debug("Loading Storage plugin: '{}'", plugin.getClass());
@@ -243,9 +236,21 @@ public class PluginScanner {
             }
         }
 
+        String pluginUiSourceHash = null;
         try (InputStream in = classLoader.getResourceAsStream(UI_MANIFEST_PATH)) {
             if (in != null) {
-                pluginUiManifest.putAll(JacksonMapper.ofJson().readValue(in, PLUGIN_UI_MANIFEST_TYPE));
+                var rawManifest = JacksonMapper.ofJson().readValue(in, new TypeReference<Map<String, Object>>() {});
+                var mapper = JacksonMapper.ofJson();
+                for (var entry : rawManifest.entrySet()) {
+                    if (SOURCE_HASH_KEY.equals(entry.getKey())) {
+                        pluginUiSourceHash = (String) entry.getValue();
+                    } else {
+                        pluginUiManifest.put(
+                            entry.getKey(),
+                            mapper.convertValue(entry.getValue(), new TypeReference<List<PluginUiModule>>() {})
+                        );
+                    }
+                }
             }
         } catch (IOException e) {
             log.error("Unable to read plugin ui manifest for plugin {}", getLocation(externalPlugin));
@@ -257,7 +262,6 @@ public class PluginScanner {
             .classLoader(classLoader)
             .tasks(tasks)
             .triggers(triggers)
-            .conditions(conditions)
             .storages(storages)
             .secrets(secrets)
             .assets(assets)
@@ -280,6 +284,7 @@ public class PluginScanner {
                 )
             )
             .pluginUiManifest(pluginUiManifest)
+            .pluginUiSourceHash(pluginUiSourceHash)
             .build();
     }
 

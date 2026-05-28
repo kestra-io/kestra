@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
@@ -28,7 +29,7 @@ import io.kestra.core.utils.IdUtils;
         @JsonSubTypes.Type(value = ExecutionCommand.Invalid.class, name = "INVALID"),
     }
 )
-public interface ExecutionCommand extends HasUID, DispatchEvent {
+public interface ExecutionCommand extends HasUID, DispatchEvent, AsyncOperation {
     /**
      * @return the tenant id
      */

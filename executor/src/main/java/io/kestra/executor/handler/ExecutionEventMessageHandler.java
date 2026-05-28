@@ -17,6 +17,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.tasks.SystemTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -67,8 +69,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     @Inject
     private DispatchQueueInterface<Execution> executionQueue;
-    @Inject
-    private DispatchQueueInterface<TerminatedLoopExecution> terminatedLoopExecutionQueue;
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
@@ -166,13 +166,14 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+                            final List<TaskRun> currentTaskRuns = executor.getExecution().getTaskRunList();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->
                                 {
                                     WorkerTask workerTask = executorTask.workerTask();
                                     try {
-                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getWhen()))) {
+                                        if (!TruthUtils.isTruthy(executorTask.runContext().render(workerTask.getTask().getRunIf()))) {
                                             workerTaskResults.add(
                                                 new WorkerTaskResult(
                                                     workerTask.getTaskRun().withState(State.Type.SKIPPED)
@@ -184,17 +185,20 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> executorTask.runContext().render(workerGroup.getKey())))
                                                     .orElse(null);
+                                                String routingKey = resolveRoutingKey(workerTask.getTask(), workerGroupKey);
                                                 if (workerTask.getTask() instanceof WorkingDirectory) {
                                                     // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
+                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask, routingKey));
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerGroupKey));
+                                                    workerJobEventQueue.emit(routingKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), routingKey));
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
+
                                             // flowable attempt state transition to running
-                                            if (workerTask.getTask().isFlowable()) {
+                                            // Skip if the task was already terminated by handleChildWorkerTaskResult (e.g., empty Loop)
+                                            if (workerTask.getTask().isFlowable() && !workerTask.getTaskRun().getState().isTerminated()) {
                                                 List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
                                                     .map(ArrayList::new)
                                                     .orElseGet(ArrayList::new);
@@ -215,7 +219,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     } catch (Exception e) {
                                         workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
                                         executorTask.runContext().logger()
-                                            .error("Failed to evaluate the when condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
+                                            .error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
                                     }
                                 }));
 
@@ -301,5 +305,25 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         var logger = runContextLoggerFactory.create(failedExecution.execution());
         logger.emitLogs(failedExecution.logs());
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
+    }
+
+    /**
+     * Resolves the routing key for a {@code WorkerJobEvent}.
+     *
+     * <p>{@link SystemTask} implementations are always dispatched to the
+     * reserved {@link WorkerGroup#SYSTEM_KEY} routing key; any user-set
+     * worker group on such a task is ignored with a warning.</p>
+     */
+    static String resolveRoutingKey(Task task, String userKey) {
+        if (task instanceof SystemTask) {
+            if (userKey != null && !WorkerGroup.SYSTEM_KEY.equals(userKey)) {
+                log.warn(
+                    "Task {} is a SystemTask; ignoring user-set workerGroup '{}' and routing to '{}'",
+                    task.getType(), userKey, WorkerGroup.SYSTEM_KEY
+                );
+            }
+            return WorkerGroup.SYSTEM_KEY;
+        }
+        return userKey;
     }
 }

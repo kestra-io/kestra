@@ -12,9 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import GithubIcon from "vue-material-design-icons/Github.vue";
-    import SlackIcon from "vue-material-design-icons/Slack.vue";
-    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue";
+    import GithubIcon from "vue-material-design-icons/Github.vue"
+    import SlackIcon from "vue-material-design-icons/Slack.vue"
+    import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue"
 
     defineProps<{
         title: string
@@ -41,15 +41,13 @@
 </script>
 
 <style scoped lang="scss">
-$font-size-lg: 1.5rem;
-$font-size-sm: 1rem;
 $black-3: #2B313E;
 $white: #FFFFFF;
 $white-1: #E0E0E0;
 $primary-1: #3F51B5;
 h2.support-title{
     border: none;
-    font-size: $font-size-lg;
+    font-size: var(--ks-font-size-lg);
     margin-top: 3rem;
     margin-bottom: 1rem;
     padding: 0;
@@ -66,18 +64,18 @@ h2.support-title{
     border-radius: .5rem;
     border: 1px solid $black-3;
     span{
-        font-size: 24px;
+        font-size: var(--ks-font-size-xl);
         color: $white;
         margin-bottom: 1rem;
     }
     h3{
-        font-size: $font-size-lg;
+        font-size: var(--ks-font-size-lg);
         padding: 0;
         margin: 0
     }
     p{
         margin-top: .5rem;
-        font-size: $font-size-sm;
+        font-size: var(--ks-font-size-sm);
         color: $white-1;
         line-height: 1.6em;
     }

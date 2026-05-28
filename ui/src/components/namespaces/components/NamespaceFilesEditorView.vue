@@ -1,6 +1,6 @@
 <template>
-    <el-splitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
-        <el-splitter-panel
+    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+        <KsSplitterPanel
             min="10%"
             key="sideBar"
             :size="sideBarSize"
@@ -9,33 +9,33 @@
                 :currentNS="namespace"
                 style="width: 100%;height: 100%;"
             />
-        </el-splitter-panel>
-        <el-splitter-panel
+        </KsSplitterPanel>
+        <KsSplitterPanel
             min="20%"
             key="editor"
             :size="editorSize"
         >
             <MultiPanelTabs v-if="mounted" v-model="panels" />
-        </el-splitter-panel>
-    </el-splitter>
+        </KsSplitterPanel>
+    </KsSplitter>
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue";
-    import {useMounted, useStorage} from "@vueuse/core";
-    import FileExplorer from "../../inputs/FileExplorer.vue";
-    import MultiPanelTabs from "../../MultiPanelTabs.vue";
-    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
-    import {useFlowStore} from "../../../stores/flow";
-    import {useStoredPanels} from "../../../composables/useStoredPanels";
+    import {computed, watch} from "vue"
+    import {useMounted, useStorage} from "@vueuse/core"
+    import FileExplorer from "../../inputs/FileExplorer.vue"
+    import MultiPanelTabs from "../../MultiPanelTabs.vue"
+    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels"
+    import {useFlowStore} from "../../../stores/flow"
+    import {useStoredPanels} from "../../../composables/useStoredPanels"
 
     const mounted = useMounted()
 
     const props = defineProps<{
         namespace: string
-    }>();
+    }>()
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
     watch(() => props.namespace, (newVal) => {
         flowStore.flow = {
@@ -43,7 +43,7 @@
             id: "",
             revision: 0,
             source: `namespace: ${newVal}\n`,
-            errors: []
+            errors: [],
         }
     }, {immediate: true})
 
@@ -65,14 +65,14 @@
                     // not a file tab
                     return
                 }
-                const tabProps = getTabPropsFromFilePath(value, false);
+                const tabProps = getTabPropsFromFilePath(value, false)
                 if(!tabProps) return
 
                 return getTabFromFilesTab(tabProps)
-            }
-        }]
+            },
+        }],
 
-    );
+    )
 
     useFilesPanels(panels, computed(() => props.namespace))
 </script>

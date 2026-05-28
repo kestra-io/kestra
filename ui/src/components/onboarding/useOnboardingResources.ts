@@ -1,19 +1,19 @@
-import {computed} from "vue";
-import {useRoute} from "vue-router";
-import CompassOutline from "vue-material-design-icons/CompassOutline.vue";
-import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
-import Youtube from "vue-material-design-icons/Youtube.vue";
-import Slack from "vue-material-design-icons/Slack.vue";
-import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
+import {computed} from "vue"
+import {useRoute} from "vue-router"
+import CompassOutline from "vue-material-design-icons/CompassOutline.vue"
+import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
+import Youtube from "vue-material-design-icons/Youtube.vue"
+import Slack from "vue-material-design-icons/Slack.vue"
+import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
 
 export function useOnboardingResources() {
-    const route = useRoute();
+    const route = useRoute()
 
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
         params: {tenant: route.params.tenant},
-    }));
+    }))
 
     const items = computed(() => [
         {
@@ -51,10 +51,10 @@ export function useOnboardingResources() {
             iconClass: "is-demo",
             href: "https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=onboarding-welcome",
         },
-    ]);
+    ])
 
     return {
         onboardingResources: items,
         tutorialRoute,
-    };
+    }
 }

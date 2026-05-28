@@ -4,10 +4,10 @@
             <Logo class="logo" />
         </div>
 
-        <el-form @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
+        <KsForm @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
             <input type="hidden" name="from" :value="redirectPath">
-            <el-form-item prop="username">
-                <el-input
+            <KsFormItem prop="username">
+                <KsInput
                     name="username"
                     size="large"
                     id="input-username"
@@ -19,14 +19,14 @@
                         <Account />
                     </template>
                     <template #suffix v-if="getFieldError('username')">
-                        <el-tooltip placement="top" :content="getFieldError('username')">
+                        <KsTooltip placement="top" :content="getFieldError('username')">
                             <InformationOutline class="validation-icon error" />
-                        </el-tooltip>
+                        </KsTooltip>
                     </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item prop="password">
-                <el-input
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem prop="password">
+                <KsInput
                     v-model="credentials.password"
                     size="large"
                     name="password"
@@ -40,14 +40,14 @@
                         <Lock />
                     </template>
                     <template #suffix v-if="getFieldError('password')">
-                        <el-tooltip placement="top" :content="getFieldError('password')">
+                        <KsTooltip placement="top" :content="getFieldError('password')">
                             <InformationOutline class="validation-icon error" />
-                        </el-tooltip>
+                        </KsTooltip>
                     </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item>
-                <el-button
+                </KsInput>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="primary"
                     class="w-100"
                     size="large"
@@ -57,19 +57,19 @@
                     :loading="isLoading"
                 >
                     {{ $t("setup.login") }}
-                </el-button>
-            </el-form-item>
-            <el-form-item>
-                <el-button
+                </KsButton>
+            </KsFormItem>
+            <KsFormItem>
+                <KsButton
                     type="default"
                     class="w-100"
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
                     {{ $t("setup.troubleshooting") }}
-                </el-button>
-            </el-form-item>
-        </el-form>
+                </KsButton>
+            </KsFormItem>
+        </KsForm>
     </div>
 </template>
 
@@ -77,9 +77,9 @@
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {ElMessage} from "element-plus"
-    import type {FormInstance} from "element-plus"
-    import axios from "axios"
+    import {KsMessage} from "@kestra-io/design-system"
+    import type {FormInstance} from "@kestra-io/design-system"
+    import {useClient} from "@kestra-io/kestra-sdk"
     import MailChecker from "mailchecker"
 
     import Account from "vue-material-design-icons/Account.vue"
@@ -92,9 +92,9 @@
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
-    import * as BasicAuth from "../../utils/basicAuth";
-    import {shouldShowWelcome} from "../../utils/welcomeGuard";
-    import {identifyPosthogUser} from "../../utils/posthog";
+    import * as BasicAuth from "../../utils/basicAuth"
+    import {shouldShowWelcome} from "../../utils/welcomeGuard"
+    import {identifyPosthogUser} from "../../utils/posthog"
 
     interface Credentials {
         username: string
@@ -113,7 +113,7 @@
     const isLoading = ref(false)
     const credentials = ref<Credentials>({
         username: "",
-        password: ""
+        password: "",
     })
 
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -121,32 +121,32 @@
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value?.trim()) {
-            return callback(new Error(t("setup.validation.email_required")));
+            return callback(new Error(t("setup.validation.email_required")))
         } else if (!EMAIL_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.email_invalid")));
+            return callback(new Error(t("setup.validation.email_invalid")))
         } else if (!MailChecker.isValid(value)) {
-            return callback(new Error(t("setup.validation.email_temporary_not_allowed")));
+            return callback(new Error(t("setup.validation.email_temporary_not_allowed")))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const validatePassword = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value || !PASSWORD_REGEX.test(value)) {
-            return callback(new Error(t("setup.validation.password_invalid")));
+            return callback(new Error(t("setup.validation.password_invalid")))
         }
-        callback();
-    };
+        callback()
+    }
 
     const rules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        password: [{required: true, validator: validatePassword, trigger: "blur"}]
+        password: [{required: true, validator: validatePassword, trigger: "blur"}],
     }))
 
-    const getFieldError = (fieldName: string) => {
-        if (!form.value) return null
+    const getFieldError = (fieldName: string): string | undefined => {
+        if (!form.value) return undefined
         const field = form.value.fields?.find((f: any) => f.prop === fieldName)
-        return field?.validateState === "error" ? field.validateMessage : null
+        return field?.validateState === "error" ? field.validateMessage : undefined
     }
 
     const redirectPath = computed(() => route.query.from as string | undefined)
@@ -157,26 +157,28 @@
         !EMAIL_REGEX.test(credentials.value.username) ||
         !PASSWORD_REGEX.test(credentials.value.password) ||
         !MailChecker.isValid(credentials.value.username) ||
-        isLoading.value
+        isLoading.value,
     )
+
+    const axios = useClient()
 
     const validateCredentials = async (auth: string) => {
         try {
-            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
+            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
             await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
-                withCredentials: true
+                withCredentials: true,
             })
         } catch(e) {
-            BasicAuth.logout();
-            throw e;
+            BasicAuth.logout()
+            throw e
         }
     }
 
     const checkServerInitialization = async () => {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {
             timeout: 10000,
-            withCredentials: true
+            withCredentials: true,
         })
         return response.data?.isBasicAuthInitialized
     }
@@ -192,27 +194,27 @@
             const errors = await miscStore.loadBasicAuthValidationErrors()
             if (errors?.length) {
                 errors.forEach((error: string) => {
-                    ElMessage.error({
+                    KsMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
                         duration: 5000,
-                        showClose: false
+                        showClose: false,
                     })
                 })
             } else {
-                ElMessage.error({
-                    message: t("setup.validation.incorrect_creds")
+                KsMessage.error({
+                    message: t("setup.validation.incorrect_creds"),
                 })
             }
         } catch {
-            ElMessage.error({
-                message: t("setup.validation.incorrect_creds")
+            KsMessage.error({
+                message: t("setup.validation.incorrect_creds"),
             })
         }
     }
 
     const handleSubmit = async () => {
         try {
-            coreStore.error = undefined;
+            coreStore.error = undefined
             if (!form.value || isLoading.value) return
 
             if (!(await form.value.validate().catch(() => false))) return
@@ -250,11 +252,11 @@
             }
 
             if (await shouldShowWelcome()) {
-                router.push({name: "welcome"});
+                router.push({name: "welcome"})
             } else if (redirectPath.value) {
-                router.push(redirectPath.value);
+                router.push(redirectPath.value)
             } else {
-                router.push({name: "home", params: {tenant: route.params.tenant}});
+                router.push({name: "home", params: {tenant: route.params.tenant}})
             }
         } catch (error: any) {
             if (handleNetworkError(error)) {
@@ -267,7 +269,7 @@
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
-                ElMessage.error("Login failed")
+                KsMessage.error("Login failed")
             }
         } finally {
             isLoading.value = false
@@ -296,37 +298,37 @@
             margin-bottom: 40px;
         }
 
-        .el-button.el-button--default {
-            background: var(--bs-gray-200);
+        .kel-button.kel-button--default {
+            background: var(--ks-bg-tag-hover);
 
             html.dark & {
-                background: var(--input-bg);
+                background: var(--ks-bg-input);
 
-                &.el-button {
+                &.kel-button {
                     border: 0;
                 }
             }
         }
 
-        .el-form-item {
-            .el-input {
+        .kel-form-item {
+            .kel-input {
                 height: 54px;
             }
 
-            .el-input-group__prepend {
+            .kel-input-group__prepend {
                 .material-design-icon {
                     .material-design-icon__svg {
-                        width: 1.5em;
-                        height: 1.5em;
+                        width: var(--ks-font-size-xl);
+                        height: var(--ks-font-size-xl);
                         bottom: -0.250em;
                     }
                 }
             }
 
             .validation-icon {
-                font-size: 1.25em;
+                font-size:  var(--ks-font-size-lg);
                 &.error {
-                    color: var(--ks-content-alert);
+                    color: var(--ks-status-error);
                 }
             }
         }

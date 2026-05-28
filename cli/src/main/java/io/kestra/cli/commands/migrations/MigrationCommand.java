@@ -2,7 +2,6 @@ package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
-import io.kestra.cli.commands.migrations.metadata.MetadataMigrationCommand;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +12,8 @@ import picocli.CommandLine;
     description = "handle migrations",
     mixinStandardHelpOptions = true,
     subcommands = {
-        MetadataMigrationCommand.class,
-        V2TriggerMigrationCommand.class,
-        V2ExecutionResubmitMigrationCommand.class,
-        V2ExecutionOutputMigrationCommand.class
+        RunMigrationCommand.class,
+        UnlockMigrationCommand.class
     }
 )
 @Slf4j

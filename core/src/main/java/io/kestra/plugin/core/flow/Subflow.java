@@ -179,8 +179,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             inputs,
             labels,
             runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
-            scheduleDate,
-            null
+            scheduleDate
         )
             .<List<SubflowExecution<?>>> map(subflowExecution -> List.of(subflowExecution))
             .orElse(Collections.emptyList());

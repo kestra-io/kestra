@@ -1,5 +1,5 @@
-import {AxiosInstance} from "axios";
-import {apiUrl} from "override/utils/route";
+import {AxiosInstance} from "axios"
+import {apiUrl} from "override/utils/route"
 
 interface Execution {
     id: string,
@@ -28,16 +28,16 @@ export function waitFor($http: AxiosInstance, execution: {id: string}, predicate
                 }
             })
 
-        };
+        }
 
         window.setTimeout(() => {
             callback()
         }, 300)
-    });
+    })
 }
 
 export function findTaskRunsByState(execution: Execution, state: string)  {
-    return execution.taskRunList.filter((taskRun) => taskRun.state?.current === state);
+    return execution.taskRunList.filter((taskRun) => taskRun.state?.current === state)
 }
 
 export function statePredicate(execution: Execution, current: {state: {histories?: any[]}}) {
@@ -46,6 +46,6 @@ export function statePredicate(execution: Execution, current: {state: {histories
 
 export function waitForState($http: AxiosInstance, execution: Execution) {
     return waitFor($http, execution, (current) => {
-        return statePredicate(execution, current);
+        return statePredicate(execution, current)
     })
 }

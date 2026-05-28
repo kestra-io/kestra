@@ -3,9 +3,11 @@ package io.kestra.core.docs;
 import java.lang.reflect.*;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.classmate.ResolvedType;
@@ -33,7 +35,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -52,6 +53,7 @@ import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.TimezoneId;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -76,6 +78,17 @@ public class JsonSchemaGenerator {
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+
+    private static final List<String> AVAILABLE_ZONE_IDS = Stream
+        .concat(ZoneId.getAvailableZoneIds().stream(), ZoneId.SHORT_IDS.keySet().stream())
+        .distinct()
+        .sorted()
+        .toList();
+
+    // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
+    // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
+    private static final String TIMEZONE_OFFSET_PATTERN =
+        "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
 
     private final PluginRegistry pluginRegistry;
 
@@ -293,7 +306,17 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
                 )
             )
-            .with(new Swagger2Module())
+            .with(new Swagger2Module() {
+                @Override
+                protected List<ResolvedType> resolveTargetTypeOverrides(MemberScope<?, ?> member) {
+                    Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
+                    if (schema != null && schema.implementation() == Object.class
+                        && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class) {
+                        return null;
+                    }
+                    return super.resolveTargetTypeOverrides(member);
+                }
+            })
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
@@ -459,6 +482,25 @@ public class JsonSchemaGenerator {
             } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
                 memberAttributes.put("$dynamic", false);
             }
+        });
+
+        // On @TimezoneId-annotated fields, expose ZoneId IDs for autocomplete while still accepting offset forms
+        // (e.g. `+02:00`, `GMT-05:00`) that ZoneId.of() parses but that are not in getAvailableZoneIds().
+        builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) ->
+        {
+            if (member.getAnnotationConsideringFieldAndGetter(TimezoneId.class) == null) {
+                return;
+            }
+            ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+            AVAILABLE_ZONE_IDS.forEach(enumNode::add);
+            ObjectNode enumBranch = context.getGeneratorConfig().createObjectNode();
+            enumBranch.set("enum", enumNode);
+            ObjectNode patternBranch = context.getGeneratorConfig().createObjectNode();
+            patternBranch.put("pattern", TIMEZONE_OFFSET_PATTERN);
+            ArrayNode anyOf = context.getGeneratorConfig().createArrayNode();
+            anyOf.add(enumBranch);
+            anyOf.add(patternBranch);
+            memberAttributes.set("anyOf", anyOf);
         });
 
         // Add Plugin annotation special docs
@@ -763,14 +805,6 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
-                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
-                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
-                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
-                .toList();
-        } else if (declaredType.getErasedType() == Condition.class) {
-            return getRegisteredPlugins()
-                .stream()
-                .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
                 .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())

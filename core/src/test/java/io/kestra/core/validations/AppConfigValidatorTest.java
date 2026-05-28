@@ -31,6 +31,7 @@ class AppConfigValidatorTest {
             try (
                 ApplicationContext context = ApplicationContext.builder()
                     .deduceEnvironment(false)
+                    .environments("test")
                     .properties(
                         Map.of("kestra.url", "https://postgres-oss.preview.dev.kestra.io")
                     )
@@ -50,6 +51,7 @@ class AppConfigValidatorTest {
             try (
                 ApplicationContext context = ApplicationContext.builder()
                     .deduceEnvironment(false)
+                    .environments("test")
                     .properties(
                         Map.of("kestra.url", "postgres-oss.preview.dev.kestra.io")
                     )
@@ -70,6 +72,7 @@ class AppConfigValidatorTest {
             try (
                 ApplicationContext context = ApplicationContext.builder()
                     .deduceEnvironment(false)
+                    .environments("test")
                     .properties(
                         Map.of("kestra.url", "ftp://postgres-oss.preview.dev.kestra.io")
                     )

@@ -27,6 +27,7 @@ import lombok.*;
 @Getter
 @Builder(toBuilder = true)
 public class TaskRun implements TenantInterface {
+    @NotNull
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -72,7 +73,7 @@ public class TaskRun implements TenantInterface {
     Boolean forceExecution;
 
     /**
-     * @deprecated should not be used anymore, but we keep it to be able to read the existing outputs from V1 inside the migration script.
+     * @deprecated should only be used inside the pre-2.0 compatibility layer.
      */
     @Hidden
     @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -80,6 +81,15 @@ public class TaskRun implements TenantInterface {
     @Schema(implementation = Object.class)
     @Deprecated(forRemoval = true, since = "2.0.0")
     Variables outputs;
+
+    /**
+     * @deprecated should only be used inside the pre-2.0 compatibility layer.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    public TaskRun clearOutputs() {
+        this.outputs = null;
+        return this;
+    }
 
     public TaskRun withState(State.Type state) {
         return new TaskRun(
@@ -154,6 +164,9 @@ public class TaskRun implements TenantInterface {
         );
     }
 
+    /**
+     * Derive a TaskRun for a child execution when restarting or replaying.
+     */
     public TaskRun forChildExecution(Map<String, String> remapTaskRunId, String executionId, State state) {
         return TaskRun.builder()
             .tenantId(this.getTenantId())
@@ -162,7 +175,7 @@ public class TaskRun implements TenantInterface {
             .namespace(this.getNamespace())
             .flowId(this.getFlowId())
             .taskId(this.getTaskId())
-            .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
+            .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
             .assets(this.getAssets())

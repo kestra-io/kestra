@@ -4,6 +4,6 @@
 
 <script setup lang="ts">
     defineOptions({
-        inheritAttrs: false
+        inheritAttrs: false,
     })
 </script>

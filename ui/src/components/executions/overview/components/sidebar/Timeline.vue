@@ -1,12 +1,12 @@
 <template>
-    <el-collapse accordion ref="container">
-        <el-collapse-item :icon="ChevronDown">
+    <KsCollapse accordion ref="container">
+        <KsCollapseItem :icon="ChevronDown">
             <template #title>
                 <span>{{ $t("state_history") }}</span>
             </template>
 
-            <el-timeline :class="{'is-narrow': isNarrow}">
-                <el-timeline-item
+            <KsTimeline :class="{'is-narrow': isNarrow}">
+                <KsTimelineItem
                     v-for="(activity, aIdx) in props.histories"
                     :key="aIdx"
                     v-bind="isNarrow ? {} : {timestamp: formatDate(activity.date)}"
@@ -19,110 +19,109 @@
                     <template v-else>
                         {{ activity.state }}
                     </template>
-                </el-timeline-item>
-            </el-timeline>
-        </el-collapse-item>
-    </el-collapse>
+                </KsTimelineItem>
+            </KsTimeline>
+        </KsCollapseItem>
+    </KsCollapse>
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, onBeforeUnmount} from "vue";
-    import type {Histories} from "../../../../../stores/executions";
+    import {ref, onMounted, onBeforeUnmount} from "vue"
+    import type {Histories} from "../../../../../stores/executions"
 
-    import {getSchemeValue} from "../../../../../utils/scheme";
+    import {getSchemeValue} from "../../../../../utils/scheme"
 
-    import moment from "moment";
+    import moment from "moment"
 
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    const props = defineProps<{ histories: Histories[] }>();
+    const props = defineProps<{ histories: Histories[] }>()
 
     const formatDate = (date: string) => {
-        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date;
-    };
+        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date
+    }
 
-    const container = ref<HTMLElement | null>(null);
-    const isNarrow = ref(false);
-    let ro: ResizeObserver | null = null;
+    const container = ref<HTMLElement | null>(null)
+    const isNarrow = ref(false)
+    let ro: ResizeObserver | null = null
 
     onMounted(() => {
         ro = new ResizeObserver(([entry]) => {
-            isNarrow.value = entry.contentRect.width < 220;
-        });
-        const el = (container.value as any)?.$el ?? container.value;
+            isNarrow.value = entry.contentRect.width < 220
+        })
+        const el = (container.value as any)?.$el ?? container.value
         if (el) {
-            ro.observe(el);
+            ro.observe(el)
         }
-    });
+    })
 
     onBeforeUnmount(() => {
-        ro?.disconnect();
-    });
+        ro?.disconnect()
+    })
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
-.el-collapse {
-    margin-top: $spacer;
+.kel-collapse {
+    margin-top: 1rem;
 
-    & :deep(.el-collapse-item__header),
-    & :deep(.el-collapse-item__content) {
+    & :deep(.kel-collapse-item__header),
+    & :deep(.kel-collapse-item__content) {
         padding-bottom: 0;
-        background-color: var(--ks-background-table-row);
-        font-size: $font-size-sm;
+        background-color: var(--ks-bg-elevated);
+        font-size: var(--ks-font-size-sm);
     }
 
-    & :deep(.el-collapse-item__header) {
+    & :deep(.kel-collapse-item__header) {
         padding-top: 0;
     }
 
-    & :deep(.el-collapse-item__header:focus:not(:hover)) {
-        color: var(--ks-content-secondary);
+    & :deep(.kel-collapse-item__header:focus:not(:hover)) {
+        color: var(--ks-text-secondary);
     }
 
-    & :deep(.el-collapse-item__arrow.is-active) {
+    & :deep(.kel-collapse-item__arrow.is-active) {
         transform: rotate(180deg);
     }
 
-    & :deep(.el-collapse-item__title) {
-        margin-right: calc($spacer / 2);
+    & :deep(.kel-collapse-item__title) {
+        margin-right: calc(1rem / 2);
         text-align: right;
     }
 }
 
-.el-timeline {
+.kel-timeline {
     padding-left: 50%;
-    margin-top: $spacer;
+    margin-top: 1rem;
 
     &.is-narrow {
         padding-left: 0;
     }
 
-    & :deep(.el-timeline-item) {
-        padding-bottom: $spacer;
+    & :deep(.kel-timeline-item) {
+        padding-bottom: 1rem;
 
         & * {
             line-height: 1.5;
-            font-size: $font-size-sm;
+            font-size: var(--ks-font-size-sm);
         }
     }
 
-    & :deep(.el-timeline-item__content) {
-        color: var(--ks-content-primary);
+    & :deep(.kel-timeline-item__content) {
+        color: var(--ks-text-primary);
     }
 
-    & :deep(.el-timeline-item__timestamp) {
+    & :deep(.kel-timeline-item__timestamp) {
         position: absolute;
         top: 0;
         left: -210px;
         width: 190px;
         margin-top: 0;
         text-align: right;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
-    & :deep(.el-timeline-item__tail) {
+    & :deep(.kel-timeline-item__tail) {
         height: inherit;
         top: 40%;
         bottom: 10%;
@@ -137,8 +136,8 @@
         gap: 4px;
 
         .timeline-timestamp {
-            font-size: $font-size-sm;
-            color: var(--ks-content-tertiary);
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-dim);
         }
     }
 }

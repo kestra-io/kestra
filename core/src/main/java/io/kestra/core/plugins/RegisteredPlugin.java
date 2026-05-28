@@ -17,7 +17,6 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -40,7 +39,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class RegisteredPlugin {
     public static final String TASKS_GROUP_NAME = "tasks";
     public static final String TRIGGERS_GROUP_NAME = "triggers";
-    public static final String CONDITIONS_GROUP_NAME = "conditions";
     public static final String STORAGES_GROUP_NAME = "storages";
     public static final String SECRETS_GROUP_NAME = "secrets";
     public static final String TASK_RUNNERS_GROUP_NAME = "task-runners";
@@ -59,7 +57,6 @@ public class RegisteredPlugin {
     private final ClassLoader classLoader;
     private final List<Class<? extends Task>> tasks;
     private final List<Class<? extends AbstractTrigger>> triggers;
-    private final List<Class<? extends Condition>> conditions;
     private final List<Class<? extends StorageInterface>> storages;
     private final List<Class<? extends SecretPluginInterface>> secrets;
     private final List<Class<? extends TaskRunner<?>>> taskRunners;
@@ -76,11 +73,11 @@ public class RegisteredPlugin {
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
     Map<String, List<PluginUiModule>> pluginUiManifest;
+    String pluginUiSourceHash;
 
     public boolean isValid() {
         return !tasks.isEmpty() ||
             !triggers.isEmpty() ||
-            !conditions.isEmpty() ||
             !storages.isEmpty() ||
             !secrets.isEmpty() ||
             !taskRunners.isEmpty() ||
@@ -118,10 +115,6 @@ public class RegisteredPlugin {
 
         if (this.getTriggers().stream().anyMatch(r -> r.getName().equals(cls))) {
             return AbstractTrigger.class;
-        }
-
-        if (this.getConditions().stream().anyMatch(r -> r.getName().equals(cls))) {
-            return Condition.class;
         }
 
         if (this.getStorages().stream().anyMatch(r -> r.getName().equals(cls))) {
@@ -195,7 +188,6 @@ public class RegisteredPlugin {
 
         result.put(TASKS_GROUP_NAME, Arrays.asList(this.getTasks().toArray(Class[]::new)));
         result.put(TRIGGERS_GROUP_NAME, Arrays.asList(this.getTriggers().toArray(Class[]::new)));
-        result.put(CONDITIONS_GROUP_NAME, Arrays.asList(this.getConditions().toArray(Class[]::new)));
         result.put(STORAGES_GROUP_NAME, Arrays.asList(this.getStorages().toArray(Class[]::new)));
         result.put(SECRETS_GROUP_NAME, Arrays.asList(this.getSecrets().toArray(Class[]::new)));
         result.put(TASK_RUNNERS_GROUP_NAME, Arrays.asList(this.getTaskRunners().toArray(Class[]::new)));
@@ -357,12 +349,6 @@ public class RegisteredPlugin {
         if (!this.getTriggers().isEmpty()) {
             b.append("[Triggers: ");
             b.append(this.getTriggers().stream().map(Class::getName).collect(Collectors.joining(", ")));
-            b.append("] ");
-        }
-
-        if (!this.getConditions().isEmpty()) {
-            b.append("[Conditions: ");
-            b.append(this.getConditions().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
 

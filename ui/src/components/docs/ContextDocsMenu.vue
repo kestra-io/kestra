@@ -1,6 +1,6 @@
 <template>
     <div class="docsMenuWrapper">
-        <el-button
+        <KsButton
             @click="menuOpen = !menuOpen"
             class="menuOpener"
             :class="{'is-open': menuOpen}"
@@ -10,7 +10,7 @@
                 class="expandIcon"
                 :class="{'rotate-icon': menuOpen}"
             />
-        </el-button>
+        </KsButton>
         <div v-if="menuOpen" class="docsMenuContainer">
             <ul class="docsMenu list-unstyled d-flex flex-column m-0">
                 <template v-if="rawStructure">
@@ -45,103 +45,107 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import {SECTIONS} from "./docsUtils";
+    import {ref, computed, watch} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import {SECTIONS} from "./docsUtils"
 
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ContextDocsLink from "./ContextDocsLink.vue";
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ContextDocsLink from "./ContextDocsLink.vue"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
-    const menuOpen = ref(false);
+    const menuOpen = ref(false)
 
-
-    const rawStructure = ref<Record<string, any> | undefined>();
-    const currentDocPath = computed(() => docStore.docPath);
+    const rawStructure = ref<Record<string, any> | undefined>()
+    const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {
-        if (!path) return "";
-        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "");
-    };
+        if (!path) return ""
+        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "")
+    }
 
     const isCurrentPage = (path: string) => {
-        if (!currentDocPath.value || !path) return false;
-        const normalizedCurrent = normalizePath(currentDocPath.value);
-        const normalizedPath = normalizePath(path);
+        if (!currentDocPath.value || !path) return false
+        const normalizedCurrent = normalizePath(currentDocPath.value)
+        const normalizedPath = normalizePath(path)
 
-        if (normalizedCurrent === normalizedPath) return true;
+        if (normalizedCurrent === normalizedPath) return true
 
-        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
+        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true
 
-        return false;
-    };
+        return false
+    }
 
     const isCurrentSection = (sectionName: string) => {
-        if (!currentDocPath.value) return false;
-        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || [];
-        return sectionChildren.some(child => isCurrentPage(child.path));
-    };
+        if (!currentDocPath.value) return false
+        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || []
+        return sectionChildren.some(child => isCurrentPage(child.path))
+    }
 
     watch(menuOpen, async (val) => {
-        if(!val || rawStructure.value !== undefined) return;
-        rawStructure.value = await docStore.children();
-    });
+        if(!val || rawStructure.value !== undefined) return
+        rawStructure.value = await docStore.children()
+    })
 
     const toc = computed(() => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
             .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
             .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
-                    return acc;
+                    return acc
                 }
 
-                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "");
+                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
 
                 acc[cleanUrl] = {
                     ...metadata,
-                    path: cleanUrl
-                };
+                    path: cleanUrl,
+                }
 
                 return acc
-            }, {});
+            }, {})
 
         for(const url in childrenWithMetadata){
-            const metadata = childrenWithMetadata[url];
-            const split = url.split("/");
-            const parentUrl = split.slice(0, split.length - 1).join("/");
-            const parent = childrenWithMetadata[parentUrl];
+            const metadata = childrenWithMetadata[url]
+            const split = url.split("/")
+            const parentUrl = split.slice(0, split.length - 1).join("/")
+            const parent = childrenWithMetadata[parentUrl]
             if (parent !== undefined) {
-                parent.children = [...(parent.children ?? []), metadata];
+                parent.children = [...(parent.children ?? []), metadata]
             }
         }
 
-        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[];
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[]
     })
 
     const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) => ({
+        .map(([section, childrenTitles]) =>({
+
             section,
             children: childrenTitles
                 .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
-                    path.split("/").length === 2 && (sidebarTitle === name || title === name)
+                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
                 ))
-                .filter((item): item is NonNullable<typeof item> => !!item)
-        }))
+                .filter((item): item is NonNullable<typeof item> => !!item),
+        })),
     )
 </script>
 
 <style scoped lang="scss">
+    ul > li > span:first-child {
+        font-size: var(--ks-font-size-xs);
+    }
+
     $scrollbar-width: 6px;
     $link-radius: 6px;
     $transition-timing: cubic-bezier(0.16, 1, 0.3, 1);
-    
+
     @mixin custom-scrollbar {
         &::-webkit-scrollbar {
             width: $scrollbar-width;
@@ -155,7 +159,7 @@
             border-radius: $link-radius;
         }
         &:hover::-webkit-scrollbar-thumb {
-            background-color: var(--ks-border-primary);
+            background-color: var(--ks-border-default);
         }
     }
 
@@ -201,14 +205,16 @@
         left: 27px;
         right: 27px;
         top: 100%;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: 0 0 $link-radius $link-radius;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         margin-top: -1px;
     }
 
     .docsMenu {
+        list-style: none;
+        padding-left: 0;
         max-height: calc(100vh - 210px);
         overflow-y: auto;
         padding-right: 0.25rem;
@@ -216,7 +222,7 @@
         @include custom-scrollbar;
 
         a, :deep(span[class*="depth-"]) {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-decoration: none;
             display: block;
             padding: 0.25rem 0.5rem;
@@ -229,21 +235,21 @@
 
             @for $i from 0 through 5 {
                 $base-pad: 0.5rem + ($i * 1rem);
-                
+
                 &.depth-#{$i} {
                     padding-left: $base-pad;
                     @if $i == 0 {
                         font-weight: 500;
                     } @else if $i == 1 {
                         font-size: 0.8rem;
-                        color: var(--ks-content-secondary);
+                        color: var(--ks-text-secondary);
                     } @else {
-                        font-size: 0.75rem;
-                        color: var(--ks-content-secondary);
+                        font-size: var(--ks-font-size-xs);
+                        color: var(--ks-text-secondary);
                         opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
                     }
                 }
-                
+
                 &.active-page.depth-#{$i} {
                     padding-left: calc(#{$base-pad} - 3px);
                 }
@@ -251,14 +257,14 @@
 
             &:hover {
                 color: var(--ks-primary);
-                background-color: var(--ks-button-background-secondary-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
 
             &.active-page {
-                color: var(--ks-content-link) !important;
+                color: var(--ks-text-link) !important;
                 font-weight: 600;
                 opacity: 1 !important;
-                background-color: var(--ks-button-background-secondary-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
         }
 
@@ -276,14 +282,14 @@
                 font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 0.05em;
-                color: var(--ks-content-secondary);
+                color: var(--ks-text-secondary);
                 text-transform: uppercase;
                 border-radius: $link-radius;
             }
 
             &.active-section {
                 > span {
-                    color: var(--ks-content-link);
+                    color: var(--ks-text-link);
                 }
             }
         }

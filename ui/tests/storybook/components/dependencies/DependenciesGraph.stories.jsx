@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file */
 import {defineComponent, onMounted, ref} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 
@@ -9,11 +8,6 @@ import {
 } from "../../../../src/components/dependencies/utils/types";
 import {useDependencies} from "../../../../src/components/dependencies/composables/useDependencies";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
-
-import cytoscape from "cytoscape";
-
-cytoscape.warnings(false)
-
 
 
 export default {
@@ -67,7 +61,7 @@ const GraphWrapper = defineComponent({
             <div style="display:flex; gap:12px; height:680px;">
                 <div style="flex:1; position:relative; min-width:480px;">
                     <div
-                        v-loading={isRendering.value}
+                        v-ks-loading={isRendering.value}
                         ref={container}
                         style="height:100%; overflow:hidden; background:transparent;"
                     />

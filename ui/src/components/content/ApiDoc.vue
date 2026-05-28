@@ -9,21 +9,21 @@
         allowAuthentication="false"
         allowServerSelection="false"
         allowTry="false"
-        regularFont="Public Sans"
-        monoFont="Source Code Pro"
+        regularFont="Inter"
+        monoFont="JetBrains Mono"
     />
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    
-    const docStore = useDocStore();
+    import {ref} from "vue"
+    import {useDocStore} from "../../stores/doc"
+
+    const docStore = useDocStore()
     const ready = ref(false)
     // @ts-expect-error rapidoc is not typed
     import("rapidoc").then(() => {
         ready.value = true
-    });
+    })
 
 
     const theme = ref(localStorage.getItem("theme") === "dark" ? "dark" : "light")

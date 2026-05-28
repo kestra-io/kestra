@@ -1,11 +1,19 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,10 +34,10 @@ class VariableRendererTest {
     VariableRenderer variableRenderer;
 
     @Inject
-    ApplicationContext applicationContext;
+    VariableConfiguration variableConfiguration;
 
     @Inject
-    VariableRenderer.VariableConfiguration variableConfiguration;
+    private PebbleEngineFactory pebbleEngineFactory;
 
     @Test
     void shouldRenderContactUntypedStringExpression() throws IllegalVariableEvaluationException {
@@ -57,6 +65,7 @@ class VariableRendererTest {
 
     @Test
     void shouldRenderTypedValueExpression() throws IllegalVariableEvaluationException {
+        TestVariableRenderer renderer = new TestVariableRenderer(pebbleEngineFactory, variableConfiguration);
         for (Object o : List.of(
             42, // Integer
             3.14, // Double
@@ -80,7 +89,7 @@ class VariableRendererTest {
         Mockito.when(mockEngine.getLiteralTemplate(Mockito.anyString()))
             .thenThrow(new RuntimeException("unexpected runtime exception"));
 
-        VariableRenderer renderer = new VariableRenderer(applicationContext, variableConfiguration);
+        VariableRenderer renderer = new VariableRenderer(pebbleEngineFactory, variableConfiguration);
         renderer.setPebbleEngine(mockEngine);
 
         // When / Then
@@ -110,4 +119,57 @@ class VariableRendererTest {
         final Map<String, Object> result_value3 = (Map<String, Object>) result.get("foo-3");
         assertThat(result_value3.keySet()).containsExactly("bar-1", "bar-2", "bar-3");
     }
+
+    @Test
+    void shouldRenderStringAsEmptyForNull() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ null }}", Map.of())).isEmpty();
+        assertThat(variableRenderer.render("{{ true ? null : 'work' }}", Map.of())).isEmpty();
+    }
+
+    @Test
+    void shouldRenderStringAsString() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ false ? null : 'work' }}", Map.of())).isEqualTo("work");
+        assertThat(variableRenderer.render("{{ 42 }}", Map.of())).isEqualTo("42");
+        assertThat(variableRenderer.render("{{ true }}", Map.of())).isEqualTo("true");
+    }
+
+    @Test
+    void shouldRenderStringAsEmptyForNullRecursively() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ null }}", Map.of(), true)).isEmpty();
+        assertThat(variableRenderer.render("prefix {{ null }}", Map.of(), true)).isEqualTo("prefix ");
+    }
+
+    @Test
+    void shouldRenderStringWithExplicitEmptyOutput() throws IllegalVariableEvaluationException {
+        assertThat(variableRenderer.render("{{ '' }}", Map.of())).isEqualTo("");
+        assertThat(variableRenderer.render("prefix {{ null }}", Map.of())).isEqualTo("prefix ");
+    }
+
+    @Test
+    void shouldRenderMapWithNullValues() throws IllegalVariableEvaluationException {
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("key1", "{{ null }}");
+        input.put("key2", "{{ 'hello' }}");
+        input.put("key3", "static");
+        Map<String, Object> result = variableRenderer.render(input, Map.of());
+        assertThat(result.get("key1")).isNull();
+        assertThat(result.get("key2")).isEqualTo("hello");
+        assertThat(result.get("key3")).isEqualTo("static");
+        assertThat(result).containsKey("key1");
+    }
+
+    @Test
+    void shouldRenderMixedFilterAndOperator() throws IllegalVariableEvaluationException {
+        Map<String, Object> variables = Map.of("outputs", Map.of("after", Map.of("value", "300"), "before", Map.of("value", "250")));
+        assertThat(variableRenderer.render("{{ outputs.after.value | number - outputs.before.value | number >= 5 }}", variables)).isEqualTo("true");
+    }
+
+    public static class TestVariableRenderer extends VariableRenderer {
+
+        public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,
+            VariableConfiguration variableConfiguration) {
+            super(pebbleEngineFactory, variableConfiguration);
+        }
+    }
+
 }

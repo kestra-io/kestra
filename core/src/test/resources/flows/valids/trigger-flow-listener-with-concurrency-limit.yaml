@@ -16,15 +16,13 @@ triggers:
       - QUEUED
       - RUNNING
       - SUCCESS
-    preconditions:
-      id: flows
-      flows:
-        - namespace: io.kestra.tests.trigger.concurrency
-          flowId: trigger-flow-with-concurrency-limit
-          states:
-            - QUEUED
-            - RUNNING
-            - SUCCESS
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.concurrency
+        flowId: trigger-flow-with-concurrency-limit
+        states:
+          - QUEUED
+          - RUNNING
+          - SUCCESS
 
 tasks:
   - id: hello

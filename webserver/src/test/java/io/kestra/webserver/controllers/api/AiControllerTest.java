@@ -20,11 +20,13 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 @KestraTest
 @WireMockTest(httpPort = 28181)
@@ -296,5 +298,21 @@ class AiControllerTest {
 
         assertThat(response.getStatus().getCode()).isEqualTo(200);
         assertThat(response.getBody().get()).isEqualTo(expectedDashboardResponse.replace("\\n", "\n"));
+    }
+
+    @Test
+    void shouldReturn503WhenProviderNotFound() {
+        // Given: request with an unknown providerId that has no matching AiService
+        HttpClientResponseException exception = catchThrowableOfType(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/ai/generate/flow",
+                    new AiController.FlowGenerationPrompt(IdUtils.create(), "Generate a flow", "yaml", "io.kestra.tests", "nonexistent-provider")),
+                String.class
+            )
+        );
+
+        assertThat(exception).isNotNull();
+        assertThat(exception.getStatus().getCode()).isEqualTo(503);
     }
 }

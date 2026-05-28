@@ -135,7 +135,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 // all tasks will be handled immediately by the worker
                 WorkerTaskResult workerTaskResult = null;
                 try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getWhen()))) {
+                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
                         workerTaskResult = new WorkerTaskResult(
                             currentWorkerTask.getTaskRun()
                                 .withState(SKIPPED)
@@ -150,7 +150,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     }
                 } catch (IllegalVariableEvaluationException e) {
                     RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating when: {}", e.getMessage(), e);
+                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
                 }
 

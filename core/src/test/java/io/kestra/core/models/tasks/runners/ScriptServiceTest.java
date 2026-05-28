@@ -26,6 +26,7 @@ import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -94,6 +95,26 @@ class ScriptServiceTest {
     }
 
     @Test
+    void shouldRejectOutputFileWithUnsupportedChars() {
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("file🐸name.txt"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("file name.txt"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+    }
+
+    @Test
+    void shouldAcceptOutputFileWithSupportedSpecialChars() throws IOException {
+        ScriptService.validateStoragePath("file,name.txt");
+        ScriptService.validateStoragePath("file:name.txt");
+        ScriptService.validateStoragePath("file;name.txt");
+        ScriptService.validateStoragePath("path/to/file.txt");
+        ScriptService.validateStoragePath("file-name_v2.txt");
+    }
+
+    @Test
     void uploadInputFiles() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
@@ -136,6 +157,45 @@ class ScriptServiceTest {
         } finally {
             filesToDelete.forEach(File::delete);
             path.toFile().delete();
+        }
+    }
+
+    @Test
+    void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
+
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
+        Map<String, String> specialCharFiles = Map.of(
+            "file,name", "kestra://some/file,name.txt",
+            "file;name", "kestra://some/file;name.txt"
+        );
+
+        for (var entry : specialCharFiles.entrySet()) {
+            Path path = createFile(tenant, entry.getKey());
+            File localFile = null;
+            try {
+                var command = ScriptService.replaceInternalStorage(
+                    runContext,
+                    "my command with an internal storage file: " + entry.getValue(),
+                    false
+                );
+
+                Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+                assertThat(matcher.matches())
+                    .as("URI with special char should be matched: " + entry.getValue())
+                    .isTrue();
+                Path absoluteLocalFilePath = Path.of(matcher.group(1));
+                localFile = absoluteLocalFilePath.toFile();
+                assertThat(localFile.exists()).isTrue();
+            } finally {
+                if (localFile != null) {
+                    localFile.delete();
+                }
+                path.toFile().delete();
+            }
         }
     }
 
@@ -255,7 +315,7 @@ class ScriptServiceTest {
     private static Path createFile(String tenant, String fileName) throws IOException {
         Path path = Path.of("/tmp/unittest/%s/%s.txt".formatted(tenant, fileName));
         if (!path.toFile().exists()) {
-            Files.createDirectory(Path.of("/tmp/unittest/%s".formatted(tenant)));
+            Files.createDirectories(Path.of("/tmp/unittest/%s".formatted(tenant)));
             Files.createFile(path);
         }
         return path;

@@ -1,11 +1,12 @@
-import {computed, ref, Ref, watch} from "vue";
-import * as FlowYamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
-import {usePlaygroundStore} from "../../stores/playground";
-import Editor from "../../components/inputs/Editor.vue";
+import {computed, ref, Ref, watch} from "vue"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+
+import {usePlaygroundStore} from "../../stores/playground"
+import Editor from "../../components/inputs/Editor.vue"
 
 export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof Editor> | undefined>, source: Ref<string>) {
     const taskLineMap = computed(() => {
-        return isCurrentTabFlow.value ? FlowYamlUtils.getTasksLines(source.value) : {}
+        return isCurrentTabFlow.value ? YAML_UTILS.getTasksLines(source.value) : {}
     })
 
     const playgroundStore = usePlaygroundStore()
@@ -16,54 +17,54 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
         end: number,
         longestLineLength: number,
         firstLineLength: number
-    }>();
+    }>()
 
-    const ln = ref<number>(-1);
+    const ln = ref<number>(-1)
 
     const hoveredTaskProperties = computed(() => {
         const lineNumber = ln.value
         const hoveredTaskIds = Object.keys(taskLineMap.value).filter(taskId => {
-            const {start, end} = taskLineMap.value[taskId];
-            return start <= lineNumber && end >= lineNumber;
+            const {start, end} = taskLineMap.value[taskId]
+            return start <= lineNumber && end >= lineNumber
         }).sort((aId, bId) => {
-            const a = taskLineMap.value[aId];
-            const b = taskLineMap.value[bId];
+            const a = taskLineMap.value[aId]
+            const b = taskLineMap.value[bId]
             // make the longest distance between start and end appear last
-            return (a.end - a.start) - (b.end - b.start);
+            return (a.end - a.start) - (b.end - b.start)
         })
 
         // take the shortest task that matches the line number
         // in case of task nesting
-        const taskId = hoveredTaskIds[0];
+        const taskId = hoveredTaskIds[0]
 
         if(!taskId) {
-            return undefined;
+            return undefined
         }
 
         const {start, end} = taskLineMap.value[taskId]
 
         // get this hovered tasks code, find the longest line
-        const taskCodeLines = source.value.split("\n").slice(start - 1, end);
+        const taskCodeLines = source.value.split("\n").slice(start - 1, end)
         const longestLineLength = taskCodeLines.reduce((longest, current) => {
-            return Math.max(longest, current.length);
-        }, 0);
+            return Math.max(longest, current.length)
+        }, 0)
 
         return {
             taskId,
             start,
             end,
             longestLineLength,
-            firstLineLength: taskCodeLines[0].length
-        };
+            firstLineLength: taskCodeLines[0].length,
+        }
     })
 
     function highlightLines(range?: {start: number, end: number}) {
         if(!range) {
-            editorRefElement.value?.clearLinesRangeHighlights();
-            return;
+            editorRefElement.value?.clearLinesRangeHighlights()
+            return
         }
 
-        editorRefElement.value?.highlightLinesRange(range);
+        editorRefElement.value?.highlightLinesRange(range)
     }
 
     function addButtonToHoveredTask(taskCode?: {taskId: string, start: number, end: number, longestLineLength:number, firstLineLength: number}) {
@@ -71,7 +72,7 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             return
         }
 
-        editorRefElement.value?.removeContentWidget(`task-hovered-${taskCode.taskId}`);
+        editorRefElement.value?.removeContentWidget(`task-hovered-${taskCode.taskId}`)
 
         // now the size of this longest line determines where
         // we will want to add the editor content widget
@@ -79,51 +80,51 @@ export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean
             id: `task-hovered-${taskCode.taskId}`,
             position: {
                 lineNumber: taskCode.start,
-                column: 0
+                column: 0,
             },
             height: Math.max(taskCode.end - taskCode.start + 1, 1),
             right: "1rem",
-        });
+        })
     }
 
-    const highlightedTaskId = ref<string | undefined>(undefined);
+    const highlightedTaskId = ref<string | undefined>(undefined)
 
     watch(hoveredTaskProperties, (res) => {
         if (playgroundStore.dropdownOpened) {
-            return;
+            return
         }
 
         if(!res || !playgroundStore.enabled || !isCurrentTabFlow.value) {
-            highlightedLines.value = undefined;
-            editorRefElement.value?.clearLinesRangeHighlights();
-            editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedTaskId.value}`);
-            highlightedTaskId.value = undefined;
-            return;
+            highlightedLines.value = undefined
+            editorRefElement.value?.clearLinesRangeHighlights()
+            editorRefElement.value?.removeContentWidget(`task-hovered-${highlightedTaskId.value}`)
+            highlightedTaskId.value = undefined
+            return
         }
 
-        const hv = highlightedLines.value as Record<string, any> | undefined;
+        const hv = highlightedLines.value as Record<string, any> | undefined
 
         // in case identical setting change nothing
         if(hv && !Object.keys(hv).some((key) => hv[key] !== (res as Record<string, any>)[key])) {
-            return;
+            return
         }
 
-        highlightedTaskId.value = res.taskId;
+        highlightedTaskId.value = res.taskId
 
         highlightLines(res)
-        addButtonToHoveredTask(res);
+        addButtonToHoveredTask(res)
 
-        highlightedLines.value = res;
-    }, {deep: true});
+        highlightedLines.value = res
+    }, {deep: true})
 
 
     function highlightHoveredTask(lineNumber?:number){
         if(!playgroundStore.enabled || !isCurrentTabFlow.value){
-            ln.value = -1;
-            return;
+            ln.value = -1
+            return
         }
         if(lineNumber === undefined) return
-        ln.value = lineNumber;
+        ln.value = lineNumber
     }
 
     return {

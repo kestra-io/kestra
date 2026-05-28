@@ -44,6 +44,28 @@ public class DateUtils {
         }
     }
 
+    /**
+     * Parses an ISO 8601 date or datetime string to an {@link Instant}.
+     *
+     * <p>Parsing order: {@link ZonedDateTime} → {@link LocalDateTime} (treated as UTC) →
+     * {@link LocalDate} (treated as midnight UTC). Throws {@link InternalException} if none match.
+     */
+    public static Instant parseInstant(String render) throws InternalException {
+        try {
+            return ZonedDateTime.parse(render).toInstant();
+        } catch (DateTimeException e1) {
+            try {
+                return LocalDateTime.parse(render).toInstant(ZoneOffset.UTC);
+            } catch (DateTimeException e2) {
+                try {
+                    return LocalDate.parse(render).atStartOfDay(ZoneOffset.UTC).toInstant();
+                } catch (DateTimeException e3) {
+                    throw new InternalException(e3);
+                }
+            }
+        }
+    }
+
     public static GroupType groupByType(Duration duration) {
         if (duration.toDays() > GroupValue.MONTH.getValue()) {
             return GroupType.MONTH;

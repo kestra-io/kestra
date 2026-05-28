@@ -16,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * This service provides facility for executing Runnable and Callable tasks inside a lock.
- * Note: it may be handy to provide a tryLock facility that, if locked, skips executing the Runnable or Callable and exits immediately.
+ * It also provides a tryLock facility which skips the Callable if the lock is already held.
+ * WARNING: for Elasticsearch, fencing via concurrency control should be used to avoid stale writes if a lock is taken over when calling doInLock and callInLock.
  *
  * @implNote There is no expiry for locks, so a service may hold a lock infinitely until the service is restarted as the
  *           liveness mechanism releases all locks when the service is unreachable.
@@ -40,7 +41,8 @@ public class LockService {
     /**
      * Executes a Runnable inside a lock.
      * If the lock is already taken, it will wait for at most the default lock timeout of 5mn.
-     * 
+     * WARNING: for Elasticsearch, fencing via concurrency control should be used to avoid stale writes if a lock is taken over.
+     *
      * @see #doInLock(String, String, Duration, Runnable)
      *
      * @param category lock category, ex 'executions'
@@ -55,7 +57,8 @@ public class LockService {
     /**
      * Executes a Runnable inside a lock.
      * If the lock is already taken, it will wait for at most the <code>timeout</code> duration.
-     * 
+     * WARNING: for Elasticsearch, fencing via concurrency control should be used to avoid stale writes if a lock is taken over.
+     *
      * @see #doInLock(String, String, Runnable)
      *
      * @param category lock category, ex 'executions'
@@ -78,7 +81,7 @@ public class LockService {
 
     /**
      * Acquires the lock only if it is not held by another process at the time of invocation.
-     * 
+     *
      * @param category the category of the lock, e.g., 'executions'
      * @param id the identifier of the lock within the specified category, e.g., an execution ID
      * @return an optional {@link Disposable} to release the lock.
@@ -110,6 +113,7 @@ public class LockService {
     /**
      * Executes a Callable inside a lock.
      * If the lock is already taken, it will wait for at most the default lock timeout of 5mn.
+     * WARNING: for Elasticsearch, fencing via concurrency control should be used to avoid stale writes if a lock is taken over.
      *
      * @param category lock category, ex 'executions'
      * @param id identifier of the lock identity inside the category, ex an execution ID
@@ -123,6 +127,7 @@ public class LockService {
     /**
      * Executes a Callable inside a lock.
      * If the lock is already taken, it will wait for at most the <code>timeout</code> duration.
+     * WARNING: for Elasticsearch, fencing via concurrency control should be used to avoid stale writes if a lock is taken over.
      *
      * @param category lock category, ex 'executions'
      * @param id identifier of the lock identity inside the category, ex an execution ID

@@ -35,14 +35,15 @@ public class QueueService {
     private final int vNodeCount;
 
     @Getter
-    protected final ExecutorService executorService;
+    protected final ExecutorService subscriberExecutorService;
 
     @Getter
     protected final QueueConfiguration queueConfiguration;
 
     @Inject
     public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration) {
-        this.executorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
+        // this executor service is used to execute subscribers, as subscribers can be CPU bound, it is not a good idea to use a virtual thread here
+        this.subscriberExecutorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
         this.vNodeCount = schedulerConfiguration.vnodes();
@@ -50,11 +51,11 @@ public class QueueService {
 
     @PreDestroy
     void close() {
-        this.executorService.shutdown();
+        this.subscriberExecutorService.shutdown();
     }
 
     public void execute(Runnable runnable) {
-        this.executorService.execute(runnable);
+        this.subscriberExecutorService.execute(runnable);
     }
 
     public int computeVNode(String key) {
@@ -70,7 +71,7 @@ public class QueueService {
                     && serialize.length >= queueConfiguration.getMessageProtection().getLimit()
             ) {
                 metricRegistry
-                    .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName())
+                    .counter(MetricRegistry.METRIC_QUEUE_MESSAGE_BIG_TOTAL, MetricRegistry.METRIC_QUEUE_MESSAGE_BIG_TOTAL_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName())
                     .increment();
 
                 // we let terminated execution messages to go through anyway

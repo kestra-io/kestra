@@ -1,9 +1,9 @@
 import {vueRouter} from "storybook-vue3-router";
 import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 import {useFlowStore} from "../../../../src/stores/flow";
 
 
@@ -28,7 +28,7 @@ export default {
 
 const Template = (args) => ({
     setup() {
-        const axios = useAxios()
+        const axios = {}
         const flowStore = useFlowStore()
         axios.get = async (uri) => {
             if (uri.endsWith("/plugins")) {
@@ -56,6 +56,7 @@ const Template = (args) => ({
             console.log("post request", uri)
             return {data: {}}
         }
+        setMockClient(axios);
 
         const flow = YAML_UTILS.parse(args.flow)
         flow.source = args.flow

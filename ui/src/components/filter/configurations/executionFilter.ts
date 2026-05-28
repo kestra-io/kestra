@@ -1,16 +1,17 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
-import permission from "../../../models/permission";
-import action from "../../../models/action";
-import {useNamespacesStore} from "override/stores/namespaces";
-import {useAuthStore} from "override/stores/auth";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
-import {useRoute} from "vue-router";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import resource from "../../../models/resource"
+import action from "../../../models/action"
+import {useNamespacesStore} from "override/stores/namespaces"
+import {useAuthStore} from "override/stores/auth"
+import {useExecutionsStore} from "../../../stores/executions"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
+import {useRoute} from "vue-router"
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
-    const route = useRoute();
+    const {t} = useI18n()
+    const route = useRoute()
 
     return computed(() => {
         return {
@@ -30,24 +31,24 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: async () => {
-                            const user = useAuthStore().user;
-                            if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                                const namespacesStore = useNamespacesStore();
-                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                            const user = useAuthStore().user
+                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
+                                const namespacesStore = useNamespacesStore()
+                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
                                 return [...new Set(namespaces
                                     .flatMap(namespace => {
                                         return namespace.split(".").reduce((current: string[], part: string) => {
-                                            const previousCombination = current?.[current.length - 1];
-                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                                        }, []);
+                                            const previousCombination = current?.[current.length - 1]
+                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
+                                        }, [])
                                     }))].map(namespace => ({
                                         label: namespace,
-                                        value: namespace
-                                    }));
+                                        value: namespace,
+                                    }))
                             }
-                            return [];
+                            return []
                         },
-                        searchable: true
+                        searchable: true,
                     },
                 ] : []) as any,
                 ...(route.name !== "flows/update" ? [{
@@ -55,13 +56,26 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
                     comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
                     ],
-                    valueType: "text",
+                    valueType: "multi-select" as const,
+                    valueProvider: async (options?: {search?: string}) => {
+                        const search = options?.search?.trim()
+                        const ids = await useExecutionsStore().findDistinctFieldValues({
+                            field: "FLOW_ID",
+                            filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
+                            size: 100,
+                        })
+                        return ids.map(id => ({label: id, value: id}))
+                    },
+                    searchable: true,
+                    showComparatorSelection: true,
                 }] : []) as any,
                 {
                     key: "kind",
@@ -70,9 +84,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.KINDS;
-                    }
+                        const {VALUES} = useValues("executions")
+                        return VALUES.KINDS
+                    },
                 },
                 {
                     key: "state",
@@ -81,12 +95,12 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.EXECUTION_STATES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
                     searchable: true,
-                    visibleByDefault: true
+                    visibleByDefault: true,
                 },
                 {
                     key: "scope",
@@ -95,10 +109,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.IN, Comparators.NOT_IN],
                     valueType: "multi-select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.SCOPES;
+                        const {VALUES} = useValues("executions")
+                        return VALUES.SCOPES
                     },
-                    showComparatorSelection: false
+                    showComparatorSelection: false,
                 },
                 {
                     key: "childFilter",
@@ -107,9 +121,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.CHILDS;
-                    }
+                        const {VALUES} = useValues("executions")
+                        return VALUES.CHILDS
+                    },
                 },
                 {
                     key: "timeRange",
@@ -118,9 +132,21 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("executions");
-                        return VALUES.RELATIVE_DATE;
-                    }
+                        const {VALUES} = useValues("executions")
+                        return VALUES.RELATIVE_DATE
+                    },
+                    dateFilterOptions: [
+                        {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
+                        {value: "END_DATE", label: t("filter.timeRange.dateFilter.endDate")},
+                        {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")},
+                    ],
+                    keyLabelProvider: (meta?: Record<string, string>) => {
+                        switch (meta?.dateFilter) {
+                        case "END_DATE": return t("filter.timeRange.chip.end")
+                        case "START_OR_END_DATE": return t("filter.timeRange.chip.startOrEnd")
+                        default: return t("filter.timeRange.chip.start")
+                        }
+                    },
                 },
                 {
                     key: "labels",
@@ -138,10 +164,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
-                        Comparators.ENDS_WITH
+                        Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true
+                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -152,9 +178,9 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true
-                }
-            ]
-        };
-    });
-};
+                    searchable: true,
+                },
+            ],
+        }
+    })
+}

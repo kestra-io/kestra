@@ -39,6 +39,9 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -94,6 +97,9 @@ public class FlowController {
 
     @Inject
     private ObjectMapper objectMapper;
+
+    @Inject
+    private ExpressionContextService expressionContextService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -824,6 +830,37 @@ public class FlowController {
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "expressions", consumes = MediaType.APPLICATION_YAML)
+    @Operation(
+        tags = { "Flows" },
+        summary = "Get available Pebble expressions for a flow",
+        description = "Returns a categorized map of expression strings available for autocompletion in the No-Code editor."
+    )
+    @ApiResponse(responseCode = "200", description = "Categorized expressions map")
+    public ExpressionContext expressions(
+        @RequestBody(description = "The flow source code") @Body String source,
+        @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
+        try {
+            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
+            return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            }
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    /**
+     * Hook for subclasses to exclude expression categories the caller is not permitted
+     * to see. Default (OSS): no exclusions. Overridden in EE to gate SECRETS / KV_PAIRS /
+     * NAMESPACE_FILES on the corresponding namespace permissions.
+     */
+    protected Set<ExpressionCategory> excludedExpressionCategories(Flow flow) {
+        return Set.of();
     }
 
     protected GenericFlow parseFlowSource(final String source) {

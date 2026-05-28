@@ -4,14 +4,14 @@ namespace: io.kestra.tests
 tasks:
   # Each
   - id: 1-each
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     values: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-each-1
         type: io.kestra.plugin.core.debug.Return
         format: "{{task.id}} > {{taskrun.value}}"
       - id: 1-each-2
-        type: io.kestra.plugin.core.flow.ForEach
+        type: io.kestra.plugin.core.flow.Loop
         values: '["a", "b"]'
         tasks:
           - id: 1-each-2-1

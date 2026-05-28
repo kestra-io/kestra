@@ -1,15 +1,15 @@
 <template>
     <div class="docs-button-row">
         <ContextDocsLink v-for="(button, index) in buttons" :key="button.label" :href="button.href.slice(6).replace(/#.+$/g, '')">
-            <el-button :type="index===0?'primary':''" size="large">
+            <KsButton :type="index===0?'primary':''" size="large">
                 {{ button.label }}
-            </el-button>
+            </KsButton>
         </ContextDocsLink>
     </div>
 </template>
 
 <script setup lang="ts">
-    import ContextDocsLink from "../docs/ContextDocsLink.vue";
+    import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
     interface Button {
         label: string;
@@ -21,8 +21,8 @@
     }
 
     withDefaults(defineProps<Props>(), {
-        buttons: () => []
-    });
+        buttons: () => [],
+    })
 </script>
 
 <style scoped lang="scss">

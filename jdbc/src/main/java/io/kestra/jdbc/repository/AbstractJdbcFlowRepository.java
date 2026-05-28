@@ -72,12 +72,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(
         io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
-        ApplicationContext applicationContext,
+        ModelValidator modelValidator,
+        ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
+        PluginDefaultService pluginDefaultService,
         JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
-        this.modelValidator = applicationContext.getBean(ModelValidator.class);
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
+        this.modelValidator = modelValidator;
+        this.eventPublisher = eventPublisher;
+        this.pluginDefaultService = pluginDefaultService;
         this.jdbcRepository.setDeserializer(record ->
         {
             String source = record.get("value", String.class);
@@ -670,6 +672,56 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .and(NAMESPACE_FIELD.eq(namespace)),
                     pageable
                 );
+            });
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ArrayListTotal<Flow> find(
+            Pageable pageable,
+            @Nullable String tenantId,
+            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
+        ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(
+                    context,
+                    getFindFlowSelect(tenantId, null, context, null)
+                        .and(findTriggerClassCondition(triggerClass)),
+                    pageable
+                );
+            });
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ArrayListTotal<Flow> findWithNoAcl(
+            Pageable pageable,
+            @Nullable String tenantId,
+            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
+        ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                ArrayList<Field<?>> fields = new ArrayList<>();
+                fields.add(VALUE_FIELD);
+                fields.add(TENANT_ID_FIELD);
+                fields.add(field("namespace"));
+                SelectConditionStep<Record> select = context
+                    .select(fields)
+                    .from(fromLastRevision(false))
+                    .join(jdbcRepository.getTable().as("ft"))
+                    .on(
+                        DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
+                            .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev", "revision"))))
+                    )
+                    .where(this.defaultFilterWithNoACL(tenantId, false))
+                    .and(findTriggerClassCondition(triggerClass));
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 

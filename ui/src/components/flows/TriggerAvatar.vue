@@ -2,7 +2,7 @@
     <div class="trigger">
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
-                <el-popover
+                <KsPopover
                     :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
@@ -13,26 +13,26 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
-                </el-popover>
+                </KsPopover>
             </template>
         </span>
     </div>
 </template>
 <script setup lang="ts">
-    import {computed, ref, nextTick} from "vue";
-    import {useRoute} from "vue-router";
-    import {usePluginsStore} from "../../stores/plugins";
-    import Utils from "../../utils/utils";
-    import TriggerVars from "./TriggerVars.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
-    import {Execution} from "../../stores/executions";
+    import {computed, ref, nextTick} from "vue"
+    import {useRoute} from "vue-router"
+    import {usePluginsStore} from "../../stores/plugins"
+    import * as Utils from "../../utils/utils"
+    import TriggerVars from "./TriggerVars.vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../utils/toast"
+    import {Execution} from "../../stores/executions"
 
     interface Flow {
         namespace: string;
@@ -52,32 +52,32 @@
         flow?: Flow;
         execution?: Execution;
         triggerId?: string;
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const route = useRoute();
+    const pluginsStore = usePluginsStore()
+    const route = useRoute()
 
-    const popoverRefs = ref<Map<string, any>>(new Map());
+    const popoverRefs = ref<Map<string, any>>(new Map())
 
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
             return props.flow.triggers.filter(
-                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id
-            );
+                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id,
+            )
         } else if (props.execution && props.execution.trigger) {
-            return [props.execution.trigger];
+            return [props.execution.trigger]
         } else {
-            return [];
+            return []
         }
-    });
+    })
 
     function uid(trigger: Trigger): string {
-        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id;
+        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id
     }
 
     function setPopoverRef(el: any, trigger: Trigger) {
         if (el) {
-            popoverRefs.value.set(uid(trigger), el);
+            popoverRefs.value.set(uid(trigger), el)
         }
     }
 
@@ -85,26 +85,26 @@
         nextTick(() => {
             popoverRefs.value.forEach((popover) => {
                 if (popover?.popperRef?.popperInstanceRef) {
-                    popover.popperRef.popperInstanceRef.update();
+                    popover.popperRef.popperInstanceRef.update()
                 }
-            });
-        });
+            })
+        })
     }
 
-    const {t} = useI18n();
-    const toast = useToast();
+    const {t} = useI18n()
+    const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
         if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && props.flow) {
-            const tenant = route.params.tenant ? route.params.tenant + "/" : "";
+            const tenant = route.params.tenant ? route.params.tenant + "/" : ""
             const url =
                 new URL(window.location.href).origin +
-                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`
             try {
-                await Utils.copy(url);
-                toast.success(t("webhook link copied"));
+                await Utils.copy(url)
+                toast.success(t("webhook link copied"))
             } catch (error) {
-                console.error(error);
+                console.error(error)
             }
         }
     }
@@ -128,7 +128,7 @@
     }
 
     :deep(div.wrapper) {
-        width: 20px;
-        height: 20px;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
     }
 </style>

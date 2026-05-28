@@ -1,0 +1,36 @@
+apiVersion: v2
+type: application
+version: "0.0.0"
+appVersion: "0.0.0"
+name: kestra
+description: Infinitely scalable, event-driven, language-agnostic orchestration and scheduling platform to manage millions of workflows declaratively in code.
+home: https://kestra.io
+icon: https://kestra.io/favicon-192x192.png
+sources:
+  - https://github.com/kestra-io/kestra
+maintainers:
+  - name: tchiotludo
+    email: tchiot.ludo@gmail.com
+annotations:
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://kestra.io/docs/
+  artifacthub.io/screenshots: |
+    - title: Home page
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/03-Homepage.png
+    - title: Flows list
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/04-Flows.png
+    - title: Flow page
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/05-Flows-Flow.png
+    - title: Execution list
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/08-Executions.png
+    - title: Execution page
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/09-Executions-Execution.png
+    - title: Execution gantt
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/27-Executions-Gantt.png
+    - title: Namespaces list
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/14-EE-Namespace.png
+    - title: Global logs
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/10-Logs.png
+    - title: Documentation
+      url: https://raw.githubusercontent.com/kestra-io/docs/main/public/docs/user-interface-guide/12-Documentations-Plugins-Plugin.png

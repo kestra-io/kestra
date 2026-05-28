@@ -56,7 +56,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then
@@ -78,7 +78,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then
@@ -93,7 +93,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then
@@ -108,7 +108,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then
@@ -121,7 +121,7 @@ class GrpcChannelManagerTest {
         // Given
         WorkerControllersConfiguration config = createStaticConfig(List.of());
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -136,12 +136,13 @@ class GrpcChannelManagerTest {
             DiscoveryType.STATIC,
             null,
             null,
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -156,12 +157,13 @@ class GrpcChannelManagerTest {
             DiscoveryType.DNS,
             null,
             new DnsConfig("", 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -176,12 +178,13 @@ class GrpcChannelManagerTest {
             DiscoveryType.DNS,
             null,
             null,
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
 
         // When/Then
         assertThatThrownBy(() -> channelManager.init())
@@ -196,7 +199,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // When
@@ -214,7 +217,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
 
         // When - call init multiple times
         channelManager.init();
@@ -233,7 +236,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
         ManagedChannel channel = (ManagedChannel) channelManager.getDefaultChannel();
 
@@ -254,7 +257,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // When - call close multiple times
@@ -273,7 +276,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         // Note: init() is NOT called
 
         // When/Then - should not throw
@@ -287,7 +290,7 @@ class GrpcChannelManagerTest {
             List.of(new Endpoint("localhost", 9096))
         );
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // When
@@ -311,7 +314,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then - channel is created successfully (load balancing is internal to gRPC)
@@ -328,7 +331,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then - channel is created successfully
@@ -345,7 +348,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then - channel is created with health check config
@@ -362,7 +365,7 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then - channel is created without health check
@@ -391,7 +394,7 @@ class GrpcChannelManagerTest {
         );
 
         // When
-        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        channelManager = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         channelManager.init();
 
         // Then - channel is created (configuration is applied internally)
@@ -418,14 +421,14 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
 
         // First manager registers the resolver
-        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         manager1.init();
 
         // Close first manager - should unregister resolver
         manager1.close();
 
         // Second manager should be able to register a new resolver
-        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config);
+        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
         manager2.init();
 
         // Then - both should work without conflict
@@ -442,6 +445,7 @@ class GrpcChannelManagerTest {
             DiscoveryType.STATIC,
             new StaticConfig(endpoints),
             null,
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
@@ -454,6 +458,7 @@ class GrpcChannelManagerTest {
         return new WorkerControllersConfiguration(
             DiscoveryType.STATIC,
             new StaticConfig(endpoints),
+            null,
             null,
             new LoadBalancing(policy),
             new HealthCheck(true),
@@ -468,6 +473,7 @@ class GrpcChannelManagerTest {
             DiscoveryType.STATIC,
             new StaticConfig(endpoints),
             null,
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(healthCheckEnabled),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
@@ -479,6 +485,7 @@ class GrpcChannelManagerTest {
             DiscoveryType.DNS,
             null,
             new DnsConfig(hostname, 9096, DnsConfig.DnsRecordType.SRV, Duration.ofSeconds(30)),
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))
@@ -490,6 +497,7 @@ class GrpcChannelManagerTest {
             DiscoveryType.DNS,
             null,
             new DnsConfig(hostname, defaultPort, DnsConfig.DnsRecordType.A, Duration.ofSeconds(30)),
+            null,
             new LoadBalancing(LoadBalancing.Policy.ROUND_ROBIN),
             new HealthCheck(true),
             new WorkerControllersConfiguration.WaitForReady(true, Duration.ofSeconds(1))

@@ -192,7 +192,7 @@ public abstract class AbstractServiceInstanceRepositoryTest {
             Instant.now().minus(Duration.ofSeconds(30)),
             Instant.now().minus(Duration.ofSeconds(30)),
             null,
-            new ServerConfig(Duration.ofSeconds(5), null, null),
+            new ServerConfig(Duration.ofSeconds(5), null, null, null, null, null),
             null,
             null,
             0L

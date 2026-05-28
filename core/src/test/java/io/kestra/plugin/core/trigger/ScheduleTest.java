@@ -1,9 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -32,10 +30,6 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.condition.DateTimeBetween;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
-import io.kestra.plugin.core.condition.Expression;
-import io.kestra.plugin.core.condition.TimeBetween;
 import io.kestra.plugin.core.debug.Return;
 
 import jakarta.inject.Inject;
@@ -58,7 +52,7 @@ class ScheduleTest {
     void failed() throws Exception {
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("1 1 1 1 1").build();
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             TriggerContext.builder()
                 .date(ZonedDateTime.now().withSecond(2))
@@ -105,24 +99,23 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(4);
-        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
-        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
-        var inputs = evaluate.get().getInputs();
+        assertThat(evaluate.get().labels()).hasSize(4);
+        assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
+        assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
+        var vars = evaluate.get().trigger().getVariables();
+        var inputs = evaluate.get().inputs();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
-        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
+        assertThat(evaluate.get().labels()).contains(new Label("flow-label-1", "flow-label-1"));
+        assertThat(evaluate.get().labels()).contains(new Label("flow-label-2", "flow-label-2"));
         assertThat(inputs.size()).isEqualTo(2);
         assertThat(inputs.get("input1")).isNull();
         assertThat(inputs.get("input2")).isEqualTo("default");
@@ -140,17 +133,16 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getLabels()).hasSize(4);
-        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
-        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var inputs = evaluate.get().getInputs();
+        assertThat(evaluate.get().labels()).hasSize(4);
+        assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
+        assertTrue(evaluate.get().labels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
+        var inputs = evaluate.get().inputs();
 
         assertThat(inputs.size()).isEqualTo(2);
         assertThat(inputs.get("input1")).isEqualTo("input1");
@@ -182,16 +174,14 @@ class ScheduleTest {
             .minusMonths(1);
         var triggerContext = triggerContext(date, scheduleTrigger);
 
-        Optional<Execution> evaluate = scheduleTrigger.evaluate(conditionContext, triggerContext);
+        Optional<TriggerEvaluationResult> evaluate = scheduleTrigger.eval(conditionContext, triggerContext);
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        assertThat(evaluate.get().getLabels()).hasSize(6);
-        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.replay", "replay"));
-        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("system.test", "test"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
-        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
-        assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));
+        assertThat(evaluate.get().labels()).doesNotContain(new Label("system.replay", "replay"));
+        assertThat(evaluate.get().labels()).doesNotContain(new Label("system.test", "test"));
+        assertThat(evaluate.get().labels()).contains(new Label("trigger-label-1", "trigger-label-1"));
+        assertThat(evaluate.get().labels()).contains(new Label("trigger-label-2", "trigger-label-2"));
+        assertThat(evaluate.get().labels()).doesNotContain(new Label("trigger-label-3", ""));
     }
 
     @Test
@@ -204,14 +194,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .plus(Duration.ofMinutes(1));
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
+        var vars = evaluate.get().trigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofMinutes(1)));
@@ -226,14 +215,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minus(Duration.ofSeconds(1));
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
+        var vars = evaluate.get().trigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofSeconds(1)));
@@ -254,7 +242,7 @@ class ScheduleTest {
                     .build()
             ).build();
         // When
-        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), triggerContext);
         // Then
         assertThat(result.isEmpty()).isTrue();
     }
@@ -274,7 +262,7 @@ class ScheduleTest {
             )
             .build();
         // When
-        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), triggerContext);
 
         // Then
         assertThat(result.isPresent()).isTrue();
@@ -312,14 +300,13 @@ class ScheduleTest {
         ZonedDateTime expected = date.withMinute(30)
             .plusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
+        var vars = evaluate.get().trigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), expected)).isEqualTo(expected);
         assertThat(dateFromVars((String) vars.get("next"), expected)).isEqualTo(expected.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), expected)).isEqualTo(expected.minusMonths(1));
@@ -332,31 +319,22 @@ class ScheduleTest {
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    DayWeekInMonth.builder()
-                        .type(DayWeekInMonth.class.getName())
-                        .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                        .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                        .date(Property.ofExpression("{{ trigger.date }}"))
-                        .build()
-                )
-            )
+            .when("{{isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST')}}")
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
         ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
         ZonedDateTime next = ZonedDateTime.parse("2021-09-06T12:00:00+02:00");
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
         var execution = evaluate.get();
-        if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
-            var vars = execution.getTrigger().getVariables();
+        if (execution.trigger() != null && execution.trigger().getVariables() != null) {
+            var vars = execution.trigger().getVariables();
             assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
             assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
@@ -370,35 +348,24 @@ class ScheduleTest {
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    DateTimeBetween.builder()
-                        .type(DateTimeBetween.class.getName())
-                        .before(Property.ofValue(ZonedDateTime.parse("2021-08-02T12:00:00+02:00")))
-                        .date(Property.ofExpression("{{ trigger.date }}"))
-                        .build()
-                )
-            )
+            .when("{{trigger.date < '2021-08-02T12:00:00+02:00'}}")
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
         ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
         var execution = evaluate.get();
-        var vars = execution.getTrigger().getVariables();
+        var vars = execution.trigger().getVariables();
         if (vars != null) {
             assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
-            if (vars.containsKey("next")) {
-            } else {
-                assertThat(vars.containsKey("next")).isFalse();
-            }
+            assertThat(vars.containsKey("next")).isFalse();
         }
     }
 
@@ -437,7 +404,7 @@ class ScheduleTest {
 
         ZonedDateTime date = ZonedDateTime.now().minusHours(1).withMinute(0).withSecond(0).withNano(0);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             TriggerContext.builder()
                 .date(date)
@@ -447,8 +414,7 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
+        var vars = evaluate.get().trigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
     }
 
@@ -467,14 +433,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContext(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
-        var vars = evaluate.get().getTrigger().getVariables();
+        var vars = evaluate.get().trigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(ZonedDateTime.parse((String) vars.get("date")).getZone().getId()).isEqualTo("-04:00");
@@ -501,11 +466,10 @@ class ScheduleTest {
             )
             .build();
         // When
-        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), triggerContext);
 
         // Then
         assertThat(result.isPresent()).isTrue();
-        assertThat(result.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
     }
 
     @Test
@@ -520,13 +484,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContextWithMultiselectInput(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        var inputs = evaluate.get().getInputs();
+        var inputs = evaluate.get().inputs();
 
         // Verify MULTISELECT input with explicit defaults works correctly
         assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option1", "option2"));
@@ -544,13 +508,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContextWithMultiselectAutoSelectFirst(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        var inputs = evaluate.get().getInputs();
+        var inputs = evaluate.get().inputs();
 
         // Verify MULTISELECT input with autoSelectFirst defaults to first option
         assertThat(inputs.get("multiselectAutoSelect")).isEqualTo(List.of("first"));
@@ -574,13 +538,13 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        Optional<Execution> evaluate = trigger.evaluate(
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
             conditionContextWithMultiselectInput(trigger),
             triggerContext(date, trigger)
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        var inputs = evaluate.get().getInputs();
+        var inputs = evaluate.get().inputs();
 
         // Verify provided value overrides defaults
         assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option3"));
@@ -702,102 +666,6 @@ class ScheduleTest {
     }
 
     @Test
-    void shouldGetNextExecutionDateWithConditionMatchingFutureDate() throws InternalException {
-
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-        OffsetTime before = now.minusHours(1).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-        OffsetTime after = now.minusHours(4).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("0 * * * *") // every hour
-            .withSeconds(false)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    TimeBetween.builder()
-                        .type(TimeBetween.class.getName())
-                        .before(Property.ofValue(before))
-                        .after(Property.ofValue(after))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
-        assertThat(result).isNotEmpty();
-    }
-
-    @Test
-    void shouldGetNextExecutionDateWithConditionMatchingCurrentDate() throws InternalException {
-
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-
-        OffsetTime before = now.plusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-        OffsetTime after = now.minusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("*/30 * * * * *")
-            .withSeconds(true)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    TimeBetween.builder()
-                        .type(TimeBetween.class.getName())
-                        .before(Property.ofValue(before))
-                        .after(Property.ofValue(after))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
-        assertThat(result).isNotEmpty();
-    }
-
-    @Test
-    void shouldGetNextExecutionDateEvenIfExpressionConditionIsFalse() throws InternalException {
-        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
-
-        Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .cron("*/30 * * * * *")
-            .withSeconds(true)
-            .timezone("Europe/Paris")
-            .conditions(
-                List.of(
-                    Expression.builder()
-                        .type(Expression.class.getName())
-                        .expression(Property.ofValue("false"))
-                        .build()
-                )
-            )
-            .build();
-
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
-
-        ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
-            .build();
-
-        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
-        assertThat(result).isNotEmpty();
-    }
-
-    @Test
     void testLastDayCron() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
@@ -806,6 +674,7 @@ class ScheduleTest {
             .build();
 
         ZonedDateTime now = ZonedDateTime.now()
+            .withDayOfMonth(1)
             .withHour(12)
             .withMinute(0)
             .withSecond(0)

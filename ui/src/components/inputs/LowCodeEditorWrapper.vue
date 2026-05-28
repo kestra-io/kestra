@@ -1,5 +1,5 @@
 <template>
-    <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
+    <div id="topologyWrapper" v-ks-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
             :flowGraph="flowGraph"
@@ -15,72 +15,72 @@
             @swapped-task="onSwappedTask"
         />
         <div v-else-if="invalidGraph">
-            <el-alert
+            <KsAlert
                 :title="$t('topology-graph.invalid')"
                 type="error"
                 class="invalid-graph"
                 :closable="false"
             >
                 {{ $t('topology-graph.invalid_description') }}
-            </el-alert>
+            </KsAlert>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {Utils} from "@kestra-io/ui-libs";
-    import LowCodeEditor from "./LowCodeEditor.vue";
-    import {useFlowStore} from "../../stores/flow";
+    import {computed, ref} from "vue"
+    import {stringUtils} from "@kestra-io/design-system"
+    import LowCodeEditor from "./LowCodeEditor.vue"
+    import {useFlowStore} from "../../stores/flow"
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
 
-    const flowYaml = computed(() => flowStore.flowYaml);
-    const flowGraph = computed(() => flowStore.flowGraph);
-    const invalidGraph = computed(() => flowStore.invalidGraph);
-    const flowId = computed(() => flowStore.flow?.id);
-    const namespace = computed(() => flowStore.flow?.namespace);
-    const expandedSubflows = computed<string[]>(() => flowStore.expandedSubflows);
-    const isAllowedEdit = computed(() => flowStore.isAllowedEdit);
-    const isReadOnly = computed(() => flowStore.isReadOnly);
+    const flowYaml = computed(() => flowStore.flowYaml)
+    const flowGraph = computed(() => flowStore.flowGraph)
+    const invalidGraph = computed(() => flowStore.invalidGraph)
+    const flowId = computed(() => flowStore.flow?.id)
+    const namespace = computed(() => flowStore.flow?.namespace)
+    const expandedSubflows = computed<string[]>(() => flowStore.expandedSubflows)
+    const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
+    const isReadOnly = computed(() => flowStore.isReadOnly)
 
-    const isLoading = ref(false);
+    const isLoading = ref(false)
 
     function loadingState(loading: boolean) {
-        isLoading.value = loading;
+        isLoading.value = loading
     }
 
-    const onExpandSubflow = (expandedSubflows: string[]) => {
-        flowStore.expandedSubflows = expandedSubflows;
-    };
+    const onExpandSubflow = (subflows: string[]) => {
+        flowStore.expandedSubflows = subflows
+    }
 
     const onSwappedTask = (swappedTasks: [string, string]) => {
         onExpandSubflow(expandedSubflows.value.map((expandedSubflow) => {
-            let swappedTaskSplit;
+            let swappedTaskSplit
             if (expandedSubflow === swappedTasks[0]) {
-                swappedTaskSplit = swappedTasks[1].split(".");
-                swappedTaskSplit.pop();
+                swappedTaskSplit = swappedTasks[1].split(".")
+                swappedTaskSplit.pop()
 
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
-                );
+                    stringUtils.afterLastDot(expandedSubflow)
+                )
             }
             if (expandedSubflow === swappedTasks[1]) {
-                swappedTaskSplit = swappedTasks[0].split(".");
-                swappedTaskSplit.pop();
+                swappedTaskSplit = swappedTasks[0].split(".")
+                swappedTaskSplit.pop()
 
                 return (
                     swappedTaskSplit.join(".") +
                     "." +
-                    Utils.afterLastDot(expandedSubflow)
-                );
+                    stringUtils.afterLastDot(expandedSubflow)
+                )
             }
 
-            return expandedSubflow;
+            return expandedSubflow
         }))
-    };
+    }
 
     const onEdit = async (source: string, currentIsFlow = false) => {
         flowStore.flowYaml = source
@@ -89,15 +89,15 @@
             editorViewType: "YAML",
             topologyVisible: true,
         })
-        
+
         if (currentIsFlow && source) {
             await flowStore.loadGraphFromSource({
                 flow: source,
             }).catch((error) => {
-                console.error("Error loading graph:", error);
+                console.error("Error loading graph:", error)
             })
         }
-        
+
         return result
     }
 </script>

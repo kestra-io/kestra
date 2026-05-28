@@ -3,6 +3,8 @@ package io.kestra.executor.handler;
 import java.util.Optional;
 
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
@@ -44,8 +46,25 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
     @Inject
     private BroadcastQueueInterface<ExecutionKilled> killQueue;
 
+    @Inject
+    private AsyncOperationService asyncOperationService;
+
     @Override
     public Optional<ExecutorContext> handle(ExecutionKilledExecution message) {
+        AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
+        String error = null;
+        try {
+            return doHandle(message);
+        } catch (RuntimeException e) {
+            outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
+            error = e.getMessage();
+            throw e;
+        } finally {
+            asyncOperationService.emitProcessedIfAsync(message, message.getTenantId(), message.getExecutionId(), outcome, error);
+        }
+    }
+
+    private Optional<ExecutorContext> doHandle(ExecutionKilledExecution message) {
         metricRegistry
             .counter(MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT, MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(message))
             .increment();
@@ -88,6 +107,15 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
                     }
                 })
                 .blockLast();
+
+            // Also kill loop sub-executions created by a Loop task within this execution.
+            for (ExecutionKilledExecution executionKilled : executionService.killLoopSubExecutions(message.getTenantId(), message.getExecutionId())) {
+                try {
+                    killQueue.emit(executionKilled);
+                } catch (QueueException e) {
+                    log.error("Unable to kill the loop sub-execution {}", executionKilled.getExecutionId(), e);
+                }
+            }
         }
 
         return maybeExecutor;

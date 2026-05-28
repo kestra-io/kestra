@@ -10,20 +10,20 @@
                     v-if="executionsStore.execution"
                     :execution="executionsStore.execution"
                 />
-                <el-dropdown trigger="click" placement="bottom-end">
-                    <el-button :icon="DotsVertical" link class="tab-icon" />
+                <KsDropdown trigger="click" placement="bottom-end">
+                    <KsButton :icon="DotsVertical" link class="tab-icon" />
                     <template #dropdown>
-                        <el-dropdown-menu class="m-2">
-                            <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
+                        <KsDropdownMenu class="m-2">
+                            <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
                                 <span class="small-text">{{ $t('playground.clear_history') }}</span>
-                            </el-dropdown-item>
-                            <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
+                            </KsDropdownItem>
+                            <KsDropdownItem :icon="CloseIcon" @click="playgroundStore.enabled = false">
                                 <span class="small-text">{{ $t('close') }} {{ $t('playground.toggle').toLowerCase() }}</span>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
                     </template>
-                </el-dropdown>
-                <el-button
+                </KsDropdown>
+                <KsButton
                     :icon="CloseIcon"
                     link
                     class="tab-icon"
@@ -72,25 +72,25 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue";
-    import {useI18n} from "vue-i18n";
-    import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue";
-    import HistoryIcon from "vue-material-design-icons/History.vue";
-    import Backspace from "vue-material-design-icons/Backspace.vue";
-    import CloseIcon from "vue-material-design-icons/Close.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import Gantt from "../executions/Gantt.vue";
+    import {computed, ref, markRaw, watch, onUnmounted, onMounted} from "vue"
+    import {useI18n} from "vue-i18n"
+    import ChartTimelineIcon from "vue-material-design-icons/ChartTimeline.vue"
+    import HistoryIcon from "vue-material-design-icons/History.vue"
+    import Backspace from "vue-material-design-icons/Backspace.vue"
+    import CloseIcon from "vue-material-design-icons/Close.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import Gantt from "../executions/Gantt.vue"
     // @ts-expect-error no types on logs
-    import Logs from "../executions/Logs.vue";
-    import ExecutionOutput from "../executions/outputs/Wrapper.vue";
-    import ExecutionMetric from "../executions/ExecutionMetric.vue";
-    import PlaygroundLog from "./playground/PlaygroundLog.vue";
-    import {usePlaygroundStore} from "../../stores/playground";
+    import Logs from "../executions/Logs.vue"
+    import ExecutionOutput from "../executions/outputs/Wrapper.vue"
+    import ExecutionMetric from "../executions/ExecutionMetric.vue"
+    import PlaygroundLog from "./playground/PlaygroundLog.vue"
+    import {usePlaygroundStore} from "../../stores/playground"
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
-    import {useExecutionsStore} from "../../stores/executions";
-    import Kill from "../executions/overview/components/actions/Kill.vue";
+    import {useExecutionsStore} from "../../stores/executions"
+    import Kill from "../executions/overview/components/actions/Kill.vue"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const tabs = computed(() => ([
         {
@@ -112,36 +112,35 @@
             name: "metrics",
             title: t("metrics"),
             component: markRaw(ExecutionMetric),
-        }
-    ]));
+        },
+    ]))
 
-    const playgroundStore = usePlaygroundStore();
-    const executionsStore = useExecutionsStore();
+    const playgroundStore = usePlaygroundStore()
+    const executionsStore = useExecutionsStore()
 
     watch(() => playgroundStore.latestExecution?.id, (newValue, oldValue) => {
         if (newValue && newValue !== oldValue) {
-            executionsStore.followExecution(playgroundStore.latestExecution, t);
+            executionsStore.followExecution(playgroundStore.latestExecution, t)
         }
-    });
+    })
 
-    const activeTab = ref(tabs.value[0]);
+    const activeTab = ref(tabs.value[0])
 
     onMounted(() => {
-        playgroundStore.runFromQuery();
-    });
+        playgroundStore.runFromQuery()
+    })
 
     onUnmounted(() => {
-        executionsStore.closeSSE();
-    });
+        executionsStore.closeSSE()
+    })
 
-    const historyVisible = ref(false);
+    const historyVisible = ref(false)
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
     .tab-icon{
-        color: var(--ks-content-inactive);
+        color: var(--ks-text-inactive);
         margin-right: 4px;
     }
 
@@ -155,7 +154,7 @@
         flex-direction: column;
         position: relative;
         color: var(--ks-color-text-secondary);
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         overflow-y: auto;
     }
 
@@ -163,10 +162,10 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         padding: 8px;
         position: sticky;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         top: 0;
         z-index: 100;
         gap: 1rem;
@@ -198,7 +197,7 @@
         gap: 8px;
         align-items: center;
         .tab-icon{
-            color: var(--ks-content-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 
@@ -206,14 +205,14 @@
         position: absolute;
         top: 56px;
         right: 12px;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border: none;
         padding: 8px;
         border-radius: 50%;
         display: flex;
         z-index: 99;
         &:hover {
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
 
@@ -227,17 +226,17 @@
             align-items: center;
             gap: .5rem;
             width: 268px;
-            font-size: 1rem;
+            font-size: var(--ks-font-size-base);
             margin: .8rem 1rem;
             font-weight: normal;
             margin-bottom: 0.5rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
 
         &.history-visible {
             width: 300px;
             overflow-y: auto;
-            border-color: var(--ks-border-primary);
+            border-color: var(--ks-border-default);
         }
     }
 
@@ -254,20 +253,20 @@
     .pillTabs {
         display: flex;
         padding: 4px;
-        background-color:var(--ks-background-card) ;
+        background-color:var(--ks-bg-surface) ;
         margin: 1rem;
         border-radius: 6px;
         gap: 2px;
         button{
             padding: 0.2rem .5rem;
-            font-size: 14px;
-            color: var(--ks-content-tertiary);
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-dim);
             background-color: transparent;
             border: none;
             border-radius: 4px;
             &.activeTab {
-                color: $base-white;
-                background-color: $base-blue-500;
+                color: var(--ks-btn-primary-text);
+                background-color: var(--ks-btn-primary-bg-default);
             }
         }
     }
@@ -275,7 +274,7 @@
     .tab-content{
         overflow: auto;
         padding: 1rem;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     .empty-state{
@@ -285,7 +284,7 @@
         justify-content: center;
         p {
             text-align: center;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             img {
                 width: 200px;
                 margin-bottom: 1rem;

@@ -6,11 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.*;
 import io.kestra.core.serializers.JacksonMapper;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
@@ -18,28 +17,28 @@ import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
+    public static final String RENDER_DEPTH_VAR = "__kestra_render_depth";
 
-    private PebbleEngine pebbleEngine;
+    private volatile PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
-    }
-
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
-        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
+        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
     }
 
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
+    }
+
+    private PebbleEngine pebbleEngine() {
+        return this.pebbleEngine;
     }
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
@@ -63,7 +62,11 @@ public class VariableRenderer {
     }
 
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
-        return (String) this.render(inline, variables, recursive, true);
+        if (inline == null) {
+            return null;
+        }
+        String result = (String) this.render(inline, variables, recursive, true);
+        return result != null ? result : "";
     }
 
     public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
@@ -98,7 +101,7 @@ public class VariableRenderer {
         }
 
         try {
-            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate((String) result);
+            PebbleTemplate compiledTemplate = this.pebbleEngine().getLiteralTemplate((String) result);
 
             try {
                 OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
@@ -170,7 +173,7 @@ public class VariableRenderer {
         }
 
         Object result = this.renderOnce(inline, variables, stringify);
-        if (result.equals(inline)) {
+        if (result == null || Objects.equals(result, inline)) {
             return result;
         }
 
@@ -186,7 +189,7 @@ public class VariableRenderer {
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
+            Object value = renderObject(r.getValue(), variables, recursive).orElse(null);
 
             map.putIfAbsent(
                 key,
@@ -210,11 +213,19 @@ public class VariableRenderer {
         } else if (object instanceof Set set) {
             return Optional.of(this.render(set, variables, recursive));
         } else if (object instanceof String string) {
-            return Optional.of(this.render(string, variables, recursive));
+            return Optional.ofNullable(this.render(string, variables, recursive, true));
         }
 
         // Return the given object if it cannot be rendered.
         return Optional.ofNullable(object);
+    }
+
+    /**
+     * Renders an object while tracking render() nesting depth to prevent infinite recursion.
+     */
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive, int renderDepth) throws IllegalVariableEvaluationException {
+        variables.put(RENDER_DEPTH_VAR, renderDepth);
+        return renderObject(object, variables, recursive);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -225,7 +236,7 @@ public class VariableRenderer {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            result.add(this.renderObject(inline, variables, recursive).orElse(inline));
+            result.add(this.renderObject(inline, variables, recursive).orElse(null));
         }
 
         return result;
@@ -255,19 +266,5 @@ public class VariableRenderer {
         }
 
         return result;
-    }
-
-    @Getter
-    @ConfigurationProperties("kestra.variables")
-    public static class VariableConfiguration {
-        public VariableConfiguration() {
-            this.cacheEnabled = true;
-            this.cacheSize = 1000;
-            this.recursiveRendering = false;
-        }
-
-        Boolean cacheEnabled;
-        Integer cacheSize;
-        Boolean recursiveRendering;
     }
 }

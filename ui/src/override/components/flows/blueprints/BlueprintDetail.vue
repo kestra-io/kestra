@@ -1,11 +1,11 @@
 <template>
-    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-loading="!blueprint">
-        <template #additional-right>
+    <TopNavBar v-if="!embed && blueprint" :title="blueprint?.title" :breadcrumb="breadcrumb" v-ks-loading="!blueprint">
+        <template #actions>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
-                    <el-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
+                    <KsButton type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
                         {{ $t('use') }}
-                    </el-button>
+                    </KsButton>
                 </router-link>
             </ul>
         </template>
@@ -13,17 +13,17 @@
     <div v-else-if="blueprint" class="header-wrapper">
         <div class="header d-flex">
             <button class="back-button align-self-center">
-                <el-icon size="medium" @click="goBack">
+                <KsIcon size="sm" @click="goBack">
                     <ChevronLeft />
-                </el-icon>
+                </KsIcon>
             </button>
             <span class="header-title align-self-center">
                 {{ $t('blueprints.title') }}
             </span>
             <router-link v-if="userCanCreate" :to="editorRoute" class="ms-auto">
-                <el-button type="primary" @click="trackBlueprintUse('detail')">
+                <KsButton type="primary" @click="trackBlueprintUse('detail')">
                     {{ $t('use') }}
-                </el-button>
+                </KsButton>
             </router-link>
         </div>
         <div>
@@ -33,8 +33,8 @@
         </div>
     </div>
 
-    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-loading="!blueprint">
-        <el-card v-if="blueprint && kind === 'flow'">
+    <section v-bind="$attrs" :class="{'container': !embed}" class="blueprint-container" v-ks-loading="!blueprint">
+        <KsCard v-if="blueprint && kind === 'flow'">
             <div class="embedded-topology" v-if="flowGraph">
                 <LowCodeEditor
                     v-if="flowGraph"
@@ -46,11 +46,11 @@
                     isReadOnly
                 />
             </div>
-        </el-card>
-        <el-row :gutter="30" v-if="blueprint">
-            <el-col :md="24" :lg="embed ? 24 : 18">
+        </KsCard>
+        <KsRow :gutter="30" v-if="blueprint">
+            <KsCol :md="24" :lg="embed ? 24 : 18">
                 <h4>{{ $t("source") }}</h4>
-                <el-card>
+                <KsCard>
                     <Editor
                         class="position-relative"
                         :readOnly="true"
@@ -64,51 +64,50 @@
                             <CopyToClipboard :text="blueprint?.source" />
                         </template>
                     </Editor>
-                </el-card>
+                </KsCard>
                 <template v-if="blueprint?.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
                     <div class="tags text-uppercase">
                         <div v-for="tag in processedTags" :key="tag.original" class="tag-box">
-                            <el-tag type="info" size="small">
+                            <KsTag type="info" size="small">
                                 {{ tag.display }}
-                            </el-tag>
+                            </KsTag>
                         </div>
                     </div>
-                    <Markdown :source="blueprint?.description" />
+                    <KsMarkdown :content="blueprint?.description" />
                 </template>
-            </el-col>
-            <el-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
+            </KsCol>
+            <KsCol :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
                 <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint?.includedTasks)]" :key="String(task)">
-                        <TaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
+                        <KsTaskIcon :cls="String(task)" :icons="pluginsStore.icons" />
                     </div>
                 </div>
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
+    import {ref, computed, onMounted} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
 
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import Editor from "../../../../components/inputs/Editor.vue";
-    import Markdown from "../../../../components/layout/Markdown.vue";
-    import TopNavBar from "../../../../components/layout/TopNavBar.vue";
-    import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
-    import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import Editor from "../../../../components/inputs/Editor.vue"
+    import TopNavBar from "../../../../components/layout/TopNavBar.vue"
+    import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue"
+    import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue"
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
 
-    import {useFlowStore} from "../../../../stores/flow";
-    import {usePluginsStore} from "../../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../../stores/blueprints";
-    import {useApiStore} from "../../../../stores/api";
+    import {useFlowStore} from "../../../../stores/flow"
+    import {usePluginsStore} from "../../../../stores/plugins"
+    import {useBlueprintsStore} from "../../../../stores/blueprints"
+    import {useApiStore} from "../../../../stores/api"
 
-    import {canCreate} from "override/composables/blueprintsPermissions";
-    import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {canCreate} from "override/composables/blueprintsPermissions"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     const props = withDefaults(defineProps<{
         blueprintId: string;
@@ -120,42 +119,42 @@
         embed: false,
         blueprintType: "community",
         kind: "flow",
-        combinedView: false
-    });
+        combinedView: false,
+    })
 
     const emit = defineEmits<{
         back: [];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
-    const {t} = useI18n();
+    const route = useRoute()
+    const router = useRouter()
+    const {t} = useI18n()
 
-    const pluginsStore = usePluginsStore();
-    const blueprintsStore = useBlueprintsStore();
-    const flowStore = useFlowStore();
-    const apiStore = useApiStore();
+    const pluginsStore = usePluginsStore()
+    const blueprintsStore = useBlueprintsStore()
+    const flowStore = useFlowStore()
+    const apiStore = useApiStore()
 
-    const flowGraph = ref();
-    const blueprint = ref();
-    const tab = ref("");
-    const tags = ref();
+    const flowGraph = ref()
+    const blueprint = ref()
+    const tab = ref("")
+    const tags = ref()
 
-    const userCanCreate = computed(() => canCreate(props.kind));
+    const userCanCreate = computed(() => canCreate(props.kind))
 
     const parsedFlow = computed(() => {
         return blueprint.value?.source ? {
-            ...parseFlow(blueprint.value.source),
-            source: blueprint.value.source
-        } : {};
-    });
+            ...YAML_UTILS.parse(blueprint.value.source),
+            source: blueprint.value.source,
+        } : {}
+    })
 
     const processedTags = computed(() => {
         return blueprint.value?.tags?.map((tag: string) => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
-        }));
-    });
+            display: tags.value?.[tag]?.name ?? tag,
+        }))
+    })
 
     const breadcrumb = computed(() => [
         {
@@ -164,41 +163,41 @@
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: route.params?.tab || tab.value
-                }
-            }
-        }
-    ]);
+                    tab: route.params?.tab || tab.value,
+                },
+            },
+        },
+    ])
 
     const editorRoute = computed(() => {
-        let additionalQuery: Record<string, any> = {};
+        let additionalQuery: Record<string, any> = {}
         if (props.kind === "flow") {
-            additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab;
+            additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab
         } else if (props.kind === "dashboard") {
             additionalQuery = {
                 name: "home",
                 params: route.params?.tenant === undefined
                     ? undefined
                     : JSON.stringify({tenant: route.params.tenant}),
-            };
+            }
         }
 
-        return {name: `${props.kind}s/create`, params: {tenant: route.params?.tenant}, query: {blueprintId: props.blueprintId, ...additionalQuery}};
-    });
+        return {name: `${props.kind}s/create`, params: {tenant: route.params?.tenant}, query: {blueprintId: props.blueprintId, ...additionalQuery}}
+    })
 
     const goBack = () => {
         if (props.embed) {
-            emit("back");
+            emit("back")
         } else {
             router.push({
                 name: "blueprints",
                 params: {
                     tenant: route.params?.tenant,
-                    tab: tab.value
-                }
-            });
+                    tab: tab.value,
+                },
+            })
         }
-    };
+    }
 
     const trackBlueprintUse = (source: "detail" | "browser") => {
         apiStore.posthogEvents({
@@ -210,49 +209,48 @@
                 blueprint_type: props.combinedView ? props.blueprintType : route.params?.tab,
                 source,
             },
-        });
-    };
+        })
+    }
 
     const loadTags = async () => {
         const data = await blueprintsStore.getBlueprintTags({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any
-        });
-        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? []);
-    };
+            kind: props.kind as any,
+        })
+        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? [])
+    }
 
     onMounted(async () => {
         const blueprintData = await blueprintsStore.getBlueprint({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
             kind: props.kind as any,
-            id: props.blueprintId
-        });
-        blueprint.value = blueprintData;
+            id: props.blueprintId,
+        })
+        blueprint.value = blueprintData
 
-        await loadTags();
+        await loadTags()
 
-        const blueprintTab = props.combinedView ? props.blueprintType : route.params?.tab;
+        const blueprintTab = props.combinedView ? props.blueprintType : route.params?.tab
         if (props.kind === "flow") {
             flowGraph.value = blueprintTab === "community"
                 ? await blueprintsStore.getBlueprintGraph({
                     type: blueprintTab as any,
                     kind: props.kind as any,
-                    id: props.blueprintId
+                    id: props.blueprintId,
                 })
                 : await flowStore.getGraphFromSourceResponse({
-                    flow: blueprint.value?.source
-                });
+                    flow: blueprint.value?.source,
+                })
         }
-    });
+    })
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-top: calc($spacer * 2);
-        margin-bottom: $spacer;
+        margin-top: calc(1rem * 2);
+        margin-bottom: 1rem;
 
-        .el-card & {
+        .kel-card & {
             margin-top: 2.5rem;
         }
 
@@ -266,20 +264,20 @@
             .back-button {
                 height: 32px;
                 margin-left: 0;
-                margin-right: calc($spacer);
+                margin-right: calc(1rem);
                 cursor: pointer;
                 border: none;
-                background: var(--ks-background-card);
+                background: var(--ks-bg-surface);
                 display: flex;
                 align-items: center;
                 border-radius: 5px;
                 padding: 4px 10px;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
             }
 
             .blueprint-title {
                 font-weight: 600;
-                font-size: 20px;
+                font-size: var(--ks-font-size-lg);
                 line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -290,16 +288,16 @@
     .blueprint-container {
         height: 100%;
 
-        :deep(.el-card) {
-            .el-card__body {
+        :deep(.kel-card) {
+            .kel-card__body {
                 padding: 0;
             }
         }
 
         h4 {
-            margin-top: calc($spacer * 2);
+            margin-top: calc(1rem * 2);
             font-weight: 600;
-            font-size: 18.4px;
+            font-size: var(--ks-font-size-md);
             line-height: 28px;
         }
 
@@ -313,17 +311,17 @@
             display: flex;
             flex-wrap: wrap;
             > div {
-                background: var(--ks-background-card);
-                border-radius: var(--bs-border-radius);
+                background: var(--ks-bg-surface);
+                border-radius: var(--kel-border-radius-base);
                 min-width : 100px;
                 width: 100px;
                 height : 100px;
-                padding: $spacer;
-                margin-right: $spacer;
-                margin-bottom: $spacer;
+                padding: 1rem;
+                margin-right: 1rem;
+                margin-bottom: 1rem;
                 display: flex;
                 flex-wrap: wrap;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
 
                 :deep(.wrapper) {
                     .icon {
@@ -335,7 +333,7 @@
                         position: static;
                         background: none;
                         border-top: 0;
-                        font-size: var(--font-size-sm);
+                        font-size: var(--ks-font-size-sm);
                     }
 
                 }
@@ -347,17 +345,17 @@
         margin: 10px 0;
         display: flex;
 
-        .el-tag.el-tag--info {
-            background-color: var(--ks-background-card);
+        .kel-tag.kel-tag--info {
+            background-color: var(--ks-bg-surface);
             padding: 15px 10px;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-transform: capitalize;
-            font-size: var(--el-font-size-small);
-            border: 1px solid var(--ks-border-primary);
+            font-size: var(--ks-font-size-sm);
+            border: 1px solid var(--ks-border-default);
         }
 
         .tag-box {
-            margin-right: calc($spacer / 3);
+            margin-right: calc(1rem / 3);
         }
     }
 </style>

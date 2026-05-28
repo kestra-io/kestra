@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -60,32 +61,32 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
 
     // Controller (WorkerJobDispatcher) metrics
-    public static final String METRIC_CONTROLLER_ACTIVE_WORKER_COUNT = "controller.active.worker.count";
-    public static final String METRIC_CONTROLLER_ACTIVE_WORKER_COUNT_DESCRIPTION = "The number of active workers in a group";
-    public static final String METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT = "controller.available.permits.count";
-    public static final String METRIC_CONTROLLER_AVAILABLE_PERMITS_COUNT_DESCRIPTION = "The total available permits (remaining capacity) in a group";
-    public static final String METRIC_CONTROLLER_INFLIGHT_COUNT = "controller.inflight.count";
-    public static final String METRIC_CONTROLLER_INFLIGHT_COUNT_DESCRIPTION = "The total number of in-flight jobs in a group";
-    public static final String METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT = "controller.total.active.worker.count";
-    public static final String METRIC_CONTROLLER_TOTAL_ACTIVE_WORKER_COUNT_DESCRIPTION = "The total number of active workers across all groups";
-    public static final String METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT = "controller.total.available.permits.count";
-    public static final String METRIC_CONTROLLER_TOTAL_AVAILABLE_PERMITS_COUNT_DESCRIPTION = "The total available permits across all groups";
-    public static final String METRIC_CONTROLLER_JOB_DISPATCHED_COUNT = "controller.job.dispatched.count";
-    public static final String METRIC_CONTROLLER_JOB_DISPATCHED_COUNT_DESCRIPTION = "The total number of jobs dispatched to workers";
-    public static final String METRIC_CONTROLLER_JOB_REQUEUED_COUNT = "controller.job.requeued.count";
-    public static final String METRIC_CONTROLLER_JOB_REQUEUED_COUNT_DESCRIPTION = "The total number of jobs re-queued due to no worker capacity";
-    public static final String METRIC_CONTROLLER_JOB_KILLED_COUNT = "controller.job.killed.count";
-    public static final String METRIC_CONTROLLER_JOB_KILLED_COUNT_DESCRIPTION = "The total number of jobs skipped because the execution was killed";
-    public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_COUNT = "controller.job.dispatch.failed.count";
-    public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_COUNT_DESCRIPTION = "The total number of job dispatch failures";
-    public static final String METRIC_CONTROLLER_WORKER_REGISTERED_COUNT = "controller.worker.registered.count";
-    public static final String METRIC_CONTROLLER_WORKER_REGISTERED_COUNT_DESCRIPTION = "The total number of worker registrations";
-    public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT = "controller.worker.unregistered.count";
-    public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_COUNT_DESCRIPTION = "The total number of worker disconnections";
-    public static final String METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_COUNT = "controller.subscription.paused.count";
-    public static final String METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_COUNT_DESCRIPTION = "The total number of queue subscription pauses";
-    public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_COUNT = "controller.subscription.resumed.count";
-    public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_COUNT_DESCRIPTION = "The total number of queue subscription resumes";
+    public static final String METRIC_CONTROLLER_WORKER_ACTIVE = "controller.worker.active";
+    public static final String METRIC_CONTROLLER_WORKER_ACTIVE_DESCRIPTION = "The number of active workers in a group";
+    public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE = "controller.permits.available";
+    public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_DESCRIPTION = "The total available permits (remaining capacity) in a group";
+    public static final String METRIC_CONTROLLER_JOB_INFLIGHT = "controller.job.inflight";
+    public static final String METRIC_CONTROLLER_JOB_INFLIGHT_DESCRIPTION = "The total number of in-flight jobs in a group";
+    public static final String METRIC_CONTROLLER_WORKER_ACTIVE_ALL = "controller.worker.active.all";
+    public static final String METRIC_CONTROLLER_WORKER_ACTIVE_ALL_DESCRIPTION = "The total number of active workers across all groups";
+    public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL = "controller.permits.available.all";
+    public static final String METRIC_CONTROLLER_PERMITS_AVAILABLE_ALL_DESCRIPTION = "The total available permits across all groups";
+    public static final String METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL = "controller.job.dispatched.total";
+    public static final String METRIC_CONTROLLER_JOB_DISPATCHED_TOTAL_DESCRIPTION = "The total number of jobs dispatched to workers";
+    public static final String METRIC_CONTROLLER_JOB_REQUEUED_TOTAL = "controller.job.requeued.total";
+    public static final String METRIC_CONTROLLER_JOB_REQUEUED_TOTAL_DESCRIPTION = "The total number of jobs re-queued due to no worker capacity";
+    public static final String METRIC_CONTROLLER_JOB_KILLED_TOTAL = "controller.job.killed.total";
+    public static final String METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION = "The total number of jobs skipped because the execution was killed";
+    public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL = "controller.job.dispatch.failed.total";
+    public static final String METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION = "The total number of job dispatch failures";
+    public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL = "controller.worker.registered.total";
+    public static final String METRIC_CONTROLLER_WORKER_REGISTERED_TOTAL_DESCRIPTION = "The total number of worker registrations";
+    public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL = "controller.worker.unregistered.total";
+    public static final String METRIC_CONTROLLER_WORKER_UNREGISTERED_TOTAL_DESCRIPTION = "The total number of worker disconnections";
+    public static final String METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_TOTAL = "controller.subscription.paused.total";
+    public static final String METRIC_CONTROLLER_SUBSCRIPTION_PAUSED_TOTAL_DESCRIPTION = "The total number of queue subscription pauses";
+    public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL = "controller.subscription.resumed.total";
+    public static final String METRIC_CONTROLLER_SUBSCRIPTION_RESUMED_TOTAL_DESCRIPTION = "The total number of queue subscription resumes";
 
     public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
     public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
@@ -157,8 +158,8 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION = "The maximum number of event-loop threads.";
     public static final String METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION = "scheduler.eventloop.tick.duration";
     public static final String METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION = "The duration of a single event-loop tick.";
-    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT = "scheduler.eventloop.events.received.count";
-    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION = "The total number of events received by the event-loop.";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_TOTAL = "scheduler.eventloop.event.received.total";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_TOTAL_DESCRIPTION = "The total number of events received by the event-loop.";
     public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION = "scheduler.eventloop.event.process.duration";
     public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION = "The duration spent processing individual events within the event-loop.";
     public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
@@ -167,16 +168,22 @@ public class MetricRegistry {
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
     public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
 
-    public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT = "queue.big_message.count";
-    public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
-    public static final String METRIC_QUEUE_EMIT_COUNT = "queue.emit.count";
-    public static final String METRIC_QUEUE_EMIT_COUNT_DESCRIPTION = "Total number of emitted messages";
+    public static final String METRIC_QUEUE_MESSAGE_BIG_TOTAL = "queue.message.big.total";
+    public static final String METRIC_QUEUE_MESSAGE_BIG_TOTAL_DESCRIPTION = "Total number of big messages";
+    public static final String METRIC_QUEUE_MESSAGE_EMITTED_TOTAL = "queue.message.emitted.total";
+    public static final String METRIC_QUEUE_MESSAGE_EMITTED_TOTAL_DESCRIPTION = "Total number of emitted messages";
     public static final String METRIC_QUEUE_CONSUME_DURATION = "queue.consume.duration";
     public static final String METRIC_QUEUE_CONSUME_DURATION_DESCRIPTION = "Queue message consumer duration for each message";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION = "queue.consume.batch.duration";
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
-    public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT = "queue.message.lag.count";
-    public static final String METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION = "Total number of messages in the queue that are not yet consumed";
+    public static final String METRIC_QUEUE_MESSAGE_LAG = "queue.message.lag";
+    public static final String METRIC_QUEUE_MESSAGE_LAG_DESCRIPTION = "Number of messages in the queue that are not yet consumed";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_ACTIVE = "queue.subscribers.active";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_ACTIVE_DESCRIPTION = "Number of active queue subscribers";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL = "queue.subscribers.paused.total";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL_DESCRIPTION = "The total number of queue subscribers pause operations";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL = "queue.subscribers.resumed.total";
+    public static final String METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL_DESCRIPTION = "The total number of queue subscribers resume operations";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -481,6 +488,17 @@ public class MetricRegistry {
         };
         var labelTags = getLabelTags(execution.getLabels());
         var tenantTag = getTenantTag(execution.getTenantId());
+        return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
+    }
+
+    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId) {
+        var baseTags = new String[] {
+            TAG_FLOW_ID, triggerId.getFlowId(),
+            TAG_NAMESPACE_ID, triggerId.getNamespace(),
+            TAG_STATE, evaluationResult.stateType().name(),
+        };
+        var labelTags = getLabelTags(evaluationResult.labels() != null ? evaluationResult.labels() : List.of());
+        var tenantTag = getTenantTag(triggerId.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 

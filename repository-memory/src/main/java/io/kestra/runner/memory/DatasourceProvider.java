@@ -7,7 +7,6 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
-import io.micronaut.flyway.FlywayConfigurationProperties;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
@@ -26,27 +25,9 @@ public class DatasourceProvider {
         return memory;
     }
 
-    @Singleton
-    @Named("h2")
-    public CustomFlywayConfiguration getFlywayConfiguration() {
-        CustomFlywayConfiguration flyway = new CustomFlywayConfiguration("h2");
-        flyway.setEnabled(true);
-        flyway.setLocations("classpath:migrations/h2");
-        flyway.setIgnoreMigrationPatterns("*:missing", "*:future");
-        flyway.getProperties().put("outOfOrder", "true");
-        return flyway;
-    }
-
     // We have to create an extended class to be able to create bean from it as DatasourceConfiguration can only be configured as yaml properties
     public static class CustomDatasourceConfiguration extends DatasourceConfiguration {
         public CustomDatasourceConfiguration(String name) {
-            super(name);
-        }
-    }
-
-    // We have to create an extended class to be able to create bean from it as DatasourceConfiguration can only be configured as yaml properties
-    public static class CustomFlywayConfiguration extends FlywayConfigurationProperties {
-        public CustomFlywayConfiguration(String name) {
             super(name);
         }
     }

@@ -12,7 +12,6 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.SecretUtils;
 import io.kestra.core.validations.FlowValidation;
 
 import io.micronaut.core.annotation.AnnotationValue;
@@ -28,19 +27,6 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
-    public static List<String> RESERVED_FLOW_IDS = List.of(
-        "pause",
-        "resume",
-        "force-run",
-        "change-status",
-        "kill",
-        "executions",
-        "search",
-        "source",
-        "disable",
-        "enable"
-    );
-
     @Inject
     private NamespaceService namespaceService;
 
@@ -54,10 +40,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         List<String> violations = new ArrayList<>();
-
-        if (value.getId() != null && RESERVED_FLOW_IDS.contains(value.getId())) {
-            violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
-        }
 
         if (namespaceService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
             violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");
@@ -101,19 +83,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
-        }
-
-        // preconditions unique id
-        duplicateIds = getDuplicates(
-            ListUtils.emptyOnNull(value.getTriggers()).stream()
-                .filter(it -> it instanceof io.kestra.plugin.core.trigger.Flow)
-                .map(it -> (io.kestra.plugin.core.trigger.Flow) it)
-                .filter(it -> it.getPreconditions() != null && it.getPreconditions().getId() != null)
-                .map(it -> it.getPreconditions().getId())
-                .toList()
-        );
-        if (!duplicateIds.isEmpty()) {
-            violations.add("Duplicate preconditions with id [" + String.join(", ", duplicateIds) + "]");
         }
 
         // system labels
@@ -170,12 +139,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                     " [" + String.join(", ", invalidOutputs) + "]"
             );
         }
-
-        // Validate that @PluginProperty(secret=true) fields use Pebble expressions
-        allTasks.forEach(task -> SecretUtils.validateSecretFields(task)
-            .forEach(msg -> violations.add("Task '" + task.getId() + "': " + msg)));
-        ListUtils.emptyOnNull(value.getTriggers()).forEach(trigger -> SecretUtils.validateSecretFields(trigger)
-            .forEach(msg -> violations.add("Trigger '" + trigger.getId() + "': " + msg)));
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

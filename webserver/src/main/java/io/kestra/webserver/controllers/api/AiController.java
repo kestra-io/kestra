@@ -15,6 +15,7 @@ import io.kestra.webserver.services.ai.UserInfo;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
@@ -49,6 +50,9 @@ public class AiController {
         @RequestBody(description = "Prompt and context required for flow generation") @Body FlowGenerationPrompt flowGenerationPrompt,
         HttpRequest<?> httpRequest) {
         AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.getProviderId());
+        if (service == null) {
+            return HttpResponse.<String>status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
+        }
 
         GenerationResult result = service
             .generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
@@ -62,6 +66,9 @@ public class AiController {
         @RequestBody(description = "Prompt and context required for dashboard generation") @Body DashboardGenerationPrompt dashboardGenerationPrompt,
         HttpRequest<?> httpRequest) {
         AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.getProviderId());
+        if (service == null) {
+            return HttpResponse.<String>status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
+        }
 
         GenerationResult result = service
             .generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);

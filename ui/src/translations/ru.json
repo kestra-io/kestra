@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
     "additionalPlugins": "Дополнительные плагины",
+    "admin": "Администратор",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -77,6 +78,7 @@
     "backfill executions": "Выполнения заполнение",
     "backfill paused": "Заполнение приостановлено",
     "backfill running": "Запуск Backfill",
+    "bar": "Бар",
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {
@@ -164,6 +166,7 @@
     "change state tooltip": "Изменить состояние выполнения",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
+    "chart type": "Тип диаграммы",
     "charts": "Графики",
     "choice": "Выбор",
     "choose file": "Выберите файл или перетащите его сюда...",
@@ -172,6 +175,7 @@
     "codeDisabled": "Отключено в flow",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
+    "commit_id": "Идентификатор коммита",
     "common": {
       "back": "Назад"
     },
@@ -203,6 +207,7 @@
     "copy": "Копировать",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
+    "copy_and_close": "Копировать и закрыть",
     "copy_to_clipboard": "Копировать в буфер обмена",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
@@ -240,7 +245,8 @@
         "plural": "Панели управления",
         "singular": "Панель управления"
       },
-      "preview": "Предварительный просмотр Dashboard"
+      "preview": "Предварительный просмотр Dashboard",
+      "switch": "Переключить Панель управления"
     },
     "data": "Данные",
     "dataFilters": "Фильтры данных",
@@ -260,7 +266,6 @@
       "5minutes": "5 минут",
       "7days": "7 дней",
       "custom": "Пользовательский",
-      "custom duration": "Пользовательская длительность",
       "dayBeforeYesterday": "Позавчера",
       "duration example": "Пример: 'P1DT1H1M1S'",
       "error": "Неверный формат длительности, должен быть в формате ISO 8601 (например, P1DT1H1M1S)",
@@ -287,7 +292,6 @@
       "today": "Сегодня",
       "yesterday": "Вчера"
     },
-    "days": "Дни",
     "debug": "Отладка",
     "default": "По умолчанию",
     "defaultsToNamespaceFile": "По умолчанию для файла namespace: <code>{name}</code>",
@@ -334,6 +338,7 @@
         "message": "В Kestra Enterprise Edition вы можете создавать пользовательские Blueprints, доступные только вашей организации. Вы можете использовать их в качестве шаблонов лучших практик для обмена, централизации и документирования часто используемых рабочих процессов в вашей команде.",
         "title": "Добавить пользовательские Blueprints"
       },
+      "contact_sales": "Связаться с отделом продаж",
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
       "instance": {
@@ -391,7 +396,8 @@
         "label": "Тесты",
         "message": "Проверьте логику ваших flow в изоляции, обнаруживайте регрессии на ранних стадиях и поддерживайте уверенность в ваших автоматизациях по мере их изменения и роста.",
         "title": "Обеспечьте надежность с каждым изменением"
-      }
+      },
+      "watch_the_video": "Смотреть видео"
     },
     "dependencies": "Зависимости",
     "dependencies delete flow": "Этот flow имеет зависимости. Удаление его предотвратит выполнение их зависимостей.<br /><br /> Вот список затронутых flows:",
@@ -477,6 +483,10 @@
         "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
         "title": "У вас пока нет объявлений!"
       },
+      "apiTokens": {
+        "content": "Токены API используются всякий раз, когда вы хотите предоставить программный доступ к API Kestra.",
+        "title": "Управление вашими API Tokens"
+      },
       "apps": {
         "content": "Начните создавать приложения для взаимодействия с Kestra из внешнего мира.",
         "title": "У вас пока нет приложений!"
@@ -492,6 +502,10 @@
       "concurrency_limit": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
         "title": "Для этого flow не установлены ограничения."
+      },
+      "concurrency_limits": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "title": "Пределы на параллельность не установлены."
       },
       "dependencies": {
         "ASSET": {
@@ -510,6 +524,10 @@
           "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> в нашей документации.",
           "title": "В настоящее время зависимости отсутствуют."
         }
+      },
+      "groups": {
+        "content": "Группы позволяют объединять пользователей, чтобы вы могли управлять разрешениями и привязками ролей коллективно в рамках вашего арендатора.",
+        "title": "У вас еще нет групп!"
       },
       "kill_switches": {
         "content": "Функция Kill Switch предоставляет механизм на основе UI для остановки проблемных выполнений. Она заменяет команды CLI <code>--skip-executions</code> и <code>--skip-flows</code> на комплексный административный интерфейс.",
@@ -538,6 +556,10 @@
       "versionPlugin": {
         "content": "Здесь вы можете управлять всеми плагинами, установленными на вашем экземпляре Kestra. Недавно установленные плагины могут быть не сразу доступны во всех службах Kestra в зависимости от конфигурации вашего экземпляра.",
         "title": "У вас еще нет версионированного плагина!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Токены регистрации позволяют удаленным worker безопасно аутентифицироваться и регистрироваться в вашем экземпляре Kestra. Создайте токен, затем используйте его для подключения новых worker к этому кластеру.",
+        "title": "У вас еще нет токенов регистрации!"
       }
     },
     "empty search": "Результаты поиска пусты",
@@ -597,7 +619,7 @@
       "metrics": "Удалить метрики",
       "storage": "Удалить внутренние файлы хранения"
     },
-    "execution_failed": "Выполнение завершилось с ошибкой!\nПоследняя ошибка была",
+    "execution_failed": "Выполнение не удалось!",
     "execution_guide": {
       "get_started": {
         "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows.",
@@ -647,333 +669,13 @@
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",
     "feeds": {
+      "heading": "Все о Kestra.",
+      "subheading": "Последние обновления, руководства и истории",
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
     "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
-    "filter": {
-      "active key value pairs": "Активные пары Key/Value",
-      "add key value pair": "Добавить пару Key/Value",
-      "aggregation": {
-        "description": "Фильтр по методу агрегации",
-        "label": "Агрегация"
-      },
-      "apply": "Применить фильтры",
-      "apply filter": "Применить фильтр",
-      "cancel": "Отменить",
-      "childFilter": {
-        "description": "Фильтр по иерархии выполнения",
-        "label": "Иерархия"
-      },
-      "childFilter_child": {
-        "description": "Фильтр по иерархии выполнения",
-        "label": "Фильтр дочерних элементов"
-      },
-      "columns": "Столбцы",
-      "comparator_descriptions": {
-        "CONTAINS": "Текст содержит указанные символы в любом месте",
-        "ENDS_WITH": "Текст заканчивается указанными символами",
-        "EQUALS": "Точное совпадение - значение должно быть идентичным",
-        "GREATER_THAN": "Сравнение чисел/дат - значение должно быть больше",
-        "GREATER_THAN_OR_EQUAL_TO": "Сравнение чисел/дат - значение должно быть больше или равно",
-        "IN": "Соответствует любому значению из списка опций",
-        "LESS_THAN": "Сравнение чисел/дат - значение должно быть меньше",
-        "LESS_THAN_OR_EQUAL_TO": "Сравнение чисел/дат - значение должно быть меньше или равно",
-        "NOT_EQUALS": "Исключает точные совпадения - значение должно отличаться",
-        "NOT_IN": "Исключает все значения из списка опций",
-        "PREFIX": "Иерархия namespace, соответствующая (например, 'com.example' соответствует 'com.example.app')",
-        "REGEX": "Расширенное сопоставление шаблонов с использованием регулярных выражений",
-        "STARTS_WITH": "Извините, я не могу помочь с этой просьбой."
-      },
-      "customize": "Добавить фильтры",
-      "customize columns": "Настроить столбцы таблицы",
-      "customize tooltip": "Настроить, какие фильтры отображать",
-      "delete filter": "Удалить фильтр",
-      "delete filter confirm": "Вы уверены, что хотите удалить этот фильтр?",
-      "description": "Описание",
-      "deselect all": "Снять выделение со всех",
-      "drag to reorder": "Перетащите для изменения порядка",
-      "drag to reorder columns": "Перетащите, чтобы изменить порядок столбцов",
-      "edit filter": "Редактировать фильтр",
-      "empty": "У вас еще нет сохраненных фильтров.",
-      "enabled": {
-        "description": "Фильтр по включенным",
-        "label": "Включено"
-      },
-      "end_date": "Дата окончания",
-      "enter description": "Введите описание фильтра",
-      "enter label": "Введите фильтр label",
-      "enter name": "Введите имя фильтра",
-      "execution_kind": {
-        "playground": "Песочница",
-        "playground_description": "Запуски, инициированные из режима Playground",
-        "test": "Тест",
-        "test_description": "Запуски, инициированные Unit Tests"
-      },
-      "filters_added": "{selected} из {total} фильтров добавлено",
-      "flowId": {
-        "description": "Фильтр по flow ID",
-        "label": "Идентификатор flow"
-      },
-      "footer_apply": "Применить",
-      "group": {
-        "description": "Фильтр по группе",
-        "label": "Группа"
-      },
-      "hierarchy": {
-        "all": "По умолчанию",
-        "child_description": "Показать только вложенные/запущенные executions",
-        "parent_description": "Показать только верхнеуровневые/корневые выполнения"
-      },
-      "key": "Ключ",
-      "kill_switch_type": {
-        "description": "Фильтр по типу kill switch",
-        "label": "Тип"
-      },
-      "kind": {
-        "description": "Фильтр по виду выполнения",
-        "label": "Тип"
-      },
-      "kv_pair_selected": "{count} Key/Value пар выбрано",
-      "label": "Ярлык",
-      "labels": {
-        "description": "Фильтр по labels",
-        "label": "Ярлыки"
-      },
-      "labels_execution": {
-        "description": "Фильтр по execution label",
-        "label": "Ярлыки"
-      },
-      "labels_flow": {
-        "description": "Фильтр по flow labels",
-        "label": "Ярлыки"
-      },
-      "level": {
-        "description": "Фильтр по уровню log",
-        "label": "Уровень"
-      },
-      "level_log_executions": {
-        "label": "Уровень Log"
-      },
-      "metric": {
-        "description": "Фильтр по типу метрики",
-        "label": "Метрика"
-      },
-      "name": {
-        "description": "Фильтр по имени",
-        "label": "Имя"
-      },
-      "namespace": {
-        "description": "Фильтр по namespace",
-        "label": "Namespace"
-      },
-      "no options found": "Опции не найдены",
-      "operator": "Оператор фильтра",
-      "options": "Параметры данных",
-      "parentId": {
-        "description": "Фильтр по ID родительской Ausführung",
-        "label": "ID родительской Ausführung"
-      },
-      "periodic refresh": "Периодическое обновление",
-      "refresh": "Обновить данные",
-      "reset": "Очистить все",
-      "reset_all": "Сбросить все фильтры",
-      "reset_tooltip": "Сбросить до значений по умолчанию",
-      "save": "Сохранить",
-      "save duplicate": "Фильтр с таким именем уже существует.",
-      "save filter": "Сохранить фильтр",
-      "save filter tooltip": "Сохранить примененные фильтры",
-      "saved": "Сохраненные фильтры",
-      "saved filters": "Сохраненные наборы фильтров",
-      "saved tooltip": "Управление сохраненными фильтрами",
-      "scope": {
-        "description": "Фильтр по области выполнения",
-        "label": "Область"
-      },
-      "scope_flow": {
-        "description": "Фильтр по области flow",
-        "label": "Область"
-      },
-      "scope_log": {
-        "description": "Фильтр по пользовательским или системным logам",
-        "label": "Область"
-      },
-      "scope_trigger": {
-        "description": "Фильтр по области действия trigger",
-        "label": "Область"
-      },
-      "search options": "Поиск...",
-      "search_placeholders": {
-        "search_blueprints": "Поиск blueprints",
-        "search_dashboards": "Искать панели...",
-        "search_executions": "Поиск выполнений",
-        "search_flows": "Поиск flow",
-        "search_kv": "Поиск KV пар",
-        "search_logs": "Поиск logs",
-        "search_metrics": "Поиск метрик",
-        "search_namespaces": "Поиск namespace",
-        "search_plugins": "Искать {count}+ plugins",
-        "search_secrets": "Поиск секретов",
-        "search_triggers": "Поиск triggers"
-      },
-      "select all": "Выбрать все",
-      "select filter": "Выберите фильтр для добавления",
-      "select_end_date": "Выберите конечную дату",
-      "select_option": "Выберите опцию",
-      "select_start_date": "Выберите дату начала",
-      "show chart": "Показать диаграмму",
-      "show data options tooltip": "Показать параметры данных",
-      "show default": "Показать по умолчанию",
-      "start_date": "Дата начала",
-      "state": {
-        "description": "Фильтр по состоянию выполнения",
-        "label": "Состояние"
-      },
-      "table_column": {
-        "blueprints": {
-          "tags": "Теги, связанные с blueprint"
-        },
-        "executions": {
-          "duration": "Общее время выполнения выполнения",
-          "end-date": "Когда выполнение завершено",
-          "flow": "ID выполненного flow",
-          "id": "ID выполнения",
-          "inputs": "Входные значения, предоставленные для выполнения",
-          "labels": "Метки выполнения (формат key:value)",
-          "namespace": "Пространство имен, к которому принадлежит выполняемый flow",
-          "outputs": "Выходные данные, сгенерированные в ходе выполнения",
-          "parent-execution": "ID родительской Ausführung, который вызвал эту Ausführung",
-          "revision": "Версия flow, используемая для этой Ausführung",
-          "start-date": "Когда началась выполнение",
-          "state": "Текущий состояние выполнения",
-          "task-id": "ID последнего task в выполнении",
-          "trigger": "Триггер, который запустил выполнение"
-        },
-        "flow_triggers": {
-          "next execution date": "Когда trigger будет выполнен в следующий раз",
-          "type": "Тип trigger",
-          "workerId": "Идентификатор worker"
-        },
-        "flows": {
-          "description": "Описание текста, предоставленного для flow",
-          "execution statistics": "Диаграмма, показывающая недавние состояния выполнения",
-          "id": "Уникальный идентификатор flow",
-          "labels": "Метки flow (формат key:value)",
-          "last execution date": "Когда flow был выполнен в последний раз",
-          "last execution status": "Статус последней выполнения",
-          "namespace": "Namespace потока",
-          "revision": "Текущий номер версии определения flow",
-          "triggers": "Триггеры, которые могут запустить flow (например, расписание, событие)"
-        },
-        "kv": {
-          "description": "Необязательные примечания, объясняющие запись в kv store",
-          "expiration date": "Когда срок действия пары ключ-значение истекает",
-          "key": "Уникальный идентификатор для сохраненного value",
-          "last modified": "Метка времени последнего обновления",
-          "namespace": "Логическая группа, где хранится пара ключ-значение"
-        },
-        "metrics": {
-          "name": "Название метрики",
-          "tags": "Теги, связанные с метрикой",
-          "task": "Задача, которая сгенерировала метрику",
-          "value": "Значение метрики"
-        },
-        "secrets": {
-          "description": "Необязательные примечания, предоставляющие контекст",
-          "key": "Идентификатор для сохраненного секрета",
-          "namespace": "Логическая группа, где хранится секрет",
-          "tags": "Дополнительные теги категоризации"
-        },
-        "triggers": {
-          "context updated date": "Последнее обновление контекста trigger",
-          "current execution": "Текущий ID выполнения",
-          "evaluation lock date": "Когда оценка заблокирована",
-          "flow": "Поток, связанный с триггером",
-          "last trigger date": "Когда trigger выполнялся в последний раз",
-          "namespace": "Namespace триггера",
-          "next evaluation date": "Когда trigger будет оценен в следующий раз",
-          "workerId": "Идентификатор worker"
-        }
-      },
-      "task": {
-        "description": "Фильтр по имени task",
-        "label": "Задача"
-      },
-      "timeRange": {
-        "description": "Фильтр по времени выполнения",
-        "label": "Интервал"
-      },
-      "timeRange_dashboard": {
-        "description": "Фильтр по окну дашборда",
-        "label": "Интервал"
-      },
-      "timeRange_log": {
-        "description": "Фильтр по временной метке log",
-        "label": "Интервал"
-      },
-      "timeRange_metric": {
-        "description": "Фильтр по временному интервалу",
-        "label": "Интервал"
-      },
-      "timeRange_trigger": {
-        "description": "Фильтр по последней метке времени срабатывания",
-        "label": "Интервал"
-      },
-      "timerange": {
-        "custom": "Пользовательский диапазон",
-        "predefined": "Предопределено"
-      },
-      "titles": {
-        "blueprint_filters": "Фильтры Blueprint",
-        "dashboard_filters": "Фильтры панели управления",
-        "execution_filters": "Фильтры выполнения",
-        "flow_dashboard_filters": "Фильтры панели управления Flow",
-        "flow_execution_filters": "Фильтры выполнения Flow",
-        "flow_filters": "Фильтры Flow",
-        "flow_metric_filters": "Фильтры Метрик Flow",
-        "kv_filters": "Фильтры Key-Value",
-        "log_filters": "Фильтры Log",
-        "metric_filters": "Фильтры Метрик",
-        "namespace_dashboard_filters": "Фильтры панели управления Namespace",
-        "namespace_filters": "Фильтры Namespaces",
-        "plugin_filters": "Поиск плагинов",
-        "secret_filters": "Фильтры секретов",
-        "trigger_filters": "Фильтры Trigger"
-      },
-      "triggerExecutionId": {
-        "description": "Фильтр по ID выполнения trigger",
-        "label": "Идентификатор выполнения Trigger"
-      },
-      "triggerId": {
-        "description": "Фильтр по идентификатору trigger",
-        "label": "ID триггера"
-      },
-      "triggerId_trigger": {
-        "description": "Фильтр по trigger ID",
-        "label": "ID триггера"
-      },
-      "triggerState": {
-        "description": "Фильтр по состоянию trigger",
-        "disabled": "Отключено",
-        "enabled": "Включено",
-        "label": "Состояние Trigger"
-      },
-      "type": {
-        "description": "Фильтр по типу",
-        "label": "Тип"
-      },
-      "update": "Обновить",
-      "username": {
-        "description": "Фильтр по имени пользователя",
-        "label": "Имя пользователя"
-      },
-      "value": "Значение",
-      "workerId": {
-        "description": "Фильтр по worker ID",
-        "label": "ID worker"
-      }
-    },
     "filter by log level": "Фильтр по уровню log",
     "filters": {
       "comparators": {
@@ -1058,6 +760,27 @@
     "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "Приложение(я)",
+        "tooltip": "Просмотр приложений, использующих этот flow"
+      },
+      "dependencies": {
+        "suffix": "Зависимость(и)",
+        "tooltip": "Просмотр зависимостей flow"
+      },
+      "errors": {
+        "label": "{count} Ошибка(и)"
+      },
+      "revisions": {
+        "suffix": "Ревизия(и)",
+        "tooltip": "Просмотр версий flow"
+      },
+      "tests": {
+        "suffix": "Тест(ы)",
+        "tooltip": "Просмотр тестов flow"
+      }
+    },
     "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
     "flow_outputs": "Выходы Flow",
@@ -1083,14 +806,12 @@
     "hide task documentation": "Скрыть документацию задачи",
     "home": "Домой",
     "hostname": "Имя хоста",
-    "hours": "Часы",
     "iam": "IAM",
     "id": "Id",
     "import": "Импорт",
     "in-our-documentation": "в нашей документации.",
     "informative notice": "Примечание(я)",
     "input": "Ввод",
-    "input_custom_duration": "или введите пользовательскую продолжительность:",
     "inputs": "Входные данные",
     "instance": "Экземпляр",
     "invalid bulk delete": "Не удалось удалить выполнения",
@@ -1149,6 +870,7 @@
     "leave page": "Покинуть страницу",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
+    "line": "Линия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
     "log expand setting": "Отображение logs по умолчанию",
@@ -1160,19 +882,62 @@
       "raw": "Временной вид",
       "raw_details": "Показать полные task logs и flow логи в формате необработанных временных меток"
     },
+    "main_configuration": "Основная конфигурация",
     "management port": "Порт управления",
     "mark as": "Пометить как <code>{status}</code>",
     "max": "Макс",
+    "mcp": {
+      "api_token": "Токен API",
+      "auth_type": "Аутентификация",
+      "basic_auth": "Базовая аутентификация",
+      "bearer_token": "Аутентификация с использованием Bearer token",
+      "connect": "Подключить",
+      "connect_modal": {
+        "claude_code": "Код Claude",
+        "claude_code_hint": "Выполните следующую команду в вашем терминале:",
+        "claude_desktop": "Клод Десктоп",
+        "claude_desktop_hint": "Добавьте следующее в ваш файл claude_desktop_config.json:",
+        "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+        "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "codex": "Codex (OpenAI)",
+        "codex_hint": "Добавьте следующее в вашу конфигурацию codex.json MCP:",
+        "cursor": "Курсор",
+        "cursor_hint": "Добавьте следующее в ~/.cursor/mcp.json:",
+        "done": "Готово",
+        "server_url": "URL сервера",
+        "title": "Подключиться к {name}"
+      },
+      "copy_url": "Скопировать URL",
+      "create": "Создать сервер",
+      "delete_confirm": "Вы уверены, что хотите удалить этот MCP сервер?",
+      "id_invalid": "ID должен начинаться с строчной буквы или цифры и содержать только строчные буквы, цифры, дефисы или подчеркивания",
+      "id_placeholder": "например, my-mcp-server",
+      "instructions": "Инструкции",
+      "main_tenant": "главная",
+      "no_servers": "Серверы MCP не найдены. Создайте первый сервер, чтобы предоставить триггеры MCP Tool внешним AI-агентам.",
+      "page_description": "Предоставьте ваши Kestra flows как инструменты для MCP-совместимых AI агентов",
+      "private": "Частный",
+      "public": "Публичный",
+      "save": "Сохранить изменения",
+      "server": "Сервер MCP",
+      "server_type": "Тип сервера",
+      "servers": "Серверы MCP",
+      "tab_connect": "Подключиться",
+      "tab_connect_placeholder": "Детали подключения скоро появятся.",
+      "tab_edit": "Редактировать",
+      "tab_tool_flows": "Инструменты Flow",
+      "tab_tool_flows_placeholder": "Управление flow инструментами скоро появится.",
+      "url_copied": "URL скопирован!",
+      "username_password": "Имя пользователя и пароль"
+    },
     "metric": "Метрика",
-    "metric choice": "Пожалуйста, выберите метрику и агрегацию",
+    "metric choice": "Для этого flow метрики недоступны",
     "metrics": "Метрики",
     "min": "Мин",
-    "minutes": "Минуты",
     "missingSource": "Отсутствует источник",
     "modify inputs": "Изменить inputs",
     "modify_inputs": "Изменить inputs",
     "monogram": "Монограмма",
-    "months": "Месяцы",
     "more_actions": "Больше действий",
     "multi_panel_editor": {
       "close_all_panels": "Закрыть все панели",
@@ -1604,6 +1369,12 @@
     "pluginPage": {
       "alt": "Иконка плагинов",
       "search": "Поиск среди {count}+ плагинов",
+      "sort": {
+        "most_used": "Наиболее используемые",
+        "name_asc": "Имя A-Я",
+        "name_desc": "Имя Я-А",
+        "newest": "Новейшие"
+      },
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow."
     },
@@ -1690,6 +1461,7 @@
     "row count": "Количество строк",
     "run task in playground": "Запустить task в playground",
     "runners": "Запуски",
+    "running": "RUNNING",
     "running duration": "Время выполнения",
     "save": "Сохранить",
     "save draft": {
@@ -1724,7 +1496,6 @@
     "search term in message": "Поиск по термину в сообщении",
     "search_docs": "Поиск",
     "searching": "Поиск...",
-    "seconds": "Секунды",
     "secret": {
       "add": "Создать",
       "inherited": "Унаследованные секреты",
@@ -1744,6 +1515,7 @@
     "seeing old revision": "Вы просматриваете старую ревизию: {revision}",
     "select": "Выберите ваш {{section}}",
     "select datetime": "Выберите дату",
+    "select view": "Выберите вид",
     "selected": "Выбрано",
     "selection": {
       "all": "Выбрать все ({count})",
@@ -2010,6 +1782,37 @@
     "triggered done": "Выполнение <em>{name}</em> успешно запущено",
     "triggerflow disabled": "Trigger отключен в определении flow",
     "triggers": "Triggers",
+    "triggers_add_card_add": "Добавить",
+    "triggers_add_card_add_to_flow": "Добавить в flow",
+    "triggers_add_category_app_description": "Периодически проверять внешние ресурсы на изменения.",
+    "triggers_add_category_app_title": "Триггеры приложения",
+    "triggers_add_category_core_description": "Встроенные триггеры, необходимые для большинства рабочих процессов.",
+    "triggers_add_category_core_title": "Триггеры Core",
+    "triggers_add_category_empty": "В этой категории нет triggers.",
+    "triggers_add_category_realtime_description": "Реагируйте мгновенно на события из систем обмена сообщениями.",
+    "triggers_add_category_realtime_title": "Триггеры в реальном времени",
+    "triggers_add_ee_tooltip": "Этот trigger требует Enterprise Edition.",
+    "triggers_add_empty_hint": "Попробуйте другой поисковый запрос или просмотрите все категории.",
+    "triggers_add_empty_title": "Триггеры не найдены",
+    "triggers_add_filter_all": "Все",
+    "triggers_add_filter_app": "Приложение",
+    "triggers_add_filter_core": "Ядро",
+    "triggers_add_filter_realtime": "Реальное время",
+    "triggers_add_modal_add_button": "Добавить Trigger в Flow",
+    "triggers_add_modal_ee_notice": "Этот trigger требует Enterprise Edition.",
+    "triggers_add_modal_flow_placeholder": "Выберите flow",
+    "triggers_add_modal_namespace_placeholder": "Выберите namespace",
+    "triggers_add_modal_properties_hint": "Настройте свойства trigger в редакторе flow после добавления trigger.",
+    "triggers_add_modal_tab_documentation": "Документация",
+    "triggers_add_modal_tab_form": "Форма",
+    "triggers_add_modal_tab_source": "Источник",
+    "triggers_add_modal_title": "{name}",
+    "triggers_add_modal_trigger_id": "Идентификатор Trigger",
+    "triggers_add_modal_trigger_id_placeholder": "Уникальный идентификатор для этого trigger",
+    "triggers_add_search_placeholder": "Поиск triggers...",
+    "triggers_add_see_less": "Скрыть",
+    "triggers_add_see_more": "Смотреть больше ({count} еще)",
+    "triggers_header_description": "Просматривайте, добавляйте и управляйте triggers для автоматизации ваших flows. Выберите из вариантов: сделать ваш flow инструментом AI, запланировать, добавить webhook trigger, опрос изменений во внешних приложениях или слушатели событий в реальном времени.",
     "triggers_state": {
       "options": {
         "disabled": "Отключено",
@@ -2017,6 +1820,8 @@
       },
       "state": "Состояние"
     },
+    "triggers_tabs_add": "Добавить",
+    "triggers_tabs_manage": "Управление",
     "true": "Истина",
     "type": "Тип",
     "unable to generate graph": "Произошла ошибка при генерации графа, что препятствует отображению топологии.",
@@ -2065,7 +1870,6 @@
       "payload": "Payload Webhook (JSON)"
     },
     "webhook link copied": "Ссылка на Webhook скопирована.",
-    "weeks": "Недели",
     "welcome": {
       "help": {
         "text": "Задайте любой вопрос в нашем сообществе Slack. Если вы застряли, мы здесь, чтобы помочь вам. ✋",
@@ -2083,6 +1887,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Создать flow с нуля",
+      "create_manually": {
+        "description": "Создать с нуля, используя редактор",
+        "title": "Создать вручную"
+      },
+      "docs": {
+        "description": "Узнайте больше в официальной документации",
+        "title": "Читать документацию"
+      },
       "execute_hint": {
         "description": "Нажмите, чтобы сохранить ваш workflow и запустить его немедленно.",
         "title": "Сохранить и выполнить ваш flow"
@@ -2145,7 +1957,7 @@
       },
       "need_help": "Нужна помощь?",
       "placeholder_prompt": "Отправляйте мне ежедневное приветственное сообщение в 9 утра.",
-      "remaining_quota": "У вас осталось {count} AI generations",
+      "remaining_quota": "У вас осталось {count} AI generations. Лимит сбрасывается ежедневно в полночь UTC.",
       "show_less": "Показать меньше подсказок",
       "show_more": "Показать больше подсказок",
       "success_page": {
@@ -2194,7 +2006,6 @@
     "worker information": "Информация о Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "Пустой key или value не допускается в метках",
-    "years": "Годы"
+    "wrong labels": "Пустой key или value не допускается в метках"
   }
 }

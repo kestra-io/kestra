@@ -4,7 +4,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -33,7 +34,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @WebServerEnabled
 @Requires(property = "kestra.tutorial-flows.enabled", value = "true", defaultValue = "true")
-public class FlowAutoLoaderService {
+public class FlowAutoLoaderService implements FlowAutoLoader {
 
     public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);
 
@@ -47,7 +48,7 @@ public class FlowAutoLoaderService {
     protected HttpClient httpClient;
 
     @Inject
-    protected KestraConfig kestraConfig;
+    protected SystemFlowsConfiguration systemFlowsConfiguration;
 
     @Inject
     private VersionProvider versionProvider;
@@ -79,7 +80,7 @@ public class FlowAutoLoaderService {
                     {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + systemFlowsConfiguration.namespace());
                         }
                         return body;
                     })

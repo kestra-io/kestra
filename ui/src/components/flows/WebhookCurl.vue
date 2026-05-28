@@ -1,7 +1,7 @@
 <template>
     <div class="webhook-curl">
         <div v-if="webhookTriggers.length > 0">
-            <el-form-item :label="$t('webhook.payload')" class="payload">
+            <KsFormItem :label="$t('webhook.payload')" class="payload">
                 <Editor
                     :fullHeight="false"
                     :input="true"
@@ -10,7 +10,7 @@
                     :showScroll="true"
                     v-model="webhookPayload"
                 />
-            </el-form-item>
+            </KsFormItem>
             <div v-for="trigger in webhookTriggers" :key="trigger.id" class="trigger">
                 <div class="code">
                     <pre><code>{{ generateWebhookCurlCommand(trigger) }}</code></pre>
@@ -18,24 +18,24 @@
                 </div>
             </div>
 
-            <el-alert type="info" showIcon :closable="false">
+            <KsAlert type="info" :closable="false">
                 {{ $t('webhook.curl_note') }}
-            </el-alert>
+            </KsAlert>
         </div>
         <div v-else>
-            <el-alert type="warning" showIcon :closable="false">
+            <KsAlert type="warning" :closable="false">
                 {{ $t('webhook.no_triggers') }}
-            </el-alert>
+            </KsAlert>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
-    import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import Editor from "../inputs/Editor.vue";
-    import {baseUrl, basePath, apiUrl} from "override/utils/route";
-    import {useFlowStore} from "../../stores/flow";
+    import {computed, onMounted, ref} from "vue"
+    import CopyToClipboard from "../layout/CopyToClipboard.vue"
+    import Editor from "../inputs/Editor.vue"
+    import {baseUrl, basePath, apiUrl} from "override/utils/route"
+    import {useFlowStore} from "../../stores/flow"
 
     interface Flow {
         namespace: string;
@@ -52,75 +52,76 @@
 
     const props = defineProps<{
         flow: Flow;
-    }>();
+    }>()
 
-    const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}");
+    const webhookPayload = ref("{\"key1\":\"value1\",\"key2\":\"value2\"}")
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
     const webhookTriggers = computed(() => {
-        const sourceFlow = flowStore.flow || props.flow;
+        const sourceFlow = flowStore.flow || props.flow
 
         if (!sourceFlow?.triggers) {
-            return [];
+            return []
         }
 
         return sourceFlow.triggers.filter((trigger: Trigger) =>
             trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
-            (trigger.disabled === undefined || trigger.disabled === false)
-        );
-    });
+            (trigger.disabled === undefined || trigger.disabled === false),
+        )
+    })
 
     const generateWebhookUrl = (trigger: Trigger): string => {
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
-        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
-    };
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
+        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`
+    }
 
     const generateWebhookCurlCommand = (trigger: Trigger): string => {
         if (!trigger.key) {
-            return "Webhook key not available";
+            return "Webhook key not available"
         }
 
-        const command = [`curl -X POST ${generateWebhookUrl(trigger)}`];
-        command.push("-H \"Content-Type: application/json\"");
+        const command = [`curl -X POST ${generateWebhookUrl(trigger)}`]
+        command.push("-H \"Content-Type: application/json\"")
 
         if (webhookPayload.value.trim()) {
-            command.push(`-d '${webhookPayload.value}'`);
+            command.push(`-d '${webhookPayload.value}'`)
         }
 
-        return toShell(command);
-    };
+        return toShell(command)
+    }
 
     const toShell = (command: string[]): string => {
-        return command.join(" \\\n  ");
-    };
+        return command.join(" \\\n  ")
+    }
 
     onMounted(async () => {
         if (props.flow?.namespace && props.flow?.id) {
             try {
                 await flowStore.loadFlow({
                     namespace: props.flow.namespace,
-                    id: props.flow.id
-                });
+                    id: props.flow.id,
+                })
             } catch (error) {
-                throw new Error(`Failed to load flow: ${error}`);
+                // oxlint-disable-next-line preserve-caught-error
+                throw new Error(`Failed to load flow: ${error}`)
             }
         }
-    });
+    })
 </script>
 
 <style scoped lang="scss">
 .webhook-curl {
     position: relative;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     padding: 1rem;
     border-radius: 0.5rem;
 
     .payload {
         margin-bottom: 1rem;
 
-        :deep(.el-form-item__label) {
-            font-size: var(--font-size-sm);
-            color: var(--ks-content-secondary);
+        :deep(.kel-form-item__label) {
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-secondary);
         }
 
         :deep(.editor-container) {

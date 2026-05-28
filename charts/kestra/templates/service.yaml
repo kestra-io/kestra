@@ -1,0 +1,28 @@
+{{- if or .Values.deployments.standalone.enabled .Values.deployments.webserver.enabled }}
+{{ $deployment := ternary "standalone" "webserver" .Values.deployments.standalone.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kestra.fullname" . }}
+  labels:
+    {{- include "kestra.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $n, $p := .Values.service.ports }}
+    - name: {{ $n }}
+      port: {{ $p.port }}
+      targetPort: {{ $p.targetPort }}
+      protocol: {{ $p.protocol | default "TCP" }}
+    {{- end }}
+  selector:
+    {{- include "kestra.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: "{{ $deployment }}"
+{{- end }}

@@ -9,8 +9,11 @@ import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
+import io.kestra.webserver.configuration.WebserverConfiguration;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -30,17 +33,8 @@ public class StaticFilter implements HttpServerFilter {
     @Value("${micronaut.server.context-path}")
     protected String basePath;
 
-    @Nullable
-    @Value("${kestra.webserver.google-analytics}")
-    protected String googleAnalytics;
-
-    @Nullable
-    @Value("${kestra.webserver.html-title}")
-    protected String htmlTitle;
-
-    @Nullable
-    @Value("${kestra.webserver.html-head}")
-    protected String htmlHead;
+    @Inject
+    protected WebserverConfiguration webserverConfiguration;
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
@@ -94,15 +88,15 @@ public class StaticFilter implements HttpServerFilter {
 
         line = line.replace("./", (basePath != null ? basePath : "") + "/ui/");
 
-        if (googleAnalytics != null) {
-            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");
+        if (webserverConfiguration.googleAnalytics() != null) {
+            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + webserverConfiguration.googleAnalytics() + "';");
         }
 
-        if (htmlTitle != null) {
-            line = line.replaceFirst("<title>(.*)</title>", "<title>" + this.htmlTitle + "</title>");
+        if (webserverConfiguration.htmlTitle() != null) {
+            line = line.replaceFirst("<title>(.*)</title>", "<title>" + webserverConfiguration.htmlTitle() + "</title>");
         }
 
-        line = line.replace("<meta name=\"html-head\" content=\"replace\">", this.htmlHead == null ? "" : this.htmlHead);
+        line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
 
         return line;
     }

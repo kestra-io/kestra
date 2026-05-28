@@ -1,10 +1,10 @@
-export const NODE = "NODE" as const;
-export const EDGE = "EDGE" as const;
+export const NODE = "NODE" as const
+export const EDGE = "EDGE" as const
 
-export const FLOW = "FLOW" as const;
-export const EXECUTION = "EXECUTION" as const;
-export const NAMESPACE = "NAMESPACE" as const;
-export const ASSET = "ASSET" as const;
+export const FLOW = "FLOW" as const
+export const EXECUTION = "EXECUTION" as const
+export const NAMESPACE = "NAMESPACE" as const
+export const ASSET = "ASSET" as const
 
 export type Types = typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
 

@@ -1,35 +1,34 @@
 <template>
-    <el-select
+    <KsSelect
         :modelValue="values"
         @update:model-value="onInput"
         filterable
         clearable
-        :persistent="false"
         :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
     >
-        <el-option
+        <KsOption
             v-for="item in schema.enum"
             :key="item"
             :label="item"
             :value="item"
         />
-    </el-select>
+    </KsSelect>
 </template>
 <script>
-    import Task from "./MixinTask";
+    import Task from "./MixinTask"
     export default {
         mixins: [Task],
-    };
+    }
 </script>
 
 <style scoped lang="scss">
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     &::placeholder {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 }
 
-:deep(.el-select__suffix) {
+:deep(.kel-select__suffix) {
     display: flex !important;
 }
 </style>

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +28,9 @@ class SwitchTest {
 
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @LoadFlows(value = { "flows/valids/switch.yaml" }, tenantId = "switch")
@@ -113,9 +117,13 @@ class SwitchTest {
     @ExecuteFlow(value = "flows/valids/switch-in-concurrent-loop.yaml", tenantId = "switchinconcurrentloop")
     void switchInConcurrentLoop(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(5);
-        // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once
-        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
-        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(2);
+
+        // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once across all sub-executions
+        assertThat(subExecutions.stream().flatMap(e -> e.getTaskRunList().stream()).filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
+        assertThat(subExecutions.stream().flatMap(e -> e.getTaskRunList().stream()).filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
     }
 }

@@ -21,6 +21,7 @@ import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,10 +36,10 @@ public class SecretFunction implements KestraFunction {
     private static final String KEY_ARG = "key";
 
     @Inject
-    private SecretService secretService;
+    private Provider<SecretService> secretService;
 
     @Inject
-    private NamespaceService namespaceService;
+    private Provider<NamespaceService> namespaceService;
 
     @Override
     public List<String> getArgumentNames() {
@@ -58,11 +59,11 @@ public class SecretFunction implements KestraFunction {
         if (namespace == null) {
             namespace = flowNamespace;
         } else {
-            namespaceService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
+            namespaceService.get().checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
         }
 
         try {
-            String secret = secretService.findSecret(flowTenantId, namespace, key);
+            String secret = secretService.get().findSecret(flowTenantId, namespace, key);
 
             final String subkey = (String) args.get(SUBKEY_ARG);
             if (subkey != null && !subkey.isEmpty()) {

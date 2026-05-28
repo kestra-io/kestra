@@ -11,11 +11,11 @@
 <script setup lang="ts">
     const emit = defineEmits<{
         (e: "add", what: string | undefined): void;
-    }>();
+    }>()
 
     defineProps<{
         what?: string;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">
@@ -28,7 +28,7 @@ button {
 
 .adding {
     cursor: pointer;
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
     font-size: $code-font-sm;
 }
 </style>

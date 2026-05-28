@@ -16,18 +16,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import ContextDocsLink from "../docs/ContextDocsLink.vue";
+    import {computed} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const props = defineProps<{
         directory: string
         title: string
     }>()
 
-    let navigation = await docStore.children(props.directory) as Record<string, any>;
+    let navigation = await docStore.children(props.directory) as Record<string, any>
 
     // avoid null values in navigation
     const protectedNavigation = computed(() => {
@@ -50,7 +50,7 @@
 
 h2.big-title {
     padding: 0;
-    font-size: 1.5rem;
+    font-size: var(--ks-font-size-xl);
     border: none;
     margin-top: 3rem;
     margin-bottom: 1rem;
@@ -61,7 +61,7 @@ h2.big-title {
     border-radius: 0.5rem;
     text-decoration: none;
     background: linear-gradient(180deg, #3a4051 0%, #272a36 100%);
-    color: white;
+    color: var(--ks-white);
     border: 1px solid #21242E;
     border-image-source: linear-gradient(180deg, #2B313E 0%, #131725 100%);
     transition: all 0.3s;
@@ -72,8 +72,8 @@ h2.big-title {
         font-weight: normal;
     }
     p.card-text{
-        font-size: .875rem;
-        line-height: 1.5em;
+        font-size: var(--ks-font-size-sm);
+        line-height: var(--ks-font-size-xl);
     }
     &:hover{
         background: linear-gradient(180deg, rgba(#3a4051, .9) 0%, rgba(#272a36,.9) 100%), #9ca4ce;

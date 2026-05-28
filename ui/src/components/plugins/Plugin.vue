@@ -7,7 +7,7 @@
         <template #secondary-header>
             <div class="plugin-secondary-header">
                 <div class="d-flex align-items-center gap-3">
-                    <TaskIcon
+                    <KsTaskIcon
                         class="plugin-icon"
                         :cls="pluginType"
                         onlyIcon
@@ -16,7 +16,7 @@
                     <h4 class="mb-0 plugin-name">
                         {{ pluginName }}
                     </h4>
-                    <el-button
+                    <KsButton
                         v-if="releaseNotesUrl"
                         size="small"
                         class="release-notes-btn d-none d-md-inline-flex"
@@ -24,10 +24,10 @@
                         @click="openReleaseNotes"
                     >
                         {{ $t('plugins.release') }}
-                    </el-button>
+                    </KsButton>
                 </div>
                 <div class="versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
-                    <el-select
+                    <KsSelect
                         v-model="version"
                         placeholder="Version"
                         size="small"
@@ -38,22 +38,22 @@
                             <span>Version: </span>
                             <span style="font-weight: bold">{{ value }}</span>
                         </template>
-                        <el-option
+                        <KsOption
                             v-for="item in pluginsStore.versions"
                             :key="item"
                             :label="item"
                             :value="item"
                         />
-                    </el-select>
+                    </KsSelect>
                     <div class="release-notes-mobile d-inline-flex d-md-none" v-if="releaseNotesUrl">
-                        <el-button
+                        <KsButton
                             size="small"
                             class="release-notes-btn"
                             :icon="GitHub"
                             @click="openReleaseNotes"
                         >
                             {{ $t('plugins.release') }}
-                        </el-button>
+                        </KsButton>
                     </div>
                 </div>
             </div>
@@ -62,18 +62,18 @@
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
-            <div class="plugin-doc" v-if="pluginsStore.plugin">
-                <Suspense v-loading="isLoading">
+            <div class="plugin-doc" v-if="pluginsStore.plugin && pluginType">
+                <Suspense v-ks-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
                         :darkMode="miscStore.theme === 'dark'"
                         :schema="pluginsStore.plugin.schema"
                         :propsInitiallyExpanded="true"
-                        :pluginType="pluginType!"
+                        :pluginType="pluginType"
                         noUrlChange
                     >
                         <template #markdown="{content}">
-                            <Markdown font-size-var="font-size-base" :source="content" />
+                            <KsMarkdown :content="content" />
                         </template>
                     </SchemaToHtml>
                 </Suspense>
@@ -83,33 +83,33 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import {TaskIcon, SchemaToHtml} from "@kestra-io/ui-libs";
-    import DocsLayout from "../docs/DocsLayout.vue";
-    import PluginHome from "./PluginHome.vue";
-    import Markdown from "../layout/Markdown.vue";
-    import Toc from "./Toc.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import GitHub from "vue-material-design-icons/Github.vue";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "override/stores/misc";
-    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {ref, computed, onMounted, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import SchemaToHtml from "./schema/SchemaToHtml.vue"
+    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import DocsLayout from "../docs/DocsLayout.vue"
+    import PluginHome from "./PluginHome.vue"
+    import Toc from "./Toc.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import GitHub from "vue-material-design-icons/Github.vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useMiscStore} from "override/stores/misc"
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const pluginsStore = usePluginsStore();
-    const miscStore = useMiscStore();
+    const pluginsStore = usePluginsStore()
+    const miscStore = useMiscStore()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const isLoading = ref<boolean>(false);
-    const version = ref<string | undefined>(undefined);
-    const pluginType = ref<string | undefined>(undefined);
-    const filteredPlugins = ref<any[] | undefined>(undefined);
+    const isLoading = ref<boolean>(false)
+    const version = ref<string | undefined>(undefined)
+    const pluginType = ref<string | undefined>(undefined)
+    const filteredPlugins = ref<any[] | undefined>(undefined)
 
     const routeInfo = computed(() => ({
         title: pluginType.value ?? t("plugins.names"),
@@ -122,76 +122,76 @@
                         link: {name: "plugins/list"},
                     },
                 ],
-    }));
+    }))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
 
     const pluginName = computed(() => {
-        const split = pluginType.value?.split(".");
-        return split ? split[split.length - 1] : undefined;
-    });
+        const split = pluginType.value?.split(".")
+        return split ? split[split.length - 1] : undefined
+    })
 
-    const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
+    const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value))
 
     const isPluginList = computed(
-        () => typeof route.name === "string" && route.name === "plugins/list"
-    );
+        () => typeof route.name === "string" && route.name === "plugins/list",
+    )
 
     function loadToc() {
-        pluginsStore.listWithSubgroup({includeDeprecated: false});
+        pluginsStore.listWithSubgroup({includeDeprecated: false})
     }
 
     function selectVersion(ver: string | undefined) {
         router.push({
             name: "plugins/view",
             params: {cls: pluginType.value, version: ver},
-        });
+        })
     }
 
     async function loadPlugin() {
         if (route.params.version) {
-            version.value = route.params.version as string;
+            version.value = route.params.version as string
         } else {
-            version.value = undefined;
+            version.value = undefined
         }
 
-        const clsParam = route.params.cls as string | undefined;
+        const clsParam = route.params.cls as string | undefined
         if (!clsParam) {
-            return;
+            return
         }
 
         const loadParams = {
             version: version.value,
             hash: hash.value,
             cls: clsParam,
-        };
+        }
 
-        isLoading.value = true;
+        isLoading.value = true
         try {
             await Promise.all([
                 pluginsStore.load(loadParams),
                 pluginsStore.loadVersions(loadParams).then((data) => {
                     if (data.versions?.length > 0) {
-                        if (!version.value) version.value = data.versions[0];
+                        if (!version.value) version.value = data.versions[0]
                     }
                 }),
-            ]);
+            ])
         } finally {
-            isLoading.value = false;
-            pluginType.value = clsParam;
+            isLoading.value = false
+            pluginType.value = clsParam
         }
     }
 
     function onRouterChange() {
-        window.scroll({top: 0, behavior: "smooth"});
-        loadPlugin();
+        window.scroll({top: 0, behavior: "smooth"})
+        loadPlugin()
     }
 
     function openReleaseNotes() {
         if (releaseNotesUrl.value) {
-            window.open(releaseNotesUrl.value, "_blank");
+            window.open(releaseNotesUrl.value, "_blank")
         }
     }
 
@@ -199,15 +199,15 @@
         [() => route.name, () => route.params],
         ([newName]) => {
             if (newName === "plugins/list") {
-                pluginType.value = undefined;
-                version.value = undefined;
+                pluginType.value = undefined
+                version.value = undefined
             }
             if (typeof newName === "string" && newName.startsWith("plugins/")) {
-                onRouterChange();
+                onRouterChange()
             }
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     watch(
         () => pluginsStore.plugins,
@@ -218,21 +218,19 @@
                 "charts",
                 "dataFilters",
                 "dataFiltersKPI",
-            ]);
+            ])
         },
-        {immediate: true}
-    );
+        {immediate: true},
+    )
 
     onMounted(() => {
-        miscStore.loadConfigs();
-        loadToc();
-        loadPlugin();
-    });
+        miscStore.loadConfigs()
+        loadToc()
+        loadPlugin()
+    })
 </script>
 
 <style scoped lang="scss">
-    @import "../../styles/components/plugin-doc";
-
     .plugin-secondary-header {
         display: flex;
         align-items: center;
@@ -240,7 +238,7 @@
         gap: 1rem;
         padding: 2rem;
         padding-bottom: 0;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         flex: 1;
         min-height: 64px;
 
@@ -251,7 +249,7 @@
         }
 
         .plugin-name {
-            font-size: 1.5rem;
+            font-size: var(--ks-font-size-xl);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -260,8 +258,8 @@
         }
 
         .release-notes-btn {
-            background-color: var(--ks-background-info);
-            color: var(--ks-content-info);
+            background-color: var(--ks-bg-info);
+            color: var(--ks-status-info);
             border: 1px solid var(--ks-border-info);
             font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
@@ -279,13 +277,13 @@
     }
 
     :deep(.main-container) {
-        background: var(--ks-background-panel);
+        background: var(--ks-bg-surface);
         margin: 0;
         padding: 0;
     }
 
     .plugin-doc {
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     @media (max-width: 991px) {
@@ -301,14 +299,14 @@
             }
 
             .plugin-name {
-                font-size: 1.25rem;
+                font-size: var(--ks-font-size-lg);
                 flex: 1;
                 min-width: 0;
             }
 
             .release-notes-btn {
                 padding: 6px 12px;
-                font-size: 0.75rem;
+                font-size: var(--ks-font-size-xs);
                 min-width: auto;
             }
 
@@ -320,7 +318,7 @@
                 gap: 0.5rem;
             }
 
-            .versions :deep(.el-select) {
+            .versions :deep(.kel-select) {
                 width: 100%;
             }
 

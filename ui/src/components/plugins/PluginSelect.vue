@@ -1,18 +1,18 @@
 <template>
-    <el-select
+    <KsSelect
         v-model="modelValue"
         :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
         clearable
     >
-        <el-option
+        <KsOption
             v-for="item in taskModels"
             :key="item.cls"
             :label="item.cls"
             :value="item.cls"
         >
             <span class="options">
-                <TaskIcon
+                <KsTaskIcon
                     v-if="hasIcons"
                     :cls="item?.cls"
                     :onlyIcon="true"
@@ -25,111 +25,111 @@
                     </div>
                 </div>
             </span>
-        </el-option>
+        </KsOption>
 
         <template #prefix>
-            <TaskIcon
+            <KsTaskIcon
                 v-if="modelValue && hasIcons"
                 :cls="modelValue"
                 :onlyIcon="true"
                 :icons="pluginsStore.icons"
             />
         </template>
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount, ref} from "vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {computed, inject, onBeforeMount, ref} from "vue"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
-        SCHEMA_DEFINITIONS_INJECTION_KEY
-    } from "../no-code/injectionKeys";
-    import {getValueAtJsonPath} from "../../utils/utils";
+        SCHEMA_DEFINITIONS_INJECTION_KEY,
+    } from "../no-code/injectionKeys"
+    import {getValueAtJsonPath} from "../../utils/utils"
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
-    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
 
-    const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "");
-    const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType);
+    const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
+    const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)
 
     const fieldDefinition = computed(() => {
         if (props.blockSchemaPath.length === 0) {
-            console.error("Definition key is required for PluginSelect component");
+            console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)
     })
 
     onBeforeMount(() => {
         if (blockType === "pluginDefaults" || isPluginBlock) {
-            pluginsStore.listWithSubgroup({includeDeprecated: false});
+            pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
     })
 
     const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
         if (item.allOf) {
             // if the item is an allOf, we need to find the first item that has a $ref
-            const refItem = item.allOf.find((d: any) => d.$ref);
+            const refItem = item.allOf.find((d: any) => d.$ref)
             if (refItem?.$ref) {
-                return removeRefPrefix(refItem.$ref);
+                return removeRefPrefix(refItem.$ref)
             }
         }
-        return removeRefPrefix(item.$ref);
-    }) || []);
+        return removeRefPrefix(item.$ref)
+    }) || [])
 
     const taskModelsSets = computed(() => {
         return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
             const def = rootDefinitions.value?.[item]
 
             if (!def || def.$deprecated) {
-                return acc;
+                return acc
             }
 
             const consolidatedType = def.allOf
                 ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
-                : def.properties?.type;
+                : def.properties?.type
 
             if (consolidatedType?.const) {
-                acc.set(consolidatedType.const, def.title ?? consolidatedType.const);
+                acc.set(consolidatedType.const, def.title ?? consolidatedType.const)
             }
 
             if (consolidatedType?.enum) {
-                const val = consolidatedType.enum[0];
+                const val = consolidatedType.enum[0]
 
-                acc.set(val, def.title ?? val);
+                acc.set(val, def.title ?? val)
             }
             return acc
-        }, new Map<string, string>());
+        }, new Map<string, string>())
     })
 
     const taskModels = computed(() => {
         const entries = blockType === "pluginDefaults"
             ? (() => {
-                const deprecated = new Set(pluginsStore.deprecatedTypes);
+                const deprecated = new Set(pluginsStore.deprecatedTypes)
                 return pluginsStore.allTypes
                     .filter((cls: string) => !deprecated.has(cls) && rootDefinitions.value?.[cls])
-                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}));
+                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}))
             })()
             : (Array.from(taskModelsSets.value) as [string, string][])
-                .map(([cls, title]) => ({cls, title}));
+                .map(([cls, title]) => ({cls, title}))
 
-        return entries.sort((a, b) => a.cls.localeCompare(b.cls));
-    });
+        return entries.sort((a, b) => a.cls.localeCompare(b.cls))
+    })
 
     const hasIcons = computed(() => {
-        const models = taskModels.value.map(m => m.cls);
-        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0;
-    });
+        const models = taskModels.value.map(m => m.cls)
+        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => models.includes(plugin)).length > 0
+    })
 
     const modelValue = defineModel({
         type: String,
         default: "",
-    });
+    })
 
     const props = defineProps<{
         blockSchemaPath: string,
@@ -137,25 +137,25 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(div.wrapper) {
+    :deep(div.ks-task-icon) {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
         margin-right: 1rem;
     }
 
-    :deep(.el-input__prefix-inner) {
-        .wrapper {
+    :deep(.kel-input__prefix-inner) {
+        .ks-task-icon {
             top: 0;
             margin-right: 0;
         }
     }
 
-    :deep(.el-select__suffix) {
+    :deep(.kel-select__suffix) {
         display: flex !important;
     }
 
-    .el-select-dropdown__item {
+    .kel-select-dropdown__item {
         height: fit-content;
         line-height: normal;
         padding: 8px 12px;
@@ -166,7 +166,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.wrapper) {
+        :deep(.ks-task-icon) {
             width: 2rem;
             height: 2rem;
         }
@@ -186,8 +186,8 @@
             }
 
             .title {
-                font-size: 0.75rem;
-                color: var(--ks-content-secondary);
+                font-size: var(--ks-font-size-xs);
+                color: var(--ks-text-secondary);
                 line-height: 1.2;
                 white-space: normal;
             }

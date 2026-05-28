@@ -22,19 +22,18 @@
                 />
             </div>
         </div>
-        <el-divider>
+        <KsDivider>
             {{ isNamespace ? $t("no-executions-view.namespace_guidance_desc") : $t("welcome_page.guide") }}
-        </el-divider>
+        </KsDivider>
         <OverviewBottom class="bottom" :isNamespace />
     </EmptyTemplate>
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
+    import OverviewBottom from "../onboarding/execution/OverviewBottom.vue"
+    import EmptyTemplate from "../layout/EmptyTemplate.vue"
     import noexecutionimg from "../../assets/onboarding/noexecution.svg"
     import {useFlowStore} from "../../stores/flow"
-    //@ts-expect-error no declaration file
     import TriggerFlow from "../flows/TriggerFlow.vue"
 
     withDefaults(defineProps<{topbar?: boolean; isNamespace?: boolean}>(), {
@@ -42,7 +41,7 @@
         isNamespace: false,
     })
 
-    const flowStore = useFlowStore();
+    const flowStore = useFlowStore()
     const flow = computed(() => flowStore.flow)
 </script>
 
@@ -56,39 +55,39 @@
     margin: 4rem auto;
 
     .title {
-        line-height: var(--el-font-line-height-primary);
+        line-height: var(--kel-font-line-height-primary);
         text-align: center;
-        font-size: var(--el-font-size-extra-large);
+        font-size: var(--ks-font-size-xl);
         font-weight: 600;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .desc {
-        line-height: var(--el-font-line-height-primary);
+        line-height: var(--kel-font-line-height-primary);
         font-weight: 300;
-        font-size: 16px;
+        font-size: var(--ks-font-size-base);
         line-height: 28px;
         text-align: center;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     .trigger {
-        :deep(.el-button) {
+        :deep(.kel-button) {
             width: 226px;
             height: 45px;
         }
     }
 }
 
-:deep(.el-divider) {
+:deep(.kel-divider) {
     max-width: 746px;
     margin: 0 auto;
 }
 
-:deep(.el-divider__text) {
-    color: var(--ks-content-secondary);
+:deep(.kel-divider__text) {
+    color: var(--ks-text-secondary);
     white-space: nowrap;
-    font-size: var(--el-font-size-extra-small);
+    font-size: var(--ks-font-size-xs);
 }
 
 .bottom {

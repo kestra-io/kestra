@@ -1,35 +1,35 @@
 <template>
     <div class="button-top">
-        <el-button-group class="view-buttons">
-            <el-tooltip :content="$t('source only')">
-                <el-button
+        <KsButtonGroup class="view-buttons">
+            <KsTooltip :content="$t('source only')">
+                <KsButton
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('documentation.documentation')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('documentation.documentation')">
+                <KsButton
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('chart preview')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('chart preview')">
+                <KsButton
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
-            </el-tooltip>
-            <el-tooltip :content="$t('dashboards.preview')">
-                <el-button
+            </KsTooltip>
+            <KsTooltip :content="$t('dashboards.preview')">
+                <KsButton
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
-            </el-tooltip>
-        </el-button-group>
+            </KsTooltip>
+        </KsButtonGroup>
 
         <ValidationErrors
             class="mx-3"
@@ -37,21 +37,21 @@
             :errors="errors"
         />
 
-        <el-button
+        <KsButton
             :icon="ContentSave"
             @click="emit('save', source)"
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
-        </el-button>
+        </KsButton>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
         <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
-        <el-splitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
-            <el-splitter-panel :size="editorWidth" min="25%" max="75%">
+        <KsSplitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
+            <KsSplitterPanel :size="editorWidth" min="25%" max="75%">
                 <Editor
                     @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
                     v-model="source"
@@ -63,8 +63,8 @@
                     :readOnly="false"
                     :navbar="false"
                 />
-            </el-splitter-panel>
-            <el-splitter-panel :size="100 - editorWidth">
+            </KsSplitterPanel>
+            <KsSplitterPanel :size="100 - editorWidth">
                 <PluginDocumentation
                     v-if="currentView === views.DOC"
                     class="combined-right-view enhance-readability"
@@ -82,17 +82,17 @@
                         <span>{{ chartError }}</span>
                     </div>
                     <div v-else>
-                        <el-empty :image="EmptyVisualDashboard" :imageSize="200">
+                        <KsEmpty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
                                     {{ $t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
-                        </el-empty>
+                        </KsEmpty>
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
+            </KsSplitterPanel>
+        </KsSplitter>
         <div v-else class="editor-only">
             <Editor
                 @save="(allowSaveUnchanged || source !== initialSource) ? $emit('save', $event) : undefined"
@@ -109,129 +109,128 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted, onBeforeUnmount} from "vue";
-    import Editor from "../../inputs/Editor.vue";
-    import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
-    import Sections from "../sections/Sections.vue";
-    import ValidationErrors from "../../flows/ValidationError.vue";
-    import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
-    import ChartBar from "vue-material-design-icons/ChartBar.vue";
-    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
-    import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue";
-    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import intro from "../../../assets/docs/dashboard_home.md?raw";
-    import yaml from "yaml";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {usePluginsStore} from "../../../stores/plugins";
-    import {useDashboardStore} from "../../../stores/dashboard";
-
+    import {ref, computed, onMounted, onBeforeUnmount} from "vue"
+    import Editor from "../../inputs/Editor.vue"
+    import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
+    import Sections from "../sections/Sections.vue"
+    import ValidationErrors from "../../flows/ValidationError.vue"
+    import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue"
+    import ChartBar from "vue-material-design-icons/ChartBar.vue"
+    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
+    import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue"
+    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import intro from "../../../assets/docs/dashboard_home.md?raw"
+    import yaml from "yaml"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {usePluginsStore} from "../../../stores/plugins"
+    import {useDashboardStore} from "../../../stores/dashboard"
 
     const props = defineProps<{
         allowSaveUnchanged?: boolean;
         initialSource?: string;
         modelValue?: string;
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "save", source?: string): void;
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const dashboardStore = useDashboardStore();
+    const pluginsStore = usePluginsStore()
+    const dashboardStore = useDashboardStore()
 
-    const source = ref(props.initialSource);
-    const errors = ref<any>(undefined);
-    const warnings = ref<any>(undefined);
-    const editorWidth = ref(50);
+    const source = ref(props.initialSource)
+    const errors = ref<any>(undefined)
+    const warnings = ref<any>(undefined)
+    const editorWidth = ref(50)
     const views = {
         DOC: "documentation",
         CHART: "chart",
         NONE: "none",
-        DASHBOARD: "dashboard"
-    };
-    const currentView = ref<string>(views.DOC);
-    const selectedChart = ref<any[]>([]);
-    const charts = ref<any[]>([]);
-    const chartError = ref<string | null>(null);
+        DASHBOARD: "dashboard",
+    }
+    const currentView = ref<string>(views.DOC)
+    const selectedChart = ref<any[]>([])
+    const charts = ref<any[]>([])
+    const chartError = ref<string | null>(null)
 
     const saveButtonType = computed(() => {
-        if (errors.value) return "danger";
-        return warnings.value ? "warning" : "primary";
-    });
+        if (errors.value) return "danger"
+        return warnings.value ? "warning" : "primary"
+    })
 
     const displaySide = computed(() => {
-        return currentView.value !== views.NONE && currentView.value !== views.DASHBOARD;
-    });
+        return currentView.value !== views.NONE && currentView.value !== views.DASHBOARD
+    })
 
     function buttonType(view: string) {
-        return view === currentView.value ? "primary" : "default";
+        return view === currentView.value ? "primary" : "default"
     }
 
     function setView(view: string) {
-        currentView.value = view;
+        currentView.value = view
         if (view === views.DASHBOARD) {
-            validateAndLoadAllCharts();
+            validateAndLoadAllCharts()
         }
     }
 
     async function updatePluginDocumentation(event: any) {
         if (currentView.value === views.DOC) {
-            const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, plugins.value);
+            const type = YAML_UTILS.getTypeAtPosition(event.model.getValue(), event.position, plugins.value)
             if (type) {
-                const plugin = await pluginsStore.load({cls: type});
-                pluginsStore.editorPlugin = {cls: type, ...plugin};
+                const plugin = await pluginsStore.load({cls: type})
+                pluginsStore.editorPlugin = {cls: type, ...plugin}
             } else {
-                pluginsStore.editorPlugin = undefined;
+                pluginsStore.editorPlugin = undefined
             }
         } else if (currentView.value === views.CHART) {
-            const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position);
+            const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
             if (chart) {
-                const result = await loadChart(chart);
+                const result = await loadChart(chart)
                 selectedChart.value = typeof result.data === "object"
                     ? [{
                         ...result.data,
                         chartOptions: {
                             ...result.data?.chartOptions,
-                            width: 12
-                        }
+                            width: 12,
+                        },
                     }]
-                    : [];
-                chartError.value = result.error;
+                    : []
+                chartError.value = result.error
             }
         }
     }
 
     function onSplitterResize(sizes: number[]) {
         if (sizes && sizes.length >= 1) {
-            const percent = sizes[0];
-            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent;
+            const percent = sizes[0]
+            editorWidth.value = percent > 75 ? 75 : percent < 25 ? 25 : percent
         }
     }
 
-    const plugins = ref<string[]>([]);
+    const plugins = ref<string[]>([])
     async function loadPlugins() {
-        const data = await pluginsStore.list();
+        const data = await pluginsStore.list()
         plugins.value = data.map((plugin: any) => {
-            const charts = plugin.charts || [];
-            const dataFilters = plugin.dataFilters || [];
-            return charts.concat(dataFilters);
+            const pluginCharts = plugin.charts || []
+            const dataFilters = plugin.dataFilters || []
+            return pluginCharts.concat(dataFilters)
         }).flat()
             .filter(({deprecated}: any) => !deprecated)
-            .map(({cls}: any) => cls);
+            .map(({cls}: any) => cls)
     }
 
     function validateAndLoadAllCharts() {
-        charts.value = [];
-        const allCharts = source.value ? YAML_UTILS.getAllCharts(source.value) : [];
+        charts.value = []
+        const allCharts = source.value ? YAML_UTILS.getAllCharts(source.value) : []
         allCharts.forEach(async (chart: any) => {
-            const loadedChart = await loadChart(chart);
-            charts.value.push(loadedChart);
-        });
+            const loadedChart = await loadChart(chart)
+            charts.value.push(loadedChart)
+        })
     }
 
     async function loadChart(chart: any) {
-        const yamlChart = yaml.stringify(chart);
+        const yamlChart = yaml.stringify(chart)
         const result: { error: string | null; data: null | {
             id?: string;
             name?: string;
@@ -242,33 +241,32 @@
         }; raw: any } = {
             error: null,
             data: null,
-            raw: {}
-        };
-        const errors = await dashboardStore.validateChart(yamlChart);
-        if (errors.constraints) {
-            result.error = errors.constraints;
-        } else {
-            result.data = {...chart, content: yamlChart, raw: chart};
+            raw: {},
         }
-        return result;
+        const validationErrors = await dashboardStore.validateChart(yamlChart)
+        if (validationErrors.constraints) {
+            result.error = validationErrors.constraints
+        } else {
+            result.data = {...chart, content: yamlChart, raw: chart}
+        }
+        return result
     }
 
     onMounted(() => {
-        loadPlugins();
-    });
+        loadPlugins()
+    })
 
     onBeforeUnmount(() => {
-        pluginsStore.editorPlugin = undefined;
-    });
+        pluginsStore.editorPlugin = undefined
+    })
 </script>
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
-    $spacing: 20px;
+    $spacing: var(--ks-font-size-lg);
 
     .main-editor {
         padding: .5rem 0px;
-        background: var(--ks-background-body);
+        background: var(--ks-bg-body);
         display: flex;
         height: calc(100% - 49px);
         min-height: 0;
@@ -277,27 +275,23 @@
         > * {
             flex: 1;
         }
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
     }
 
-    .el-empty {
+    .kel-empty {
         background-color: transparent;
 
-        .el-empty__description {
-            font-size: var(--el-font-size-small);
+        .kel-empty__description {
+            font-size: var(--ks-font-size-sm);
         }
     }
 
     .custom {
         padding: 24px 32px;
 
-        &.el-row {
+        &.kel-row {
             width: 100%;
 
-            & .el-col {
+            & .kel-col {
                 padding-bottom: $spacing;
 
                 &:nth-of-type(even) > div {
@@ -306,9 +300,9 @@
 
                 & > div {
                     height: 100%;
-                    background: var(--ks-background-card);
-                    border: 1px solid var(--ks-border-primary);
-                    border-radius: $border-radius;
+                    background: var(--ks-bg-surface);
+                    border: 1px solid var(--ks-border-default);
+                    border-radius: var(--ks-radius-base);
                 }
             }
         }
@@ -331,8 +325,8 @@
         height: 100%;
 
         &.enhance-readability {
-            padding: calc(var(--spacer) * 1.5);
-            background-color: var(--bs-gray-100);
+            padding: calc(1rem * 1.5);
+            background-color: var(--ks-bg-tag);
         }
     }
 
@@ -360,9 +354,9 @@
     }
 
     .view-buttons {
-        .el-button {
-            &.el-button--primary {
-                color: var(--ks-content-link);
+        .kel-button {
+            &.kel-button--primary {
+                color: var(--ks-text-link);
                 opacity: 1;
             }
 

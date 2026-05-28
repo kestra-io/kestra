@@ -202,7 +202,10 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URL of the downloaded file in Kestra's internal storage"
+            title = "The URI of the downloaded file in Kestra's internal storage.",
+            description = "This is an internal Kestra storage URI (e.g. `kestra:///namespace/flow/executions/.../filename`), not an HTTP URL. " +
+                "The actual storage backend (local filesystem, S3, GCS, Azure Blob, etc.) is determined by your Kestra configuration. " +
+                "Pass this URI to subsequent tasks using `{{ outputs.<task_id>.uri }}`."
         )
         private final URI uri;
 

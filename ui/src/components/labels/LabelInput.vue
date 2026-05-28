@@ -5,33 +5,33 @@
         :key="index"
     >
         <div class="flex-grow-1 d-flex align-items-center">
-            <el-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('key')"
-                v-model="label.key"
+                :modelValue="(label.key as string | undefined)"
                 :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
-            <el-input
+            <KsInput
                 class="form-control me-2"
                 :placeholder="$t('value')"
-                v-model="label.value"
+                :modelValue="(label.value as string | undefined)"
                 @update:model-value="update(index, $event, 'value')"
             />
         </div>
         <div class="flex-shrink-1">
-            <el-button-group class="d-flex">
-                <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" />
-            </el-button-group>
+            <KsButtonGroup class="d-flex">
+                <KsButton :icon="Plus" @click="addItem" />
+                <KsButton :icon="Minus" @click="removeItem(index)" />
+            </KsButtonGroup>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted} from "vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Minus from "vue-material-design-icons/Minus.vue";
+    import {ref, onMounted} from "vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Minus from "vue-material-design-icons/Minus.vue"
 
     interface Label {
         key: string | null;
@@ -41,43 +41,43 @@
     const props = defineProps<{
         labels: Label[];
         existingLabels?: Label[];
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:labels", value: Label[]): void;
-    }>();
+    }>()
 
-    const locals = ref<Label[]>([]);
-    const localExisting = ref<string[]>([]);
+    const locals = ref<Label[]>([])
+    const localExisting = ref<string[]>([])
 
     const addItem = () => {
-        locals.value.push({key: null, value: null});
-        emit("update:labels", locals.value);
-    };
+        locals.value.push({key: null, value: null})
+        emit("update:labels", locals.value)
+    }
 
     const removeItem = (index: number) => {
-        locals.value.splice(index, 1);
+        locals.value.splice(index, 1)
         if (locals.value.length === 0) {
-            addItem();
+            addItem()
         }
-        emit("update:labels", locals.value);
-    };
+        emit("update:labels", locals.value)
+    }
 
-    const update = (index: number, value: string | null, prop: keyof Label) => {
-        locals.value[index][prop] = value;
-        emit("update:labels", locals.value);
-    };
+    const update = (index: number, value: string | number | undefined, prop: keyof Label) => {
+        locals.value[index][prop] = value !== "" && value !== undefined ? String(value) : null
+        emit("update:labels", locals.value)
+    }
 
     onMounted(() => {
         if (props.labels.length === 0) {
-            addItem();
+            addItem()
         } else {
-            locals.value = props.labels;
+            locals.value = props.labels
             if (locals.value.length === 0) {
-                addItem();
+                addItem()
             }
         }
 
-        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || [];
-    });
+        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || []
+    })
 </script>

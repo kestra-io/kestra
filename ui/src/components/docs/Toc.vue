@@ -1,5 +1,5 @@
 <template>
-    <el-autocomplete
+    <KsAutocomplete
         ref="search"
         class="flex-shrink-0"
         v-model="query"
@@ -19,7 +19,7 @@
                 <ArrowRight class="is-justify-end" />
             </RouterLink>
         </template>
-    </el-autocomplete>
+    </KsAutocomplete>
     <ul class="list-unstyled d-flex flex-column gap-3">
         <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
             <span class="text-secondary">
@@ -31,11 +31,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {ref, computed, onMounted} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     interface TocItem {
         title: string;
@@ -50,7 +50,7 @@
         title: string;
     }
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const sections = {
         "Get Started with Kestra": [
@@ -58,7 +58,7 @@
             "Tutorial",
             "Architecture",
             "Installation Guide",
-            "User Interface"
+            "User Interface",
         ],
         "Build with Kestra": [
             "Concepts",
@@ -66,71 +66,71 @@
             "Expressions",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
-            "How-to Guides"
+            "How-to Guides",
         ],
         "Scale with Kestra": [
             "Enterprise Edition",
             "Task Runners",
-            "Best Practices"
+            "Best Practices",
         ],
         "Manage Kestra": [
             "Administrator Guide",
             "Configuration Guide",
             "Migration Guide",
             "Terraform Provider",
-            "API Reference"
-        ]
-    };
+            "API Reference",
+        ],
+    }
 
-    const rawStructure = ref<any>(undefined);
-    const query = ref<string>("");
+    const rawStructure = ref<any>(undefined)
+    const query = ref<string>("")
 
     const toc = computed((): TocItem[] | undefined => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
             .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
             .map(([url, metadata]: [string, any]) => [url, {
                 ...metadata,
-                path: url
-            } as TocItem]));
+                path: url,
+            } as TocItem]))
         Object.entries(childrenWithMetadata)
             .forEach(([url, metadata]: [string, any]) => {
-                const split = url.split("/");
-                const parentUrl = split.slice(0, split.length - 1).join("/");
-                const parent = childrenWithMetadata[parentUrl];
+                const split = url.split("/")
+                const parentUrl = split.slice(0, split.length - 1).join("/")
+                const parent = childrenWithMetadata[parentUrl]
                 if (parent !== undefined) {
-                    parent.children = [...(parent.children ?? []), metadata];
+                    parent.children = [...(parent.children ?? []), metadata]
                 }
-            });
+            })
 
-        return Object.values(childrenWithMetadata);
-    });
+        return Object.values(childrenWithMetadata)
+    })
 
     const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
         if (toc.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         return Object.entries(sections).map(([section, childrenTitles]) => [
-            section, 
-            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title))
-        ]);
-    });
+            section,
+            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title)),
+        ])
+    })
 
     onMounted(async () => {
-        rawStructure.value = await docStore.children();
-    });
+        rawStructure.value = await docStore.children()
+    })
 
-    const search = async (query: string, cb: (results: SearchResult[]) => void) => {
-        cb(await docStore.search({q: query}));
-    };
+    const search = async (q: string, cb: (results: SearchResult[]) => void) => {
+        cb(await docStore.search({q}))
+    }
 </script>
 
 <style lang="scss" scoped>
     ul > li > span:first-child {
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 </style>

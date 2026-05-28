@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -13,10 +14,14 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.worker.systemworker.SystemWorker;
 import org.awaitility.Awaitility;
 
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import io.kestra.core.utils.Await;
 
@@ -24,15 +29,30 @@ import io.kestra.core.utils.Await;
     name = "executor",
     description = "Start the Kestra executor"
 )
+@Slf4j
 public class ExecutorCommand extends AbstractServerCommand {
+    private ExecutorService poolExecutor;
+
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private ExecutorsUtils executorsUtils;
 
     @Inject
-    private IgnoreExecutionService ignoreExecutionService;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
+
+    @Inject
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
+
+    @Inject
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
+
+    @Inject
+    private Provider<Executor> executorService;
+
+    @Inject
+    private BeanProvider<SystemWorker> systemWorker;
 
     @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
@@ -66,26 +86,29 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.ignoreExecutionService.setIgnoredExecutions(ignoreExecutions);
-        this.ignoreExecutionService.setIgnoredFlows(ignoreFlows);
-        this.ignoreExecutionService.setIgnoredNamespaces(ignoreNamespaces);
-        this.ignoreExecutionService.setIgnoredTenants(ignoreTenants);
-        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
 
         super.call();
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        Executor executorService = applicationContext.getBean(Executor.class);
-        executorService.run();
+        executorService.get().run();
+
+        // start the embedded SystemWorker (always present in EXECUTOR mode)
+        poolExecutor = executorsUtils.cachedThreadPool("embedded-services");
+        log.info("Starting the embedded SystemWorker.");
+        poolExecutor.execute(systemWorker.get()::start);
+
+        shutdownHook(true, () -> poolExecutor.shutdown());
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 

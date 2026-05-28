@@ -7,22 +7,23 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.kestra.core.runners.*;
-import io.kestra.core.server.Service;
-import io.kestra.core.utils.ExecutorsUtils;
-
-import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+
+import io.kestra.core.runners.*;
+import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.Service;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.executor.DefaultExecutor;
+import io.kestra.worker.systemworker.SystemWorker;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
+import io.micronaut.context.BeanProvider;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Await;
 
 @Slf4j
 public class StandAloneRunner implements Runnable, AutoCloseable {
@@ -41,10 +42,25 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
     private ExecutorsUtils executorsUtils;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultExecutor defaultExecutor;
 
-    @Value("${kestra.server.standalone.running.timeout:PT1M}")
-    private Duration runningTimeout;
+    @Inject
+    private Provider<Controller> controllerProvider;
+
+    @Inject
+    private Provider<Worker> workerProvider;
+
+    @Inject
+    private Provider<Scheduler> schedulerProvider;
+
+    @Inject
+    private Provider<Indexer> indexerProvider;
+
+    @Inject
+    private BeanProvider<SystemWorker> systemWorkerProvider;
+
+    @Inject
+    private ServerConfig serverConfig;
 
     private final List<Service> servers = new ArrayList<>();
 
@@ -57,34 +73,39 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(DefaultExecutor.class));
+        poolExecutor.execute(defaultExecutor);
 
         if (controllerEnabled) {
-            Controller controller = applicationContext.getBean(Controller.class);
+            Controller controller = controllerProvider.get();
             poolExecutor.execute(controller::start);
             servers.add(controller);
         }
 
         if (workerEnabled) {
-            Worker worker = applicationContext.getBean(Worker.class);
+            Worker worker = workerProvider.get();
             poolExecutor.execute(() -> worker.start(workerThread, null));
             servers.add(worker);
         }
 
         if (schedulerEnabled) {
-            Scheduler scheduler = applicationContext.getBean(Scheduler.class);
+            Scheduler scheduler = schedulerProvider.get();
             poolExecutor.execute(scheduler);
             servers.add(scheduler);
         }
 
         if (indexerEnabled) {
-            Indexer indexer = applicationContext.getBean(Indexer.class);
+            Indexer indexer = indexerProvider.get();
             poolExecutor.execute(indexer);
             servers.add(indexer);
         }
 
+        // start the embedded SystemWorker (always present in STANDALONE mode)
+        SystemWorker systemWorker = systemWorkerProvider.get();
+        poolExecutor.execute(systemWorker::start);
+        servers.add(systemWorker);
+
         try {
-            Await.await().atMost(runningTimeout).until(
+            Await.await().atMost(getRunningTimeout()).until(
                 () -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
             );
         } catch (ConditionTimeoutException e) {
@@ -94,6 +115,13 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
                     .toList() + " not started in time"
             );
         }
+    }
+
+    private Duration getRunningTimeout() {
+        return Optional.ofNullable(serverConfig.standalone())
+            .map(ServerConfig.Standalone::running)
+            .map(ServerConfig.Standalone.Running::timeout)
+            .orElse(Duration.ofMinutes(1));
     }
 
     public boolean isRunning() {

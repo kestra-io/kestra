@@ -1,0 +1,18 @@
+id: flow-trigger-stable-condition-id-flow-listen
+namespace: io.kestra.tests.trigger.stable.condition.id
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.stable.condition.id
+        flowId: flow-trigger-stable-condition-id-flow-a
+        states: [SUCCESS]
+      - namespace: io.kestra.tests.trigger.stable.condition.id
+        flowId: flow-trigger-stable-condition-id-flow-b
+        states: [SUCCESS]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

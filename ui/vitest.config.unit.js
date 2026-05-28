@@ -1,21 +1,21 @@
-import {defineProject} from "vitest/config";
-import vue from "@vitejs/plugin-vue";
+import {defineProject} from "vitest/config"
+import vue from "@vitejs/plugin-vue"
 
-import viteConfig from "./vite.config.js";
+import viteConfig from "./vite.config.js"
+
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
 export default defineProject({
     plugins: [
         vue(),
     ],
-    resolve: {
-        alias: viteConfig.resolve.alias,
-    },
+    resolve: resolvedViteConfig.resolve,
     test: {
         name: "unit",
         environment: "jsdom",
         reporters: [
             ["default"],
-            ["junit"]
+            ["junit"],
         ],
         outputFile: {
             junit: "./test-report.junit.xml",
@@ -35,7 +35,7 @@ export default defineProject({
                 "**/.storybook/**",
                 "**/*.stories.*",
                 "**/*.d.ts",
-            ]
+            ],
         },
     },
     define: {

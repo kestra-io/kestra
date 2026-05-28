@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <KsButton
         v-if="isAllowedEdit"
         :icon="Api"
         tag="a"
@@ -8,32 +8,32 @@
         rel="noopener noreferrer"
     >
         {{ $t("api") }}
-    </el-button>
+    </KsButton>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
 
-    import {apiUrl} from "override/utils/route";
+    import {apiUrl} from "override/utils/route"
 
-    import {Execution} from "../../../../../stores/executions";
-    import {useAuthStore} from "override/stores/auth";
+    import {Execution} from "../../../../../stores/executions"
+    import {useAuthStore} from "override/stores/auth"
 
-    import permission from "../../../../../models/permission";
-    import action from "../../../../../models/action";
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
 
-    import Api from "vue-material-design-icons/Api.vue";
+    import Api from "vue-material-design-icons/Api.vue"
 
-    const props = defineProps<{ execution: Execution }>();
+    const props = defineProps<{ execution: Execution }>()
 
     const isAllowedEdit = computed(() => {
         return (
             props.execution &&
             useAuthStore().user?.isAllowed(
-                permission.FLOW,
+                resource.FLOW,
                 action.UPDATE,
                 props.execution.namespace,
             )
-        );
-    });
+        )
+    })
 </script>

@@ -123,10 +123,6 @@
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
-    // Quick-filter interval is a curated subset with short labels for a compact
-    // single-row layout; the full localized range list stays available via the
-    // "Add filters" dropdown (timeRange). Labels go through i18n via
-    // `datepicker.short.*` keys so translators can localize the abbreviations.
     const quickIntervals = computed(() => [
         {label: t("datepicker.short.15m"), value: "PT15M"},
         {label: t("datepicker.short.1h"), value: "PT1H"},

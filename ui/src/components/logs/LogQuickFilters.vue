@@ -61,9 +61,6 @@
         "update:timeRange": [value: string];
     }>()
 
-    // Each level pill is tinted with its semantic log color. Exposed as CSS
-    // custom properties so the scoped styles can theme idle/hover/active states
-    // from a single source per level (resolves through the --ks-log-* tokens).
     const levelStyle = (value: string) => {
         const key = value.toLowerCase()
         return {
@@ -82,10 +79,6 @@
         gap: var(--ks-spacing-4);
         margin-top: var(--ks-spacing-2);
 
-        // Stack interval + level groups vertically when the row can't fit them
-        // side-by-side (mobile, sidebar collapsed, narrow split panes). Groups
-        // stretch full-width and scroll horizontally if their contents still
-        // overflow (the KsSegmented is one non-shrinkable unit).
         @media (max-width: 48rem) {
             flex-direction: column;
             align-items: stretch;

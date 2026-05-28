@@ -2,10 +2,6 @@ import {describe, expect, it} from "vitest"
 import {mount} from "@vue/test-utils"
 import LogQuickFilters from "../../../src/components/logs/LogQuickFilters.vue"
 
-// KsSegmented (the interval control) is globally registered by the design-system
-// plugin. Stub it so we test LogQuickFilters' own contract without depending on
-// KsSegmented internals. The level pills are plain buttons rendered by this
-// component, so we query them directly by data-test.
 const KsSegmentedStub = {
     name: "KsSegmented",
     props: ["options", "modelValue"],

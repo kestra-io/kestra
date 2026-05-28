@@ -2,16 +2,6 @@ const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]["
 const TIME_RANGE_EQUALS_FILTER_KEY = "filters[timeRange][EQUALS]"
 const LEGACY_TIME_RANGE_FILTER_KEY = "timeRange"
 
-/**
- * Normalize a route query to express the time-range filter as a single
- * `filters[timeRange][EQUALS]=<value>` entry.
- *
- * Mirrors `normalizeRouteLevelFilter`:
- *  - strips any other `filters[timeRange][*]` comparator,
- *  - strips the legacy top-level `timeRange` key,
- *  - strips explicit `startDate`/`endDate` (the time-range value re-derives them),
- *  - drops the filter entirely when `value` is undefined.
- */
 export const normalizeRouteTimeRangeFilter = (
     query: Record<string, any>,
     value: string | undefined,

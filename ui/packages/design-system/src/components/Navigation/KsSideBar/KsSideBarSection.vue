@@ -56,7 +56,7 @@
 
 <style scoped lang="scss">
 .ks-sidebar-section {
-    padding: 0 var(--ks-spacing-4);
+    padding: 0 var(--ks-spacing-2) 0 var(--ks-spacing-4);
 }
 
 .ks-sidebar-section__title {

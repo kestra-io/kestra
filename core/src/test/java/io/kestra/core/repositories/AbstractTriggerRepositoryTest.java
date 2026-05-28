@@ -100,6 +100,8 @@ public abstract class AbstractTriggerRepositoryTest {
             QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.NAMESPACE).value("trigger.namespace").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value("flowId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value(List.of("flowId")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value(List.of("anotherFlowId")).operation(Op.NOT_IN).build(),
             QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
             QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("triggerId").operation(Op.EQUALS).build(),

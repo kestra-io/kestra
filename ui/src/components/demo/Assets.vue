@@ -1,26 +1,21 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title" />
-    <Layout
-        :title="t(`demos.assets.title`)"
+    <Empty
         type="assets"
-        :image="{
-            source: img,
-            alt: t(`demos.assets.title`)
-        }"
-        :video="{
-            source: 'https://www.youtube.com/embed/XhICXP_GXic',
-        }"
+        demoCta
+        :title="t(`demos.assets.title`)"
+        video="https://www.youtube.com/embed/XhICXP_GXic"
+        learnMore="https://kestra.io/docs/enterprise/governance/assets"
     >
-        <template #message>
+        <template #description>
             {{ $t(`demos.assets.message`) }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import img from "../../assets/demo/assets.png"
     import useRouteContext from "../../composables/useRouteContext"
 
     defineProps({
@@ -30,7 +25,7 @@
         },
     })
 
-    import Layout from "./Layout.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
     const {t} = useI18n()

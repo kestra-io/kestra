@@ -33,7 +33,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[-\\p{Alnum}._\\+~#=/]*)", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}._\\+~#=/,:;";
+    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[" + ALLOWED_PATH_CHARS + "]*)", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern VALID_STORAGE_PATH_PATTERN = Pattern.compile("[" + ALLOWED_PATH_CHARS + "]+", Pattern.UNICODE_CHARACTER_CLASS);
 
     // These are the three common additional variables task runners must provide for variable rendering.
     public static final String VAR_WORKING_DIR = "workingDir";
@@ -136,6 +138,7 @@ public final class ScriptService {
                 .forEach(throwConsumer(path ->
                 {
                     String filename = outputDir.relativize(path).toString();
+                    validateStoragePath(filename);
 
                     uploaded.put(
                         filename,
@@ -145,6 +148,15 @@ public final class ScriptService {
         }
 
         return uploaded;
+    }
+
+    static void validateStoragePath(String filename) throws IOException {
+        if (!VALID_STORAGE_PATH_PATTERN.matcher(filename).matches()) {
+            throw new IOException(
+                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, hash, equals, slashes, commas, colons, semicolons."
+                    .formatted(filename)
+            );
+        }
     }
 
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command) {

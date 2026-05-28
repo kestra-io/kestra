@@ -46,7 +46,7 @@
                     </KsTooltip>
                 </div>
             </div>
-            <KsAlert v-if="savedFilters.length === 0" type="info" showIcon :closable="false">
+            <KsAlert v-if="savedFilters.length === 0" type="info" :closable="false">
                 {{ $t("filter.empty") }}
                 <template #icon>
                     <InformationOutline />
@@ -99,7 +99,7 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 0.75rem 0.75rem 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--ks-border-primary);
+        border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
         top: 0;
@@ -111,12 +111,12 @@
         }
 
         :deep(.kel-button) {
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
 
             &:hover {
-                color: var(--ks-content-link);
+                color: var(--ks-text-link);
             }
         }
     }
@@ -128,7 +128,7 @@
         scrollbar-color: transparent transparent;
 
         &:hover {
-            scrollbar-color: var(--ks-border-secondary) transparent;
+            scrollbar-color: var(--ks-border-subtle) transparent;
         }
 
         .saved-filter-item {
@@ -138,7 +138,7 @@
             padding: 0.375rem 1rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
 
             &:last-child {
                 border-bottom: none;
@@ -153,7 +153,7 @@
 
             .saved-filter-description {
                 font-size: 0.625rem;
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
             }
 
             .action-buttons {
@@ -161,35 +161,35 @@
                 gap: 0.5rem;
 
                 :deep(.kel-button) {
-                    color: var(--ks-content-tertiary);
+                    color: var(--ks-text-dim);
                     margin: 0;
                     padding: 0;
 
                     .play-icon {
-                        color: var(--ks-chart-success);
+                        color: var(--ks-status-success);
                         font-size: var(--ks-font-size-base);
                     }
                 }
 
                 :deep(.edit-button:hover) {
-                    color: var(--ks-content-running);
+                    color: var(--ks-status-running);
                 }
 
                 :deep(.delete-button:hover) {
-                    color: var(--ks-content-alert);
+                    color: var(--ks-text-error);
                 }
             }
         }
 
         :deep(.kel-alert) {
             text-align: center;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
             padding: 0.875rem;
         }
     }
 
     :deep(.kel-alert__icon) {
-        color: var(--ks-content-info);
+        color: var(--ks-text-info);
         font-size: var(--ks-font-size-xl);
     }
 }

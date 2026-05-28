@@ -5,7 +5,6 @@
         v-if="alertState.visible"
         :title="alertState.message"
         type="error"
-        showIcon
         :closable="false"
         class="mb-2"
     />

@@ -1,29 +1,24 @@
 <template>
-    <KsInput
+    <KsSearch
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
         :readonly="readonly"
         clearable
     >
-        <template #prefix>
+        <template v-if="$slots.prefix" #prefix>
             <slot name="prefix" />
         </template>
-        <template #suffix>
-            <div class="shortcut d-flex">
-                <slot name="suffix">
-                    <Magnify />
-                </slot>
-            </div>
+        <template v-if="$slots.suffix" #suffix>
+            <slot name="suffix" />
         </template>
-    </KsInput>
+    </KsSearch>
 </template>
 
 <script lang="ts" setup>
     import {ref, watch, onMounted, onUnmounted} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import debounce from "lodash/debounce"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     const props = withDefaults(defineProps<{
         router?: boolean;
@@ -85,17 +80,3 @@
         },
     )
 </script>
-
-<style scoped lang="scss">
-    .shortcut {
-        font-size: var(--ks-font-size-xs);
-        line-height: 1.25rem;
-        gap: .25rem;
-    }
-
-    .kel-input {
-        :deep(.kel-input__prefix), :deep(input)::placeholder {
-            color: var(--ks-content-primary);
-        }
-    }
-</style>

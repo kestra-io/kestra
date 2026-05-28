@@ -76,7 +76,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     BroadcastQueueInterface<McpSessionEvent> mcpSessionQueue;
 
     @Test
-    void givenServerIsShuttingDown_whenNewRequestComes_thenRejectRequest() {
+    void shouldRejectRequestWhenServerIsShuttingDown() {
         // Given
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.closeGracefully().block();
@@ -93,7 +93,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenThing_whenAction_thenResult() {
+    void shouldReturnMethodNotAllowedWhenUnsupportedHttpMethodReceived() {
         // Given — an unsupported HTTP method (PUT) with otherwise valid headers
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
@@ -109,7 +109,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenARequestWithInvalidResponseType_whenRequestReceived_thenRejectRequest() {
+    void shouldRejectRequestWhenRequestHasInvalidResponseType() {
         // Given — Accept header contains only application/json, missing the required text/event-stream
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
@@ -125,7 +125,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPostRequestWithEmptyBody_whenRequestReceived_thenRejectRequest() {
+    void shouldRejectRequestWhenPostRequestHasEmptyBody() {
         // Given — POST with no body at all
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
@@ -141,7 +141,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPostRequestWithInvalidBody_whenRequestReceived_thenRejectRequest() {
+    void shouldRejectRequestWhenPostRequestHasInvalidBody() {
         // Given — POST with a body that is not valid JSON-RPC
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         KestraMcpTransportContext context = buildTransportContext();
@@ -157,7 +157,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenInitializeRequest_whenRequestReceived_thenSessionIdsReturned() {
+    void shouldReturnSessionIdsWhenInitializeRequestReceived() {
         // Given
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
@@ -176,7 +176,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenNotificationRequest_whenRequestReceived_thenRequestIsAccepted() {
+    void shouldAcceptRequestWhenNotificationRequestReceived() {
         // Given — a session established via initialize, then a notification posted with the session ID
         KestraFluxStreamableServerTransportProvider provider = new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
         provider.setSessionFactory(buildSessionFactory());
@@ -197,7 +197,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPersistentSSEConnectionIsOnSeparateInstance_whenRequestReceived_thenRequestIsAccepted() {
+    void shouldAcceptRequestWhenPersistentSseConnectionIsOnSeparateInstance() {
         // Given
         KestraMcpTransportContext context = buildTransportContext();
         mcpSessionRepository.save(new McpSession(
@@ -223,7 +223,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPersistentSSEConnectionIsOnSeparateInstance_whenToolCallReceived_thenRequestIsHandledByEphemeralSession() {
+    void shouldHandleToolCallByEphemeralSessionWhenSseConnectionIsOnSeparateInstance() {
         // Given — session exists on another server
         KestraMcpTransportContext context = buildTransportContext();
         mcpSessionRepository.save(new McpSession(
@@ -247,7 +247,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenLocalAndRemoteSessions_whenNotifyClientsIsCalled_thenOnlyLocalSessionsReceiveNotification() {
+    void shouldNotifyOnlyLocalSessionsWhenNotifyClientsIsCalled() {
         // Given — a local session initialized on this node
         KestraFluxStreamableServerTransportProvider provider =
             new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
@@ -266,7 +266,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPersistentSSEConnectionIsOnSeparateInstance_whenDeleteReceived_thenSessionDeletedAndBroadcastEmitted() throws InterruptedException {
+    void shouldDeleteSessionAndEmitBroadcastWhenDeleteReceivedForRemoteSseSession() throws InterruptedException {
         // Given — session exists on another server
         String remoteSseNode = UUID.randomUUID().toString();
         KestraMcpTransportContext context = buildTransportContext();
@@ -312,7 +312,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenPersistentSSEConnectionIsOnSeparateInstance_whenGetReceived_thenSseOwnershipTransferredToThisNode() throws InterruptedException {
+    void shouldTransferSseOwnershipToThisNodeWhenGetReceivedForRemoteSseSession() throws InterruptedException {
         // Given — session exists on another server
         String remoteSseNode = UUID.randomUUID().toString();
         KestraMcpTransportContext context = buildTransportContext();
@@ -360,7 +360,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenSessionOwnedLocally_whenOwnershipTransferBroadcastReceived_thenSessionRemovedFromLocalState() throws Exception {
+    void shouldRemoveSessionFromLocalStateWhenOwnershipTransferBroadcastReceived() throws Exception {
         // Given — a session initialized on this node (ends up in streamableSessions)
         KestraFluxStreamableServerTransportProvider provider =
             new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
@@ -390,7 +390,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenSessionOwnedLocally_whenDeleteBroadcastReceived_thenSessionRemovedFromLocalState() throws Exception {
+    void shouldRemoveSessionFromLocalStateWhenDeleteBroadcastReceived() throws Exception {
         // Given — a session initialized on this node
         KestraFluxStreamableServerTransportProvider provider =
             new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);
@@ -420,7 +420,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenNewSession_whenSessionInitialized_thenCreatedEventBroadcast() throws InterruptedException {
+    void shouldBroadcastCreatedEventWhenSessionInitialized() throws InterruptedException {
         // Given — subscribe to the queue before the session is created
         KestraMcpTransportContext context = buildTransportContext();
         CountDownLatch latch = new CountDownLatch(1);
@@ -456,7 +456,7 @@ class KestraFluxStreamableServerTransportProviderTest {
     }
 
     @Test
-    void givenSessionOwnedLocally_whenOwnershipChangedToThisNode_thenSessionKeptInLocalState() throws InterruptedException, QueueException {
+    void shouldKeepSessionInLocalStateWhenOwnershipChangedToThisNode() throws InterruptedException, QueueException {
         // Given — a session initialized on this node (ends up in streamableSessions)
         KestraFluxStreamableServerTransportProvider provider =
             new KestraFluxStreamableServerTransportProvider(new McpErrorResponseMapper(), mcpSessionService);

@@ -258,6 +258,28 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/distinct-field-values")
+    @Operation(tags = { "Executions" }, summary = "List distinct values for one of the executions filter fields, optionally narrowed by additional query filters")
+    public List<String> findDistinctFieldValues(
+        @Parameter(description = "The field whose distinct values to return. Must be a field supported by the EXECUTION resource.") @QueryValue QueryFilter.Field field,
+        @Parameter(description = "Additional filters to narrow the distinct values. PHP-style nested query is used - examples: `filters[flowId][CONTAINS]=test`, `filters[state][IN]=FAILED,WARNING`", in = ParameterIn.QUERY)
+            @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) int size) {
+        if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
+            throw new HttpStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Field " + field + " is not supported for executions"
+            );
+        }
+        return executionRepository.findDistinctFieldValues(
+            tenantService.resolveTenant(),
+            field,
+            filters,
+            Pageable.from(0, size)
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/graph")
     @Operation(tags = { "Executions" }, summary = "Generate a graph for an execution")
     public FlowGraph getExecutionFlowGraph(

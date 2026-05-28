@@ -25,6 +25,15 @@ interface StateModel {
 export const LOG_LEVELS = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"] as const
 
 export const STATES:Record<string, StateModel> = Object.freeze({
+    SUBMITTED: {
+        name: "SUBMITTED",
+        color: "#1761FD",
+        colorClass: "blue-500",
+        icon: DotsVerticalCircle,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
     CREATED: {
         name: "CREATED",
         color: "#1761FD",
@@ -165,6 +174,7 @@ export const STATES:Record<string, StateModel> = Object.freeze({
 const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<string, U> =>
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
+export const SUBMITTED = "SUBMITTED" as const
 export const CREATED = "CREATED" as const
 export const RESTARTED = "RESTARTED" as const
 export const SUCCESS = "SUCCESS" as const
@@ -218,11 +228,11 @@ export function colorClass() {
 }
 
 export function color() {
-    return mapValues(STATES, (state) => cssVar(`--ks-chart-${state.name.toLowerCase()}`))
+    return mapValues(STATES, (state) => cssVar(`--ks-status-${state.name.toLowerCase()}`))
 }
 
 export function getStateColor(state:string) {
-    return cssVar(`--ks-chart-${STATES[state].name.toLowerCase()}`)
+    return cssVar(`--ks-status-${STATES[state].name.toLowerCase()}`)
 }
 
 export function icon() {

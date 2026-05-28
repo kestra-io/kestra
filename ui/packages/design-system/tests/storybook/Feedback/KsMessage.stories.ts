@@ -24,7 +24,7 @@ export const Success: Story = {
     render: () => ({
         components: {KsButton},
         setup() {
-            const show = () => KsMessage.success("Flow saved successfully")
+            const show = () => KsMessage({message: "Flow saved successfully"})
             return {show}
         },
         template: `
@@ -95,7 +95,7 @@ export const WithOptions: Story = {
                 KsMessage({
                     message: "Login failed",
                     type: "error",
-                    duration: 5000,
+                    duration: 50000,
                     showClose: true,
                 })
             return {show}

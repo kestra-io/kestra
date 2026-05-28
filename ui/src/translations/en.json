@@ -57,6 +57,7 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
+    "copy_and_close": "Copy and close",
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
@@ -168,6 +169,7 @@
     "display flow {id} executions": "Display flow {id} executions",
     "actions": "Actions",
     "select datetime": "Select a date",
+    "select view": "Select view",
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
     "is required": "{field} is required",
@@ -440,6 +442,7 @@
     "tenantId": "Tenant ID",
     "codeDisabled": "Disabled in Flow",
     "paused": "Paused",
+    "running": "Running",
     "Fold auto": "Editor: automatic fold of multi-lines",
     "Hover description": "Editor: Show description of field when hovering on key or value",
     "Fold content lines": "Fold multiline strings",
@@ -494,7 +497,9 @@
     "execution labels": "Execution labels",
     "wrong labels": "Empty key or value is not allowed in labels",
     "feeds": {
-      "title": "What's new at Kestra"
+      "title": "What's new at Kestra",
+      "heading": "All things Kestra.",
+      "subheading": "The latest updates, guides and stories"
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
@@ -656,6 +661,9 @@
     "open": "Open",
     "dependency task": "Task {taskId} is a dependency of another task",
     "administration": "Administration",
+    "admin": "Admin",
+    "main_configuration": "Main Configuration",
+    "commit_id": "Commit id",
     "evaluation lock date": "Evaluation lock date",
     "unlock trigger": {
       "tooltip": {
@@ -845,7 +853,13 @@
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
       "search": "Search across {count}+ plugins",
-      "alt": "Plugins Icon"
+      "alt": "Plugins Icon",
+      "sort": {
+        "name_asc": "Name A-Z",
+        "name_desc": "Name Z-A",
+        "newest": "Newest",
+        "most_used": "Most used"
+      }
     },
     "no inputs": "This flow has no inputs.",
     "settings": {
@@ -914,6 +928,8 @@
     "demos": {
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Get a Demo",
+      "contact_sales": "Contact Sales",
+      "watch_the_video": "Watch the video",
       "secrets": {
         "title": "Upgrade your Secrets Management",
         "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",
@@ -1534,6 +1550,10 @@
         "title": "You have no Assets yet!",
         "content": "Add assets to track and manage your data assets, services, and infrastructure."
       },
+      "apiTokens": {
+        "title": "Manage your API Tokens",
+        "content": "API tokens are used anytime you want to grant programmatic access to the Kestra API."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Executions</a></strong> in our documentation."
@@ -1542,9 +1562,21 @@
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
+      "concurrency_limits": {
+        "title": "No concurrency limits are set.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+      },
       "pluginDefaults": {
         "title": "You have no plugin defaults yet!",
         "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
+      },
+      "workerRegistrationTokens": {
+        "title": "You have no registration tokens yet!",
+        "content": "Registration tokens let remote workers securely authenticate and register with your Kestra instance. Create a token, then use it to connect new workers to this cluster."
+      },
+      "groups": {
+        "title": "You have no groups yet!",
+        "content": "Groups let you bundle users together so you can manage permissions and role bindings collectively across your tenant."
       },
       "dependencies": {
         "FLOW": {
@@ -1930,6 +1962,14 @@
         "bearer_token": "Bearer token authentication",
         "delete_confirm": "Are you sure you want to delete this MCP server?",
         "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
+        "id_placeholder": "e.g. my-mcp-server",
+        "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
+        "main_tenant": "main",
+        "tab_edit": "Edit",
+        "tab_connect": "Connect",
+        "tab_tool_flows": "Tool Flows",
+        "tab_tool_flows_placeholder": "Tool flows management is coming soon.",
+        "tab_connect_placeholder": "Connection details coming soon.",
         "connect_modal": {
             "title": "Connect to {name}",
             "server_url": "Server URL",
@@ -1945,6 +1985,27 @@
             "codex_hint": "Add the following to your codex.json MCP configuration:",
             "done": "Done"
         }
+    },
+    "flow_editor_stats": {
+      "revisions": {
+        "suffix": "Revision(s)",
+        "tooltip": "View flow revisions"
+      },
+      "dependencies": {
+        "suffix": "Dependencie(s)",
+        "tooltip": "View flow dependencies"
+      },
+      "apps": {
+        "suffix": "App(s)",
+        "tooltip": "View apps using this flow"
+      },
+      "tests": {
+        "suffix": "Test(s)",
+        "tooltip": "View flow tests"
+      },
+      "errors": {
+        "label": "{count} Error(s)"
+      }
     }
   }
 }

@@ -78,7 +78,7 @@ abstract public class Task implements TaskInterface {
 
     @Builder.Default
     @PluginProperty(hidden = true, group = "reliability", dynamic = true)
-    private String when = "true";
+    private String runIf = "true";
 
     @Builder.Default
     @PluginProperty(hidden = true, group = "reliability")
@@ -92,11 +92,6 @@ abstract public class Task implements TaskInterface {
     @Valid
     @Nullable
     private AssetsDeclaration assets;
-
-    @Deprecated(forRemoval = true, since = "2.0.0")
-    public void setRunIf(String runIf) {
-        this.when = runIf;
-    }
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

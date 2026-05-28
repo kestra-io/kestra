@@ -2,11 +2,11 @@ package io.kestra.executor;
 
 import java.util.List;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
@@ -23,7 +23,7 @@ import static io.kestra.core.repositories.AbstractFlowRepositoryTest.TEST_NAMESP
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class FlowTriggerServiceTest {
     private static final List<Label> EMPTY_LABELS = List.of();
 
@@ -211,6 +211,30 @@ class FlowTriggerServiceTest {
 
         // Then
         assertThat(resultingExecutionsToRun).isEmpty();
+    }
+
+    @Test
+    void computeExecutionsFromFlowTriggers_whenStartWithNamespace() {
+        // Given - malformed Pebble expression causes IllegalVariableEvaluationException, treated as false
+        var simpleFlow = aSimpleFlow();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(List.of(flowTriggerWithWhen("{{ flow.namespace | startsWith('io.kestra') }}")))
+            .build();
+        var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS);
+
+        // When
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            simpleFlowExecution,
+            flowWithFlowTrigger
+        );
+
+        // Then
+        assertThat(resultingExecutionsToRun).hasSize(1);
+        assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
     }
 
     private static io.kestra.plugin.core.trigger.Flow flowTriggerWithNoConditions() {

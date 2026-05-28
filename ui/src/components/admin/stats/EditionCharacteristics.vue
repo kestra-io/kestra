@@ -59,11 +59,11 @@
 <style scoped lang="scss">
 .edition-card {
     padding: 2rem;
-    background-color: var(--ks-background-body);
+    background-color: var(--ks-bg-body);
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
+    box-shadow: 0 2px 4px var(--ks-shadow-element);
 
 
     :deep(.kel-card__header) {
@@ -110,7 +110,7 @@
                 padding-top: 2px;
 
                 .check-icon {
-                    color: var(--ks-content-success);
+                    color: var(--ks-status-success);
                 }
             }
 

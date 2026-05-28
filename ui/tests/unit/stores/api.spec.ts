@@ -39,7 +39,7 @@ vi.mock("../../../src/utils/uid", () => ({
     getUid: vi.fn(() => "uid-123"),
 }))
 
-vi.mock("../../../src/utils/axios", () => ({
+vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
         get: vi.fn(),
         post: vi.fn(),

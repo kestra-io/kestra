@@ -81,9 +81,13 @@ export default {
                 "parent_description": "Show only top-level/root executions",
             },
             "execution_kind": {
+                "normal": "Normal",
                 "playground":"Playground",
+                "loop": "Loop",
                 "test":"Test",
+                "normal_description": "Regular executions",
                 "playground_description": "Executions triggered from Playground mode",
+                "loop_description": "Executions created by the Loop task",
                 "test_description": "Executions triggered by Unit Tests",
             },
             "scope": {
@@ -125,6 +129,10 @@ export default {
             "flowId": {
                 "label": "Flow ID",
                 "description": "Filter by flow ID",
+            },
+            "email" : {
+                "label": "Email",
+                "description": "Filter by email",
             },
             "kind": {
                 "label": "Kind",
@@ -393,8 +401,12 @@ export default {
             "enter label": "Filter-Label eingeben",
             "enter name": "Filtername eingeben",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Spielplatz",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Test",
                 "test_description": "Ausführungen ausgelöst durch Unit Tests",
             },
@@ -590,6 +602,7 @@ export default {
             "timeRange": {
                 "description": "Nach Ausführungszeit filtern",
                 "label": "Intervall",
+                "applyTo": "Anwenden auf",
                 "chip": {
                     "end": "Beendet",
                     "start": "Gestartet",
@@ -729,8 +742,12 @@ export default {
             "enter label": "Ingrese etiqueta de filtro",
             "enter name": "Ingrese el nombre del filtro",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Área de Pruebas",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Ejecuciones activadas desde el modo Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Prueba",
                 "test_description": "Ejecuciones activadas por Unit Tests",
             },
@@ -926,6 +943,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tiempo de ejecución",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -1065,8 +1083,12 @@ export default {
             "enter label": "Entrez le label de filtre",
             "enter name": "Entrez le nom du filtre",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Terrain de jeu",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Exécutions déclenchées depuis le mode Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Test",
                 "test_description": "Exécutions déclenchées par les tests unitaires",
             },
@@ -1262,6 +1284,7 @@ export default {
             "timeRange": {
                 "description": "Filtrer par temps d'exécution",
                 "label": "Intervalle",
+                "applyTo": "Appliquer à",
                 "chip": {
                     "end": "Terminé",
                     "start": "Démarré",
@@ -1401,8 +1424,12 @@ export default {
             "enter label": "फ़िल्टर लेबल दर्ज करें",
             "enter name": "फ़िल्टर नाम दर्ज करें",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "प्लेग्राउंड",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
+                "loop_description": "Executions created by the Loop task",
                 "test": "परीक्षण",
                 "test_description": "यूनिट टेस्ट द्वारा ट्रिगर की गई Executions",
             },
@@ -1598,6 +1625,7 @@ export default {
             "timeRange": {
                 "description": "कार्य समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+                "applyTo": "लागू करें",
                 "chip": {
                     "end": "समाप्त",
                     "start": "शुरू हुआ",
@@ -1737,8 +1765,12 @@ export default {
             "enter label": "Inserisci il filtro label",
             "enter name": "Inserisci il nome del filtro",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Playground",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Esecuzioni triggerate dalla modalità Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Test",
                 "test_description": "Esecuzioni attivate dai Unit Test",
             },
@@ -1934,6 +1966,7 @@ export default {
             "timeRange": {
                 "description": "Filtra per tempo di esecuzione",
                 "label": "Intervallo",
+                "applyTo": "Applica a",
                 "chip": {
                     "end": "Terminato",
                     "start": "Iniziato",
@@ -2073,8 +2106,12 @@ export default {
             "enter label": "フィルターラベルを入力してください",
             "enter name": "フィルター名を入力してください",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "プレイグラウンド",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Playgroundモードからトリガーされた実行",
+                "loop_description": "Executions created by the Loop task",
                 "test": "テスト",
                 "test_description": "ユニットテストによってトリガーされた実行",
             },
@@ -2270,6 +2307,7 @@ export default {
             "timeRange": {
                 "description": "実行時間でフィルター",
                 "label": "インターバル",
+                "applyTo": "適用先",
                 "chip": {
                     "end": "終了しました",
                     "start": "開始しました",
@@ -2409,8 +2447,12 @@ export default {
             "enter label": "필터 label 입력",
             "enter name": "필터 이름 입력",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "플레이그라운드",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "플레이그라운드 모드에서 트리거된 실행",
+                "loop_description": "Executions created by the Loop task",
                 "test": "테스트",
                 "test_description": "단위 테스트에 의해 트리거된 실행",
             },
@@ -2606,6 +2648,7 @@ export default {
             "timeRange": {
                 "description": "실행 시간으로 필터링",
                 "label": "간격",
+                "applyTo": "적용 대상",
                 "chip": {
                     "end": "종료됨",
                     "start": "시작됨",
@@ -2745,8 +2788,12 @@ export default {
             "enter label": "Wprowadź filtr label",
             "enter name": "Wprowadź nazwę filtra",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Plac zabaw",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Wykonania uruchomione z trybu Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Test",
                 "test_description": "Wykonania wyzwolone przez testy jednostkowe",
             },
@@ -2942,6 +2989,7 @@ export default {
             "timeRange": {
                 "description": "Filtruj według czasu wykonania",
                 "label": "Interwał",
+                "applyTo": "Zastosuj do",
                 "chip": {
                     "end": "Zakończono",
                     "start": "Rozpoczęto",
@@ -3081,8 +3129,12 @@ export default {
             "enter label": "Insira o filtro {label}",
             "enter name": "Insira o nome do filtro",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Playground",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Execuções acionadas a partir do modo Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Teste",
                 "test_description": "Execuções triggeradas por Unit Tests",
             },
@@ -3278,6 +3330,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -3417,8 +3470,12 @@ export default {
             "enter label": "Insira o filtro de label",
             "enter name": "Insira o nome do filtro",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Playground",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Execuções acionadas a partir do modo Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Teste",
                 "test_description": "Execuções acionadas por Unit Tests",
             },
@@ -3614,6 +3671,7 @@ export default {
             "timeRange": {
                 "description": "Filtrar por tempo de execução",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
                 "chip": {
                     "end": "Finalizado",
                     "start": "Iniciado",
@@ -3753,8 +3811,12 @@ export default {
             "enter label": "Введите фильтр label",
             "enter name": "Введите имя фильтра",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "Песочница",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "Запуски, инициированные из режима Playground",
+                "loop_description": "Executions created by the Loop task",
                 "test": "Тест",
                 "test_description": "Запуски, инициированные Unit Tests",
             },
@@ -3950,6 +4012,7 @@ export default {
             "timeRange": {
                 "description": "Фильтр по времени выполнения",
                 "label": "Интервал",
+                "applyTo": "Применить к",
                 "chip": {
                     "end": "Завершено",
                     "start": "Начато",
@@ -4089,8 +4152,12 @@ export default {
             "enter label": "输入过滤器标签",
             "enter name": "输入过滤器名称",
             "execution_kind": {
+                "normal": "Normal",
                 "playground": "游乐场",
+                "loop": "Loop",
+                "normal_description": "Regular executions",
                 "playground_description": "从Playground模式触发的执行",
+                "loop_description": "Executions created by the Loop task",
                 "test": "测试",
                 "test_description": "单元测试触发的执行",
             },
@@ -4286,6 +4353,7 @@ export default {
             "timeRange": {
                 "description": "按执行时间筛选",
                 "label": "间隔",
+                "applyTo": "应用于",
                 "chip": {
                     "end": "结束",
                     "start": "已启动",

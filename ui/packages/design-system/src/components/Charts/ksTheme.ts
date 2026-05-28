@@ -22,7 +22,7 @@ export default () => {
         },
         axisLabel: {
             show: true,
-            color: cssVar("--ks-content-primary"),
+            color: cssVar("--ks-text-primary"),
         },
         splitLine: {
             show: false,
@@ -60,13 +60,13 @@ export default () => {
         ],
         backgroundColor: "transparent",
         textStyle: {
-            fontFamily: "'Public Sans', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontSize: 12,
-            color: cssVar("--ks-content-primary"),
+            color: cssVar("--ks-text-primary"),
         },
         title: {
             textStyle: {
-                color: cssVar("--ks-content-primary"),
+                color: cssVar("--ks-text-primary"),
             },
             subtextStyle: {
                 color: cssVar("--ks-gray-400"),
@@ -100,8 +100,8 @@ export default () => {
                 position: "bottom",
                 fontSize: 10,
                 textBorderWidth: 1,
-                color: cssVar("--ks-content-primary"),
-                textBorderColor: cssVar("--ks-background-body"),
+                color: cssVar("--ks-text-primary"),
+                textBorderColor: cssVar("--ks-bg-body"),
             },
             lineStyle: {
                 color: cssVar("--kel-text-color-placeholder"),

@@ -138,14 +138,14 @@
 
     .default-theme{
         :deep(.kel-splitter-panel) {
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
         }
 
         :deep(.kel-splitter__splitter){
-            border-top-color: var(--ks-border-primary);
-            background-color: var(--ks-background-panel);
+            border-top-color: var(--ks-border-default);
+            background-color: var(--ks-bg-surface);
             &:before, &:after{
-                background-color: var(--ks-content-secondary);
+                background-color: var(--ks-text-secondary);
             }
         }
     }

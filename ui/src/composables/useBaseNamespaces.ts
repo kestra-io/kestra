@@ -1,8 +1,8 @@
 import {ref} from "vue"
-import {useRouter} from "vue-router"
-import {apiUrl, apiUrlWithTenant} from "override/utils/route"
+import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useClient} from "@kestra-io/kestra-sdk"
+import * as NamespaceAPI from "@kestra-io/kestra-sdk/namespaces"
 
 function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`
@@ -22,54 +22,52 @@ export const useBaseNamespacesStore = () => {
     const inheritedKVs = ref<any>(undefined)
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
-    const autocomplete = ref<any>(undefined)
+    const autocomplete = ref<string[]>()
     const total = ref(0)
     const existing = ref(true)
 
     const axios = useClient()
-    const router = useRouter()
 
-    async function loadAutocomplete(this: any, options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
-        const response = await axios.post(`${apiUrlWithTenant(router.currentRoute.value)}/namespaces/autocomplete`, options ?? {})
-        autocomplete.value = response.data
-        return response.data
+    async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const response = await NamespaceAPI.autocompleteNamespaces(options ?? {})
+        autocomplete.value = response
+        return response
     }
 
-    async function search(this: any, options: any) {
+    async function search(options: Parameters<typeof NamespaceAPI.searchNamespaces>[0] & {commit?: boolean}) {
         const shouldCommit = options.commit !== false
         delete options.commit
-        const response = await axios.get(`${apiUrl()}/namespaces/search`, {params: options, ...VALIDATE})
-        if (response.status === 200 && shouldCommit) {
-            namespaces.value = response.data.results
-            total.value = response.data.total
+        const response = await NamespaceAPI.searchNamespaces(options)
+        if (shouldCommit) {
+            namespaces.value = response.results
+            total.value = response.total
         }
-        return response.data
+        return response
     }
 
-    async function load(this: any, id: string) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${id}`, VALIDATE)
-
-        if(response.status === 200) {
-            namespace.value = response.data
-            existing.value = true
+    async function load(id: string) {
+        try{
+            namespace.value = await NamespaceAPI.loadNamespace({id})
+        }catch (e: any) {
+            if (e.status === 404) {
+                existing.value = false
+                return null
+            }
+            throw e
         }
 
-        if(response.status === 404) {
-            existing.value = false
-        }
-
-        return response.data
+        return namespace.value
     }
 
-    async function update(this: any, _: {route: any, payload: any}) {
+    async function update(_: {route: any, payload: any}) {
         // NOOP IN OSS
     }
 
-    async function loadDependencies(this: any, options: {namespace: string}) {
+    async function loadDependencies(options: {namespace: string}) {
         return await axios.get(`${apiUrl()}/namespaces/${options.namespace}/dependencies`)
     }
 
-    async function kvsList(this: any, item: {id: string}) {
+    async function kvsList(item: {id: string}) {
         const {data} = await axios.get(`${apiUrl()}/kv`, {
             ...VALIDATE,
             params: {
@@ -79,7 +77,7 @@ export const useBaseNamespacesStore = () => {
         return kvs.value = data?.results
     }
 
-    async function kv(this: any, payload: {namespace: string; key: string}) {
+    async function kv(payload: {namespace: string; key: string}) {
         const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`, VALIDATE)
         if (response.status === 404) {
             throw new Error(response.data.message)
@@ -93,12 +91,12 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function loadInheritedKVs(this: any, id: string) {
+    async function loadInheritedKVs(id: string) {
         const response = await axios.get(`${apiUrl()}/namespaces/${id}/kv/inheritance`, {...VALIDATE})
         inheritedKVs.value = response.data
     }
 
-    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
+    async function createKv(payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
         await axios.put(
             `${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`,
             payload.value,
@@ -112,17 +110,17 @@ export const useBaseNamespacesStore = () => {
         )
     }
 
-    async function deleteKv(this: any, payload: {namespace: string; key: string}) {
+    async function deleteKv(payload: {namespace: string; key: string}) {
         await axios.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`)
     }
 
-    async function deleteKvs(this: any, payload: {namespace: string; request: any}) {
+    async function deleteKvs(payload: {namespace: string; request: any}) {
         await axios.delete(`${apiUrl()}/namespaces/${payload.namespace}/kv`, {
             data: payload.request,
         })
     }
 
-    async function loadInheritedSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
+    async function loadInheritedSecrets({id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<Record<string, string[]>> {
         const response = await axios.get(`${apiUrl()}/namespaces/${id}/inherited-secrets`, {
             ...VALIDATE,
             params,
@@ -136,7 +134,7 @@ export const useBaseNamespacesStore = () => {
         return response.data
     }
 
-    async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
+    async function listSecrets({id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
         const response = await axios.get(`${apiUrl()}/secrets`, {
             ...VALIDATE,
             params: {
@@ -163,32 +161,32 @@ export const useBaseNamespacesStore = () => {
         ]
     }
 
-    async function createSecrets(this: any, _: {namespace: string; secret: any}) {
+    async function createSecrets(_: {namespace: string; secret: any}) {
         // NOOP IN OSS
     }
 
-    async function patchSecret(this: any, _: {namespace: string; secret: any}) {
+    async function patchSecret(_: {namespace: string; secret: any}) {
         // NOOP IN OSS
     }
 
-    async function deleteSecrets(this: any, _: {namespace: string; key: string}) {
+    async function deleteSecrets(_: {namespace: string; key: string}) {
         // NOOP IN OSS
     }
 
-    async function loadInheritedVariables(this: any, _: {id: string, commit?: boolean}) {
+    async function loadInheritedVariables(_: {id: string, commit?: boolean}) {
         // NOOP IN OSS
     }
 
-    async function loadInheritedPluginDefaults(this: any, _: {id: string, commit?: boolean}) {
+    async function loadInheritedPluginDefaults(_: {id: string, commit?: boolean}) {
         // NOOP IN OSS
     }
 
-    async function createDirectory(this: any, payload: {namespace: string; path: string}) {
+    async function createDirectory(payload: {namespace: string; path: string}) {
         const URL = `${base(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`
         await axios.post(URL)
     }
 
-    async function readDirectory<T>(this: any, payload: {namespace: string; path?: string}): Promise<T[]> {
+    async function readDirectory<T>(payload: {namespace: string; path?: string}): Promise<T[]> {
         const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`
         // Accept 200 or 404 so axios doesn't treat 404 as an error (which would set coreStore.error globally)
         const response = await axios.get(URL, VALIDATE)
@@ -203,7 +201,7 @@ export const useBaseNamespacesStore = () => {
         return response.data ?? []
     }
 
-    async function createFile(this: any, payload: {namespace: string; path: string; content: string}) {
+    async function createFile(payload: {namespace: string; path: string; content: string}) {
         const DATA = new FormData()
         const BLOB = new Blob([payload.content], {type: "text/plain"})
         DATA.append("fileContent", BLOB)
@@ -212,7 +210,7 @@ export const useBaseNamespacesStore = () => {
         await axios.post(URL, Utils.toFormData(DATA), HEADERS)
     }
 
-    async function fileRevisions(this: any, payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
+    async function fileRevisions(payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
         if (!payload.path) return []
 
         const URL = `${base(payload.namespace)}/files/revisions?path=${slashPrefix(safePath(payload.path))}`
@@ -229,7 +227,7 @@ export const useBaseNamespacesStore = () => {
         return (request.data as {revision: number}[])
     }
 
-    async function readFile(this: any, payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
+    async function readFile(payload: {namespace: string; path: string, revision?: number}): Promise<{content?: string, notFound?: boolean, error?: string}> {
         if (!payload.path) return {error: "Path is required"}
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}${payload.revision !== undefined ? `&revision=${payload.revision}` : ""}`
@@ -247,13 +245,13 @@ export const useBaseNamespacesStore = () => {
         return {content: request.data ?? ""}
     }
 
-    async function searchFiles(this: any, payload: {namespace: string; query: string}) {
+    async function searchFiles(payload: {namespace: string; query: string}) {
         const URL = `${base(payload.namespace)}/files/search?q=${payload.query}`
         const request = await axios.get(URL)
         return request.data ?? []
     }
 
-    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: ArrayBuffer}) {
+    async function importFileDirectory(payload: {namespace: string; path: string; content: ArrayBuffer}) {
         const DATA = new FormData()
         const BLOB = new Blob([payload.content], {type: "text/plain"})
         DATA.append("fileContent", BLOB)
@@ -262,22 +260,22 @@ export const useBaseNamespacesStore = () => {
         await axios.post(URL, DATA, HEADERS)
     }
 
-    async function moveFileDirectory(this: any, payload: {namespace: string; old: string; new: string}) {
+    async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
         const URL = `${base(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`
         await axios.put(URL)
     }
 
-    async function renameFileDirectory(this: any, payload: {namespace: string; old: string; new: string}) {
+    async function renameFileDirectory(payload: {namespace: string; old: string; new: string}) {
         const URL = `${base(payload.namespace)}/files?from=${slashPrefix(payload.old)}&to=${slashPrefix(payload.new)}`
         await axios.put(URL)
     }
 
-    async function deleteFileDirectory(this: any, payload: {namespace: string; path: string}) {
+    async function deleteFileDirectory(payload: {namespace: string; path: string}) {
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`
         await axios.delete(URL)
     }
 
-    async function exportFileDirectory(this: any, payload: {namespace: string}) {
+    async function exportFileDirectory(payload: {namespace: string}) {
         const URL = `${base(payload.namespace)}/files/export`
         const request = await axios.get(URL)
 

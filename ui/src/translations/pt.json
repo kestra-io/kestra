@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "add_new_item": "Adicionar novo item",
     "additionalPlugins": "Plugins Adicionais",
+    "admin": "Administração",
     "administration": "Administração",
     "advanced configuration": "Outras propriedades",
     "after": "depois",
@@ -174,6 +175,7 @@
     "codeDisabled": "Desativado no Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar tudo",
+    "commit_id": "ID do commit",
     "common": {
       "back": "Voltar"
     },
@@ -205,6 +207,7 @@
     "copy": "Copiar",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
+    "copy_and_close": "Copiar e fechar",
     "copy_to_clipboard": "Copiar para a área de transferência",
     "create": "Criar",
     "create first task": "Crie sua primeira task",
@@ -335,6 +338,7 @@
         "message": "Na Kestra Enterprise Edition, você pode criar Blueprints personalizados disponíveis apenas para sua organização. Você pode usá-los como modelos de melhores práticas para compartilhar, centralizar e documentar fluxos de trabalho comumente usados em sua equipe.",
         "title": "Adicionar Blueprints Personalizados"
       },
+      "contact_sales": "Contatar Vendas",
       "enterprise_edition": "Edição Enterprise",
       "get_a_demo_button": "Obter uma Demonstração",
       "instance": {
@@ -392,7 +396,8 @@
         "label": "Testes",
         "message": "Verifique a lógica dos seus flows isoladamente, detecte regressões cedo e mantenha a confiança nas suas automações à medida que elas mudam e crescem.",
         "title": "Garanta a Confiabilidade com Cada Alteração"
-      }
+      },
+      "watch_the_video": "Assista ao vídeo"
     },
     "dependencies": "Dependências",
     "dependencies delete flow": "Este flow tem dependências. Deletá-lo impedirá que suas dependências sejam executadas.<br /><br /> Aqui está a lista de flows afetados:",
@@ -478,6 +483,10 @@
         "content": "Os anúncios permitem que você notifique seus usuários sobre quaisquer alterações ou informe-os sobre o tempo de inatividade planejado para manutenção. Basta selecionar o tipo de anúncio, o intervalo de datas em que ele deve ser exibido e escrever a mensagem do anúncio.",
         "title": "Você ainda não tem anúncios!"
       },
+      "apiTokens": {
+        "content": "Tokens de API são usados sempre que você deseja conceder acesso programático à API do Kestra.",
+        "title": "Gerencie seus Tokens de API"
+      },
       "apps": {
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo.",
         "title": "Você ainda não tem apps!"
@@ -493,6 +502,10 @@
       "concurrency_limit": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum limite está definido para este Flow."
+      },
+      "concurrency_limits": {
+        "content": "Leia mais sobre os <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "title": "Nenhum limite de concorrência está definido."
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +524,10 @@
           "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Dependências de Namespace</a> em nossa documentação.",
           "title": "Atualmente, não há dependências."
         }
+      },
+      "groups": {
+        "content": "Grupos permitem que você agrupe usuários para gerenciar permissões e vinculações de funções coletivamente em todo o seu mandante.",
+        "title": "Você ainda não tem grupos!"
       },
       "kill_switches": {
         "content": "O recurso Kill Switch fornece um mecanismo baseado em UI para interromper execuções problemáticas. Ele substitui os comandos <code>--skip-executions</code> e <code>--skip-flows</code> disponíveis apenas no CLI por uma interface de administração abrangente.",
@@ -539,6 +556,10 @@
       "versionPlugin": {
         "content": "Aqui você pode gerenciar todos os plugins instalados na sua instância do Kestra. Plugins recém-instalados podem não estar imediatamente disponíveis em todos os serviços do Kestra, dependendo da configuração da sua instância.",
         "title": "Você ainda não tem um plugin versionado!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Tokens de registro permitem que workers remotos autentiquem-se e registrem-se com segurança na sua instância do Kestra. Crie um token e use-o para conectar novos workers a este cluster.",
+        "title": "Você ainda não tem tokens de registro!"
       }
     },
     "empty search": "Resultados da pesquisa estão vazios",
@@ -648,6 +669,8 @@
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
     "feeds": {
+      "heading": "Tudo sobre Kestra.",
+      "subheading": "As últimas atualizações, guias e histórias",
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
@@ -737,6 +760,27 @@
     "flow source not found": "Fonte do flow não encontrada",
     "flow-dependencies": "dependências",
     "flow-no-dependencies": "Seu flow não possui dependências",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "App(s)",
+        "tooltip": "Visualizar aplicativos usando este flow"
+      },
+      "dependencies": {
+        "suffix": "Dependência(s)",
+        "tooltip": "Ver dependências do flow"
+      },
+      "errors": {
+        "label": "{count} Erro(s)"
+      },
+      "revisions": {
+        "suffix": "Revisão(ões)",
+        "tooltip": "Ver revisões do flow"
+      },
+      "tests": {
+        "suffix": "Teste(s)",
+        "tooltip": "Ver testes de flow"
+      }
+    },
     "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
     "flow_outputs": "Saídas do Flow",
@@ -838,6 +882,7 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs completos de task e flow em formato bruto ordenado por timestamp"
     },
+    "main_configuration": "Configuração Principal",
     "management port": "Port de gerenciamento",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
@@ -865,7 +910,10 @@
       "copy_url": "Copiar URL",
       "create": "Criar Servidor",
       "delete_confirm": "Tem certeza de que deseja excluir este servidor MCP?",
+      "id_invalid": "O ID deve começar com uma letra minúscula ou dígito, e conter apenas letras minúsculas, dígitos, hífens ou underscores",
+      "id_placeholder": "por exemplo, my-mcp-server",
       "instructions": "Instruções",
+      "main_tenant": "principal",
       "no_servers": "Nenhum servidor MCP encontrado. Crie seu primeiro servidor para expor triggers da ferramenta MCP a agentes de IA externos.",
       "page_description": "Exponha seus flows do Kestra como ferramentas para agentes de IA compatíveis com MCP",
       "private": "Privado",
@@ -874,6 +922,11 @@
       "server": "Servidor MCP",
       "server_type": "Tipo de Servidor",
       "servers": "Servidores MCP",
+      "tab_connect": "Conectar",
+      "tab_connect_placeholder": "Detalhes da conexão em breve.",
+      "tab_edit": "Editar",
+      "tab_tool_flows": "Fluxos de Ferramentas",
+      "tab_tool_flows_placeholder": "O gerenciamento de flows de ferramentas estará disponível em breve.",
       "url_copied": "URL copiado!",
       "username_password": "Nome de usuário & senha"
     },
@@ -1316,6 +1369,12 @@
     "pluginPage": {
       "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
+      "sort": {
+        "most_used": "Mais usados",
+        "name_asc": "Nome A-Z",
+        "name_desc": "Nome Z-A",
+        "newest": "Mais recente"
+      },
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."
     },
@@ -1402,6 +1461,7 @@
     "row count": "Contagem de linhas",
     "run task in playground": "Executar task no playground",
     "runners": "Corredores",
+    "running": "RUNNING",
     "running duration": "Duração em execução",
     "save": "Salvar",
     "save draft": {
@@ -1455,6 +1515,7 @@
     "seeing old revision": "Você está vendo uma revisão antiga: {revision}",
     "select": "Selecione sua {{section}}",
     "select datetime": "Selecione uma data",
+    "select view": "Selecionar visualização",
     "selected": "Selecionado",
     "selection": {
       "all": "Selecionar todos ({count})",

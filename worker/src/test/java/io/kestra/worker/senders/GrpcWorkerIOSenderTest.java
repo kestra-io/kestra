@@ -50,7 +50,6 @@ class GrpcWorkerIOSenderTest {
     ApplicationContext applicationContext;
 
     @Inject
-    @Named(GrpcWorkerIOSenderFactory.GRPC)
     GrpcWorkerIOSender<WorkerTaskResult> taskResultSender;
 
     @Inject

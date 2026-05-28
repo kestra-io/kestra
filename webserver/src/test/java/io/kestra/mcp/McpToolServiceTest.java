@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -68,12 +69,12 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenReturnToolSpecForFlow() {
+    void shouldReturnToolSpecWhenFlowHasMcpToolTrigger() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).hasSize(1);
@@ -81,12 +82,12 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenAnnotationsAreMapped() {
+    void shouldMapAnnotationsWhenFlowHasMcpToolTrigger() {
         // Given — MCP_TRIGGER_ONE has Annotations(readOnly=true, openWorld=false, destructive=false, idempotent=true)
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         ToolAnnotations annotations = tools.getFirst().tool().annotations();
@@ -98,7 +99,7 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithoutMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowHasNoMcpToolTrigger() {
         // Given
         Schedule scheduleTrigger = Schedule.builder()
             .id("schedule")
@@ -108,19 +109,19 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(scheduleTrigger))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).isEmpty();
     }
 
     @Test
-    void givenFlowWithMultipleMcpToolTrigger_whenListToolSpecsForServer_thenToolSpecsReturnedForEachTrigger() {
+    void shouldReturnToolSpecForEachTriggerWhenFlowHasMultipleMcpToolTriggers() {
         // Given
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE, MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).hasSize(2);
@@ -130,13 +131,13 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenFlowWithToolTrigger_whenListToolSpecsForServerForSameTriggerMultipleTimes_thenCachedToolSpecsReturned() {
+    void shouldReturnCachedToolSpecsWhenListingToolSpecsMultipleTimes() {
         // Given
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
-        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(firstCall).hasSize(1);
@@ -145,13 +146,13 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenMultipleFlowsWithMcpToolTrigger_whenListToolSpecsForServer_thenToolSpecsReturnedForEachFlow() {
+    void shouldReturnToolSpecForEachFlowWhenMultipleFlowsHaveMcpToolTrigger() {
         // Given
         FlowWithSource savedFlow1 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
         FlowWithSource savedFlow2 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).hasSize(2);
@@ -160,37 +161,37 @@ class McpToolServiceTest {
     }
 
     @Test
-    void givenDeletedFlowWithMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowWithMcpToolTriggerIsDeleted() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
         flowRepository.delete(savedFlow);
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).isEmpty();
     }
 
     @Test
-    void givenFlowWithDisabledMcpToolTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenMcpToolTriggerIsDisabled() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(DISABLED_MCP_TRIGGER))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
         // Then
         assertThat(tools).isEmpty();
     }
 
     @Test
-    void givenFlowsWithoutTrigger_whenListToolSpecsForServer_thenNoToolSpecsReturned() {
+    void shouldReturnNoToolSpecsWhenFlowHasNoTriggers() {
         // Given
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of())));
         try {
             // When
-            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID);
+            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
 
             // Then
             assertThat(tools).isEmpty();

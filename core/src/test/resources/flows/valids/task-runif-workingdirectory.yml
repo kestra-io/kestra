@@ -1,0 +1,27 @@
+id: task-runif-workingdirectory
+namespace: io.kestra.tests
+
+inputs:
+  - id: scripts_to_run
+    type: MULTISELECT
+    required: true
+    values:
+      - "orders"
+      - "carriers"
+      - "transactions"
+    defaults: ["orders"]
+
+tasks:
+  - id: fileSystem
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+
+      - id: log_orders
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ inputs.scripts_to_run contains 'orders' }}"
+        runIf: "{{ inputs.scripts_to_run contains 'orders' }}"
+
+      - id: log_test
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ inputs.scripts_to_run contains 'test' }}"
+        runIf: "{{ inputs.scripts_to_run contains 'test' }}"

@@ -288,6 +288,94 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    void givenSeededExecutions_whenFindDistinctFieldValuesWithoutFilters_thenReturnsAllDistinctValues() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, null, Pageable.from(0, 100));
+
+        // Then — inject() seeds executions with two flow ids: FLOW ("full") and "second"
+        assertThat(ids).containsExactlyInAnyOrder(FLOW, "second");
+    }
+
+    @Test
+    void givenSeededExecutions_whenFindDistinctFieldValuesNarrowedBySameFieldContains_thenReturnsMatchingValueOnly() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+        QueryFilter narrow = QueryFilter.builder()
+            .field(Field.FLOW_ID).operation(Op.CONTAINS).value("cond")
+            .build();
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(narrow), Pageable.from(0, 100));
+
+        // Then
+        assertThat(ids).containsExactly("second");
+    }
+
+    @Test
+    void givenSeededExecutions_whenFindDistinctFieldValuesNarrowedByOtherField_thenReturnsValuesMatchingThatField() {
+        // Given — only the running executions all have flowId="full" (first 5 in inject() are RUNNING)
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+        QueryFilter narrow = QueryFilter.builder()
+            .field(Field.STATE).operation(Op.IN).value(List.of(State.Type.RUNNING.name()))
+            .build();
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(narrow), Pageable.from(0, 100));
+
+        // Then
+        assertThat(ids).containsExactly(FLOW);
+    }
+
+    @Test
+    void givenSeededExecutions_whenFindDistinctFieldValuesWithNonMatchingFilter_thenReturnsEmpty() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+        QueryFilter narrow = QueryFilter.builder()
+            .field(Field.FLOW_ID).operation(Op.CONTAINS).value("no-such-flow-id")
+            .build();
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, List.of(narrow), Pageable.from(0, 100));
+
+        // Then
+        assertThat(ids).isEmpty();
+    }
+
+    @Test
+    void givenSeededExecutions_whenFindDistinctFieldValuesWithSizeOne_thenReturnsAtMostOneValue() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(tenant, Field.FLOW_ID, null, Pageable.from(0, 1));
+
+        // Then
+        assertThat(ids).hasSize(1);
+    }
+
+    @Test
+    void givenSeededExecutionsForOneTenant_whenFindDistinctFieldValuesForOtherTenant_thenReturnsEmpty() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var otherTenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        inject(tenant);
+
+        // When
+        List<String> ids = executionRepository.findDistinctFieldValues(otherTenant, Field.FLOW_ID, null, Pageable.from(0, 100));
+
+        // Then
+        assertThat(ids).isEmpty();
+    }
+
+    @Test
     protected void find() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         inject(tenant);

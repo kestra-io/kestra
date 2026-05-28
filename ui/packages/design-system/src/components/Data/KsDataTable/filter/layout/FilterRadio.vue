@@ -61,18 +61,18 @@
         transition: background-color 0.2s;
         padding: 0.25rem 0.75rem;
         padding-right: 4px;
-        border-radius: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border-radius: var(--ks-radius-base);
+        border: 1px solid var(--ks-border-default);
         display: flex;
         align-items: center;
         justify-content: space-between;
 
         &.selected {
-            border-color: var(--ks-content-link);
+            border-color: var(--ks-text-link);
         }
 
         &:hover {
-            background-color: var(--ks-dropdown-background-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
 
         :deep(.kel-radio) {
@@ -82,34 +82,34 @@
             .kel-radio__inner {
                 width: 1.15rem;
                 height: 1.15rem;
-                border: 0.125rem solid var(--ks-content-link);
+                border: 0.125rem solid var(--ks-text-link);
                 background: transparent;
 
                 &::after {
                     width: 0.5rem;
                     height: 0.5rem;
-                    background-color: var(--ks-content-link);
+                    background-color: var(--ks-text-link);
                 }
             }
 
             &.is-checked {
                 .kel-radio__label {
-                    color: var(--ks-content-link);
+                    color: var(--ks-text-link);
                 }
 
                 .kel-radio__inner {
-                    border-color: var(--ks-content-link);
+                    border-color: var(--ks-text-link);
                     background: transparent;
                 }
             }
 
             &:hover {
                 .kel-radio__label {
-                    color: var(--ks-content-link-hover);
+                    color: var(--ks-text-link);
                 }
 
                 .kel-radio__inner {
-                    border-color: var(--ks-content-link-hover);
+                    border-color: var(--ks-text-link);
                 }
             }
         }
@@ -123,12 +123,12 @@
             .title {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 500;
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
             }
 
             .desc {
                 font-size: var(--ks-font-size-xs);
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
                 line-height: 1.4;
             }
         }

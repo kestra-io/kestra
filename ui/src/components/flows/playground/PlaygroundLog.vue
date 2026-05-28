@@ -45,7 +45,7 @@
         display: grid;
         border: none;
         width: 284px;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         text-align: left;
         padding: .3rem .5rem;
         font-size: var(--ks-font-size-sm);
@@ -60,7 +60,7 @@
             padding: 0;
         }
         &.active{
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
     .playground-status {
@@ -72,6 +72,6 @@
     }
     .playground-duration {
         grid-area: duration;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

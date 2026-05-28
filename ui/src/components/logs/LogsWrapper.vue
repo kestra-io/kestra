@@ -20,7 +20,7 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
-                    <LogQuickFilters
+                    <QuickFilters
                         :levels="VALUES.LEVELS"
                         :intervals="quickIntervals"
                         :level="effectiveLogLevel"
@@ -68,7 +68,7 @@
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
     import {useValues} from "../filter/composables/useValues"
-    import LogQuickFilters from "./LogQuickFilters.vue"
+    import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 

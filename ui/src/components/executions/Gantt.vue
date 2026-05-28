@@ -14,6 +14,13 @@
             @search="search = $event"
             @filter="onFilterChange"
         />
+        <QuickFilters
+            :levels="VALUES.LEVELS"
+            :level="effectiveSelectedLogLevel"
+            :showInterval="false"
+            :levelLabel="t('filter.level_log_executions.label')"
+            @update:level="setLevelRouteValue"
+        />
         <div class="gantt-stage">
             <KsCard
                 id="gantt"
@@ -162,6 +169,8 @@
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     interface TaskRun {
         id: string;
@@ -256,7 +265,10 @@
 
     // Log level filter policy
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
-    const {effectiveValue: effectiveSelectedLogLevel} = useRouteFilterPolicy<string>({
+    const {
+        effectiveValue: effectiveSelectedLogLevel,
+        setRouteValue: setLevelRouteValue,
+    } = useRouteFilterPolicy<string>({
         defaultValue: () => defaultLogLevel.value,
         applyDefaultIfMissing: () => true,
         fallbackValue: () => "TRACE",
@@ -264,6 +276,7 @@
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
+    const {VALUES} = useValues("logs")
 
     // Computed properties
     const execution = computed<Execution | undefined>(() => executionsStore.execution)

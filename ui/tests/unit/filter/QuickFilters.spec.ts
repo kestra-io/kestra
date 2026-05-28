@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {mount} from "@vue/test-utils"
-import LogQuickFilters from "../../../src/components/logs/LogQuickFilters.vue"
+import QuickFilters from "../../../src/components/filter/QuickFilters.vue"
 
 const KsSegmentedStub = {
     name: "KsSegmented",
@@ -10,7 +10,7 @@ const KsSegmentedStub = {
 }
 
 const mountFilters = (props = {}) =>
-    mount(LogQuickFilters, {
+    mount(QuickFilters, {
         props: {levels: [], intervals: [], ...props},
         global: {stubs: {KsSegmented: KsSegmentedStub}},
     })
@@ -18,12 +18,12 @@ const mountFilters = (props = {}) =>
 const intervalSegment = (wrapper: ReturnType<typeof mountFilters>) =>
     wrapper
         .findAllComponents(KsSegmentedStub)
-        .find((segment) => segment.attributes("data-test") === "log-quick-filters-interval")
+        .find((segment) => segment.attributes("data-test") === "quick-filters-interval")
 
 const levelPills = (wrapper: ReturnType<typeof mountFilters>) =>
-    wrapper.findAll("[data-test^=\"log-quick-filters-level-\"]")
+    wrapper.findAll("[data-test^=\"quick-filters-level-\"]")
 
-describe("LogQuickFilters", () => {
+describe("QuickFilters", () => {
     const LEVELS = [
         {label: "INFO", value: "INFO"},
         {label: "ERROR", value: "ERROR"},
@@ -41,17 +41,17 @@ describe("LogQuickFilters", () => {
         const wrapper = mountFilters({levels: LEVELS, level: "ERROR"})
 
         expect(
-            wrapper.find("[data-test=\"log-quick-filters-level-ERROR\"]").attributes("aria-pressed"),
+            wrapper.find("[data-test=\"quick-filters-level-ERROR\"]").attributes("aria-pressed"),
         ).toBe("true")
         expect(
-            wrapper.find("[data-test=\"log-quick-filters-level-INFO\"]").attributes("aria-pressed"),
+            wrapper.find("[data-test=\"quick-filters-level-INFO\"]").attributes("aria-pressed"),
         ).toBe("false")
     })
 
     it("emits update:level when a level pill is clicked", async () => {
         const wrapper = mountFilters({levels: LEVELS, level: "INFO"})
 
-        await wrapper.find("[data-test=\"log-quick-filters-level-ERROR\"]").trigger("click")
+        await wrapper.find("[data-test=\"quick-filters-level-ERROR\"]").trigger("click")
 
         expect(wrapper.emitted("update:level")).toEqual([["ERROR"]])
     })
@@ -95,5 +95,16 @@ describe("LogQuickFilters", () => {
 
         expect(intervalSegment(wrapper)).toBeUndefined()
         expect(levelPills(wrapper)).toHaveLength(2)
+    })
+
+    it("hides the level pills when showLevel is false but keeps the interval", () => {
+        const wrapper = mountFilters({
+            levels: LEVELS,
+            intervals: [{label: "Last 1 hour", value: "PT1H"}],
+            showLevel: false,
+        })
+
+        expect(levelPills(wrapper)).toHaveLength(0)
+        expect(intervalSegment(wrapper)).toBeTruthy()
     })
 })

@@ -1,9 +1,9 @@
 <template>
-    <div class="log-quick-filters">
-        <div v-if="showInterval" class="log-quick-filters__group">
-            <span v-if="intervalLabel" class="log-quick-filters__label">{{ intervalLabel }}</span>
+    <div class="quick-filters">
+        <div v-if="showInterval" class="quick-filters__group">
+            <span v-if="intervalLabel" class="quick-filters__label">{{ intervalLabel }}</span>
             <KsSegmented
-                data-test="log-quick-filters-interval"
+                data-test="quick-filters-interval"
                 :modelValue="timeRange"
                 :options="intervals"
                 size="default"
@@ -11,11 +11,11 @@
             />
         </div>
 
-        <div class="log-quick-filters__group">
-            <span v-if="levelLabel" class="log-quick-filters__label">{{ levelLabel }}</span>
+        <div v-if="showLevel" class="quick-filters__group">
+            <span v-if="levelLabel" class="quick-filters__label">{{ levelLabel }}</span>
             <div
-                class="log-quick-filters__levels"
-                data-test="log-quick-filters-level"
+                class="quick-filters__levels"
+                data-test="quick-filters-level"
                 role="group"
                 :aria-label="levelLabel"
             >
@@ -23,14 +23,14 @@
                     v-for="lvl in levels"
                     :key="lvl.value"
                     type="button"
-                    class="log-quick-filters__level"
-                    :class="{'log-quick-filters__level--active': lvl.value === level}"
+                    class="quick-filters__level"
+                    :class="{'quick-filters__level--active': lvl.value === level}"
                     :style="levelStyle(lvl.value)"
-                    :data-test="`log-quick-filters-level-${lvl.value}`"
+                    :data-test="`quick-filters-level-${lvl.value}`"
                     :aria-pressed="lvl.value === level"
                     @click="emit('update:level', lvl.value)"
                 >
-                    <span class="log-quick-filters__dot" aria-hidden="true" />
+                    <span class="quick-filters__dot" aria-hidden="true" />
                     {{ lvl.label }}
                 </button>
             </div>
@@ -40,18 +40,21 @@
 
 <script setup lang="ts">
     withDefaults(defineProps<{
-        levels: Array<{label: string; value: string}>;
+        levels?: Array<{label: string; value: string}>;
         intervals?: Array<{label: string; value: string}>;
         level?: string;
         timeRange?: string;
         showInterval?: boolean;
+        showLevel?: boolean;
         intervalLabel?: string;
         levelLabel?: string;
     }>(), {
+        levels: () => [],
         intervals: () => [],
         level: undefined,
         timeRange: undefined,
         showInterval: true,
+        showLevel: true,
         intervalLabel: undefined,
         levelLabel: undefined,
     })
@@ -72,7 +75,7 @@
 </script>
 
 <style lang="scss" scoped>
-    .log-quick-filters {
+    .quick-filters {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
@@ -85,7 +88,7 @@
             align-items: stretch;
             gap: var(--ks-spacing-2);
 
-            .log-quick-filters__group {
+            .quick-filters__group {
                 width: 100%;
                 overflow-x: auto;
             }

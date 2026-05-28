@@ -10,7 +10,7 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
-        <LogQuickFilters
+        <QuickFilters
             :levels="logLevels"
             :level="effectiveLevel"
             :showInterval="false"
@@ -150,7 +150,7 @@
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
     import {useValues} from "../filter/composables/useValues"
-    import LogQuickFilters from "../logs/LogQuickFilters.vue"
+    import QuickFilters from "../filter/QuickFilters.vue"
 
     function distinctFilter(value, index, array) {
         return array.indexOf(value) === index
@@ -170,7 +170,7 @@
             DynamicScrollerItem,
             Refresh,
             KSFilter,
-            LogQuickFilters,
+            QuickFilters,
         },
         setup() {
             const logExecutionsFilter = useLogExecutionsFilter()

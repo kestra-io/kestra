@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -20,6 +21,8 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import reactor.core.publisher.Flux;
@@ -123,5 +126,92 @@ class RunContextLoggerTest {
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage())
             .isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");
+    }
+
+    @Test
+    void transformPreservesMDC() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logQueue,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        // initializeLogger() populates the per-run LoggerContext's MDC adapter on this thread.
+        ch.qos.logback.classic.Logger perRunLogger =
+            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+
+        // Build and transform the event on a different thread, mirroring the production case
+        // where logger() is initialized on one thread and logs are emitted on a worker thread.
+        // The per-run MDC adapter's thread-local is empty on this worker, so a fix that relies
+        // on event.getMDCPropertyMap() would produce an empty MDC here.
+        ILoggingEvent transformed = Executors.newSingleThreadExecutor().submit(() -> {
+            LoggingEvent original = new LoggingEvent(
+                RunContextLoggerTest.class.getName(),
+                perRunLogger,
+                ch.qos.logback.classic.Level.INFO,
+                "msg",
+                null,
+                null
+            );
+            return new TransformExposingAppender(runContextLogger, perRunLogger).transform(original);
+        }).get();
+
+        assertThat(transformed.getMDCPropertyMap())
+            .containsEntry("tenantId", logEntry.getTenantId())
+            .containsEntry("namespace", logEntry.getNamespace())
+            .containsEntry("flowId", logEntry.getFlowId())
+            .containsEntry("executionId", logEntry.getExecutionId());
+    }
+
+    @Test
+    void initializeLoggerPopulatesGlobalMDC_andResetMDCClearsIt() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        try {
+            RunContextLogger runContextLogger = new RunContextLogger(
+                logQueue,
+                logEntry,
+                Level.TRACE,
+                false
+            );
+            runContextLogger.logger();
+
+            // Global SLF4J MDC must carry the execution context so non-flow loggers
+            // (worker, executor, scheduler) on this thread emit it too. v0.19.5 parity.
+            assertThat(org.slf4j.MDC.get("tenantId")).isEqualTo(logEntry.getTenantId());
+            assertThat(org.slf4j.MDC.get("namespace")).isEqualTo(logEntry.getNamespace());
+            assertThat(org.slf4j.MDC.get("flowId")).isEqualTo(logEntry.getFlowId());
+            assertThat(org.slf4j.MDC.get("executionId")).isEqualTo(logEntry.getExecutionId());
+
+            runContextLogger.resetMDC();
+
+            assertThat(org.slf4j.MDC.get("tenantId")).isNull();
+            assertThat(org.slf4j.MDC.get("namespace")).isNull();
+            assertThat(org.slf4j.MDC.get("flowId")).isNull();
+            assertThat(org.slf4j.MDC.get("executionId")).isNull();
+        } finally {
+            // Safety net in case an assertion failure skipped resetMDC().
+            logEntry.toMap().keySet().forEach(org.slf4j.MDC::remove);
+        }
+    }
+
+    /**
+     * Exposes the protected {@link RunContextLogger.BaseAppender#transform} for the test.
+     */
+    private static final class TransformExposingAppender extends RunContextLogger.BaseAppender {
+        TransformExposingAppender(RunContextLogger runContextLogger, ch.qos.logback.classic.Logger logger) {
+            super(runContextLogger, logger);
+        }
+
+        @Override
+        protected void append(ILoggingEvent event) {
+            // unused
+        }
     }
 }

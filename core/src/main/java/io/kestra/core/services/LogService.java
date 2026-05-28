@@ -3,9 +3,13 @@ package io.kestra.core.services;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
@@ -38,7 +42,13 @@ public class LogService {
         String finalMsg = FLOW_PREFIX_WITH_TENANT + message;
         Object[] executionArgs = new Object[] { flow.getTenantId(), flow.getNamespace(), flow.getId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        logger.atLevel(level).log(finalMsg, finalArgs);
+        try (var ignored = mdcScope(
+            "tenantId", flow.getTenantId(),
+            "namespace", flow.getNamespace(),
+            "flowId", flow.getId()
+        )) {
+            logger.atLevel(level).log(finalMsg, finalArgs);
+        }
     }
 
     /**
@@ -52,7 +62,14 @@ public class LogService {
     public void logExecution(Execution execution, Logger logger, Level level, String message, Object... args) {
         Object[] executionArgs = new Object[] { execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        logger.atLevel(level).log(EXECUTION_PREFIX_WITH_TENANT + message, finalArgs);
+        try (var ignored = mdcScope(
+            "tenantId", execution.getTenantId(),
+            "namespace", execution.getNamespace(),
+            "flowId", execution.getFlowId(),
+            "executionId", execution.getId()
+        )) {
+            logger.atLevel(level).log(EXECUTION_PREFIX_WITH_TENANT + message, finalArgs);
+        }
     }
 
     /**
@@ -66,7 +83,14 @@ public class LogService {
     public void logTrigger(TriggerContext triggerContext, Logger logger, Level level, String message, Object... args) {
         Object[] executionArgs = new Object[] { triggerContext.getTenantId(), triggerContext.getNamespace(), triggerContext.getFlowId(), triggerContext.getTriggerId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        logger.atLevel(level).log(TRIGGER_PREFIX_WITH_TENANT + message, finalArgs);
+        try (var ignored = mdcScope(
+            "tenantId", triggerContext.getTenantId(),
+            "namespace", triggerContext.getNamespace(),
+            "flowId", triggerContext.getFlowId(),
+            "triggerId", triggerContext.getTriggerId()
+        )) {
+            logger.atLevel(level).log(TRIGGER_PREFIX_WITH_TENANT + message, finalArgs);
+        }
     }
 
     /**
@@ -81,7 +105,16 @@ public class LogService {
         }
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
         Logger logger = logger(taskRun);
-        logger.atLevel(level).log(finalMsg, finalArgs);
+        try (var ignored = mdcScope(
+            "tenantId", taskRun.getTenantId(),
+            "namespace", taskRun.getNamespace(),
+            "flowId", taskRun.getFlowId(),
+            "taskId", taskRun.getTaskId(),
+            "executionId", taskRun.getExecutionId(),
+            "taskRunId", taskRun.getId()
+        )) {
+            logger.atLevel(level).log(finalMsg, finalArgs);
+        }
     }
 
     public int purge(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -112,5 +145,29 @@ public class LogService {
         return LoggerFactory.getLogger(
             "execution." + execution.getFlowId()
         );
+    }
+
+    /**
+     * Populates SLF4J MDC for the duration of a try-with-resources block, then removes
+     * only the keys it set. Skips null values.
+     */
+    private static MDCScope mdcScope(String... kvPairs) {
+        List<String> putKeys = new ArrayList<>(kvPairs.length / 2);
+        for (int i = 0; i + 1 < kvPairs.length; i += 2) {
+            if (kvPairs[i + 1] != null) {
+                MDC.put(kvPairs[i], kvPairs[i + 1]);
+                putKeys.add(kvPairs[i]);
+            }
+        }
+        return () -> putKeys.forEach(MDC::remove);
+    }
+
+    /**
+     * Narrows {@link AutoCloseable#close()} to remove the {@code throws Exception},
+     * so callers don't need a {@code try/catch} around a plain MDC cleanup.
+     */
+    private interface MDCScope extends AutoCloseable {
+        @Override
+        void close();
     }
 }

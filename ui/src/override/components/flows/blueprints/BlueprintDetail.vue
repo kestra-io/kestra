@@ -267,12 +267,12 @@
                 margin-right: calc(1rem);
                 cursor: pointer;
                 border: none;
-                background: var(--ks-background-card);
+                background: var(--ks-bg-surface);
                 display: flex;
                 align-items: center;
                 border-radius: 5px;
                 padding: 4px 10px;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
             }
 
             .blueprint-title {
@@ -311,7 +311,7 @@
             display: flex;
             flex-wrap: wrap;
             > div {
-                background: var(--ks-background-card);
+                background: var(--ks-bg-surface);
                 border-radius: var(--kel-border-radius-base);
                 min-width : 100px;
                 width: 100px;
@@ -321,7 +321,7 @@
                 margin-bottom: 1rem;
                 display: flex;
                 flex-wrap: wrap;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--ks-border-default);
 
                 :deep(.wrapper) {
                     .icon {
@@ -346,12 +346,12 @@
         display: flex;
 
         .kel-tag.kel-tag--info {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-surface);
             padding: 15px 10px;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             text-transform: capitalize;
             font-size: var(--ks-font-size-sm);
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
         }
 
         .tag-box {

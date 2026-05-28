@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
     "additionalPlugins": "추가 플러그인",
+    "admin": "관리자",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flow에서 비활성화됨",
     "collapse": "축소",
     "collapse all": "모두 축소",
+    "commit_id": "커밋 id",
     "common": {
       "back": "뒤로"
     },
@@ -205,6 +207,7 @@
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
+    "copy_and_close": "복사하고 닫기",
     "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
@@ -335,6 +338,7 @@
         "message": "Kestra Enterprise Edition에서는 조직에만 사용할 수 있는 맞춤형 Blueprints를 생성할 수 있습니다. 이를 모범 사례 템플릿으로 사용하여 팀 내에서 자주 사용하는 workflow를 공유하고, 중앙 집중화하고, 문서화할 수 있습니다.",
         "title": "사용자 정의 Blueprints 추가"
       },
+      "contact_sales": "영업팀에 문의하세요",
       "enterprise_edition": "엔터프라이즈 에디션",
       "get_a_demo_button": "데모 받기",
       "instance": {
@@ -392,7 +396,8 @@
         "label": "테스트",
         "message": "플로우의 로직을 개별적으로 검증하고, 회귀를 조기에 감지하며, 자동화가 변화하고 성장함에 따라 신뢰를 유지하세요.",
         "title": "모든 변경 사항에 대한 신뢰성 보장"
-      }
+      },
+      "watch_the_video": "비디오 보기"
     },
     "dependencies": "종속성",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
@@ -478,6 +483,10 @@
         "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단에 대해 알릴 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요.",
         "title": "아직 공지가 없습니다!"
       },
+      "apiTokens": {
+        "content": "API 토큰은 Kestra API에 대한 프로그래매틱 접근을 허용하고자 할 때 사용됩니다.",
+        "title": "API 토큰 관리"
+      },
       "apps": {
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",
         "title": "앱이 아직 없습니다!"
@@ -493,6 +502,10 @@
       "concurrency_limit": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
+      },
+      "concurrency_limits": {
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대해 더 읽어보세요.",
+        "title": "동시성 제한이 설정되지 않았습니다."
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +524,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
+      },
+      "groups": {
+        "content": "그룹은 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전체에서 집합적으로 관리할 수 있도록 합니다.",
+        "title": "아직 그룹이 없습니다!"
       },
       "kill_switches": {
         "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
@@ -539,6 +556,10 @@
       "versionPlugin": {
         "content": "여기에서 Kestra 인스턴스에 설치된 모든 플러그인을 관리할 수 있습니다. 새로 설치된 플러그인은 인스턴스의 구성에 따라 모든 Kestra 서비스에서 즉시 사용 가능하지 않을 수 있습니다.",
         "title": "아직 버전이 지정된 플러그인이 없습니다!"
+      },
+      "workerRegistrationTokens": {
+        "content": "등록 토큰은 원격 worker가 Kestra 인스턴스에 안전하게 인증하고 등록할 수 있도록 합니다. 토큰을 생성한 후 이를 사용하여 새로운 worker를 이 클러스터에 연결하세요.",
+        "title": "아직 등록 토큰이 없습니다!"
       }
     },
     "empty search": "검색 결과가 없습니다",
@@ -648,6 +669,8 @@
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
     "feeds": {
+      "heading": "Kestra의 모든 것.",
+      "subheading": "최신 업데이트, 가이드 및 스토리",
       "title": "Kestra의 새로운 기능"
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
@@ -737,6 +760,27 @@
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "앱(s)",
+        "tooltip": "이 flow를 사용하는 앱 보기"
+      },
+      "dependencies": {
+        "suffix": "종속성",
+        "tooltip": "flow 종속성 보기"
+      },
+      "errors": {
+        "label": "{count} 오류"
+      },
+      "revisions": {
+        "suffix": "리비전(s)",
+        "tooltip": "flow 수정 보기"
+      },
+      "tests": {
+        "suffix": "테스트",
+        "tooltip": "flow 테스트 보기"
+      }
+    },
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
     "flow_outputs": "Flow Outputs",
@@ -838,6 +882,7 @@
       "raw": "Temporal 보기",
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
+    "main_configuration": "주요 설정",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",
@@ -865,7 +910,10 @@
       "copy_url": "URL 복사",
       "create": "서버 생성",
       "delete_confirm": "이 MCP 서버를 삭제하시겠습니까?",
+      "id_invalid": "ID는 소문자 또는 숫자로 시작해야 하며, 소문자, 숫자, 하이픈, 밑줄만 포함할 수 있습니다.",
+      "id_placeholder": "예: my-mcp-server",
       "instructions": "지침",
+      "main_tenant": "메인",
       "no_servers": "MCP 서버를 찾을 수 없습니다. 외부 AI 에이전트에 MCP Tool trigger를 노출하기 위해 첫 번째 서버를 생성하세요.",
       "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
       "private": "비공개",
@@ -874,6 +922,11 @@
       "server": "MCP 서버",
       "server_type": "서버 유형",
       "servers": "MCP 서버",
+      "tab_connect": "연결",
+      "tab_connect_placeholder": "연결 세부 정보가 곧 제공됩니다.",
+      "tab_edit": "편집",
+      "tab_tool_flows": "도구 Flows",
+      "tab_tool_flows_placeholder": "도구 flow 관리가 곧 제공됩니다.",
       "url_copied": "URL이 복사되었습니다!",
       "username_password": "사용자 이름 & 비밀번호"
     },
@@ -1316,6 +1369,12 @@
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
+      "sort": {
+        "most_used": "가장 많이 사용됨",
+        "name_asc": "이름 A-Z",
+        "name_desc": "이름 Z-A",
+        "newest": "최신순"
+      },
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },
@@ -1402,6 +1461,7 @@
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
     "runners": "러너",
+    "running": "실행 중",
     "running duration": "실행 중 지속 시간",
     "save": "저장",
     "save draft": {
@@ -1455,6 +1515,7 @@
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
     "select datetime": "날짜 선택",
+    "select view": "보기 선택",
     "selected": "선택됨",
     "selection": {
       "all": "모두 선택 ({count})",

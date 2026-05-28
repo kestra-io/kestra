@@ -76,7 +76,7 @@ test.describe("Flow Page", () => {
             await monacoEditor.clear({force: true})
             await expect(page.getByTestId("monaco-editor").getByText("Hello World")).not.toBeVisible()
             await monacoEditor.fill(flowYaml, {force: true})
-            await page.getByRole("button", {name: "Actions"}).click()
+            await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
             await page.getByRole("button", {name: "Save"}).click()

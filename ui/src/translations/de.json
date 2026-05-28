@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
     "add_new_item": "Neues Element hinzufügen",
     "additionalPlugins": "Zusätzliche Plugins",
+    "admin": "Admin",
     "administration": "Administration",
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
@@ -174,6 +175,7 @@
     "codeDisabled": "In Flow deaktiviert",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
+    "commit_id": "Commit-ID",
     "common": {
       "back": "Zurück"
     },
@@ -205,6 +207,7 @@
     "copy": "Kopieren",
     "copy logs": "Logs kopieren",
     "copy url": "URL kopieren",
+    "copy_and_close": "Kopieren und schließen",
     "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
@@ -335,6 +338,7 @@
         "message": "In der Kestra Enterprise Edition können Sie benutzerdefinierte Blueprints erstellen, die nur für Ihre Organisation verfügbar sind. Sie können diese als Best-Practice-Vorlagen verwenden, um häufig genutzte Workflows in Ihrem Team zu teilen, zu zentralisieren und zu dokumentieren.",
         "title": "Benutzerdefinierte Blueprints hinzufügen"
       },
+      "contact_sales": "Vertrieb kontaktieren",
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Demo anfordern",
       "instance": {
@@ -392,7 +396,8 @@
         "label": "Tests",
         "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
         "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
-      }
+      },
+      "watch_the_video": "Sieh dir das Video an"
     },
     "dependencies": "Abhängigkeiten",
     "dependencies delete flow": "Dieser Flow hat Abhängigkeiten. Das Löschen verhindert, dass deren Abhängigkeiten ausgeführt werden.<br /><br /> Hier ist die Liste der betroffenen Flows:",
@@ -478,6 +483,10 @@
         "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
         "title": "Sie haben noch keine Ankündigungen!"
       },
+      "apiTokens": {
+        "content": "API-Tokens werden verwendet, wenn Sie programmatischen Zugriff auf die Kestra-API gewähren möchten.",
+        "title": "Verwalten Sie Ihre API-Tokens"
+      },
       "apps": {
         "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
         "title": "Sie haben noch keine Apps!"
@@ -493,6 +502,10 @@
       "concurrency_limit": {
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
+      },
+      "concurrency_limits": {
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "title": "Es sind keine Nebenläufigkeitsgrenzen festgelegt."
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +524,10 @@
           "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
         }
+      },
+      "groups": {
+        "content": "Gruppen ermöglichen es Ihnen, Benutzer zusammenzufassen, sodass Sie Berechtigungen und Rollenbindungen gemeinsam über Ihren Mandanten verwalten können.",
+        "title": "Sie haben noch keine Gruppen!"
       },
       "kill_switches": {
         "content": "Die Kill Switch-Funktion bietet einen UI-basierten Mechanismus, um problematische Ausführungen zu stoppen. Sie ersetzt die nur CLI-basierten Befehle <code>--skip-executions</code> und <code>--skip-flows</code> durch eine umfassende Verwaltungsoberfläche.",
@@ -539,6 +556,10 @@
       "versionPlugin": {
         "content": "Hier können Sie alle Plugins verwalten, die auf Ihrer Kestra-Instanz installiert sind. Neu installierte Plugins sind möglicherweise nicht sofort in allen Kestra-Diensten verfügbar, abhängig von der Konfiguration Ihrer Instanz.",
         "title": "Sie haben noch kein versioniertes Plugin!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Registrierungstoken ermöglichen es Remote-Workern, sich sicher zu authentifizieren und bei Ihrer Kestra-Instanz zu registrieren. Erstellen Sie ein Token und verwenden Sie es, um neue Worker mit diesem Cluster zu verbinden.",
+        "title": "Sie haben noch keine Registrierungstoken!"
       }
     },
     "empty search": "Suchergebnisse sind leer",
@@ -648,6 +669,8 @@
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
     "feeds": {
+      "heading": "Alles rund um Kestra.",
+      "subheading": "Die neuesten Updates, Anleitungen und Geschichten",
       "title": "Was gibt's Neues bei Kestra"
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",
@@ -737,6 +760,27 @@
     "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "App(s)",
+        "tooltip": "Apps anzeigen, die diesen flow verwenden"
+      },
+      "dependencies": {
+        "suffix": "Abhängigkeit(en)",
+        "tooltip": "Flow-Abhängigkeiten anzeigen"
+      },
+      "errors": {
+        "label": "{count} Fehler"
+      },
+      "revisions": {
+        "suffix": "Revision(en)",
+        "tooltip": "Flow-Revisionen anzeigen"
+      },
+      "tests": {
+        "suffix": "Test(s)",
+        "tooltip": "Flow-Tests anzeigen"
+      }
+    },
     "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
     "flow_outputs": "Flow Outputs",
@@ -838,6 +882,7 @@
       "raw": "Temporale Ansicht",
       "raw_details": "Vollständige Task Logs und Flow Logs in einem rohen, nach Zeitstempel geordneten Format anzeigen"
     },
+    "main_configuration": "Hauptkonfiguration",
     "management port": "Management-Port",
     "mark as": "Als <code>{status}</code> markieren",
     "max": "Max",
@@ -865,7 +910,10 @@
       "copy_url": "URL kopieren",
       "create": "Server erstellen",
       "delete_confirm": "Möchten Sie diesen MCP-Server wirklich löschen?",
+      "id_invalid": "Die ID muss mit einem Kleinbuchstaben oder einer Ziffer beginnen und darf nur Kleinbuchstaben, Ziffern, Bindestriche oder Unterstriche enthalten.",
+      "id_placeholder": "z.B. mein-mcp-server",
       "instructions": "Anweisungen",
+      "main_tenant": "Haupt",
       "no_servers": "Keine MCP-Server gefunden. Erstellen Sie Ihren ersten Server, um MCP Tool Trigger für externe KI-Agenten bereitzustellen.",
       "page_description": "Stellen Sie Ihre Kestra flows als Werkzeuge für MCP-kompatible KI-Agenten bereit",
       "private": "Privat",
@@ -874,6 +922,11 @@
       "server": "MCP-Server",
       "server_type": "Servertyp",
       "servers": "MCP-Server",
+      "tab_connect": "Verbinden",
+      "tab_connect_placeholder": "Verbindungsdetails folgen in Kürze.",
+      "tab_edit": "Bearbeiten",
+      "tab_tool_flows": "Tool-Flows",
+      "tab_tool_flows_placeholder": "Das Management von Tool flows kommt bald.",
       "url_copied": "URL kopiert!",
       "username_password": "Benutzername & Passwort"
     },
@@ -1316,6 +1369,12 @@
     "pluginPage": {
       "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
+      "sort": {
+        "most_used": "Am häufigsten verwendet",
+        "name_asc": "Name A-Z",
+        "name_desc": "Name Z-A",
+        "newest": "Neueste"
+      },
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },
@@ -1402,6 +1461,7 @@
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
     "runners": "Läufer",
+    "running": "RUNNING",
     "running duration": "Laufzeitdauer",
     "save": "Speichern",
     "save draft": {
@@ -1455,6 +1515,7 @@
     "seeing old revision": "Sie sehen eine alte Revision: {revision}",
     "select": "Wählen Sie Ihren {{section}} aus",
     "select datetime": "Datum auswählen",
+    "select view": "Ansicht auswählen",
     "selected": "Ausgewählt",
     "selection": {
       "all": "Alle auswählen ({count})",

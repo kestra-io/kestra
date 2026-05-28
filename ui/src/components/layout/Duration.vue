@@ -87,7 +87,7 @@
                 if(statusVarname === "submitted") statusVarname = "created"
 
                 return {
-                    backgroundColor: `var(--ks-chart-${statusVarname})`,
+                    backgroundColor: `var(--ks-status-${statusVarname})`,
                 }
             },
         },

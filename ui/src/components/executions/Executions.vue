@@ -25,9 +25,9 @@
                     <li>
                         <TriggerFlow
                             v-if="flowStore.flow"
-                            :disabled="flowStore.flow?.disabled || isReadOnly"
-                            :flowId="flowStore.flow?.id"
-                            :namespace="flowStore.flow?.namespace"
+                            :disabled="flowStore.flow.disabled ?? isReadOnly"
+                            :flowId="flowStore.flow.id"
+                            :namespace="flowStore.flow.namespace"
                         />
                     </li>
                 </template>
@@ -85,7 +85,7 @@
                 <KsButton v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
+                <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
                     {{ $t("kill") }}
                 </KsButton>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
@@ -403,7 +403,6 @@
     import Sections from "../dashboard/sections/Sections.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
-    //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
@@ -638,7 +637,7 @@
     })
 
     const canCheck = computed(() => {
-        return canDelete.value || canUpdate.value
+        return canDelete.value || canUpdate.value || canKill.value
     })
 
     const canCreate = computed(() => {
@@ -651,6 +650,10 @@
 
     const canDelete = computed(() => {
         return authStore.user?.isAllowed(resource.EXECUTION, action.DELETE, props.namespace)
+    })
+
+    const canKill = computed(() => {
+        return authStore.user?.isAllowed(resource.EXECUTION, action.KILL, props.namespace)
     })
 
     const isAllowedEdit = computed(() => {
@@ -913,7 +916,6 @@
                 title: t("execution-warn-title"),
                 description: t("execution-warn-deleting-still-running"),
                 type: "warning",
-                showIcon: true,
                 closable: false,
             }) : null,
             h(KsCheckbox, {
@@ -1036,7 +1038,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .padding-bottom {
@@ -1044,13 +1046,13 @@
 }
 
 .custom-warning {
-    border: 1px solid var(--ks-chart-border-warning);
+    border: 1px solid var(--ks-status-warning);
     border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px var(--ks-chart-border-warning);
+    box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
 
     :deep(.kel-alert__title) {
         font-size: var(--ks-font-size-base);
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
         font-weight: bold;
     }
 
@@ -1059,12 +1061,12 @@
     }
 
     :deep(.kel-alert__icon) {
-        color: var(--ks-content-warning);
+        color: var(--ks-status-warning);
     }
 }
 
 .code-text {
-    color: var(--ks-content-primary);
+    color: var(--ks-text-primary);
 }
 
 :deep(.executions-table) .kel-table__row {
@@ -1072,6 +1074,6 @@
 }
 
 :deep(a.execution-id) code {
-    color: var(--ks-content-link);
+    color: var(--ks-text-link);
 }
 </style>

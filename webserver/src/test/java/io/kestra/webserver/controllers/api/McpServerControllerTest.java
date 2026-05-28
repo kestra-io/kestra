@@ -37,7 +37,7 @@ class McpServerControllerTest {
     McpServerService mcpService;
 
     @Test
-    void givenValidMcp_whenCreate_thenMcpIsCreated() {
+    void shouldCreateMcpWhenValidMcpProvided() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
 
@@ -52,7 +52,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenMcpAlreadyExists_whenCreateWithSameId_thenConflictReturned() {
+    void shouldReturnConflictWhenCreatingMcpWithDuplicateId() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -66,7 +66,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenMcpWithMissingRequiredFields_whenCreate_thenValidationErrorReturned() {
+    void shouldReturnValidationErrorWhenCreatingMcpWithMissingRequiredFields() {
         // Given — null id violates @NotBlank/@NotNull
         ApiMcpServer mcp = new ApiMcpServer(null, null, null, null, null, true, false, null, null);
 
@@ -79,7 +79,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenExistingMcp_whenGet_thenMcpIsReturned() {
+    void shouldReturnMcpWhenGettingExistingMcp() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -93,7 +93,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenNonExistingMcp_whenGet_thenNotFoundReturned() {
+    void shouldReturnNotFoundWhenGettingNonExistingMcp() {
         // Given
         String nonExistentId = IdUtils.create();
 
@@ -107,7 +107,7 @@ class McpServerControllerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void givenMultipleMcps_whenList_thenPagedResultsReturned() {
+    void shouldReturnPagedResultsWhenListingMcps() {
         // Given
         ApiMcpServer mcpOne = buildMcp(IdUtils.create());
         ApiMcpServer mcpTwo = buildMcp(IdUtils.create());
@@ -128,7 +128,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenExistingMcp_whenUpdate_thenMcpIsUpdated() {
+    void shouldUpdateMcpWhenUpdatingExistingMcp() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -145,7 +145,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenNonExistingMcp_whenUpdate_thenNotFoundReturned() {
+    void shouldReturnNotFoundWhenUpdatingNonExistingMcp() {
         // Given
         String nonExistentId = IdUtils.create();
         ApiMcpServer mcp = buildMcp(IdUtils.create());
@@ -159,7 +159,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenExistingMcp_whenDelete_thenNoContentReturned() {
+    void shouldReturnNoContentWhenDeletingExistingMcp() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -172,7 +172,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenNonExistingMcp_whenDelete_thenNotFoundReturned() {
+    void shouldReturnNotFoundWhenDeletingNonExistingMcp() {
         // Given
         String nonExistentId = IdUtils.create();
 
@@ -185,7 +185,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenReservedId_whenCreate_thenValidationErrorReturned() {
+    void shouldReturnValidationErrorWhenCreatingMcpWithReservedId() {
         // Given — "default" is a reserved id
         ApiMcpServer mcp = new ApiMcpServer(McpServer.DEFAULT_ID,
             "A description", null, null, null, true, false, null, null);
@@ -199,7 +199,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenExistingMcp_whenUpdateWithReservedId_thenValidationErrorReturned() {
+    void shouldReturnValidationErrorWhenUpdatingMcpWithReservedId() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -215,7 +215,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenDefaultMcp_whenDelete_thenForbiddenReturned() {
+    void shouldReturnForbiddenWhenDeletingDefaultMcp() {
         // Given — provision via the service; the API blocks creating "default" directly
         mcpService.createDefaultMcpServerIfNotExist(TenantService.MAIN_TENANT);
 
@@ -228,7 +228,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenExistingMcp_whenToggle_thenEnabledStateFlipped() {
+    void shouldFlipEnabledStateWhenTogglingExistingMcp() {
         // Given
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);
@@ -243,7 +243,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenNonExistingMcp_whenToggle_thenNotFoundReturned() {
+    void shouldReturnNotFoundWhenTogglingNonExistingMcp() {
         // Given
         String nonExistentId = IdUtils.create();
 
@@ -256,7 +256,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenEnterpriseAuthType_whenCreate_thenForbiddenReturned() {
+    void shouldReturnForbiddenWhenCreatingMcpWithEnterpriseAuthType() {
         // Given — API_TOKEN requires EE; OSS edition is active in tests
         ApiMcpServer mcp = new ApiMcpServer("test-mcp-" + IdUtils.create().toLowerCase(),
             "A description", null, null, McpServer.AuthType.API_TOKEN, true, false, null, null);
@@ -270,7 +270,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenBasicAuthType_whenCreate_thenMcpIsCreated() {
+    void shouldCreateMcpWhenUsingBasicAuthType() {
         // Given — BASIC is the only auth type permitted in OSS
         ApiMcpServer mcp = new ApiMcpServer("test-mcp-" + IdUtils.create().toLowerCase(),
             "A description", null, null, McpServer.AuthType.BASIC, true, false, null, null);
@@ -284,7 +284,7 @@ class McpServerControllerTest {
     }
 
     @Test
-    void givenEnterpriseAuthType_whenUpdate_thenForbiddenReturned() {
+    void shouldReturnForbiddenWhenUpdatingMcpWithEnterpriseAuthType() {
         // Given — create a valid MCP server first, then try to switch to an EE-only auth type
         ApiMcpServer mcp = buildMcp(IdUtils.create());
         ApiMcpServer created = client.toBlocking().retrieve(POST(MCP_PATH, mcp), ApiMcpServer.class);

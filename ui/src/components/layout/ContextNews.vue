@@ -1,59 +1,40 @@
 <template>
-    <ContextInfoContent ref="contextInfoRef" :title="$t('feeds.title')">
-        <div
+    <ContextInfoContent ref="contextInfoRef">
+        <header class="newsHeader">
+            <h4>{{ $t("feeds.heading") }}</h4>
+            <p>{{ $t("feeds.subheading") }}</p>
+        </header>
+        <a
             class="post"
             :class="{
-                lastPost: index === 0,
-                expanded: expanded[feed.id]
+                topPost: index === 0,
+                bottomPost: index === feeds.length - 1
             }"
             v-for="(feed, index) in feeds"
             :key="feed.id"
+            :href="feed.href ?? feed.link"
+            target="_blank"
+            rel="noopener noreferrer"
         >
-            <div v-if="feed.image" class="mr-2">
-                <img :src="feed.image" alt="">
-            </div>
+            <img v-if="feed.image" :src="feed.image" alt="">
             <div class="metaBlock">
+                <KsDateAgo className="news-date" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <KsDateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
-            <KsMarkdown class="markdown-tooltip postParagraph" :content="feed.description" />
-
-            <div class="newsButtonBar">
-                <KsButton
-                    style="flex:1"
-                    @click="expanded[feed.id] = !expanded[feed.id]"
-                >
-                    <MenuDown class="expandIcon" />
-                    {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
-                </KsButton>
-                <KsButton
-                    v-if="feed.href"
-                    :title="$t('open in new tab')"
-                    tag="a"
-                    type="primary"
-                    target="_blank"
-                    :href="feed.href"
-                >
-                    <OpenInNew :title="feed.link" />
-                </KsButton>
-            </div>
-
-            <KsDivider class="mb-2" v-if="index !== feeds.length - 1" />
-        </div>
+            <OpenInNew class="openInNewIcon" aria-hidden="true" />
+        </a>
     </ContextInfoContent>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive, ref} from "vue"
+    import {computed, onMounted, ref} from "vue"
     import {useStorage} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import MenuDown from "vue-material-design-icons/MenuDown.vue"
 
-    import {KsMarkdown} from "@kestra-io/design-system"
     import ContextInfoContent from "../ContextInfoContent.vue"
 
     import {useApiStore} from "../../stores/api"
@@ -62,8 +43,6 @@
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
     const feeds = computed(() => apiStore.feeds)
-
-    const expanded = reactive<Record<string, boolean>>({})
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     onMounted(() => {
@@ -75,88 +54,103 @@
 </script>
 
 <style scoped lang="scss">
-    $post-line-height: 1.6;
+    .newsHeader {
+        padding: 2rem 2rem 0;
+
+        h4 {
+            font-size: var(--ks-font-size-md);
+            font-weight: 600;
+            margin: 0 0 0.25rem;
+            color: var(--ks-content-primary);
+        }
+
+        p {
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-content-secondary);
+            margin: 0;
+        }
+    }
 
     .post {
-        padding: 1rem 1rem 0rem 1rem;
+        position: relative;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        margin: 0 1rem;
+        padding: 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+
+        & + & {
+            margin-top: 0.25rem;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background: var(--ks-bg-hover-elevated);
+            border-color: var(--ks-border-focus);
+
+            .openInNewIcon {
+                opacity: 1;
+            }
+        }
 
         h5 {
-            margin-bottom: 0;
-            font-size: var(--ks-font-size-lg);
+            margin: 0;
+            font-size: var(--ks-font-size-md);
+            font-weight: 600;
+            color: var(--ks-content-primary);
         }
 
         img {
-            max-height: 6rem;
-            max-width: 10rem;
-            margin-right: 1rem;
-            float: left;
-            border-radius: var(--kel-border-radius-round);
+            display: block;
+            width: 100px;
+            aspect-ratio: 16 / 9;
+            border: 1px solid var(--ks-border-default);
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
         }
 
         .metaBlock {
             display: flex;
             flex-direction: column;
-            vertical-align: middle;
-            justify-content: center;
             gap: 0.25rem;
-            min-height: 6rem;
-        }
-
-        hr {
-            border-top-color: var(--ks-border-primary);
-            margin-top: .5rem;
-            margin-bottom: .5rem;
-        }
-
-        .small {
-            font-size:  var(--ks-font-size-sm);
-            opacity: 0.7;
-        }
-
-        a.kel-button {
-            font-weight: bold;
-        }
-
-        .expandIcon {
-            margin-right: 1rem;
+            min-width: 0;
         }
     }
 
-    .expanded .expandIcon{
-        transform: rotate(180deg);
-    }
-
-    .lastPost{
-        .postParagraph {
-            max-height: calc(6 * #{$post-line-height}em);
-        }
+    .topPost {
+        flex-direction: column;
+        gap: 0.5rem;
 
         img {
-            display: block;
             width: 100%;
-            float: none;
-            max-width: none;
-            max-height: none;
-            margin-bottom: 1rem;
+            aspect-ratio: auto;
+            border: none;
+            border-radius: var(--kel-border-radius-round);
         }
     }
 
-    .postParagraph {
-        max-height: calc(4 * #{$post-line-height}em);
-        overflow: hidden;
-        line-height: $post-line-height;
-        .expanded & {
-            max-height: none;
-            overflow: visible;
-        }
+    .bottomPost {
+        margin-bottom: 2rem;
     }
 
-    .newsButtonBar {
-        display: flex;
-        margin-top: 1rem;
+    .openInNewIcon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--ks-content-primary);
+        opacity: 0;
+        transition: opacity 0.15s ease;
     }
 
     :deep(.news-date) {
-        color: var(--ks-content-secondary);
+        font-size: 9px;
+        font-weight: 400;
+        color: var(--ks-text-secondary);
     }
 </style>

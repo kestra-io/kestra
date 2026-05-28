@@ -82,6 +82,7 @@ jobs:
     timeout-minutes: 60
     outputs:
       ui: ${{ steps.changes.outputs.ui }}
+      ui-design-system: ${{ steps.changes.outputs.ui-design-system }}
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
     steps:

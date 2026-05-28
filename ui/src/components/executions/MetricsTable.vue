@@ -169,9 +169,9 @@
         align-items: center;
         padding: 3px 6px;
         border-radius: 4px;
-        border: 1px solid var(--ks-badge-border);
-        background-color: var(--ks-badge-background);
-        color: var(--ks-badge-content);
+        border: 1px solid var(--ks-border-info);
+        background-color: var(--ks-bg-badge);
+        color: var(--ks-text-info);
         font-size: var(--ks-font-size-xs);
     }
 </style>

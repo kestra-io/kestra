@@ -4,7 +4,7 @@ import {BasePage} from "./base.page"
 import {shared} from "../fixtures/shared"
 
 interface McpServerFormData {
-    name?: string;
+    id?: string;
     description?: string;
     systemPrompt?: string;
     serverType?: "PRIVATE" | "PUBLIC";
@@ -29,18 +29,19 @@ export class McpPage extends BasePage {
     }
 
     async openCreateModal(): Promise<void> {
-        await this.page.getByRole("button", {name: "+ Create Server"}).click()
+        await this.page.getByRole("link", {name: /Create Server/i}).click()
+        await expect(this.page.getByRole("textbox").first()).toBeVisible()
     }
 
     async fillServerForm(data: McpServerFormData): Promise<void> {
-        if (data.name !== undefined) {
-            await this.page.getByRole("textbox").first().fill(data.name)
+        if (data.id !== undefined) {
+            await this.page.getByRole("textbox").first().fill(data.id)
         }
         if (data.description !== undefined) {
             await this.page.getByPlaceholder("description").fill(data.description)
         }
         if (data.systemPrompt !== undefined) {
-            await this.page.getByPlaceholder("System Prompt").fill(data.systemPrompt)
+            await this.page.getByPlaceholder("Instructions").fill(data.systemPrompt)
         }
         if (data.serverType !== undefined) {
             const label = data.serverType === "PRIVATE" ? "Private" : "Public"
@@ -55,35 +56,39 @@ export class McpPage extends BasePage {
         await this.page.getByRole("button", {name: /Create Server|Save Changes/}).last().click()
     }
 
-    getCardByName(name: string): Locator {
-        return this.page.locator(".mcp-card").filter({hasText: name})
+    getRowById(id: string): Locator {
+        return this.page.locator(".mcp-list__row").filter({hasText: id})
     }
 
-    async openEditModal(name: string): Promise<void> {
-        const card = this.getCardByName(name)
-        await card.locator(".mcp-card__actions-right button").first().click()
+    getCardById(id: string): Locator {
+        return this.getRowById(id)
     }
 
-    async openConnectModal(name: string): Promise<void> {
-        const card = this.getCardByName(name)
-        await card.getByRole("button", {name: "Connect"}).click()
+    async openEditModal(id: string): Promise<void> {
+        await this.getRowById(id).click()
+        await expect(this.page.getByRole("button", {name: "Save Changes"})).toBeVisible()
     }
 
-    async toggleServer(name: string): Promise<void> {
-        const card = this.getCardByName(name)
-        // el-switch hides the <input role="switch"> off-screen; click the visible core span
-        await card.locator(".el-switch__core").click()
+    async openConnectModal(id: string): Promise<void> {
+        await this.openEditModal(id)
+        await this.page.getByRole("tab", {name: "Connect"}).click()
     }
 
-    async deleteServer(name: string): Promise<void> {
+    async toggleServer(id: string): Promise<void> {
+        await this.openEditModal(id)
+        await this.page.locator(".mcp-edit__toggle .el-switch__core").click()
+        await this.page.getByRole("button", {name: "Save Changes"}).click()
+        await this.goto()
+    }
+
+    async deleteServer(id: string): Promise<void> {
         this.page.on("dialog", dialog => dialog.accept())
-        const card = this.getCardByName(name)
-        await card.locator(".mcp-card__delete-btn").click()
+        await this.openEditModal(id)
+        await this.page.getByRole("button", {name: "Delete"}).click()
     }
 
-    async isServerEnabled(name: string): Promise<boolean> {
-        const card = this.getCardByName(name)
-        const classes = await card.getAttribute("class") ?? ""
-        return !classes.includes("mcp-card--disabled")
+    async isServerEnabled(id: string): Promise<boolean> {
+        const row = this.getRowById(id)
+        return await row.locator(".mcp-list__status--enabled").isVisible()
     }
 }

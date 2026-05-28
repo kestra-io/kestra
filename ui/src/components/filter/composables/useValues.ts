@@ -82,9 +82,19 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         ],
         KINDS: [
             {
+                label: t("filter.execution_kind.normal"),
+                description: t("filter.execution_kind.normal_description"),
+                value: "NORMAL",
+            },
+            {
                 label: t("filter.execution_kind.playground"),
                 description: t("filter.execution_kind.playground_description"),
                 value: "PLAYGROUND",
+            },
+            {
+                label: t("filter.execution_kind.loop"),
+                description: t("filter.execution_kind.loop_description"),
+                value: "LOOP",
             },
             ...(isOSS.value ? [] : [{
                 label: t("filter.execution_kind.test"),

@@ -69,7 +69,7 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .sidebar {
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         padding: 2rem;
         height: 100%;
         position: relative;
@@ -109,7 +109,7 @@
     }
 
     .secondary-header {
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         display: flex;
         align-items: center;
         min-height: 64px;
@@ -125,7 +125,7 @@
 
     .main-container {
         flex: 1;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         position: relative;
         min-height: 0;
         overflow-y: auto;
@@ -134,7 +134,7 @@
     .content {
         margin: 0;
         padding: 1rem;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
 
         h1 {
             margin-bottom: 0.5rem;
@@ -156,7 +156,7 @@
 
     @media (max-width: 991px) {
         .secondary-header {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
 
             .mobile-menu-toggle {
                 display: flex;
@@ -266,7 +266,7 @@
         .content {
             margin: 0;
             padding: 0.75rem;
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
         }
     }
 

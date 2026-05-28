@@ -41,7 +41,7 @@
         data: Record<string, any>;
         execution?: Execution;
     }>()
-    
+
     const emit = defineEmits<{ (e: "on-copy", event: any): void }>()
 
     const getHumanizeLabel = (key: string): string => {
@@ -67,6 +67,6 @@
     }
 
     :deep(.kel-table__cell:nth-child(2) span) {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

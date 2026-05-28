@@ -298,6 +298,10 @@ public abstract class AbstractJdbcRepository {
             return getEnabledCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.SUPER_ADMIN) {
+            return getSuperAdminCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.STATUS) {
             return statusCondition(value, operation);
         }
@@ -442,6 +446,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition getEnabledCondition(Object value, Op operation) {
         return defaultHandlers(QueryFilter.Field.ENABLED, value, operation);
+    }
+
+    protected Condition getSuperAdminCondition(Object value, Op operation) {
+        throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
     }
 
     // Generate the condition for Field.STATE

@@ -290,14 +290,7 @@
       "thisYear": "इस साल",
       "thisYearSoFar": "अब तक इस साल",
       "today": "आज",
-      "yesterday": "कल",
-      "short": {
-        "15m": "15m",
-        "1h": "1h",
-        "12h": "12h",
-        "1d": "1d",
-        "7d": "7d"
-      }
+      "yesterday": "कल"
     },
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",

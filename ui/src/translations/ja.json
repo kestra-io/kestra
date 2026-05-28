@@ -290,14 +290,7 @@
       "thisYear": "今年",
       "thisYearSoFar": "今年これまで",
       "today": "今日",
-      "yesterday": "昨日",
-      "short": {
-        "15m": "15m",
-        "1h": "1h",
-        "12h": "12h",
-        "1d": "1d",
-        "7d": "7d"
-      }
+      "yesterday": "昨日"
     },
     "debug": "デバッグ",
     "default": "デフォルト",

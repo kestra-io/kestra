@@ -72,6 +72,9 @@ public class McpToolService {
     public List<McpServerFeatures.AsyncToolSpecification> listToolSpecsForServer(String tenantId, String serverId, McpServer.ServerType serverType) {
         return fetchFlowWithMcpToolTrigger(tenantId, serverId, serverType).stream().flatMap(flow -> flow.getTriggers().stream()
                 .filter(isMcpTriggerTypeAndEnabledPredicate())
+                .filter(trigger -> serverId.equals(
+                    Objects.requireNonNullElse(((McpToolTrigger) trigger).getMcpServer(), McpToolTrigger.DEFAULT_SERVER_ID)
+                ))
                 .map(trigger -> getAsyncToolSpecification(flow, (McpToolTrigger) trigger))
             ).toList();
     }

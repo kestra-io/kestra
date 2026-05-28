@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * API DTO for MCP server creation, update, and retrieval.
@@ -31,6 +32,12 @@ public record ApiMcpServer(
 
     @Schema(description = "Authentication type for private servers.")
     McpServer.AuthType authType,
+
+    @Schema(description = "OAuth provider key from micronaut.security.oauth2.clients. Required when authType is OAUTH.")
+    String oauthProvider,
+
+    @Schema(description = "Scopes advertised in the server's RFC 9728 Protected Resource Metadata document. Only meaningful when authType is OAUTH. When null or empty the field is omitted from the PRM document.")
+    List<String> oauthScopesSupported,
 
     @Schema(description = "Whether the MCP server is disabled.")
     boolean disabled,
@@ -57,6 +64,8 @@ public record ApiMcpServer(
             mcpServer.instructions(),
             mcpServer.serverType(),
             mcpServer.authType(),
+            mcpServer.oauthProvider(),
+            mcpServer.oauthScopesSupported(),
             mcpServer.disabled(),
             mcpServer.isDefault(),
             mcpServer.created(),

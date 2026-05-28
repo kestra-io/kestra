@@ -26,7 +26,7 @@
             </RouterLink>
         </KsOption>
         <KsOption label="Settings" value="settings">
-            <RouterLink :to="{name: 'settings'}" class="menu-item">
+            <RouterLink :to="{name: 'preferences'}" class="menu-item">
                 <CogOutline class="menu-icon" />
                 {{ $t("settings.label") }}
             </RouterLink>

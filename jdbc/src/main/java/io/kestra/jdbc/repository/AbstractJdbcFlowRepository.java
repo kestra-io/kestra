@@ -300,11 +300,20 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions) {
+        return findRevisions(namespace, id, revisions, this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted)));
+    }
+
+    @Override
+    public List<FlowWithSource> findRevisionsWithoutAcl(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions) {
+        return findRevisions(namespace, id, revisions, this.defaultFilterWithNoACL(tenantId, Boolean.TRUE.equals(allowDeleted)));
+    }
+
+    private List<FlowWithSource> findRevisions(String namespace, String id, List<Integer> revisions, Condition baseFilter) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                Condition tenantAndRevisionCondition = this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted));
+                Condition tenantAndRevisionCondition = baseFilter;
                 if (!ListUtils.isEmpty(revisions)) {
                     tenantAndRevisionCondition = tenantAndRevisionCondition.and(REVISION_FIELD.in(revisions));
                 }

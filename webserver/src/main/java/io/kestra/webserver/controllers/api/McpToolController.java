@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.mcp.models.McpServer;
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -9,6 +8,7 @@ import io.micronaut.http.MediaType;
 import io.kestra.core.tenant.TenantService;
 import io.micronaut.http.annotation.*;
 import io.modelcontextprotocol.spec.HttpHeaders;
+import io.kestra.mcp.McpServerCache;
 import io.kestra.mcp.McpServerHandlerTransport;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
@@ -24,19 +24,19 @@ public class McpToolController {
     private final McpServerHandlerTransport handlerRegistry;
     private final TenantService tenantService;
     private final McpSessionFactory sessionFactory;
-    private final McpServerRepositoryInterface mcpServerRepository;
+    private final McpServerCache mcpServerCache;
 
     @Inject
     public McpToolController(
         McpServerHandlerTransport handlerRegistry,
         TenantService tenantService,
         McpSessionFactory sessionFactory,
-        McpServerRepositoryInterface mcpServerRepository
+        McpServerCache mcpServerCache
     ) {
         this.handlerRegistry = handlerRegistry;
         this.tenantService = tenantService;
         this.sessionFactory = sessionFactory;
-        this.mcpServerRepository = mcpServerRepository;
+        this.mcpServerCache = mcpServerCache;
     }
 
     @Get("/{id}")
@@ -69,7 +69,7 @@ public class McpToolController {
 
         String tenantId = tenantService.resolveTenant();
 
-        Optional<McpServer> mcpServer = mcpServerRepository.get(tenantId, id);
+        Optional<McpServer> mcpServer = mcpServerCache.get(tenantId, id);
         if (mcpServer.isEmpty()) {
             return Mono.just(HttpResponse.notFound());
         }

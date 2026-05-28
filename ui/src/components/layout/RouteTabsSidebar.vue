@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar v-if="hasTabs" class="route-tabs-sidebar" aria-label="Tabs">
+    <KsSideBar v-if="hasTabs && displayMode === 'sidebar'" class="route-tabs-sidebar" aria-label="Tabs">
         <div class="tabs-list">
             <template v-for="(tab, index) in visibleTabs" :key="tab.name ?? `header-${index}`">
                 <div v-if="tab.header" class="tab-header">{{ tab.title }}</div>
@@ -9,31 +9,14 @@
                     :disabled="!tooltipFor(tab)"
                     placement="right"
                 >
-                    <KsSideBarItem
-                        v-if="tab.disabled"
-                        :title="tab.title"
-                        :icon="tab.icon"
-                        :active="isActive(tab)"
-                        :locked="tab.locked"
-                        disabled
-                        :class="{indented: hasHeader}"
-                    >
-                        <template v-if="tab.count !== undefined" #suffix>
-                            <KsBadge :value="tab.count" type="primary" class="count" />
-                        </template>
-                    </KsSideBarItem>
-                    <router-link
-                        v-else
-                        :to="routeFor(tab)"
-                        custom
-                        v-slot="{href, navigate}"
-                    >
+                    <router-link :to="routeFor(tab)" custom v-slot="{href, navigate}">
                         <KsSideBarItem
                             :title="tab.title"
                             :icon="tab.icon"
                             :href="href"
                             :active="isActive(tab)"
                             :locked="tab.locked"
+                            :disabled="tab.disabled"
                             :class="{indented: hasHeader}"
                             @click="navigate"
                         >
@@ -61,7 +44,7 @@
     const route = useRoute()
     const router = useRouter()
     const routeTabsStore = useRouteTabsStore()
-    const {hasTabs, visibleTabs, routeName, embedActiveTab} = storeToRefs(routeTabsStore)
+    const {hasTabs, visibleTabs, routeName, embedActiveTab, displayMode} = storeToRefs(routeTabsStore)
 
     const hasHeader = computed(() => visibleTabs.value.some((tab) => tab.header))
 
@@ -100,36 +83,36 @@
 </script>
 
 <style scoped lang="scss">
-.route-tabs-sidebar {
-    width: 200px;
-    flex-shrink: 0;
-    --ks-sidebar-item-font-weight: normal;
-}
-
-.tabs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 0 var(--ks-spacing-4);
-}
-
-.tab-header {
-    padding: var(--ks-spacing-2) var(--ks-spacing-3);
-    font-size: var(--ks-font-size-xs);
-    font-weight: 600;
-    color: var(--ks-text-primary);
-}
-
-.indented {
-    margin-left: var(--ks-spacing-3);
-}
-
-.count {
-    flex-shrink: 0;
-    :deep(.kel-badge__content) {
-        position: static;
-        border: none;
-        margin-top: 0;
+    .route-tabs-sidebar {
+        width: 200px;
+        flex-shrink: 0;
+        --ks-sidebar-item-font-weight: normal;
     }
-}
+
+    .tabs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 0 var(--ks-spacing-4);
+    }
+
+    .tab-header {
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
+
+    .indented {
+        margin-left: var(--ks-spacing-3);
+    }
+
+    .count {
+        flex-shrink: 0;
+        :deep(.kel-badge__content) {
+            position: static;
+            border: none;
+            margin-top: 0;
+        }
+    }
 </style>

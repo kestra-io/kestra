@@ -28,6 +28,8 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
+    implementation "io.micronaut.security:micronaut-security-csrf"
+
     implementation("com.posthog.java:posthog:1.2.0")
 
     // ai

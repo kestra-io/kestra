@@ -12,40 +12,37 @@ import io.kestra.core.repositories.ArrayListTotal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class SearcheableTest {
-    private Searcheable<TestEntity> searchable;
+class SearchableTest {
+    private List<TestEntity> entities;
 
     @BeforeEach
     void setUp() {
-        List<TestEntity> entities = List.of(
+        entities = List.of(
             new TestEntity("Alice", 30),
             new TestEntity("Bob", 25),
             new TestEntity("Charlie", 35),
             new TestEntity("Alice", 40)
         );
-        searchable = Searcheable.of(entities);
     }
 
     @Test
     void shouldReturnMatchingResultsWhenSearchByQuery() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .query("Alice")
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .searchableExtractor("name", TestEntity::name)
-            .build();
+            .build()
+            .filter(entities, 1, 100, null, null, "Alice");
 
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
         assertEquals(2, result.getTotal());
         assertEquals("Alice", result.getFirst().name());
     }
 
     @Test
     void shouldSortResultsWhenSortedAscBySingleField() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .sort(List.of("age:asc"))
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .sortableExtractor("age", TestEntity::age)
-            .build();
+            .build()
+            .filter(entities, 1, 100, List.of("age:asc"), null, null);
 
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
         assertEquals(25, result.get(0).age());
         assertEquals(30, result.get(1).age());
         assertEquals(35, result.get(2).age());
@@ -54,12 +51,11 @@ class SearcheableTest {
 
     @Test
     void shouldSortResultsWhenSortedDesBySingleField() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .sort(List.of("age:desc"))
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .sortableExtractor("age", TestEntity::age)
-            .build();
+            .build()
+            .filter(entities, 1, 100, List.of("age:desc"), null, null);
 
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
         assertEquals(40, result.get(0).age());
         assertEquals(35, result.get(1).age());
         assertEquals(30, result.get(2).age());
@@ -68,13 +64,12 @@ class SearcheableTest {
 
     @Test
     void shouldSortResultsWhenSortedByMultipleFields() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .sort(List.of("name:asc", "age:asc"))
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .sortableExtractor("name", TestEntity::name)
             .sortableExtractor("age", TestEntity::age)
-            .build();
+            .build()
+            .filter(entities, 1, 100, List.of("name:asc", "age:asc"), null, null);
 
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
         assertEquals("Alice", result.get(0).name());
         assertEquals(30, result.get(0).age());
         assertEquals("Alice", result.get(1).name());
@@ -83,19 +78,17 @@ class SearcheableTest {
 
     @Test
     void shouldReturnPaginatedResultsWhenPaginationApplied() {
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .page(1)
-            .size(2)
-            .build();
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
+            .build()
+            .filter(entities, 1, 2, null, null, null);
 
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
         assertEquals(2, result.size());
         assertEquals(4, result.getTotal());
     }
 
     @Test
     void shouldFilterResultsByQueryFiltersWhenQueryFilterApplied() {
-        // Given:
+        // Given
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .field(QueryFilter.Field.QUERY)
@@ -104,17 +97,15 @@ class SearcheableTest {
                 .build()
         );
 
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .queryFilters(queryFilters)
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
                 (testEntity, value) -> testEntity.name().equals(value)
             )
-            .build();
-
-        // When
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, null);
 
         // Then
         assertEquals(2, result.size());
@@ -122,7 +113,7 @@ class SearcheableTest {
 
     @Test
     void shouldFilterResultsByQueryFiltersAndSearchableExtractorWhenQueryFilterAppliedAndSearchableExtractor() {
-        // Given:
+        // Given
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .field(QueryFilter.Field.QUERY)
@@ -131,19 +122,16 @@ class SearcheableTest {
                 .build()
         );
 
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .queryFilters(queryFilters)
+        // When
+        ArrayListTotal<TestEntity> result = Searchable.<TestEntity>builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
                 (testEntity, value) -> testEntity.name().equals(value)
             )
             .searchableExtractor("age", TestEntity::age)
-            .query("30")
-            .build();
-
-        // When
-        ArrayListTotal<TestEntity> result = searchable.search(searched);
+            .build()
+            .filter(entities, 1, 100, null, queryFilters, "30");
 
         // Then
         assertEquals(1, result.size());
@@ -151,7 +139,7 @@ class SearcheableTest {
 
     @Test
     void shouldThrowErrorWhenUnsupportedFilterOperationProvided() {
-        // Given:
+        // Given
         List<QueryFilter> queryFilters = List.of(
             QueryFilter.builder()
                 .field(QueryFilter.Field.FLOW_ID)
@@ -160,8 +148,7 @@ class SearcheableTest {
                 .build()
         );
 
-        Searcheable.Searched<TestEntity> searched = Searcheable.Searched.<TestEntity> builder()
-            .queryFilters(queryFilters)
+        Searchable<TestEntity> searchable = Searchable.<TestEntity>builder()
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.QUERY,
                 QueryFilter.Op.EQUALS,
@@ -169,12 +156,12 @@ class SearcheableTest {
             )
             .build();
 
-        // When
+        // When / Then
         InvalidQueryFiltersException queryFiltersException = assertThrows(
-            InvalidQueryFiltersException.class, () -> searchable.search(searched)
+            InvalidQueryFiltersException.class,
+            () -> searchable.filter(entities, 1, 100, null, queryFilters, null)
         );
 
-        // Then
         assertEquals(
             "Provided query filters are invalid: Unsupported operation for FLOW_ID: EQUALS",
             queryFiltersException.getMessage()

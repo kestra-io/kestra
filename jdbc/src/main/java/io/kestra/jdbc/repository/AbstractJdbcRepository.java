@@ -313,6 +313,10 @@ public abstract class AbstractJdbcRepository {
             return nameCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.TAGS) {
+            return tagsCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
             return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
@@ -450,6 +454,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition getSuperAdminCondition(Object value, Op operation) {
         throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
+    }
+
+    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation for TAGS field: " + operation);
     }
 
     // Generate the condition for Field.STATE

@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
+      "sort": {
+        "most_used": "Más usados",
+        "name_asc": "Nombre A-Z",
+        "name_desc": "Nombre Z-A",
+        "newest": "Más reciente"
+      },
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow."
     },
@@ -1522,16 +1528,6 @@
     "settings": {
       "blocks": {
         "configuration": {
-          "descriptions": {
-            "auto_refresh_interval": "",
-            "default_namespace": "",
-            "editor_type": "",
-            "execute_default_tab": "",
-            "execute_flow": "",
-            "flow_default_tab": "",
-            "log_display": "",
-            "log_level": ""
-          },
           "fields": {
             "auto_refresh_interval": "Intervalo de Auto Refresh",
             "default_namespace": "Namespace Predeterminado",
@@ -1555,11 +1551,6 @@
           "label": "Exportar"
         },
         "localization": {
-          "descriptions": {
-            "date_format": "",
-            "language": "",
-            "time_zone": ""
-          },
           "fields": {
             "date_format": "Formato de Fecha",
             "time_zone": "Zona Horaria"
@@ -1575,27 +1566,12 @@
           "unsaved_warning": "Tienes cambios no guardados. ¿Quieres guardarlos antes de salir?"
         },
         "theme": {
-          "color_modes": {
-            "dark_1": "Dark 1.0",
-            "dark_2": "Dark 2.0",
-            "light": "Claro",
-            "sync": "Sincronizar con el sistema"
-          },
-          "descriptions": {
-            "color_mode": "",
-            "editor_folding_stratgy": "",
-            "editor_font_family": "",
-            "editor_font_size": "",
-            "editor_hover_description": "",
-            "logs_font_size": ""
-          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Clásico",
               "kestra": "Kestra",
               "label": "Esquema de Colores del Gráfico"
             },
-            "color_mode": "Modo de color",
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
@@ -1606,11 +1582,10 @@
             "logs_font_size": "Tamaño de Fuente de Logs",
             "theme": "Tema"
           },
-          "label": "Apariencia"
+          "label": "Preferencias de Tema"
         }
       },
-      "label": "Configuración",
-      "updated": "{name} actualizado"
+      "label": "Configuración"
     },
     "setup": {
       "config": {

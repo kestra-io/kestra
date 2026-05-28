@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
+      "sort": {
+        "most_used": "最も使用されている",
+        "name_asc": "名前 A-Z",
+        "name_desc": "名前 Z-A",
+        "newest": "最新"
+      },
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },
@@ -1522,16 +1528,6 @@
     "settings": {
       "blocks": {
         "configuration": {
-          "descriptions": {
-            "auto_refresh_interval": "",
-            "default_namespace": "",
-            "editor_type": "",
-            "execute_default_tab": "",
-            "execute_flow": "",
-            "flow_default_tab": "",
-            "log_display": "",
-            "log_level": ""
-          },
           "fields": {
             "auto_refresh_interval": "自動更新間隔",
             "default_namespace": "デフォルトNamespace",
@@ -1555,11 +1551,6 @@
           "label": "エクスポート"
         },
         "localization": {
-          "descriptions": {
-            "date_format": "",
-            "language": "",
-            "time_zone": ""
-          },
           "fields": {
             "date_format": "日付形式",
             "time_zone": "タイムゾーン"
@@ -1575,27 +1566,12 @@
           "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
         },
         "theme": {
-          "color_modes": {
-            "dark_1": "Dark 1.0",
-            "dark_2": "Dark 2.0",
-            "light": "ライト",
-            "sync": "システムに合わせる"
-          },
-          "descriptions": {
-            "color_mode": "",
-            "editor_folding_stratgy": "",
-            "editor_font_family": "",
-            "editor_font_size": "",
-            "editor_hover_description": "",
-            "logs_font_size": ""
-          },
           "fields": {
             "chart_color_scheme": {
               "classic": "クラシック",
               "kestra": "Kestra",
               "label": "チャートのカラースキーム"
             },
-            "color_mode": "カラーモード",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
@@ -1606,11 +1582,10 @@
             "logs_font_size": "ログフォントサイズ",
             "theme": "テーマ"
           },
-          "label": "外観"
+          "label": "テーマ設定"
         }
       },
-      "label": "設定",
-      "updated": "{name} を更新しました"
+      "label": "設定"
     },
     "setup": {
       "config": {

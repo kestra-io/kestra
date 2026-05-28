@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
+      "sort": {
+        "most_used": "最常使用",
+        "name_asc": "名称 A-Z",
+        "name_desc": "名称 Z-A",
+        "newest": "最新"
+      },
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
     },
@@ -1522,16 +1528,6 @@
     "settings": {
       "blocks": {
         "configuration": {
-          "descriptions": {
-            "auto_refresh_interval": "",
-            "default_namespace": "",
-            "editor_type": "",
-            "execute_default_tab": "",
-            "execute_flow": "",
-            "flow_default_tab": "",
-            "log_display": "",
-            "log_level": ""
-          },
           "fields": {
             "auto_refresh_interval": "自动刷新间隔",
             "default_namespace": "默认命名空间",
@@ -1555,11 +1551,6 @@
           "label": "导出"
         },
         "localization": {
-          "descriptions": {
-            "date_format": "",
-            "language": "",
-            "time_zone": ""
-          },
           "fields": {
             "date_format": "日期格式",
             "time_zone": "时区"
@@ -1575,27 +1566,12 @@
           "unsaved_warning": "您有未保存的更改。您想在离开之前保存它们吗？"
         },
         "theme": {
-          "color_modes": {
-            "dark_1": "Dark 1.0",
-            "dark_2": "Dark 2.0",
-            "light": "浅色",
-            "sync": "跟随系统"
-          },
-          "descriptions": {
-            "color_mode": "",
-            "editor_folding_stratgy": "",
-            "editor_font_family": "",
-            "editor_font_size": "",
-            "editor_hover_description": "",
-            "logs_font_size": ""
-          },
           "fields": {
             "chart_color_scheme": {
               "classic": "经典",
               "kestra": "Kestra",
               "label": "图表配色方案"
             },
-            "color_mode": "颜色模式",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
             "editor_font_family": "编辑器字体家族",
             "editor_font_size": "编辑器字体大小",
@@ -1606,11 +1582,10 @@
             "logs_font_size": "日志字体大小",
             "theme": "主题"
           },
-          "label": "外观"
+          "label": "主题偏好"
         }
       },
-      "label": "设置",
-      "updated": "{name} 已更新"
+      "label": "设置"
     },
     "setup": {
       "config": {

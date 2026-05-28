@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "Ikona wtyczek",
       "search": "Wyszukaj wśród {count}+ wtyczek",
+      "sort": {
+        "most_used": "Najczęściej używane",
+        "name_asc": "Nazwa A-Z",
+        "name_desc": "Nazwa Z-A",
+        "newest": "Najnowsze"
+      },
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
     },
@@ -1522,16 +1528,6 @@
     "settings": {
       "blocks": {
         "configuration": {
-          "descriptions": {
-            "auto_refresh_interval": "",
-            "default_namespace": "",
-            "editor_type": "",
-            "execute_default_tab": "",
-            "execute_flow": "",
-            "flow_default_tab": "",
-            "log_display": "",
-            "log_level": ""
-          },
           "fields": {
             "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "default_namespace": "Domyślny Namespace",
@@ -1555,11 +1551,6 @@
           "label": "Eksportuj"
         },
         "localization": {
-          "descriptions": {
-            "date_format": "",
-            "language": "",
-            "time_zone": ""
-          },
           "fields": {
             "date_format": "Format Daty",
             "time_zone": "Strefa Czasowa"
@@ -1575,27 +1566,12 @@
           "unsaved_warning": "Masz niezapisane zmiany. Czy chcesz je zapisać przed opuszczeniem?"
         },
         "theme": {
-          "color_modes": {
-            "dark_1": "Dark 1.0",
-            "dark_2": "Dark 2.0",
-            "light": "Jasny",
-            "sync": "Synchronizuj z systemem"
-          },
-          "descriptions": {
-            "color_mode": "",
-            "editor_folding_stratgy": "",
-            "editor_font_family": "",
-            "editor_font_size": "",
-            "editor_hover_description": "",
-            "logs_font_size": ""
-          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Klasyczny",
               "kestra": "Kestra",
               "label": "Schemat kolorów wykresu"
             },
-            "color_mode": "Tryb kolorów",
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
@@ -1606,11 +1582,10 @@
             "logs_font_size": "Rozmiar czcionki logów",
             "theme": "Motyw"
           },
-          "label": "Wygląd"
+          "label": "Preferencje Motywu"
         }
       },
-      "label": "Ustawienia",
-      "updated": "Zaktualizowano: {name}"
+      "label": "Ustawienia"
     },
     "setup": {
       "config": {

@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "Icône des plugins",
       "search": "Rechercher parmi {count}+ plugins",
+      "sort": {
+        "most_used": "Les plus utilisés",
+        "name_asc": "Nom A-Z",
+        "name_desc": "Nom Z-A",
+        "newest": "Le plus récent"
+      },
       "title1": "Les plugins sont des blocs pour vos workflows.",
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."
     },
@@ -1522,16 +1528,6 @@
     "settings": {
       "blocks": {
         "configuration": {
-          "descriptions": {
-            "auto_refresh_interval": "",
-            "default_namespace": "",
-            "editor_type": "",
-            "execute_default_tab": "",
-            "execute_flow": "",
-            "flow_default_tab": "",
-            "log_display": "",
-            "log_level": ""
-          },
           "fields": {
             "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
             "default_namespace": "Espace de noms par défaut",
@@ -1555,11 +1551,6 @@
           "label": "Exporter"
         },
         "localization": {
-          "descriptions": {
-            "date_format": "",
-            "language": "",
-            "time_zone": ""
-          },
           "fields": {
             "date_format": "Format de Date",
             "time_zone": "Fuseau Horaire"
@@ -1575,27 +1566,12 @@
           "unsaved_warning": "Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?"
         },
         "theme": {
-          "color_modes": {
-            "dark_1": "Dark 1.0",
-            "dark_2": "Dark 2.0",
-            "light": "Clair",
-            "sync": "Synchroniser avec le système"
-          },
-          "descriptions": {
-            "color_mode": "",
-            "editor_folding_stratgy": "",
-            "editor_font_family": "",
-            "editor_font_size": "",
-            "editor_hover_description": "",
-            "logs_font_size": ""
-          },
           "fields": {
             "chart_color_scheme": {
               "classic": "Classique",
               "kestra": "Kestra",
               "label": "Schéma de Couleurs du Graphique"
             },
-            "color_mode": "Mode de couleur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
@@ -1606,11 +1582,10 @@
             "logs_font_size": "Taille de police des Logs",
             "theme": "Modèle"
           },
-          "label": "Apparence"
+          "label": "Préférences de thème"
         }
       },
-      "label": "Paramètres",
-      "updated": "{name} mis à jour"
+      "label": "Paramètres"
     },
     "setup": {
       "config": {

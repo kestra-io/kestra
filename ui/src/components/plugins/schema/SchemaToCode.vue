@@ -66,7 +66,6 @@
     .code-block {
         position: relative;
         padding: 0.75rem;
-        margin: 1rem 0;
         background-color: var(--ks-bg-input);
         border: 1px solid var(--ks-border-default);
         border-radius: 0.5rem;

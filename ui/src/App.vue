@@ -1,10 +1,15 @@
 <template>
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
-    <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
-        <router-view />
-    </component>
-    <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
+    <div id="app-shell">
+        <AppTopNavBar  v-if="loaded && route?.name && !route.meta?.anonymous"  />
+        <div id="app-body">
+            <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded">
+                <router-view />
+            </component>
+        </div>
+    </div>
+    <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
 </template>
 
@@ -25,6 +30,7 @@
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
+    import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import {usePluginsStore} from "./stores/plugins"
@@ -40,8 +46,6 @@
     const route = useRoute()
 
     const envName = computed(() => layoutStore.envName || miscStore.configs?.environment?.name)
-
-    const shouldRenderApp = computed(() => loaded.value)
 
     function setTitleEnvSuffix() {
         const envSuffix = envName.value ? ` - ${envName.value}` : ""
@@ -86,6 +90,7 @@
         if (appContainer) appContainer.style.display = "block"
         loaded.value = true
     }
+
     watch(() => route?.meta?.anonymous, async (anonymous) => {
         if (!anonymous && BasicAuth.isLoggedIn()) {
             try {

@@ -1,0 +1,18 @@
+FROM eclipse-temurin:25-jre
+
+ARG UV_VERSION="0.6.17"
+
+RUN groupadd kestra && \
+    useradd -m -g kestra kestra
+
+WORKDIR /app
+
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+RUN curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh && \
+    mv /root/.local/bin/uv /bin && \
+    mv /root/.local/bin/uvx /bin

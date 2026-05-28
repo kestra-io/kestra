@@ -1,25 +1,23 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    <Layout
-        :title="t(`demos.apps.title`)"
+    <Empty
         type="apps"
-        :image="{source: sourceImg, alt: t(`demos.apps.title`)}"
-        :video="{
-            source: 'https://www.youtube.com/embed/KwBO8mcS3kk',
-        }"
+        demoCta
+        :title="t(`demos.apps.title`)"
+        video="https://www.youtube.com/embed/KwBO8mcS3kk"
+        learnMore="https://kestra.io/docs/enterprise/scalability/apps"
     >
-        <template #message>
+        <template #description>
             {{ $t(`demos.apps.message`) }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import Layout from "./Layout.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
-    import sourceImg from "../../assets/demo/apps.png"
     import useRouteContext from "../../composables/useRouteContext"
 
     const {t} = useI18n()

@@ -1,19 +1,21 @@
 @use "color-palette" as palette;
 
 // font family
-$font-family-sans-serif: "Public Sans", sans-serif;
-$font-family-monospace: "Source Code Pro", monospace;
+$font-family-sans-serif: "Inter", sans-serif;
+$font-family-monospace: "JetBrains Mono", monospace;
 
 // font sizes
-$font-size-base: 1rem;
-$font-size-xs: $font-size-base * 0.75;
-$font-size-sm: $font-size-base * 0.875;
-$font-size-md : $font-size-base * 1;
-$font-size-lg: $font-size-base * 1.25;
-$font-size-xl: $font-size-base * 1.375;
-$font-size-2xl : $font-size-base * 2.188;
-$font-size-3xl : $font-size-base * 3;
-$font-size-4xl : $font-size-base * 3.75;
+$font-size-base-px: 14px;
+$font-size-base: 1rem; // This represents 14px
+$font-size-2xs: calc(10 / 14) * $font-size-base;
+$font-size-xs:  calc(11 / 14) * $font-size-base;
+$font-size-sm:  calc(12 / 14) * $font-size-base;
+$font-size-md:  $font-size-base;
+$font-size-lg:  calc(16 / 14) * $font-size-base;
+$font-size-xl:  calc(18 / 14) * $font-size-base;
+$font-size-2xl: calc(20 / 14) * $font-size-base;
+$font-size-3xl: calc(22 / 14) * $font-size-base;
+$font-size-4xl: calc(26 / 14) * $font-size-base;
 
 // base colors
 $black: #14181f;
@@ -46,6 +48,7 @@ $colors: (
 );
 
 // border radius
-$border-radius: 0.25rem !default;
-$border-radius-lg: 0.5rem !default;
-$border-radius-sm: 0.15rem !default;
+$border-radius: 0.5rem !default;
+$border-radius-lg: 0.625rem !default;
+$border-radius-sm: 0.375rem !default;
+$border-radius-xs: 0.25rem !default;

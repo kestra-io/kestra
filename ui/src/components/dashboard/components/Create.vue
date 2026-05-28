@@ -13,7 +13,7 @@
     import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useToast} from "../../../utils/toast"
-    import {getRandomID} from "../../../../scripts/id"
+    import {getRandomID} from "../../../utils/id"
     import {processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
     import useRouteContext from "../../../composables/useRouteContext"

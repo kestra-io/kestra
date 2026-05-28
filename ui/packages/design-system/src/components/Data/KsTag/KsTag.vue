@@ -2,7 +2,7 @@
     <ElTag
         disableTransitions
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'kel-tag--neutral': plain}"
+        :class="{'kel-tag--default': type === undefined}"
         @close="emit('close')"
     >
         <template #default>
@@ -21,11 +21,11 @@
 <script setup lang="ts">
     import {ElTag} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import type {Component} from "vue"
+    import {type Component} from "vue"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         type?: "" | "success" | "info" | "warning" | "danger" | "primary"
         size?: "large" | "default" | "small"
         closable?: boolean
@@ -34,7 +34,9 @@
         round?: boolean
         label?: string
         plain?: boolean
-    }>()
+    }>(), {
+        effect: "plain",
+    })
 
     const emit = defineEmits<{
         close: []
@@ -57,34 +59,34 @@
 
     $tag-color-map: (
         primary: (
-            bg: var(--ks-button-background-primary),
-            border: var(--ks-button-background-primary),
-            text: var(--ks-white),
+            bg: var(--ks-status-background-paused),
+            border: var(--ks-status-border-paused),
+            text: var(--ks-status-paused),
         ),
         success: (
-            bg: var(--ks-background-success),
-            border: var(--ks-border-success),
-            text: var(--ks-content-success),
+            bg: var(--ks-status-background-success),
+            border: var(--ks-status-border-success),
+            text: var(--ks-status-success),
         ),
         warning: (
             bg: var(--ks-log-background-warn),
             border: var(--ks-log-border-warn),
-            text: var(--ks-log-content-warn),
+            text: var(--ks-log-warn),
         ),
         danger: (
             bg: var(--ks-log-background-error),
             border: var(--ks-log-border-error),
-            text: var(--ks-log-content-error),
+            text: var(--ks-log-error),
         ),
         error: (
             bg: var(--ks-log-background-error),
             border: var(--ks-log-border-error),
-            text: var(--ks-log-content-error),
+            text: var(--ks-log-error),
         ),
         info: (
-            bg: var(--ks-badge-background),
-            border: var(--ks-badge-border),
-            text: var(--ks-badge-content),
+            bg: var(--ks-log-background-info),
+            border: var(--ks-log-border-info),
+            text: var(--ks-log-info),
         ),
     );
 
@@ -102,10 +104,18 @@
             line-height: 0;
         }
 
+        &.kel-tag--plain {
+            --kel-tag-bg-color: var(--ks-bg-tag);
+            --kel-tag-text-color: var(--ks-bg-tag);
+            --kel-tag-border-color: var(--ks-bg-tag);
+            --kel-tag-hover-color: var(--ks-bg-tag);
+        }
+
         @each $i, $colors in $tag-color-map {
-            &.kel-tag--#{$i} {
+            &.kel-tag--plain.kel-tag--#{$i} {
                 --kel-tag-bg-color: #{map.get($colors, bg)};
                 --kel-tag-text-color: #{map.get($colors, text)};
+                --kel-tag-border-color: #{map.get($colors, border)};
                 --kel-tag-hover-color: #{map.get($colors, text)};
 
                 a {
@@ -114,19 +124,37 @@
             }
         }
 
-        &.kel-tag--neutral {
-            --kel-tag-bg-color: #ECEBEF;
-            --kel-tag-text-color: var(--ks-content-primary);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-content-primary);
+        &.kel-tag--default {
+            //--kel-tag-bg-color: var(--ks-bg-tag);
+            //--kel-tag-text-color: var(--ks-text-primary);
+            //--kel-tag-border-color: var(--ks-border-default);
+            //--kel-tag-hover-color: var(--ks-text-primary);
+            //
+            //a {
+            //    color: var(--ks-text-primary);
+            //}
 
-            a {
-                color: var(--ks-content-primary);
+            &.kel-tag--dark {
+                --kel-tag-bg-color: var(--ks-gray-500);
+                --kel-tag-border-color: var(--ks-border-default);
+            }
+
+            &.kel-tag--light {
+                --kel-tag-text-color: var(--ks-black);
+                --kel-tag-bg-color: var(--ks-gray-50);
+
+            }
+
+            &.kel-tag--plain {
+                --kel-tag-bg-color: var(--ks-bg-tag);
+                --kel-tag-text-color: var(--ks-text-primary);
+                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-hover-color: var(--ks-text-primary);
+
+                a {
+                    color: var(--ks-text-primary);
+                }
             }
         }
-    }
-
-    html.dark .kel-tag.kel-tag--neutral {
-        --kel-tag-bg-color: #5A6079;
     }
 </style>

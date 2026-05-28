@@ -223,5 +223,12 @@ export const useApiStore = defineStore("api", {
                 withCredentials: true,
             })
         },
+
+        async pluginsInformation() {
+            return axios.get<{byPlugin: Record<string, {lastReleasedAt?: string; usageCount?: number}>}>(
+                `${API_URL}/v1/plugins/pluginsInformation?icons=false`,
+                {withCredentials: true},
+            )
+        },
     },
 })

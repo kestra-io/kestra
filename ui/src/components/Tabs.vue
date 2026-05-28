@@ -1,5 +1,14 @@
 <template>
+    <section
+        v-if="vertical && activeTab"
+        v-bind="attrsWithoutClass"
+        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+    >
+        <TabBody />
+    </section>
+
     <KsRouterTab
+        v-else
         :tabs="tabs"
         :routeName="routeName"
         :top="top"
@@ -22,38 +31,21 @@
                 </span>
             </EnterpriseBadge>
         </template>
-        <template #content="{activeTab: activeTabLocal}">
-            <BlueprintDetail
-                v-if="selectedBlueprintId"
-                :blueprintId="selectedBlueprintId"
-                blueprintType="community"
-                @back="selectedBlueprintId = undefined"
-                :combinedView="true"
-                :kind="(activeTabLocal as Tab).props?.blueprintKind"
-                :embed="(activeTabLocal as Tab).props?.embed ?? true"
-            />
-            <component
-                v-else-if="isEditorActiveTab(activeTabLocal as Tab) || activeTabLocal.component"
-                v-bind="{...(activeTabLocal as Tab).props, ...attrsWithoutClass}"
-                v-on="(activeTabLocal as Tab)['v-on'] ?? {}"
-                ref="tabContent"
-                :is="activeTabLocal.component"
-                :namespace="getNamespaceToForward(activeTabLocal as Tab)"
-                @go-to-detail="(blueprintId: string) => selectedBlueprintId = blueprintId"
-                :embed="(activeTabLocal as Tab).props?.embed ?? true"
-            />
+        <template #content>
+            <TabBody />
         </template>
     </KsRouterTab>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs} from "vue"
+    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, type Component} from "vue"
     import {useRoute} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import type {RouterTab} from "@kestra-io/design-system"
+    import {useRouteTabsStore} from "../stores/routeTabs"
 
-    interface Tab extends RouterTab {
+    export interface Tab extends RouterTab {
         locked?: boolean;
         props?: any;
     }
@@ -67,11 +59,18 @@
          */
         embedActiveTab?: string;
         namespace?: string | null;
+        /**
+         * When true, push the tab list into the routeTabsStore so it surfaces in
+         * the vertical RouteTabsSidebar; this component then only renders the
+         * active tab's content (no horizontal tab bar).
+         */
+        vertical?: boolean;
     }>(), {
         routeName: "",
         top: true,
         embedActiveTab: undefined,
         namespace: null,
+        vertical: false,
     })
 
     const emit = defineEmits<{
@@ -84,6 +83,8 @@
 
     const attrs = useAttrs()
     const route = useRoute()
+    const routeTabsStore = useRouteTabsStore()
+    const tabsOwnerId = Symbol("route-tabs-owner")
 
     const selectedBlueprintId = ref<string | undefined>(undefined)
 
@@ -118,15 +119,71 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value.locked) return {"px-0": true}
-        return {"container": true, "mt-4": true}
+        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
+        return {"container": true, "tabs-flush-top": true}
+    })
+
+    function syncStore() {
+        if (props.vertical) {
+            routeTabsStore.setTabs({
+                ownerId: tabsOwnerId,
+                tabs: props.tabs,
+                routeName: props.routeName,
+                embedActiveTab: props.embedActiveTab,
+            })
+        } else {
+            routeTabsStore.clearTabsIfOwner(tabsOwnerId)
+        }
+    }
+
+    watch(
+        () => [props.vertical, props.tabs, props.routeName, props.embedActiveTab],
+        syncStore,
+        {deep: true},
+    )
+
+    onMounted(syncStore)
+    onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
+
+    const TabBody = defineComponent({
+        name: "TabBody",
+        inheritAttrs: false,
+        setup() {
+            return () => {
+                const tab = activeTab.value as Tab | undefined
+                if (selectedBlueprintId.value) {
+                    return h(BlueprintDetail, {
+                        blueprintId: selectedBlueprintId.value,
+                        blueprintType: "community",
+                        onBack: () => (selectedBlueprintId.value = undefined),
+                        combinedView: true,
+                        kind: tab?.props?.blueprintKind,
+                        embed: tab?.props?.embed ?? true,
+                    })
+                }
+                if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
+                return h(tab.component as Component, {
+                    ...tab.props,
+                    ...attrsWithoutClass.value,
+                    ...tab["v-on"],
+                    namespace: getNamespaceToForward(tab),
+                    embed: tab.props?.embed ?? true,
+                    onGoToDetail: (id: string) => (selectedBlueprintId.value = id),
+                })
+            }
+        },
     })
 </script>
 
 <style scoped lang="scss">
-    section.container.mt-4:has(> section.empty) {
+    section.maximized {
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0;
+        flex-grow: 1;
+    }
+
+    section.no-overflow {
+        overflow: hidden;
     }
 
     .editor-splitter {

@@ -15,7 +15,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--ks-background-body);
+    background: var(--ks-bg-body);
     padding: 1rem;
     overflow-y: auto;
 

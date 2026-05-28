@@ -84,7 +84,6 @@
                 :key="type"
                 :type="type.toLowerCase()"
                 :title="`${type} Alert`"
-                showIcon
             />
         </div>
 

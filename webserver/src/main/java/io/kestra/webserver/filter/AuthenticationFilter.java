@@ -46,8 +46,9 @@ public class AuthenticationFilter implements HttpServerFilter {
             .flux()
             .flatMap(basicAuthConfiguration ->
             {
-                boolean isConfigEndpoint = request.getPath().endsWith("/configs")
-                    || ((request.getPath().endsWith("/basicAuth") || request.getPath().endsWith("/basicAuthValidationErrors"))
+                String normalizedPath = normalizePath(request.getPath());
+                boolean isConfigEndpoint = "/api/v1/configs".equals(normalizedPath)
+                    || ((normalizedPath.matches("/api/v1(/[^/]+)?/basicAuth") || "/api/v1/basicAuthValidationErrors".equals(normalizedPath))
                         && !basicAuthService.isBasicAuthInitialized());
 
                 boolean isOpenUrl = Optional.ofNullable(basicAuthConfiguration.openUrls())
@@ -73,6 +74,10 @@ public class AuthenticationFilter implements HttpServerFilter {
 
                 return chain.proceed(request);
             });
+    }
+
+    private static String normalizePath(String path) {
+        return path.replaceAll("/+", "/");
     }
 
     @SuppressWarnings("rawtypes")

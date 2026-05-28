@@ -17,19 +17,30 @@ public @interface PluginSubGroup {
     PluginCategory[] categories() default { OTHER };
 
     enum PluginCategory {
+        @Deprecated
         DATABASE,
+        @Deprecated
         MESSAGING,
+        @Deprecated
         SCRIPT,
+        @Deprecated
         TRANSFORMATION,
+        @Deprecated
         BATCH,
+        @Deprecated
         ALERTING,
         CLOUD,
+        @Deprecated
         STORAGE,
+        @Deprecated
         OTHER,
+        @Deprecated
         TOOL,
         AI,
         CORE,
+        @Deprecated
         INGESTION,
+        @Deprecated
         BI,
         BUSINESS,
         DATA,

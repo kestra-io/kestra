@@ -23,17 +23,16 @@ export function setupTenantRouter(router: Router, app: App): void {
         }
     }
 
-    router.beforeEach((to, from, next) => {
+    router.beforeEach((to, from) => {
         // on login, prevent redirection to tenant
         if (to.meta?.anonymous === true) {
-            return next()
+            return true
         }
         if (to.path !== "/" && !to.params.tenant) {
             // Use current tenant from route context, fallback to "main"
             const currentTenant = from.params?.tenant || "main"
-            next({path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash, replace: true})
-        } else {
-            next()
+            return {path: `/${currentTenant}${to.path}`, query: to.query, hash: to.hash, replace: true}
         }
+        return true
     })
 }

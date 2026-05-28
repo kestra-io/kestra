@@ -6,7 +6,7 @@
         />
         <section
             v-if="activeTab"
-            :class="[containerClass, {maximized: activeTab.maximized, 'no-overflow': activeTab.noOverflow}]"
+            :class="[containerClass, {maximized: activeTab.maximized, 'no-overflow': activeTab.noOverflow}, 'padding']"
         >
             <component
                 :is="activeTab.component"
@@ -368,5 +368,9 @@
 
     section.no-overflow {
         overflow: hidden;
+    }
+
+    section.container.padding {
+        padding: 0 2rem;
     }
 </style>

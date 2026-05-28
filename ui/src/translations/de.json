@@ -1368,13 +1368,52 @@
     },
     "pluginPage": {
       "alt": "Plugins-Symbol",
+      "elementType": {
+        "apps": "Anwendung",
+        "charts": "Diagramm",
+        "conditions": "Bedingung",
+        "logExporters": "Log-Exporter",
+        "secrets": "Geheimnis",
+        "taskRunners": "Task-Runner",
+        "tasks": "Aufgabe",
+        "triggers": "Trigger"
+      },
+      "group": {
+        "blueprints": "Blueprints ({count})",
+        "noBlueprints": "Noch keine Blueprints für dieses Plugin verfügbar.",
+        "plugins": "Plugins ({count})",
+        "tasks": "Aufgaben ({count})"
+      },
+      "header": {
+        "back": "Zurück zu Plugins",
+        "certified": "Zertifiziert",
+        "enterpriseEdition": "Enterprise Edition"
+      },
+      "loadError": "Konnte Plugins nicht laden. Bitte versuchen Sie es erneut.",
+      "noResults": "Keine Plugins entsprechen Ihrer Suche.",
+      "notFound": "Dieses Plugin konnte nicht gefunden werden.",
+      "overview": {
+        "createdBy": "Erstellt von",
+        "latest": "Neueste",
+        "linksResources": "Links & Ressourcen",
+        "managedBy": "Verwaltet von",
+        "minKestraVersion": "Min. kompatible Kestra-Version: {version}",
+        "minKestraVersionShort": "Min. Kestra-Version {version}",
+        "pluginType": "Plugintyp",
+        "previousVersions": "Vorherige Versionen",
+        "releaseNotes": "Versionshinweise",
+        "title": "Übersicht",
+        "versions": "Versionen"
+      },
       "search": "Suche in {count}+ Plugins",
+      "searchTasks": "Suche {count} Tasks",
       "sort": {
-        "most_used": "Am häufigsten verwendet",
-        "name_asc": "Name A-Z",
-        "name_desc": "Name Z-A",
+        "mostUsed": "Am häufigsten verwendet",
+        "nameAsc": "Name A-Z",
+        "nameDesc": "Name Z-A",
         "newest": "Neueste"
       },
+      "sortBy": "Sortieren nach",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },

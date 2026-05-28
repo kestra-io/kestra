@@ -853,13 +853,7 @@
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
       "search": "Search across {count}+ plugins",
-      "alt": "Plugins Icon",
-      "sort": {
-        "name_asc": "Name A-Z",
-        "name_desc": "Name Z-A",
-        "newest": "Newest",
-        "most_used": "Most used"
-      }
+      "alt": "Plugins Icon"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {

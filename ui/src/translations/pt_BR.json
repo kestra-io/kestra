@@ -766,7 +766,7 @@
         "tooltip": "Ver aplicativos usando este flow"
       },
       "dependencies": {
-        "suffix": "Dependência(s)",
+        "suffix": "Dependências",
         "tooltip": "Visualizar dependências do flow"
       },
       "errors": {

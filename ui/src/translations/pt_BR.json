@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
+      "sort": {
+        "most_used": "Mais usados",
+        "name_asc": "Nome A-Z",
+        "name_desc": "Nome Z-A",
+        "newest": "Mais recente"
+      },
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."
     },

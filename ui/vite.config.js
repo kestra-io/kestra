@@ -45,8 +45,7 @@ export default defineConfig(({mode}) => {
         server: {
             watch: {
                 ignored: [
-                    "!**/node_modules/@kestra-io/design-system/src/**",
-                    "!**/node_modules/@kestra-io/topology/src/**",
+                    "!**/node_modules/@kestra-io/*/src/**",
                 ],
             },
             proxy: {

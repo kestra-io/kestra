@@ -49,6 +49,48 @@ class AuthenticationFilterTest {
     }
 
     @Test
+    void configEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /configs which are not the config endpoint
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+            .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void basicAuthEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /basicAuth which are not the basicAuth endpoint
+        // Use a path with two segments before /basicAuth — the regex only allows zero or one tenant segment
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
+                        .basicAuth("anonymous", "hacker"))
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void basicAuthValidationErrorsEndpointShouldBeCheckedExactly() {
+        // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /basicAuthValidationErrors which are not the basicAuthValidationErrors endpoint
+        settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
+        try {
+            HttpClientResponseException httpClientResponseException = assertThrows(
+                HttpClientResponseException.class, () -> client.toBlocking()
+                    .exchange(HttpRequest.GET("/api/v1/main/basicAuthValidationErrors").basicAuth("anonymous", "hacker"))
+            );
+            assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
     void testBasicAuthOpenedBeforeSetupOnly() {
         TestAuthFilter.ENABLED = false;
 

@@ -32,6 +32,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -245,7 +246,8 @@ public class ExecutionController {
         @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
 
     ) {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -270,7 +272,8 @@ public class ExecutionController {
             executionRepository.find(
                 PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
                 tenantService.resolveTenant(),
-                filters
+                QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+                dateFilter
             )
         );
     }
@@ -1202,7 +1205,8 @@ public class ExecutionController {
     }
 
     private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
-        Execution replay = executionService.replay(execution, taskRunId, revision)
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
+        Execution replay = executionService.replay(execution, flow, taskRunId, revision)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
@@ -2784,7 +2788,7 @@ public class ExecutionController {
 
     /**
      * For override purpose.
-     * 
+     *
      * @param execution
      * @return true if the user has the authorization, false else.
      */

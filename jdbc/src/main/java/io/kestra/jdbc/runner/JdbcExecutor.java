@@ -1475,7 +1475,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     }
                     // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
-                        Execution newExecution = executionService.replay(executor.getExecution(), null, null);
+                        Execution newExecution = executionService.replay(executor.getExecution(), findFlowOrThrow(executor.getExecution()), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
                     // Handle WaitFor

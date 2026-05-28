@@ -16,9 +16,11 @@ jobs:
     - name: Check EE repo for branch with same name
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
       id: check-ee-branch
-      uses: actions/github-script@v8
+      uses: kestra-io/actions/composite/github-script@main
       with:
-        github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+        gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+        repositories: kestra-io/kestra-ee
         script: |
           const pr = context.payload.pull_request;
           if (!pr) {
@@ -40,13 +42,14 @@ jobs:
 
       # Targeting pull request (only if not from a fork and EE has no branch with same name)
     - name: Trigger EE Workflow (pull request, with payload)
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
         && steps.check-ee-branch.outputs.exists == 'false' }}
+      uses: kestra-io/actions/composite/repository-dispatch@main
       with:
-        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+        gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
         repository: kestra-io/kestra-ee
         event-type: "oss-updated"
         client-payload: >-

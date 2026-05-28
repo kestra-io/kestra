@@ -20,6 +20,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
     private static final String TENANT_ID = TestsUtils.randomTenant();
@@ -47,6 +48,36 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
 
     protected Map<String, List<String>> getNamespacesPerTenant() {
         return Map.of(TENANT_ID, List.of("my.first.namespace", "my.second.namespace", "another.namespace"));
+    }
+
+    @Test
+    void shouldKeepAllTenantsWhenTenantFilterIsNull() {
+        Map<String, List<String>> input = getNamespacesPerTenant();
+
+        Map<String, List<String>> result = MetadataMigrationService.filterTenants(input, null);
+
+        assertThat(result).isEqualTo(input);
+    }
+
+    @Test
+    void shouldRestrictToSingleTenantWhenTenantFilterMatches() {
+        Map<String, List<String>> input = getNamespacesPerTenant();
+        String firstTenant = input.keySet().iterator().next();
+
+        Map<String, List<String>> result = MetadataMigrationService.filterTenants(input, firstTenant);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(firstTenant)).isEqualTo(input.get(firstTenant));
+    }
+
+    @Test
+    void shouldThrowWhenTenantFilterDoesNotMatch() {
+        Map<String, List<String>> input = getNamespacesPerTenant();
+
+        assertThatThrownBy(() -> MetadataMigrationService.filterTenants(input, "unknown-tenant"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("unknown-tenant")
+            .hasMessageContaining("Available tenants");
     }
 
     @Test
@@ -93,7 +124,7 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
         Mockito.when(repo.findByPath(Mockito.any(), Mockito.any(), Mockito.any()))
             .thenReturn(Optional.empty());
 
-        service.nsFilesMigration(false);
+        service.nsFilesMigration(false, null);
 
         Mockito.verify(repo, Mockito.never())
             .save(Mockito.argThat(meta -> meta.getPath().endsWith(".v1")));

@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
+      "sort": {
+        "most_used": "가장 많이 사용됨",
+        "name_asc": "이름 A-Z",
+        "name_desc": "이름 Z-A",
+        "newest": "최신순"
+      },
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },

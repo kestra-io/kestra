@@ -81,10 +81,27 @@
         gap: var(--ks-spacing-4);
         margin-top: var(--ks-spacing-2);
 
+        // Stack interval + level groups vertically when the row can't fit them
+        // side-by-side (mobile, sidebar collapsed, narrow split panes). Groups
+        // stretch full-width and scroll horizontally if their contents still
+        // overflow (the KsSegmented is one non-shrinkable unit).
+        @media (max-width: 48rem) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--ks-spacing-2);
+
+            .log-quick-filters__group {
+                width: 100%;
+                overflow-x: auto;
+            }
+        }
+
         &__group {
             display: inline-flex;
             align-items: center;
             gap: var(--ks-spacing-2);
+            min-width: 0;
+            max-width: 100%;
         }
 
         &__label {
@@ -97,6 +114,7 @@
         &__levels {
             display: inline-flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: var(--ks-spacing-1);
         }
 

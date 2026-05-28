@@ -1366,6 +1366,10 @@
     "pluginPage": {
       "alt": "Ikona wtyczek",
       "search": "Wyszukaj wśród {count}+ wtyczek",
+      "sort": {
+        "name_asc": "Nazwa A-Z",
+        "name_desc": "Nazwa Z-A"
+      },
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
     },

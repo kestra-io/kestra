@@ -1366,6 +1366,10 @@
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
+      "sort": {
+        "name_asc": "名前 A-Z",
+        "name_desc": "名前 Z-A"
+      },
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },

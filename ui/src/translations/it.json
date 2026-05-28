@@ -1366,6 +1366,10 @@
     "pluginPage": {
       "alt": "Icona Plugin",
       "search": "Cerca tra oltre {count} plugin",
+      "sort": {
+        "name_asc": "Nome A-Z",
+        "name_desc": "Nome Z-A"
+      },
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow."
     },

@@ -1366,6 +1366,10 @@
     "pluginPage": {
       "alt": "Icône des plugins",
       "search": "Rechercher parmi {count}+ plugins",
+      "sort": {
+        "name_asc": "Nom A-Z",
+        "name_desc": "Nom Z-A"
+      },
       "title1": "Les plugins sont des blocs pour vos workflows.",
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."
     },

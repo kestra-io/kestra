@@ -78,6 +78,7 @@
         flex-wrap: wrap;
         gap: var(--ks-spacing-4);
         margin-top: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-3);
 
         @media (max-width: 48rem) {
             flex-direction: column;

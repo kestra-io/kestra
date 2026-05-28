@@ -109,7 +109,7 @@
         }
 
         &__option--selected &__label {
-            color: var(--ks-content-link, var(--ks-border-focus));
+            color: var(--ks-text-primary, #FFF);
         }
     }
 </style>

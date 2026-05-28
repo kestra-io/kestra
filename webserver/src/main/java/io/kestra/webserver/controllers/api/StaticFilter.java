@@ -110,7 +110,8 @@ public class StaticFilter implements HttpServerFilter {
             return response;
         }
 
-        String metaTag = "<meta name=\"csrf-token\" content=\"" + csrfToken + "\">";
+        String escaped = csrfToken.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
+        String metaTag = "<meta name=\"csrf-token\" content=\"" + escaped + "\">";
         html = html.replaceFirst("<head>", "<head>\n" + metaTag);
         response = response.body(html);
         response.cookie(

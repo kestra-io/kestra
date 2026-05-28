@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Filter("/api/v1/*/mcp/*")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
-@Requires(property = "micronaut.security.filter.enabled", notEquals = "true")
+@Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class McpServerAuthenticationFilter implements HttpServerFilter {
 
     /** Request attribute set when this filter has already made the auth decision. */

@@ -61,8 +61,11 @@ public class CsrfTokenFilter implements Ordered {
         return null;
     }
 
+    private static final String JWT_COOKIE_NAME = "JWT";
+
     private boolean hasCookieAuth(@NonNull HttpRequest<?> request) {
-        return request.getCookies().findCookie(BASIC_AUTH_COOKIE_NAME).isPresent();
+        return request.getCookies().findCookie(BASIC_AUTH_COOKIE_NAME).isPresent()
+            || request.getCookies().findCookie(JWT_COOKIE_NAME).isPresent();
     }
 
     @Nullable

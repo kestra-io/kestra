@@ -53,7 +53,7 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
-            .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .state(new State().withState(State.Type.RUNNING))
             .labels(
                 List.of(
                     new Label("execution-label", "execution"),
@@ -110,7 +110,7 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
-            .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .state(new State().withState(State.Type.RUNNING))
             .labels(
                 List.of(
                     new Label("execution-label", "execution"),
@@ -166,7 +166,7 @@ class FlowTest {
             .namespace("io.kestra.unittest")
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
-            .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .state(new State().withState(State.Type.RUNNING))
             .labels(
                 List.of(
                     new Label("execution-label", "execution"),

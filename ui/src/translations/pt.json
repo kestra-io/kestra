@@ -36,6 +36,7 @@
     "add_new_item": "Adicionar novo item",
     "additionalPlugins": "Plugins Adicionais",
     "admin": "Administração",
+    "admin_preferences": "Preferences",
     "administration": "Administração",
     "advanced configuration": "Outras propriedades",
     "after": "depois",
@@ -766,7 +767,7 @@
         "tooltip": "Visualizar aplicativos usando este flow"
       },
       "dependencies": {
-        "suffix": "Dependência(s)",
+        "suffix": "Dependências",
         "tooltip": "Ver dependências do flow"
       },
       "errors": {
@@ -858,6 +859,7 @@
     "last 48 hours": "últimas 48 horas",
     "last X days count": "{count} nos últimos {days} dias",
     "last evaluation date": "Data da última avaliação",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
     "last execution status": "Último status de execução",
@@ -1369,6 +1371,12 @@
     "pluginPage": {
       "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
+      "sort": {
+        "most_used": "Mais usados",
+        "name_asc": "Nome A-Z",
+        "name_desc": "Nome Z-A",
+        "newest": "Mais recente"
+      },
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."
     },

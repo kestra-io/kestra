@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import {type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import Menu from "vue-material-design-icons/Menu.vue"
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
@@ -91,7 +91,7 @@
         disabled?: boolean
     }
 
-    defineProps<{
+    const props = defineProps<{
         title?: string
         description?: string
         breadcrumb?: KsBreadcrumbItem[]

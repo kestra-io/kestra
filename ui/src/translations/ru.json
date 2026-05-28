@@ -36,6 +36,7 @@
     "add_new_item": "Добавить новый элемент",
     "additionalPlugins": "Дополнительные плагины",
     "admin": "Администратор",
+    "admin_preferences": "Preferences",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -766,7 +767,7 @@
         "tooltip": "Просмотр приложений, использующих этот flow"
       },
       "dependencies": {
-        "suffix": "Зависимость(и)",
+        "suffix": "Зависимости",
         "tooltip": "Просмотр зависимостей flow"
       },
       "errors": {
@@ -858,6 +859,7 @@
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
     "last evaluation date": "Дата последней оценки",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Дата последнего выполнения",
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",
@@ -1369,6 +1371,12 @@
     "pluginPage": {
       "alt": "Иконка плагинов",
       "search": "Поиск среди {count}+ плагинов",
+      "sort": {
+        "most_used": "Наиболее используемые",
+        "name_asc": "Имя A-Я",
+        "name_desc": "Имя Я-А",
+        "newest": "Новейшие"
+      },
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow."
     },

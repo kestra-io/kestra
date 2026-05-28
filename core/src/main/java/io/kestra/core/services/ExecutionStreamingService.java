@@ -108,16 +108,13 @@ public class ExecutionStreamingService {
     public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<Execution>> sink, Flow flow) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
-            boolean wasEmpty = MapUtils.isEmpty(subscribers);
-
             // Register the subscriber BEFORE resuming the queue. If the queue is resumed first,
             // the polling thread can deliver a terminal FollowExecutionEvent between resume() and put(),
             // missing the event and leaving Flux.last() hanging forever.
             subscribers.computeIfAbsent(executionId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, Pair.of(sink, flow));
 
-            // resume the subscription if it was paused with no subscribers
-            if (wasEmpty && this.queueSubscriber.isPaused()) {
+            if (this.queueSubscriber.isPaused()) {
                 this.queueSubscriber.resume();
             }
         }

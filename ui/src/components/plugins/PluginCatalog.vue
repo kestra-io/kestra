@@ -140,12 +140,14 @@
     const searchText = ref("")
     const selectedCategories = ref<string[]>([])
 
-    type SortKey = "nameAsc" | "nameDesc"
+    type SortKey = "nameAsc" | "nameDesc" | "newest" | "mostUsed"
     const sortBy = ref<SortKey>("nameAsc")
 
     const sortOptions = computed<{value: SortKey, label: string}[]>(() => [
         {value: "nameAsc", label: t("pluginPage.sort.nameAsc")},
         {value: "nameDesc", label: t("pluginPage.sort.nameDesc")},
+        {value: "newest", label: t("pluginPage.sort.newest")},
+        {value: "mostUsed", label: t("pluginPage.sort.mostUsed")},
     ])
 
     const searchInput = computed(() => searchText.value.toLowerCase())
@@ -198,11 +200,32 @@
         return selectedCategories.value.some(selected => cats.includes(selected))
     }
 
-    const comparator = (a: Plugin, b: Plugin): number => {
-        const titleA = pluginTitle(a)
-        const titleB = pluginTitle(b)
-        const cmp = titleA < titleB ? -1 : titleA > titleB ? 1 : 0
-        return sortBy.value === "nameDesc" ? -cmp : cmp
+    // Comparator map keyed by sortBy. `newest` / `mostUsed` rely on enrichment data
+    // (api.kestra.io); missing values degrade gracefully to the name comparison.
+    const nameAsc = (a: Plugin, b: Plugin): number => pluginTitle(a).localeCompare(pluginTitle(b))
+
+    const newestComparator = (a: Plugin, b: Plugin): number => {
+        const dateA = enrichmentStore.getEnrichment(a)?.lastReleasedAt
+        const dateB = enrichmentStore.getEnrichment(b)?.lastReleasedAt
+        const tA = dateA ? new Date(dateA).getTime() : 0
+        const tB = dateB ? new Date(dateB).getTime() : 0
+        if (!tA && !tB) return nameAsc(a, b)
+        if (!tA) return 1
+        if (!tB) return -1
+        return tB - tA || nameAsc(a, b)
+    }
+
+    const mostUsedComparator = (a: Plugin, b: Plugin): number => {
+        const uA = enrichmentStore.getEnrichment(a)?.usageCount ?? 0
+        const uB = enrichmentStore.getEnrichment(b)?.usageCount ?? 0
+        return uB - uA || nameAsc(a, b)
+    }
+
+    const comparators: Record<SortKey, (a: Plugin, b: Plugin) => number> = {
+        nameAsc,
+        nameDesc: (a, b) => nameAsc(b, a),
+        newest: newestComparator,
+        mostUsed: mostUsedComparator,
     }
 
     const pluginsList = computed<Plugin[]>(() => {
@@ -210,7 +233,7 @@
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => matchesSelectedCategories(plugin))
             .slice()
-            .sort(comparator)
+            .sort(comparators[sortBy.value] ?? nameAsc)
     })
 
     const loadPluginIcons = async () => {

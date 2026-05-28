@@ -1369,6 +1369,12 @@
     "pluginPage": {
       "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
+      "sort": {
+        "most_used": "Am häufigsten verwendet",
+        "name_asc": "Name A-Z",
+        "name_desc": "Name Z-A",
+        "newest": "Neueste"
+      },
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },

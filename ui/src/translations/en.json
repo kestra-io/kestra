@@ -871,7 +871,9 @@
       "sortBy": "Sort by",
       "sort": {
         "nameAsc": "Name A-Z",
-        "nameDesc": "Name Z-A"
+        "nameDesc": "Name Z-A",
+        "newest": "Newest",
+        "mostUsed": "Most used"
       },
       "group": {
         "plugins": "Plugins ({count})",

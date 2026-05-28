@@ -8,19 +8,19 @@
 
 html.dark-2 {
     /* bg */
-    #{--ks-bg-active}: #2a283e;
+    #{--ks-bg-active}: #2e2e3c;
     #{--ks-bg-badge}: $base-gray-neutral-800;
-    #{--ks-bg-base}: #0a0b0f;
-    #{--ks-bg-body}: #0a0b0f;
-    #{--ks-bg-elevated}: #15171e;
-    #{--ks-bg-hover}: #31303b;
+    #{--ks-bg-base}: #111115;
+    #{--ks-bg-body}: #111115;
+    #{--ks-bg-elevated}: #1a1c22;
+    #{--ks-bg-hover}: #23252e;
     #{--ks-bg-hover-elevated}: #2a283e;
-    #{--ks-bg-input}: $base-gray-neutral-1000;
+    #{--ks-bg-input}: #111115;
     #{--ks-tabs-bg}: #08090A;
     #{--ks-bg-overlay}: #0e1016;
     #{--ks-bg-scrim}: #0e1016cc;
-    #{--ks-bg-sidebar}: #0e1016;
-    #{--ks-bg-surface}: #15171e;
+    #{--ks-bg-sidebar}: #1a1c22;
+    #{--ks-bg-surface}: #1a1c22;
     #{--ks-bg-tag}: #ffffff1a;
     #{--ks-bg-tag-active}: #9869f766;
     #{--ks-bg-tag-hover}: #9869f733;
@@ -31,10 +31,10 @@ html.dark-2 {
     #{--ks-bg-inactive}: $base-gray-neutral-500;
 
     /* border */
-    #{--ks-border-default}: #31303b;
-    #{--ks-border-focus}: $base-primary-500;
-    #{--ks-border-strong}: #585673;
-    #{--ks-border-subtle}: #2a283e;
+    #{--ks-border-default}: #2e2e3c;
+    #{--ks-border-focus}: $base-primary-300;
+    #{--ks-border-strong}: #424256;
+    #{--ks-border-subtle}: #23252e;
     #{--ks-border-error}: $base-red-500;
     #{--ks-border-info}: $base-blue-300;
     #{--ks-border-success}: $base-green-600;
@@ -78,12 +78,12 @@ html.dark-2 {
     #{--ks-shadow-surface}: #00000026;
 
     /* text */
-    #{--ks-text-dim}: $base-gray-neutral-300;
+    #{--ks-text-dim}: #adadbf;
     #{--ks-text-inactive}: $base-gray-neutral-400;
     #{--ks-text-link}: $base-primary-200;
     #{--ks-text-muted}: #b7b4c3;
     #{--ks-text-primary}: $base-white;
-    #{--ks-text-secondary}: #c6c4d0;
+    #{--ks-text-secondary}: #adadbf;
     #{--ks-text-error}: $base-red-200;
     #{--ks-text-info}: $base-blue-300;
     #{--ks-text-success}: $base-green-100;
@@ -100,7 +100,7 @@ html.dark-2 {
 
     /* toggle */
     #{--ks-toogle-bg-active}: $base-primary-400;
-    #{--ks-toogle-bg-default}: #31303b;
+    #{--ks-toogle-bg-default}: #424256;
     #{--ks-toogle-bg-hover}: #585673;
     #{--ks-toogle-bg-inactive}: #15171e;
 

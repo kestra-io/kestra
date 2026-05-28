@@ -21,26 +21,26 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.2.3.7755"
+    id "org.sonarqube" version "7.3.0.8198"
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.53.0"
+    id "com.github.ben-manes.versions" version "0.54.0"
 
     // front
     id 'com.github.node-gradle.node' version '7.1.0'
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.7"
+    id "com.gorylenko.gradle-git-properties" version "3.0.3"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.0" apply false
+    id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.0.4"
+    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
 }
 
 idea {
@@ -249,7 +249,9 @@ subprojects {subProj ->
         }
 
         def commonTestConfig = { Test t ->
-            t.ignoreFailures = true
+            t.timeout = java.time.Duration.ofMinutes(
+                (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+            )
             t.finalizedBy jacocoTestReport
             t.doFirst {
                 logger.lifecycle("[TASK START] ${t.path}")
@@ -338,6 +340,9 @@ subprojects {subProj ->
                 includeTags 'flaky'
             }
 
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
             reports {
                 junitXml.required = true
                 junitXml.outputPerTestCase = true
@@ -346,6 +351,9 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
+            t.ignoreFailures = true
+            t.filter { failOnNoMatchingTests = false }
+            t.outputs.doNotCacheIf("Flaky tests are non-deterministic") { true }
             t.mustRunAfter(tasks.named('test'))
         }
 

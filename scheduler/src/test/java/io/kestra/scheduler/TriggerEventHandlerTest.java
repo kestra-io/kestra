@@ -1,15 +1,22 @@
 package io.kestra.scheduler;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -28,9 +35,11 @@ import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
@@ -64,6 +73,7 @@ class TriggerEventHandlerTest {
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
     private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
+    private BroadcastQueueInterface<AsyncOperationProcessedEvent> asyncOperationProcessedEventQueue;
 
     @BeforeEach
     void setUp() {
@@ -72,6 +82,12 @@ class TriggerEventHandlerTest {
         triggerId = Fixtures.triggerId();
         triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
         executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
+        asyncOperationProcessedEventQueue = Mockito.mock(BroadcastQueueInterface.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SchedulerClock.setClock(Clock.systemDefaultZone());
     }
 
     TriggerEventHandler newTriggerEventHandler(List<FlowWithSource> flows) {
@@ -81,12 +97,13 @@ class TriggerEventHandlerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            executionKilledQueue
+            executionKilledQueue,
+            new AsyncOperationService(asyncOperationProcessedEventQueue)
         );
     }
 
     @Test
-    void shouldCreateTriggerGivenTriggerCreatedEventWhenFlowDoesExist() {
+    void shouldCreateTriggerWithNextEvaluationDateGivenTriggerCreatedEventWhenFlowDoesExist() {
         // GIVEN
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         TriggerCreated event = new TriggerCreated(triggerId, 1);
@@ -99,6 +116,7 @@ class TriggerEventHandlerTest {
         assertThat(saved).isPresent();
         assertThat(TriggerId.of(saved.get())).isEqualTo(triggerId);
         assertThat(saved.get().getLastEventId()).isNotNull();
+        assertThat(saved.get().getNextEvaluationDate()).isNotNull();
     }
 
     @Test
@@ -167,6 +185,45 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateWhenTriggerUpdated() {
+        // GIVEN
+        ZonedDateTime staleNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, staleNextEvaluationDate));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerUpdated event = new TriggerUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(staleNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldNotMutateTriggerStateWhenFlowRevisionUpdated() {
+        // GIVEN
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().plusMinutes(5);
+        TriggerState initial = triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate);
+        triggerStateStore.save(initial);
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        TriggerFlowRevisionUpdated event = new TriggerFlowRevisionUpdated(triggerId, Fixtures.defaultFlow().getRevision());
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> after = triggerStateStore.findById(triggerId);
+        assertThat(after).isPresent();
+        assertThat(after.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
+        assertThat(after.get().getUpdatedAt()).isEqualTo(initial.getUpdatedAt());
+        assertThat(after.get().getLastEventId()).isEqualTo(initial.getLastEventId());
     }
 
     @Test
@@ -184,6 +241,27 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldResetTriggerAndRecomputeNextEvaluationDateWhenFlowExists() {
+        // GIVEN
+        triggerStateStore.save(triggerState
+            .locked(Clock.systemDefaultZone(), true)
+            .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15)));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        ResetTrigger event = new ResetTrigger(triggerId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(Instant.now().minusSeconds(1));
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
@@ -275,6 +353,32 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldPreserveCurrentDateGivenAdvancedBackfillWhenPaused() {
+        // GIVEN: a backfill that has progressed past its start date
+        ZonedDateTime start = ZonedDateTime.now(CLOCK).minusDays(10);
+        ZonedDateTime end = ZonedDateTime.now(CLOCK);
+        ZonedDateTime advanced = start.plusDays(4);
+        Backfill backfill = Backfill.builder()
+            .start(start)
+            .end(end)
+            .currentDate(advanced)
+            .paused(false)
+            .build();
+        triggerStateStore.save(triggerState.backfill(CLOCK, backfill));
+        handler = newTriggerEventHandler(List.of());
+        SetPauseBackfillTrigger event = new SetPauseBackfillTrigger(triggerId, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: currentDate is preserved (progress bar must not reset)
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).get()
+            .extracting(t -> t.getBackfill().getCurrentDate())
+            .isEqualTo(advanced);
+    }
+
+    @Test
     void shouldCompleteTriggerGivenTriggerCompletedEventWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);
@@ -301,6 +405,8 @@ class TriggerEventHandlerTest {
                 State.Type.CREATED,
                 null,
                 null,
+                null,
+                null,
                 null
             )
         );
@@ -321,6 +427,8 @@ class TriggerEventHandlerTest {
             triggerId, new TriggerEvaluationResult(
                 IdUtils.create(),
                 State.Type.FAILED,
+                null,
+                null,
                 null,
                 null,
                 null
@@ -477,5 +585,171 @@ class TriggerEventHandlerTest {
         assertThat(updated).get().extracting(TriggerState::getBackfill).isNull();
         assertThat(updated).get().extracting(TriggerState::getNextEvaluationDate).isEqualTo(previousNextEvaluationDate.toInstant());
         assertThat(updated).get().extracting(TriggerState::getLastEventId).isEqualTo(event.eventId());
+    }
+
+    // Fixed clock on Wednesday 2024-01-03 at 10:00 in the system default zone.
+    // With cron "*/1 * * * *" + DayWeek=SUNDAY condition, the next matching tick is the next
+    // Sunday 00:00 in the Schedule's timezone (system default). The exact instant depends on
+    // the system zone, so the tests assert on day-of-week rather than a hard-coded instant.
+    private static final ZonedDateTime FIXED_WEDNESDAY = LocalDateTime.of(2024, 1, 3, 10, 0)
+        .atZone(ZoneId.systemDefault());
+
+    private Clock fixWedClock() {
+        Clock fixed = Clock.fixed(FIXED_WEDNESDAY.toInstant(), ZoneId.systemDefault());
+        SchedulerClock.setClock(fixed);
+        return fixed;
+    }
+
+    private void assertMatchesNextSunday(TriggerState state) {
+        assertThat(state.getNextEvaluationDate()).isNotNull();
+        ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
+        assertThat(nextZoned.getDayOfWeek())
+            .as("nextEvaluationDate should fall on a SUNDAY in the schedule's timezone, but was %s", nextZoned)
+            .isEqualTo(DayOfWeek.SUNDAY);
+        assertThat(nextZoned).isAfter(FIXED_WEDNESDAY);
+    }
+
+    @Test
+    void shouldComputeNextEvaluationDateRespectingConditionsWhenTriggerCreated() {
+        // GIVEN a brand-new trigger (evaluatedAt=null) with DayWeek=SUNDAY condition, clock on Friday
+        Clock clock = fixWedClock();
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        TriggerCreated event = new TriggerCreated(triggerId, 0);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN persisted nextEvaluationDate falls on SUNDAY, not the next raw cron tick
+        Optional<TriggerState> saved = triggerStateStore.findById(triggerId);
+        assertThat(saved).isPresent();
+        assertMatchesNextSunday(saved.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerUpdated() {
+        // GIVEN a trigger evaluated once before the update event fires
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+        handler = newTriggerEventHandler(List.of(flow));
+        TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReset() {
+        // GIVEN
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        ResetTrigger event = new ResetTrigger(triggerId);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
+        // GIVEN a trigger evaluated once before being disabled and re-enabled
+        Clock clock = fixWedClock();
+        triggerStateStore.save(triggerState
+            .evaluatedAt(clock, FIXED_WEDNESDAY)
+            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+            .disabled(clock, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(clock, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertMatchesNextSunday(updated.get());
+    }
+
+    @Test
+    void shouldEmitSucceededProcessedEventWhenCommandCarriesOperationId() throws QueueException {
+        // GIVEN: a stored trigger state and a SetDisableTrigger carrying an operationId
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of());
+        String operationId = IdUtils.create();
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: a SUCCEEDED processed event is emitted on the async operation queue.
+        ArgumentCaptor<AsyncOperationProcessedEvent> captor = ArgumentCaptor.forClass(AsyncOperationProcessedEvent.class);
+        Mockito.verify(asyncOperationProcessedEventQueue).emit(captor.capture());
+        AsyncOperationProcessedEvent emitted = captor.getValue();
+        assertThat(emitted.operationId()).isEqualTo(operationId);
+        assertThat(emitted.tenantId()).isEqualTo(triggerId.getTenantId());
+        assertThat(emitted.itemId()).isEqualTo(event.uid());
+        assertThat(emitted.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.SUCCEEDED);
+        assertThat(emitted.error()).isNull();
+    }
+
+    @Test
+    void shouldNotEmitProcessedEventWhenCommandHasNoOperationId() throws QueueException {
+        // GIVEN: a stored trigger state and a SetDisableTrigger WITHOUT operationId
+        triggerStateStore.save(triggerState);
+        handler = newTriggerEventHandler(List.of());
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the async operation queue is never touched.
+        Mockito.verify(asyncOperationProcessedEventQueue, Mockito.never()).emit(Mockito.any(AsyncOperationProcessedEvent.class));
+    }
+
+    @Test
+    void shouldEmitFailedProcessedEventWhenHandlerThrows() throws QueueException {
+        // GIVEN: a TriggerStateStore that throws on findById to force a RuntimeException inside doHandle
+        TriggerStateStore failingStore = Mockito.mock(TriggerStateStore.class);
+        Mockito.when(failingStore.findById(Mockito.any())).thenThrow(new RuntimeException("boom"));
+        handler = new TriggerEventHandler(
+            failingStore,
+            new InMemoryFlowMetaStore(TEST_VNODE_COUNT, List.of()),
+            triggerExecutionPublisher,
+            runContextFactory,
+            conditionService,
+            executionKilledQueue,
+            new AsyncOperationService(asyncOperationProcessedEventQueue)
+        );
+        String operationId = IdUtils.create();
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true).withOperationId(operationId);
+
+        // WHEN / THEN
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> handler.handle(CLOCK, TEST_VNODE, event))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
+
+        // AND: a FAILED processed event is emitted with the error message.
+        ArgumentCaptor<AsyncOperationProcessedEvent> captor = ArgumentCaptor.forClass(AsyncOperationProcessedEvent.class);
+        Mockito.verify(asyncOperationProcessedEventQueue).emit(captor.capture());
+        AsyncOperationProcessedEvent emitted = captor.getValue();
+        assertThat(emitted.operationId()).isEqualTo(operationId);
+        assertThat(emitted.itemId()).isEqualTo(event.uid());
+        assertThat(emitted.outcome()).isEqualTo(AsyncOperationProcessedEvent.Outcome.FAILED);
+        assertThat(emitted.error()).isEqualTo("boom");
     }
 }

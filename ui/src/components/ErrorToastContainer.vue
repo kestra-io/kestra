@@ -1,5 +1,5 @@
 <template>
-    <el-button
+    <KsButton
         v-if="isFlowContext"
         @click="fixWithAi"
         class="el-button--small"
@@ -7,8 +7,8 @@
     >
         <AiIcon class="me-1" />
         <span>{{ $t("fix_with_ai") }}</span>
-    </el-button>
-    <span v-html="markdownRenderer" v-if="items.length === 0" />
+    </KsButton>
+    <KsMarkdown :content="markdownRenderer" v-if="items.length === 0" />
     <ul>
         <li v-for="(item, index) in items" :key="index" class="font-monospace">
             <template v-if="item.path">
@@ -20,11 +20,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
-    import {useRoute} from "vue-router";
-    import AiIcon from "vue-material-design-icons/Creation.vue";
-    import * as Markdown from "../utils/markdown";
-    import {useFlowStore} from "../stores/flow";
+    import {ref, computed, onMounted, watch} from "vue"
+    import {useRoute} from "vue-router"
+    import AiIcon from "vue-material-design-icons/Creation.vue"
+    import {useFlowStore} from "../stores/flow"
 
     interface ErrorItem {
         path?: string;
@@ -49,57 +48,58 @@
     }
 
     const props = withDefaults(defineProps<Props>(), {
-        onClose: null
-    });
+        onClose: null,
+    })
 
-    const route = useRoute();
-    const flowStore = useFlowStore();
-    const markdownRenderer = ref<string | undefined>(undefined);
+    const route = useRoute()
+    const flowStore = useFlowStore()
+    const markdownRenderer = ref<string | undefined>(undefined)
 
     const isFlowContext = computed(() => {
-        const routeName = route?.name;
-        return routeName === "flows/update" || routeName === "flows/create";
-    });
+        const routeName = route?.name
+        return routeName === "flows/update" || routeName === "flows/create"
+    })
 
-    const renderMarkdown = async (): Promise<string> => {
+    const renderMarkdown = (): string => {
         if (props.message.response && props.message.response.status === 503) {
-            return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
+            return "Server is temporarily unavailable. Please try again later."
         }
-        return await Markdown.render(props.message.message || props.message.content?.message || "", {html: true});
-    };
+
+        return props.message.message || props.message.content?.message || ""
+    }
 
     const fixWithAi = async () => {
-        const errorMessage = props.message.message || props.message.content?.message || "";
+        const errorMessage = props.message.message || props.message.content?.message || ""
         const errorItems = props.items.map((item: ErrorItem) => {
-            const path = item.path ? `At ${item.path}: ` : "";
-            return path + item.message;
-        }).join("\n");
+            const path = item.path ? `At ${item.path}: ` : ""
+            return path + item.message
+        }).join("\n")
 
-        const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n");
-        const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`;
+        const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n")
+        const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`
 
         try {
-            window.sessionStorage.setItem("kestra-ai-prompt", prompt);
+            window.sessionStorage.setItem("kestra-ai-prompt", prompt)
         } catch (err) {
-            console.warn("AI prompt not persisted to sessionStorage:", err);
+            console.warn("AI prompt not persisted to sessionStorage:", err)
         }
 
         // Close the notification
         if (props.onClose) {
-            props.onClose();
+            props.onClose()
         }
 
-        flowStore.setOpenAiCopilot(true);
-    };
+        flowStore.setOpenAiCopilot(true)
+    }
 
     // Watch for changes in message
-    watch(() => props.message, async () => {
-        markdownRenderer.value = await renderMarkdown();
-    }, {deep: true});
+    watch(() => props.message, () => {
+        markdownRenderer.value = renderMarkdown()
+    }, {deep: true})
 
     onMounted(async () => {
-        markdownRenderer.value = await renderMarkdown();
-    });
+        markdownRenderer.value = renderMarkdown()
+    })
 </script>
 
 <style scoped lang="scss">
@@ -110,7 +110,7 @@
     }
 
     li {
-        font-size: 0.8rem;
+        font-size: var(--ks-font-size-sm);
         margin-top: .5rem;
 
     }

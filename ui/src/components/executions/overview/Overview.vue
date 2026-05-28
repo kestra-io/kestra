@@ -1,11 +1,11 @@
 <template>
-    <el-splitter
+    <KsSplitter
         v-if="execution"
         id="overview"
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <el-splitter-panel :size="verticalLayout ? '50%' : '30%'">
+        <KsSplitterPanel :size="verticalLayout ? '50%' : '30%'">
             <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: $t('state')}]">
@@ -16,22 +16,22 @@
                             />
                         </template>
                     </Row>
-                    <Status :status="execution.state.current" />
+                    <KsExecutionStatus :status="execution.state.current" />
                     <Timeline :histories="execution.state.histories || []" />
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="general">
                     <Row :rows="general" />
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
                     />
-                    <el-row :gutter="12">
-                        <el-col
+                    <KsRow :gutter="12">
+                        <KsCol
                             v-for="(action, aIdx) in actions"
                             :key="aIdx"
                             :span="12"
@@ -42,20 +42,20 @@
                                 v-on="action.on || {}"
                                 :execution
                             />
-                        </el-col>
-                    </el-row>
+                        </KsCol>
+                    </KsRow>
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="metadata">
                     <Row :rows="[property]" v-for="property in metadata" :key="property.label">
                         <template v-if="property.value instanceof Date" #value>
-                            <DateAgo :date="property.value" format="L LTS" />
+                            <KsDateAgo :date="property.value" format="L LTS" />
                         </template>
                     </Row>
                 </div>
 
-                <el-divider />
+                <KsDivider />
                 <div class="labels">
                     <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
                         <template #action>
@@ -65,18 +65,18 @@
                     <Labels :labels="execution.labels || []" />
                 </div>
             </div>
-        </el-splitter-panel>
+        </KsSplitterPanel>
 
-        <el-splitter-panel>
+        <KsSplitterPanel>
             <div class="main">
                 <div id="alerts">
-                    <el-alert
+                    <KsAlert
                         v-if="matchesStatus('replayed')"
                         :title="$t('execution replayed')"
                         :closable="false"
                     />
 
-                    <el-alert v-if="matchesStatus('replay')" :closable="false">
+                    <KsAlert v-if="matchesStatus('replay')" :closable="false">
                         <template #title>
                             <div>
                                 {{ $t("execution replay") }}
@@ -89,16 +89,16 @@
                                         )
                                     "
                                 >
-                                    <Id
+                                    <KsId
                                         :value="execution.originalId"
                                         :shrink="false"
                                     />
                                 </router-link>.
                             </div>
                         </template>
-                    </el-alert>
+                    </KsAlert>
 
-                    <el-alert
+                    <KsAlert
                         v-if="matchesStatus('restarted')"
                         :title="
                             $t('execution restarted', {
@@ -107,7 +107,6 @@
                             })
                         "
                         type="warning"
-                        showIcon
                         :closable="false"
                     />
 
@@ -139,17 +138,17 @@
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
-                                <el-select
+                                <KsSelect
                                     v-model="timerange"
                                     @change="chartRef!.refresh(filters)"
                                 >
-                                    <el-option
+                                    <KsOption
                                         v-for="option in options"
                                         :key="option.value"
                                         :label="option.label"
                                         :value="option.value"
                                     />
-                                </el-select>
+                                </KsSelect>
                             </div>
                         </section>
                         <TimeSeries
@@ -164,90 +163,87 @@
 
                 <PrevNext :execution />
             </div>
-        </el-splitter-panel>
-    </el-splitter>
-    <NoData
+        </KsSplitterPanel>
+    </KsSplitter>
+    <KsEmpty
         v-else
         id="empty"
-        :text="$t('execution not found', {executionId: route.params.id})"
+        :description="$t('execution not found', {executionId: route.params.id})"
     />
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
-    import {watchDebounced} from "@vueuse/core";
+    import {onMounted, computed, ref} from "vue"
+    import {watchDebounced} from "@vueuse/core"
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useRoute} from "vue-router"
+    const route = useRoute()
 
-    import {useExecutionsStore} from "../../../stores/executions";
-    const store = useExecutionsStore();
+    import {useExecutionsStore} from "../../../stores/executions"
+    const store = useExecutionsStore()
 
-    import {useMiscStore} from "override/stores/misc";
-    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+    import {useMiscStore} from "override/stores/misc"
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
-    import moment from "moment";
+    import moment from "moment"
 
-    import {verticalLayout} from "./utils/layout";
-    import {createLink} from "./utils/links";
-    import Utils from "../../../utils/utils";
-    import {FilterObject} from "../../../utils/filters";
+    import {verticalLayout} from "./utils/layout"
+    import {createLink} from "./utils/links"
+    import {FilterObject} from "../../../utils/filters"
 
-    import {Status, State} from "@kestra-io/ui-libs";
+    import {State, durationUtils} from "@kestra-io/design-system"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import Row from "./components/sidebar/Row.vue";
-    import Labels from "./components/sidebar/Labels.vue";
-    import Timeline from "./components/sidebar/Timeline.vue";
+    import Row from "./components/sidebar/Row.vue"
+    import Labels from "./components/sidebar/Labels.vue"
+    import Timeline from "./components/sidebar/Timeline.vue"
 
-    import DateAgo from "../../layout/DateAgo.vue";
-    import ErrorAlert from "./components/main/ErrorAlert.vue";
-    import Id from "../../Id.vue";
-    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
-    import DebugPanel from "./components/main/cascaders/DebugPanel.vue";
-    import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
-    import PrevNext from "./components/main/PrevNext.vue";
+    import ErrorAlert from "./components/main/ErrorAlert.vue"
+    import {KsId} from "@kestra-io/design-system"
+    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue"
+    import DebugPanel from "./components/main/cascaders/DebugPanel.vue"
+    import TimeSeries from "../../dashboard/sections/TimeSeries.vue"
+    import PrevNext from "./components/main/PrevNext.vue"
 
-    import NoData from "../../layout/NoData.vue";
-
-    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
-    import SetLabels from "../SetLabels.vue";
-    import Pause from "./components/actions/Pause.vue";
+    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue"
+    import SetLabels from "../SetLabels.vue"
+    import Pause from "./components/actions/Pause.vue"
     //@ts-expect-error No declaration file
-    import Resume from "./components/actions/Resume.vue";
-    import Restart from "./components/actions/Restart.vue";
-    import Unqueue from "./components/actions/Unqueue.vue";
-    import ForceRun from "./components/actions/ForceRun.vue";
-    import Kill from "./components/actions/Kill.vue";
-    import Api from "./components/actions/Api.vue";
-    import Delete from "./components/actions/Delete.vue";
+    import Resume from "./components/actions/Resume.vue"
+    import Restart from "./components/actions/Restart.vue"
+    import Unqueue from "./components/actions/Unqueue.vue"
+    import ForceRun from "./components/actions/ForceRun.vue"
+    import Kill from "./components/actions/Kill.vue"
+    import Api from "./components/actions/Api.vue"
+    import Delete from "./components/actions/Delete.vue"
 
-    import yaml from "yaml";
-    import YAML_CHART from "./components/main/assets/chart.yaml?raw";
-    import {useValues} from "../../filter/composables/useValues";
+    import yaml from "yaml"
+    import YAML_CHART from "./components/main/assets/chart.yaml?raw"
+    import {useValues} from "../../filter/composables/useValues"
 
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
-    import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
-    import CalendarClock from "vue-material-design-icons/CalendarClock.vue";
-    import Update from "vue-material-design-icons/Update.vue";
-    import TimerSand from "vue-material-design-icons/TimerSand.vue";
-    import History from "vue-material-design-icons/History.vue";
-    import SortVariant from "vue-material-design-icons/SortVariant.vue";
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue"
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
+    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
+    import CalendarClock from "vue-material-design-icons/CalendarClock.vue"
+    import Update from "vue-material-design-icons/Update.vue"
+    import TimerSand from "vue-material-design-icons/TimerSand.vue"
+    import History from "vue-material-design-icons/History.vue"
+    import SortVariant from "vue-material-design-icons/SortVariant.vue"
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
 
-    const emits = defineEmits(["follow"]);
+    const emits = defineEmits(["follow"])
 
-    const execution = computed(() => store.execution);
+    const execution = computed(() => store.execution)
     const general = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
             {
@@ -267,10 +263,10 @@
                 label: t("revision"),
                 value: execution.value.flowRevision,
             },
-        ];
-    });
+        ]
+    })
     const metadata = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
             ...(execution.value.trigger?.id
@@ -281,11 +277,9 @@
                         value: execution.value.trigger.id,
                         to: {
                             name: "admin/triggers",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                            },
+                            params: execution.value.tenantId
+                                ? {tenant: execution.value.tenantId}
+                                : {},
                             query: {
                                 "filters[q][EQUALS]": execution.value.trigger.id,
                             },
@@ -320,21 +314,21 @@
                 icon: TimerSand,
                 label: t("duration"),
                 value: (() => {
-                    const histories = execution.value.state.histories;
+                    const histories = execution.value.state.histories
 
-                    if (!histories || histories.length === 0) return "-";
+                    if (!histories || histories.length === 0) return "-"
 
-                    const timestamp = (d: string) => new Date(d).getTime();
+                    const timestamp = (d: string) => new Date(d).getTime()
 
-                    const start = timestamp(histories[0].date);
-                    const last = histories[histories.length - 1];
-                    const isRunning = State.isRunning(last.state);
+                    const start = timestamp(histories[0].date)
+                    const last = histories[histories.length - 1]
+                    const isRunning = State.isRunning(last.state)
 
-                    const stop = isRunning ? Date.now() : timestamp(last.date);
+                    const stop = isRunning ? Date.now() : timestamp(last.date)
 
-                    const deltaSeconds = (stop - start) / 1000;
+                    const deltaSeconds = (stop - start) / 1000
 
-                    return Utils.humanDuration(deltaSeconds);
+                    return durationUtils.humanDuration(deltaSeconds)
                 })(),
             },
             {
@@ -383,12 +377,12 @@
                     },
                 ]
                 : []),
-        ];
-    });
+        ]
+    })
     const actions = computed(() => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
-        const follow = (event: any) => emits("follow", event);
+        const follow = (event: any) => emits("follow", event)
 
         return [
             {component: Restart, on: {follow}},
@@ -401,29 +395,29 @@
             {component: ForceRun},
             {component: Api},
             {component: Delete},
-        ];
-    });
+        ]
+    })
 
-    const loadExecution = (id: string) => store.loadExecution({id});
+    const loadExecution = (id: string) => store.loadExecution({id})
 
     const matchesStatus = (type: "restarted" | "replayed" | "replay") => {
-        if (!execution.value) return false;
+        if (!execution.value) return false
 
-        const key = `system.${type}`;
+        const key = `system.${type}`
 
         return (
             execution.value?.labels?.some(
                 (label) => label.key === key && String(label.value) === "true",
             ) ?? false
-        );
-    };
+        )
+    }
 
-    const debugProperty = ref<"outputs" | "trigger" | undefined>(undefined);
-    const debugPath = ref<string | undefined>(undefined);
+    const debugProperty = ref<"outputs" | "trigger" | undefined>(undefined)
+    const debugPath = ref<string | undefined>(undefined)
     const onDebugPath = (property: string, path: string) => {
-        debugProperty.value = property as "outputs" | "trigger";
-        debugPath.value = path;
-    };
+        debugProperty.value = property as "outputs" | "trigger"
+        debugPath.value = path
+    }
 
     const cascaders: Element[] = [
         {
@@ -448,26 +442,17 @@
             elements: execution.value?.trigger,
             includeDebug: "trigger",
         },
-    ];
+    ]
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE;
-    const timerange = ref<string>("PT168H"); // Default to last 7 days
+    const options = useValues("executions").VALUES.RELATIVE_DATE
+    const timerange = ref<string>("PT168H") // Default to last 7 days
 
-    const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
-    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART};
+    const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null)
+    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART}
     const filters = computed((): FilterObject[] => {
-        if (!execution.value) return [];
+        if (!execution.value) return []
 
         return [
-            ...(execution.value.tenantId
-                ? [
-                    {
-                        field: "tenant",
-                        operation: "EQUALS",
-                        value: execution.value.tenantId,
-                    },
-                ]
-                : []),
             {
                 field: "namespace",
                 operation: "EQUALS",
@@ -483,39 +468,38 @@
                 operation: "EQUALS",
                 value: timerange.value,
             },
-        ];
-    });
+        ]
+    })
 
     onMounted(() => {
-        if (!route.params.id) return;
-        loadExecution(route.params.id as string);
-    });
+        if (!route.params.id) return
+        loadExecution(route.params.id as string)
+    })
 
     // Refresh the chart when execution ID or timerange changes.
     // Debounce to avoid flooding the dashboard generator on rapid SSE updates.
     watchDebounced(
         () => [execution.value?.id, timerange.value],
         () => {
-            if (!chartRef.value || !execution.value) return;
-            chartRef.value?.refresh(filters.value as any);
+            if (!chartRef.value || !execution.value) return
+            chartRef.value?.refresh(filters.value as any)
         },
-        {debounce: 500, maxWait: 1000}
-    );
+        {debounce: 500, maxWait: 1000},
+    )
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 #overview {
-    :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
-        background-color: var(--ks-background-table-row);
+    :deep(.kel-splitter-panel:has(> .sidebar:first-child)) {
+        background-color: var(--ks-bg-elevated);
     }
 
     .sidebar > div,
     .main > div {
-        padding: calc($spacer * 1.5);
+        padding: calc(1rem * 1.5);
     }
 
     .sidebar {
@@ -523,15 +507,15 @@
 
         & :deep(.state),
         & :deep(.labels) {
-            .el-row {
-                margin-bottom: calc($spacer * 1.5);
+            .kel-row {
+                margin-bottom: calc(1rem * 1.5);
             }
 
             & button {
                 width: 100%;
                 overflow: hidden;
 
-                span:not(i span) {
+                span:not(i span):not(.material-design-icon) {
                     display: block;
                     min-width: 0;
                     white-space: nowrap;
@@ -541,19 +525,19 @@
             }
         }
 
-        & .actions .el-row {
-            margin-top: calc($spacer * 1.5);
+        & .actions .kel-row {
+            margin-top: calc(1rem * 1.5);
 
-            & .el-col {
+            & .kel-col {
                 &:empty {
                     display: none; // If button is not displayed for any reason, hide the whole column
                 }
 
-                & :deep(.el-button) {
+                & :deep(.kel-button) {
                     width: 100%;
-                    margin-bottom: calc($spacer / 1.5);
-                    padding: $spacer;
-                    font-size: $font-size-sm;
+                    margin-bottom: calc(1rem / 1.5);
+                    padding: 1rem;
+                    font-size: var(--ks-font-size-sm);
                     overflow: hidden;
 
                     span:not(i span) {
@@ -573,7 +557,7 @@
             padding-bottom: 0;
 
             &:last-child {
-                padding-bottom: calc($spacer * 1.5);
+                padding-bottom: calc(1rem * 1.5);
             }
         }
 
@@ -582,31 +566,31 @@
                 display: none;
             }
 
-            .el-alert {
+            .kel-alert {
                 &:not(:first-child) {
-                    margin-top: $spacer;
+                    margin-top: 1rem;
                 }
 
-                & :deep(.el-alert__icon) {
-                    font-size: var(--el-alert-icon-size);
-                    width: var(--el-alert-icon-size);
-                    margin-right: calc($spacer * 1.5);
+                & :deep(.kel-alert__icon) {
+                    font-size: var(--kel-alert-icon-size);
+                    width: var(--kel-alert-icon-size);
+                    margin-right: calc(1rem * 1.5);
                 }
             }
         }
 
         #chart {
             > div {
-                padding: calc($spacer * 2);
-                border: 1px solid var(--el-border-color-light);
-                border-radius: calc($spacer / 2);
-                background-color: var(--ks-background-card);
+                padding: calc(1rem * 2);
+                border: 1px solid var(--kel-border-color-light);
+                border-radius: calc(1rem / 2);
+                background-color: var(--ks-bg-surface);
 
                 > section:first-child {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: $spacer;
+                    margin-bottom: 1rem;
 
                     & .heading {
                         display: flex;
@@ -614,9 +598,9 @@
                         overflow: hidden;
 
                         & .material-design-icon {
-                            margin-right: $spacer;
-                            font-size: $font-size-xl;
-                            color: var(--ks-content-link);
+                            margin-right: 1rem;
+                            font-size: var(--ks-font-size-xl);
+                            color: var(--ks-text-link);
                         }
 
                         & span:not(.material-design-icon) {
@@ -629,28 +613,28 @@
                     }
 
                     & .timerange {
-                        .el-select {
-                            width: calc($spacer * 10);
+                        .kel-select {
+                            width: calc(1rem * 10);
                         }
                     }
                 }
             }
         }
 
-        & :deep(.el-empty) {
+        & :deep(.kel-empty) {
             padding: 0;
 
-            & .el-empty__image {
-                width: calc($spacer * 8) !important;
+            & .kel-empty__image {
+                width: calc(1rem * 8) !important;
             }
 
-            & .el-empty__description {
-                margin-top: calc($spacer / 2);
+            & .kel-empty__description {
+                margin-top: calc(1rem / 2);
             }
         }
     }
 
-    div.el-divider {
+    div.kel-divider {
         margin: 0;
         padding: 0;
     }
@@ -658,6 +642,6 @@
 
 #empty {
     height: 100%;
-    background-color: var(--ks-background-table-row);
+    background-color: var(--ks-bg-elevated);
 }
 </style>

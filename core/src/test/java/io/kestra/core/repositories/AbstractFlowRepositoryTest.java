@@ -15,7 +15,7 @@ import org.slf4j.event.Level;
 
 import com.google.common.collect.ImmutableMap;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
@@ -83,13 +83,91 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
     }
 
+    @Test
+    void givenFlowWithTrigger_whenFindingFlowWithGivenTriggerClass_thenFindFlowWithTriggerClass() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        UnitTest trigger = UnitTest.builder()
+            .id("trigger")
+            .type(UnitTest.class.getName())
+            .build();
+
+        FlowWithSource flowWithTrigger = builder(tenant, "flow-with-trigger", TEST_FLOW_ID)
+            .triggers(List.of(trigger))
+            .build();
+        FlowWithSource flowWithoutTrigger = builder(tenant, "flow-without-trigger", TEST_FLOW_ID)
+            .build();
+
+        flowWithTrigger = flowRepository.create(GenericFlow.of(flowWithTrigger));
+        flowWithoutTrigger = flowRepository.create(GenericFlow.of(flowWithoutTrigger));
+
+        try {
+            // When
+            ArrayListTotal<Flow> results = flowRepository.find(
+                Pageable.UNPAGED,
+                tenant,
+                TEST_NAMESPACE,
+                UnitTest.class
+            );
+
+            // Then
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("flow-with-trigger");
+        } finally {
+            deleteFlow(flowWithTrigger);
+            deleteFlow(flowWithoutTrigger);
+        }
+    }
+
+    @Test
+    void givenMultipleFlowWithTriggerIsDistinctNamespaceWithCommonPrefix_whenFindingFlowWithGivenTriggerClass_shouldFindFlowWithTriggerClassAndFullyMatchingNamespace() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String childNamespace = TEST_NAMESPACE + ".child";
+
+        UnitTest trigger = UnitTest.builder()
+            .id("trigger")
+            .type(UnitTest.class.getName())
+            .build();
+
+        FlowWithSource flowInBaseNamespace = builder(tenant, "flow-in-base-namespace", TEST_FLOW_ID)
+            .triggers(List.of(trigger))
+            .build();
+        FlowWithSource flowInChildNamespace = builder(tenant, "flow-in-child-namespace", TEST_FLOW_ID)
+            .namespace(childNamespace)
+            .triggers(List.of(trigger))
+            .build();
+
+        flowInBaseNamespace = flowRepository.create(GenericFlow.of(flowInBaseNamespace));
+        flowInChildNamespace = flowRepository.create(GenericFlow.of(flowInChildNamespace));
+
+        try {
+            // When
+            ArrayListTotal<Flow> results = flowRepository.find(
+                Pageable.UNPAGED,
+                tenant,
+                TEST_NAMESPACE,
+                UnitTest.class
+            );
+
+            // Then
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("flow-in-base-namespace");
+            assertThat(results.getFirst().getNamespace()).isEqualTo(TEST_NAMESPACE);
+        } finally {
+            deleteFlow(flowInBaseNamespace);
+            deleteFlow(flowInChildNamespace);
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter) {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -109,7 +187,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = FlowWithSource.builder()
             .id("filterFlowId")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenant)
             .labels(Label.from(Map.of("key", "value")))
             .build();
@@ -127,7 +205,7 @@ public abstract class AbstractFlowRepositoryTest {
         return Stream.of(
             QueryFilter.builder().field(Field.QUERY).value("filterFlowId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.NAMESPACE).value(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(SystemFlowsConfiguration.DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value("filterFlowId").operation(Op.EQUALS).build()
         );
@@ -830,7 +908,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenantFlowExist = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowExist = FlowWithSource.builder()
             .id("flowExist")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenantFlowExist)
             .deleted(false)
             .build();
@@ -839,7 +917,7 @@ public abstract class AbstractFlowRepositoryTest {
         String tenantFlowDeleted = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flowDeleted = FlowWithSource.builder()
             .id("flowDeleted")
-            .namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE)
+            .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
             .tenantId(tenantFlowDeleted)
             .deleted(true)
             .build();

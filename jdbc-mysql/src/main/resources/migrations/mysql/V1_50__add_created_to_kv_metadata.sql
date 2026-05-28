@@ -1,1 +1,0 @@
-ALTER TABLE kv_metadata ADD COLUMN `created` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(IF(value ->> '$.created' = 'null', value ->> '$.updated', value ->> '$.created') , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL;

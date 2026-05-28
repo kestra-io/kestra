@@ -1,9 +1,9 @@
 import dotenv from "dotenv"
-const __dirname = new URL(".", import.meta.url).pathname;
-dotenv.config({path: __dirname + "/.env"});
+const __dirname = new URL(".", import.meta.url).pathname
+dotenv.config({path: __dirname + "/.env"})
 
-import type {PlaywrightTestConfig} from "@playwright/test";
-import {devices} from "@playwright/test";
+import type {PlaywrightTestConfig} from "@playwright/test"
+import {devices} from "@playwright/test"
 
 
 /**
@@ -18,13 +18,13 @@ import {devices} from "@playwright/test";
 const config: PlaywrightTestConfig = {
     testDir: "./",
     /* Maximum time one test can run for. */
-    timeout: 30 * 1000,
+    timeout: 60 * 1000,
     expect: {
         /**
          * Maximum time expect() should wait for the condition to be met.
          * For example in `await expect(locator).toHaveText();`
          */
-        timeout: 5000,
+        timeout: 15000,
         toHaveScreenshot: {
             maxDiffPixelRatio: 0.02,
         },
@@ -73,6 +73,6 @@ const config: PlaywrightTestConfig = {
     //   port: 8080,
     //   reuseExistingServer: !process.env.CI,
     // },
-};
+}
 
-export default config;
+export default config

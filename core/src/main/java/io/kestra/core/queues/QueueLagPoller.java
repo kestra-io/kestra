@@ -13,6 +13,7 @@ import io.kestra.core.runners.WorkerJobEvent;
 
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Provider;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -25,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class QueueLagPoller {
     private final MetricRegistry metricRegistry;
     private final WorkerGroupMetaStore workerGroupExecutor;
-    private final BeanProvider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider;
+    private final Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider;
 
     private final Cache<CacheKey, Integer> queueLagCache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofSeconds(30))
@@ -34,7 +35,7 @@ public class QueueLagPoller {
     public QueueLagPoller(
         MetricRegistry metricRegistry,
         WorkerGroupMetaStore workerGroupExecutor,
-        BeanProvider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider) {
+        Provider<KeyedDispatchQueueInterface<WorkerJobEvent>> workerJobQueueProvider) {
         this.metricRegistry = metricRegistry;
         this.workerJobQueueProvider = workerJobQueueProvider;
         this.workerGroupExecutor = workerGroupExecutor;
@@ -45,7 +46,7 @@ public class QueueLagPoller {
         Set<String> availableWorkerGroups = workerGroupExecutor.listAllWorkerGroupKeys();
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobQueue = workerJobQueueProvider.get();
         availableWorkerGroups.stream().filter(
-            workerGroup -> metricRegistry.findGauges(MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT).stream().noneMatch(
+            workerGroup -> metricRegistry.findGauges(MetricRegistry.METRIC_QUEUE_MESSAGE_LAG).stream().noneMatch(
                 gauge -> workerGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP))
             )
         ).forEach(
@@ -77,8 +78,8 @@ public class QueueLagPoller {
 
     private void register(Supplier<Number> supplier, String... tags) {
         this.metricRegistry.gauge(
-            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT,
-            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_COUNT_DESCRIPTION,
+            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG,
+            MetricRegistry.METRIC_QUEUE_MESSAGE_LAG_DESCRIPTION,
             supplier,
             tags
         );

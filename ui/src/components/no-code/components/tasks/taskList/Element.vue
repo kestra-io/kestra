@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <TaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
+            <KsTaskIcon :cls="element.type" :icons="pluginsStore.icons" onlyIcon />
         </div>
 
         <div class="flex-grow-1 label">
@@ -27,23 +27,23 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
-    import {useI18n} from "vue-i18n";
-    import PlayIcon from "vue-material-design-icons/Play.vue";
-    import {usePluginsStore} from "../../../../../stores/plugins";
-    import {usePlaygroundStore} from "../../../../../stores/playground";
+    import {computed, inject} from "vue"
+    import {useI18n} from "vue-i18n"
+    import PlayIcon from "vue-material-design-icons/Play.vue"
+    import {usePluginsStore} from "../../../../../stores/plugins"
+    import {usePlaygroundStore} from "../../../../../stores/playground"
 
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../../utils/icons"
     import {
         EDIT_TASK_FUNCTION_INJECTION_KEY,
-    } from "../../../injectionKeys";
+    } from "../../../injectionKeys"
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {KsTaskIcon} from "@kestra-io/design-system"
 
-    const emits = defineEmits(["removeElement", "moveElement"]);
+    const emits = defineEmits(["removeElement", "moveElement"])
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = defineProps<{
         section: string;
@@ -58,33 +58,32 @@
         typeFieldSchema: "on" | "type";
         moved?: boolean;
         title?: string
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const playgroundStore = usePlaygroundStore();
+    const pluginsStore = usePluginsStore()
+    const playgroundStore = usePlaygroundStore()
 
-    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"));
+    const isTask = computed(() => ["tasks", "task"].includes(props.parentPathComplete.split(".").pop() ?? "not-found"))
 
-    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {});
+    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {})
 
     const identifier = computed(() => {
         return props.element.id
             ?? props.element[props.typeFieldSchema]
-            ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
-    });
+            ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`
+    })
 
     const handleClick = () => {
         editTask(
             props.parentPathComplete,
             props.blockSchemaPath,
-            props.elementIndex
-        );
-    };
+            props.elementIndex,
+        )
+    }
 </script>
 
 <style scoped lang="scss">
 @import "../../../styles/code.scss";
-@import "@kestra-io/ui-libs/src/scss/_color-palette";
 
 .element {
     cursor: pointer;
@@ -93,7 +92,7 @@
     transition: all 0.2s ease-in-out;
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     & > .icon {
@@ -106,13 +105,13 @@
     }
 
     &.moved {
-        background-color: var(--ks-button-background-secondary-active);
-        border-color: var(--ks-border-active);
+        background-color: var(--ks-btn-secondary-bg-active);
+        border-color: var(--ks-border-focus);
     }
 
     .playground-run-task{
-        color: $base-white;
-        background-color: $base-blue-400;
+        color: var(--ks-btn-primary-text);
+        background-color: var(--ks-btn-primary-bg-default);
         height: 16px;
         width: 16px;
         font-size: 4px;
@@ -124,7 +123,7 @@
         border: none;
     }
 
-    .delete-element {        color: $base-white;
+    .delete-element {        color: var(--ks-btn-primary-text);
         border: none;
         background-color: transparent;
     }

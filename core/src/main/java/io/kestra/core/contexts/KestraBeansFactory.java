@@ -2,21 +2,19 @@ package io.kestra.core.contexts;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
-
+import io.kestra.core.contexts.configuration.StorageConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
-import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
+import io.kestra.core.utils.ExecutorsUtils;
 
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
@@ -37,8 +35,8 @@ public class KestraBeansFactory {
     @Inject
     StorageConfig storageConfig;
 
-    @Value("${kestra.storage.type}")
-    protected Optional<String> storageType;
+    @Inject
+    protected StorageConfiguration storageConfiguration;
 
     @Singleton
     public PluginCatalogService pluginCatalogService(@Client("api") HttpClient httpClient, ExecutorsUtils executorsUtils) {
@@ -65,7 +63,7 @@ public class KestraBeansFactory {
     }
 
     public String getStoragePluginId(StorageInterfaceFactory storageInterfaceFactory) {
-        return storageType.orElseThrow(
+        return storageConfiguration.type().orElseThrow(
             () -> new KestraRuntimeException(
                 String.format(
                     "No storage configured through the application property '%s'. Supported types are: %s", KESTRA_STORAGE_TYPE_CONFIG,

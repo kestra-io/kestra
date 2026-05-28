@@ -9,11 +9,13 @@ import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,6 +78,37 @@ public abstract class AbstractJdbcRepository<T> {
         return fields;
     }
 
+    /**
+     * Fetches an entity using {@code fetcher}, or inserts a default one (via {@code defaultEntity}) if absent, then re-fetches.
+     * The {@code fetcher} should use {@code FOR UPDATE} so the returned entity is locked within the caller's transaction.
+     */
+    public T getOrInsert(DSLContext dslContext, Supplier<Optional<T>> fetcher, Supplier<T> defaultEntity) {
+        // Note: ideally, we should emit an INSERT IGNORE or ON CONFLICT DO NOTHING but H2 didn't support it.
+        // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
+        // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
+        // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
+        return fetcher.get().orElseGet(() -> {
+            try {
+                T entity = defaultEntity.get();
+                Map<Field<Object>, Object> fields = this.persistFields(entity);
+                var insert = dslContext
+                    .insertInto(this.getTable())
+                    .set(KEY_FIELD, this.key(entity))
+                    .set(fields);
+                if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES) || dslContext.configuration().dialect().supports(SQLDialect.MYSQL)) {
+                    insert.onDuplicateKeyIgnore().execute();
+                } else {
+                    insert.execute();
+                }
+            } catch (DataAccessException e) {
+                // we ignore any constraint violation
+            }
+            // refetch to have a lock on it
+            // at this point we are sure the record is inserted so it should never throw
+            return fetcher.get().orElseThrow();
+        });
+    }
+
     public int count(Condition condition) {
         return getDslContextWrapper()
             .transactionResult(
@@ -88,16 +121,47 @@ public abstract class AbstractJdbcRepository<T> {
             );
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T, Map)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity) {
         this.persist(entity, null);
     }
 
+
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, Map<Field<Object>, Object> fields) {
         dslContextWrapper.transaction(
             configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
@@ -107,6 +171,56 @@ public abstract class AbstractJdbcRepository<T> {
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
+            .execute();
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object, Map)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity) {
+        this.persist(entity, null);
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, Map<Field<Object>, Object> fields) {
+        dslContextWrapper.transaction(
+            configuration -> this.persist(entity, DSL.using(configuration), fields)
+        );
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
+
+        dslContext
+            .update(table)
+            .set(finalFields)
+            .where(KEY_FIELD.eq(key(entity)))
             .execute();
     }
 
@@ -244,7 +358,7 @@ public abstract class AbstractJdbcRepository<T> {
                     .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
                     .asTable("page")
             )
-            .where(DSL.trueCondition());
+            .where(DSL.noCondition());
     }
 
     @SneakyThrows

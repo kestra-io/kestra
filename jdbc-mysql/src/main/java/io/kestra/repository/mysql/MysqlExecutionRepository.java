@@ -8,11 +8,14 @@ import org.jooq.Field;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
+import io.kestra.core.events.CrudEvent;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
+import io.micronaut.context.event.ApplicationEventPublisher;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -23,9 +26,10 @@ import jakarta.inject.Named;
 public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public MysqlExecutionRepository(@Named("executions") MysqlRepository<Execution> repository,
-        ApplicationContext applicationContext,
+        ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
+        SystemFlowsConfiguration systemFlowsConfiguration,
         JdbcFilterService filterService) {
-        super(repository, applicationContext, filterService);
+        super(repository, eventPublisher, systemFlowsConfiguration, filterService);
     }
 
     @Override

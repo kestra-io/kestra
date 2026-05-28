@@ -1,41 +1,41 @@
 <template>
     <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
-            <el-button @click="isNavbarVisible = !isNavbarVisible">
+            <KsButton @click="isNavbarVisible = !isNavbarVisible">
                 <MenuIcon />
-            </el-button>
+            </KsButton>
         </div>
-        <el-form :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
+        <KsForm :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
             <slot />
-        </el-form>
+        </KsForm>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
-    import MenuIcon from "vue-material-design-icons/Menu.vue";
+    import {ref} from "vue"
+    import MenuIcon from "vue-material-design-icons/Menu.vue"
 
-    const isNavbarVisible = ref(false);
+    const isNavbarVisible = ref(false)
 </script>
 
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     @include res(sm) {
-        :deep(.el-form--inline) {
-            .el-form-item {
+        :deep(.kel-form--inline) {
+            .kel-form-item {
                 margin-right: 5px;
 
-                .el-radio-group {
+                .kel-radio-group {
                     margin-right: 5px;
                 }
 
-                .el-form-item__content {
-                    > *:not(.el-button-group) {
+                .kel-form-item__content {
+                    > *:not(.kel-button-group) {
                         width: 200px;
                     }
 
-                    > .el-button-group {
+                    > .kel-button-group {
                         max-width: 200px;
                     }
                 }
@@ -44,12 +44,12 @@
     }
 
     @include res(xs) {
-        :deep(.el-form--inline) {
-            .el-form-item {
+        :deep(.kel-form--inline) {
+            .kel-form-item {
                 display: block;
                 margin-right: 0;
 
-                .el-input {
+                .kel-input {
                     margin: 0;
                 }
 
@@ -73,7 +73,7 @@
         }
 
         @include res(xs) {
-            .el-form--inline {
+            .kel-form--inline {
                 display: none;
             }
         }

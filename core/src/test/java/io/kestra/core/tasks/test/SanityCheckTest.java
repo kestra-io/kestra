@@ -37,7 +37,7 @@ class SanityCheckTest {
     @Test
     @ExecuteFlow("sanity-checks/kv.yaml")
     void qaKv(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getTaskRunList()).hasSize(7);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
@@ -118,6 +118,12 @@ class SanityCheckTest {
     @ExecuteFlow("sanity-checks/output_values.yaml")
     void qaOutputValues(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/ion_binary.yaml")
+    void qaIonBinary(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

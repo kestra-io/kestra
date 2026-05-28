@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import io.kestra.core.runners.*;
+import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -73,7 +74,7 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromLocalFileWhenAllowedGlobally() throws IOException {
         URI uri = createFile();
-        RunContext runContext = buildRunContext(List.of("/tmp"));
+        RunContext runContext = buildRunContext(List.of(System.getProperty("java.io.tmpdir")));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -84,7 +85,7 @@ class URIFetcherTest {
     @Test
     void shouldFetchFromLocalFileWhenAllowedForPlugin() throws IOException {
         URI uri = createFile();
-        RunContext runContext = buildRunContext(Collections.emptyList(), List.of("/tmp"));
+        RunContext runContext = buildRunContext(Collections.emptyList(), List.of(System.getProperty("java.io.tmpdir")));
 
         try (var fetch = URIFetcher.of(uri).fetch(runContext)) {
             String fetchedContent = new String(fetch.readAllBytes());
@@ -126,7 +127,7 @@ class URIFetcherTest {
 
     private RunContext buildRunContext(List<String> globalAllowedPaths, List<String> pluginAllowedPath) {
         var spy = Mockito.spy(runContextFactory.of());
-        var localPath = new LocalPathFactory(globalAllowedPaths).createLocalPath(spy);
+        var localPath = new LocalPathFactory(new LocalFilesConfiguration(globalAllowedPaths, true, true)).createLocalPath(spy);
         Mockito.when(spy.localPath()).thenReturn(localPath);
         Mockito.when(spy.pluginConfiguration(Mockito.anyString())).thenReturn(Optional.of(pluginAllowedPath));
         return spy;

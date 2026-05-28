@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,14 +20,20 @@ import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.posthog.PosthogService;
+
+import io.micronaut.core.annotation.Nullable;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AiService<T extends AiConfiguration> implements AiServiceInterface {
     private final PosthogService postHogService;
     @Getter
@@ -36,7 +43,11 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final VersionProvider versionProvider;
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
+    private final ExpressionContextService expressionContextService;
+    private final PluginDefaultService pluginDefaultService;
     private final NamespaceContextTool namespaceContextTool;
+    @Nullable
+    private volatile KestraDocsContextTool kestraDocsContextTool;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -46,9 +57,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public abstract ChatModel chatModel(List<ChatModelListener> listeners);
 
+    protected String baseUrl() {
+        return null;
+    }
+
     protected List<ChatModelListener> listeners(String spanName, String conversationId) {
         List<ChatModelListener> listeners = new ArrayList<>(this.listeners);
-        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, () -> metadataByConversationId.get(conversationId)));
+        listeners.add(new MetadataAppenderChatModelListener(this.instanceUid, this.aiProvider, spanName, this.baseUrl(), () -> metadataByConversationId.get(conversationId)));
         return listeners;
     }
 
@@ -63,24 +78,19 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     protected FlowYamlBuilder flowYamlBuilder(String conversationId) {
-        return AiServices.builder(FlowYamlBuilder.class)
-            .chatModel(
-                this.chatModel(
-                    this.listeners("FlowYamlBuilder", conversationId)
-                )
-            )
-            .tools(namespaceContextTool)
-            .build();
+        var builder = AiServices.builder(FlowYamlBuilder.class)
+            .chatModel(this.chatModel(this.listeners("FlowYamlBuilder", conversationId)));
+        List<Object> tools = new ArrayList<>();
+        if (namespaceContextTool != null) tools.add(namespaceContextTool);
+        if (kestraDocsContextTool != null) tools.add(kestraDocsContextTool);
+        return tools.isEmpty() ? builder.build() : builder.tools(tools).build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
-        return AiServices.builder(DashboardYamlBuilder.class)
-            .chatModel(
-                this.chatModel(
-                    this.listeners("DashboardYamlBuilder", conversationId)
-                )
-            )
-            .build();
+        var builder = AiServices.builder(DashboardYamlBuilder.class)
+            .chatModel(this.chatModel(this.listeners("DashboardYamlBuilder", conversationId)));
+        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        return builder.build();
     }
 
     public AiService(
@@ -89,11 +99,13 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final VersionProvider versionProvider,
         final InstanceService instanceService,
         final PosthogService postHogService,
-        final NamespaceContextTool namespaceContextTool,
+        @Nullable final NamespaceContextTool namespaceContextTool,
         final String aiProvider,
         final String displayName,
         final List<ChatModelListener> listeners,
-        final T aiConfiguration) {
+        final T aiConfiguration,
+        final ExpressionContextService expressionContextService,
+        final PluginDefaultService pluginDefaultService) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -102,11 +114,17 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.displayName = displayName;
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
+        this.expressionContextService = expressionContextService;
+        this.pluginDefaultService = pluginDefaultService;
         this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
         this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);
         this.versionProvider = versionProvider;
+    }
+
+    public void setKestraDocsContextTool(KestraDocsContextTool kestraDocsContextTool) {
+        this.kestraDocsContextTool = kestraDocsContextTool;
     }
 
     @Override
@@ -118,13 +136,16 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
+        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+
         String generatedFlow = flowAiCopilot.generateFlow(
             this.pluginFinder(flowGenerationPrompt.getConversationId()),
             this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
             (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
             allPluginsMetadata(),
             flowGenerationPrompt,
-            tenantId
+            tenantId,
+            pebbleExpressions
         );
 
         return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
@@ -154,14 +175,44 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         return displayName;
     }
 
+    public ExpressionContextService expressionContextService() {
+        return expressionContextService;
+    }
+
+    private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
+        if (flowYaml != null && !flowYaml.isBlank()) {
+            try {
+                Flow flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, flowYaml, false);
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());
+            }
+        }
+        if (namespace != null && !namespace.isBlank()) {
+            try {
+                Flow flow = Flow.builder()
+                    .id("__ai_context__")
+                    .namespace(namespace)
+                    .tenantId(tenantId)
+                    .tasks(List.of())
+                    .build();
+                return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
+            } catch (Exception e) {
+                log.debug("Could not build namespace pebble expression context, falling back to global: {}", e.getMessage());
+            }
+        }
+        return PebbleExpressionsFormatter.format(expressionContextService.buildGlobalExpressionContext().toDisplayNameMap());
+    }
+
     public PluginFinder pluginFinderForConversation(String conversationId) {
         return this.pluginFinder(conversationId);
     }
 
     public <B> B buildAiService(Class<B> serviceClass, String spanName, String conversationId) {
-        return AiServices.builder(serviceClass)
-            .chatModel(this.chatModel(this.listeners(spanName, conversationId)))
-            .build();
+        var builder = AiServices.builder(serviceClass)
+            .chatModel(this.chatModel(this.listeners(spanName, conversationId)));
+        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        return builder.build();
     }
 
     public record ConversationMetadata(String conversationId, String ip, String parentSpanId, String uid) {
@@ -177,7 +228,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             return null;
         }
         String parentSpanId = IdUtils.create();
-        String uid = userInfo.uid();
+        String uid = Objects.requireNonNullElse(userInfo.uid(), "api-call");
         this.postHogService.capture(
             uid, "$ai_trace", Map.of(
                 "$ai_trace_id", conversationId,

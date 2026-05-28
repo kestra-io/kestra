@@ -9,24 +9,24 @@
 </template>
 
 <script setup lang="ts">
-    import CloseIcon from "vue-material-design-icons/Close.vue";
-    const emit = defineEmits(["click"]);
+    import CloseIcon from "vue-material-design-icons/Close.vue"
+    const emit = defineEmits(["click"])
 </script>
 
 <style scoped>
     .clear-button{
         border: none;
         background: transparent;
-        color: var(--ks-content-link);
+        color: var(--ks-text-link);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .clear-icon * {
-        font-size: 20px;
+        font-size: var(--ks-font-size-lg);
     }
     .clear-icon {
-        height: 20px;
+        height: var(--ks-font-size-lg);
     }
 </style>

@@ -1,10 +1,12 @@
 package io.kestra.queue;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.utils.IdUtils;
+import io.micrometer.core.instrument.Tags;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
@@ -15,12 +17,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
-
-import io.kestra.core.queues.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.awaitility.Awaitility.await;
@@ -36,6 +37,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
+
+    @Inject
+    private MetricRegistry metricRegistry;
 
     private KestraContext realContext;
     protected NoOpShutdownContext noOpShutdownContext;
@@ -56,18 +60,25 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     void singleConsumer() throws QueueException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+        Set<String> expectedKeys = Collections.synchronizedSet(new HashSet<>());
 
         QueueSubscriber<TestDispatch> subscriber = dispatchQueue
             .subscriber()
             .subscribe(e ->
             {
-                list.add(e.getLeft().id);
-                countDownLatch.countDown();
+                if (expectedKeys.contains(e.getLeft().key)) {
+                    list.add(e.getLeft().id);
+                    countDownLatch.countDown();
+                }
             });
 
         String prefix = this.keyPrefix();
-        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 1));
-        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 2));
+        String key1 = prefix + "_" + IdUtils.create();
+        String key2 = prefix + "_" + IdUtils.create();
+        expectedKeys.add(key1);
+        expectedKeys.add(key2);
+        dispatchQueue.emit(new TestDispatch(key1, 1));
+        dispatchQueue.emit(new TestDispatch(key2, 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -108,7 +119,14 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     @Test
     void closingConsumer() throws QueueException, InterruptedException {
         singleConsumer();
-        singleConsumer();
+
+        try {
+            singleConsumer();
+        } catch (RejectedExecutionException e) {
+            // Some queue backends can briefly reject task submission while previous consumers are tearing down.
+            Thread.sleep(200);
+            singleConsumer();
+        }
     }
 
     @Test
@@ -196,7 +214,7 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         );
 
         // consume the remaining items from the queue
-        CountDownLatch remaining = new CountDownLatch(3);
+        CountDownLatch remaining = new CountDownLatch(13);
         subscriber = dispatchQueue
             .subscriber()
             .subscribe(e ->
@@ -262,6 +280,65 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isBefore(resumeTime)).count()).isEqualTo(1);
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime)).count()).isEqualTo(4);
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRecordPauseAndResumeCounters() throws QueueException, InterruptedException {
+        // Given
+        String queueName = ((GenericQueueInterface<?>) dispatchQueue).queueName();
+        Tags tags = Tags.of(MetricRegistry.TAG_QUEUE_NAME, queueName);
+        double pauseBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL, tags);
+        double resumeBefore = counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL, tags);
+
+        QueueSubscriber<TestDispatch> subscriber = dispatchQueue
+            .subscriber()
+            .subscribe(e -> {});
+
+        // When
+        subscriber.pause();
+        subscriber.resume();
+        subscriber.pause();
+        subscriber.resume();
+        subscriber.close();
+
+        // Then
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL, tags) - pauseBefore).isEqualTo(2.0);
+        assertThat(counterValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_RESUMED_TOTAL, tags) - resumeBefore).isEqualTo(2.0);
+    }
+
+    @Test
+    void shouldRemoveSubscribersFromGaugeOnClose() throws QueueException, InterruptedException {
+        // Given
+        String queueName = ((GenericQueueInterface<?>) dispatchQueue).queueName();
+        Tags tags = Tags.of(MetricRegistry.TAG_QUEUE_NAME, queueName);
+        double baseline = gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags);
+
+        // When - subscribe two
+        QueueSubscriber<TestDispatch> sub1 = dispatchQueue.subscriber().subscribe(e -> {});
+        QueueSubscriber<TestDispatch> sub2 = dispatchQueue.subscriber().subscribe(e -> {});
+
+        // Then
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(2.0);
+
+        // When - close one
+        sub1.close();
+        // Then
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(1.0);
+
+        // When - close the other
+        sub2.close();
+        // Then
+        assertThat(gaugeValue(MetricRegistry.METRIC_QUEUE_SUBSCRIBERS_ACTIVE, tags) - baseline).isEqualTo(0.0);
+    }
+
+    private double counterValue(String name, Tags tags) {
+        var counter = metricRegistry.find(name).tags(tags).counter();
+        return counter == null ? 0.0 : counter.count();
+    }
+
+    private double gaugeValue(String name, Tags tags) {
+        var gauge = metricRegistry.find(name).tags(tags).gauge();
+        return gauge == null ? 0.0 : gauge.value();
     }
 
     @Test

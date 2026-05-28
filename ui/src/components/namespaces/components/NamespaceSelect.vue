@@ -1,5 +1,5 @@
 <template>
-    <el-select
+    <KsSelect
         class="fit-text"
         v-model="modelValue"
         :multiple
@@ -8,14 +8,11 @@
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
-        remote
-        remoteShowSuffix
-        :remoteMethod="onSearch"
         :placeholder="placeholder ?? $t('namespaces')"
-        :suffixIcon="readOnly ? Lock : undefined"
+        :suffixIcon="suffixIcon"
     >
         <template #tag>
-            <el-tag
+            <KsTag
                 v-for="(value, index) in validValues"
                 :key="index"
                 class="namespace-tag"
@@ -24,25 +21,25 @@
             >
                 <FolderOpenOutline class="tag-icon" />
                 {{ value }}
-            </el-tag>
+            </KsTag>
         </template>
-        <el-option
+        <KsOption
             v-for="item in options"
             :key="item.id"
             :label="item.label"
             :value="item.id"
         />
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import {defaultNamespace} from "../../../composables/useNamespaces";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import {defaultNamespace} from "../../../composables/useNamespaces"
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
@@ -51,19 +48,21 @@
     }>(), {
         multiple: false,
         clearable: true,
-        placeholder: undefined
-    });
-
-    defineOptions({
-        inheritAttrs: false
+        placeholder: undefined,
     })
 
-    const modelValue = defineModel<string | string[]>();
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
 
-    const namespacesStore = useNamespacesStore();
+    defineOptions({
+        inheritAttrs: false,
+    })
+
+    const modelValue = defineModel<string | string[]>()
+
+    const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean)
+        [modelValue.value].flat().filter(Boolean),
     )
 
     const options = computed(() => {
@@ -73,22 +72,17 @@
             })
     })
 
-    const onSearch = (search: string) => {
-        namespacesStore.loadAutocomplete({
-            q: search,
-            ids: modelValue.value as string[] ?? [],
-        })
-    }
-
     onMounted(() => {
+        namespacesStore.loadAutocomplete({ids: modelValue.value as string[] ?? []})
+
         if (modelValue.value === undefined || modelValue.value.length === 0) {
-            const defaultNamespaceVal = defaultNamespace();
+            const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal];
+                    modelValue.value = [defaultNamespaceVal]
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value;
+                modelValue.value = defaultNamespaceVal ?? modelValue.value
             }
         }
     })
@@ -97,18 +91,18 @@
 <style scoped lang="scss">
     .namespace-tag {
         background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-log-content-debug);
+        color: var(--ks-status-info);
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 
-        :deep(.el-tag__content) {
+        :deep(.kel-tag__content) {
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
-        :deep(.el-tag__close) {
-            color: var(--ks-log-content-debug);
+        :deep(.kel-tag__close) {
+            color: var(--ks-status-info);
 
             &:hover {
                 background-color: transparent;

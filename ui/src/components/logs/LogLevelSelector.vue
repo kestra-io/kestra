@@ -1,20 +1,19 @@
 <template>
-    <el-select
+    <KsSelect
         :modelValue="value"
         @update:model-value="emit('update:modelValue', $event)"
         filterable
-        :persistent="false"
         :placeholder="$t('revisions')"
     >
-        <el-option
+        <KsOption
             v-for="item in LEVELS"
             :key="item"
             :label="item"
             :value="item"
         >
             {{ item }}
-        </el-option>
-    </el-select>
+        </KsOption>
+    </KsSelect>
 </template>
 <script setup lang="ts">
     const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()
@@ -24,7 +23,7 @@
         router?: boolean
     }>(), {
         value: "INFO",
-        router: true
+        router: true,
     })
 
     const LEVELS = [
@@ -33,5 +32,5 @@
         "INFO",
         "WARN",
         "ERROR",
-    ];
+    ]
 </script>

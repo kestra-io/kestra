@@ -11,8 +11,10 @@ import org.awaitility.Awaitility;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "scheduler",
@@ -21,7 +23,7 @@ import picocli.CommandLine;
 @Slf4j
 public class SchedulerCommand extends AbstractServerCommand {
     @Inject
-    private ApplicationContext applicationContext;
+    private Provider<Scheduler> scheduler;
 
     @CommandLine.Option(names = { "-t", "--max-threads" }, description = "The maximum number of threads used by the scheduler for evaluating triggers.")
     private Integer maxThread;
@@ -37,10 +39,9 @@ public class SchedulerCommand extends AbstractServerCommand {
     public Integer call() throws Exception {
         super.call();
 
-        Scheduler scheduler = applicationContext.getBean(Scheduler.class);
-        scheduler.start(Optional.ofNullable(this.maxThread).orElse(Scheduler.defaultMaxNumThreads()));
+        scheduler.get().start(Optional.ofNullable(this.maxThread).orElse(Scheduler.defaultMaxNumThreads()));
 
-        Awaitility.await().forever().until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

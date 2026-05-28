@@ -5,28 +5,28 @@
 </template>
 
 <script setup lang="ts">
-    import {cssVariable} from "@kestra-io/ui-libs";
-    import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "override/stores/misc";
-    import {computed} from "vue";
+    import {cssVar} from "@kestra-io/design-system"
+    import {useLayoutStore} from "../../stores/layout"
+    import {useMiscStore} from "override/stores/misc"
+    import {computed} from "vue"
 
-    const layoutStore = useLayoutStore(); 
-    const miscStore = useMiscStore(); 
-    
+    const layoutStore = useLayoutStore()
+    const miscStore = useMiscStore()
+
     const name = computed(() => {
-        return layoutStore.envName || miscStore.configs?.environment?.name;
+        return layoutStore.envName || miscStore.configs?.environment?.name
     })
 
     const color = computed(() => {
         if (layoutStore.envColor) {
-            return layoutStore.envColor;
+            return layoutStore.envColor
         }
 
         if (miscStore.configs?.environment?.color) {
-            return miscStore.configs.environment.color;
+            return miscStore.configs.environment.color
         }
 
-        return cssVariable("--bs-info");
+        return cssVar("--ks-status-info")
     })
 
 </script>
@@ -39,10 +39,10 @@
 
     strong {
         border: 1px solid v-bind('color');
-        border-radius: var(--bs-border-radius);
-        color: var(--ks-content-primary);
+        border-radius: var(--kel-border-radius-base);
+        color: var(--ks-text-primary);
         padding: 0.125rem 0.25rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;

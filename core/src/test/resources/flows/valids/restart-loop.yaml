@@ -1,0 +1,17 @@
+id: restart-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: [1, 2, 3]
+    tasks:
+    - id: inLoop
+      type: io.kestra.plugin.core.log.Log
+      message: In da loop
+    - id: failFirstTime
+      type: io.kestra.plugin.core.log.Log
+      message: "{{ 1 / taskrun.attemptsCount }}"
+    - id: logSuccess
+      type: io.kestra.plugin.core.log.Log
+      message: Success

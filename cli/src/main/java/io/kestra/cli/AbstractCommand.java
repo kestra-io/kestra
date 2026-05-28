@@ -14,13 +14,15 @@ import java.util.concurrent.Callable;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.cli.services.StartupHookInterface;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.webserver.services.FlowAutoLoaderService;
+import io.kestra.core.migration.MigrationRunner;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
@@ -28,6 +30,20 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
+import io.kestra.core.utils.Rethrow;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -46,6 +62,12 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private io.kestra.core.utils.VersionProvider versionProvider;
 
     @Inject
+    private Optional<EmbeddedServer> embeddedServer;
+
+    @Inject
+    private BeanProvider<FlowAutoLoader> flowAutoLoaderService;
+
+    @Inject
     protected Provider<PluginRegistry> pluginRegistryProvider;
 
     @Inject
@@ -59,16 +81,21 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
 
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        MigrationRunner.setSkipAutoRun(true);
+        return Map.of();
+    }
+
     @Override
     public Integer call() throws Exception {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
         initLogger();
         sendServerLog();
+        maybeInitPlugins();
         if (this.startupHook != null) {
             this.startupHook.start(this);
         }
-
-        maybeInitPlugins();
         maybeStartWebserver();
         return 0;
     }
@@ -145,8 +172,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
             return;
         }
 
-        applicationContext
-            .findBean(EmbeddedServer.class)
+        embeddedServer
             .ifPresent(server ->
             {
                 server.start();
@@ -169,9 +195,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
                 }
 
                 if (isFlowAutoLoadEnabled()) {
-                    applicationContext
-                        .findBean(FlowAutoLoaderService.class)
-                        .ifPresent(FlowAutoLoaderService::load);
+                    flowAutoLoaderService.ifPresent(FlowAutoLoader::load);
                 }
             });
     }

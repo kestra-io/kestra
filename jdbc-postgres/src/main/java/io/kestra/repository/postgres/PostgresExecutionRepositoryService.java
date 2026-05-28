@@ -27,7 +27,7 @@ public abstract class PostgresExecutionRepositoryService {
             });
         }
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
@@ -62,7 +62,7 @@ public abstract class PostgresExecutionRepositoryService {
         if (!inConditions.isEmpty()) {
             conditions.add(DSL.or(inConditions));
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
     }
 
     public static Condition statesFilter(List<State.Type> state) {

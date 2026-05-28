@@ -12,11 +12,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import io.kestra.core.models.triggers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -24,13 +24,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -38,7 +31,6 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -275,23 +267,13 @@ class TriggerSchedulerTest {
     }
 
     @Test
-    @FlakyTest
     void shouldSucceedScheduleConditionalScheduleTriggerGivenValidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.defaultFlow(
             builder -> builder
                 // execute the workflow only if that day is the first Monday of the month.
                 .cron("0 0 * * *")
-                .conditions(
-                    List.of(
-                        DayWeekInMonth.builder()
-                            .type(DayWeekInMonth.class.getName())
-                            .date(Property.ofExpression("{{ trigger.date }}"))
-                            .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
-                            .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                            .build()
-                    )
-                )
+                .when("{{isDayWeekInMonth(trigger.date, 'MONDAY', 'FIRST')}}")
                 .build()
         );
         // Start scheduler at some arbitrary date (e.g., 2025-11-01, which is a Saturday)
@@ -314,6 +296,31 @@ class TriggerSchedulerTest {
 
         // THEN - first Monday of the month => should fire execution
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldStoreNextConditionMatchingDateOnFirstEvaluationWhenConditionFails() {
+        // GIVEN clock fixed on a Friday at 10:00, a */1 min cron + DayWeek=SUNDAY condition
+        ZonedDateTime friday = java.time.LocalDateTime.of(2024, 1, 5, 10, 0)
+            .atZone(ZoneId.systemDefault());
+        SchedulerClock.setClock(Clock.fixed(friday.toInstant(), ZoneId.systemDefault()));
+
+        FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(
+            ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // WHEN the first cron tick fires (1 minute later)
+        SchedulerClock.offset(Duration.ofMinutes(1));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN the condition failed (Friday ≠ Sunday) and the persisted nextEvaluationDate is on a Sunday
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElseThrow();
+        ZonedDateTime nextZoned = state.getNextEvaluationDate().atZone(ZoneId.systemDefault());
+        assertThat(nextZoned.getDayOfWeek())
+            .as("nextEvaluationDate should fall on a SUNDAY, but was %s", nextZoned)
+            .isEqualTo(DayOfWeek.SUNDAY);
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
     }
 
     @Test
@@ -570,6 +577,28 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldDeleteOrphanTriggerStateOnScheduleGivenSoftDeletedFlow() {
+        // region [GIVEN]
+        FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
+
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(initialState);
+
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        TriggerState state = triggerStateStore.findById(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNull();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
     void shouldScheduleScheduleTriggerWithBackfill() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);
@@ -692,8 +721,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Optional.of(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Optional.of(TriggerService.generateEvaluationResult(this, conditionContext, Map.of()));
         }
     }
 
@@ -707,8 +736,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Mono.just(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Publisher<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Mono.just(TriggerService.generateRealtimeEvaluationResult(this, conditionContext, null));
         }
     }
 }

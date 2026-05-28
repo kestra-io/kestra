@@ -42,6 +42,23 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
     }
 
     @Override
+    public Set<String> findDistinctNamespace(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> new HashSet<>(DSL
+                    .using(configuration)
+                    .select(field("namespace"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId, false))
+                    .and(lastCondition())
+                    .groupBy(field("namespace"))
+                    .fetch()
+                    .map(record -> record.getValue("namespace", String.class)))
+            );
+    }
+
+    @Override
     public Optional<PersistedKvMetadata> findByName(String tenantId, String namespace, String name) {
         var condition = field("namespace").eq(namespace)
             .and(field("name").eq(name))
@@ -53,7 +70,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         @Nullable List<QueryFilter> filters,
         boolean allowExpired,
         FetchVersion fetchBehavior) {
-        var condition = allowExpired ? DSL.trueCondition()
+        var condition = allowExpired ? DSL.noCondition()
             : DSL.or(
                 field("expiration_date").greaterThan(Instant.now()),
                 field("expiration_date").isNull()
@@ -73,6 +90,11 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
     public ArrayListTotal<PersistedKvMetadata> find(Pageable pageable, String tenantId, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) {
         var condition = findSelect(filters, allowExpired, fetchBehavior);
         return this.findPage(pageable, tenantId, condition, allowDeleted);
+    }
+
+    @Override
+    public PersistedKvMetadata delete(PersistedKvMetadata persistedKvMetadata) {
+        return this.save(persistedKvMetadata.toDeleted());
     }
 
     @Override

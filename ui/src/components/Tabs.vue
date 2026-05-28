@@ -1,69 +1,53 @@
 <template>
-    <el-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
-        <el-tab-pane
-            v-for="tab in tabs.filter(t => !t.hidden)"
-            :key="tab.name"
-            :label="tab.title"
-            :name="tab.name || 'default'"
-            :disabled="tab.disabled"
-        >
-            <template #label>
-                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
-                    <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
-                        <span><strong>{{ tab.title }}</strong></span>
-                    </el-tooltip>
-                    <EnterpriseBadge :enable="tab.locked">
-                        <span class="tab-label-wrapper">
-                            {{ tab.title }}
-                            <el-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
-                        </span>
-                    </EnterpriseBadge>
-                </component>
-            </template>
-        </el-tab-pane>
-    </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}">
-        <BlueprintDetail
-            v-if="selectedBlueprintId"
-            :blueprintId="selectedBlueprintId"
-            blueprintType="community"
-            @back="selectedBlueprintId = undefined"
-            :combinedView="true"
-            :kind="activeTab.props.blueprintKind"
-            :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
-        />
-        <component
-            v-else
-            v-bind="{...activeTab.props, ...attrsWithoutClass}"
-            v-on="activeTab['v-on'] ?? {}"
-            ref="tabContent"
-            :is="activeTab.component"
-            :namespace="namespaceToForward"
-            @go-to-detail="(blueprintId: string) => selectedBlueprintId = blueprintId"
-            :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
-        />
+    <section
+        v-if="vertical && activeTab"
+        v-bind="attrsWithoutClass"
+        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+    >
+        <TabBody />
     </section>
+
+    <KsRouterTab
+        v-else
+        :tabs="tabs"
+        :routeName="routeName"
+        :top="top"
+        :embedActiveTab="embedActiveTab"
+        :class="containerClass"
+        @changed="emit('changed', $event)"
+    >
+        <template #tab-label="{tab}">
+            <KsTooltip
+                v-if="tab.disabled && (tab as Tab).props?.showTooltip"
+                :content="$t('add-trigger-in-editor')"
+                placement="top"
+            >
+                <span><strong>{{ tab.title }}</strong></span>
+            </KsTooltip>
+            <EnterpriseBadge :enable="(tab as Tab).locked">
+                <span class="tab-label-wrapper">
+                    {{ tab.title }}
+                    <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
+                </span>
+            </EnterpriseBadge>
+        </template>
+        <template #content>
+            <TabBody />
+        </template>
+    </KsRouterTab>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, nextTick, useAttrs} from "vue";
-    import {useRoute} from "vue-router";
-    import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
+    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, type Component} from "vue"
+    import {useRoute} from "vue-router"
+    import EnterpriseBadge from "./EnterpriseBadge.vue"
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
+    import type {RouterTab} from "@kestra-io/design-system"
+    import {useRouteTabsStore} from "../stores/routeTabs"
 
-    interface Tab {
-        name?: string;
-        title: string;
-        hidden?: boolean;
-        disabled?: boolean;
-        props?: any;
-        count?: number;
+    export interface Tab extends RouterTab {
         locked?: boolean;
-        query?: any;
-        component?: any;
-        maximized?: boolean;
-        noOverflow?: boolean;
-        "v-on"?: any;
+        props?: any;
     }
 
     const props = withDefaults(defineProps<{
@@ -75,14 +59,19 @@
          */
         embedActiveTab?: string;
         namespace?: string | null;
-        type?: string;
+        /**
+         * When true, push the tab list into the routeTabsStore so it surfaces in
+         * the vertical RouteTabsSidebar; this component then only renders the
+         * active tab's content (no horizontal tab bar).
+         */
+        vertical?: boolean;
     }>(), {
         routeName: "",
         top: true,
         embedActiveTab: undefined,
         namespace: null,
-        type: undefined
-    });
+        vertical: false,
+    })
 
     const emit = defineEmits<{
         /**
@@ -90,157 +79,140 @@
          * @property {Object} newTab the new active tab
          */
         changed: [tab: Tab];
-    }>();
+    }>()
 
-    const attrs = useAttrs();
-    const route = useRoute();
+    const attrs = useAttrs()
+    const route = useRoute()
+    const routeTabsStore = useRouteTabsStore()
+    const tabsOwnerId = Symbol("route-tabs-owner")
 
-    const activeName = ref<string | undefined>(undefined);
-    const selectedBlueprintId = ref<string | undefined>(undefined);
+    const selectedBlueprintId = ref<string | undefined>(undefined)
 
-    const activeTab = computed(() => {
-        return props.tabs.filter(tab => (props.embedActiveTab ?? route?.params?.tab) === tab.name)[0] || props.tabs[0];
-    });
+    const activeTab = computed<Tab>(() => {
+        const key = props.embedActiveTab ?? (route?.params?.tab as string | undefined)
+        return props.tabs.find(t => t.name === key) ?? props.tabs[0]
+    })
 
-    const isEditorActiveTab = computed(() => {
-        const TAB = activeTab.value.name;
-        const ROUTE = route?.name as string;
+    const isEditorActiveTab = (tab: Tab): boolean => {
+        const TAB = tab.name
+        const ROUTE = route?.name as string
 
         if (["flows/update", "flows/create"].includes(ROUTE)) {
-            return TAB === "edit";
+            return TAB === "edit"
         } else if (["namespaces/update", "namespaces/create"].includes(ROUTE)) {
-            if (TAB === "files") return true;
+            if (TAB === "files") return true
         }
 
-        return false;
-    });
+        return false
+    }
 
     const attrsWithoutClass = computed(() => {
         return Object.fromEntries(
-            Object.entries(attrs)
-                .filter(([key]) => key !== "class")
-        );
-    });
+            Object.entries(attrs).filter(([key]) => key !== "class"),
+        )
+    })
 
-    const namespaceToForward = computed(() => {
-        return activeTab.value.props?.namespace ?? props.namespace;
+    const getNamespaceToForward = (tab: Tab) => {
+        return tab.props?.namespace ?? props.namespace
         // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
         // in this case this.props.namespace will be used
-    });
-
-    const containerClass = computed(() => getTabClasses(activeTab.value));
-
-    const embeddedTabChange = (tab: Tab) => {
-        emit("changed", tab);
-    };
-
-    const setActiveName = () => {
-        activeName.value = activeTab.value.name || "default";
-    };
-
-    const to = (tab: Tab) => {
-        if (activeTab.value === tab) {
-            setActiveName();
-            return route;
-        } else {
-            return {
-                name: props.routeName || route?.name,
-                params: {...route?.params, tab: tab.name},
-                query: {...tab.query}
-            };
-        }
-    };
-
-    const getTabClasses = (tab: Tab) => {
-        if (tab.locked) return {"px-0": true};
-        return {"container": true, "mt-4": true};
-    };
-
-    if (route) {
-        watch(route, () => {
-            setActiveName();
-        });
     }
 
-    watch(activeTab, () => {
-        nextTick(() => {
-            setActiveName();
-        });
-    });
+    const containerClass = computed(() => {
+        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
+        return {"container": true, "tabs-flush-top": true}
+    })
 
-    onMounted(() => {
-        setActiveName();
-    });
+    function syncStore() {
+        if (props.vertical) {
+            routeTabsStore.setTabs({
+                ownerId: tabsOwnerId,
+                tabs: props.tabs,
+                routeName: props.routeName,
+                embedActiveTab: props.embedActiveTab,
+            })
+        } else {
+            routeTabsStore.clearTabsIfOwner(tabsOwnerId)
+        }
+    }
+
+    watch(
+        () => [props.vertical, props.tabs, props.routeName, props.embedActiveTab],
+        syncStore,
+        {deep: true},
+    )
+
+    onMounted(syncStore)
+    onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
+
+    const TabBody = defineComponent({
+        name: "TabBody",
+        inheritAttrs: false,
+        setup() {
+            return () => {
+                const tab = activeTab.value as Tab | undefined
+                if (selectedBlueprintId.value) {
+                    return h(BlueprintDetail, {
+                        blueprintId: selectedBlueprintId.value,
+                        blueprintType: "community",
+                        onBack: () => (selectedBlueprintId.value = undefined),
+                        combinedView: true,
+                        kind: tab?.props?.blueprintKind,
+                        embed: tab?.props?.embed ?? true,
+                    })
+                }
+                if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
+                return h(tab.component as Component, {
+                    ...tab.props,
+                    ...attrsWithoutClass.value,
+                    ...tab["v-on"],
+                    namespace: getNamespaceToForward(tab),
+                    embed: tab.props?.embed ?? true,
+                    onGoToDetail: (id: string) => (selectedBlueprintId.value = id),
+                })
+            }
+        },
+    })
 </script>
 
 <style scoped lang="scss">
-section.container.mt-4:has(> section.empty) {
-    margin: 0 !important;
-    padding: 0 !important;
-}
+    section.maximized {
+        margin: 0 !important;
+        padding: 0;
+        flex-grow: 1;
+    }
 
-:deep(.el-tabs) {
-    .el-tabs__item.is-disabled {
-        &:after {
-            top: 0;
-            content: "";
-            position: absolute;
-            display: block;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-        }
+    section.no-overflow {
+        overflow: hidden;
+    }
 
-        a {
-            color: var(--ks-content-inactive);
+    .editor-splitter {
+        height: 100%;
+
+        :deep(.kel-splitter-panel) {
+            display: flex;
+            flex-direction: column;
         }
     }
-}
 
-.maximized {
-    margin: 0 !important;
-    padding: 0;
-    flex-grow: 1;
-}
-
-.no-overflow {
-    overflow: hidden;
-}
-
-.editor-splitter {
-    height: 100%;
-
-    :deep(.el-splitter-panel) {
-        display: flex;
-        flex-direction: column;
+    .sidebar {
+        height: 100%;
+        width: 100%;
     }
-}
 
-.sidebar {
-    height: 100%;
-    width: 100%;
-}
-
-:deep(.el-tabs__nav-next),
-:deep(.el-tabs__nav-prev) {
-    &.is-disabled {
-        display: none;
+    .tab-label-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
-}
 
-.tab-label-wrapper {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.inline-badge {
-    :deep(.el-badge__content) {
-        transform: translateY(-1px);
-        position: static;
-        border: none;
-        margin-top: 0;
-        vertical-align: middle;
+    .inline-badge {
+        :deep(.kel-badge__content) {
+            transform: translateY(-1px);
+            position: static;
+            border: none;
+            margin-top: 0;
+            vertical-align: middle;
+        }
     }
-}
 </style>

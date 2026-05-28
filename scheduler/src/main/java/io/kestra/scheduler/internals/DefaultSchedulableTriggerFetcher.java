@@ -79,8 +79,8 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 );
 
                 // Check whether the Flow still exists
-                if (maybeFlowTrigger.isEmpty()) {
-                    triggerStateStore.delete(triggerState); // Delete triggerState state
+                if (maybeFlowTrigger.isEmpty() || maybeFlowTrigger.get().isDeleted()) {
+                    triggerStateStore.delete(triggerState);
                     return null;
                 }
 
@@ -89,7 +89,7 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
                 // 1. The overall Flow might be disabled 
                 // 2. The specific trigger may have been removed.
-                // 3. The trigger itself may have been disabled .
+                // 3. The trigger itself may have been disabled.
                 // 
                 // 2. and 3. can occur if the Flow has been updated but the associated TriggerEvent
                 // has not yet been processed. In these cases, 

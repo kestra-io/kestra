@@ -19,15 +19,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, toRef} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import {useDocsLink} from "./useDocsLink";
+    import {computed, toRef} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import {useDocsLink} from "./useDocsLink"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const emit = defineEmits<{
         click: []
-    }>();
+    }>()
 
     const props = withDefaults(defineProps<{
         href?: string;
@@ -36,24 +36,24 @@
     }>(), {
         href: undefined,
         useRaw: false,
-        class: undefined
-    });
+        class: undefined,
+    })
 
-    const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));
-    const finalHref = computed(() => props.useRaw ? props.href : href.value);
+    const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")))
+    const finalHref = computed(() => props.useRaw ? props.href : href.value)
 
     const navigateInVuex = () => {
-        docStore.docPath = finalHref.value;
-    };
+        docStore.docPath = finalHref.value
+    }
 </script>
 
 <style lang="scss" scoped>
     .docsMenu {
         .depth-0 {
-            padding-left: 20px;
+            padding-left: var(--ks-font-size-lg);
         }
         .depth-1 {
-            padding-left: 20px;
+            padding-left: var(--ks-font-size-lg);
         }
         .depth-2 {
             padding-left: 30px;

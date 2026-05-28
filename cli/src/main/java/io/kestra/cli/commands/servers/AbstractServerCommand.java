@@ -3,6 +3,7 @@ package io.kestra.cli.commands.servers;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.contexts.KestraContext;
 
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -10,6 +11,11 @@ import picocli.CommandLine;
 public abstract class AbstractServerCommand extends AbstractCommand implements ServerCommandInterface {
     @CommandLine.Option(names = { "--port" }, description = "The port to bind")
     Integer serverPort;
+
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return Map.of();
+    }
 
     @Override
     public Integer call() throws Exception {

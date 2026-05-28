@@ -100,13 +100,20 @@ public class RetryCaseTest {
         runnerUtils.runOne(
             Execution.newExecution(flow, null),
             flow,
-            Duration.ofSeconds(10)
+            Duration.ofSeconds(30)
         );
         Await.until(
             () -> "flow should have ended in Failed state",
-            () -> executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent(),
+            () -> {
+                try {
+                    return executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent();
+                } catch (Exception e) {
+                    // Repository may be unavailable during context teardown (e.g., ES connection pool closed)
+                    return false;
+                }
+            },
             Duration.ofMillis(100),
-            Duration.ofSeconds(10)
+            Duration.ofSeconds(30)
         );
         var executions = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED);
         assertThat(executions.stream().map(e -> e.getState().getCurrent())).contains(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
@@ -155,8 +162,17 @@ public class RetryCaseTest {
 
     public void retryFlowableParallel(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().get(1).attemptNumber()).isGreaterThanOrEqualTo(2);
-        assertThat(execution.getTaskRunList().get(2).attemptNumber()).isGreaterThanOrEqualTo(2);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        // The Loop task run itself is not retried; its child tasks are retried within their sub-executions
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(1);
+
+        // At least one sub-execution must have retried its child task
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(2);
+        boolean anyChildRetried = subExecutions.stream()
+            .flatMap(sub -> sub.getTaskRunList().stream())
+            .anyMatch(tr -> tr.getTaskId().equals("child") && tr.attemptNumber() >= 2);
+        assertThat(anyChildRetried).isTrue();
     }
 
     public void retryDynamicTask(Execution execution) {

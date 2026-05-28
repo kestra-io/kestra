@@ -1,30 +1,28 @@
-import moment from "moment";
+import moment from "moment"
 
-export default class QueryBuilder {
-    static split(q) {
-        return q.split(/[^a-zA-Z0-9_.-]+/g)
-            .filter(r => r !== "");
+export function split(q) {
+    return q.split(/[^a-zA-Z0-9_.-]+/g)
+        .filter(r => r !== "")
+}
+
+export function toLucene(q) {
+    const splitQuery = split(q)
+
+    let query = "(*" + splitQuery.join("*") + "*)^3 OR (*" + splitQuery.join("* AND *") + "*)"
+
+    if (splitQuery.length === 1 ) {
+        query = `(${q})^5 OR ${query}`
     }
 
-    static toLucene(q) {
-        const split = QueryBuilder.split(q);
+    return `(${query})`
+}
 
-        let query = "(*" + split.join("*") + "*)^3 OR (*" + split.join("* AND *") + "*)";
+export function toTextLucene(q) {
+    const splitQuery = split(q)
 
-        if (split.length === 1 ) {
-            query = `(${q})^5 OR ${query}`
-        }
+    return `(${splitQuery.join(" AND ") })`
+}
 
-        return `(${query})`;
-    }
-
-    static toTextLucene(q) {
-        const split = QueryBuilder.split(q);
-
-        return `(${split.join(" AND ") })`;
-    }
-
-    static iso(date) {
-        return moment(new Date(parseInt(date))).toISOString(true);
-    }
+export function iso(date) {
+    return moment(new Date(parseInt(date))).toISOString(true)
 }

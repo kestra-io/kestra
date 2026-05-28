@@ -2,6 +2,7 @@
     <div ref="rootEl" class="ai-copilot-wrapper">
         <AITriggerButton
             v-if="sticky && aiCopilotAllowed"
+            ref="triggerBtn"
             class="no-code-ai-trigger"
             :show="true"
             :opened="aiCopilotOpened"
@@ -15,17 +16,10 @@
             :closeAiCopilot="closeAiCopilot"
         />
 
-        <Transition name="backdrop-fade">
-            <div
-                v-if="aiCopilotOpened"
-                class="ai-copilot-backdrop"
-                @click="closeAiCopilot"
-            />
-        </Transition>
-
         <Transition name="copilot-slide">
             <AiCopilot
                 v-if="aiCopilotOpened"
+                ref="copilotEl"
                 class="position-absolute prompt ai-copilot-popup"
                 @close="closeAiCopilot"
                 :flow="flow"
@@ -39,18 +33,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import AiCopilot from "./AiCopilot.vue";
-    import AITriggerButton from "./AITriggerButton.vue";
-    import {useAuthStore} from "override/stores/auth";
-    import {useApiStore} from "../../stores/api";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import Utils from "../../utils/utils";
-    import type {AiGenerationType} from "../../utils/constants";
+    import {computed, ref} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {onClickOutside} from "@vueuse/core"
+    import AiCopilot from "./AiCopilot.vue"
+    import AITriggerButton from "./AITriggerButton.vue"
+    import {useAuthStore} from "override/stores/auth"
+    import {useApiStore} from "../../stores/api"
+    import {useMiscStore} from "override/stores/misc"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import * as Utils from "../../utils/utils"
+    import {aiGenerationTypes} from "../../utils/constants"
+    import type {AiGenerationType} from "../../utils/constants"
 
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         flow: string;
         generationType: AiGenerationType;
         namespace?: string;
@@ -58,33 +55,51 @@
     }>(), {
         namespace: undefined,
         sticky: false,
-    });
+    })
 
     const emit = defineEmits<{
         (e: "generated-yaml", yaml: string): void;
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
-    const authStore = useAuthStore();
-    const apiStore = useApiStore();
+    const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const apiStore = useApiStore()
+    const miscStore = useMiscStore()
 
-    const rootEl = ref<HTMLDivElement>();
-    const aiCopilotOpened = ref(false);
-    const conversationId = ref<string>(Utils.uid());
-    const aiCopilotAllowed = computed(() => !!authStore.user?.hasAnyActionOnAnyNamespace(permission.AI_COPILOT, action.READ));
+    const rootEl = ref<HTMLDivElement>()
+    const copilotEl = ref<InstanceType<typeof AiCopilot>>()
+    const triggerBtn = ref<InstanceType<typeof AITriggerButton>>()
+    const aiCopilotOpened = ref(false)
+    const conversationId = ref<string>(Utils.uid())
+
+    onClickOutside(
+        computed(() => copilotEl.value?.$el),
+        () => { if (aiCopilotOpened.value) closeAiCopilot() },
+        {ignore: [computed(() => triggerBtn.value?.$el), ".ai-provider-pill-popper"]},
+    )
+
+    const aiCopilotAllowed = computed(() => {
+        if (!authStore.user?.hasAnyActionOnAnyNamespace(resource.COPILOT, action.USE)) {
+            return false
+        }
+        if (props.generationType === aiGenerationTypes.APP || props.generationType === aiGenerationTypes.TEST) {
+            return miscStore.configs?.isAiApiKeyConfigured === true
+        }
+        return true
+    })
 
     function openAiCopilot() {
         apiStore.posthogEvents({
             type: "AI_COPILOT",
             action: "open_click",
-        });
-        aiCopilotOpened.value = true;
+        })
+        aiCopilotOpened.value = true
     }
 
     function closeAiCopilot() {
-        aiCopilotOpened.value = false;
-        clearAiQueryParam();
+        aiCopilotOpened.value = false
+        clearAiQueryParam()
     }
 
     function clearAiQueryParam() {
@@ -93,17 +108,17 @@
                 name: route.name,
                 params: route.params,
                 query: {...route.query, ai: undefined},
-            });
+            })
         }
     }
 
     function resetConversation() {
-        conversationId.value = Utils.uid();
+        conversationId.value = Utils.uid()
     }
 
     function onGeneratedYaml(yaml: string) {
-        emit("generated-yaml", yaml);
-        aiCopilotOpened.value = false;
+        emit("generated-yaml", yaml)
+        aiCopilotOpened.value = false
     }
 
     defineExpose({
@@ -112,7 +127,7 @@
         closeAiCopilot,
         resetConversation,
         rootEl,
-    });
+    })
 </script>
 
 <style scoped lang="scss">
@@ -127,8 +142,8 @@
         width: calc(100% - 5rem);
         left: 3rem;
         max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
+        background-color: var(--ks-bg-surface);
+        box-shadow: 0 2px 4px 0 var(--ks-shadow-element);
     }
 
     .no-code-ai-trigger {
@@ -143,29 +158,9 @@
         padding-top: calc(1.5rem + 32px) !important; // 0.75rem top offset + button height + 0.75rem gap
     }
 
-    .ai-copilot-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        z-index: 1000;
-    }
-
     .ai-copilot-popup {
         z-index: 1001;
         transform-origin: center bottom;
-    }
-
-    .backdrop-fade-enter-active,
-    .backdrop-fade-leave-active {
-        transition: opacity 0.2s ease;
-    }
-
-    .backdrop-fade-enter-from,
-    .backdrop-fade-leave-to {
-        opacity: 0;
     }
 
     .copilot-slide-enter-active {

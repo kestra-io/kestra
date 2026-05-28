@@ -12,7 +12,6 @@ import org.apache.commons.io.IOUtils;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.PluginSubGroup;
-import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
@@ -64,6 +63,7 @@ public class DocumentationGenerator {
             })
             .autoEscaping(false)
             .extension(new Extension())
+            .allowOverrideCoreOperators(true)
             .build();
     }
 
@@ -75,7 +75,6 @@ public class DocumentationGenerator {
 
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
-        result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getAdditionalPlugins(), AdditionalPlugin.class, "additional-plugins"));

@@ -29,7 +29,6 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      TRUNK_API_TOKEN: ${{ secrets.TRUNK_API_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
     with:
@@ -42,11 +41,17 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      TRUNK_API_TOKEN: ${{ secrets.TRUNK_API_TOKEN }}
+
+  design-system-frontend-tests:
+    name: Design System Frontend tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-maven:
     name: Publish Maven
-    needs: [ backend-tests, frontend-tests ]
+    needs: [ backend-tests, frontend-tests, design-system-frontend-tests ]
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
     secrets:
@@ -58,11 +63,41 @@ jobs:
     with:
       java-version: 25
 
+  generate-configuration-schema:
+    name: Generate Configuration Schema
+    needs: [build-artifacts]
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v5
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Prepare executable
+        run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
+
+      - name: Generate and publish schema
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        with:
+          kestra-version: ${{ github.ref_name }}
+          executable-path: build/executable/kestra
+          output-path: oss.json
+          gcs-destination: kestra-api-storage_prd/configuration-schema/${{ github.ref_name }}/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Slack - Schema generation failure
+        if: failure()
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
   publish-github:
     name: Github Release
     needs: [build-artifacts, backend-tests, frontend-tests]
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
-    secrets:
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-      SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
+    secrets: inherit

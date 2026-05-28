@@ -93,6 +93,13 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
 
     private Object inputFiles;
 
+    @Schema(
+        title = "List of output file names to capture after execution.",
+        description = """
+            Declares files produced by the script that should be uploaded to Kestra's internal storage.
+            Use `{{ outputFiles["filename"] }}` in your script body to get the resolved absolute path — this works for local runners (Process, Docker) and remote runners (Kubernetes, cloud batch).
+            Glob patterns (e.g. `*.csv`) are supported for post-run collection but cannot be referenced via Pebble expressions inside the script."""
+    )
     private Property<List<String>> outputFiles;
 
     @Schema(

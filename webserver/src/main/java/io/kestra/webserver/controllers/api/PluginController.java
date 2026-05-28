@@ -11,13 +11,16 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -40,6 +43,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 
+import static io.kestra.core.models.Plugin.isDeprecated;
+import static io.kestra.core.models.Plugin.isInternal;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/plugins/")
@@ -138,6 +143,68 @@ public class PluginController {
             .toList();
     }
 
+    @Get(uri = "triggers")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get list of trigger plugins grouped by category",
+        description = "Feeds the 'Add Trigger' catalog UI. Returns one entry per non-internal, non-deprecated " +
+            "trigger class, classified as core (bundled with Kestra Core), realtime (implements " +
+            "RealtimeTriggerInterface) or app (implements PollingTriggerInterface)."
+    )
+    public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
+        List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
+                .filter(c -> !isInternal(c))
+                .filter(c -> !c.getName().startsWith("org.kestra."))
+                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
+            )
+            .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
+            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+
+        return PagedResults.of(new ArrayListTotal<>(all, all.size()));
+    }
+
+    private ApiTriggerPlugin toApiTriggerPlugin(RegisteredPlugin registeredPlugin, Class<? extends AbstractTrigger> triggerClass) {
+        io.swagger.v3.oas.annotations.media.Schema schema = triggerClass.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+        String title = triggerClass.getSimpleName();
+        String description = schema != null && !schema.description().isEmpty() ? schema.description() : null;
+        Boolean deprecated = isDeprecated(triggerClass) ? Boolean.TRUE : null;
+
+        return new ApiTriggerPlugin(
+            triggerClass.getName(),
+            title,
+            description,
+            TriggerPluginCategory.classify(registeredPlugin, triggerClass),
+            isEnterpriseEdition(registeredPlugin, triggerClass),
+            triggerClass.getName(),
+            deprecated
+        );
+    }
+
+    /**
+     * A trigger is classified as Enterprise Edition when either the owning plugin's manifest marks
+     * the module as EE (via the {@code X-Kestra-License} attribute) or the class lives in an EE
+     * package. EE classes show up under several package shapes depending on where they're housed:
+     * {@code io.kestra.ee.*} and {@code io.kestra.plugin.ee.*} for bundled EE modules, plus any
+     * external plugin that carves out an {@code .ee.} namespace (for example
+     * {@code io.kestra.plugin.kestra.ee.assets}). The package fallback matters because uber-jars
+     * strip module-level manifests, so the license attribute alone isn't reliable.
+     */
+    protected boolean isEnterpriseEdition(RegisteredPlugin registeredPlugin, Class<?> triggerClass) {
+        String license = registeredPlugin.license();
+        if (license != null && license.toUpperCase(Locale.ROOT).contains("EE")) {
+            return true;
+        }
+
+        String packageName = triggerClass.getPackageName();
+        return packageName.startsWith("io.kestra.ee.")
+            || packageName.startsWith("io.kestra.plugin.ee.")
+            || packageName.contains(".ee.");
+    }
+
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
@@ -148,7 +215,6 @@ public class PluginController {
                 plugin -> Stream.of(
                     plugin.getTasks().stream(),
                     plugin.getTriggers().stream(),
-                    plugin.getConditions().stream(),
                     plugin.getTaskRunners().stream(),
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
@@ -248,9 +314,9 @@ public class PluginController {
                 new DocumentationWithSchema(
                     doc,
                     new Schema(
-                        classPluginDocumentation.getPropertiesSchema(),
-                        classPluginDocumentation.getOutputsSchema(),
-                        classPluginDocumentation.getDefs()
+                        applyAlertReplacementToMap(classPluginDocumentation.getPropertiesSchema()),
+                        applyAlertReplacementToMap(classPluginDocumentation.getOutputsSchema()),
+                        applyAlertReplacementToMap(classPluginDocumentation.getDefs())
                     )
                 )
             )
@@ -320,7 +386,7 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles()))
+                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
                                 .toList()
                         );
                     }
@@ -373,14 +439,76 @@ public class PluginController {
         return type;
     }
 
+    /**
+     * Converts Nuxt-content-style two-colon alert directives to the three-colon remark-directive
+     * container syntax that KsMarkdown expects.
+     * <p>
+     * {@code ::alert{type="info"}} → {@code :::alert{type="info"}}
+     * {@code ::} (closing) → {@code :::}
+     */
     private String alertReplacement(@NonNull String original) {
-        // we need to replace the NuxtJS ::alert{type=} :: with the more standard ::: warning :::
-        return original.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n")
-            .replace("\n::\n", "\n:::\n");
+        return original
+            .replaceAll("(?m)^::alert\\{type=\"(.*?)\"\\}$", ":::alert{type=\"$1\"}")
+            .replaceAll("(?m)^::$", ":::");
+    }
+
+    /**
+     * Recursively walks a JSON-schema map and applies {@link #alertReplacement} to every
+     * {@code "description"} string value so that plugin property descriptions authored in
+     * Nuxt-content syntax render correctly in the UI via KsMarkdown.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> applyAlertReplacementToMap(Map<String, Object> map) {
+        if (map == null) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>(map);
+        for (String key : result.keySet().toArray(new String[0])) {
+            Object value = result.get(key);
+            if ("description".equals(key) && value instanceof String s) {
+                result.put(key, alertReplacement(s));
+            } else if (value instanceof Map<?, ?> m) {
+                result.put(key, applyAlertReplacementToMap((Map<String, Object>) m));
+            } else if (value instanceof List<?> l) {
+                result.put(key, applyAlertReplacementToList((List<Object>) l));
+            }
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> applyAlertReplacementToList(List<Object> list) {
+        return list.stream().map(item -> {
+            if (item instanceof Map<?, ?> m) return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
+            if (item instanceof List<?> l) return (Object) applyAlertReplacementToList((List<Object>) l);
+            return item;
+        }).toList();
     }
 
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Lightweight descriptor of a trigger plugin class for the "Add Trigger" catalog UI.
+     *
+     * @param type fully qualified class name (for example {@code io.kestra.plugin.core.trigger.Schedule})
+     * @param name human-readable name (Schema#title if set, otherwise simple class name)
+     * @param description one-line description from the plugin @Schema
+     * @param group category bucket ({@code core}, {@code realtime}, or {@code app})
+     * @param ee true when the trigger is only available in Enterprise Edition (bundled with EE core, or shipped by a plugin distributed under an Enterprise license)
+     * @param icon icon key resolvable via {@code GET /api/v1/plugins/icons}
+     * @param deprecated whether the trigger is deprecated
+     */
+    public record ApiTriggerPlugin(
+        String type,
+        String name,
+        String description,
+        TriggerPluginCategory group,
+        boolean ee,
+        String icon,
+        Boolean deprecated
+    ) {
     }
 }

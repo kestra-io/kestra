@@ -1,8 +1,8 @@
 <template>
     <ul>
         <li>
-            <el-button
-                :type="props.type || 'primary'"
+            <KsButton
+                :type="(props.type || 'primary') as any"
                 :icon="props.icon ?? Plus"
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"
@@ -10,22 +10,22 @@
                 :loading="props.loading ?? false"
             >
                 {{ props.label }}
-            </el-button>
+            </KsButton>
         </li>
     </ul>
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue";
+    import type {Component} from "vue"
 
-    import Plus from "vue-material-design-icons/Plus.vue";
+    import Plus from "vue-material-design-icons/Plus.vue"
 
-    const emits = defineEmits<{ (event: "click"): void }>();
+    const emits = defineEmits<{ (event: "click"): void }>()
     const props = defineProps<{
         label: string;
         icon?: Component;
         type?: string;
         to?: Record<string, any>;
         loading?: boolean;
-    }>();
+    }>()
 </script>

@@ -13,7 +13,7 @@ import lombok.Builder;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ExecutionTrigger {
     @NotNull
     String id;

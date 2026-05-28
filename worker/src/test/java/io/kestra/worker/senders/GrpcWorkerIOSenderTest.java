@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,8 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.worker.Controller;
 import io.kestra.core.worker.models.WorkerContext;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
@@ -47,7 +50,6 @@ class GrpcWorkerIOSenderTest {
     ApplicationContext applicationContext;
 
     @Inject
-    @Named("taskResultSender")
     GrpcWorkerIOSender<WorkerTaskResult> taskResultSender;
 
     @Inject
@@ -121,6 +123,42 @@ class GrpcWorkerIOSenderTest {
         assertThat(received.getTaskRun().getId()).isEqualTo(large.getTaskRun().getId());
         assertThat(received.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(received.getOutputs()).isNull();
+    }
+
+    @Test
+    void shouldRetryOnceOnUnauthenticatedError() {
+        // Given - first call fails with UNAUTHENTICATED, second succeeds
+        AtomicInteger callCount = new AtomicInteger(0);
+        doAnswer(inv -> {
+            OpaqueData req = inv.getArgument(0);
+            StreamObserver<OpaqueData> obs = inv.getArgument(1);
+            if (callCount.getAndIncrement() == 0) {
+                obs.onError(new StatusRuntimeException(Status.UNAUTHENTICATED.withDescription("Invalid or expired access token")));
+            } else {
+                obs.onNext(OpaqueData.newBuilder().setHeader(req.getHeader()).build());
+                obs.onCompleted();
+            }
+            return null;
+        }).when(grpcWorkerControllerService).sendWorkerTaskResults(any(), any());
+
+        WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
+
+        // When
+        taskResultSender.send(List.of(result));
+
+        // Then - should have been called twice (initial + retry)
+        ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
+        await()
+            .atMost(Duration.ofSeconds(3))
+            .untilAsserted(() -> {
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
+
+        // The retried request should contain the same task result
+        WorkerTaskResult received = deserialize(captor.getAllValues().getLast()).records().getFirst();
+        assertThat(received.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
+        assertThat(received.getOutputs()).isEqualTo(Map.of("key", "value"));
     }
 
     private static WorkerTaskResult buildTaskResult(Map<String, Object> outputs) {

@@ -29,9 +29,9 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.plugins.configuration.PluginsConfiguration;
 import io.kestra.core.utils.Version;
 
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -59,10 +59,10 @@ public class MavenPluginDownloader implements Closeable {
 
     @Inject
     public MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
-        @Nullable @Value("${kestra.plugins.local-repository-path}") String localRepositoryPath) {
+        @Nullable PluginsConfiguration pluginsConfiguration) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
-        this.session = repositorySystemSession(system, localRepositoryPath);
+        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration.localRepositoryPath() : null);
     }
 
     /**

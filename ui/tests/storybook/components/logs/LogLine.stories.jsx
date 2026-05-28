@@ -7,7 +7,6 @@ import {
     waitFor
 } from "storybook/test";
 import LogLine from "../../../../src/components/logs/LogLine.vue";
-import {ElCard} from "element-plus";
 
 const ALLOWED_LEVELS = [
     "TRACE",
@@ -125,15 +124,15 @@ export const WithFilter = {
         return {
             setup(){
                 const values = ref("filterable");
-                return () => <el-card>
-                    <el-form label-position="top">
-                        <el-form-item label="Filter">
-                            <el-input v-model={values.value} type="search" placeholder="Filter"/>
-                        </el-form-item>
+                return () => <ks-card>
+                    <ks-form label-position="top">
+                        <ks-form-item label="Filter">
+                            <ks-input v-model={values.value} type="search" placeholder="Filter"/>
+                        </ks-form-item>
                         <hr style={{margin: ".5rem 0"}}/>
                         <LogLine {...argsDefaults("INFO", "This is a filterable message")} filter={values.value} />
-                    </el-form>
-                </el-card>
+                    </ks-form>
+                </ks-card>
             }
         }
     }
@@ -178,21 +177,21 @@ WithExcludedMetas.args = {
 
 export const MultipleLogLinesWithAllLevels = () => {
     return (
-        <ElCard>
+        <ks-card>
             {
                 ALLOWED_LEVELS.map((level, index) => {
                     return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args.log, level}} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-primary)"}} />
                 })
             }
-        </ElCard>
+        </ks-card>
     );
 };
 
 // reproduction of https://github.com/kestra-io/kestra/pull/7133
 export const ShortLogWithoutContext = () => {
     return (
-        <ElCard>
+        <ks-card>
             <LogLine log={{level: "INFO", message: "test"}} level="INFO" />
-        </ElCard>
+        </ks-card>
     );
 }

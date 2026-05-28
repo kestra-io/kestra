@@ -15,16 +15,16 @@ public final class SecretUtils {
     private SecretUtils() {}
 
     /**
-     * Returns a list of violation messages for any {@link PluginProperty#secret()} field
+     * Returns a list of warning messages for any {@link PluginProperty#secret()} field
      * on the given object whose value is a plain-text string rather than a Pebble expression.
      *
      * @param obj the object to inspect (task, trigger, etc.)
-     * @return violation messages, empty if all secret fields are properly expressed
+     * @return warning messages, empty if all secret fields use Pebble expressions
      */
     public static List<String> validateSecretFields(Object obj) {
-        List<String> violations = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
         if (obj == null) {
-            return violations;
+            return warnings;
         }
 
         Class<?> clazz = obj.getClass();
@@ -57,13 +57,13 @@ public final class SecretUtils {
                 }
 
                 if (strValue != null && !PebbleUtil.containsOpeningBlockDelimiter(strValue)) {
-                    violations.add("Property '" + field.getName() + "' is annotated as a secret and must be provided as a Pebble expression (e.g., `{{ secret('MY_SECRET') }}`), not a plain-text value.");
+                    warnings.add("Property '" + field.getName() + "' is annotated as a secret and should be provided as a Pebble expression (e.g., `{{ secret('MY_SECRET') }}`), not a plain-text value.");
                 }
             }
             clazz = clazz.getSuperclass();
         }
 
-        return violations;
+        return warnings;
     }
 
     private static String getPropertyExpression(Property<?> property) {

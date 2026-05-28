@@ -66,7 +66,9 @@ public abstract class TriggerService {
             State.Type.CREATED,
             executionTrigger,
             labels,
-            conditionContext.getFlow().getRevision()
+            conditionContext.getFlow().getRevision(),
+            null,
+            null
         );
     }
 

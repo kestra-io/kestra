@@ -1,8 +1,8 @@
-import {computed, ComputedRef, onMounted} from "vue";
-import {useI18n} from "vue-i18n";
-import {useFlowStore} from "../../../stores/flow";
-import {usePluginsStore} from "../../../stores/plugins";
-import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+import {computed, ComputedRef, onMounted} from "vue"
+import {useI18n} from "vue-i18n"
+import {useFlowStore} from "../../../stores/flow"
+import {usePluginsStore} from "../../../stores/plugins"
+import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
 
 // fields displayed on top of the form
@@ -10,7 +10,7 @@ const MAIN_KEYS = [
     "id",
     "namespace",
     "description",
-    "inputs"
+    "inputs",
 ]
 
 // ---
@@ -31,27 +31,27 @@ export const SECTIONS_IDS = [
 const HIDDEN_FIELDS = [
     "deleted",
     "tenantId",
-    "revision"
-];
+    "revision",
+]
 
 export function useFlowFields(flowSource: ComputedRef<string>){
-    const flowStore = useFlowStore();
-    const pluginsStore = usePluginsStore();
+    const flowStore = useFlowStore()
+    const pluginsStore = usePluginsStore()
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     onMounted(() => {
-        pluginsStore.lazyLoadSchemaType({type: "flow"});
-    });
+        pluginsStore.lazyLoadSchemaType({type: "flow"})
+    })
 
     const parsedFlow = computed(() => {
         try {
-            return YAML_UTILS.parse(flowSource.value) ?? {};
+            return YAML_UTILS.parse(flowSource.value) ?? {}
         } catch (e) {
-            console.error("Error parsing flow YAML", e);
-            return {};
+            console.error("Error parsing flow YAML", e)
+            return {}
         }
-    });
+    })
 
     const getFieldFromKey = (key:string, translateGroup: string) => ({
         modelValue: parsedFlow.value[key],
@@ -70,14 +70,14 @@ export function useFlowFields(flowSource: ComputedRef<string>){
         return Object.keys(pluginsStore.flowRootProperties ?? {})
             .filter((key) => !MAIN_KEYS.includes(key) && !HIDDEN_FIELDS.includes(key) && (!pluginsStore.flowRootProperties?.[key]?.$deprecated || parsedFlow.value[key]))
             .map((key) => getFieldFromKey(key, "general")).sort((a, b) => {
-                const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number]);
-                const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number]);
+                const indexA = SECTIONS_IDS.indexOf(a.fieldKey as typeof SECTIONS_IDS[number])
+                const indexB = SECTIONS_IDS.indexOf(b.fieldKey as typeof SECTIONS_IDS[number])
                 if(indexA === -1 || indexB === -1) {
-                    return indexB - indexA;
+                    return indexB - indexA
                 }
-                return indexA - indexB;
-            });
-    });
+                return indexA - indexB
+            })
+    })
 
     return {
         fieldsFromSchemaTop,

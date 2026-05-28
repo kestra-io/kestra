@@ -26,11 +26,11 @@ import jakarta.annotation.Nullable;
 /**
  * Sends worker data to the controller via gRPC.
  * <p>
- * Instances are created by {@link WorkerIOSenderFactory} with the appropriate
+ * Instances are created by {@link GrpcWorkerIOSenderFactory} with the appropriate
  * event type, gRPC method reference, and {@link SendStrategy}.
  *
  * @param <T> the type of event to send.
- * @see WorkerIOSenderFactory
+ * @see GrpcWorkerIOSenderFactory
  */
 public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender {
 
@@ -163,7 +163,10 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
 
     private void sendOpaqueData(final BatchMessage<T> batchMessage) {
         OpaqueData request = buildRequest(batchMessage);
-        StreamObserver<OpaqueData> observer = fallbackMapperOnResourceExhausted != null ? new FallbackOnResourceExhaustedObserver(batchMessage) : DEFAULT_OBSERVER;
+        StreamObserver<OpaqueData> baseObserver = fallbackMapperOnResourceExhausted != null
+            ? new FallbackOnResourceExhaustedObserver(batchMessage)
+            : DEFAULT_OBSERVER;
+        StreamObserver<OpaqueData> observer = new RetryOnUnauthenticatedObserver(batchMessage, baseObserver);
         grpcSendMethod.accept(request, observer);
     }
 
@@ -172,6 +175,50 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setMessage(MessageFormats.JSON.toByteString(batchMessage))
             .build();
+    }
+
+    /**
+     * A per-call {@link StreamObserver} that retries once when the server
+     * rejects the request with {@code UNAUTHENTICATED} (e.g. expired access token).
+     * <p>
+     * The retry re-invokes the gRPC method, which goes through the auth interceptor
+     * again and picks up a refreshed token. The delegate observer handles any further
+     * errors, preventing infinite retry loops.
+     */
+    private class RetryOnUnauthenticatedObserver implements StreamObserver<OpaqueData> {
+
+        private final BatchMessage<T> originalBatch;
+        private final StreamObserver<OpaqueData> delegate;
+
+        RetryOnUnauthenticatedObserver(final BatchMessage<T> originalBatch, final StreamObserver<OpaqueData> delegate) {
+            this.originalBatch = originalBatch;
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void onNext(OpaqueData value) {
+            delegate.onNext(value);
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            if (isUnauthenticated(t)) {
+                LOG.warn("UNAUTHENTICATED error while sending {}, retrying once", eventType.getSimpleName());
+                grpcSendMethod.accept(buildRequest(originalBatch), delegate);
+            } else {
+                delegate.onError(t);
+            }
+        }
+
+        @Override
+        public void onCompleted() {
+            delegate.onCompleted();
+        }
+
+        private static boolean isUnauthenticated(final Throwable t) {
+            return t instanceof StatusRuntimeException sre
+                && sre.getStatus().getCode() == Status.Code.UNAUTHENTICATED;
+        }
     }
 
     /**

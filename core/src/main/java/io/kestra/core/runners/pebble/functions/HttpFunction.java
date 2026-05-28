@@ -33,6 +33,7 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.EvaluationContextImpl;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -54,10 +55,10 @@ public class HttpFunction<T> implements KestraFunction {
     };
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
 
     @Inject
-    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
+    private Provider<RunContextFactory> runContextFactoryProvider;
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
@@ -70,7 +71,7 @@ public class HttpFunction<T> implements KestraFunction {
             .collect(HashMap::new, (m, k) -> m.put(k, context.getVariable(k)), HashMap::putAll);
 
         // We need late injection otherwise there is a circular dependency issue between Extension and VariableRenderer from RunContextFactory
-        RunContextFactory runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        RunContextFactory runContextFactory = runContextFactoryProvider.get();
         RunContext runContext = runContextFactory.of(pebbleVariables);
 
         URI uri = args.get("uri") instanceof URI uriObject

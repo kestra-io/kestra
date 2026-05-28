@@ -5,9 +5,9 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
+        <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
             <MenuRight />
-        </el-icon>
+        </KsIcon>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
@@ -30,28 +30,27 @@
                     </span>
                 </span>
             </div>
-            <div
+            <pre
                 ref="lineContent"
                 :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
-                v-html="renderedMarkdown"
+                v-html="renderedHtml"
             />
         </div>
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, nextTick} from "vue";
-    import Convert from "ansi-to-html";
-    import {useStorage} from "@vueuse/core";
-    import xss from "xss";
-    import * as Markdown from "../../utils/markdown";
-    import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import linkify from "./linkify";
-    import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import {LevelKey} from "../../utils/logs";
-    import {Log} from "../../stores/logs";
-    import {useRouter} from "vue-router";
-    import * as Filters from "../../utils/filters";
+    import {computed, nextTick, ref, watch} from "vue"
+    import Convert from "ansi-to-html"
+    import {useStorage} from "@vueuse/core"
+    import xss from "xss"
+    import MenuRight from "vue-material-design-icons/MenuRight.vue"
+    import linkify, {processLinkTags} from "./linkify"
+    import CopyToClipboard from "../layout/CopyToClipboard.vue"
+    import {LevelKey} from "../../utils/logs"
+    import {Log} from "../../stores/logs"
+    import {useRouter} from "vue-router"
+    import * as Filters from "../../utils/filters"
 
     // Props
     const props = defineProps<{
@@ -61,22 +60,21 @@
         level?: LevelKey,
         excludeMetas?: (keyof Log)[],
         title?: boolean
-    }>();
+    }>()
 
     // State
-    const renderedMarkdown = ref<string | undefined>(undefined);
-    const logsFontSize = useStorage<number>("logsFontSize", 12);
-    const lineContent = ref<HTMLElement>();
-
-    const convert = new Convert();
+    const logsFontSize = useStorage<number>("logsFontSize", 12)
+    const convert = new Convert()
+    const lineContent = ref<HTMLElement>()
+    const router = useRouter()
 
     // Computed
     const logLineStyle = computed(() => ({
         fontSize: `${logsFontSize.value}px`,
-    }));
+    }))
 
     const metaWithValue = computed(() => {
-        const metaWithValue: any[] = [];
+        const result: any[] = []
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -86,12 +84,12 @@
             "index",
             "attemptNumber",
             "executionKind",
-            ...(props.excludeMetas ?? [])
-        ];
+            ...(props.excludeMetas ?? []),
+        ]
         for (const keyString in props.log) {
-            const key = keyString as keyof Log;
+            const key = keyString as keyof Log
             if (props.log[key] && !excludes.includes(key)) {
-                let meta: any = {key, value: props.log[key]};
+                let meta: any = {key, value: props.log[key]}
                 if (key === "executionId") {
                     meta["router"] = {
                         name: "executions/update",
@@ -100,73 +98,63 @@
                             flowId: props.log["flowId"],
                             id: props.log[key],
                         },
-                    };
+                    }
                 }
                 if (key === "namespace") {
-                    meta["router"] = {name: "flows/list", query: {namespace: props.log[key]}};
+                    meta["router"] = {name: "flows/list", query: {namespace: props.log[key]}}
                 }
                 if (key === "flowId") {
                     meta["router"] = {
                         name: "flows/update",
                         params: {namespace: props.log["namespace"], id: props.log[key]},
-                    };
+                    }
                 }
-                metaWithValue.push(meta);
+                result.push(meta)
             }
         }
-        return metaWithValue;
-    });
+        return result
+    })
 
     const levelStyle = computed(() => {
-        const lowerCaseLevel = props.log?.level?.toLowerCase();
+        const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
             "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
-            "color": `var(--ks-log-content-${lowerCaseLevel})`,
+            "color": `var(--ks-log-${lowerCaseLevel})`,
             "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
-        };
-    });
+        }
+    })
 
     const filtered = computed(() =>
-        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? ""))
-    );
+        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? "")),
+    )
 
     const iconColor = computed(() => {
-        const logLevel = props.log.level?.toLowerCase();
-        return `var(--ks-log-content-${logLevel}) !important`;
-    });
+        const logLevel = props.log.level?.toLowerCase()
+        return `var(--ks-log-${logLevel}) !important`
+    })
 
-    const message = computed(() => {
-        let logMessage = !props.log.message
-            ? ""
-            : convert.toHtml(
-                xss(props.log.message, {
-                    allowList: {span: ["style"]},
-                })
-            );
-        logMessage = logMessage.replaceAll(
+    const renderedHtml = computed(() => {
+        const raw = props.log.message ?? ""
+        let html = convert.toHtml(
+            xss(raw, {
+                allowList: {span: ["style"]},
+            }),
+        )
+
+        html = processLinkTags(html)
+        html = html.replaceAll(
             /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-            "$1<a href='$2' target='_blank'>$2</a>$3"
-        );
-        return logMessage;
-    });
+            "$1<a href='$2' target='_blank'>$2</a>$3",
+        )
 
-    const router = useRouter()
-    onMounted(() => {
-        setTimeout(() => {
-            linkify(lineContent.value, router);
-        }, 200);
-    });
+        return html
+    })
 
-    watch(renderedMarkdown, () => {
+    watch(renderedHtml, () => {
         nextTick(() => {
-            linkify(lineContent.value, router);
-        });
-    });
-
-    // Initial markdown render
-    (async () => {
-        renderedMarkdown.value = (await Markdown.render(message.value, {onlyLink: true, html: true})).trim();
-    })();
+            linkify(lineContent.value, router)
+        })
+    }, {immediate: true})
 </script>
 <style scoped lang="scss">
 div.line {
@@ -184,7 +172,7 @@ div.line {
     border-left-style: solid;
     border-left-color: transparent;
 
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 
     // hack for class containing 0
     &[class*="-0"] {
@@ -222,9 +210,16 @@ div.line {
         .header > * + * {
             margin-left: 1rem;
         }
+
+        pre {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            font-size: inherit;
+        }
     }
 
-    .el-tag {
+    .kel-tag {
         height: auto;
     }
 
@@ -238,7 +233,7 @@ div.line {
 
         span:first-child {
             margin-right: 6px;
-            font-family: var(--bs-font-sans-serif);
+            font-family: var(--kbs-body-font-family);
             user-select: none;
 
             &::after {
@@ -247,7 +242,7 @@ div.line {
         }
 
         & a {
-            border-radius: var(--bs-border-radius);
+            border-radius: var(--kel-border-radius-base);
         }
 
         &.log-level {
@@ -269,7 +264,7 @@ div.line {
 
     .log-level {
         padding: 0.25rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         user-select: none;
     }
 

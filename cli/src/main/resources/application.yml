@@ -133,35 +133,6 @@ endpoints:
   env:
     enabled: true
 
-flyway:
-  datasources:
-    postgres:
-      enabled: true
-      locations:
-        - classpath:migrations/postgres
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-      properties:
-        flyway:
-          postgresql:
-            transactional:
-              lock: false
-    mysql:
-      enabled: true
-      locations:
-        - classpath:migrations/mysql
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-    h2:
-      enabled: true
-      locations:
-        - classpath:migrations/h2
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-
 kestra:
   tutorial-flows:
     # Automatically loads all tutorial flows at startup.
@@ -287,6 +258,9 @@ kestra:
     prefixes:
       - system.
       - internal.
+
+  async-operations:
+    wait-timeout: PT30S
 
 otel:
   exclusions:

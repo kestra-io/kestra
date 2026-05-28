@@ -2,7 +2,7 @@ import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {useAxios} from "../../../../src/utils/axios.js";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "inputs/InputsForm",
@@ -21,7 +21,7 @@ const meta = {
 export default meta;
 
 const Sut = defineComponent((props) => {
-    const axios = useAxios()
+    const axios = {}
 
     axios.post = (uri) => {
         if (!uri.endsWith("/validate")) {
@@ -37,14 +37,15 @@ const Sut = defineComponent((props) => {
             }
         })}
 
+    setMockClient(axios);
 
     const values = ref({});
     return () => (<>
-        <el-form label-position="top">
+        <ks-form label-position="top">
             <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={{namespace: "ns1", id: "flowid1"}}
                         onUpdate:modelValue={(value) => values.value = value}
             />
-        </el-form>
+        </ks-form>
         <pre data-testid="test-content">{
             JSON.stringify(values.value, null, 2)
         }</pre>

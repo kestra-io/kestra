@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Agrega un Trigger a tu Flow primero",
     "add_new_item": "Agregar nuevo elemento",
     "additionalPlugins": "Plugins Adicionales",
+    "admin": "Administrador",
     "administration": "Administración",
     "advanced configuration": "Otras propiedades",
     "after": "después",
@@ -77,6 +78,7 @@
     "backfill executions": "Ejecuciones de backfill",
     "backfill paused": "Backfill pausado",
     "backfill running": "Backfill en ejecución",
+    "bar": "Bar",
     "before": "antes",
     "behavior": "Comportamiento",
     "blueprints": {
@@ -164,6 +166,7 @@
     "change state tooltip": "Cambiar el estado de ejecución",
     "chart": "Gráfico",
     "chart preview": "Vista previa del gráfico",
+    "chart type": "Tipo de gráfico",
     "charts": "Gráficos",
     "choice": "Opción",
     "choose file": "Elige un archivo o suéltalo aquí...",
@@ -172,6 +175,7 @@
     "codeDisabled": "Desactivado en Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
+    "commit_id": "ID de commit",
     "common": {
       "back": "Atrás"
     },
@@ -203,6 +207,7 @@
     "copy": "Copiar",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
+    "copy_and_close": "Copiar y cerrar",
     "copy_to_clipboard": "Copiar al portapapeles",
     "create": "Crear",
     "create first task": "Crea tu primera task",
@@ -240,7 +245,8 @@
         "plural": "Dashboards",
         "singular": "Panel de control"
       },
-      "preview": "Vista previa del Dashboard"
+      "preview": "Vista previa del Dashboard",
+      "switch": "Cambiar Dashboard"
     },
     "data": "Datos",
     "dataFilters": "Filtros de Datos",
@@ -260,7 +266,6 @@
       "5minutes": "5 minutos",
       "7days": "7 días",
       "custom": "Personalizado",
-      "custom duration": "Duración personalizada",
       "dayBeforeYesterday": "Anteayer",
       "duration example": "Ejemplo: 'P1DT1H1M1S'",
       "error": "Formato de duración inválido, debe ser una duración ISO 8601 (P1DT1H1M1S por ej.)",
@@ -287,7 +292,6 @@
       "today": "Hoy",
       "yesterday": "Ayer"
     },
-    "days": "Días",
     "debug": "Depuración",
     "default": "Predeterminado",
     "defaultsToNamespaceFile": "Por defecto en el archivo de namespace: <code>{name}</code>",
@@ -334,6 +338,7 @@
         "message": "En Kestra Enterprise Edition, puedes crear Blueprints personalizados disponibles solo para tu organización. Puedes usarlos como plantillas de mejores prácticas para compartir, centralizar y documentar flujos de trabajo comúnmente utilizados en tu equipo.",
         "title": "Agregar Blueprints Personalizados"
       },
+      "contact_sales": "Contactar Ventas",
       "enterprise_edition": "Edición Enterprise",
       "get_a_demo_button": "Obtener una Demo",
       "instance": {
@@ -391,7 +396,8 @@
         "label": "Pruebas",
         "message": "Verifica la lógica de tus flows de forma aislada, detecta regresiones temprano y mantén la confianza en tus automatizaciones a medida que cambian y crecen.",
         "title": "Garantiza la Fiabilidad con Cada Cambio"
-      }
+      },
+      "watch_the_video": "Mira el video"
     },
     "dependencies": "Dependencias",
     "dependencies delete flow": "Este flow tiene dependencias. Eliminarlo impedirá que se ejecuten sus dependencias.<br /><br /> Aquí está la lista de flows afectados:",
@@ -477,6 +483,10 @@
         "content": "Los anuncios te permiten notificar a tus usuarios sobre cualquier cambio o informarles sobre el tiempo de inactividad planificado para mantenimiento. Simplemente selecciona el tipo de anuncio, el rango de fechas en el que debe mostrarse y escribe el mensaje del anuncio.",
         "title": "¡No tienes anuncios todavía!"
       },
+      "apiTokens": {
+        "content": "Los tokens de API se utilizan cada vez que deseas otorgar acceso programático a la API de Kestra.",
+        "title": "Administra tus API Tokens"
+      },
       "apps": {
         "content": "Comienza a crear Apps para interactuar con Kestra desde el mundo exterior.",
         "title": "¡Aún no tienes aplicaciones!"
@@ -492,6 +502,10 @@
       "concurrency_limit": {
         "content": "Lea más sobre los <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Límites de Concurrencia</a></strong> en nuestra documentación.",
         "title": "No se han establecido límites para este Flow."
+      },
+      "concurrency_limits": {
+        "content": "Lea más sobre los <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Límites de Concurrency</a></strong> en nuestra documentación.",
+        "title": "No se han establecido límites de concurrencia."
       },
       "dependencies": {
         "ASSET": {
@@ -510,6 +524,10 @@
           "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> en nuestra documentación.",
           "title": "Actualmente no hay dependencias."
         }
+      },
+      "groups": {
+        "content": "Los grupos te permiten agrupar usuarios para que puedas gestionar permisos y asignaciones de roles colectivamente en tu mandante.",
+        "title": "¡Aún no tienes grupos!"
       },
       "kill_switches": {
         "content": "La función Kill Switch proporciona un mecanismo basado en la UI para detener ejecuciones problemáticas. Reemplaza los comandos de solo CLI <code>--skip-executions</code> y <code>--skip-flows</code> con una interfaz de administración integral.",
@@ -538,6 +556,10 @@
       "versionPlugin": {
         "content": "Aquí puedes gestionar todos los plugins instalados en tu instancia de Kestra. Los plugins recién instalados pueden no estar disponibles de inmediato en todos los servicios de Kestra, dependiendo de la configuración de tu instancia.",
         "title": "¡Aún no tienes ningún plugin versionado!"
+      },
+      "workerRegistrationTokens": {
+        "content": "Los tokens de registro permiten que los workers remotos se autentiquen y registren de manera segura con tu instancia de Kestra. Crea un token y luego úsalo para conectar nuevos workers a este clúster.",
+        "title": "¡Aún no tienes tokens de registro!"
       }
     },
     "empty search": "Resultados de búsqueda vacíos",
@@ -597,7 +619,7 @@
       "metrics": "Eliminar métricas",
       "storage": "Eliminar archivos de almacenamiento interno"
     },
-    "execution_failed": "¡Ejecución fallida!\nEl último error fue",
+    "execution_failed": "¡Ejecución fallida!",
     "execution_guide": {
       "get_started": {
         "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo.",
@@ -647,329 +669,13 @@
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
     "feeds": {
+      "heading": "Todo sobre Kestra.",
+      "subheading": "Las últimas actualizaciones, guías e historias",
       "title": "Novedades en Kestra"
     },
     "file preview truncated": "El contenido mostrado ha sido truncado",
     "fileTypeNotAllowed": "Tipo de archivo no permitido. Tipos aceptados: {types}",
     "files": "Archivos",
-    "filter": {
-      "active key value pairs": "Pares de Key/Value activos",
-      "add key value pair": "Agregar par de Key/Value",
-      "aggregation": {
-        "description": "Filtrar por método de agregación",
-        "label": "Agregación"
-      },
-      "apply": "Aplicar filtros",
-      "apply filter": "Aplicar filtro",
-      "cancel": "Cancelar",
-      "childFilter": {
-        "description": "Filtrar por jerarquía de ejecución",
-        "label": "Jerarquía"
-      },
-      "childFilter_child": {
-        "description": "Filtrar por jerarquía de ejecución",
-        "label": "Filtro de Child"
-      },
-      "columns": "Columnas",
-      "comparator_descriptions": {
-        "CONTAINS": "El texto incluye los caracteres especificados en cualquier parte",
-        "ENDS_WITH": "El texto termina con los caracteres especificados",
-        "EQUALS": "Coincidencia exacta: el valor debe ser idéntico",
-        "GREATER_THAN": "Comparación numérica/fecha - el valor debe ser mayor",
-        "GREATER_THAN_OR_EQUAL_TO": "Comparación numérica/fecha - el valor debe ser mayor o igual",
-        "IN": "Coincide con cualquier valor de una lista de opciones",
-        "LESS_THAN": "Comparación numérica/fecha - el valor debe ser menor",
-        "LESS_THAN_OR_EQUAL_TO": "Comparación numérica/fecha - el valor debe ser menor o igual",
-        "NOT_EQUALS": "Excluye coincidencias exactas: el valor debe ser diferente",
-        "NOT_IN": "Excluye todos los valores de una lista de opciones",
-        "PREFIX": "Coincidencia de jerarquía de namespace (por ejemplo, 'com.example' coincide con 'com.example.app')",
-        "REGEX": "Coincidencia de patrones avanzada usando expresiones regulares",
-        "STARTS_WITH": "El texto comienza con los caracteres especificados"
-      },
-      "customize": "Agregar filtros",
-      "customize columns": "Personalizar columnas de la tabla",
-      "customize tooltip": "Personalizar qué filtros mostrar",
-      "delete filter": "Eliminar filtro",
-      "delete filter confirm": "¿Está seguro de que desea eliminar este filtro?",
-      "description": "Descripción",
-      "deselect all": "Deseleccionar todo",
-      "drag to reorder": "Arrastrar para reordenar",
-      "drag to reorder columns": "Arrastrar para reordenar columnas",
-      "edit filter": "Editar filtro",
-      "empty": "Todavía no tienes ningún filtro guardado.",
-      "enabled": {
-        "description": "Filtrar por habilitado",
-        "label": "Habilitado"
-      },
-      "end_date": "Fecha de finalización",
-      "enter description": "Ingrese la descripción del filtro",
-      "enter label": "Ingrese etiqueta de filtro",
-      "enter name": "Ingrese el nombre del filtro",
-      "execution_kind": {
-        "playground": "Área de Pruebas",
-        "playground_description": "Ejecuciones activadas desde el modo Playground",
-        "test": "Prueba",
-        "test_description": "Ejecuciones activadas por Unit Tests"
-      },
-      "filters_added": "{selected} de {total} filtros añadidos",
-      "flowId": {
-        "description": "Filtrar por flow ID",
-        "label": "ID de Flow"
-      },
-      "footer_apply": "Aplicar",
-      "group": {
-        "description": "Filtrar por grupo",
-        "label": "Grupo"
-      },
-      "hierarchy": {
-        "all": "Predeterminado",
-        "child_description": "Mostrar solo ejecuciones anidadas/disparadas",
-        "parent_description": "Mostrar solo ejecuciones de nivel superior/raíz"
-      },
-      "key": "Clave",
-      "kill_switch_type": {
-        "description": "Filtrar por tipo de kill switch",
-        "label": "Tipo"
-      },
-      "kind": {
-        "description": "Filtrar por tipo de ejecución",
-        "label": "Tipo"
-      },
-      "kv_pair_selected": "{count} pares de Key/Value seleccionados",
-      "label": "Etiqueta",
-      "labels": {
-        "description": "Filtrar por labels",
-        "label": "Etiquetas"
-      },
-      "labels_execution": {
-        "description": "Filtrar por labels de ejecución",
-        "label": "Etiquetas"
-      },
-      "labels_flow": {
-        "description": "Filtrar por labels de flow",
-        "label": "Etiquetas"
-      },
-      "level": {
-        "description": "Filtrar por severidad del log",
-        "label": "Nivel"
-      },
-      "level_log_executions": {
-        "label": "Nivel de Log"
-      },
-      "metric": {
-        "description": "Filtrar por tipo de métrica",
-        "label": "Métrica"
-      },
-      "name": {
-        "description": "Filtrar por nombre",
-        "label": "Nombre"
-      },
-      "namespace": {
-        "description": "Filtrar por namespace",
-        "label": "Namespace"
-      },
-      "no options found": "No se encontraron opciones",
-      "operator": "Operador de filtro",
-      "options": "Opciones de Datos",
-      "periodic refresh": "Actualización periódica",
-      "refresh": "Actualizar datos",
-      "reset": "Borrar todo",
-      "reset_all": "Restablecer todos los filtros",
-      "reset_tooltip": "Restablecer a los valores predeterminados",
-      "save": "Guardar",
-      "save duplicate": "Ya existe un filtro con este nombre.",
-      "save filter": "Guardar filtro",
-      "save filter tooltip": "Guardar filtros aplicados",
-      "saved": "Filtros guardados",
-      "saved filters": "Conjuntos de Filtros Guardados",
-      "saved tooltip": "Administrar filtros guardados",
-      "scope": {
-        "description": "Filtrar por alcance de ejecución",
-        "label": "Ámbito"
-      },
-      "scope_flow": {
-        "description": "Filtrar por alcance de flow",
-        "label": "Ámbito"
-      },
-      "scope_log": {
-        "description": "Filtrar por logs de usuario o sistema",
-        "label": "Ámbito"
-      },
-      "scope_trigger": {
-        "description": "Filtrar por alcance de trigger",
-        "label": "Ámbito"
-      },
-      "search options": "Buscar...",
-      "search_placeholders": {
-        "search_blueprints": "Buscar blueprints",
-        "search_dashboards": "Buscar dashboards...",
-        "search_executions": "Buscar ejecuciones",
-        "search_flows": "Buscar flows",
-        "search_kv": "Buscar pares KV",
-        "search_logs": "Buscar logs",
-        "search_metrics": "Buscar métricas",
-        "search_namespaces": "Buscar namespaces",
-        "search_plugins": "Buscar {count}+ plugins",
-        "search_secrets": "Buscar secretos",
-        "search_triggers": "Buscar triggers"
-      },
-      "select all": "Seleccionar todo",
-      "select filter": "Selecciona un filtro para añadir",
-      "select_end_date": "Seleccionar fecha de finalización",
-      "select_option": "Selecciona una opción",
-      "select_start_date": "Seleccionar fecha de inicio",
-      "show chart": "Mostrar gráfico",
-      "show data options tooltip": "Mostrar opciones de datos",
-      "show default": "Mostrar predeterminado",
-      "start_date": "Fecha de inicio",
-      "state": {
-        "description": "Filtrar por estado de ejecución",
-        "label": "Estado"
-      },
-      "table_column": {
-        "blueprints": {
-          "tags": "Etiquetas asociadas con el blueprint"
-        },
-        "executions": {
-          "duration": "Tiempo total de ejecución",
-          "end-date": "Cuando la ejecución finalizó",
-          "flow": "ID del flow ejecutado",
-          "id": "ID de Ejecución",
-          "inputs": "Valores de input proporcionados a la ejecución",
-          "labels": "Etiquetas de ejecución (formato key:value)",
-          "namespace": "Namespace al que pertenece el flow ejecutado",
-          "outputs": "Salidas emitidas por la ejecución",
-          "parent-execution": "ID de ejecución principal que desencadenó esta ejecución",
-          "revision": "Versión del flow utilizada para esta ejecución",
-          "start-date": "Cuando la ejecución comenzó",
-          "state": "Estado actual de ejecución",
-          "task-id": "ID de la última task en la ejecución",
-          "trigger": "Trigger que inició la ejecución"
-        },
-        "flow_triggers": {
-          "next execution date": "Cuándo se ejecutará el trigger a continuación",
-          "type": "Tipo de trigger",
-          "workerId": "Identificador de worker"
-        },
-        "flows": {
-          "description": "Descripción del texto proporcionada para el flow",
-          "execution statistics": "Gráfico que muestra los estados recientes de ejecución",
-          "id": "Identificador único de flow",
-          "labels": "Etiquetas de flow (formato key:value)",
-          "last execution date": "Cuando el flow fue ejecutado por última vez",
-          "last execution status": "Estado de la ejecución más reciente",
-          "namespace": "Namespace del flow",
-          "revision": "Número de versión actual de la definición del flow",
-          "triggers": "Disparadores que pueden iniciar el flow (por ejemplo, programación, evento)"
-        },
-        "kv": {
-          "description": "Notas opcionales explicando la entrada KV",
-          "expiration date": "Cuando el kv store expira",
-          "key": "Identificador único para el valor almacenado",
-          "last modified": "Marca de tiempo de la actualización más reciente",
-          "namespace": "Agrupación lógica donde se almacena el par key-value"
-        },
-        "metrics": {
-          "name": "Nombre de la métrica",
-          "tags": "Etiquetas asociadas con la métrica",
-          "task": "Tarea que generó la métrica",
-          "value": "Valor de la métrica"
-        },
-        "secrets": {
-          "description": "Notas opcionales que proporcionan contexto",
-          "key": "Identificador para el secreto almacenado",
-          "namespace": "Agrupación lógica donde se almacena el secreto",
-          "tags": "Etiquetas de categorización adicionales"
-        },
-        "triggers": {
-          "context updated date": "Última actualización del contexto del trigger",
-          "current execution": "ID de ejecución actual",
-          "evaluation lock date": "Cuando la evaluación está bloqueada",
-          "flow": "Flujo asociado con el trigger",
-          "last trigger date": "Cuando el trigger se ejecutó por última vez",
-          "namespace": "Namespace del trigger",
-          "next evaluation date": "Cuando el trigger se evalúe la próxima vez",
-          "workerId": "Identificador de worker"
-        }
-      },
-      "task": {
-        "description": "Filtrar por nombre de task",
-        "label": "Tarea"
-      },
-      "timeRange": {
-        "description": "Filtrar por tiempo de ejecución",
-        "label": "Intervalo"
-      },
-      "timeRange_dashboard": {
-        "description": "Filtrar por ventana del dashboard",
-        "label": "Intervalo"
-      },
-      "timeRange_log": {
-        "description": "Filtrar por timestamp de log",
-        "label": "Intervalo"
-      },
-      "timeRange_metric": {
-        "description": "Filtrar por intervalo de tiempo",
-        "label": "Intervalo"
-      },
-      "timeRange_trigger": {
-        "description": "Filtrar por la última marca de tiempo activada",
-        "label": "Intervalo"
-      },
-      "timerange": {
-        "custom": "Rango Personalizado",
-        "predefined": "Predefinido"
-      },
-      "titles": {
-        "blueprint_filters": "Filtros de Blueprint",
-        "dashboard_filters": "Filtros del Dashboard",
-        "execution_filters": "Filtros de Ejecución",
-        "flow_dashboard_filters": "Filtros del Dashboard de Flow",
-        "flow_execution_filters": "Filtros de Ejecución de Flow",
-        "flow_filters": "Filtros de Flow",
-        "flow_metric_filters": "Filtros de Métricas de Flow",
-        "kv_filters": "Filtros de Key-Value",
-        "log_filters": "Filtros de Log",
-        "metric_filters": "Filtros de Métricas",
-        "namespace_dashboard_filters": "Filtros del Dashboard de Namespace",
-        "namespace_filters": "Filtros de Namespaces",
-        "plugin_filters": "Búsqueda de Plugin",
-        "secret_filters": "Filtros de Secretos",
-        "trigger_filters": "Filtros de Trigger"
-      },
-      "triggerExecutionId": {
-        "description": "Filtrar por ID de ejecución de trigger",
-        "label": "ID de Ejecución del Trigger"
-      },
-      "triggerId": {
-        "description": "Filtrar por identificador de trigger",
-        "label": "ID de Trigger"
-      },
-      "triggerId_trigger": {
-        "description": "Filtrar por trigger ID",
-        "label": "ID de Trigger"
-      },
-      "triggerState": {
-        "description": "Filtrar por estado del trigger",
-        "disabled": "Desactivado",
-        "enabled": "Habilitado",
-        "label": "Estado del Trigger"
-      },
-      "type": {
-        "description": "Filtrar por tipo",
-        "label": "Tipo"
-      },
-      "update": "Actualizar",
-      "username": {
-        "description": "Filtrar por nombre de usuario",
-        "label": "Nombre de usuario"
-      },
-      "value": "Valor",
-      "workerId": {
-        "description": "Filtrar por ID de worker",
-        "label": "ID del Worker"
-      }
-    },
     "filter by log level": "Filtrar por nivel de log",
     "filters": {
       "comparators": {
@@ -1054,6 +760,27 @@
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "Aplicación(es)",
+        "tooltip": "Ver aplicaciones que usan este flow"
+      },
+      "dependencies": {
+        "suffix": "Dependencia(s)",
+        "tooltip": "Ver dependencias del flow"
+      },
+      "errors": {
+        "label": "{count} Error(es)"
+      },
+      "revisions": {
+        "suffix": "Revisión(es)",
+        "tooltip": "Ver revisiones de flow"
+      },
+      "tests": {
+        "suffix": "Prueba(s)",
+        "tooltip": "Ver pruebas de flow"
+      }
+    },
     "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
     "flow_outputs": "Salidas del Flow",
@@ -1079,14 +806,12 @@
     "hide task documentation": "Ocultar documentación de la task",
     "home": "Inicio",
     "hostname": "Nombre del host",
-    "hours": "Horas",
     "iam": "IAM",
     "id": "Id",
     "import": "Importar",
     "in-our-documentation": "en nuestra documentación.",
     "informative notice": "Nota(s)",
     "input": "Entrada",
-    "input_custom_duration": "o ingrese duración personalizada:",
     "inputs": "Entradas",
     "instance": "Instancia",
     "invalid bulk delete": "No se pudieron eliminar las ejecuciones",
@@ -1145,6 +870,7 @@
     "leave page": "Salir de la página",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
+    "line": "Línea",
     "line-by-line": "línea por línea",
     "loaded x dependencies": "{count} dependencias cargadas",
     "log expand setting": "Visualización predeterminada del Log",
@@ -1156,19 +882,62 @@
       "raw": "Vista temporal",
       "raw_details": "Mostrar task logs y flow logs completos en un formato crudo ordenado por marca de tiempo"
     },
+    "main_configuration": "Configuración Principal",
     "management port": "Puerto de gestión",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",
+    "mcp": {
+      "api_token": "Token de API",
+      "auth_type": "Autenticación",
+      "basic_auth": "Autenticación Básica",
+      "bearer_token": "Autenticación de token Bearer",
+      "connect": "Conectar",
+      "connect_modal": {
+        "claude_code": "Código Claude",
+        "claude_code_hint": "Ejecute el siguiente comando en su terminal:",
+        "claude_desktop": "Claude Desktop",
+        "claude_desktop_hint": "Agrega lo siguiente a tu archivo claude_desktop_config.json:",
+        "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+        "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "codex": "Codex (OpenAI)",
+        "codex_hint": "Agrega lo siguiente a tu configuración MCP en codex.json:",
+        "cursor": "Cursor",
+        "cursor_hint": "Agrega lo siguiente a ~/.cursor/mcp.json:",
+        "done": "Hecho",
+        "server_url": "URL del servidor",
+        "title": "Conectar a {name}"
+      },
+      "copy_url": "Copiar URL",
+      "create": "Crear Servidor",
+      "delete_confirm": "¿Está seguro de que desea eliminar este servidor MCP?",
+      "id_invalid": "El id debe comenzar con una letra minúscula o un dígito, y contener solo letras minúsculas, dígitos, guiones o guiones bajos.",
+      "id_placeholder": "p. ej. my-mcp-server",
+      "instructions": "Instrucciones",
+      "main_tenant": "principal",
+      "no_servers": "No se encontraron servidores MCP. Cree su primer servidor para exponer los triggers de la herramienta MCP a agentes de IA externos.",
+      "page_description": "Exponga sus flows de Kestra como herramientas para agentes de IA compatibles con MCP",
+      "private": "Privado",
+      "public": "Público",
+      "save": "Guardar cambios",
+      "server": "Servidor MCP",
+      "server_type": "Tipo de Servidor",
+      "servers": "Servidores MCP",
+      "tab_connect": "Conectar",
+      "tab_connect_placeholder": "Detalles de conexión próximamente.",
+      "tab_edit": "Editar",
+      "tab_tool_flows": "Flujos de Herramientas",
+      "tab_tool_flows_placeholder": "La gestión de flows de herramientas llegará pronto.",
+      "url_copied": "¡URL copiada!",
+      "username_password": "Nombre de usuario y contraseña"
+    },
     "metric": "Métrica",
-    "metric choice": "Por favor elige una métrica y una agregación",
+    "metric choice": "No hay métricas disponibles para este flow",
     "metrics": "Métricas",
     "min": "Min",
-    "minutes": "Minutos",
     "missingSource": "Fuente faltante",
     "modify inputs": "Modificar inputs",
     "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
-    "months": "Meses",
     "more_actions": "Más acciones",
     "multi_panel_editor": {
       "close_all_panels": "Cerrar todos los paneles",
@@ -1600,6 +1369,12 @@
     "pluginPage": {
       "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
+      "sort": {
+        "most_used": "Más usados",
+        "name_asc": "Nombre A-Z",
+        "name_desc": "Nombre Z-A",
+        "newest": "Más reciente"
+      },
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow."
     },
@@ -1686,6 +1461,7 @@
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",
     "runners": "Corredores",
+    "running": "RUNNING",
     "running duration": "Duración en ejecución",
     "save": "Guardar",
     "save draft": {
@@ -1720,7 +1496,6 @@
     "search term in message": "Término de búsqueda en mensaje",
     "search_docs": "Buscar",
     "searching": "Buscando...",
-    "seconds": "Segundos",
     "secret": {
       "add": "Crear",
       "inherited": "Secrets heredados",
@@ -1740,6 +1515,7 @@
     "seeing old revision": "Estás viendo una revisión antigua: {revision}",
     "select": "Seleccione su {{section}}",
     "select datetime": "Seleccionar una fecha",
+    "select view": "Seleccionar vista",
     "selected": "Seleccionado",
     "selection": {
       "all": "Seleccionar todo ({count})",
@@ -2006,6 +1782,37 @@
     "triggered done": "Ejecución <em>{name}</em> se ha activado exitosamente",
     "triggerflow disabled": "El trigger está deshabilitado en la definición del flujo",
     "triggers": "Triggers",
+    "triggers_add_card_add": "Agregar",
+    "triggers_add_card_add_to_flow": "Agregar al flow",
+    "triggers_add_category_app_description": "Comprobar periódicamente los recursos externos para detectar cambios.",
+    "triggers_add_category_app_title": "Disparadores de la App",
+    "triggers_add_category_core_description": "Triggers integrados esenciales para la mayoría de los workflows.",
+    "triggers_add_category_core_title": "Disparadores Principales",
+    "triggers_add_category_empty": "No hay triggers en esta categoría.",
+    "triggers_add_category_realtime_description": "Reacciona instantáneamente a eventos de sistemas de mensajería.",
+    "triggers_add_category_realtime_title": "Disparadores en Tiempo Real",
+    "triggers_add_ee_tooltip": "Este trigger requiere la Enterprise Edition.",
+    "triggers_add_empty_hint": "Intenta con un término de búsqueda diferente o navega por todas las categorías.",
+    "triggers_add_empty_title": "No se encontraron triggers",
+    "triggers_add_filter_all": "Todo",
+    "triggers_add_filter_app": "Aplicación",
+    "triggers_add_filter_core": "Núcleo",
+    "triggers_add_filter_realtime": "Tiempo real",
+    "triggers_add_modal_add_button": "Agregar Trigger al Flow",
+    "triggers_add_modal_ee_notice": "Este trigger requiere Enterprise Edition.",
+    "triggers_add_modal_flow_placeholder": "Seleccione un flow",
+    "triggers_add_modal_namespace_placeholder": "Seleccione un namespace",
+    "triggers_add_modal_properties_hint": "Configura las propiedades del trigger en el editor de flow después de añadir el trigger.",
+    "triggers_add_modal_tab_documentation": "Documentación",
+    "triggers_add_modal_tab_form": "Formulario",
+    "triggers_add_modal_tab_source": "Origen",
+    "triggers_add_modal_title": "{name}",
+    "triggers_add_modal_trigger_id": "ID de Trigger",
+    "triggers_add_modal_trigger_id_placeholder": "Identificador único para este trigger",
+    "triggers_add_search_placeholder": "Buscar triggers...",
+    "triggers_add_see_less": "Ver menos",
+    "triggers_add_see_more": "Ver más ({count} más)",
+    "triggers_header_description": "Navega, añade y gestiona triggers para automatizar tus flows. Elige entre exponer tu flow como una herramienta de IA, programar, añadir un webhook trigger, sondear cambios en aplicaciones externas o escuchar eventos en tiempo real.",
     "triggers_state": {
       "options": {
         "disabled": "Deshabilitado",
@@ -2013,6 +1820,8 @@
       },
       "state": "Estado"
     },
+    "triggers_tabs_add": "Agregar",
+    "triggers_tabs_manage": "Administrar",
     "true": "Verdadero",
     "type": "Tipo",
     "unable to generate graph": "Ocurrió un problema al generar el gráfico que impide que se muestre la topología.",
@@ -2061,7 +1870,6 @@
       "payload": "Payload de Webhook (JSON)"
     },
     "webhook link copied": "Enlace de Webhook copiado.",
-    "weeks": "Semanas",
     "welcome": {
       "help": {
         "text": "Haz cualquier pregunta en nuestra comunidad de Slack. Si estás atascado, estamos aquí para ayudarte. ✋",
@@ -2079,6 +1887,14 @@
     },
     "welcome_copilot": {
       "button_cta": "Crear flow desde cero",
+      "create_manually": {
+        "description": "Construir desde cero usando el editor",
+        "title": "Crear manualmente"
+      },
+      "docs": {
+        "description": "Aprende más en la documentación oficial",
+        "title": "Lee la documentación"
+      },
       "execute_hint": {
         "description": "Haz clic para guardar tu flujo de trabajo y ejecutarlo inmediatamente.",
         "title": "Guardar y ejecutar tu flow"
@@ -2141,7 +1957,7 @@
       },
       "need_help": "¿Necesitas ayuda?",
       "placeholder_prompt": "Envíame un mensaje de saludo diario a las 9am.",
-      "remaining_quota": "Te quedan {count} generaciones de IA",
+      "remaining_quota": "Te quedan {count} generaciones de IA. El límite se restablece diariamente a medianoche UTC.",
       "show_less": "Mostrar menos mensajes",
       "show_more": "Mostrar más indicaciones",
       "success_page": {
@@ -2190,7 +2006,6 @@
     "worker information": "Información del Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
-    "wrong labels": "No se permite una key o value vacía en las etiquetas",
-    "years": "Años"
+    "wrong labels": "No se permite una key o value vacía en las etiquetas"
   }
 }

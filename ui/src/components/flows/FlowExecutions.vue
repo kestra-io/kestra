@@ -9,10 +9,10 @@
 </template>
 
 <script setup lang="ts">
-    import Executions from "../executions/Executions.vue";
+    import Executions from "../executions/Executions.vue"
 
-    import {useFlowStore} from "../../stores/flow";
-    const flowStore = useFlowStore();
+    import {useFlowStore} from "../../stores/flow"
+    const flowStore = useFlowStore()
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 </script>

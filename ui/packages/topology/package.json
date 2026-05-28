@@ -1,0 +1,81 @@
+{
+    "name": "@kestra-io/topology",
+    "version": "0.0.0-dev",
+    "description": "Kestra flow topology graph component – powered by Vue Flow",
+    "type": "module",
+    "homepage": "https://github.com/kestra-io/kestra#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kestra-io/kestra.git"
+    },
+    "bugs": {
+        "url": "https://github.com/kestra-io/kestra/issues"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./vue-flow-utils": "./src/vue-flow-utils.ts"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "sideEffects": [
+        "**/*.css",
+        "**/*.scss",
+        "./dist/style.css",
+        "./src/index.ts"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "typecheck": "vue-tsc --noEmit",
+        "test": "npm run unit:test",
+        "unit:test": "vitest run --config vitest.unit.config.ts",
+        "unit:watch": "vitest --config vitest.unit.config.ts",
+        "lint:fix": "eslint --fix",
+        "lint:test": "eslint",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "dagre": "^0.8.5",
+        "html-to-image": "^1.11.13",
+        "js-yaml": "^4",
+        "vue-material-design-icons": "^5.3.1",
+        "yaml": "^2"
+    },
+    "peerDependencies": {
+        "@kestra-io/design-system": "*",
+        "@vue-flow/background": "^1.3.2",
+        "@vue-flow/controls": "^1.1.3",
+        "@vue-flow/core": "^1.48.2",
+        "lodash": "^4",
+        "moment": "^2.30.1",
+        "moment-timezone": "^0.6.2",
+        "vue": "^3.5.0",
+        "vue-i18n": "^11.4.2"
+    },
+    "peerDependenciesMeta": {
+        "vue-i18n": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/dagre": "^0.7.52",
+        "@types/js-yaml": "^4.0.9",
+        "@types/lodash": "^4",
+        "@types/node": "^25.6.2",
+        "@vitejs/plugin-vue": "^6.0.6",
+        "sass-embedded": "^1.99.0",
+        "tsdown": "^0.22.0",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.11",
+        "vitest": "^4.1.0",
+        "vue": "^3.5.0",
+        "vue-i18n": "^11.4.2",
+        "vue-tsc": "^3.2.8"
+    }
+}

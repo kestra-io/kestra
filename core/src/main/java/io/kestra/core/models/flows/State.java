@@ -28,6 +28,7 @@ public class State {
     @JsonInclude
     Type current;
 
+    @NotNull
     @Valid
     List<History> histories;
 
@@ -118,7 +119,7 @@ public class State {
             return Optional.empty();
         }
 
-        return Optional.of(this.histories.get(this.histories.size() - 1).getDate());
+        return Optional.of(this.histories.getLast().getDate());
     }
 
     public String humanDuration() {
@@ -134,7 +135,7 @@ public class State {
             return Instant.now();
         }
 
-        return this.histories.get(this.histories.size() - 1).getDate();
+        return this.histories.getLast().getDate();
     }
 
     public Instant minDate() {
@@ -176,6 +177,7 @@ public class State {
     }
 
     @JsonIgnore
+    // Used in EE
     public static Type[] runningTypes() {
         return Arrays.stream(Type.values())
             .filter(type -> type.isRunning() || type.isCreated())
@@ -212,21 +214,12 @@ public class State {
         return this.current.isSuccess();
     }
 
-    @JsonIgnore
-    public boolean isRestartable() {
-        return this.current.isFailed() || this.isPaused();
-    }
-
-    @JsonIgnore
-    public boolean isResumable() {
-        return this.current.isPaused() || this.current.isRetrying() || this.current.isCreated();
-    }
-
     /**
      * Checks whether the state is restarted after being paused.
      *
      * @return {@code true} if resuming. Otherwise {@code false}.
      */
+    // Used in EE
     @JsonIgnore
     public boolean isResumingAfterPause() {
         if (!this.current.equals(Type.RESTARTED) || this.histories.size() < 2) {

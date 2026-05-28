@@ -24,16 +24,16 @@ public class FileSizeFunction extends AbstractFileFunction {
     protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
-                FileAttributes fileAttributes = storageInterface.getAttributes(tenantId, namespace, path);
+                FileAttributes fileAttributes = storageInterface.get().getAttributes(tenantId, namespace, path);
                 yield fileAttributes.getSize();
             }
             case LocalPath.FILE_SCHEME -> {
-                BasicFileAttributes fileAttributes = localPathFactory.createLocalPath().getAttributes(path);
+                BasicFileAttributes fileAttributes = localPathFactory.get().createLocalPath().getAttributes(path);
                 yield fileAttributes.size();
             }
             case Namespace.NAMESPACE_FILE_SCHEME -> {
-                FileAttributes fileAttributes = namespaceFactory
-                    .of(tenantId, namespace, storageInterface)
+                FileAttributes fileAttributes = namespaceFactory.get()
+                    .of(tenantId, namespace, storageInterface.get())
                     .getFileMetadata(NamespaceFile.normalize(Path.of(path.getPath())));
                 yield fileAttributes.getSize();
             }

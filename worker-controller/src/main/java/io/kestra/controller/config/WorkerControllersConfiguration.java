@@ -18,31 +18,13 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
 /**
  * Configuration for worker-to-controller service discovery.
  * <p>
- * Supports two discovery strategies:
+ * Supports three discovery strategies:
  * <ul>
  * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
  * <li>DNS: DNS SRV/A record resolution with gRPC load-balancing</li>
+ * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
  * </ul>
  * <p>
- * Example configuration:
- * 
- * <pre>
- * kestra:
- *   worker:
- *     controllers:
- *       type: STATIC
- *       static:
- *         endpoints:
- *           - host: controller-1.example.com
- *             port: 9096
- *           - host: controller-2.example.com
- *             port: 9096
- *       load-balancing:
- *         policy: ROUND_ROBIN
- *       health-check:
- *         enabled: true
- *         interval: PT30S
- * </pre>
  */
 @ConfigurationProperties("kestra.worker.controllers")
 public record WorkerControllersConfiguration(
@@ -52,6 +34,8 @@ public record WorkerControllersConfiguration(
     @Nullable StaticConfig staticConfig,
 
     @Nullable DnsConfig dnsConfig,
+
+    @Nullable StorageConfig storageConfig,
 
     @Valid LoadBalancing loadBalancing,
 
@@ -69,7 +53,11 @@ public record WorkerControllersConfiguration(
         /**
          * DNS-based discovery using SRV or A records.
          */
-        DNS
+        DNS,
+        /**
+         * Dynamic discovery via Kestra internal storage; controllers self-register their endpoint.
+         */
+        STORAGE
     }
 
     @ConfigurationProperties("static")
@@ -117,6 +105,15 @@ public record WorkerControllersConfiguration(
              */
             A
         }
+    }
+
+    /**
+     * Internal storage-based discovery configuration.
+     */
+    @ConfigurationProperties("storage")
+    @Requires(property = "kestra.worker.controllers.type", value = "STORAGE")
+    public record StorageConfig(
+        @Bindable(defaultValue = "PT30S") Duration refreshInterval) {
     }
 
     /**

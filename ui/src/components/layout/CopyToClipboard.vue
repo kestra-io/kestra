@@ -1,37 +1,36 @@
 <template>
     <div class="clipboard">
-        <el-tooltip
+        <KsTooltip
             trigger="click"
             :content="$t('copied')"
             placement="left"
             :autoClose="2000"
         >
-            <el-button :icon="ContentCopy" type="default" :link @click="copyText">
+            <KsButton :icon="ContentCopy" type="default" :link @click="copyText">
                 <span v-if="label">{{ label }}</span>
-            </el-button>
-        </el-tooltip>
+            </KsButton>
+        </KsTooltip>
 
         <slot name="right" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Utils from "../../utils/utils";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import * as Utils from "../../utils/utils"
 
-    const props = defineProps<{ text: string; label?: string, link?: boolean }>();
+    const props = defineProps<{ text: string; label?: string, link?: boolean }>()
 
-    const copyText = () => Utils.copy(props.text);
+    const copyText = () => Utils.copy(props.text)
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .clipboard {
     z-index: 1;
     position: absolute;
-    top: $spacer;
-    right: $spacer;
+    top: 1rem;
+    right: 1rem;
     display: inline-flex;
 }
 </style>

@@ -1,26 +1,26 @@
 <template>
     <TopNavBar :title="routeInfo.title">
-        <template #additional-right>
-            <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
+        <template #actions>
+            <KsButton @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
                 {{ $t("settings.blocks.save.label") }}
-            </el-button>
+            </KsButton>
         </template>
     </TopNavBar>
 
     <Wrapper>
         <Block :heading="$t('settings.blocks.configuration.label')">
             <template #actions>
-                <el-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <KsButton
                         v-if="!hasDefaultMainConfig"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultConfigurations"
                     />
-                </el-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
@@ -33,19 +33,19 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.log_display')">
-                        <el-select :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.logDisplay" @update:model-value="onLogDisplayChange">
+                            <KsOption
                                 v-for="item in logDisplayOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.editor_type')">
-                        <el-select :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.editorType" @update:model-value="onEditorTypeChange">
+                            <KsOption
                                 v-for="item in [
                                     {
                                         label: $t('no_code.labels.yaml'),
@@ -60,48 +60,48 @@
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_flow')">
-                        <el-select :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.executeFlowBehaviour" @update:model-value="onExecuteFlowBehaviourChange">
+                            <KsOption
                                 v-for="item in Object.values(executeFlowBehaviours)"
                                 :key="item"
                                 :label="$t(`open in ${item}`)"
                                 :value="item"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.execute_default_tab')">
-                        <el-select :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.executeDefaultTab" @update:model-value="onExecuteDefaultTabChange">
+                            <KsOption
                                 v-for="item in executeDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
-                        <el-select :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <KsOption
                                 v-for="item in flowDefaultTabOptions"
                                 :key="item.value"
                                 :label="item.label"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
                     <Column :label="$t('settings.blocks.configuration.fields.playground')">
-                        <el-switch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
+                        <KsSwitch :modelValue="pendingSettings.editorPlayground" @update:model-value="onEditorPlaygroundChange" />
                     </Column>
                 </Row>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
-                        <el-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
                             controlsPosition="right"
@@ -111,7 +111,7 @@
                             <template #suffix>
                                 <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
                             </template>
-                        </el-input-number>
+                        </KsInputNumber>
                     </Column>
                 </Row>
             </template>
@@ -119,33 +119,33 @@
 
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #actions>
-                <el-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <KsButton
                         v-if="!hasDefaultPreferences"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultPreferences"
                     />
-                </el-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.theme')">
-                        <el-select :modelValue="pendingSettings.theme" @update:model-value="onTheme">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.theme" @update:model-value="onTheme">
+                            <KsOption
                                 v-for="item in themesOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
-                        <el-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.logsFontSize"
                             @update:model-value="onLogsFontSize"
                             controlsPosition="right"
@@ -155,18 +155,18 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
-                        <el-select :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
+                            <KsOption
                                 v-for="item in fontFamilyOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_size')">
-                        <el-input-number
+                        <KsInputNumber
                             :modelValue="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
                             controlsPosition="right"
@@ -178,29 +178,29 @@
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.editor_folding_stratgy')">
-                        <el-switch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
+                        <KsSwitch :aria-label="$t('Fold auto')" :modelValue="pendingSettings.autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
                     </Column>
                     <Column :label="$t('settings.blocks.theme.fields.editor_hover_description')">
-                        <el-switch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
+                        <KsSwitch :aria-label="$t('Hover description')" :modelValue="pendingSettings.hoverTextEditor" @update:model-value="onHoverTextEditor" />
                     </Column>
                 </Row>
 
                 <Row>
                     <Column :label="$t('settings.blocks.theme.fields.environment_name')">
-                        <el-tooltip
+                        <KsTooltip
                             v-if="isEnvNameFromConfig"
                             :content="$t('settings.blocks.theme.fields.environment_name_tooltip')"
                             placement="bottom"
                         >
-                            <el-input
+                            <KsInput
                                 v-model="pendingSettings.envName"
                                 @change="onEnvNameChange"
                                 :placeholder="$t('name')"
                                 clearable
                             />
-                        </el-tooltip>
+                        </KsTooltip>
 
-                        <el-input
+                        <KsInput
                             v-else
                             v-model="pendingSettings.envName"
                             @change="onEnvNameChange"
@@ -210,7 +210,7 @@
                     </Column>
 
                     <Column :label="$t('settings.blocks.theme.fields.environment_color')">
-                        <el-color-picker
+                        <KsColorPicker
                             v-model="pendingSettings.envColor"
                             @change="onEnvColorChange"
                             showAlpha
@@ -222,51 +222,51 @@
 
         <Block :heading="$t('settings.blocks.localization.label')" :note="$t('settings.blocks.localization.note')">
             <template #actions>
-                <el-tooltip
+                <KsTooltip
                     :content="$t('settings.blocks.reset_section_to_defaults')"
                     placement="top"
                 >
-                    <el-button
+                    <KsButton
                         v-if="!hasDefaultLocalization"
                         :icon="Reload"
                         circle
                         @click="restoreDefaultLocalization"
                     />
-                </el-tooltip>
+                </KsTooltip>
             </template>
             <template #content>
                 <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.language')">
-                        <el-select :modelValue="pendingSettings.lang" @update:model-value="onLang">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.lang" @update:model-value="onLang">
+                            <KsOption
                                 v-for="item in langOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.time_zone')">
-                        <el-select :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.timezone" @update:model-value="onTimezone" filterable>
+                            <KsOption
                                 v-for="item in zonesWithOffset"
                                 :key="item.zone"
                                 :label="`${item.zone} (UTC${item.offset === 0 ? '' : item.formattedOffset})`"
                                 :value="item.zone"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
 
                     <Column :label="$t('settings.blocks.localization.fields.date_format')">
-                        <el-select :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
-                            <el-option
+                        <KsSelect :modelValue="pendingSettings.dateFormat" @update:model-value="onDateFormat" :key="localeKey">
+                            <KsOption
                                 v-for="item in dateFormats"
                                 :key="pendingSettings.timezone + item.value"
                                 :label="$filters.date(now, item.value)"
                                 :value="item.value"
                             />
-                        </el-select>
+                        </KsSelect>
                     </Column>
                 </Row>
             </template>
@@ -276,9 +276,9 @@
             <template #content>
                 <Row>
                     <Column>
-                        <el-button v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
+                        <KsButton v-if="canReadFlows" :icon="Download" @click="exportFlows()" class="w-100">
                             {{ $t("settings.blocks.export.fields.flows") }}
-                        </el-button>
+                        </KsButton>
                     </Column>
                 </Row>
             </template>
@@ -287,23 +287,23 @@
 </template>
 
 <script setup>
-    import Reload from "vue-material-design-icons/Reload.vue";
-    import Download from "vue-material-design-icons/Download.vue";
-    import {executeFlowBehaviours} from "../../utils/constants";
+    import Reload from "vue-material-design-icons/Reload.vue"
+    import Download from "vue-material-design-icons/Download.vue"
+    import {executeFlowBehaviours} from "../../utils/constants"
 </script>
 
 <script>
-    import RouteContext from "../../mixins/routeContext";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
-    import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
-    import Utils from "../../utils/utils";
-    import {mapStores} from "pinia";
-    import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "override/stores/misc";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {logDisplayTypes, storageKeys} from "../../utils/constants";
+    import RouteContext from "../../mixins/routeContext"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"
+    import LogLevelSelector from "../../components/logs/LogLevelSelector.vue"
+    import * as Utils from "../../utils/utils"
+    import {mapStores} from "pinia"
+    import {useLayoutStore} from "../../stores/layout"
+    import {useMiscStore} from "override/stores/misc"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import {logDisplayTypes, storageKeys} from "../../utils/constants"
 
     import Wrapper from "./components/Wrapper.vue"
     import Block from "./components/block/Block.vue"
@@ -311,7 +311,7 @@
     import Column from "./components/block/Column.vue"
     import {useAuthStore} from "override/stores/auth"
     import {useFlowStore} from "../../stores/flow"
-    import {defaultNamespace} from "../../composables/useNamespaces";
+    import {defaultNamespace} from "../../composables/useNamespaces"
 
 
     export default {
@@ -323,13 +323,13 @@
             Wrapper,
             Block,
             Row,
-            Column
+            Column,
         },
         props: {
             allowDefaultNamespace: {
                 type: Boolean,
-                default: true
-            }
+                default: true,
+            },
         },
         data() {
             return {
@@ -346,22 +346,22 @@
                     executeDefaultTab: "gantt",
                     flowDefaultTab: "overview",
                     editorPlayground: true,
-                    autoRefreshInterval: 10
+                    autoRefreshInterval: 10,
                 },
                 defaultPreferences: {
                     theme: "syncWithSystem",
                     logsFontSize: 12,
-                    editorFontFamily: "'Source Code Pro', monospace",
+                    editorFontFamily: "'JetBrains Mono', monospace",
                     editorFontSize: 12,
                     autofoldTextEditor: false,
                     hoverTextEditor: false,
                     envName: undefined,
-                    envColor: undefined
+                    envColor: undefined,
                 },
                 defaultLocalization:{
                     lang: "en",
                     timezone: this.$moment.tz.guess(),
-                    dateFormat: "llll"
+                    dateFormat: "llll",
                 },
                 originalSettings: {},
                 pendingSettings: {
@@ -383,7 +383,7 @@
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
                     editorPlayground: undefined,
-                    logsFontSize: undefined
+                    logsFontSize: undefined,
                 },
                 settingsKeyMapping: {
                     dateFormat: storageKeys.DATE_FORMAT_STORAGE_KEY,
@@ -391,50 +391,50 @@
                     executeFlowBehaviour: storageKeys.EXECUTE_FLOW_BEHAVIOUR,
                 },
                 zonesWithOffset: this.$moment.tz.names().map((zone) => {
-                    const timezoneMoment = this.$moment.tz(zone);
+                    const timezoneMoment = this.$moment.tz(zone)
                     return {
                         zone,
                         offset: timezoneMoment.utcOffset(),
-                        formattedOffset: timezoneMoment.format("Z")
-                    };
+                        formattedOffset: timezoneMoment.format("Z"),
+                    }
                 }).sort((a, b) => a.offset - b.offset),
                 now: this.$moment(),
                 localeKey: this.$moment.locale(),
-            };
+            }
         },
         created() {
-            this.pendingSettings.defaultNamespace = defaultNamespace();
-            this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
-            this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
-            this.pendingSettings.lang = Utils.getLang();
-            this.pendingSettings.theme = Utils.getTheme();
+            this.pendingSettings.defaultNamespace = defaultNamespace()
+            this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML"
+            this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO"
+            this.pendingSettings.lang = Utils.getLang()
+            this.pendingSettings.theme = Utils.getTheme()
 
-            this.pendingSettings.dateFormat = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll";
-            this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess();
-            this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
-            this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true";
-            this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT;
-            this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12;
-            this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
-            this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
-            this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
-            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
-            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") === "false" ? false : true;
-            this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name;
-            this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color;
-            this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
-            this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
-            this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
+            this.pendingSettings.dateFormat = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll"
+            this.pendingSettings.timezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || this.$moment.tz.guess()
+            this.pendingSettings.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true"
+            this.pendingSettings.hoverTextEditor = localStorage.getItem("hoverTextEditor") === "true"
+            this.pendingSettings.logDisplay = localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT
+            this.pendingSettings.editorFontSize = parseInt(localStorage.getItem("editorFontSize")) || 12
+            this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace"
+            this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab"
+            this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt"
+            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview"
+            this.pendingSettings.editorPlayground = localStorage.getItem("editorPlayground") !== "false"
+            this.pendingSettings.envName = this.layoutStore.envName || this.miscStore.configs?.environment?.name
+            this.pendingSettings.envColor = this.layoutStore.envColor || this.miscStore.configs?.environment?.color
+            this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12
+            this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10
+            this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings))
 
-            this.checkDefaultStates();
+            this.checkDefaultStates()
         },
         methods: {
             checkForChanges() {
-                this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings);
-                this.checkDefaultStates();
+                this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings)
+                this.checkDefaultStates()
             },
             async confirmNavigation() {
-                if (!this.hasUnsavedChanges) return true;
+                if (!this.hasUnsavedChanges) return true
 
                 try {
                     await this.$confirm(
@@ -446,190 +446,190 @@
                             type: "warning",
                             showClose: false,
                             closeOnClickModal: false,
-                            closeOnPressEscape: false
-                        }
-                    );
-                    await this.saveAllSettings();
-                    return true;
+                            closeOnPressEscape: false,
+                        },
+                    )
+                    await this.saveAllSettings()
+                    return true
                 } catch {
-                    this.pendingSettings = JSON.parse(JSON.stringify(this.originalSettings));
-                    this.hasUnsavedChanges = false;
-                    return true;
+                    this.pendingSettings = JSON.parse(JSON.stringify(this.originalSettings))
+                    this.hasUnsavedChanges = false
+                    return true
                 }
             },
             isObjectEqual(obj1, obj2, keys) {
                 return keys.every(key => {
-                    const val1 = obj1[key];
-                    const val2 = obj2[key];
+                    const val1 = obj1[key]
+                    const val2 = obj2[key]
 
-                    if (val1 == null && val2 == null) return true;
-                    if (val1 == null || val2 == null) return false;
+                    if (val1 == null && val2 == null) return true
+                    if (val1 == null || val2 == null) return false
 
-                    return String(val1) === String(val2);
-                });
+                    return String(val1) === String(val2)
+                })
             },
             checkDefaultStates() {
                 this.hasDefaultMainConfig = this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultMainConfig,
-                    Object.keys(this.defaultMainConfig)
-                );
+                    Object.keys(this.defaultMainConfig),
+                )
 
                 this.hasDefaultPreferences = this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultPreferences,
-                    Object.keys(this.defaultPreferences)
-                );
+                    Object.keys(this.defaultPreferences),
+                )
 
                 this.hasDefaultLocalization=this.isObjectEqual(
                     this.pendingSettings,
                     this.defaultLocalization,
-                    Object.keys(this.defaultLocalization)
-                );
+                    Object.keys(this.defaultLocalization),
+                )
             },
             restoreDefaultLocalization(){
                 Object.keys(this.defaultLocalization).forEach(key => {
-                    this.pendingSettings[key] = this.defaultLocalization[key];
-                });
+                    this.pendingSettings[key] = this.defaultLocalization[key]
+                })
 
-                this.saveAllSettings();
+                this.saveAllSettings()
             },
             restoreDefaultConfigurations(){
                 Object.keys(this.defaultMainConfig).forEach(key => {
-                    this.pendingSettings[key] = this.defaultMainConfig[key];
-                });
+                    this.pendingSettings[key] = this.defaultMainConfig[key]
+                })
 
-                this.saveAllSettings();
+                this.saveAllSettings()
             },
             restoreDefaultPreferences(){
                 Object.keys(this.defaultPreferences).forEach(key => {
-                    this.pendingSettings[key] = this.defaultPreferences[key];
-                });
+                    this.pendingSettings[key] = this.defaultPreferences[key]
+                })
 
-                this.saveAllSettings();
+                this.saveAllSettings()
             },
             handleBeforeUnload(e) {
                 if (this.hasUnsavedChanges) {
-                    e.preventDefault();
-                    e.returnValue = "";
+                    e.preventDefault()
+                    e.returnValue = ""
                 }
             },
             async handleNavigationClick(e) {
-                const link = e.target.closest("a");
-                if (!link) return;
+                const link = e.target.closest("a")
+                if (!link) return
 
-                if (!window.location.pathname.includes("/settings")) return;
+                if (!window.location.pathname.includes("/settings")) return
 
                 if (this.hasUnsavedChanges) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault()
+                    e.stopPropagation()
 
-                    const shouldNavigate = await this.confirmNavigation();
+                    const shouldNavigate = await this.confirmNavigation()
                     if (shouldNavigate) {
-                        const href = link.getAttribute("href");
+                        const href = link.getAttribute("href")
                         if (link.getAttribute("data-vue-router") === "true") {
-                            this.$router.push(href);
+                            this.$router.push(href)
                         } else {
-                            window.location.href = href;
+                            window.location.href = href
                         }
                     }
                 }
             },
             onNamespaceSelect(value) {
-                this.pendingSettings.defaultNamespace = value;
-                this.checkForChanges();
+                this.pendingSettings.defaultNamespace = value
+                this.checkForChanges()
             },
             onEditorTypeChange(value) {
-                this.pendingSettings.editorType = value;
-                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
-                this.checkForChanges();
+                this.pendingSettings.editorType = value
+                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value)
+                this.checkForChanges()
             },
             onLevelChange(value) {
-                this.pendingSettings.defaultLogLevel = value;
-                this.checkForChanges();
+                this.pendingSettings.defaultLogLevel = value
+                this.checkForChanges()
             },
             onLang(value) {
-                this.pendingSettings.lang = value;
-                this.checkForChanges();
+                this.pendingSettings.lang = value
+                this.checkForChanges()
             },
             onTheme(value) {
-                this.pendingSettings.theme = value;
-                this.checkForChanges();
+                this.pendingSettings.theme = value
+                this.checkForChanges()
             },
             onDateFormat(value) {
-                this.pendingSettings.dateFormat = value;
-                this.checkForChanges();
+                this.pendingSettings.dateFormat = value
+                this.checkForChanges()
             },
             onTimezone(value) {
-                this.pendingSettings.timezone = value;
-                this.checkForChanges();
+                this.pendingSettings.timezone = value
+                this.checkForChanges()
             },
             onAutofoldTextEditor(value) {
-                this.pendingSettings.autofoldTextEditor = value;
-                this.checkForChanges();
+                this.pendingSettings.autofoldTextEditor = value
+                this.checkForChanges()
             },
             onHoverTextEditor(value) {
-                this.pendingSettings.hoverTextEditor = value;
-                this.checkForChanges();
+                this.pendingSettings.hoverTextEditor = value
+                this.checkForChanges()
             },
             exportFlows() {
                 return this.flowStore.findFlows({size: 1, page: 1})
                     .then((result) => {
-                        const flowCount = result.total;
+                        const flowCount = result.total
 
                         return this.flowStore.exportFlowByQuery({})
                             .then(() => {
                                 this.$toast().success(
                                     this.$t("flows exported", {
                                         count: flowCount,
-                                    })
-                                );
-                            });
-                    });
+                                    }),
+                                )
+                            })
+                    })
             },
             onLogDisplayChange(value) {
-                this.pendingSettings.logDisplay = value;
-                this.checkForChanges();
+                this.pendingSettings.logDisplay = value
+                this.checkForChanges()
             },
             onFontSize(value) {
-                this.pendingSettings.editorFontSize = value;
-                this.checkForChanges();
+                this.pendingSettings.editorFontSize = value
+                this.checkForChanges()
             },
             onFontFamily(value) {
-                this.pendingSettings.editorFontFamily = value;
-                this.checkForChanges();
+                this.pendingSettings.editorFontFamily = value
+                this.checkForChanges()
             },
             onEnvNameChange(value) {
-                this.pendingSettings.envName = value;
-                this.checkForChanges();
+                this.pendingSettings.envName = value
+                this.checkForChanges()
             },
             onEnvColorChange(value) {
-                this.pendingSettings.envColor = value;
-                this.checkForChanges();
+                this.pendingSettings.envColor = value
+                this.checkForChanges()
             },
             onExecuteFlowBehaviourChange(value) {
-                this.pendingSettings.executeFlowBehaviour = value;
-                this.checkForChanges();
+                this.pendingSettings.executeFlowBehaviour = value
+                this.checkForChanges()
             },
             onExecuteDefaultTabChange(value){
-                this.pendingSettings.executeDefaultTab = value;
-                this.checkForChanges();
+                this.pendingSettings.executeDefaultTab = value
+                this.checkForChanges()
             },
             onAutoRefreshInterval(value) {
-                this.pendingSettings.autoRefreshInterval = value;
-                this.checkForChanges();
+                this.pendingSettings.autoRefreshInterval = value
+                this.checkForChanges()
             },
             onFlowDefaultTabChange(value){
-                this.pendingSettings.flowDefaultTab = value;
-                this.checkForChanges();
+                this.pendingSettings.flowDefaultTab = value
+                this.checkForChanges()
             },
             onEditorPlaygroundChange(value) {
-                this.pendingSettings.editorPlayground = value;
-                this.checkForChanges();
+                this.pendingSettings.editorPlayground = value
+                this.checkForChanges()
             },
             onLogsFontSize(value) {
-                this.pendingSettings.logsFontSize = value;
-                this.checkForChanges();
+                this.pendingSettings.logsFontSize = value
+                this.checkForChanges()
             },
             async saveAllSettings() {
                 let refreshWhenSaved = false
@@ -646,16 +646,16 @@
                         break
                     case "envName":
                         if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.name) {
-                            this.layoutStore.setEnvName(this.pendingSettings[key]);
+                            this.layoutStore.setEnvName(this.pendingSettings[key])
                         }
                         break
                     case "envColor":
                         if (this.pendingSettings[key] !== this.miscStore.configs?.environment?.color) {
-                            this.layoutStore.setEnvColor(this.pendingSettings[key]);
+                            this.layoutStore.setEnvColor(this.pendingSettings[key])
                         }
                         break
                     case "theme":
-                        Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
+                        Utils.switchTheme(this.miscStore, this.pendingSettings[key])
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -675,7 +675,7 @@
                         // before refreshing. If we don't, some values will be saved
                         // but the page will refresh before all is saved.
                         refreshWhenSaved = true
-                        break;
+                        break
                     }
                     default:
                         if (storedKey) {
@@ -689,65 +689,65 @@
                     }
                 }
 
-                this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
-                this.hasUnsavedChanges = false;
-                this.checkDefaultStates();
+                this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings))
+                this.hasUnsavedChanges = false
+                this.checkDefaultStates()
 
                 // Clear namespace filters from sessionStorage if default namespace changed/cleared
                 if (previousDefaultNamespace !== this.pendingSettings.defaultNamespace) {
-                    this.clearNamespaceFilters();
+                    this.clearNamespaceFilters()
                 }
 
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
-                this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
+                this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true})
             },
             clearNamespaceFilters() {
                 Object.keys(sessionStorage)
                     .filter(key => key.includes("_restore_url"))
                     .forEach(key => {
-                        const value = sessionStorage.getItem(key);
-                        if (!value) return;
+                        const value = sessionStorage.getItem(key)
+                        if (!value) return
 
-                        const filters = JSON.parse(value);
+                        const filters = JSON.parse(value)
                         const updated = Object.fromEntries(
-                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]"))
-                        );
+                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]")),
+                        )
 
                         if (Object.keys(updated).length) {
-                            sessionStorage.setItem(key, JSON.stringify(updated));
+                            sessionStorage.setItem(key, JSON.stringify(updated))
                         } else {
-                            sessionStorage.removeItem(key);
+                            sessionStorage.removeItem(key)
                         }
-                    });
+                    })
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.miscStore, "syncWithSystem");
+                    Utils.switchTheme(this.miscStore, "syncWithSystem")
                 }
             },
         },
         mounted() {
-            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
+            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+            mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem)
 
-            window.addEventListener("beforeunload", this.handleBeforeUnload);
-            document.addEventListener("click", this.handleNavigationClick, true); // Use capture phase
+            window.addEventListener("beforeunload", this.handleBeforeUnload)
+            document.addEventListener("click", this.handleNavigationClick, true) // Use capture phase
         },
         beforeUnmount() {
-            window.removeEventListener("beforeunload", this.handleBeforeUnload);
-            document.removeEventListener("click", this.handleNavigationClick, true);
+            window.removeEventListener("beforeunload", this.handleBeforeUnload)
+            document.removeEventListener("click", this.handleNavigationClick, true)
         },
         computed: {
             ...mapStores(useLayoutStore, useMiscStore, useAuthStore, useFlowStore),
             mappedTheme() {
-                return this.miscStore.theme;
+                return this.miscStore.theme
             },
             routeInfo() {
                 return {
-                    title: this.$t("settings.label")
-                };
+                    title: this.$t("settings.label"),
+                }
             },
             langOptions() {
                 return [
@@ -763,14 +763,14 @@
                     {value: "zh_CN", text: "Chinese"},
                     {value: "ja", text: "Japanese"},
                     {value: "ko", text: "Korean"},
-                    {value: "hi", text: "Hindi"}
-                ];
+                    {value: "hi", text: "Hindi"},
+                ]
             },
             themesOptions() {
                 return [
                     {value: "light", text: "Light"},
                     {value: "dark", text: "Dark"},
-                    {value: "syncWithSystem", text: "Sync With System"}
+                    {value: "syncWithSystem", text: "Sync With System"},
                 ]
             },
             dateFormats() {
@@ -789,152 +789,156 @@
                     {value: "lll"},
                     {value: "llll"},
                     {value: "LLL"},
-                    {value: "LLLL"}
+                    {value: "LLLL"},
                 ]
             },
             canReadFlows() {
-                return this.authStore.user?.isAllowed(permission.FLOW, action.READ);
+                return this.authStore.user?.isAllowed(resource.FLOW, action.VIEW)
             },
             logDisplayOptions() {
                 return  [
                     {value: logDisplayTypes.ERROR, text: this.$t("expand error")},
                     {value: logDisplayTypes.ALL, text: this.$t("expand all")},
-                    {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")}
+                    {value: logDisplayTypes.HIDDEN, text: this.$t("collapse all")},
                 ]
             },
             fontFamilyOptions() {
                 // Array of font family that contains arabic language and japanese, chinese, korean languages compatible font family
                 return [
                     {
+                        value: "'JetBrains Mono', monospace",
+                        text: "JetBrains Mono",
+                    },
+                    {
                         value: "'Source Code Pro', monospace",
-                        text: "Source Code Pro"
+                        text: "Source Code Pro",
                     },
                     {
                         value: "'Courier New', monospace",
-                        text: "Courier"
+                        text: "Courier",
                     },
                     {
                         value: "'Times New Roman', serif",
-                        text: "Times New Roman"
+                        text: "Times New Roman",
                     },
                     {
                         value: "'Book Antiqua', serif",
-                        text: "Book Antiqua"
+                        text: "Book Antiqua",
                     },
                     {
                         value: "'Times New Roman Arabic', serif",
-                        text: "Times New Roman Arabic"
+                        text: "Times New Roman Arabic",
                     },
                     {
                         value: "'SimSun', sans-serif",
-                        text: "SimSun"
-                    }
+                        text: "SimSun",
+                    },
                 ]
             },
             executeDefaultTabOptions() {
                 return [
                     {
                         value : "overview",
-                        label: this.$t("overview")
+                        label: this.$t("overview"),
                     },
                     {
                         value : "gantt",
-                        label: this.$t("gantt")
+                        label: this.$t("gantt"),
                     },
                     {
                         value : "logs",
-                        label: this.$t("logs")
+                        label: this.$t("logs"),
                     },
                     {
                         value : "topology",
-                        label: this.$t("topology")
+                        label: this.$t("topology"),
                     },
                     {
                         value: "outputs",
-                        label: this.$t("outputs")
+                        label: this.$t("outputs"),
                     },
                     {
                         value : "metrics",
-                        label: this.$t("metrics")
-                    }
+                        label: this.$t("metrics"),
+                    },
                 ]
             },
             flowDefaultTabOptions() {
                 return [
                     {
                         value : "overview",
-                        label: this.$t("overview")
+                        label: this.$t("overview"),
                     },
                     {
                         value : "topology",
-                        label: this.$t("topology")
+                        label: this.$t("topology"),
                     },
                     {
                         value : "executions",
-                        label: this.$t("executions")
+                        label: this.$t("executions"),
                     },
                     {
                         value : "edit",
-                        label: this.$t("edit")
+                        label: this.$t("edit"),
                     },
                     {
                         value : "revisions",
-                        label: this.$t("revisions")
+                        label: this.$t("revisions"),
                     },
                     {
                         value : "triggers",
-                        label: this.$t("triggers")
+                        label: this.$t("triggers"),
                     },
                     {
                         value : "logs",
-                        label: this.$t("logs")
+                        label: this.$t("logs"),
                     },
                     {
                         value : "metrics",
-                        label: this.$t("metrics")
+                        label: this.$t("metrics"),
                     },
                     {
                         value : "dependencies",
-                        label: this.$t("dependencies")
+                        label: this.$t("dependencies"),
                     },
                     {
                         value : "concurrency",
-                        label: this.$t("concurrency")
+                        label: this.$t("concurrency"),
                     },
                     {
                         value : "auditlogs",
-                        label: this.$t("auditlogs")
+                        label: this.$t("auditlogs"),
                     },
                 ]
             },
             isEnvNameFromConfig() {
-                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name;
-            }
+                return !this.layoutStore.envName && !!this.miscStore.configs?.environment?.name
+            },
         },
         watch: {
             mappedTheme: {
                 handler() {
-                    this.pendingSettings.theme = Utils.getTheme();
+                    this.pendingSettings.theme = Utils.getTheme()
                 },
                 immediate: true,
             },
         },
-    };
+    }
 </script>
 <style scoped lang="scss">
-    .settings-wrapper .el-input-number {
+    .settings-wrapper .kel-input-number {
         max-width: 20vw;
 
-        & .el-input__suffix {
-            color: var(--ks-content-secondary);
+        & .kel-input__suffix {
+            color: var(--ks-text-secondary);
         }
 
     }
 
-    .el-input__count {
-        color: var(--ks-content-primary) !important;
+    .kel-input__count {
+        color: var(--ks-text-primary) !important;
 
-        .el-input__count-inner {
+        .kel-input__count-inner {
             background: none !important;
         }
     }

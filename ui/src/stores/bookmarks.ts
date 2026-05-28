@@ -39,7 +39,7 @@ export const useBookmarksStore = defineStore("bookmarks", {
             if (index > -1) {
                 pages.splice(index, 1, {
                     ...pages[index],
-                    label: page.label
+                    label: page.label,
                 })
                 this.updateAll(pages)
             }
@@ -48,6 +48,6 @@ export const useBookmarksStore = defineStore("bookmarks", {
         updateAll(pages: Array<Page>) {
             this.pages = pages
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pages))
-        }
+        },
     },
 })

@@ -1,23 +1,23 @@
 <template>
     <div class="wrapper">
-        <el-checkbox-button
+        <KsCheckboxButton
             v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
-            :label="$t('no_code.toggle_pebble')"
             :title="$t('no_code.toggle_pebble')"
+            :aria-label="$t('no_code.toggle_pebble')"
             class="ks-pebble"
         >
             <IconCodeBracesBox />
-        </el-checkbox-button>
+        </KsCheckboxButton>
 
-        <el-date-picker
+        <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
-            @update:model-value="onInput($event.toISOString())"
+            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
-        <el-input-number
+        <KsInputNumber
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
             align="right"
@@ -29,8 +29,8 @@
             <template #suffix>
                 <span class="duration-unit">{{ $t("days") }}</span>
             </template>
-        </el-input-number>
-        <el-time-picker
+        </KsInputNumber>
+        <KsTimePicker
             v-if="!pebble && schema?.format === 'duration'"
             :modelValue="timeDurationValue"
             type="time"
@@ -61,14 +61,14 @@
     </div>
 </template>
 <script lang="ts" setup>
-    import {ref, computed, onMounted} from "vue";
-    import $moment from "moment";
-    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
-    import Editor from "../../../../components/inputs/Editor.vue";
-    import InputText from "../inputs/InputText.vue";
-    import {Schema} from "./getTaskComponent";
+    import {ref, computed, onMounted} from "vue"
+    import $moment from "moment"
+    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue"
+    import Editor from "../../../../components/inputs/Editor.vue"
+    import InputText from "../inputs/InputText.vue"
+    import {Schema} from "./getTaskComponent"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         disabled?: boolean;
@@ -76,57 +76,57 @@
         schema?: Schema;
         root?: string;
         task?: any;
-    }>();
+    }>()
 
     const emit = defineEmits<{
         (e: "update:modelValue", value: string | undefined): void;
-    }>();
+    }>()
 
 
-    const pebble = ref(false);
+    const pebble = ref(false)
 
     // Computed property for editor language
     const editorLanguage = computed(() => {
-        return props.schema?.$language ?? "plaintext";
-    });
+        return props.schema?.$language ?? "plaintext"
+    })
 
     const values = computed(() => {
         if (props.modelValue === undefined) {
-            return props.schema?.default;
+            return props.schema?.default
         }
 
-        return props.modelValue;
+        return props.modelValue
     })
 
     onMounted(() => {
-        const schema = props.schema;
-        if (!schema) return;
+        const schema = props.schema
+        if (!schema) return
 
         if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
-            pebble.value = false;
+            pebble.value = false
         } else if (schema.format === "duration" && values.value) {
-            pebble.value = !$moment.duration(props.modelValue).isValid();
+            pebble.value = !$moment.duration(props.modelValue).isValid()
         } else if (schema.format === "date-time" && values.value) {
-            pebble.value = isNaN(Date.parse(props.modelValue as string));
+            pebble.value = isNaN(Date.parse(props.modelValue as string))
         }
-    });
+    })
 
     // FIXME: hardcoded condition only show days input for timeWindow durations
     const showDurationDays = computed(() => {
         return props.schema?.format === "duration" && props.root?.startsWith("timeWindow")
-    });
+    })
 
     const daysDurationValue = computed<number | undefined>(() => {
         if (typeof values.value === "string") {
-            const duration = $moment.duration(values.value);
-            return Math.floor(duration.asDays());
+            const duration = $moment.duration(values.value)
+            return Math.floor(duration.asDays())
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     const timeDurationValue = computed<Date | undefined>(() => {
         if (typeof values.value === "string") {
-            const duration = $moment.duration(values.value);
+            const duration = $moment.duration(values.value)
             return new Date(
                 1981,
                 1,
@@ -134,18 +134,18 @@
                 duration.hours(),
                 duration.minutes(),
                 duration.seconds(),
-            );
+            )
         }
-        return undefined;
-    });
+        return undefined
+    })
 
     const defaultDuration = computed(() => {
-        return $moment().seconds(0).minutes(0).hours(0).toDate();
-    });
+        return $moment().seconds(0).minutes(0).hours(0).toDate()
+    })
 
-    function onInputDuration(value: Date | "" | null) {
+    function onInputDuration(value: string | Date | null | undefined) {
         const emitted =
-            value === "" || value === null
+            !(value instanceof Date)
                 ? undefined
                 : $moment
                     .duration({
@@ -154,12 +154,12 @@
                         minutes: value.getMinutes(),
                         hours: value.getHours(),
                     })
-                    .toString();
-        emit("update:modelValue", emitted);
+                    .toString()
+        emit("update:modelValue", emitted)
     }
 
     function onInputDaysDuration(value: number | undefined) {
-        const currentTimeDuration = timeDurationValue.value;
+        const currentTimeDuration = timeDurationValue.value
         const emitted = (value === undefined)
             ? undefined
             : currentTimeDuration === undefined
@@ -176,21 +176,21 @@
                         seconds: currentTimeDuration.getSeconds(),
                     })
                     .toString()
-        emit("update:modelValue", emitted);
+        emit("update:modelValue", emitted)
     }
 
     function onInput(value: string) {
-        emit("update:modelValue", value);
+        emit("update:modelValue", value)
     }
 
-    const editorValue = computed(() => props.modelValue);
+    const editorValue = computed(() => props.modelValue)
 
 </script>
 
 <style scoped lang="scss">
-:deep(.el-input__inner) {
+:deep(.kel-input__inner) {
     &::placeholder {
-        color: var(--ks-content-inactive) !important;
+        color: var(--ks-text-inactive) !important;
     }
 }
 :deep(.placeholder) {
@@ -201,8 +201,8 @@
     display: flex;
     align-items: stretch;
     justify-content: stretch;
-    border-radius: 0.25rem;
-    border: 1px solid var(--ks-border-primary);
+    border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
     width: 100%;
 
     :deep(.disabled-field) {
@@ -210,7 +210,7 @@
         border-radius: 4px;
     }
 
-    :deep(.el-input__wrapper),
+    :deep(.kel-input__wrapper),
     :deep(.editor-container) {
         box-shadow: none;
     }
@@ -219,24 +219,24 @@
         flex: 1;
     }
 
-    :deep(.el-checkbox-button__inner) {
+    :deep(.kel-checkbox-button__inner) {
         padding: 4px;
         border: none;
     }
 
     .ks-pebble:deep(span:hover){
-        color: var(--ks-content-link-hover) ;
+        color: var(--ks-text-link) ;
     }
 
     .ks-pebble * {
-        font-size: 24px;
+        font-size: var(--ks-font-size-xl);
         vertical-align: top;
     }
 }
 
 .duration-unit{
-    color: var(--ks-content-inactive);
-    font-size: 0.875rem;
+    color: var(--ks-text-inactive);
+    font-size: var(--ks-font-size-sm);
     line-height: 1.25rem;
     background-color: transparent;
 }

@@ -1,5 +1,5 @@
 <template>
-    <el-input-number
+    <KsInputNumber
         :modelValue="val"
         @update:model-value="onInput"
         :state="isValid"
@@ -18,18 +18,18 @@
         computed: {
             isValid() {
                 if (this.required && this.modelValue === undefined) {
-                    return false;
+                    return false
                 }
 
                 if (this.modelValue !== undefined) {
                     return !isNaN(this.modelValue)
                 }
 
-                return true;
+                return true
             },
             val(){
-                return this.values ? parseInt(this.values.toString(), 10) : undefined;
-            }
-        }
-    };
+                return this.values ? parseInt(this.values.toString(), 10) : undefined
+            },
+        },
+    }
 </script>

@@ -8,45 +8,45 @@
             <span v-html="$t('errors.' + code + '.content')" />
         </p>
 
-        <el-button v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
+        <KsButton v-if="!isFullScreen()" tag="router-link" :to="{name: 'home'}" type="primary" size="large">
             {{ $t("back_to_dashboard") }}
-        </el-button>
+        </KsButton>
     </EmptyTemplate>
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import EmptyTemplate from "../../components/layout/EmptyTemplate.vue";
-    import {useCoreStore} from "../../stores/core";
-    import sourceImg from "../../assets/errors/kestra-error.png";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import EmptyTemplate from "../../components/layout/EmptyTemplate.vue"
+    import {useCoreStore} from "../../stores/core"
+    import sourceImg from "../../assets/errors/kestra-error.png"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = defineProps<{
         code: number | string;
-    }>();
+    }>()
 
-    const coreStore = useCoreStore();
-    const route = useRoute();
+    const coreStore = useCoreStore()
+    const route = useRoute()
 
-    const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}));
+    const routeInfo = computed(() => ({title: t("errors." + props.code + ".title")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 
     const isFullScreen = () => {
-        return document.getElementsByTagName("html")[0].classList.contains("full-screen");
-    };
+        return document.getElementsByTagName("html")[0].classList.contains("full-screen")
+    }
 
     watch(
         () => route.fullPath,
         () => {
-            coreStore.error = undefined;
-        }
-    );
+            coreStore.error = undefined
+        },
+    )
 </script>
 
 <style scoped lang="scss">
@@ -57,12 +57,12 @@
 
     h2 {
         line-height: 30px;
-        font-size: 20px;
+        font-size: var(--ks-font-size-lg);
         font-weight: 600;
     }
 
     p {
         line-height: 22px;
-        font-size: 14px;
+        font-size: var(--ks-font-size-sm);
     }
 </style>

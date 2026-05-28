@@ -30,9 +30,11 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Run tasks as local subprocesses on the worker.",
     description = """
-        Executes task commands with the host OS process APIs. Working directory is exposed via `{{workingDir}}` expression / `WORKING_DIR` environment variables; if `outputFiles` are configured, write them to the same directory or use `{{outputDir}}` / `OUTPUT_DIR` when enabled. Input files and namespace files will be available in this directory.
+        Executes task commands using the host OS process APIs. The working directory is exposed as the `{{workingDir}}` template variable and the `WORKING_DIR` environment variable; input files and namespace files are materialized there before execution, and `outputFiles` must be written there to be captured.
 
-        Platform-agnostic (Linux/macOS/Windows). If the worker stops, the process is interrupted and will be recreated on restart."""
+        When a task enables output directory support, the `{{outputDir}}` template variable and `OUTPUT_DIR` environment variable are also available as a dedicated location for output files — this is a separate mechanism from `outputFiles`.
+
+        Platform-agnostic (Linux/macOS/Windows). If the worker is interrupted, the process and all its descendants are killed. Kestra will re-queue the task execution when the worker restarts."""
 )
 @Plugin(
     examples = {

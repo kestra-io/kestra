@@ -5,32 +5,32 @@
                 Loading plugins...
             </div>
         </div>
-        <PluginList 
+        <PluginList
             v-else
-            :plugins="pluginsData" 
-            :key="useMiscStore().theme" 
+            :plugins="pluginsData"
+            :key="useMiscStore().theme"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref, computed} from "vue";
-    import {useMiscStore} from "override/stores/misc";
-    import {usePluginsStore} from "../../stores/plugins";
-    import PluginList from "./PluginList.vue";
+    import {onMounted, ref, computed} from "vue"
+    import {useMiscStore} from "override/stores/misc"
+    import {usePluginsStore} from "../../stores/plugins"
+    import PluginList from "./PluginList.vue"
 
-    const isLoading = ref(false);
-    const pluginsStore = usePluginsStore();
+    const isLoading = ref(false)
+    const pluginsStore = usePluginsStore()
 
-    const pluginsData = computed(() => pluginsStore.plugins);
+    const pluginsData = computed(() => pluginsStore.plugins)
 
     onMounted(async () => {
         if (!pluginsData.value?.length) {
-            isLoading.value = true;
-            await pluginsStore.listWithSubgroup({includeDeprecated: false});
-            isLoading.value = false;
+            isLoading.value = true
+            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+            isLoading.value = false
         }
-    });
+    })
 
 </script>
 
@@ -39,7 +39,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
     }
 
     .loading-container {
@@ -49,8 +49,8 @@
         justify-content: center;
 
         .loading-text {
-            color: var(--ks-content-secondary);
-            font-size: 14px;
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
         }
     }
 </style>

@@ -1,13 +1,13 @@
 <template>
     <div class="list-preview-container">
-        <el-table :data="previewData" stripe class="ion-table-preview">
-            <el-table-column type="index" :index="indexMethod" label="#" width="60" align="center" />
-            <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
+        <KsTable :data="previewData" stripe class="ion-table-preview">
+            <KsTableColumn type="index" :index="indexMethod" label="#" width="60" align="center" />
+            <KsTableColumn v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
                 <template #default="scope">
                     <div :class="['cell-wrapper', {'expanded': expandedCells.has(getCellKey(scope.$index, column))}]">
                         <span v-if="isComplex(scope.row[column])">
                             <span class="preview-cell">{{ getTruncatedContent(scope.row[column], scope.$index, column) }}</span>
-                            <el-button
+                            <KsButton
                                 v-if="needsExpansion(scope.row[column])"
                                 link
                                 type="primary"
@@ -16,20 +16,20 @@
                                 @click="toggleExpand(scope.$index, column)"
                             >
                                 {{ expandedCells.has(getCellKey(scope.$index, column)) ? $t('preview.collapse') : $t('preview.expand') }}
-                            </el-button>
+                            </KsButton>
                         </span>
                         <span v-else class="preview-cell">
                             {{ scope.row[column] }}
                         </span>
                     </div>
                 </template>
-            </el-table-column>
-        </el-table>
+            </KsTableColumn>
+        </KsTable>
 
-        <Pagination
+        <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :size="pageSize"
+            :size="(pageSize as any)"
             :page="currentPage"
             @page-changed="onPageChanged"
         />
@@ -37,93 +37,92 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import Pagination from "./layout/Pagination.vue";
+    import {ref, computed} from "vue"
 
-    const MAX_CELL_CHARS = 2000;
+    const MAX_CELL_CHARS = 2000
 
     const props = defineProps({
         value: {
             type: Array as () => Record<string, any>[],
-            required: true
-        }
-    });
+            required: true,
+        },
+    })
 
-    const expandedCells = ref(new Set<string>());
-    const currentPage = ref(1);
-    const pageSize = ref(50);
+    const expandedCells = ref(new Set<string>())
+    const currentPage = ref(1)
+    const pageSize = ref(50)
 
     const previewData = computed(() => {
-        const startIndex = (currentPage.value - 1) * pageSize.value;
-        const endIndex = startIndex + pageSize.value;
-        return props.value.slice(startIndex, endIndex);
-    });
+        const startIndex = (currentPage.value - 1) * pageSize.value
+        const endIndex = startIndex + pageSize.value
+        return props.value.slice(startIndex, endIndex)
+    })
 
     const totalPages = computed(() => {
-        return Math.ceil(props.value.length / pageSize.value);
-    });
+        return Math.ceil(props.value.length / pageSize.value)
+    })
 
     const indexMethod = (index: number) => {
-        return (currentPage.value - 1) * pageSize.value + index + 1;
-    };
+        return (currentPage.value - 1) * pageSize.value + index + 1
+    }
 
     const onPageChanged = (payload: { page?: number; size?: number }): void => {
         if (payload.page !== undefined) {
-            currentPage.value = payload.page;
+            currentPage.value = payload.page
         }
         if (payload.size !== undefined) {
-            pageSize.value = payload.size;
+            pageSize.value = payload.size
         }
-        expandedCells.value.clear();
-    };
+        expandedCells.value.clear()
+    }
 
     const generateTableColumns = computed(() => {
-        const allKeys = new Set<string>();
+        const allKeys = new Set<string>()
         props.value.forEach(item => {
             if (item && typeof item === "object") {
-                Object.keys(item).forEach(key => allKeys.add(key));
+                Object.keys(item).forEach(key => allKeys.add(key))
             }
-        });
-        return Array.from(allKeys);
-    });
+        })
+        return Array.from(allKeys)
+    })
 
 
     const isComplex = (data: any): boolean => {
-        return data !== null && typeof data === "object";
-    };
+        return data !== null && typeof data === "object"
+    }
 
     const getCellKey = (rowIndex: number, column: string): string => {
-        return `${rowIndex}-${column}`;
-    };
+        return `${rowIndex}-${column}`
+    }
 
     const needsExpansion = (data: any): boolean => {
-        const stringified = JSON.stringify(data, null, 2);
-        return stringified.length > MAX_CELL_CHARS;
-    };
+        const stringified = JSON.stringify(data, null, 2)
+        return stringified.length > MAX_CELL_CHARS
+    }
 
     const getTruncatedContent = (data: any, rowIndex: number, column: string): string => {
-        const cellKey = getCellKey(rowIndex, column);
-        const stringified = JSON.stringify(data, null, 2);
+        const cellKey = getCellKey(rowIndex, column)
+        const stringified = JSON.stringify(data, null, 2)
 
         if (expandedCells.value.has(cellKey)) {
-            return stringified;
+            return stringified
         }
 
         if (stringified.length > MAX_CELL_CHARS) {
-            return stringified.slice(0, MAX_CELL_CHARS) + "... [truncated]";
+            return stringified.slice(0, MAX_CELL_CHARS) + "... [truncated]"
         }
 
-        return stringified;
-    };
+        return stringified
+    }
 
     const toggleExpand = (rowIndex: number, column: string): void => {
-        const cellKey = getCellKey(rowIndex, column);
+        const cellKey = getCellKey(rowIndex, column)
         if (expandedCells.value.has(cellKey)) {
-            expandedCells.value.delete(cellKey);
+            expandedCells.value.delete(cellKey)
         } else {
-            expandedCells.value.add(cellKey);
+            expandedCells.value.add(cellKey)
         }
-    };
+    }
 </script>
 
 <style scoped lang="scss">
@@ -136,7 +135,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.el-table__body-wrapper) {
+        :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }
@@ -158,14 +157,14 @@
         display: block;
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-family: monospace;
-        font-size: 12px;
+        font-family: var(--kel-font-family-monospace), monospace;
+        font-size: var(--ks-font-size-xs);
         line-height: 1.4;
     }
 
     .expand-button {
         margin-top: 4px;
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 
     :deep(.ks-editor) {

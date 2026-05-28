@@ -23,6 +23,8 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 import lombok.SneakyThrows;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 /**
  * JUnit 5 extension to evaluate triggers and inject its Optional<Execution>.
  */
@@ -53,6 +55,10 @@ public class TriggerEvaluationExtension implements ParameterResolver {
         }
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
+
+        if (flow.getTenantId() == null) {
+            flow = flow.toBuilder().tenantId(MAIN_TENANT).build();
+        }
 
         AbstractTrigger trigger = flow.getTriggers().stream()
             .filter(t -> t.getId().equals(evaluateTrigger.triggerId()))
@@ -90,7 +96,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             TriggerContext triggerContext = triggerContext(trigger, flow);
             ConditionContext conditionContext = conditionContext(trigger, flow);
 
-            return pollingTrigger.evaluate(conditionContext, triggerContext);
+            return pollingTrigger.eval(conditionContext, triggerContext).map(eval -> eval.toExecution(triggerContext));
         } else {
             throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
         }
@@ -103,7 +109,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
         return ConditionContext.builder()
             .runContext(
                 runContextInitializer.forScheduler(
-                    (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
+                    (DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger
                 )
             )
             .flow(flow)
@@ -116,6 +122,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             .flowId(flow.getId())
             .triggerId(trigger.getId())
             .date(ZonedDateTime.now())
+            .tenantId(flow.getTenantId())
             .build();
     }
 

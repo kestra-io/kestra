@@ -1,29 +1,29 @@
 <template>
     <section id="filtering">
-        <el-input
+        <KsSearch
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable
         />
 
-        <el-select 
+        <KsSelect
             v-model="namespace"
             :placeholder="$t('dependency.search.namespace.select')"
             clearable
             filterable
         >
-            <el-option
+            <KsOption
                 v-for="item in namespaces"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"
             />
-        </el-select>
+        </KsSelect>
 
-        <el-switch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
+        <KsSwitch v-if="$props.subtype === ASSET" v-model="flow" :activeText="$t('dependency.search.flow.display')" />
     </section>
 
-    <el-table
+    <KsTable
         :data="results"
         :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
@@ -31,7 +31,7 @@
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
         :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
-        <el-table-column>
+        <KsTableColumn>
             <template #default="{row}">
                 <section id="row">
                     <section id="left">
@@ -48,7 +48,7 @@
                     </section>
 
                     <section id="right">
-                        <Status
+                        <KsExecutionStatus
                             v-if="row.data.metadata.subtype === EXECUTION && row.data.metadata.state"
                             :status="row.data.metadata.state"
                             size="small"
@@ -57,120 +57,120 @@
                             v-if="[FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
                             :to="{
                                 name: row.data.metadata.subtype === ASSET ? 'assets/update' : 'flows/update',
-                                params: row.data.metadata.subtype === ASSET 
+                                params: row.data.metadata.subtype === ASSET
                                     ? {namespace: row.data.namespace, assetId: row.data.flow}
                                     : {namespace: row.data.namespace, id: row.data.flow}
                             }"
                         >
-                            <el-icon :size="16">
+                            <KsIcon size="sm">
                                 <OpenInNew />
-                            </el-icon>
+                            </KsIcon>
                         </RouterLink>
                     </section>
                 </section>
             </template>
-        </el-table-column>
-    </el-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
 <script setup lang="ts">
-    import {watch, nextTick, ref, computed} from "vue";
+    import {watch, nextTick, ref, computed} from "vue"
 
-    import type cytoscape from "cytoscape";
+    import Link from "./Link.vue"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
 
-    import Link from "./Link.vue";
-    import {Status} from "@kestra-io/ui-libs";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
+    import type {Types, Node, Element} from "../utils/types"
 
-    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types";
-    import type {Types, Node} from "../utils/types";
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
-    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
+    const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>()
     const props = defineProps<{
-        elements: cytoscape.ElementDefinition[];
+        elements: Element[];
         highlightShown?: (nodeIDs: string[]) => void;
         selected: Node["id"] | undefined;
         subtype?: Types;
-    }>();
+    }>()
 
     const focusSelectedRow = () => {
-        const row = document.querySelector<HTMLElement>(".el-table__row.selected");
+        const row = document.querySelector<HTMLElement>(".kel-table__row.selected")
 
-        if (!row) return;
+        if (!row) return
 
-        row.scrollIntoView({behavior: "smooth", block: "center"});
-    };
+        row.scrollIntoView({behavior: "smooth", block: "center"})
+    }
 
     watch(
         () => props.selected,
         async (ID) => {
-            if (!ID) return;
+            if (!ID) return
 
-            await nextTick();
+            await nextTick()
 
-            focusSelectedRow();
+            focusSelectedRow()
         },
-    );
+    )
 
-    const search = ref("");
-    const namespace = ref<string | undefined>(undefined);
-    const flow = ref<boolean>(true);
+    const search = ref("")
+    const namespace = ref<string | undefined>(undefined)
+    const flow = ref<boolean>(true)
 
-    const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__";
+    const NO_NAMESPACE_VALUE = "__NO_NAMESPACE__"
+
+    const isNodeElement = (e: Element): e is {data: Node} => e?.data?.type === NODE
 
     const namespaces = computed(() => {
         const unique = new Set<string>(
             props.elements
-                ?.filter(e => e?.data?.type === NODE && e?.data?.namespace)
-                .map(e => e.data.namespace)
-        );
+                ?.filter((e): e is {data: Node} => isNodeElement(e) && !!e.data.namespace)
+                .map(e => e.data.namespace),
+        )
 
         return [
-            ...Array.from(unique).map((namespace) => ({
-                label: namespace,
-                value: namespace,
+            ...Array.from(unique).map((ns) => ({
+                label: ns,
+                value: ns,
             })),
             ...(props.subtype === ASSET ?  [{
                 label: t("dependency.search.namespace.no_namespace"),
                 value: NO_NAMESPACE_VALUE,
-            }] : [])      
-        ];
-    });
+            }] : []),
+        ]
+    })
 
     const results = computed(() => {
-        const query = search.value.trim().toLowerCase();
+        const query = search.value.trim().toLowerCase()
 
-        const results = props.elements
-            .filter(({data}) => data.type === NODE)
+        const filtered = props.elements
+            .filter(isNodeElement)
             .filter(({data}) => flow.value || data.metadata.subtype !== FLOW)
             .filter(({data}) => {
-                if (!namespace.value) return true;
+                if (!namespace.value) return true
 
                 if (namespace.value === NO_NAMESPACE_VALUE) {
-                    return data.namespace === undefined;
+                    return data.namespace === undefined
                 }
 
-                return data.namespace === namespace.value;
+                return data.namespace === namespace.value
             })
             .filter(({data}) => {
-                if (!query) return true;
+                if (!query) return true
 
                 return (
                     data.flow?.toLowerCase().includes(query) ||
                     data.namespace?.toLowerCase().includes(query)
-                );
-            });
+                )
+            })
 
         // Pass the IDs of the currently shown nodes to the parent component for highlighting in the graph.
-        const IDs = results.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []));
-        props.highlightShown?.(IDs);
+        const IDs = filtered.flatMap(r => (r.data.id !== undefined ? [r.data.id] : []))
+        props.highlightShown?.(IDs)
 
-        return results;
-    });
+        return filtered
+    })
 </script>
 
 <style scoped lang="scss">
@@ -179,29 +179,29 @@ section#filtering {
     top: 0;
     z-index: 10; // Keeps it above table rows
     padding: 1rem;
-    background-color: var(--ks-background-input);
+    background-color: var(--ks-bg-input);
 
-    :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+    :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
         margin-bottom: 0.5rem;
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
     }
 }
 
-.el-table.nodes {
+.kel-table.nodes {
     outline: none;
     border-radius: 0;
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 
-    :deep(.el-table__empty-text) {
+    :deep(.kel-table__empty-text) {
         width: 100%;
-        font-size: var(--font-size-sm);
+        font-size: var(--ks-font-size-sm);
     }
 
-    & :deep(.el-table__row.selected) {
-        background-color: var(--ks-tag-background);
+    & :deep(.kel-table__row.selected) {
+        background-color: var(--ks-bg-tag);
 
         &:hover {
-            --el-table-row-hover-bg-color: var(--ks-tag-background-hover);
+            --kel-table-row-hover-bg-color: var(--ks-bg-tag-hover);
         }
     }
 }
@@ -212,7 +212,7 @@ section#row {
     align-items: center;
     max-width: 100%;
     padding: 0.75rem 0 0.75rem 0.75rem;
-    font-size: var(--font-size-xs);
+    font-size: var(--ks-font-size-xs);
     cursor: pointer;
 
     & section#left {
@@ -234,7 +234,7 @@ section#row {
 
         & p.description {
             margin: 0;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
@@ -242,8 +242,8 @@ section#row {
         flex-shrink: 0;
         margin-left: 0.5rem;
 
-        :deep(a:hover .el-icon) {
-            color: var(--ks-content-link-hover);
+        :deep(a:hover .kel-icon) {
+            color: var(--ks-text-link);
         }
     }
 }

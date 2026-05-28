@@ -1,17 +1,17 @@
 <template>
-    <el-dropdown>
-        <el-button>
+    <KsDropdown>
+        <KsButton>
             <DotsVertical />
-        </el-button>
+        </KsButton>
         <template #dropdown>
-            <el-dropdown-menu>
+            <KsDropdownMenu>
                 <slot />
-            </el-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
 </script>
 

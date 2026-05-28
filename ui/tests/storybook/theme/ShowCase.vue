@@ -84,7 +84,6 @@
                 :key="type"
                 :type="type.toLowerCase()"
                 :title="`${type} Alert`"
-                showIcon
             />
         </div>
 
@@ -143,7 +142,7 @@
                 size="large"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -151,7 +150,7 @@
                 />
             </el-select>
             <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -164,7 +163,7 @@
                 size="small"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -180,7 +179,7 @@
                 placeholder="Select"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -224,14 +223,14 @@
 
 <script setup lang="ts">
     import {onMounted, ref} from "vue"
-    import {ElMessage} from "element-plus"
+    import {KsMessage} from "@kestra-io/design-system"
     import Search from "vue-material-design-icons/SearchWeb.vue"
     import Edit from "vue-material-design-icons/Pencil.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import Message from "vue-material-design-icons/Message.vue"
     import Star from "vue-material-design-icons/Star.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import Upload from "vue-material-design-icons/Upload.vue";
+    import Upload from "vue-material-design-icons/Upload.vue"
     import Tabs from "../../../src/components/Tabs.vue"
 
     const input = ref("")
@@ -240,7 +239,7 @@
 
 
     function toast() {
-        ElMessage.success("Hello")
+        KsMessage.success("Hello")
     }
 
     const tableData = [
@@ -355,7 +354,7 @@
 </script>
 
 <style scoped>
-.demo-tabs > :deep( .el-tabs__content) {
+.demo-tabs > :deep( .kel-tabs__content) {
   padding: 32px;
   color: #6b778c;
   font-size: 32px;

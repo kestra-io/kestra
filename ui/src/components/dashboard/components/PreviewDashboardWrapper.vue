@@ -10,12 +10,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, watch} from "vue";
-    import Sections from "../sections/Sections.vue";
-    import {Chart} from "../types.ts";
-    import {useDashboardStore} from "../../../stores/dashboard";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import throttle from "lodash/throttle";
+    import {ref, watch} from "vue"
+    import Sections from "../sections/Sections.vue"
+    import {Chart} from "../types.ts"
+    import {useDashboardStore} from "../../../stores/dashboard"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import throttle from "lodash/throttle"
 
     interface Result {
         error: string[] | null;
@@ -25,40 +25,40 @@
 
     const charts = ref<Result[]>([])
 
-    const dashboardStore = useDashboardStore();
+    const dashboardStore = useDashboardStore()
 
-    const validateAndLoadAllChartsThrottled = throttle(validateAndLoadAllCharts, 500);
+    const validateAndLoadAllChartsThrottled = throttle(validateAndLoadAllCharts, 500)
 
     async function validateAndLoadAllCharts() {
-        const allCharts = YAML_UTILS.getAllCharts(dashboardStore.sourceCode) ?? [];
+        const allCharts = YAML_UTILS.getAllCharts(dashboardStore.sourceCode) ?? []
         charts.value = await Promise.all(allCharts.map(async (chart: any) => {
-            return loadChart(chart);
-        }));
+            return loadChart(chart)
+        }))
     }
 
     watch(
         () => dashboardStore.sourceCode,
         () => {
-            validateAndLoadAllChartsThrottled();
+            validateAndLoadAllChartsThrottled()
         }
-        , {immediate: true}
-    );
+        , {immediate: true},
+    )
 
 
 
     async function loadChart(chart: any) {
-        const yamlChart = YAML_UTILS.stringify(chart);
+        const yamlChart = YAML_UTILS.stringify(chart)
         const result: Result = {
             error: null,
             data: null,
-            raw: {}
-        };
-        const errors = await dashboardStore.validateChart(yamlChart);
-        if (errors.constraints) {
-            result.error = errors.constraints;
-        } else {
-            result.data = {...chart, content: yamlChart, raw: chart};
+            raw: {},
         }
-        return result;
+        const errors = await dashboardStore.validateChart(yamlChart)
+        if (errors.constraints) {
+            result.error = errors.constraints
+        } else {
+            result.data = {...chart, content: yamlChart, raw: chart}
+        }
+        return result
     }
 </script>

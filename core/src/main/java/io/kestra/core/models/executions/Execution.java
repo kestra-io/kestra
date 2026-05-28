@@ -25,7 +25,6 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.event.DispatchEvent;
-import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
@@ -55,7 +54,14 @@ import lombok.extern.slf4j.Slf4j;
 @ToString
 @EqualsAndHashCode
 public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID, DispatchEvent {
+    // !!! WARNING !!!
+    // When you add anything in this class, make sure to also update ApiExecution and ApiLightExecution in the webserver module
+    // !!!!!!!!!!!!!!!
 
+    public static final String STATE_START_DATE_FIELD = "state.startDate";
+    public static final String STATE_END_DATE_FIELD = "state.endDate";
+
+    @NotNull
     @With
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
@@ -100,6 +106,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
 
     String parentId;
 
+    @NotNull
     String originalId;
 
     @With
@@ -109,6 +116,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @Builder.Default
     boolean deleted = false;
 
+    @NotNull
     @With
     ExecutionMetadata metadata;
 
@@ -389,6 +397,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return withLabels(existingLabel);
     }
 
+    /**
+     * Creates a child execution with the given parameters.
+     * Child executions derived from the original execution, to restart or replay it.
+     * When restarting, set the <code>childExecutionId</code> to the original execution ID, when replaying, set it to null.
+     */
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList,
         State state) {
         return new Execution(
@@ -403,7 +416,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.labels,
             this.variables,
             state,
-            childExecutionId != null ? this.getId() : null,
+            // preserve the parentId when restarting, this is needed for loop sub-executions
+            childExecutionId != null ? this.getId() : this.parentId,
             this.originalId,
             this.trigger,
             this.deleted,
@@ -419,12 +433,12 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
 
     /**
      * Creates a derived loop execution from the current execution and the loop task run
-     * with the given index information (value and index).
+     * with the given iteration information (index, key and value).
      */
-    public Execution loopExecution(String loopExecutionId, TaskRun taskRun, int index, @Nullable String key, String value) {
+    public Execution loopExecution(TaskRun taskRun, int index, @Nullable String key, String value) {
         return new Execution(
             this.tenantId,
-            loopExecutionId,
+            IdUtils.create(),
             this.namespace,
             this.flowId,
             this.flowRevision,
@@ -435,11 +449,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.variables,
             this.state,
             this.id,
-            this.originalId,
+            null,
             null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
             this.deleted,
             this.metadata,
-            this.scheduleDate,
+            null,
             this.traceParent,
             this.fixtures,
             ExecutionKind.LOOP,

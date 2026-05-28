@@ -1,14 +1,14 @@
 <template>
     <div class="plugins-list">
-        <el-input
-            class="p-2 bg-transparent search"
+        <KsSearch
+            class="search"
             :placeholder="$t('pluginPage.search', {count: countPlugin})"
             v-model="searchInput"
             clearable
         />
-        <el-collapse accordion v-model="activeNames">
+        <KsCollapse accordion v-model="activeNames">
             <template v-for="(plugin) in sortedPlugins(pluginsList)" :key="plugin.title">
-                <el-collapse-item
+                <KsCollapseItem
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
@@ -28,7 +28,7 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <TaskIcon
+                                                    <KsTaskIcon
                                                         :onlyIcon="true"
                                                         :cls="namespace + '.' + cls"
                                                         :icons="pluginsStore.icons"
@@ -46,85 +46,86 @@
                             </ul>
                         </li>
                     </ul>
-                </el-collapse-item>
+                </KsCollapseItem>
             </template>
-        </el-collapse>
+        </KsCollapse>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, nextTick, reactive} from "vue";
-    import {useRoute} from "vue-router";
-    import {isEntryAPluginElementPredicate, TaskIcon, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {cap} from "../../utils/filters";
+    import {ref, computed, watch, nextTick, reactive} from "vue"
+    import {useRoute} from "vue-router"
+    import {isEntryAPluginElementPredicate, type Plugin, type PluginElement} from "../../utils/pluginUtils"
+    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {cap} from "../../utils/filters"
 
     const props = defineProps<{
         plugins: Plugin[];
-    }>();
+    }>()
 
     defineEmits<{
         routerChange: [];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const pluginsStore = usePluginsStore();
+    const route = useRoute()
+    const pluginsStore = usePluginsStore()
 
-    const pluginRefs = reactive<Record<string, any>>({});
-    const activeNames = ref<string[]>([]);
-    const searchInput = ref<string>("");
+    const pluginRefs = reactive<Record<string, any>>({})
+    const activeNames = ref<string[]>([])
+    const searchInput = ref<string>("")
 
     const countPlugin = computed(() => {
-        return new Set(props.plugins.flatMap(plugin => pluginElements(plugin))).size;
-    });
+        return new Set(props.plugins.flatMap(plugin => pluginElements(plugin))).size
+    })
 
     const pluginElements = (plugin: Plugin) => {
         return Object.entries(plugin)
             .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
             .flatMap(([_, value]) => (value as PluginElement[])
                 .filter(({deprecated}) => !deprecated)
-                .map(({cls}) => cls)
-            );
-    };
+                .map(({cls}) => cls),
+            )
+    }
 
     const getScrollableParent = (el: HTMLElement): HTMLElement | null => {
-        let parent = el.parentElement;
+        let parent = el.parentElement
         while (parent) {
-            const style = getComputedStyle(parent);
+            const style = getComputedStyle(parent)
             if (style.overflowY === "auto" || style.overflowY === "scroll") {
-                return parent;
+                return parent
             }
-            parent = parent.parentElement;
+            parent = parent.parentElement
         }
-        return null;
-    };
+        return null
+    }
 
     const scrollToActivePlugin = () => {
-        const activePlugin = localStorage.getItem("activePlugin");
+        const activePlugin = localStorage.getItem("activePlugin")
         if (activePlugin) {
-            const pluginElement = pluginRefs[activePlugin];
+            const pluginElement = pluginRefs[activePlugin]
             if (pluginElement) {
-                const el = pluginElement.$el as HTMLElement;
-                const scrollContainer = getScrollableParent(el);
+                const el = pluginElement.$el as HTMLElement
+                const scrollContainer = getScrollableParent(el)
                 if (scrollContainer) {
-                    const elRect = el.getBoundingClientRect();
-                    const containerRect = scrollContainer.getBoundingClientRect();
-                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"});
+                    const elRect = el.getBoundingClientRect()
+                    const containerRect = scrollContainer.getBoundingClientRect()
+                    scrollContainer.scrollBy({top: elRect.top - containerRect.top, behavior: "smooth"})
                 }
             }
         }
-    };
+    }
 
     const pluginsList = computed(() => {
         return props.plugins
             .filter((plugin, index, self) => {
                 return index === self.findIndex((t) => (
                     t.title === plugin.title && t.group === plugin.group
-                ));
+                ))
             })
             .filter(plugin => {
                 return plugin.title?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-                    pluginElements(plugin).some(element => element.toLowerCase().includes(searchInput.value.toLowerCase()));
+                    pluginElements(plugin).some(element => element.toLowerCase().includes(searchInput.value.toLowerCase()))
             })
             .map(plugin => {
                 return {
@@ -135,47 +136,47 @@
                             .map(([elementType, elements]) => [
                                 elementType,
                                 (elements as PluginElement[]).filter(({deprecated}) => !deprecated)
-                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase()))
-                            ])
-                    )
-                };
-            });
-    });
+                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase())),
+                            ]),
+                    ),
+                }
+            })
+    })
 
     watch(() => route.params.cls, (cls) => {
-        if (!cls) return;
+        if (!cls) return
         props.plugins.forEach(plugin => {
             if (Object.entries(plugin).some(([key, value]) => {
                 if (isEntryAPluginElementPredicate(key, value)) {
-                    return (value as PluginElement[]).some(({cls: c}) => c === cls);
+                    return (value as PluginElement[]).some(({cls: c}) => c === cls)
                 }
-                return false;
+                return false
             })) {
                 if (activeNames.value[0] !== plugin.group) {
-                    activeNames.value = [plugin.group];
-                    localStorage.setItem("activePlugin", plugin.group);
+                    activeNames.value = [plugin.group]
+                    localStorage.setItem("activePlugin", plugin.group)
                 }
             }
-        });
+        })
         nextTick(() => {
-            scrollToActivePlugin();
-        });
-    }, {immediate: true});
+            scrollToActivePlugin()
+        })
+    }, {immediate: true})
 
     const handlePluginChange = (pluginGroup: string) => {
-        activeNames.value = [pluginGroup];
-        localStorage.setItem("activePlugin", pluginGroup);
-    };
+        activeNames.value = [pluginGroup]
+        localStorage.setItem("activePlugin", pluginGroup)
+    }
 
     const sortedPlugins = (plugins: Plugin[]) => {
         return plugins
             .sort((a, b) => {
                 const nameA = (a.title ? a.title.toLowerCase() : ""),
-                      nameB = (b.title ? b.title.toLowerCase() : "");
+                      nameB = (b.title ? b.title.toLowerCase() : "")
 
-                return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-            });
-    };
+                return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0))
+            })
+    }
 
     const group = (plugin: Plugin) => {
         return Object.entries(plugin)
@@ -183,31 +184,30 @@
             .flatMap(([type, value]) => {
                 return (value as PluginElement[]).filter(({deprecated}) => !deprecated)
                     .map(({cls}) => {
-                        const namespace = cls.substring(0, cls.lastIndexOf("."));
+                        const namespace = cls.substring(0, cls.lastIndexOf("."))
 
                         return {
                             type,
                             namespace: namespace,
-                            cls: cls.substring(cls.lastIndexOf(".") + 1)
-                        };
-                    });
+                            cls: cls.substring(cls.lastIndexOf(".") + 1),
+                        }
+                    })
             })
             .reduce((accumulator, value) => {
-                accumulator[value.namespace] = accumulator[value.namespace] || {};
-                accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
-                accumulator[value.namespace][value.type].push(value.cls);
+                accumulator[value.namespace] = accumulator[value.namespace] || {}
+                accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || []
+                accumulator[value.namespace][value.type].push(value.cls)
 
-                return accumulator;
-            }, {} as Record<string, Record<string, string[]>>);
-    };
+                return accumulator
+            }, {} as Record<string, Record<string, string[]>>)
+    }
 
     const isVisible = (plugin: Plugin) => {
-        return pluginElements(plugin).length > 0;
-    };
+        return pluginElements(plugin).length > 0
+    }
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .plugins-list {
         display: flex;
@@ -217,41 +217,41 @@
 
         .search {
             flex-shrink: 0;
-            background-color: var(--ks-background-panel);
+            background-color: var(--ks-bg-surface);
             padding-bottom: 0.5rem;
         }
 
-        .el-collapse {
+        .kel-collapse {
             flex: 1;
         }
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--bs-gray-100);
+            background-color: var(--ks-bg-tag);
         }
 
-        .el-collapse-item__header {
-            font-size: 0.875rem;
+        .kel-collapse-item__header {
+            font-size: var(--ks-font-size-sm);
         }
 
         ul {
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
-            font-size: var(--font-size-xs);
+            font-size: var(--ks-font-size-xs);
             margin-left: .5rem;
         }
 
         h6,
         a {
             word-break: break-all;
-            color: var(--el-collapse-header-text-color);
+            color: var(--kel-collapse-header-text-color);
         }
 
         .toc-h3 {
             .icon {
-                width: var(--font-size-sm);
-                height: var(--font-size-sm);
+                width: var(--ks-font-size-sm);
+                height: var(--ks-font-size-sm);
                 display: inline-block;
                 position: relative;
             }
@@ -264,7 +264,7 @@
                 margin-left: .5rem;
 
                 h6 {
-                    font-size: var(--font-size-sm);
+                    font-size: var(--ks-font-size-sm);
                     margin-bottom: .5rem;
                 }
 
@@ -276,7 +276,7 @@
     }
 
     .selected {
-        color: var(--ks-content-link);
+        color: var(--ks-text-link);
     }
 
     @media (max-width: 991px) {
@@ -287,12 +287,12 @@
                 z-index: 10;
             }
 
-            .el-collapse {
+            .kel-collapse {
                 overflow-y: auto;
             }
 
-            .el-collapse-item__header {
-                font-size: 0.75rem;
+            .kel-collapse-item__header {
+                font-size: var(--ks-font-size-xs);
             }
 
             ul {
@@ -307,7 +307,7 @@
                 }
 
                 h6 {
-                    font-size: 0.75rem;
+                    font-size: var(--ks-font-size-xs);
                 }
 
                 .toc-h4 {

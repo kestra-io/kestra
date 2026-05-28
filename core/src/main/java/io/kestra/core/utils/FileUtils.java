@@ -1,10 +1,10 @@
 package io.kestra.core.utils;
 
-import java.net.URI;
-import java.util.Optional;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.net.URI;
+import java.util.Optional;
 
 /**
  * Utility methods for manipulating files.
@@ -59,5 +59,42 @@ public final class FileUtils {
     public static String getFileName(final URI uri) {
         String path = uri.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
+    }
+
+    /**
+     * Check if the provided URI contains a relative parent path traversal segment (i.e., "..").
+     *
+     * @param uri the URI to validate
+     * @return true if there is a relative parent path traversal
+     */
+    public static boolean isParentTraversal(URI uri) {
+        return uri != null && isParentTraversal(uri.getPath());
+    }
+
+    /**
+     * Check if the provided path contains a relative parent path traversal segment (i.e., "..").
+     * <p>
+     * Both {@code /} and {@code \} are treated as path separators so that Windows-style backslash
+     * payloads (e.g. {@code "..\..\"}) cannot bypass the check. Only forward slashes were previously
+     * matched, allowing backslash payloads to slip through on Linux/containers before being
+     * canonicalized (GHSA-qw4v-6w32-xx9h).
+     * <p>
+     * The {@code path} argument must already be percent-decoded. {@link URI#getPath()} performs this
+     * decoding automatically, so callers that obtain the path via a URI do not need to decode it
+     * manually. Callers that pass a raw URL string should decode it first.
+     *
+     * @param path the path to validate (must be percent-decoded)
+     * @return true if there is a relative parent path traversal
+     */
+    public static boolean isParentTraversal(String path) {
+        if (path == null) {
+            return false;
+        }
+        // Normalize both separators to '/' so the check is platform- and payload-agnostic.
+        String normalized = path.replace('\\', '/');
+        return normalized.equals("..")
+            || normalized.startsWith("../")
+            || normalized.endsWith("/..")
+            || normalized.contains("/../");
     }
 }

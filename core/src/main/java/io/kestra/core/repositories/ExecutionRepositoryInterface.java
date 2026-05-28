@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
@@ -18,6 +19,7 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -25,7 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
 
-public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Executions.Fields> {
+public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Executions.Fields>, DistinctFieldValuesQueryInterface {
     default Optional<Execution> findById(String tenantId, String id) {
         return findById(tenantId, id, false);
     }
@@ -69,6 +71,14 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
+    default ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        @Nullable DateFilter dateFilter) {
+        return find(pageable, tenantId, filters);
+    }
+
     default Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,
@@ -108,7 +118,7 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
     @VisibleForTesting
     Execution delete(Execution execution);
 
-    Integer purge(Execution execution);
+    boolean purge(Execution execution);
 
     Integer purge(List<Execution> executions);
 
@@ -155,7 +165,34 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         MAIN
     }
 
+    /** Controls which execution date column(s) the time-based filters are applied against. */
+    enum DateFilter {
+        START_DATE,
+        END_DATE,
+        START_OR_END_DATE
+    }
+
     List<Execution> lastExecutions(
         String tenantId,
         @Nullable List<FlowFilter> flows);
+
+    /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
+    default List<Execution> findLoopSubExecutions(String tenantId, String parentExecutionId) {
+        return find(
+            Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
+            tenantId,
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.PARENT_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(parentExecutionId)
+                    .build(),
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.LOOP)
+                    .build()
+            )
+        );
+    }
 }

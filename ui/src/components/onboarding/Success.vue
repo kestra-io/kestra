@@ -1,7 +1,7 @@
 <template>
     <section id="welcome-success" class="container">
-        <el-row justify="center">
-            <el-col :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
+        <KsRow justify="center">
+            <KsCol :xs="24" :sm="22" :md="18" :lg="16" :xl="14">
                 <div class="welcome-success-hero">
                     <div class="welcome-success-icon">
                         <svg viewBox="0 0 109 109" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -96,33 +96,32 @@
                         {{ $t("welcome_copilot.success_page.restart") }}
                     </router-link>
                 </div>
-            </el-col>
-        </el-row>
+            </KsCol>
+        </KsRow>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import useRouteContext from "../../composables/useRouteContext";
-    import OnboardingResourceList from "./OnboardingResourceList.vue";
-    import {useOnboardingResources} from "./useOnboardingResources";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
+    import useRouteContext from "../../composables/useRouteContext"
+    import OnboardingResourceList from "./OnboardingResourceList.vue"
+    import {useOnboardingResources} from "./useOnboardingResources"
 
-    const {t} = useI18n();
-    const route = useRoute();
+    const {t} = useI18n()
+    const route = useRoute()
 
-    const routeInfo = computed(() => ({title: t("welcome_copilot.success_page.title")}));
-    useRouteContext(routeInfo);
-    const {onboardingResources} = useOnboardingResources();
+    const routeInfo = computed(() => ({title: t("welcome_copilot.success_page.title")}))
+    useRouteContext(routeInfo)
+    const {onboardingResources} = useOnboardingResources()
     const restartRoute = computed(() => ({
         name: "welcome",
         params: {tenant: route.params.tenant},
-    }));
+    }))
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
 #welcome-success {
     position: relative;
@@ -141,16 +140,16 @@
 
         h1 {
             margin: 0.5rem 0 1rem;
-            color: var(--ks-content-primary);
-            font-size: $font-size-lg;
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-lg);
             font-weight: 700;
         }
 
         p {
             max-width: 460px;
             margin: 0;
-            color: var(--ks-content-secondary);
-            font-size: $font-size-md;
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }
     }

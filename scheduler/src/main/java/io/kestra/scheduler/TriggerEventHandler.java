@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import io.kestra.core.events.EventId;
+import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -20,6 +23,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
@@ -34,6 +38,7 @@ import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
@@ -64,6 +69,7 @@ public class TriggerEventHandler {
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
     private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
+    private final AsyncOperationService asyncOperationService;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -71,13 +77,15 @@ public class TriggerEventHandler {
         TriggerExecutionPublisher triggerExecutionPublisher,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
+        BroadcastQueueInterface<ExecutionKilled> executionKilledQueue,
+        AsyncOperationService asyncOperationService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
         this.executionKilledQueue = executionKilledQueue;
+        this.asyncOperationService = asyncOperationService;
     }
 
     /**
@@ -89,11 +97,26 @@ public class TriggerEventHandler {
      */
     public void handle(Clock clock, Integer vNode, TriggerEvent event) {
         LOG.debug("Received event {} for {} at {}", event.type(), event.id(), event.timestamp());
+        AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
+        String error = null;
+        try {
+            doHandle(clock, vNode, event);
+        } catch (RuntimeException e) {
+            outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
+            error = e.getMessage();
+            throw e;
+        } finally {
+            emitProcessedIfAsync(event, outcome, error);
+        }
+    }
+
+    private void doHandle(Clock clock, Integer vNode, TriggerEvent event) {
         switch (event) {
             // Events
             case TriggerCreated evt -> onTriggerCreated(clock, evt, vNode);
             case TriggerDeleted evt -> onTriggerDeleted(evt);
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
+            case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
@@ -104,6 +127,14 @@ public class TriggerEventHandler {
             case DeleteBackfillTrigger evt -> onDeleteBackfillTrigger(clock, evt);
             case ResetTrigger evt -> onResetTrigger(clock, evt);
             default -> throw new IllegalStateException("Unexpected value: " + event);
+        }
+    }
+
+    private void emitProcessedIfAsync(TriggerEvent message,
+                                      AsyncOperationProcessedEvent.Outcome outcome,
+                                      String error) {
+        if (message instanceof AsyncOperation op) {
+            asyncOperationService.emitProcessedIfAsync(op, message.id().getTenantId(), message.uid(), outcome, error);
         }
     }
 
@@ -135,12 +166,8 @@ public class TriggerEventHandler {
                 return;
             }
 
-            RunContext runContext = runContextFactory.of(flow, trigger);
-            ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-
-            if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-                ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
-                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate);
+            if (trigger instanceof PollingTriggerInterface) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             }
 
             triggerStateStore.save(state);
@@ -202,7 +229,7 @@ public class TriggerEventHandler {
             if (wasDisabled && !event.disabled()) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
                 if (data.getRight() != null) {
-                    state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                    state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 }
             }
             triggerStateStore.save(state);
@@ -241,7 +268,7 @@ public class TriggerEventHandler {
 
             TriggerState newState = state;
             if (data.getRight() != null) {
-                newState = newState.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                newState = newState.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
             }
 
             if (event.evaluation() != null) {
@@ -281,9 +308,13 @@ public class TriggerEventHandler {
     void onResetTrigger(Clock clock, ResetTrigger event) {
         findTriggerState(event).ifPresent(state ->
         {
+            Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
             state = state
                 .lastEventId(clock, event.eventId())
                 .reset(clock);
+            if (data.getRight() != null) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+            }
             triggerStateStore.save(state);
         });
     }
@@ -300,10 +331,24 @@ public class TriggerEventHandler {
             if (data.getRight() != null) {
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight());
+                    .update(clock, data.getRight())
+                    .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
                 triggerStateStore.save(state);
             }
         });
+    }
+
+    /**
+     * Handler method for {@link TriggerFlowRevisionUpdated}.
+     * <p>
+     * The trigger definition is unchanged; this event only forces the scheduler's
+     * flow metadata cache to refresh to the latest revision. No trigger state mutation.
+     *
+     * @param event the event.
+     */
+    void onTriggerFlowRevisionUpdated(TriggerFlowRevisionUpdated event) {
+        // Side-effect: CachedFlowMetaStore refreshes its cache on newer revision.
+        findFlow(event, event.revision());
     }
 
     /**
@@ -345,11 +390,24 @@ public class TriggerEventHandler {
     void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
+            Flow flow = data.getLeft();
+            AbstractTrigger trigger = data.getRight();
             TriggerState state = TriggerState
-                .of(event.id(), TriggerType.from(data.getRight()), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
+                .of(event.id(), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vNode)
                 .lastEventId(clock, event.eventId());
+            state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
             triggerStateStore.save(state);
         }
+    }
+
+    /**
+     * Computes the next evaluation date for the given trigger, taking the trigger's conditions into account
+     * so handlers don't overwrite a condition-aware date (e.g. {@code DayWeek=SUNDAY}) with the next raw cron tick.
+     */
+    private ZonedDateTime nextEvaluationDate(Clock clock, Flow flow, AbstractTrigger trigger, TriggerContext triggerContext) {
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+        return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
     }
 
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {

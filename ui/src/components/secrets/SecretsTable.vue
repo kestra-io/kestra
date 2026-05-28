@@ -1,12 +1,24 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <KsDataTable
+            ref="dataTable"
+            :loadData="loadData"
+            :data="secrets"
+            :total="total"
+            :defaultSort="{prop: 'key', order: 'ascending'}"
+            :selectable="false"
+            @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
+            @sort-change="({prop, order}: {column: any; prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
+            :no-data-text="$t('no_results.secrets')"
+            class="fill-height"
+            :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+        >
             <template #top>
                 <KSFilter
                     :configuration="secretsFilter"
                     :tableOptions="{
                         chart: {shown: false},
-                        refresh: {shown: true, callback: loadData}
+                        refresh: {shown: true, callback: () => dataTable?.reload()}
                     }"
                     :prefix="'secrets'"
                     :buttons="{savedFilters: {shown: !namespace}}"
@@ -20,132 +32,113 @@
                 />
             </template>
 
-            <template #table>
-                <SelectTable
-                    :data="secrets"
-                    ref="selectTable"
-                    :defaultSort="{prop: 'key', order: 'ascending'}"
-                    tableLayout="auto"
-                    fixed
-                    :selectable="false"
-                    @sort-change="onSort"
-                    :no-data-text="$t('no_results.secrets')"
-                    class="fill-height"
-                    :rowKey="(row: any) => `${row.namespace}-${row.key}`"
-                >
-                    <el-table-column
-                        prop="key"
-                        sortable="custom"
-                        :sortOrders="['ascending', 'descending']"
-                        :label="keyOnly ? $t('secret.names') : $t('key')"
+            <KsTableColumn
+                prop="key"
+                sortable="custom"
+                :sortOrders="['ascending', 'descending']"
+                :label="keyOnly ? $t('secret.names') : $t('key')"
+            >
+                <template #default="scope">
+                    <KsId v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn
+                v-for="col in visibleColumns"
+                :key="col.prop"
+                :prop="col.prop"
+                :label="col.label"
+                :sortable="col.prop === 'namespace' ? 'custom' : false"
+                :sortOrders="col.prop === 'namespace' ? ['ascending', 'descending'] : []"
+            >
+                <template #default="scope">
+                    <template v-if="col.prop === 'namespace'">
+                        <KsTag
+                            type="info"
+                            class="namespace-tag"
+                        >
+                            <FolderOpenOutline />
+                            {{ scope.row?.namespace }}
+                        </KsTag>
+                    </template>
+                    <template v-else-if="col.prop === 'description'">
+                        {{ scope.row?.description }}
+                    </template>
+                    <template v-else-if="col.prop === 'tags'">
+                        <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
+                    </template>
+                </template>
+            </KsTableColumn>
+
+            <KsTableColumn columnKey="locked" className="row-action">
+                <template #default="scope">
+                    <KsTooltip
+                        v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
-                        <template #default="scope">
-                            <Id v-if="scope.row?.key !== undefined" :value="scope.row.key" :shrink="false" />
+                        <template #content>
+                            <span v-html="$t('secret.isReadOnly')" />
                         </template>
-                    </el-table-column>
+                        <KsIcon class="d-flex justify-content-center">
+                            <Lock />
+                        </KsIcon>
+                    </KsTooltip>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column
-                        v-for="col in visibleColumns"
-                        :key="col.prop"
-                        :prop="col.prop"
-                        :label="col.label"
-                        :sortable="col.prop === 'namespace' ? 'custom' : false"
-                        :sortOrders="col.prop === 'namespace' ? ['ascending', 'descending'] : []"
+            <KsTableColumn columnKey="copy" className="row-action">
+                <template #default="scope">
+                    <KsIconButton
+                        :tooltip="$t('copy_to_clipboard')"
+                        placement="left"
+                        @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
                     >
-                        <template #default="scope">
-                            <template v-if="col.prop === 'namespace'">
-                                <el-tag
-                                    type="info"
-                                    class="namespace-tag"
-                                >
-                                    <FolderOpenOutline />
-                                    {{ scope.row?.namespace }}
-                                </el-tag>
-                            </template>
-                            <template v-else-if="col.prop === 'description'">
-                                {{ scope.row?.description }}
-                            </template>
-                            <template v-else-if="col.prop === 'tags'">
-                                <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
-                            </template>
-                        </template>
-                    </el-table-column>
+                        <ContentCopy />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column columnKey="locked" className="row-action">
-                        <template #default="scope">
-                            <el-tooltip
-                                v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
-                                transition=""
-                                :hideAfter="0"
-                                :persistent="false"
-                                effect="light"
-                            >
-                                <template #content>
-                                    <span v-html="$t('secret.isReadOnly')" />
-                                </template>
-                                <el-icon class="d-flex justify-content-center text-base">
-                                    <Lock />
-                                </el-icon>
-                            </el-tooltip>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column columnKey="copy" className="row-action">
-                        <template #default="scope">
-                            <IconButton
-                                :tooltip="$t('copy_to_clipboard')"
-                                placement="left"
-                                @click="Utils.copy(`\{\{ secret('${scope.row?.key}') \}\}`)"
-                            >
-                                <ContentCopy />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
-
-                    <el-table-column
-                        v-if="!keyOnly && !paneView"
-                        columnKey="update"
-                        className="row-action"
+            <KsTableColumn
+                v-if="!keyOnly && !paneView"
+                columnKey="update"
+                className="row-action"
+            >
+                <template #default="scope">
+                    <KsIconButton
+                        v-if="canUpdate(scope.row)"
+                        :tooltip="$t('update')"
+                        placement="left"
+                        @click="updateSecretModal(scope.row)"
                     >
-                        <template #default="scope">
-                            <IconButton
-                                v-if="canUpdate(scope.row)"
-                                :tooltip="$t('update')"
-                                placement="left"
-                                @click="updateSecretModal(scope.row)"
-                            >
-                                <FileDocumentEdit />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
+                        <FileDocumentEdit />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
 
-                    <el-table-column
-                        v-if="!keyOnly && !paneView"
-                        columnKey="delete"
-                        className="row-action"
+            <KsTableColumn
+                v-if="!keyOnly && !paneView"
+                columnKey="delete"
+                className="row-action"
+            >
+                <template #default="scope">
+                    <KsIconButton
+                        v-if="canDelete(scope.row)"
+                        :tooltip="$t('delete')"
+                        placement="left"
+                        @click="removeSecret(scope.row)"
                     >
-                        <template #default="scope">
-                            <IconButton
-                                v-if="canDelete(scope.row)"
-                                :tooltip="$t('delete')"
-                                placement="left"
-                                @click="removeSecret(scope.row)"
-                            >
-                                <Delete />
-                            </IconButton>
-                        </template>
-                    </el-table-column>
-                </SelectTable>
-            </template>
-        </DataTable>
+                        <Delete />
+                    </KsIconButton>
+                </template>
+            </KsTableColumn>
+        </KsDataTable>
 
-        <Drawer
+        <KsDrawer
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
         >
-            <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-                <el-form-item
+            <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+                <KsFormItem
                     v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
@@ -157,108 +150,102 @@
                         :includeSystemNamespace="true"
                         all
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.key')" prop="key">
-                    <el-input v-model="secret.key" :disabled="secret.update" required />
-                </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
-                    <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
-                </el-form-item>
-                <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
-                    <el-col :span="20">
-                        <MultilineSecret
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.key')" prop="key">
+                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                </KsFormItem>
+                <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
+                    <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
+                </KsFormItem>
+                <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value">
+                    <KsCol :span="20">
+                        <KsPassword
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
                         />
-                    </el-col>
-                    <el-col class="px-2" :span="4">
-                        <el-switch
+                    </KsCol>
+                    <KsCol class="px-2" :span="4">
+                        <KsSwitch
                             size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
                             :activeIcon="PencilOutline"
                             :inactiveIcon="PencilOff"
                         />
-                    </el-col>
-                </el-form-item>
-                <el-form-item :label="$t('secret.description')" prop="description">
-                    <el-input
+                    </KsCol>
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.description')" prop="description">
+                    <KsInput
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
                         required
                     />
-                </el-form-item>
-                <el-form-item :label="$t('secret.tags')" prop="tags">
-                    <el-row class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                        <el-col :span="8">
-                            <el-input required v-model="tag.key" :placeholder="$t('key')" />
-                        </el-col>
-                        <el-col :span="12">
-                            <el-input required v-model="tag.value" :placeholder="$t('value')" />
-                        </el-col>
-                        <el-button-group class="d-flex flex-nowrap">
-                            <el-button
+                </KsFormItem>
+                <KsFormItem :label="$t('secret.tags')" prop="tags">
+                    <KsRow class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                        <KsCol :span="8">
+                            <KsInput required v-model="tag.key" :placeholder="$t('key')" />
+                        </KsCol>
+                        <KsCol :span="12">
+                            <KsInput required v-model="tag.value" :placeholder="$t('value')" />
+                        </KsCol>
+                        <KsButtonGroup class="d-flex flex-nowrap">
+                            <KsButton
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
                             />
-                        </el-button-group>
-                    </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="default">
+                        </KsButtonGroup>
+                    </KsRow>
+                    <KsButton :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
-                    </el-button>
-                </el-form-item>
-            </el-form>
+                    </KsButton>
+                </KsFormItem>
+            </KsForm>
 
             <template #footer>
-                <el-button :icon="ContentSave" @click="saveSecret(form)" type="primary">
+                <KsButton :icon="ContentSave" @click="saveSecret(form)" type="primary">
                     {{ $t('save') }}
-                </el-button>
+                </KsButton>
             </template>
-        </Drawer>
+        </KsDrawer>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import type {FormInstance} from "element-plus";
-    import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
-    import _merge from "lodash/merge";
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import type {FormInstance} from "@kestra-io/design-system"
+    import {ref, computed, watch, onMounted, useTemplateRef} from "vue"
+    import _merge from "lodash/merge"
 
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import PencilOff from "vue-material-design-icons/PencilOff.vue";
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import PencilOff from "vue-material-design-icons/PencilOff.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ContentSave from "vue-material-design-icons/ContentSave.vue"
+    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
-    import Id from "../Id.vue";
-    import IconButton from "../IconButton.vue";
-    import Drawer from "../Drawer.vue";
-    import Labels from "../layout/Labels.vue";
-    import KSFilter from "../filter/components/KSFilter.vue";
-    import DataTable from "../layout/DataTable.vue";
-    import SelectTable from "../layout/SelectTable.vue";
-    import MultilineSecret from "./MultilineSecret.vue";
-    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
+    import Labels from "../layout/Labels.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
-    import action from "../../models/action";
-    import permission from "../../models/permission";
-    import Utils from "../../utils/utils";
-    import {useToast} from "../../utils/toast";
-    import {storageKeys} from "../../utils/constants";
-    import {useSecretsStore} from "../../stores/secrets";
-    import {useAuthStore} from "override/stores/auth";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import {useSecretsFilter} from "../filter/configurations";
-    import {useTableColumns} from "../../composables/useTableColumns";
-    import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
+    import {storageKeys} from "../../utils/constants"
+    import {useSecretsStore} from "../../stores/secrets"
+    import {useAuthStore} from "override/stores/auth"
+    import {useNamespacesStore} from "override/stores/namespaces"
+    import {useSecretsFilter} from "../filter/configurations"
+    import {useTableColumns} from "../../composables/useTableColumns"
 
-    const secretsFilter = useSecretsFilter();
+    const secretsFilter = useSecretsFilter()
 
     interface SecretForm {
         value: string;
@@ -292,29 +279,29 @@
         keyOnly: false,
         paneView: false,
         namespaceColumn: undefined,
-        includeInherited: false
-    });
+        includeInherited: false,
+    })
 
     const emit = defineEmits<{
         "update:addSecretModalVisible": [value: boolean];
         "update:isSecretReadOnly": [value: boolean];
         hasData: [value: boolean];
-    }>();
+    }>()
 
-    const {t} = useI18n();
-    const toast = useToast();
-    const route = useRoute();
-    const authStore = useAuthStore();
-    const secretsStore = useSecretsStore();
-    const namespacesStore = useNamespacesStore();
+    const {t} = useI18n()
+    const toast = useToast()
+    const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
+    const secretsStore = useSecretsStore()
+    const namespacesStore = useNamespacesStore()
 
-    const form = ref<FormInstance>();
-    const dataTable = useTemplateRef<DataTableRef>("dataTable");
+    const form = ref<FormInstance>()
 
-    const total = ref(0);
-    const hasData = ref<boolean>();
-    const areNamespaceSecretsReadOnly = ref(false);
-    const secrets = ref<(NamespaceSecret & {namespace?: string})[]>();
+    const total = ref(0)
+    const hasData = ref<boolean>()
+    const areNamespaceSecretsReadOnly = ref(false)
+    const secrets = ref<(NamespaceSecret & {namespace?: string})[]>()
 
     const secret = ref<SecretForm>({
         namespace: props.namespace,
@@ -323,10 +310,10 @@
         description: undefined,
         tags: [{key: undefined, value: undefined}],
         update: undefined,
-        updateValue: undefined
-    });
+        updateValue: undefined,
+    })
 
-    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS;
+    const storageKey = storageKeys.DISPLAY_SECRETS_COLUMNS
 
     const optionalColumns = computed(() => {
         const columns = [
@@ -334,221 +321,223 @@
                 label: t("namespace"),
                 prop: "namespace",
                 default: true,
-                description: t("filter.table_column.secrets.namespace")
+                description: t("filter.table_column.secrets.namespace"),
             },
             {
                 label: t("description"),
                 prop: "description",
                 default: true,
-                description: t("filter.table_column.secrets.description")
+                description: t("filter.table_column.secrets.description"),
             },
             {
                 label: t("tags"),
                 prop: "tags",
                 default: true,
-                description: t("filter.table_column.secrets.tags")
-            }
-        ];
+                description: t("filter.table_column.secrets.tags"),
+            },
+        ]
 
         return columns.filter(col => {
-            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false;
-            if (col.prop === "description" && props.keyOnly) return false;
-            if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false;
-            return true;
-        });
-    });
+            if (col.prop === "namespace" && !(props.namespace === undefined || props.namespaceColumn)) return false
+            if (col.prop === "description" && props.keyOnly) return false
+            if (col.prop === "tags" && (props.keyOnly || props.paneView)) return false
+            return true
+        })
+    })
 
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
         columns: optionalColumns.value,
-        storageKey: storageKey
-    });
+        storageKey: storageKey,
+    })
 
     const visibleColumns = computed(() =>
         displayColumns.value
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
-            ?.filter(Boolean) as any[]
-    );
+            ?.filter(Boolean) as any[],
+    )
 
     const secretModalTitle = computed(() => {
         return secret.value?.update
             ? t("secret.update", {name: secret.value?.key})
-            : t("secret.add");
-    });
+            : t("secret.add")
+    })
 
     const addSecretDrawerVisible = computed({
         get() {
-            return props.addSecretModalVisible;
+            return props.addSecretModalVisible
         },
         set(newValue: boolean) {
-            emit("update:addSecretModalVisible", newValue);
-        }
-    });
+            emit("update:addSecretModalVisible", newValue)
+        },
+    })
 
     const checkSecretValue = (_rule: any, _value: any, callback: any) => {
         if (secret.value?.updateValue && (secret.value.value === undefined || secret.value.value.length === 0)) {
-            callback(new Error("Value must not be empty."));
+            callback(new Error("Value must not be empty."))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const checkSecretTags = (_rule: any, _value: any, callback: any) => {
-        const keys = secret.value?.tags?.map((it) => it.key);
+        const keys = secret.value?.tags?.map((it) => it.key)
 
         if (secret.value?.tags?.length === 1) {
             if (secret.value?.tags?.[0]?.key === undefined && secret.value?.tags?.[0]?.value === undefined) {
-                callback();
-                return;
+                callback()
+                return
             }
         }
 
-        const nullKeys = keys?.filter(item => item === undefined);
-        const duplicateKeys = keys?.filter((item, index) => keys.indexOf(item) !== index);
+        const nullKeys = keys?.filter(item => item === undefined)
+        const duplicateKeys = keys?.filter((item, index) => keys.indexOf(item) !== index)
 
         if (nullKeys?.length > 0) {
-            callback(new Error("Tag key must not be empty."));
+            callback(new Error("Tag key must not be empty."))
         } else if (duplicateKeys?.length > 0) {
-            callback(new Error("Duplicate tags for keys: " + Array.from(new Set(duplicateKeys))));
+            callback(new Error("Duplicate tags for keys: " + Array.from(new Set(duplicateKeys))))
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const rules = {
         key: [
-            {required: true, trigger: "change"}
+            {required: true, trigger: "change"},
         ],
         value: [
             {
                 validator: checkSecretValue,
                 trigger: ["blur"],
-                required: false
-            }
+                required: false,
+            },
         ],
         secret: [
-            {required: true, trigger: "change"}
+            {required: true, trigger: "change"},
         ],
         tags: [
             {
                 validator: checkSecretTags,
                 trigger: ["blur"],
-                required: false
-            }
-        ]
-    };
+                required: false,
+            },
+        ],
+    }
 
-    const canUpdate = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) &&
-            !areNamespaceSecretsReadOnly.value;
-    };
+    const canUpdate = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.UPDATE, item.namespace) &&
+            !areNamespaceSecretsReadOnly.value
+    }
 
-    const canDelete = (secret: NamespaceSecret & {namespace?: string}) => {
-        return secret?.namespace !== undefined &&
-            authStore.user?.isAllowed(permission.SECRET, action.DELETE, secret.namespace) &&
-            !areNamespaceSecretsReadOnly.value;
-    };
+    const canDelete = (item: NamespaceSecret & {namespace?: string}) => {
+        return item?.namespace !== undefined &&
+            authStore.user?.isAllowed(resource.SECRET, action.DELETE, item.namespace) &&
+            !areNamespaceSecretsReadOnly.value
+    }
+
+    const dataTable = useTemplateRef("dataTable")
 
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter();
-        return _merge(base, queryFilter);
-    };
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return _merge(base, filters)
+    }
 
-    const loadData = async (callback?: () => void) => {
-        try {
-            const secretsResponse = await secretsStore.find(loadQuery({
-                size: parseInt(String(route.query?.size ?? 25)),
-                page: parseInt(String(route.query?.page ?? 1)),
-                sort: String(route.query?.sort ?? "key:asc"),
-                ...(props.namespace === undefined ? {} : {
+    const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const secretsResponse = await secretsStore.find(loadQuery({
+            size,
+            page,
+            sort: sort ?? String(route.query.sort ?? "key:asc"),
+            ...(props.namespace === undefined ? {} : {
+                filters: {
+                    namespace: {
+                        EQUALS: props.namespace,
+                    },
+                },
+            }),
+        }))
+
+        emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
+
+        let allSecrets = secretsResponse.results ?? []
+
+        if (props.includeInherited && props.namespace) {
+            const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
+
+            for (const parentNs of parentNamespaces) {
+                const parentSecretsResponse = await secretsStore.find(loadQuery({
                     filters: {
                         namespace: {
-                            EQUALS: props.namespace
-                        }
-                    }
-                })
-            }));
+                            EQUALS: parentNs,
+                        },
+                    },
+                }))
 
-            emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
-
-            let allSecrets = secretsResponse.results ?? [];
-
-            if (props.includeInherited && props.namespace) {
-                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
-
-                for (const parentNs of parentNamespaces) {
-                    const parentSecretsResponse = await secretsStore.find(loadQuery({
-                        filters: {
-                            namespace: {
-                                EQUALS: parentNs
-                            }
-                        }
-                    }));
-
-                    const parentSecrets = parentSecretsResponse?.results ?? [];
-                    if (parentSecrets.length > 0) {
-                        const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
-                        const newSecrets = parentSecrets.filter(
-                            (s: any) => s?.key && !currentKeys.has(s.key)
-                        );
-                        allSecrets.push(...newSecrets);
-                    }
+                const parentSecrets = parentSecretsResponse?.results ?? []
+                if (parentSecrets.length > 0) {
+                    const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean))
+                    const newSecrets = parentSecrets.filter(
+                        (s: any) => s?.key && !currentKeys.has(s.key),
+                    )
+                    allSecrets.push(...newSecrets)
                 }
             }
-
-            hasData.value = (allSecrets.length ?? 0) !== 0;
-            areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
-            secrets.value = allSecrets;
-            total.value = secretsResponse.total ?? 0;
-        } finally {
-            if (callback) callback();
         }
-    };
 
-    const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
-        dataTableRef: dataTable,
-        loadData
-    });
+        hasData.value = (allSecrets.length ?? 0) !== 0
+        areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
+        secrets.value = allSecrets
+        total.value = secretsResponse.total ?? 0
+    }
+
+    const filterQuery = computed(() => {
+        const {page: _p, size: _s, sort: _so, ...filters} = route.query
+        return filters
+    })
+
+    watch(filterQuery, () => {
+        dataTable.value?.resetAndReload()
+    }, {deep: true})
 
     const updateSecretModal = (secretData: NamespaceSecret) => {
-        secret.value.namespace = secretData?.namespace;
-        secret.value.key = secretData?.key;
-        secret.value.description = secretData?.description;
-        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}];
-        secret.value.update = true;
-        secret.value.updateValue = false;
-        addSecretDrawerVisible.value = true;
-    };
+        secret.value.namespace = secretData?.namespace
+        secret.value.key = secretData?.key
+        secret.value.description = secretData?.description
+        secret.value.tags = secretData?.tags?.map((x: any) => ({...x})) ?? [{key: undefined, value: undefined}]
+        secret.value.update = true
+        secret.value.updateValue = false
+        addSecretDrawerVisible.value = true
+    }
 
     const addSecretTag = () => {
-        secret.value?.tags?.push({key: "" as any, value: "" as any});
-    };
+        secret.value?.tags?.push({key: "" as any, value: "" as any})
+    }
 
     const removeSecretTag = (index: number) => {
-        secret.value?.tags?.splice(index, 1);
-    };
+        secret.value?.tags?.splice(index, 1)
+    }
 
     const removeSecret = ({key, namespace}: {key: string; namespace: string}) => {
         toast.confirm(t("delete confirm", {name: key}), () => {
             return namespacesStore
                 .deleteSecrets({namespace, key})
                 .then(() => {
-                    toast.deleted(key);
+                    toast.deleted(key)
                 })
-                .then(() => loadData());
-        });
-    };
+                .then(() => dataTable.value?.reload())
+        })
+    }
 
     const isSecretValueUpdated = () => {
-        return !secret.value?.update || secret.value?.updateValue;
-    };
+        return !secret.value?.update || secret.value?.updateValue
+    }
 
     const saveSecret = (formRef: FormInstance | undefined) => {
-        if (!formRef) return;
+        if (!formRef) return
 
         formRef.validate((valid: boolean) => {
             if (!valid) {
-                return;
+                return
             }
 
             const secretData: any = {
@@ -556,27 +545,27 @@
                 description: secret.value?.description,
                 tags: secret.value?.tags
                     ?.map(item => item.value !== undefined ? item : {key: item.key, value: ""})
-                    ?.filter(item => item.key !== undefined)
-            };
+                    ?.filter(item => item.key !== undefined),
+            }
 
             if (isSecretValueUpdated()) {
-                secretData.value = secret.value?.value;
+                secretData.value = secret.value?.value
             }
 
             const actionMethod = isSecretValueUpdated()
                 ? namespacesStore.createSecrets
-                : namespacesStore.patchSecret;
+                : namespacesStore.patchSecret
 
             actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
                 .then(() => {
-                    secret.value!.update = true;
-                    toast.saved(secret.value?.key || "");
-                    addSecretDrawerVisible.value = false;
-                    resetForm();
-                    return loadData();
-                });
-        });
-    };
+                    secret.value!.update = true
+                    toast.saved(secret.value?.key || "")
+                    addSecretDrawerVisible.value = false
+                    resetForm()
+                    dataTable.value?.reload()
+                })
+        })
+    }
 
     const resetForm = () => {
         secret.value = {
@@ -586,37 +575,37 @@
             description: undefined,
             tags: [{key: undefined, value: undefined}],
             update: undefined,
-            updateValue: undefined
-        };
-    };
+            updateValue: undefined,
+        }
+    }
 
     watch(() => props.addSecretModalVisible, (newValue) => {
         if (!newValue) {
-            resetForm();
+            resetForm()
         }
-    });
+    })
 
     watch(hasData, (newValue, oldValue) => {
         if (oldValue !== newValue) {
-            emit("hasData", newValue!);
+            emit("hasData", newValue!)
         }
-    });
+    })
 
     onMounted(() => {
         updateDisplayColumns(
             localStorage.getItem(`columns_${storageKey}`)?.split(",") ||
-                optionalColumns.value?.filter(col => col.default).map(col => col.prop)
-        );
-    });
+                optionalColumns.value?.filter(col => col.default).map(col => col.prop),
+        )
+    })
 </script>
 <style scoped lang="scss">
     .namespace-tag {
         background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-log-content-debug);
+        color: var(--ks-status-info);
         border: 1px solid var(--ks-log-border-debug);
         padding: 0 6px;
 
-        :deep(.el-tag__content) {
+        :deep(.kel-tag__content) {
             display: flex;
             align-items: center;
             gap: 4px;

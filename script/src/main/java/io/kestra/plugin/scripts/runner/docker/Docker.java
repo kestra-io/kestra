@@ -55,6 +55,7 @@ import lombok.experimental.SuperBuilder;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
+import io.kestra.core.utils.Await;
 
 @SuperBuilder(toBuilder = true)
 @ToString
@@ -608,7 +609,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 WaitContainerResultCallback result = dockerClient.waitContainerCmd(runContainerId).start();
 
                 Integer exitCode = result.awaitStatusCode();
-                Awaitility.await().forever().until(ended::get);
+                Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
@@ -631,9 +632,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     .details(DockerTaskRunnerDetailResult.builder().containerId(runContainerId).build())
                     .build();
             } finally {
+                // Clear the interrupted flag so Docker HTTP cleanup calls are not rejected.
+                boolean wasInterrupted = Thread.interrupted();
                 try {
-                    // kill container if it's still running, this means there was an exception and the container didn't
-                    // come to a normal end.
                     kill();
 
                     if (Boolean.TRUE.equals(renderedDelete)) {
@@ -652,6 +653,10 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     }
                 } catch (Exception ignored) {
 
+                } finally {
+                    if (wasInterrupted) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
             }
         } catch (RuntimeException e) {

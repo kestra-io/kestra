@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
+import io.grpc.StatusOr;
 
 /**
  * A gRPC NameResolver that resolves to a static list of controller addresses.
@@ -46,7 +47,9 @@ public class StaticNameResolver extends NameResolver {
 
     private void resolve() {
         if (listener != null) {
-            listener.onResult(ResolutionResult.newBuilder().setAddresses(addresses).build());
+            listener.onResult2(ResolutionResult.newBuilder()
+                .setAddressesOrError(StatusOr.fromValue(addresses))
+                .build());
         }
     }
 

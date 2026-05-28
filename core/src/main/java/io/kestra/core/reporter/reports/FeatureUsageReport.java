@@ -3,6 +3,7 @@ package io.kestra.core.reporter.reports;
 import java.time.Instant;
 import java.util.Objects;
 
+import io.kestra.core.models.ServerType;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.reporter.AbstractReportable;
@@ -14,6 +15,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -27,15 +29,23 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
     private final FlowRepositoryInterface flowRepository;
     private final ExecutionRepositoryInterface executionRepository;
     private final DashboardRepositoryInterface dashboardRepository;
+    private final ServerType serverType;
 
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
         ExecutionRepositoryInterface executionRepository,
-        DashboardRepositoryInterface dashboardRepository) {
+        DashboardRepositoryInterface dashboardRepository,
+        @Value("${kestra.server-type}") ServerType serverType) {
         super(Types.USAGE, Schedules.hourly(), true);
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;
         this.dashboardRepository = dashboardRepository;
+        this.serverType = serverType;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return serverType.equals(ServerType.EXECUTOR) || serverType.equals(ServerType.STANDALONE);
     }
 
     @Override

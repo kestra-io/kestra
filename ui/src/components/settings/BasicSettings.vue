@@ -173,7 +173,7 @@
     </Wrapper>
 </template>
 
-<script>
+<script lang="ts">
     import RouteContext from "../../mixins/routeContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue"

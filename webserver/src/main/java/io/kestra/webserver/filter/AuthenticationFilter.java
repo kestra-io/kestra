@@ -25,7 +25,7 @@ import reactor.core.scheduler.Schedulers;
 
 @Filter("/api/v1/**")
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
-@Requires(property = "micronaut.security.enabled", notEquals = "true") // don't add this filter in EE
+@Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class AuthenticationFilter implements HttpServerFilter {
     private static final Integer ORDER = ServerFilterPhase.SECURITY.order();
     /** @deprecated Use {@link BasicAuthService#BASIC_AUTH_COOKIE_NAME} */

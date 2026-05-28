@@ -147,6 +147,9 @@ export {
     readAppliedLevelFilter,
     normalizeRouteLevelFilter,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
+export {
+    normalizeRouteTimeRangeFilter,
+} from "./components/Data/KsDataTable/filter/utils/timeRangeQuery"
 export type {
     FilterConfiguration,
     AppliedFilter,

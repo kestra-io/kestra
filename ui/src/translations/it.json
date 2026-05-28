@@ -290,7 +290,14 @@
       "thisYear": "Quest'anno",
       "thisYearSoFar": "Quest'anno finora",
       "today": "Oggi",
-      "yesterday": "Ieri"
+      "yesterday": "Ieri",
+      "short": {
+        "15m": "15m",
+        "1h": "1h",
+        "12h": "12h",
+        "1d": "1d",
+        "7d": "7d"
+      }
     },
     "debug": "Debug",
     "default": "Predefinito",

@@ -27,7 +27,7 @@
                         :timeRange="selectedTimeRange"
                         :intervalLabel="t('filter.timeRange_log.label')"
                         :levelLabel="t('filter.level_log_executions.label')"
-                        @update:level="onQuickFilterLevel"
+                        @update:level="setLevelRouteValue"
                         @update:time-range="onQuickFilterTimeRange"
                     />
                 </template>
@@ -88,6 +88,7 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
+        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
@@ -124,14 +125,15 @@
     const {VALUES} = useValues("logs")
     // Quick-filter interval is a curated subset with short labels for a compact
     // single-row layout; the full localized range list stays available via the
-    // "Add filters" dropdown (timeRange).
-    const quickIntervals = [
-        {label: "15m", value: "PT15M"},
-        {label: "1h", value: "PT1H"},
-        {label: "12h", value: "PT12H"},
-        {label: "1d", value: "PT24H"},
-        {label: "7d", value: "PT168H"},
-    ]
+    // "Add filters" dropdown (timeRange). Labels go through i18n via
+    // `datepicker.short.*` keys so translators can localize the abbreviations.
+    const quickIntervals = computed(() => [
+        {label: t("datepicker.short.15m"), value: "PT15M"},
+        {label: t("datepicker.short.1h"), value: "PT1H"},
+        {label: t("datepicker.short.12h"), value: "PT12H"},
+        {label: t("datepicker.short.1d"), value: "PT24H"},
+        {label: t("datepicker.short.7d"), value: "PT168H"},
+    ])
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
 
@@ -224,17 +226,8 @@
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
 
-    const onQuickFilterLevel = (level: string) => {
-        setLevelRouteValue(level)
-    }
-
     const onQuickFilterTimeRange = (value: string) => {
-        const query = {...route.query}
-        delete query.startDate
-        delete query.endDate
-        delete query.timeRange
-        query["filters[timeRange][EQUALS]"] = value
-        router.replace({query})
+        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
     }
 
     const loadQuery = (base: any) => {

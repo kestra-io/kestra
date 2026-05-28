@@ -17,6 +17,7 @@
                 class="log-quick-filters__levels"
                 data-test="log-quick-filters-level"
                 role="group"
+                :aria-label="levelLabel"
             >
                 <button
                     v-for="lvl in levels"
@@ -133,13 +134,18 @@
             white-space: nowrap;
             cursor: pointer;
             transition:
-                background-color 0.15s ease,
-                border-color 0.15s ease,
-                color 0.15s ease;
+                background-color var(--ks-duration-base) ease,
+                border-color var(--ks-duration-base) ease,
+                color var(--ks-duration-base) ease;
 
             &:hover {
                 background: var(--level-bg);
                 color: var(--ks-text-primary);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--level-color);
+                outline-offset: 2px;
             }
 
             &--active {

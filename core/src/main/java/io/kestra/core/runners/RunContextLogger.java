@@ -199,6 +199,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         Logger newLogger = loggerContext.getLogger(this.loggerName);
 
         if (this.logEntry != null) {
+            // Defensive: populate the per-run LoggerContext's MDC adapter so that any future
+            // code path which reads MDC from the event (rather than from the eager snapshot
+            // set in BaseAppender.transform()) still sees the execution context. Paired with
+            // resetMDC() below on cleanup. Today both are effectively no-ops because the
+            // snapshot in transform() short-circuits event.getMDCPropertyMap().
             loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
         }
 
@@ -335,6 +340,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
+                // The new LoggingEvent has no MDC by default; pull it from the LogEntry so
+                // forwarded events carry it
+                if (this.runContextLogger.logEntry != null) {
+                    lle.setMDCPropertyMap(this.runContextLogger.logEntry.toMap());
+                }
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());
                 }

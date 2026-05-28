@@ -41,6 +41,8 @@
                         fixed
                         :data
                         :rowKey
+                        :expandRowKeys="composedExpandRowKeys"
+                        :rowClassName="composedRowClassName"
                         :emptyText="data && data.length === 0 ? noDataText : ''"
                         @selection-change="selectionChanged"
                         @select="onSelect"
@@ -70,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -93,6 +95,7 @@
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
         selectionMapper?: (element: any) => any
+        forceExpandedRowKeys?: string[]
     }>(), {
         data: () => [],
         total: 0,
@@ -106,6 +109,7 @@
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
         selectionMapper: undefined,
+        forceExpandedRowKeys: () => [],
     })
 
     const emit = defineEmits<{
@@ -127,10 +131,34 @@
     }>()
 
     const slots = useSlots()
+    const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
     const hasTableSlot = computed(() => !!slots["table"])
     const hasBulkActions = computed(() => !!slots["bulk-actions"])
     const hasEmpty = computed(() => !!slots["empty"])
+
+    const composedExpandRowKeys = computed<string[] | undefined>(() => {
+        const forced = props.forceExpandedRowKeys ?? []
+        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        if (!forced.length && !userKeys.length) return undefined
+        return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    const composedRowClassName = computed(() => {
+        const forced = new Set(props.forceExpandedRowKeys ?? [])
+        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+
+        if (!forced.size && !userClass) return undefined
+
+        return (arg: {row: any}) => {
+            const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
+            if (!forced.size) return base
+            const key = typeof props.rowKey === "function"
+                ? (props.rowKey as (row: any) => string)(arg.row)
+                : (arg.row as any)?.[props.rowKey as string]
+            return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
+        }
+    })
 
     const isLoading = ref(props.loading)
     const isReady = ref(false)
@@ -393,5 +421,9 @@
             }
         }
 
+        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+            visibility: hidden;
+            pointer-events: none;
+        }
     }
 </style>

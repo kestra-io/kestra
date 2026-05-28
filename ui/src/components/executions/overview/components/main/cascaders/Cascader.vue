@@ -4,11 +4,10 @@
             <KsText truncated>
                 {{ props.title }}
             </KsText>
-            <KsInput
+            <KsSearch
                 v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
-                :suffixIcon="Magnify"
             />
         </div>
 
@@ -47,7 +46,6 @@
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
 
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     export interface Node {
         label: string;

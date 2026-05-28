@@ -12,7 +12,6 @@
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
-        "allowImportingTsExtensions": true,
         "jsx": "preserve",
         "jsxImportSource": "vue"
     },

@@ -146,7 +146,7 @@
 
         return filtered
             .filter((plugin, index, self) =>
-                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group),
+                index === self.findIndex(task => task.title === plugin.title && task.group === plugin.group),
             )
             .filter(isPluginVisible)
             .sort((a, b) => {

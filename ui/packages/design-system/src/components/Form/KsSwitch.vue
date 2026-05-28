@@ -60,7 +60,7 @@
                 width: 14px;
                 height: 14px;
                 top: 3px;
-                left: 3px;
+                left: calc(100% - 17px);
                 border-radius: 7px;
                 background-color: palette.$base-white;
                 box-shadow: 0 1px 4px var(--ks-shadow-element);
@@ -76,16 +76,17 @@
             background-color: var(--ks-toogle-bg-active);
 
             .kel-switch__action {
-                left: calc(100% - 17px);
+                left: 3px;
             }
         }
 
-        &:hover:not(.is-disabled) .kel-switch__core .kel-switch__action {
+        &:hover:not(.is-disabled):not(.is-checked) .kel-switch__core .kel-switch__action {
             width: 18px;
+            left: calc(100% - 21px);
         }
 
         &.is-checked:hover:not(.is-disabled) .kel-switch__core .kel-switch__action {
-            left: calc(100% - 21px);
+            width: 18px;
         }
 
         &.is-disabled {

@@ -120,7 +120,7 @@
 
     /** Locale-aware name comparison (ascending). */
     const nameAscComparator: Comparator = (a, b) =>
-        a.manifest["X-Kestra-Title"].localeCompare(b.manifest["X-Kestra-Title"])
+        a.title.localeCompare(b.title)
 
     /** Sort by most-recently-released; ties fall back to name ascending. */
     const newestComparator: Comparator = (a, b) => {

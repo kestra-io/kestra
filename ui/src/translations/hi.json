@@ -766,7 +766,7 @@
         "tooltip": "इस flow का उपयोग करने वाले ऐप्स देखें"
       },
       "dependencies": {
-        "suffix": "निर्भरता(एं)",
+        "suffix": "निर्भरताएं",
         "tooltip": "flow निर्भरता देखें"
       },
       "errors": {

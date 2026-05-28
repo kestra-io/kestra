@@ -9,10 +9,10 @@ import {playwright} from "@vitest/browser-playwright"
 // compiler warns that the option is ignored in non-browser builds — this
 // is a known false-positive that produces no functional difference.
 // Suppress it so test output stays clean.
-const _consoleWarn = console.warn.bind(console)
+const consoleWarnBak = console.warn.bind(console)
 console.warn = (...args: unknown[]) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
-    _consoleWarn(...args)
+    consoleWarnBak(...args)
 }
 
 const storybookConfigDir = resolve(import.meta.dirname, ".storybook")

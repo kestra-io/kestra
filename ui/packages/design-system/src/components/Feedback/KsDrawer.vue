@@ -18,7 +18,7 @@
                 <slot name="header" />
             </span>
             <KsButton link @click="toggleFullScreen">
-                <Fullscreen class="full-screen" />
+                <ArrowExpand class="full-screen" />
             </KsButton>
         </template>
         <template v-if="$slots.footer" #footer>
@@ -30,7 +30,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {ElDrawer} from "element-plus"
-    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import ArrowExpand from "vue-material-design-icons/ArrowExpand.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -72,15 +72,22 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .kel-drawer {
+        --kel-drawer-bg-color: var(--ks-bg-sidebar);
 
-        .kel-drawer__header {
-            .full-screen {
-                > .material-design-icon__svg {
-                    width: 1.5rem;
-                    height: 1.5rem;
-                    bottom: -0.250rem;
-                }
-            }
+        &.ltr {
+            border-right: 1px solid var(--ks-border-default);
+        }
+
+        &.rtl {
+            border-left: 1px solid var(--ks-border-default);
+        }
+
+        &.ttb {
+            border-bottom: 1px solid var(--ks-border-default);
+        }
+
+        &.btt {
+            border-top: 1px solid var(--ks-border-default);
         }
 
         &.ltr,
@@ -146,11 +153,24 @@
         .kel-drawer__header {
             padding: 1rem;
             margin-bottom: 0;
-            background-color: var(--ks-background-panel);
-            border-bottom: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-primary);
+            background-color: var(--ks-bg-base);
+            border-bottom: 1px solid var(--ks-border-default);
+            color: var(--ks-text-primary);
             font-weight: bold;
-            font-size: var(--ks-font-size-md);
+
+            h3 {
+                font-size: var(--kel-font-size-large);
+                margin-bottom: 0;
+            }
+
+            .full-screen {
+                margin-right: 1rem;
+                > .material-design-icon__svg {
+                    width: 1.375rem;
+                    height: 1.375rem;
+                    bottom: -0.250rem;
+                }
+            }
         }
     }
 

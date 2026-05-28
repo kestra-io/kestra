@@ -5,6 +5,12 @@
   $namespace: 'kel'
 );
 
+// types
+$types: success, warning, error, info;
+
+
+$fill-color-base: #fafcff;
+
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
     $font-family: (
         '':  var(--ks-font-family-sans),
@@ -19,6 +25,7 @@
         'small': var(--ks-font-size-sm),
         'extra-small': var(--ks-font-size-xs),
     ),
+
 
     $colors: (
         'white': palette.$base-white,
@@ -65,19 +72,19 @@
     ),
 
     $input: (
-        'bg-color': var(--ks-background-input),
+        'bg-color': var(--ks-bg-input),
     ),
 
     $checkbox: (
-        'bg-color': var(--ks-background-input),
+        'bg-color': var(--ks-bg-input),
     ),
 
     $radio: (
-        'input-bg-color': var(--ks-background-input),
+        'input-bg-color': var(--ks-bg-input),
     ),
 
     $select: (
-        'input-color': var(--ks-background-input),
+        'input-color': var(--ks-bg-input),
     ),
 );
 
@@ -116,52 +123,99 @@
 @use "element-plus/theme-chalk/src/dark/css-vars";
 @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-:root,
-html.dark {
-    #{--kel-bg-color}: var(--ks-background-body);
-    #{--kel-bg-color-page}: var(--ks-background-body);
-    #{--kel-bg-color-overlay}: var(--ks-dropdown-background);
+:root, html.dark {
+    #{--kel-color-primary-light-3}: palette.$base-primary-300;
+    #{--kel-color-primary-light-5}: palette.$base-primary-200;
+    #{--kel-color-primary-light-7}: palette.$base-primary-100;
+    #{--kel-color-primary-light-8}: palette.$base-primary-50;
+    #{--kel-color-primary-light-9}: palette.$base-primary-25;
+    #{--kel-color-primary-dark-2}: palette.$base-primary-700;
 
-    #{--kel-disabled-bg-color}: var(--ks-button-background-inactive);
+    #{--kel-color-success-light-3}: palette.$base-green-300;
+    #{--kel-color-success-light-5}: palette.$base-green-200;
+    #{--kel-color-success-light-7}: palette.$base-green-100;
+    #{--kel-color-success-light-8}: palette.$base-green-50;
+    #{--kel-color-success-light-9}: palette.$base-green-25;
+    #{--kel-color-success-dark-2}: palette.$base-green-700;
 
-    #{--kel-text-color-primary}: var(--ks-content-primary);
-    #{--kel-text-color-regular}: var(--ks-content-primary);
-    #{--kel-text-color-secondary}: var(--ks-content-secondary);
-    #{--kel-text-color-placeholder}: var(--ks-content-tertiary);
-    #{--kel-text-color-disabled}: var(--ks-content-inactive);
+    #{--kel-color-warning-light-3}: palette.$base-orange-300;
+    #{--kel-color-warning-light-5}: palette.$base-orange-200;
+    #{--kel-color-warning-light-7}: palette.$base-orange-100;
+    #{--kel-color-warning-light-8}: palette.$base-orange-50;
+    #{--kel-color-warning-light-9}: palette.$base-orange-25;
+    #{--kel-color-warning-dark-2}: palette.$base-orange-700;
 
-    #{--kel-border-color}: var(--ks-border-primary);
-    #{--kel-border-color-light}: var(--ks-border-primary);
-    #{--kel-border-color-lighter}: var(--ks-border-primary);
-    #{--kel-border-color-extra-light}: var(--ks-border-primary);
-    #{--kel-border-color-dark}: var(--ks-border-secondary);
-    #{--kel-border-color-darker}: var(--ks-border-secondary);
+    #{--kel-color-danger-light-3}: palette.$base-red-300;
+    #{--kel-color-danger-light-5}: palette.$base-red-200;
+    #{--kel-color-danger-light-7}: palette.$base-red-100;
+    #{--kel-color-danger-light-8}: palette.$base-red-50;
+    #{--kel-color-danger-light-9}: palette.$base-red-25;
+    #{--kel-color-danger-dark-2}: palette.$base-red-700;
 
-    #{--kel-fill-color}: var(--ks-button-background-secondary-active); // used in buttons .is-text
-    #{--kel-fill-color-light}: var(--ks-dropdown-background-active); // used in many places autocomplete suggestion highlighted
-    #{--kel-fill-color-lighter}: var(--ks-button-background-secondary-active); // used to be for table stripped but not anymore
-    #{--kel-fill-color-dark}: var(--ks-button-background-secondary-active); // used in buttons .is-text when active
-    #{--kel-fill-color-blank}: var(--ks-background-card); // used in many places --kel-input-background-color
-    #{--kel-input-bg-color}: var(--ks-background-input);
-    #{--kel-menu-hover-bg-color}: var(--ks-button-background-secondary);
-    #{--kel-menu-hover-text-color}: var(--ks-content-primary);
-    #{--kel-menu-active-color}: var(--ks-content-link);
+    #{--kel-color-error-light-3}: palette.$base-red-300;
+    #{--kel-color-error-light-5}: palette.$base-red-200;
+    #{--kel-color-error-light-7}: palette.$base-red-100;
+    #{--kel-color-error-light-8}: palette.$base-red-50;
+    #{--kel-color-error-light-9}: palette.$base-red-25;
+    #{--kel-color-error-dark-2}: palette.$base-red-700;
 
-    #{--kel-button-active-text-color}: var(--ks-content-primary);
-    #{--kel-popper-bg-color-light}: var(--ks-dropdown-background);
-    #{--kel-border-color-hover}: var(--ks-border-primary);
+    #{--kel-color-info-light-3}: palette.$base-blue-300;
+    #{--kel-color-info-light-5}: palette.$base-blue-200;
+    #{--kel-color-info-light-7}: palette.$base-blue-100;
+    #{--kel-color-info-light-8}: palette.$base-blue-50;
+    #{--kel-color-info-light-9}: palette.$base-blue-25;
+    #{--kel-color-info-dark-2}: palette.$base-blue-700;
 
-    #{--kel-color-danger}: var(--ks-content-alert);
-    #{--kel-color-error}: var(--ks-content-alert);
+    /* page */
+    //#{--kel-bg-color-page}: var(--ks-text-primary);
+    #{--kel-bg-color}: var(--ks-bg-base);
+    #{--kel-bg-color-overlay}: var(--ks-bg-elevated);
+
+    #{--kel-popover-bg-color}: var(--ks-bg-elevated);
+
+    /* text */
+    #{--kel-text-color-primary}: var(--ks-text-primary);
+    #{--kel-text-color-regular}: var(--ks-text-muted);
+    #{--kel-text-color-secondary}: var(--ks-text-secondary);
+    #{--kel-text-color-placeholder}: var(--ks-text-dim);
+    #{--kel-text-color-disabled}: var(--ks-text-inactive);
+
+    /* border */
+    #{--kel-border-color-darker}: var(--ks-border-strong);
+    #{--kel-border-color-dark}: var(--ks-border-strong);
+    #{--kel-border-color}: var(--ks-border-default);
+    #{--kel-border-color-light}: var(--ks-border-default);
+    #{--kel-border-color-lighter}: var(--ks-border-subtle);
+    #{--kel-border-color-extra-light}: var(--ks-border-subtle);
+
+    /* fill — gray-neutral scale, darker → more opaque */
+    #{--kel-fill-color-darker}: var(--ks-bg-hover);
+    #{--kel-fill-color-dark}: var(--ks-bg-hover);
+    #{--kel-fill-color}: var(--ks-bg-active);
+    #{--kel-fill-color-light}: var(--ks-bg-hover-elevated);
+    #{--kel-fill-color-lighter}: var(--ks-bg-surface);
+    #{--kel-fill-color-extra-light}: var(--ks-bg-surface);
+    #{--kel-fill-color-blank}: var(--ks-bg-sidebar);
+
+    /* disabled */
+    #{--kel-disabled-bg-color}: var(--ks-bg-inactive);
+    #{--kel-disabled-text-color}: var(--ks-text-inactive);
+    #{--kel-disabled-border-color}: var(--ks-border-subtle);
+
+    /* shadow */
+    #{--kel-box-shadow}: 0px 12px 32px 4px var(--ks-shadow-element), 0px 8px 20px var(--ks-shadow-surface);
+    #{--kel-box-shadow-light}: 0px 0px 12px var(--ks-shadow-surface);
+    #{--kel-box-shadow-lighter}: 0px 0px 6px var(--ks-shadow-element);
+    #{--kel-box-shadow-dark}: 0px 16px 48px 16px var(--ks-shadow-elevated), 0px 12px 32px var(--ks-shadow-surface), 0px 8px 16px -8px var(--ks-shadow-surface);
 }
 
 // popper
 .kel-popper {
     box-shadow: var(--kel-box-shadow);
-    border: 1px solid var(--ks-border-primary) !important;
+    border: 1px solid var(--ks-border-default) !important;
 
     & > .kel-popper__arrow::before {
-        border: 1px solid var(--ks-border-primary) !important;
+        border: 1px solid var(--ks-border-default) !important;
     }
 }
 
@@ -176,8 +230,16 @@ html.dark {
 
 // notifications
 .kel-notification {
-    --kel-notification-border-color: var(--ks-border-primary);
-    --kel-notification-title-color: var(--ks-content-primary);
+    --kel-notification-border-color: var(--ks-border-strong);
+    --kel-notification-title-color: var(--ks-text-primary);
+    background-color: var(--ks-bg-elevated);
+
+    @each $type in $types {
+        .kel-notification--#{$type}, &.kel-notification--#{$type} .kel-notification__icon {
+            --kel-notification-icon-color: var(--ks-text-#{$type});
+            color: var(--kel-notification-icon-color);
+        }
+    }
 
     .kel-notification__group {
         flex-grow: 2;
@@ -208,12 +270,48 @@ html.dark {
     }
 }
 
+// message
+.kel-message {
+    &.is-plain {
+        background-color: var(--ks-bg-elevated);
+        border-color: var(--ks-border-strong);
+    }
+
+    @each $type in $types {
+        .kel-message-icon--#{$type} {
+            color: var(--ks-text-#{$type});
+        }
+    }
+
+    .kel-message__content {
+        color: var(--ks-text-primary);
+    }
+}
+
 // message box
 .kel-message-box {
-    border: 1px solid var(--ks-border-primary);
+    --kel-messagebox-border-radius: var(--ks-radius-base);
+    border: 1px solid var(--ks-border-default);
+    background-color: var(--ks-bg-elevated);
 
     .kel-message-box__headerbtn .kel-message-box__close {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
+    }
+
+    .kel-message-box__header {
+        margin-bottom: var(--kel-messagebox-padding-primary);
+        font-weight: bold;
+    }
+
+    .kel-message-box__btns {
+        margin-top: calc(var(--kel-messagebox-padding-primary) * 2);
+        border-top: 1px solid var(--ks-border-default);
+        margin-left: calc(var(--kel-messagebox-padding-primary) * -1);
+        margin-bottom: calc(var(--kel-messagebox-padding-primary) * -1);
+        padding-bottom: var(--kel-messagebox-padding-primary);
+        padding-right: var(--kel-messagebox-padding-primary);
+        width: calc(100% + var(--kel-messagebox-padding-primary) * 2);
+        background-color: var(--ks-bg-base);
     }
 }
 

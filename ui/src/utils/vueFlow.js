@@ -2,75 +2,75 @@ import {useVueFlow} from "@vue-flow/core"
 
 
 export const predecessorsEdge = (vueFlowId, nodeUid) => {
-    const {getEdges} = useVueFlow(vueFlowId);
+    const {getEdges} = useVueFlow(vueFlowId)
 
-    let nodes = [];
+    let nodes = []
 
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
             nodes.push(edge)
-            let recursiveEdge = predecessorsEdge(vueFlowId, edge.source);
+            let recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
 
-    return nodes;
+    return nodes
 }
 
 export const successorsEdge = (vueFlowId, nodeUid) => {
-    const {getEdges} = useVueFlow(vueFlowId);
+    const {getEdges} = useVueFlow(vueFlowId)
 
-    let nodes = [];
+    let nodes = []
 
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
             nodes.push(edge)
-            let recursiveEdge = successorsEdge(vueFlowId, edge.target);
+            let recursiveEdge = successorsEdge(vueFlowId, edge.target)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
 
-    return nodes;
+    return nodes
 }
 
 export const predecessorsNode = (vueFlowId, nodeUid) => {
-    const {getEdges, findNode} = useVueFlow(vueFlowId);
+    const {getEdges, findNode} = useVueFlow(vueFlowId)
 
-    let nodes = [findNode(nodeUid)];
+    let nodes = [findNode(nodeUid)]
 
     for (const edge of getEdges.value) {
         if (edge.target === nodeUid) {
             nodes.push(edge.sourceNode)
-            let recursiveEdge = predecessorsNode(vueFlowId, edge.source);
+            let recursiveEdge = predecessorsNode(vueFlowId, edge.source)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
 
-    return nodes;
+    return nodes
 }
 
 export const successorsNode = (vueFlowId, nodeUid) => {
-    const {getEdges, findNode} = useVueFlow(vueFlowId);
+    const {getEdges, findNode} = useVueFlow(vueFlowId)
 
-    let nodes = [findNode(nodeUid)];
+    let nodes = [findNode(nodeUid)]
 
     for (const edge of getEdges.value) {
         if (edge.source === nodeUid) {
             nodes.push(edge.targetNode)
-            let recursiveEdge = successorsNode(vueFlowId, edge.target);
+            let recursiveEdge = successorsNode(vueFlowId, edge.target)
             if (recursiveEdge.length > 0) {
-                nodes.push(...recursiveEdge);
+                nodes.push(...recursiveEdge)
             }
         }
     }
 
-    return nodes;
+    return nodes
 }
 
 export const linkedElements = (vueFlowId, nodeUid) => {

@@ -65,6 +65,11 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
         this.currentThread.setContextClassLoader(classLoader);
 
         try {
+            // Guard against a kill received before currentThread was recorded:
+            // interrupt() was a no-op, so honor the killed flag here.
+            if (this.killed) {
+                return KILLED;
+            }
             return doCall();
         } catch (Throwable e) {
             Exceptions.throwIfFatal(e);

@@ -46,6 +46,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final ExpressionContextService expressionContextService;
     private final PluginDefaultService pluginDefaultService;
     private final NamespaceContextTool namespaceContextTool;
+    @Nullable
+    private volatile KestraDocsContextTool kestraDocsContextTool;
     private final String instanceUid;
     private final String aiProvider;
     private final String displayName;
@@ -78,17 +80,17 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     protected FlowYamlBuilder flowYamlBuilder(String conversationId) {
         var builder = AiServices.builder(FlowYamlBuilder.class)
             .chatModel(this.chatModel(this.listeners("FlowYamlBuilder", conversationId)));
-        return (namespaceContextTool != null ? builder.tools(namespaceContextTool) : builder).build();
+        List<Object> tools = new ArrayList<>();
+        if (namespaceContextTool != null) tools.add(namespaceContextTool);
+        if (kestraDocsContextTool != null) tools.add(kestraDocsContextTool);
+        return tools.isEmpty() ? builder.build() : builder.tools(tools).build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
-        return AiServices.builder(DashboardYamlBuilder.class)
-            .chatModel(
-                this.chatModel(
-                    this.listeners("DashboardYamlBuilder", conversationId)
-                )
-            )
-            .build();
+        var builder = AiServices.builder(DashboardYamlBuilder.class)
+            .chatModel(this.chatModel(this.listeners("DashboardYamlBuilder", conversationId)));
+        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        return builder.build();
     }
 
     public AiService(
@@ -119,6 +121,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
         this.dashboardAiCopilot = new DashboardAiCopilot<>(Dashboard.class);
         this.versionProvider = versionProvider;
+    }
+
+    public void setKestraDocsContextTool(KestraDocsContextTool kestraDocsContextTool) {
+        this.kestraDocsContextTool = kestraDocsContextTool;
     }
 
     @Override
@@ -203,9 +209,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     }
 
     public <B> B buildAiService(Class<B> serviceClass, String spanName, String conversationId) {
-        return AiServices.builder(serviceClass)
-            .chatModel(this.chatModel(this.listeners(spanName, conversationId)))
-            .build();
+        var builder = AiServices.builder(serviceClass)
+            .chatModel(this.chatModel(this.listeners(spanName, conversationId)));
+        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        return builder.build();
     }
 
     public record ConversationMetadata(String conversationId, String ip, String parentSpanId, String uid) {

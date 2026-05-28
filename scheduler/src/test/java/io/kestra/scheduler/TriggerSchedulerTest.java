@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import io.kestra.core.models.triggers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -23,13 +24,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -727,8 +721,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Optional.of(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Optional<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Optional.of(TriggerService.generateEvaluationResult(this, conditionContext, Map.of()));
         }
     }
 
@@ -742,8 +736,8 @@ class TriggerSchedulerTest {
         private Property<String> value;
 
         @Override
-        public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
-            return Mono.just(TriggerService.generateExecution(this, conditionContext, context, Map.of()));
+        public Publisher<TriggerEvaluationResult> eval(ConditionContext conditionContext, TriggerContext context) {
+            return Mono.just(TriggerService.generateRealtimeEvaluationResult(this, conditionContext, null));
         }
     }
 }

@@ -12,11 +12,11 @@
 </template>
 
 <script setup lang="ts">
-    import AiIcon from "./AiIcon.vue";
+    import AiIcon from "./AiIcon.vue"
 
     interface AITriggerButtonProps {
-        show: boolean;
-        opened: boolean;
+        show?: boolean;
+        opened?: boolean;
     }
 
     interface AITriggerButtonEmits {
@@ -26,12 +26,12 @@
     withDefaults(defineProps<AITriggerButtonProps>(), {
         show: false,
         opened: false,
-    });
+    })
 
-    const emit = defineEmits<AITriggerButtonEmits>();
+    const emit = defineEmits<AITriggerButtonEmits>()
 
     function handleClick(): void {
-        emit("click");
+        emit("click")
     }
 </script>
 
@@ -66,8 +66,8 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background-color: var(--ks-button-background-secondary);
-        color: var(--ks-content-primary);
+        background-color: var(--ks-btn-secondary-bg-default);
+        color: var(--ks-text-primary);
         box-shadow: 0px 4px 4px 0px #00000040;
         font-size: var(--ks-font-size-xs);
         font-weight: 700;

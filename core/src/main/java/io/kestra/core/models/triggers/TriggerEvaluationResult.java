@@ -1,7 +1,10 @@
 package io.kestra.core.models.triggers;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.Label;
@@ -9,6 +12,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 
 /**
@@ -32,7 +36,11 @@ public record TriggerEvaluationResult(
     @JsonProperty State.Type stateType,
     @JsonProperty ExecutionTrigger trigger,
     @JsonProperty @Nullable List<Label> labels,
-    @JsonProperty @Nullable Integer flowRevision
+    @JsonProperty @Nullable Integer flowRevision,
+    @JsonProperty @Nullable Instant scheduleDate,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(implementation = Object.class)
+    Map<String, Object> inputs
 ) {
 
     /**
@@ -47,7 +55,9 @@ public record TriggerEvaluationResult(
             execution.getState().getCurrent(),
             execution.getTrigger(),
             execution.getLabels(),
-            execution.getFlowRevision()
+            execution.getFlowRevision(),
+            execution.getScheduleDate(),
+            execution.getInputs()
         );
     }
 
@@ -55,7 +65,7 @@ public record TriggerEvaluationResult(
      * Returns a copy with a different state type.
      */
     public TriggerEvaluationResult withState(State.Type state) {
-        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision);
+        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs);
     }
 
     /**
@@ -78,6 +88,8 @@ public record TriggerEvaluationResult(
             .state(state)
             .trigger(trigger)
             .labels(labels)
+            .scheduleDate(scheduleDate)
+            .inputs(inputs)
             .build();
     }
 }

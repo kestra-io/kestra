@@ -215,7 +215,7 @@ public final class TriggerState implements TriggerId {
             backfill = backfill
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
-                .currentDate(backfill.getStart())
+                .currentDate(backfill.getCurrentDate() != null ? backfill.getCurrentDate() : backfill.getStart())
                 .previousNextExecutionDate(toZonedDateTime(nextEvaluationDate))
                 .build();
         }

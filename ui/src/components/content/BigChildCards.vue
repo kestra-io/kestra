@@ -16,18 +16,18 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import ContextDocsLink from "../docs/ContextDocsLink.vue";
+    import {computed} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import ContextDocsLink from "../docs/ContextDocsLink.vue"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const props = defineProps<{
         directory: string
         title: string
     }>()
 
-    let navigation = await docStore.children(props.directory) as Record<string, any>;
+    let navigation = await docStore.children(props.directory) as Record<string, any>
 
     // avoid null values in navigation
     const protectedNavigation = computed(() => {

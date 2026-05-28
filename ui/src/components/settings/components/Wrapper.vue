@@ -14,6 +14,6 @@
 
 <script setup lang="ts">
     const layout = (span: number, offset: number) => {
-        return {span, offset};
-    };
+        return {span, offset}
+    }
 </script>

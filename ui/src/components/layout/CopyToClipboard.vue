@@ -16,12 +16,12 @@
 </template>
 
 <script setup lang="ts">
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Utils from "../../utils/utils";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import * as Utils from "../../utils/utils"
 
-    const props = defineProps<{ text: string; label?: string, link?: boolean }>();
+    const props = defineProps<{ text: string; label?: string, link?: boolean }>()
 
-    const copyText = () => Utils.copy(props.text);
+    const copyText = () => Utils.copy(props.text)
 </script>
 
 <style scoped lang="scss">

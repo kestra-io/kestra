@@ -1,7 +1,9 @@
 package io.kestra.worker.stores;
 
+import java.time.Duration;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceBlockingStub;
@@ -13,6 +15,7 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.worker.MetaStoreCacheConfig;
 import io.kestra.plugin.core.debug.Return;
 
 import jakarta.inject.Inject;
@@ -32,7 +35,16 @@ class GrpcWorkerFlowMetaStoreTest extends AbstractGrpcMetaStoreTest {
 
     @Override
     protected void initClientStore() {
-        grpcWorkerFlowMetaStore = new GrpcWorkerFlowMetaStore(flowMetaStoreStub, clientWorkerInfo());
+        grpcWorkerFlowMetaStore = new GrpcWorkerFlowMetaStore(
+            flowMetaStoreStub,
+            clientWorkerInfo(),
+            new MetaStoreCacheConfig(10_000L, Duration.ofHours(1))
+        );
+    }
+
+    @AfterEach
+    void clearCache() {
+        grpcWorkerFlowMetaStore.invalidateAll();
     }
 
     @Test

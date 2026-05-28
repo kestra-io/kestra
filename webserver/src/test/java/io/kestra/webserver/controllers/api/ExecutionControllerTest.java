@@ -347,6 +347,93 @@ class ExecutionControllerTest {
         assertThat(result.size()).isGreaterThanOrEqualTo(2);
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void findDistinctFieldValues_flowId_returnsListOfStrings() {
+        seedExecutionWithFlowId(MAIN_TENANT, "distinct-flow-test-a");
+        seedExecutionWithFlowId(MAIN_TENANT, "distinct-flow-test-b");
+
+        List<String> all = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/distinct-field-values?field=FLOW_ID&size=100"),
+            Argument.of(List.class, String.class)
+        );
+
+        assertThat(all).contains("distinct-flow-test-a", "distinct-flow-test-b");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void findDistinctFieldValues_flowId_narrowsByContainsFilter() {
+        seedExecutionWithFlowId(MAIN_TENANT, "distinct-flow-narrow-alpha");
+        seedExecutionWithFlowId(MAIN_TENANT, "distinct-flow-narrow-beta");
+
+        List<String> filtered = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/distinct-field-values?field=FLOW_ID&filters[flowId][CONTAINS]=narrow-alpha&size=100"),
+            Argument.of(List.class, String.class)
+        );
+
+        assertThat(filtered).contains("distinct-flow-narrow-alpha");
+        assertThat(filtered).doesNotContain("distinct-flow-narrow-beta");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void findDistinctFieldValues_namespace_returnsListOfStrings() {
+        seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "distinct-ns-flow", "io.kestra.distinct.alpha");
+        seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "distinct-ns-flow", "io.kestra.distinct.beta");
+
+        List<String> namespaces = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/distinct-field-values?field=NAMESPACE&size=100"),
+            Argument.of(List.class, String.class)
+        );
+
+        assertThat(namespaces).contains("io.kestra.distinct.alpha", "io.kestra.distinct.beta");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void findDistinctFieldValues_narrowsByCrossFieldFilter() {
+        seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "cross-flow-in-target", "io.kestra.cross-test.target");
+        seedExecutionWithFlowIdAndNamespace(MAIN_TENANT, "cross-flow-not-in-target", "io.kestra.cross-test.other");
+
+        List<String> filtered = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/distinct-field-values?field=FLOW_ID&filters[namespace][EQUALS]=io.kestra.cross-test.target&size=100"),
+            Argument.of(List.class, String.class)
+        );
+
+        assertThat(filtered).contains("cross-flow-in-target");
+        assertThat(filtered).doesNotContain("cross-flow-not-in-target");
+    }
+
+    @Test
+    void findDistinctFieldValues_unsupportedField_returnsBadRequest() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/distinct-field-values?field=USERNAME&size=100"),
+                Argument.of(List.class, String.class)
+            )
+        );
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+    }
+
+    private void seedExecutionWithFlowId(String tenant, String flowId) {
+        seedExecutionWithFlowIdAndNamespace(tenant, flowId, "io.kestra.distinct-test");
+    }
+
+    private void seedExecutionWithFlowIdAndNamespace(String tenant, String flowId, String namespace) {
+        executionRepository.save(
+            Execution.builder()
+                .id(io.kestra.core.utils.IdUtils.create())
+                .namespace(namespace)
+                .tenantId(tenant)
+                .flowId(flowId)
+                .flowRevision(1)
+                .state(new io.kestra.core.models.flows.State().withState(io.kestra.core.models.flows.State.Type.SUCCESS))
+                .build()
+        );
+    }
+
     @Test
     void badQueryFilters() {
         HttpClientResponseException exception = assertThrows(

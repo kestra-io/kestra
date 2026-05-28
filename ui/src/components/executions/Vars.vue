@@ -24,11 +24,11 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import Utils from "../../utils/utils";
-    import VarValue from "./VarValue.vue";
+    import {computed} from "vue"
+    import * as Utils from "../../utils/utils"
+    import VarValue from "./VarValue.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions"
 
 
     interface VariableRow {
@@ -45,14 +45,14 @@
         }>(),
         {
             keyLabelTranslationKey: "name",
-        }
-    );
+        },
+    )
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
     const variables = computed<VariableRow[]>(() => {
-        return Utils.executionVars(props.data);
-    });
+        return Utils.executionVars(props.data)
+    })
 
 </script>
 <style>

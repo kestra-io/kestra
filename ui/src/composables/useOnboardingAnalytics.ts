@@ -1,11 +1,11 @@
-import {useRoute} from "vue-router";
-import {useApiStore} from "../stores/api";
-import {pageFromRoute} from "../utils/eventsRouter";
-import {FIRST_FLOW_STEP_IDS, type OnboardingStepType} from "../components/onboarding/guides/firstFlowGuide";
+import {useRoute} from "vue-router"
+import {useApiStore} from "../stores/api"
+import {pageFromRoute} from "../utils/eventsRouter"
+import {FIRST_FLOW_STEP_IDS, type OnboardingStepType} from "../components/onboarding/guides/firstFlowGuide"
 
-export const ONBOARDING_V2_SEMVER = "2.0.0";
-export const ONBOARDING_V2_EXPERIENCE = "first_flow_tutorial";
-export const ONBOARDING_V2_TEMPLATE = "first_flow_tutorial";
+export const ONBOARDING_V2_SEMVER = "2.0.0"
+export const ONBOARDING_V2_EXPERIENCE = "first_flow_tutorial"
+export const ONBOARDING_V2_TEMPLATE = "first_flow_tutorial"
 
 interface TrackOnboardingOptions {
     action: string;
@@ -17,8 +17,8 @@ interface TrackOnboardingOptions {
 }
 
 export function useOnboardingAnalytics() {
-    const apiStore = useApiStore();
-    const route = useRoute();
+    const apiStore = useApiStore()
+    const route = useRoute()
 
     const trackOnboarding = ({
         action,
@@ -31,7 +31,7 @@ export function useOnboardingAnalytics() {
         const step =
             stepId && FIRST_FLOW_STEP_IDS.includes(stepId)
                 ? FIRST_FLOW_STEP_IDS.indexOf(stepId) + 1
-                : undefined;
+                : undefined
 
         apiStore.events({
             type: "ONBOARDING",
@@ -49,10 +49,10 @@ export function useOnboardingAnalytics() {
                 ...additional,
             },
             page: pageFromRoute(route),
-        });
-    };
+        })
+    }
 
     return {
         trackOnboarding,
-    };
+    }
 }

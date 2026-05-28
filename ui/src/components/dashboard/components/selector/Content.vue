@@ -22,10 +22,9 @@
 
     <hr class="my-2">
 
-    <el-input
+    <KsSearch
         v-model="search"
         :placeholder="$t('search')"
-        :prefixIcon="Magnify"
         clearable
         class="my-1 mb-3 search"
     />
@@ -47,10 +46,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import Item from "./Item.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {ref, computed} from "vue"
+    import Item from "./Item.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     type Dashboard = {id: string; title: string; isDefault: boolean};
 
@@ -58,19 +56,19 @@
         dashboards: Dashboard[];
         selected: {id: string; title: string} | undefined;
         query: Record<string, unknown>;
-    }>();
+    }>()
 
     defineEmits<{
         select: [id: string];
         setDefault: [id: string];
         edit: [id: string];
         remove: [dashboard: {id: string; title: string}];
-    }>();
+    }>()
 
-    const search = ref("");
+    const search = ref("")
     const filtered = computed(() =>
-        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()))
-    );
+        props.dashboards.filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase())),
+    )
 </script>
 
 <style scoped lang="scss">
@@ -89,7 +87,7 @@
 :deep(li.el-dropdown-menu__item) {
     &:hover,
     &:focus {
-        background: var(--ks-select-hover);
+        background: var(--ks-bg-hover);
     }
 }
 </style>

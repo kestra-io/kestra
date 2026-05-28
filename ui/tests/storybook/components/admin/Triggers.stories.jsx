@@ -1,6 +1,6 @@
-import Triggers from "../../../../src/components/admin/Triggers.vue";
+import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useAxios} from "../../../../src/utils/axios";
+import {setMockClient} from "@kestra-io/kestra-sdk"
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -10,6 +10,11 @@ const meta = {
             {
                 path: "/",
                 name: "home",
+                component: {template: "<div>home</div>"}
+            },
+            {
+                path: "/:tab?",
+                name: "admin/triggers",
                 component: Triggers
             },
             {
@@ -25,71 +30,78 @@ export default meta;
 
 const triggersData = [
     {
-        "abstractTrigger": {
+        "trigger": {
             "id": "every10min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": true,
             "cron": "10 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "company.team",
             "flowId": "trigger_test_foo",
             "triggerId": "every10min",
-            "date": "2025-04-15T14:34:19+02:00",
-            "disabled": true
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": true,
+            "locked": false
         }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "id": "every5min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "5 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_bar",
             "triggerId": "every5min",
-            "disabled": false
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": false
         }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "backfill": true,
             "id": "every1min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "1 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_backfill_running",
             "triggerId": "every1min",
-            "disabled": false
-        },
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": true
+        }
     },
     {
-        "abstractTrigger": {
+        "trigger": {
             "backfill": {
                 "paused": true
             },
             "id": "every1min",
             "type": "io.kestra.plugin.core.trigger.Schedule",
+            "disabled": false,
             "cron": "1 * * * *"
         },
-        "triggerContext": {
-            "tenantId": "ten",
+        "state": {
             "namespace": "io.kestra.company",
             "flowId": "trigger_tests_backfill_paused",
             "triggerId": "every1min",
-            "disabled": false
-        },
+            "updatedAt": "2025-04-15T14:34:19Z",
+            "disabled": false,
+            "locked": false
+        }
     }
 ]
 
 const Template = (args) => ({
     setup() {
-        const store = useAxios()
+        const store = {}
         store.get = async function (uri) {
             if (uri.includes("/triggers/search")) {
                 return {
@@ -133,6 +145,8 @@ const Template = (args) => ({
             console.log("put request", uri)
             return {data: {}}
         }
+
+        setMockClient(store);
 
         return () =>
             <Triggers />

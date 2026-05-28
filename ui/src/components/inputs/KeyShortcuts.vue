@@ -35,10 +35,10 @@
 </template>
 
 <script setup lang="ts">
-    import Keyboard from "vue-material-design-icons/Keyboard.vue";
-    import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
+    import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
 
-    const {isKeyShortcutsDialogShown} = useKeyShortcuts();
+    const {isKeyShortcutsDialogShown} = useKeyShortcuts()
 
     const commands = [
         {
@@ -96,18 +96,18 @@
         {
             keys: ["⌘ Cmd/Ctrl", "0"],
             description: "editor_shortcuts.reset_fontsize",
-        }
-    ];
+        },
+    ]
 </script>
 
 <style scoped lang="scss">
 .kel-tag {
-    background-color: var(--ks-tag-background);
-    color: var(--ks-tag-content);
+    background-color: var(--ks-bg-tag);
+    color: var(--ks-text-primary);
     font-size: var(--kel-tag-font-size);
     text-transform: capitalize;
     font-weight: 500;
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-default);
     border-radius: 4px;
     display: inline-block;
     padding: 6px 10px;

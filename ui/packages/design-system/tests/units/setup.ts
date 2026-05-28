@@ -7,10 +7,10 @@ vi.mock("vue-i18n", () => ({
   }),
   createI18n: () => ({
     install(app:AppContext) {
-      app.config.globalProperties.$t = (key:string) => key;
+      app.config.globalProperties.$t = (key:string) => key
     },
   }),
-}));
+}))
 
 // jsdom doesn't run layout, so ResizeObserver-backed hooks like useElementSize
 // would report 0×0 forever, and any v-if gated on dimensions never renders.

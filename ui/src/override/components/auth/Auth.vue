@@ -25,12 +25,6 @@
                 {{ $t("product_tour") }}
             </RouterLink>
         </KsOption>
-        <KsOption label="Settings" value="settings">
-            <RouterLink :to="{name: 'settings'}" class="menu-item">
-                <CogOutline class="menu-icon" />
-                {{ $t("settings.label") }}
-            </RouterLink>
-        </KsOption>
         <KsOption label="slack" value="slack">
             <a href="https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
@@ -52,7 +46,6 @@
     import {computed} from "vue"
     import {useRoute, useRouter} from "vue-router"
 
-    import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import Logout from "vue-material-design-icons/Logout.vue"

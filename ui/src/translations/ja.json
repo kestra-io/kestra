@@ -858,6 +858,7 @@
     "last 48 hours": "過去48時間",
     "last X days count": "過去{days}日間に{count}",
     "last evaluation date": "最終評価日",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最後の実行日",
     "last execution state": "最終状態",
     "last execution status": "最後の実行ステータス",
@@ -1369,6 +1370,12 @@
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
+      "sort": {
+        "most_used": "最も使用されている",
+        "name_asc": "名前 A-Z",
+        "name_desc": "名前 Z-A",
+        "newest": "最新"
+      },
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },

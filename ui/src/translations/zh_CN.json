@@ -858,6 +858,7 @@
     "last 48 hours": "最近48小时",
     "last X days count": "{days}天内的{count}",
     "last evaluation date": "上次评估日期",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
@@ -1369,6 +1370,12 @@
     "pluginPage": {
       "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
+      "sort": {
+        "most_used": "最常使用",
+        "name_asc": "名称 A-Z",
+        "name_desc": "名称 Z-A",
+        "newest": "最新"
+      },
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
     },

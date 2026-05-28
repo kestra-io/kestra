@@ -1,4 +1,28 @@
 @font-face {
+    font-family: 'Mona Sans';
+    font-style: normal;
+    font-weight: 200 900;
+    font-display: swap;
+    src:
+        local('Mona Sans'),
+        local('MonaSans'),
+        url('../fonts/mona-sans/MonaSans-VF.woff2') format('woff2-variations'),
+        url('../fonts/mona-sans/MonaSans-VF.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Mona Sans';
+    font-style: italic;
+    font-weight: 200 900;
+    font-display: swap;
+    src:
+        local('Mona Sans'),
+        local('MonaSans'),
+        url('../fonts/mona-sans/MonaSans-Italic-VF.woff2') format('woff2-variations'),
+        url('../fonts/mona-sans/MonaSans-Italic-VF.woff2') format('woff2');
+}
+
+@font-face {
     font-family: 'Inter';
     font-style: normal;
     font-weight: 100 900;

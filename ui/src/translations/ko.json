@@ -36,6 +36,7 @@
     "add_new_item": "새 항목 추가",
     "additionalPlugins": "추가 플러그인",
     "admin": "관리자",
+    "admin_preferences": "Preferences",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -858,6 +859,7 @@
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
     "last evaluation date": "마지막 평가 날짜",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
     "last execution status": "마지막 실행 상태",
@@ -1369,6 +1371,12 @@
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
+      "sort": {
+        "most_used": "가장 많이 사용됨",
+        "name_asc": "이름 A-Z",
+        "name_desc": "이름 Z-A",
+        "newest": "최신순"
+      },
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },

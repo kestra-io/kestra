@@ -12,7 +12,6 @@ export interface RouteTab {
     query?: Record<string, unknown>;
     component?: Component;
     props?: Record<string, any>;
-    "v-on"?: Record<string, any>;
     locked?: boolean;
     icon?: Component;
     excludeFromScope?: boolean;
@@ -32,11 +31,14 @@ export interface RouteTab {
     header?: boolean;
 }
 
+type RouteTabsDisplayMode = "sidebar" | "select";
+
 interface SetTabsPayload {
     ownerId: symbol;
     tabs: RouteTab[];
     routeName?: string;
     embedActiveTab?: string;
+    displayMode?: RouteTabsDisplayMode;
 }
 
 interface State {
@@ -44,6 +46,7 @@ interface State {
     routeName: string;
     embedActiveTab: string | undefined;
     ownerId: symbol | null;
+    displayMode: RouteTabsDisplayMode;
 }
 
 export const useRouteTabsStore = defineStore("routeTabs", {
@@ -52,6 +55,7 @@ export const useRouteTabsStore = defineStore("routeTabs", {
         routeName: "",
         embedActiveTab: undefined,
         ownerId: null,
+        displayMode: "sidebar",
     }),
     getters: {
         hasTabs: (state): boolean => state.tabs.length > 0,
@@ -63,6 +67,7 @@ export const useRouteTabsStore = defineStore("routeTabs", {
             this.routeName = payload.routeName ?? ""
             this.embedActiveTab = payload.embedActiveTab
             this.ownerId = payload.ownerId
+            this.displayMode = payload.displayMode ?? "sidebar"
         },
         clearTabsIfOwner(ownerId: symbol) {
             if (this.ownerId === ownerId) {
@@ -70,6 +75,7 @@ export const useRouteTabsStore = defineStore("routeTabs", {
                 this.routeName = ""
                 this.embedActiveTab = undefined
                 this.ownerId = null
+                this.displayMode = "sidebar"
             }
         },
     },

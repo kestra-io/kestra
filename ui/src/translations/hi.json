@@ -36,6 +36,7 @@
     "add_new_item": "नया आइटम जोड़ें",
     "additionalPlugins": "अतिरिक्त Plugins",
     "admin": "प्रशासनिक",
+    "admin_preferences": "Preferences",
     "administration": "प्रशासन",
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
@@ -766,7 +767,7 @@
         "tooltip": "इस flow का उपयोग करने वाले ऐप्स देखें"
       },
       "dependencies": {
-        "suffix": "निर्भरता(एं)",
+        "suffix": "निर्भरताएं",
         "tooltip": "flow निर्भरता देखें"
       },
       "errors": {
@@ -858,6 +859,7 @@
     "last 48 hours": "पिछले 48 घंटे",
     "last X days count": "{दिनों} दिनों में {गिनती}",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
     "last execution status": "अंतिम निष्पादन स्थिति",
@@ -1369,6 +1371,12 @@
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
+      "sort": {
+        "most_used": "सबसे अधिक उपयोग किया गया",
+        "name_asc": "नाम A-Z",
+        "name_desc": "नाम Z-A",
+        "newest": "नवीनतम"
+      },
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
     },

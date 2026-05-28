@@ -2,28 +2,32 @@
     <template v-if="ready">
         <FlowRootTopBar
             :routeInfo="routeInfo"
-            :activeTabName="activeTabName()"
+            :activeTabName="activeTabName"
         />
-        <Tabs
-            routeName="flows/update"
-            ref="currentTab"
-            :tabs="tabs"
-            @expand-subflow="updateExpandedSubflows"
-        />
+        <section
+            v-if="activeTab"
+            :class="[containerClass, {maximized: activeTab.maximized, 'no-overflow': activeTab.noOverflow}]"
+        >
+            <component
+                :is="activeTab.component"
+                v-bind="activeTab.props"
+                :embed="activeTab.props?.embed ?? true"
+                @expand-subflow="updateExpandedSubflows"
+            />
+        </section>
     </template>
 </template>
 
 <script>
-    import Topology from "./Topology.vue"
     import FlowRevisions from "./FlowRevisions.vue"
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue"
     import RouteContext from "../../mixins/routeContext"
     import {mapStores} from "pinia"
     import {useFlowStore} from "../../stores/flow"
+    import {useRouteTabsStore} from "../../stores/routeTabs"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import Tabs from "../Tabs.vue"
     import Overview from "./Overview.vue"
     import Dependencies from "../dependencies/Dependencies.vue"
     import FlowMetrics from "./FlowMetrics.vue"
@@ -38,18 +42,24 @@
     export default {
         mixins: [RouteContext],
         components: {
-            Tabs,
             FlowRootTopBar,
         },
         data() {
             return {
-                tabIndex: undefined,
                 previousFlow: undefined,
                 dependenciesCount: undefined,
                 deleted: false,
+                tabsOwnerId: Symbol("flow-root-tabs"),
             }
         },
         watch: {
+            tabs: {
+                immediate: true,
+                deep: true,
+                handler() {
+                    this.syncTabsToStore()
+                },
+            },
             $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
                     this.load()
@@ -127,29 +137,14 @@
                 return this.$route.params.namespace + "/" + this.$route.params.id
             },
             getTabs() {
-                let tabs = [
-                    {
-                        name: undefined,
-                        component: Topology,
-                        title: this.$t("topology"),
-                        props: {
-                            isReadOnly: true,
-                            expandedSubflows: this.flowStore.expandedSubflows,
-                        },
-                    },
-                ]
+                let tabs = []
 
                 if (this.user?.hasAny(resource.EXECUTION)) {
-                    tabs[0].name = "topology"
-
-                    tabs = [
-                        {
-                            name: "overview",
-                            component: Overview,
-                            title: this.$t("overview"),
-                            containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
-                        },
-                    ].concat(tabs)
+                    tabs.push({
+                        name: "overview",
+                        component: Overview,
+                        title: this.$t("overview"),
+                    })
                 }
 
                 if (
@@ -181,7 +176,6 @@
                         name: "edit",
                         component: MultiPanelFlowEditorView,
                         title: this.$t("edit"),
-                        containerClass: "full-container",
                         maximized: true,
                     })
                 }
@@ -198,7 +192,6 @@
                     tabs.push({
                         name: "revisions",
                         component: FlowRevisions,
-                        containerClass: "container full-height",
                         title: this.$t("revisions"),
                     })
                 }
@@ -236,7 +229,6 @@
                             showFilters: true,
                             restoreurl: false,
                         },
-                        containerClass: "container",
                     })
                 }
 
@@ -280,12 +272,11 @@
                     component: FlowConcurrency,
                 })
 
-                tabs.push(                    {
+                tabs.push({
                     name: "auditlogs",
                     title: this.$t("auditlogs"),
                     component: DemoAuditLogs,
-                    maximize: true,
-                    props:{
+                    props: {
                         embed: true,
                     },
                     locked: true,
@@ -296,12 +287,28 @@
             updateExpandedSubflows(expandedSubflows) {
                 this.flowStore.expandedSubflows = expandedSubflows
             },
-            activeTabName() {
-                return this.$refs.currentTab?.activeTab?.name ?? "home"
+            syncTabsToStore() {
+                this.routeTabsStore.setTabs({
+                    ownerId: this.tabsOwnerId,
+                    tabs: this.tabs,
+                    routeName: "flows/update",
+                    displayMode: "select",
+                })
             },
         },
         computed: {
-            ...mapStores(useFlowStore, useAuthStore, useMiscStore),
+            ...mapStores(useFlowStore, useAuthStore, useMiscStore, useRouteTabsStore),
+            activeTab() {
+                const key = this.$route?.params?.tab
+                return this.tabs.find(t => t.name === key) ?? this.tabs[0]
+            },
+            activeTabName() {
+                return this.activeTab?.name ?? "home"
+            },
+            containerClass() {
+                if (this.activeTab?.locked) return {"px-0": true, "full-container": true}
+                return {"container": true, "tabs-flush-top": true}
+            },
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -336,6 +343,9 @@
                 return this.authStore.user
             },
         },
+        beforeUnmount() {
+            this.routeTabsStore.clearTabsIfOwner(this.tabsOwnerId)
+        },
         unmounted() {
             this.flowStore.flow = undefined
             this.flowStore.flowGraph = undefined
@@ -343,10 +353,20 @@
     }
 </script>
 <style scoped lang="scss">
-.gray-700 {
-    color: var(--ks-text-secondary-color);
-}
-.body-color {
-    color: var(--ks-text-primary);
-}
+    .gray-700 {
+        color: var(--ks-text-secondary-color);
+    }
+    .body-color {
+        color: var(--ks-text-primary);
+    }
+
+    section.maximized {
+        margin: 0 !important;
+        padding: 0;
+        flex-grow: 1;
+    }
+
+    section.no-overflow {
+        overflow: hidden;
+    }
 </style>

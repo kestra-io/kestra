@@ -858,6 +858,7 @@
     "last 48 hours": "последние 48 часов",
     "last X days count": "{count} за последние {days} дней",
     "last evaluation date": "Дата последней оценки",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "Дата последнего выполнения",
     "last execution state": "Последнее состояние",
     "last execution status": "Последний статус выполнения",

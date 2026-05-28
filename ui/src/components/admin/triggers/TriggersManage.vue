@@ -576,14 +576,12 @@
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId)
                 triggers.value = triggers.value?.map((tr: any) => {
-                    const triggerContextMatches = tr.triggerContext &&
-                        tr.triggerContext.flowId === updatedTrigger.flowId &&
-                        tr.triggerContext.triggerId === updatedTrigger.triggerId
-
-                    if (triggerContextMatches) {
-                        return {triggerContext: updatedTrigger, abstractTrigger: tr.abstractTrigger}
-                    }
-                    return tr
+                    const {namespace, flowId, triggerId} = tr.state ?? tr.trigger ?? {}
+                    return namespace === updatedTrigger.namespace
+                        && flowId === updatedTrigger.flowId
+                        && triggerId === updatedTrigger.triggerId
+                        ? {...tr, state: updatedTrigger}
+                        : tr
                 })
             })
     }

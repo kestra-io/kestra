@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
     "add_new_item": "नया आइटम जोड़ें",
     "additionalPlugins": "अतिरिक्त Plugins",
+    "admin": "प्रशासनिक",
     "administration": "प्रशासन",
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flow में अक्षम",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
+    "commit_id": "कमिट id",
     "common": {
       "back": "वापस"
     },
@@ -880,6 +882,7 @@
       "raw": "Temporal दृश्य",
       "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं"
     },
+    "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",

@@ -11,21 +11,21 @@ javaPlatform {
 
 dependencies {
     // versions for libraries with multiple module but no BOM
-    def slf4jVersion = "2.0.17"
+    def slf4jVersion = "2.0.18"
     def protobufVersion = "3.25.9" // Orc still uses 3 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.84"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "1.5.6"
     def jsonschemaVersion = "4.38.0"
-    def kafkaVersion = "4.2.0"
+    def kafkaVersion = "4.3.0"
     def opensearchVersion = "3.8.0"
     def opensearchRestVersion = "3.5.0"
-    def flyingSaucerVersion = "10.2.0"
+    def flyingSaucerVersion = "10.2.2"
     def jacksonVersion = "2.21.3"
     def jacksonAnnotationsVersion = "2.21"
     def jugVersion = "5.2.0"
-    def langchain4jVersion = "1.14.0"
-    def langchain4jCommunityVersion = "1.14.0-beta24"
+    def langchain4jVersion = "1.15.0"
+    def langchain4jCommunityVersion = "1.15.0-beta25"
     def jettyVersion = "12.0.31" // Wiremock uses an older version as Micronaut
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
@@ -35,9 +35,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.10.13")
     api platform("io.qameta.allure:allure-bom:2.34.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.80.0')
-    api platform("com.azure:azure-sdk-bom:1.3.6")
-    api platform('software.amazon.awssdk:bom:2.44.2')
+    api platform('com.google.cloud:libraries-bom:26.83.0')
+    api platform("com.azure:azure-sdk-bom:1.3.7")
+    api platform('software.amazon.awssdk:bom:2.44.13')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
@@ -81,17 +81,17 @@ dependencies {
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         api "org.apache.kafka:kafka-server-common:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.45.2'
+        api 'software.amazon.awssdk.crt:aws-crt:0.46.1'
 
         // Other libs
         api("org.projectlombok:lombok:1.18.46")
         api("org.codehaus.janino:janino:3.1.12")
-        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.25.4'
+        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.26.0'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.3'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
-        api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.1'
+        api group: 'net.thisptr', name: 'jackson-jq', version: '1.6.2'
         api group: 'com.google.guava', name: 'guava', version: '33.6.0-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.22.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
@@ -102,12 +102,12 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-apache', version: mavenResolverVersion
-        api 'com.github.oshi:oshi-core:7.0.1'
+        api 'com.github.oshi:oshi-core:7.2.1'
         api 'io.pebbletemplates:pebble:4.1.1'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.8.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.14.1'
+        api 'nl.basjes.gitignore:gitignore-reader:2.0.0'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion
@@ -130,18 +130,18 @@ dependencies {
         api group: 'jakarta.annotation', name: 'jakarta.annotation-api', version: '3.0.0'
         api group: 'org.eclipse.angus', name: 'jakarta.mail', version: '2.0.5'
         api group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.4'
-        api group: 'de.siegmar', name: 'fastcsv', version: '4.2.0'
+        api group: 'de.siegmar', name: 'fastcsv', version: '4.3.0'
         // Json Diff
         api group: 'com.github.java-json-tools', name: 'json-patch', version: '1.13'
         api 'com.rabbitmq:amqp-client:5.30.0'
         api 'org.apache.commons:commons-pool2:2.13.1'
-        api 'io.lettuce:lettuce-core:7.5.1.RELEASE'
+        api 'io.lettuce:lettuce-core:7.5.2.RELEASE'
 
         // force transitive version to fix CVE
         api 'org.codehaus.plexus:plexus-utils:4.0.3' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.21.3")
+        api ("org.jooq:jooq:3.21.4")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"
@@ -150,7 +150,7 @@ dependencies {
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
         api "org.wiremock:wiremock-jetty12:3.13.2"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.59.0"
+        api "com.microsoft.playwright:playwright:1.60.0"
         api "org.awaitility:awaitility:4.3.0"
         api "com.tngtech.archunit:archunit-junit5:1.4.2"
 
@@ -166,7 +166,7 @@ dependencies {
         api "io.kestra:storage-local:$version"
         api "io.kestra:scheduler:$version"
         api "io.kestra:worker:$version"
-        api "io.kestra.libs:copilot:0.3.0"
-        api 'io.modelcontextprotocol.sdk:mcp:1.1.1'
+        api "io.kestra.libs:copilot:0.3.1"
+        api 'io.modelcontextprotocol.sdk:mcp:1.1.3'
     }
 }

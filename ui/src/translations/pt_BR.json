@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
     "add_new_item": "Adicionar novo item",
     "additionalPlugins": "Plugins Adicionais",
+    "admin": "Administração",
     "administration": "Administração",
     "advanced configuration": "Outras propriedades",
     "after": "depois",
@@ -174,6 +175,7 @@
     "codeDisabled": "Desativado no Flow",
     "collapse": "Recolher",
     "collapse all": "Recolher tudo",
+    "commit_id": "ID do commit",
     "common": {
       "back": "Voltar"
     },
@@ -880,6 +882,7 @@
       "raw": "Visualização temporal",
       "raw_details": "Mostrar logs completos de task e flow em formato bruto ordenado por timestamp"
     },
+    "main_configuration": "Configuração Principal",
     "management port": "Port de gerenciamento",
     "mark as": "Marcar como <code>{status}</code>",
     "max": "Max",

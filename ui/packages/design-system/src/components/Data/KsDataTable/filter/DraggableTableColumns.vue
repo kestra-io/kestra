@@ -35,32 +35,32 @@
 </template>
 
 <script setup lang="ts">
-    import {EyeOutline, EyeOffOutline} from "./utils/icons";
-    import {useDragAndDrop} from "./composables/useDragAndDrop";
-    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns";
-    import Drag from "vue-material-design-icons/Drag.vue";
+    import {EyeOutline, EyeOffOutline} from "./utils/icons"
+    import {useDragAndDrop} from "./composables/useDragAndDrop"
+    import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
+    import Drag from "vue-material-design-icons/Drag.vue"
 
     const props = defineProps<{
         columns: ColumnConfig[];
         visibleColumns: string[];
         storageKey: string;
-    }>();
+    }>()
 
     const emits = defineEmits<{
         updateColumns: [columns: string[]];
-    }>();
+    }>()
 
     const {
         visibleColumns: localVisibleColumns,
         orderedColumns,
         isVisible,
         toggleColumn,
-        reorderColumns
+        reorderColumns,
     } = useTableColumns({
         columns: props.columns,
         storageKey: props.storageKey,
-        initialVisibleColumns: props.visibleColumns
-    });
+        initialVisibleColumns: props.visibleColumns,
+    })
 
     const {
         draggedIndex,
@@ -68,22 +68,22 @@
         handleDragStart,
         handleDragOver,
         handleDrop,
-        handleDragEnd
-    } = useDragAndDrop();
+        handleDragEnd,
+    } = useDragAndDrop()
 
     const handleToggle = (column: ColumnConfig) => {
-        toggleColumn(column);
-        emits("updateColumns", localVisibleColumns.value);
-    };
+        toggleColumn(column)
+        emits("updateColumns", localVisibleColumns.value)
+    }
 
     const handleReorder = (fromIndex: number, toIndex: number) => {
-        reorderColumns(fromIndex, toIndex);
-        emits("updateColumns", localVisibleColumns.value);
-    };
+        reorderColumns(fromIndex, toIndex)
+        emits("updateColumns", localVisibleColumns.value)
+    }
 
     const onDrop = (event: DragEvent, targetIndex: number) => {
-        handleDrop(event, targetIndex, handleReorder);
-    };
+        handleDrop(event, targetIndex, handleReorder)
+    }
 </script>
 
 <style lang="scss" scoped>
@@ -93,11 +93,11 @@
     align-items: center;
     padding: 0.375rem 1rem;
     transition: all 0.2s ease;
-    border-bottom: 1px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-default);
     cursor: move;
 
     &:hover {
-        background-color: var(--ks-dropdown-background-hover);
+        background-color: var(--ks-bg-hover-elevated);
     }
 
     &:last-child {
@@ -109,7 +109,7 @@
     }
 
     &.drag-over {
-        background-color: var(--ks-background-secondary);
+        background-color: var(--ks-bg-surface);
     }
 
     .column-info {
@@ -118,7 +118,7 @@
 
         .drag-handle {
             margin-right: 0.5rem;
-            color: var(--ks-content-tertiary);
+            color: var(--ks-text-dim);
         }
 
         .column-text {
@@ -126,7 +126,7 @@
             flex-direction: column;
 
             small {
-                color: var(--ks-content-tertiary);
+                color: var(--ks-text-dim);
                 font-size: var(--ks-font-size-xs);
                 font-weight: 400;
             }

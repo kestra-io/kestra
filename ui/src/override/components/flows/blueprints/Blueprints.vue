@@ -31,21 +31,22 @@
     </template>
 </template>
 <script setup lang="ts">
-    import {ref, computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import TopNavBar from "../../../../components/layout/TopNavBar.vue";
-    import DottedLayout from "../../../../components/layout/DottedLayout.vue";
-    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue";
-    import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue";
-    import DemoBlueprints from "../../../../components/demo/Blueprints.vue";
-    import useRouteContext from "../../../../composables/useRouteContext";
+    import {ref, computed, onBeforeUnmount, onMounted, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import TopNavBar from "../../../../components/layout/TopNavBar.vue"
+    import DottedLayout from "../../../../components/layout/DottedLayout.vue"
+    import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
+    import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue"
+    import DemoBlueprints from "../../../../components/demo/Blueprints.vue"
+    import useRouteContext from "../../../../composables/useRouteContext"
+    import {useRouteTabsStore} from "../../../../stores/routeTabs"
 
-    import headerImage from "../../../../assets/icons/blueprint.svg";
-    import headerImageDark from "../../../../assets/icons/blueprint-dark.svg";
+    import headerImage from "../../../../assets/icons/blueprint.svg"
+    import headerImageDark from "../../../../assets/icons/blueprint-dark.svg"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     interface Props {
         kind: "flow" | "dashboard" | "app";
@@ -57,19 +58,53 @@
     const props = withDefaults(defineProps<Props>(), {
         tab: "community",
         combinedView: false,
-        embed: false
-    });
+        embed: false,
+    })
 
-    const emit = defineEmits<{loaded: [value: any]}>();
+    const emit = defineEmits<{loaded: [value: any]}>()
 
-    const selectedBlueprintId = ref<string | undefined>(undefined);
+    const selectedBlueprintId = ref<string | undefined>(undefined)
 
     const routeInfo = computed(() => ({title: props.kind === "flow" ? t("blueprints.flows") :
         props.kind === "dashboard" ? t("blueprints.dashboards") :
-        t("blueprints.title")
-    }));
+        t("blueprints.title"),
+    }))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
+
+    const routeTabsStore = useRouteTabsStore()
+    const tabsOwnerId = Symbol("blueprints-route-tabs")
+
+    const blueprintTabs = computed(() => [
+        {
+            name: "custom",
+            title: t("blueprints.custom"),
+            route: {name: "blueprints", params: {kind: "flow", tab: "custom"}},
+            locked: true,
+        },
+        {
+            name: "flow-community",
+            title: t("blueprints.flows"),
+            route: {name: "blueprints", params: {kind: "flow", tab: "community"}},
+        },
+        {
+            name: "dashboard-community",
+            title: t("blueprints.dashboards"),
+            route: {name: "blueprints", params: {kind: "dashboard", tab: "community"}},
+        },
+    ])
+
+    function syncBlueprintTabs() {
+        if (props.embed) return
+        routeTabsStore.setTabs({
+            ownerId: tabsOwnerId,
+            tabs: blueprintTabs.value,
+        })
+    }
+
+    onMounted(syncBlueprintTabs)
+    watch(blueprintTabs, syncBlueprintTabs, {deep: true})
+    onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 </script>
 <style scoped lang="scss">
     .main-container {

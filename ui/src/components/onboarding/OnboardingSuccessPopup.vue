@@ -32,40 +32,40 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {computed, nextTick} from "vue"
+    import {useRoute, useRouter} from "vue-router"
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
         backdrop?: boolean;
     }>(), {
         backdrop: true,
-    });
+    })
     const emit = defineEmits<{
         "update:modelValue": [boolean];
-    }>();
+    }>()
 
-    const route = useRoute();
-    const router = useRouter();
+    const route = useRoute()
+    const router = useRouter()
     const tutorialRoute = computed(() => ({
         name: "flows/create",
         query: {onboarding: "guided", reset: "true"},
         params: {tenant: route.params.tenant},
-    }));
+    }))
     const successRoute = computed(() => ({
         name: "welcome/success",
         params: {tenant: route.params.tenant},
-    }));
+    }))
 
     async function goToTutorial() {
         if (!props.modelValue) {
-            return;
+            return
         }
 
-        emit("update:modelValue", false);
-        await nextTick();
-        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)));
-        window.location.assign(router.resolve(tutorialRoute.value).href);
+        emit("update:modelValue", false)
+        await nextTick()
+        await new Promise(resolve => window.requestAnimationFrame(() => resolve(undefined)))
+        window.location.assign(router.resolve(tutorialRoute.value).href)
     }
 </script>
 
@@ -95,15 +95,15 @@
         z-index: 1;
         width: min(100%, 360px);
         padding: 2rem 1.75rem 1.5rem;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
         border-radius: 14px;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
         text-align: center;
 
         h3 {
             margin: 0 0 0.75rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-lg);
             font-weight: 700;
             line-height: 1.1;
@@ -111,7 +111,7 @@
 
         p {
             margin: 0 0 1.5rem;
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-base);
             line-height: 1.5;
         }

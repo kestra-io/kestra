@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-    import Plus from "vue-material-design-icons/Plus.vue";
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     defineOptions({
         name: "AddTaskButton",
@@ -24,7 +24,7 @@
     width: 25px;
     height: 25px;
     border: 0.4px solid var(--ks-border-primary);
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
     cursor: pointer;
 
     &.text-danger {

@@ -15,10 +15,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.Schedulable;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
@@ -31,19 +28,8 @@ import io.kestra.core.utils.ListUtils;
  */
 final class SchedulableExecutionFactory {
 
-    static Execution createFailedExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext) throws IllegalVariableEvaluationException {
-        return Execution.builder()
-            .id(conditionContext.getRunContext().getTriggerExecutionId())
-            .tenantId(triggerContext.getTenantId())
-            .namespace(triggerContext.getNamespace())
-            .flowId(triggerContext.getFlowId())
-            .flowRevision(conditionContext.getFlow().getRevision())
-            .labels(SchedulableExecutionFactory.getLabels(trigger, conditionContext.getRunContext(), triggerContext.getBackfill(), conditionContext.getFlow()))
-            .state(new State().withState(State.Type.FAILED))
-            .build();
-    }
-
-    static Execution createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate)
+    // TODO rename and maybe move ?
+    static TriggerEvaluationResult createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate)
         throws IllegalVariableEvaluationException {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
@@ -63,10 +49,11 @@ final class SchedulableExecutionFactory {
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(conditionContext.getFlow().getRevision())
-            .variables(conditionContext.getFlow().getVariables())
+            .variables(conditionContext.getFlow().getVariables()) // TODO needed ??
             .labels(executionLabels)
             .state(new State())
             .trigger(executionTrigger)
+
             .scheduleDate(Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
@@ -75,7 +62,15 @@ final class SchedulableExecutionFactory {
         // add inputs and inject defaults (FlowInputOutput handles defaults internally)
         execution = execution.withInputs(runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs));
 
-        return execution;
+        return new TriggerEvaluationResult(
+            runContext.getTriggerExecutionId(),
+            new State().getCurrent(),
+            executionTrigger,
+            executionLabels,
+            conditionContext.getFlow().getRevision(),
+            Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null),
+            runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs)
+        );
     }
 
     private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {

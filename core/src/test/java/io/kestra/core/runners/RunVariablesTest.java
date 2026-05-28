@@ -26,6 +26,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
@@ -175,7 +176,7 @@ class RunVariablesTest {
 
     @Test
     void nonResolvableDynamicInputsShouldBeSkipped() {
-        VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
+        VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableConfiguration.class);
         ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
         MeterRegistry mkMeterRegistry = Mockito.mock(MeterRegistry.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
@@ -312,7 +313,8 @@ class RunVariablesTest {
         Execution parentExecution = Execution.builder()
             .id("parent-exec-id").namespace("ns").flowId("flow").state(new State())
             .outputs(Map.of())
-            .build();
+            .build()
+            .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
             List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))

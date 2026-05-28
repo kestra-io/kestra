@@ -23,10 +23,10 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {onMounted, ref} from "vue"
 
-    import VarValue from "../executions/VarValue.vue";
-    import Utils from "../../utils/utils";
+    import VarValue from "../executions/VarValue.vue"
+    import * as Utils from "../../utils/utils"
 
     interface Options {
         label: string;
@@ -34,14 +34,14 @@
         children?: Options[];
     }
 
-    defineProps<{ options: Options[]; execution: any }>();
+    defineProps<{ options: Options[]; execution: any }>()
         
-    const panelRef = ref<any>(null);
+    const panelRef = ref<any>(null)
 
     onMounted(() => {
-        const nodes =  panelRef.value.$el.querySelectorAll(".kel-cascader-node");
-        if(nodes.length > 0) (nodes[0] as HTMLElement).click();
-    });
+        const nodes =  panelRef.value.$el.querySelectorAll(".kel-cascader-node")
+        if(nodes.length > 0) (nodes[0] as HTMLElement).click()
+    })
 </script>
 
 <style scoped lang="scss">

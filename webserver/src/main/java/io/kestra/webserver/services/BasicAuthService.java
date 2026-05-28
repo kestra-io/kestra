@@ -6,6 +6,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.cookie.Cookie;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.ValidationErrorException;
@@ -18,7 +21,6 @@ import io.kestra.webserver.models.events.OssAuthEvent;
 
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.Nullable;
@@ -29,13 +31,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Context
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true") // don't load this in EE
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
     public static final String BASIC_AUTH_ERROR_CONFIG = "kestra.server.authentication-configuration-error";
+    public static final String BASIC_AUTH_COOKIE_NAME = "BASIC_AUTH";
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*");
     private static final int EMAIL_PASSWORD_MAX_LEN = 256;
@@ -74,7 +76,6 @@ public class BasicAuthService {
             return;
         }
         try {
-            // save configured default credentials
             save(
                 new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
             );
@@ -178,6 +179,50 @@ public class BasicAuthService {
         return credentials != null &&
             !StringUtils.isBlank(credentials.getUsername()) &&
             !StringUtils.isBlank(credentials.getPassword());
+    }
+
+    /**
+     * Returns {@code true} if the request carries valid basic-auth credentials
+     * (either via the {@value BASIC_AUTH_COOKIE_NAME} cookie or an {@code Authorization: Basic} header).
+     */
+    public boolean isAuthenticated(HttpRequest<?> request) {
+        SaltedBasicAuthCredentials credentials = credentials();
+        if (credentials == null) {
+            return false;
+        }
+        Optional<String> encoded = extractFromCookie(request).or(() -> extractFromAuthorizationHeader(request));
+        if (encoded.isEmpty()) {
+            return false;
+        }
+        try {
+            String decoded = new String(Base64.getDecoder().decode(encoded.get()));
+            int colonIdx = decoded.indexOf(':');
+            if (colonIdx < 0) {
+                return false;
+            }
+            String username = decoded.substring(0, colonIdx);
+            String password = decoded.substring(colonIdx + 1);
+            return username.equals(credentials.getUsername())
+                && AuthUtils.encodePassword(credentials.getSalt(), password).equals(credentials.getPassword());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private Optional<String> extractFromCookie(HttpRequest<?> request) {
+        try {
+            return Optional.ofNullable(request.getCookies().get(BASIC_AUTH_COOKIE_NAME))
+                .map(Cookie::getValue);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> extractFromAuthorizationHeader(HttpRequest<?> request) {
+        return request.getHeaders()
+            .getAuthorization()
+            .filter(auth -> auth.toLowerCase().startsWith("basic"))
+            .map(cred -> cred.substring("Basic ".length()));
     }
 
     @Getter

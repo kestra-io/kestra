@@ -61,6 +61,7 @@ public final class RunVariables {
         "execution.originalId",
         "execution.outputs",
         "execution.startDate",
+        "execution.endDate",
         "execution.state",
         // Flow
         "flow",
@@ -214,11 +215,9 @@ public final class RunVariables {
         loopRunMap.put("value", loopRun.value());
         if (loopRun.parents() != null) {
             loopRunMap.put("parent", of(loopRun.parents().getLast()));
-            if (loopRun.parents().size() > 1) {
-                List<Map<String, Object>> parents = new ArrayList<>();
-                loopRun.parents().forEach(parent -> parents.add(of(parent)));
-                loopRunMap.put("parents", parents);
-            }
+            List<Map<String, Object>> parents = new ArrayList<>();
+            loopRun.parents().forEach(parent -> parents.add(of(parent)));
+            loopRunMap.put("parents", parents);
         }
         return loopRunMap;
     }
@@ -248,9 +247,11 @@ public final class RunVariables {
         Optional.ofNullable(execution.getState()).map(State::getStartDate)
             .ifPresent(startDate -> executionMap.put("startDate", startDate));
 
+        Optional.ofNullable(execution.getState()).flatMap(State::getEndDate)
+            .ifPresent(endDate -> executionMap.put("endDate", endDate));
+
         Optional.ofNullable(execution.getOriginalId())
             .ifPresent(originalId -> executionMap.put("originalId", originalId));
-
 
         if (execution.getOutputs() != null) {
             executionMap.put("outputs", execution.getOutputs());
@@ -567,7 +568,7 @@ public final class RunVariables {
         }
 
         private Map<String, Object> computeTasksMap(List<TaskRun> taskRunList) {
-            Map<String, Object> tasksMap = new HashMap<>();
+            Map<String, Object> tasksMap = new LinkedHashMap<>();
             taskRunList.forEach(taskRun ->
             {
                 if (taskRun.getState() != null) {

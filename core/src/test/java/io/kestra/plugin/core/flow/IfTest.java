@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -25,6 +26,9 @@ class IfTest {
 
     @Inject
     private TestRunnerUtils runnerUtils;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "iftruthy")
@@ -132,9 +136,12 @@ class IfTest {
             (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(8);
-        assertThat(execution.findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
+        assertThat(subExecutions.get(1).findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -148,8 +155,11 @@ class IfTest {
     @Test
     @ExecuteFlow(value = "flows/valids/if-in-parallel.yaml", tenantId = "ifonparallelbranch")
     void ifOnParallelBranch(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
     }
 
     @Test

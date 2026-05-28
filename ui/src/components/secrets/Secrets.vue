@@ -76,35 +76,35 @@
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
 
-    import SecretsTable from "./SecretsTable.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Navbar from "../layout/TopNavBar.vue";
-    import {useI18n} from "vue-i18n";
-    import {computed, ref} from "vue";
-    import useRouteContext from "../../composables/useRouteContext";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
-    import {useMiscStore} from "override/stores/misc";
+    import SecretsTable from "./SecretsTable.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+    import Navbar from "../layout/TopNavBar.vue"
+    import {useI18n} from "vue-i18n"
+    import {computed, ref} from "vue"
+    import useRouteContext from "../../composables/useRouteContext"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
+    import {useMiscStore} from "override/stores/misc"
 
-    useRestoreUrl();
-    import DemoButtons from "../demo/DemoButtons.vue";
-    import EnterpriseTag from "../EnterpriseTag.vue";
+    useRestoreUrl()
+    import DemoButtons from "../demo/DemoButtons.vue"
+    import EnterpriseTag from "../EnterpriseTag.vue"
 
-    const miscStore = useMiscStore();
+    const miscStore = useMiscStore()
 
     const props = defineProps({
         namespace: {
             type: String,
-            default: undefined
-        }
-    });
+            default: undefined,
+        },
+    })
 
-    const addSecretModalVisible = ref(false);
-    const hasData = ref<boolean>();
+    const addSecretModalVisible = ref(false)
+    const hasData = ref<boolean>()
 
-    const {t} = useI18n({useScope: "global"});
-    const routeInfo = computed(() => ({title: t("secret.names")}));
+    const {t} = useI18n({useScope: "global"})
+    const routeInfo = computed(() => ({title: t("secret.names")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 </script>
 
 <style scoped lang="scss">
@@ -116,6 +116,7 @@
         .header-block {
             p {
                 font-size: var(--ks-font-size-sm);
+                color: var(--ks-text-secondary);
             }
 
         }
@@ -135,7 +136,7 @@
             flex: 1;
             aspect-ratio: 16 / 9;
             border-radius: 8px;
-            border: 1px solid var(--ks-border-primary);
+            border: 1px solid var(--ks-border-default);
             overflow: hidden;
 
             iframe {
@@ -206,7 +207,7 @@
     }
 
     .secrets-divider {
-        border-top: 1px solid var(--ks-border-primary);
+        border-top: 1px solid var(--ks-border-default);
     }
 
     .ee-tag-wrap {

@@ -29,6 +29,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicReference<AbstractWorkerCallable> currentWorkerCallable = new AtomicReference<>();
 
     private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicBoolean killRequested = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
         MetricRegistry metricRegistry,
@@ -65,6 +66,11 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
         this.currentWorkerCallable.set(workerJobCallable);
+        // Propagate a kill that arrived before currentWorkerCallable was set
+        // (between register() and here, kill() was a no-op).
+        if (killRequested.get()) {
+            workerJobCallable.kill();
+        }
         try {
             return tracer.inCurrentContext(
                 workerJobCallable.getRunContext(),
@@ -91,6 +97,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     @Override
     public void kill() {
+        killRequested.set(true);
         Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
     }
 

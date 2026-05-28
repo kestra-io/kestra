@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "add_new_item": "새 항목 추가",
     "additionalPlugins": "추가 플러그인",
+    "admin": "관리자",
     "administration": "관리",
     "advanced configuration": "다른 속성",
     "after": "이후",
@@ -77,6 +78,7 @@
     "backfill executions": "backfill 실행",
     "backfill paused": "백필 일시 중지됨",
     "backfill running": "백필 실행 중",
+    "bar": "바",
     "before": "이전",
     "behavior": "동작",
     "blueprints": {
@@ -164,6 +166,7 @@
     "change state tooltip": "실행 상태 변경",
     "chart": "차트",
     "chart preview": "차트 미리보기",
+    "chart type": "차트 유형",
     "charts": "차트",
     "choice": "선택",
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
@@ -172,6 +175,7 @@
     "codeDisabled": "Flow에서 비활성화됨",
     "collapse": "축소",
     "collapse all": "모두 축소",
+    "commit_id": "커밋 id",
     "common": {
       "back": "뒤로"
     },
@@ -203,6 +207,7 @@
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
+    "copy_and_close": "복사하고 닫기",
     "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
@@ -333,6 +338,7 @@
         "message": "Kestra Enterprise Edition에서는 조직에만 사용할 수 있는 맞춤형 Blueprints를 생성할 수 있습니다. 이를 모범 사례 템플릿으로 사용하여 팀 내에서 자주 사용하는 workflow를 공유하고, 중앙 집중화하고, 문서화할 수 있습니다.",
         "title": "사용자 정의 Blueprints 추가"
       },
+      "contact_sales": "영업팀에 문의하세요",
       "enterprise_edition": "엔터프라이즈 에디션",
       "get_a_demo_button": "데모 받기",
       "instance": {
@@ -390,7 +396,8 @@
         "label": "테스트",
         "message": "플로우의 로직을 개별적으로 검증하고, 회귀를 조기에 감지하며, 자동화가 변화하고 성장함에 따라 신뢰를 유지하세요.",
         "title": "모든 변경 사항에 대한 신뢰성 보장"
-      }
+      },
+      "watch_the_video": "비디오 보기"
     },
     "dependencies": "종속성",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
@@ -476,6 +483,10 @@
         "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단에 대해 알릴 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요.",
         "title": "아직 공지가 없습니다!"
       },
+      "apiTokens": {
+        "content": "API 토큰은 Kestra API에 대한 프로그래매틱 접근을 허용하고자 할 때 사용됩니다.",
+        "title": "API 토큰 관리"
+      },
       "apps": {
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",
         "title": "앱이 아직 없습니다!"
@@ -491,6 +502,10 @@
       "concurrency_limit": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
+      },
+      "concurrency_limits": {
+        "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대해 더 읽어보세요.",
+        "title": "동시성 제한이 설정되지 않았습니다."
       },
       "dependencies": {
         "ASSET": {
@@ -509,6 +524,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
         }
+      },
+      "groups": {
+        "content": "그룹은 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전체에서 집합적으로 관리할 수 있도록 합니다.",
+        "title": "아직 그룹이 없습니다!"
       },
       "kill_switches": {
         "content": "킬 스위치 기능은 문제 있는 실행을 중지할 수 있는 UI 기반 메커니즘을 제공합니다. 이는 CLI 전용 <code>--skip-executions</code> 및 <code>--skip-flows</code> 명령을 포괄적인 관리 인터페이스로 대체합니다.",
@@ -537,6 +556,10 @@
       "versionPlugin": {
         "content": "여기에서 Kestra 인스턴스에 설치된 모든 플러그인을 관리할 수 있습니다. 새로 설치된 플러그인은 인스턴스의 구성에 따라 모든 Kestra 서비스에서 즉시 사용 가능하지 않을 수 있습니다.",
         "title": "아직 버전이 지정된 플러그인이 없습니다!"
+      },
+      "workerRegistrationTokens": {
+        "content": "등록 토큰은 원격 worker가 Kestra 인스턴스에 안전하게 인증하고 등록할 수 있도록 합니다. 토큰을 생성한 후 이를 사용하여 새로운 worker를 이 클러스터에 연결하세요.",
+        "title": "아직 등록 토큰이 없습니다!"
       }
     },
     "empty search": "검색 결과가 없습니다",
@@ -646,6 +669,8 @@
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
     "feeds": {
+      "heading": "Kestra의 모든 것.",
+      "subheading": "최신 업데이트, 가이드 및 스토리",
       "title": "Kestra의 새로운 기능"
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
@@ -735,6 +760,27 @@
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "앱(s)",
+        "tooltip": "이 flow를 사용하는 앱 보기"
+      },
+      "dependencies": {
+        "suffix": "종속성",
+        "tooltip": "flow 종속성 보기"
+      },
+      "errors": {
+        "label": "{count} 오류"
+      },
+      "revisions": {
+        "suffix": "리비전(s)",
+        "tooltip": "flow 수정 보기"
+      },
+      "tests": {
+        "suffix": "테스트",
+        "tooltip": "flow 테스트 보기"
+      }
+    },
     "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
     "flow_outputs": "Flow Outputs",
@@ -824,6 +870,7 @@
     "leave page": "페이지 나가기",
     "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
     "light_version": "라이트 버전",
+    "line": "라인",
     "line-by-line": "줄별로",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
     "log expand setting": "기본 Log 표시",
@@ -835,11 +882,56 @@
       "raw": "Temporal 보기",
       "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시"
     },
+    "main_configuration": "주요 설정",
     "management port": "관리 포트",
     "mark as": "<code>{status}</code>로 표시",
     "max": "Max",
+    "mcp": {
+      "api_token": "API 토큰",
+      "auth_type": "인증",
+      "basic_auth": "기본 인증",
+      "bearer_token": "베어러 토큰 인증",
+      "connect": "연결",
+      "connect_modal": {
+        "claude_code": "Claude 코드",
+        "claude_code_hint": "터미널에서 다음 명령어를 실행하세요:",
+        "claude_desktop": "클로드 데스크톱",
+        "claude_desktop_hint": "다음 내용을 claude_desktop_config.json 파일에 추가하십시오:",
+        "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+        "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "codex": "Codex (OpenAI)",
+        "codex_hint": "귀하의 codex.json MCP 구성에 다음을 추가하십시오:",
+        "cursor": "커서",
+        "cursor_hint": "~/.cursor/mcp.json에 다음을 추가하십시오:",
+        "done": "완료",
+        "server_url": "서버 URL",
+        "title": "{name}에 연결"
+      },
+      "copy_url": "URL 복사",
+      "create": "서버 생성",
+      "delete_confirm": "이 MCP 서버를 삭제하시겠습니까?",
+      "id_invalid": "ID는 소문자 또는 숫자로 시작해야 하며, 소문자, 숫자, 하이픈, 밑줄만 포함할 수 있습니다.",
+      "id_placeholder": "예: my-mcp-server",
+      "instructions": "지침",
+      "main_tenant": "메인",
+      "no_servers": "MCP 서버를 찾을 수 없습니다. 외부 AI 에이전트에 MCP Tool trigger를 노출하기 위해 첫 번째 서버를 생성하세요.",
+      "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
+      "private": "비공개",
+      "public": "공개",
+      "save": "변경 사항 저장",
+      "server": "MCP 서버",
+      "server_type": "서버 유형",
+      "servers": "MCP 서버",
+      "tab_connect": "연결",
+      "tab_connect_placeholder": "연결 세부 정보가 곧 제공됩니다.",
+      "tab_edit": "편집",
+      "tab_tool_flows": "도구 Flows",
+      "tab_tool_flows_placeholder": "도구 flow 관리가 곧 제공됩니다.",
+      "url_copied": "URL이 복사되었습니다!",
+      "username_password": "사용자 이름 & 비밀번호"
+    },
     "metric": "메트릭",
-    "metric choice": "메트릭과 집계를 선택하세요",
+    "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
     "metrics": "메트릭",
     "min": "Min",
     "missingSource": "소스 누락",
@@ -1277,6 +1369,12 @@
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
+      "sort": {
+        "most_used": "가장 많이 사용됨",
+        "name_asc": "이름 A-Z",
+        "name_desc": "이름 Z-A",
+        "newest": "최신순"
+      },
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },
@@ -1363,6 +1461,7 @@
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
     "runners": "러너",
+    "running": "실행 중",
     "running duration": "실행 중 지속 시간",
     "save": "저장",
     "save draft": {
@@ -1416,6 +1515,7 @@
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
     "select datetime": "날짜 선택",
+    "select view": "보기 선택",
     "selected": "선택됨",
     "selection": {
       "all": "모두 선택 ({count})",
@@ -1682,6 +1782,37 @@
     "triggered done": "<em>{name}</em>이(가) 성공적으로 Trigger 되었습니다.",
     "triggerflow disabled": "Flow 정의에서 trigger가 비활성화되었습니다.",
     "triggers": "Triggers",
+    "triggers_add_card_add": "추가",
+    "triggers_add_card_add_to_flow": "flow에 추가",
+    "triggers_add_category_app_description": "외부 리소스를 주기적으로 확인하여 변경 사항을 검사합니다.",
+    "triggers_add_category_app_title": "앱 Triggers",
+    "triggers_add_category_core_description": "대부분의 워크플로우에 필수적인 내장 트리거.",
+    "triggers_add_category_core_title": "코어 Triggers",
+    "triggers_add_category_empty": "이 카테고리에 trigger가 없습니다.",
+    "triggers_add_category_realtime_description": "메시징 시스템의 이벤트에 즉시 반응하십시오.",
+    "triggers_add_category_realtime_title": "실시간 Triggers",
+    "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
+    "triggers_add_empty_hint": "다른 검색어를 시도하거나 모든 카테고리를 탐색하세요.",
+    "triggers_add_empty_title": "트리거를 찾을 수 없음",
+    "triggers_add_filter_all": "모두",
+    "triggers_add_filter_app": "앱",
+    "triggers_add_filter_core": "코어",
+    "triggers_add_filter_realtime": "실시간",
+    "triggers_add_modal_add_button": "Flow에 Trigger 추가",
+    "triggers_add_modal_ee_notice": "이 trigger는 Enterprise Edition이 필요합니다.",
+    "triggers_add_modal_flow_placeholder": "flow 선택",
+    "triggers_add_modal_namespace_placeholder": "namespace 선택",
+    "triggers_add_modal_properties_hint": "트리거를 추가한 후 flow 편집기에서 트리거 속성을 구성합니다.",
+    "triggers_add_modal_tab_documentation": "문서",
+    "triggers_add_modal_tab_form": "폼",
+    "triggers_add_modal_tab_source": "출처",
+    "triggers_add_modal_title": "{name}",
+    "triggers_add_modal_trigger_id": "트리거 ID",
+    "triggers_add_modal_trigger_id_placeholder": "이 trigger의 고유 식별자",
+    "triggers_add_search_placeholder": "트리거 검색...",
+    "triggers_add_see_less": "간단히 보기",
+    "triggers_add_see_more": "더 보기 ({count} 더 보기)",
+    "triggers_header_description": "트리거를 찾아보고 추가하고 관리하여 flow를 자동화하세요. flow를 AI 도구로 노출하거나, 스케줄링, webhook trigger 추가, 외부 앱의 변경 사항 폴링, 실시간 이벤트 리스너 중에서 선택하세요.",
     "triggers_state": {
       "options": {
         "disabled": "비활성화됨",
@@ -1689,6 +1820,8 @@
       },
       "state": "상태"
     },
+    "triggers_tabs_add": "추가",
+    "triggers_tabs_manage": "관리",
     "true": "True",
     "type": "유형",
     "unable to generate graph": "그래프 생성 중 문제가 발생하여 토폴로지를 표시할 수 없습니다.",
@@ -1824,7 +1957,7 @@
       },
       "need_help": "도움이 필요하신가요?",
       "placeholder_prompt": "매일 오전 9시에 인사 메시지를 보내주세요.",
-      "remaining_quota": "{count}개의 AI 생성이 남았습니다",
+      "remaining_quota": "{count}개의 AI 생성이 남아 있습니다. 제한은 매일 자정 UTC에 초기화됩니다.",
       "show_less": "더 적은 프롬프트 표시",
       "show_more": "더 많은 프롬프트 보기",
       "success_page": {

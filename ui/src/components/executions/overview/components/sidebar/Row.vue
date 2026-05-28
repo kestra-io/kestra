@@ -29,9 +29,9 @@
 </template>
 
 <script setup lang="ts">
-    import type {Component} from "vue";
+    import type {Component} from "vue"
 
-    import {RouteLocationRaw} from "vue-router";
+    import {RouteLocationRaw} from "vue-router"
 
     const props = defineProps<{
         rows: {
@@ -40,7 +40,7 @@
             value?: string | number | Date;
             to?: RouteLocationRaw;
         }[];
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">
@@ -64,7 +64,7 @@
         }
 
         & .kel-text {
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
         }
     }
 

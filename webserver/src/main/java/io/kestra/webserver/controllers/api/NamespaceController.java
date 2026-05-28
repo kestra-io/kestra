@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.Strings;
 
-import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
@@ -46,7 +46,7 @@ public class NamespaceController<N extends Namespace> {
     private FlowTopologyService flowTopologyService;
 
     @Inject
-    private KestraConfig kestraConfig;
+    private SystemFlowsConfiguration systemFlowsConfiguration;
 
     protected Comparator<String> sorter(Pageable pageable) {
         return Optional.of(pageable.getSort().getOrderBy())
@@ -63,8 +63,8 @@ public class NamespaceController<N extends Namespace> {
         List<String> filteredFetchedNamespaces = Optional.ofNullable(fetchedNamespacesByForceInclude.get(false)).orElse(Collections.emptyList()).stream()
             .filter(n -> q == null || Strings.CI.contains(n, q))
             .toList();
-        List<String> systemFlowNamespace = q == null || Strings.CI.contains(kestraConfig.getSystemFlowNamespace(), q)
-            ? List.of(kestraConfig.getSystemFlowNamespace())
+        List<String> systemFlowNamespace = q == null || Strings.CI.contains(systemFlowsConfiguration.namespace(), q)
+            ? List.of(systemFlowsConfiguration.namespace())
             : Collections.emptyList();
 
         List<String> forceIncludeExistingNamespaceIds = Optional.ofNullable(fetchedNamespacesByForceInclude.get(true)).orElse(Collections.emptyList());

@@ -1,3 +1,4 @@
+{{- if or .Values.deployments.standalone.enabled .Values.deployments.webserver.enabled }}
 {{ $deployment := ternary "standalone" "webserver" .Values.deployments.standalone.enabled }}
 apiVersion: v1
 kind: Service
@@ -24,3 +25,4 @@ spec:
   selector:
     {{- include "kestra.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: "{{ $deployment }}"
+{{- end }}

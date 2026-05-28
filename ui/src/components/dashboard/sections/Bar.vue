@@ -18,62 +18,62 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, PropType} from "vue";
-    import {useRoute, useRouter} from "vue-router";
-    import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/design-system";
-    import type {KsChartSeriesItem} from "@kestra-io/design-system";
-    import {Chart, useChartGenerator} from "../composables/useDashboards";
-    import {extractState, getConsistentHEXColor} from "../composables/charts";
-    import {useTheme} from "../../../utils/utils";
-    import {FilterObject} from "../../../utils/filters";
-    import {useMiscStore} from "override/stores/misc";
+    import {computed, ref, watch, PropType} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {ChartFeature, KsBar, TooltipType, durationUtils} from "@kestra-io/design-system"
+    import type {KsChartSeriesItem} from "@kestra-io/design-system"
+    import {Chart, useChartGenerator} from "../composables/useDashboards"
+    import {extractState, getConsistentHEXColor} from "../composables/charts"
+    import {useTheme} from "../../../utils/utils"
+    import {FilterObject} from "../../../utils/filters"
+    import {useMiscStore} from "override/stores/misc"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
-    });
+    })
 
-    const {data, chartOptions} = props.chart;
+    const {data, chartOptions} = props.chart
 
-    const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg);
+    const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg)
 
-    const theme = useTheme();
+    const theme = useTheme()
 
     function isDurationAgg() {
-        return aggregator[0][1].field === "DURATION";
+        return aggregator[0][1].field === "DURATION"
     }
 
     const parsedData = computed(() => {
-        const column = chartOptions?.column ?? "";
-        const columns = data?.columns ?? {};
+        const column = chartOptions?.column ?? ""
+        const columns = data?.columns ?? {}
 
         const validColumns = Object.entries(columns)
             .filter(([_, value]) => !(value as Record<string, any>).agg)
             .filter(c => c[0] !== column)
-            .map(([key]) => key);
+            .map(([key]) => key)
 
-        const grouped: Record<string, Record<string, number>> = {};
+        const grouped: Record<string, Record<string, number>> = {}
 
-        const rawData = generated.value?.results as Record<string, any>[] | undefined;
+        const rawData = generated.value?.results as Record<string, any>[] | undefined
         rawData?.forEach((item: Record<string, any>) => {
-            const key = validColumns.map((col) => item[col]).join(", ");
-            const itemColumn = item[column] as string;
+            const key = validColumns.map((col) => item[col]).join(", ")
+            const itemColumn = item[column] as string
 
             if (!grouped[itemColumn]) {
-                grouped[itemColumn] = {};
+                grouped[itemColumn] = {}
             }
             if (!grouped[itemColumn][key]) {
-                grouped[itemColumn][key] = 0;
+                grouped[itemColumn][key] = 0
             }
 
-            grouped[itemColumn][key] += item[aggregator[0][0]];
-        });
+            grouped[itemColumn][key] += item[aggregator[0][0]]
+        })
 
-        const xLabels = [...new Set(rawData?.map((item: Record<string, any>) => item[column] as string))];
+        const xLabels = [...new Set(rawData?.map((item: Record<string, any>) => item[column] as string))]
 
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel as string] ?? {}).map(subSectionsEntry => ({
@@ -81,25 +81,25 @@
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
                 tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? durationUtils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
-            }));
-        });
+            }))
+        })
 
-        return {labels: xLabels, datasets};
-    });
+        return {labels: xLabels, datasets}
+    })
 
-    const categories = computed(() => parsedData.value.labels);
+    const categories = computed(() => parsedData.value.labels)
 
     const seriesData = computed<KsChartSeriesItem[]>(() => {
         return parsedData.value.datasets.map((ds) => ({
             name: ds.label,
             data: ds.data,
             itemStyle: {color: ds.backgroundColor},
-        }));
-    });
+        }))
+    })
 
     const echartsOption = computed((): Record<string, unknown> => {
-        const isCompact = props.short;
-        const showAxes = !isCompact;
+        const isCompact = props.short
+        const showAxes = !isCompact
 
         return {
             grid: isCompact
@@ -126,30 +126,30 @@
                 top: "10px",
                 right: "10px",
             } : {show: false},
-        };
-    });
+        }
+    })
 
-    const {data: generated, generate} = useChartGenerator(props.dashboardId, props);
+    const {data: generated, generate} = useChartGenerator(props.dashboardId, props)
 
-    const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null);
-    const route = useRoute();
-    const router = useRouter();
+    const ksBarRef = ref<InstanceType<typeof KsBar> | null>(null)
+    const route = useRoute()
+    const router = useRouter()
 
     watch(ksBarRef, (newRef) => {
-        if (!newRef) return;
-        const instance = newRef.getEchartsInstance();
-        if (!instance) return;
+        if (!newRef) return
+        const instance = newRef.getEchartsInstance()
+        if (!instance) return
         instance.on("click", (params: any) => {
-            const state = params.seriesName;
-            const query: Record<string, any> = {};
+            const state = params.seriesName
+            const query: Record<string, any> = {}
             if (state) {
-                query.state = extractState(state);
-                query.scope = "USER";
-                query.size = 100;
-                query.page = 1;
+                query.state = extractState(state)
+                query.scope = "USER"
+                query.size = 100
+                query.page = 1
             }
-            if (route.query.namespace) query.namespace = route.query.namespace;
-            if (route.query.q) query.q = route.query.q;
+            if (route.query.namespace) query.namespace = route.query.namespace
+            if (route.query.q) query.q = route.query.q
 
             router.push({
                 name: "executions/list",
@@ -158,21 +158,21 @@
                     ...query,
                     "filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
                 },
-            });
-        });
-    });
+            })
+        })
+    })
 
     function refresh() {
-        return generate();
+        return generate()
     }
 
     defineExpose({
-        refresh
-    });
+        refresh,
+    })
 
     watch(() => route.params.filters, () => {
-        refresh();
-    }, {deep: true});
+        refresh()
+    }, {deep: true})
 </script>
 
 <style scoped lang="scss">

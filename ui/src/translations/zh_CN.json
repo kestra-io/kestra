@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
     "add_new_item": "添加新项目",
     "additionalPlugins": "附加插件",
+    "admin": "管理员",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -77,6 +78,7 @@
     "backfill executions": "回填执行",
     "backfill paused": "补数据已暂停",
     "backfill running": "正在运行Backfill",
+    "bar": "酒吧",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
@@ -164,6 +166,7 @@
     "change state tooltip": "更改执行状态",
     "chart": "图表",
     "chart preview": "图表预览",
+    "chart type": "图表类型",
     "charts": "图表",
     "choice": "选择",
     "choose file": "选择文件或拖放到此处...",
@@ -172,6 +175,7 @@
     "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "commit_id": "提交 id",
     "common": {
       "back": "返回"
     },
@@ -203,6 +207,7 @@
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
+    "copy_and_close": "复制并关闭",
     "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
@@ -333,6 +338,7 @@
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。",
         "title": "添加自定义蓝图"
       },
+      "contact_sales": "联系我们的销售团队",
       "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
       "instance": {
@@ -390,7 +396,8 @@
         "label": "测试",
         "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
         "title": "确保每次更改的可靠性"
-      }
+      },
+      "watch_the_video": "观看视频"
     },
     "dependencies": "依赖关系",
     "dependencies delete flow": "此流程有依赖关系。删除它将阻止其依赖关系的执行。<br /><br /> 受影响的流程列表如下：",
@@ -476,6 +483,10 @@
         "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
       },
+      "apiTokens": {
+        "content": "API令牌用于在您希望授予程序化访问Kestra API时使用。",
+        "title": "管理您的API Tokens"
+      },
       "apps": {
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
         "title": "您还没有应用程序！"
@@ -491,6 +502,10 @@
       "concurrency_limit": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Flow未设置限制。"
+      },
+      "concurrency_limits": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">并发限制</a></strong>的信息。",
+        "title": "未设置并发限制。"
       },
       "dependencies": {
         "ASSET": {
@@ -509,6 +524,10 @@
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
         }
+      },
+      "groups": {
+        "content": "组允许您将用户捆绑在一起，以便您可以在整个租户中集体管理权限和角色绑定。",
+        "title": "您还没有群组！"
       },
       "kill_switches": {
         "content": "Kill Switch 功能提供了一种基于UI的机制来停止有问题的执行。它用一个全面的管理界面替代了仅限CLI的<code>--skip-executions</code>和<code>--skip-flows</code>命令。",
@@ -537,6 +556,10 @@
       "versionPlugin": {
         "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
         "title": "您还没有版本化的插件！"
+      },
+      "workerRegistrationTokens": {
+        "content": "注册令牌允许远程worker安全地进行身份验证并注册到您的Kestra实例。创建一个令牌，然后使用它将新worker连接到此集群。",
+        "title": "您还没有注册令牌！"
       }
     },
     "empty search": "搜索结果为空",
@@ -646,6 +669,8 @@
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
     "feeds": {
+      "heading": "所有关于Kestra的内容。",
+      "subheading": "最新更新、指南和故事",
       "title": "Kestra的最新动态"
     },
     "file preview truncated": "显示的内容已被截断",
@@ -735,6 +760,27 @@
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "应用程序",
+        "tooltip": "查看使用此flow的应用程序"
+      },
+      "dependencies": {
+        "suffix": "依赖项",
+        "tooltip": "查看flow依赖关系"
+      },
+      "errors": {
+        "label": "{count} 错误"
+      },
+      "revisions": {
+        "suffix": "版本",
+        "tooltip": "查看flow修订版本"
+      },
+      "tests": {
+        "suffix": "测试",
+        "tooltip": "查看flow测试"
+      }
+    },
     "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
     "flow_outputs": "Flow Outputs",
@@ -824,6 +870,7 @@
     "leave page": "离开页面",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
+    "line": "行",
     "line-by-line": "逐行",
     "loaded x dependencies": "已加载 {count} 个依赖项",
     "log expand setting": "日志默认显示",
@@ -835,11 +882,56 @@
       "raw": "时间视图",
       "raw_details": "以原始时间顺序显示完整任务日志和流程日志"
     },
+    "main_configuration": "主配置",
     "management port": "管理端口",
     "mark as": "标记为 <code>{status}</code>",
     "max": "最大",
+    "mcp": {
+      "api_token": "API Token",
+      "auth_type": "身份验证",
+      "basic_auth": "基本认证",
+      "bearer_token": "Bearer token 身份验证",
+      "connect": "连接",
+      "connect_modal": {
+        "claude_code": "Claude代码",
+        "claude_code_hint": "在终端中运行以下命令：",
+        "claude_desktop": "Claude 桌面版",
+        "claude_desktop_hint": "请将以下内容添加到您的 claude_desktop_config.json 文件中：",
+        "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",
+        "claude_desktop_win": "Windows: %APPDATA%\\Claude\\claude_desktop_config.json",
+        "codex": "Codex (OpenAI)",
+        "codex_hint": "将以下内容添加到您的codex.json MCP配置中：",
+        "cursor": "光标",
+        "cursor_hint": "将以下内容添加到 ~/.cursor/mcp.json：",
+        "done": "完成",
+        "server_url": "服务器 URL",
+        "title": "连接到 {name}"
+      },
+      "copy_url": "复制 URL",
+      "create": "创建服务器",
+      "delete_confirm": "您确定要删除此MCP服务器吗？",
+      "id_invalid": "ID必须以小写字母或数字开头，并且只能包含小写字母、数字、连字符或下划线。",
+      "id_placeholder": "例如 my-mcp-server",
+      "instructions": "说明",
+      "main_tenant": "main",
+      "no_servers": "未找到MCP服务器。创建您的第一个服务器以向外部AI代理公开MCP Tool triggers。",
+      "page_description": "将您的Kestra flow公开为MCP兼容AI代理的工具",
+      "private": "私有",
+      "public": "公开",
+      "save": "保存更改",
+      "server": "MCP 服务器",
+      "server_type": "服务器类型",
+      "servers": "MCP 服务器",
+      "tab_connect": "连接",
+      "tab_connect_placeholder": "连接详情即将推出。",
+      "tab_edit": "编辑",
+      "tab_tool_flows": "工具Flows",
+      "tab_tool_flows_placeholder": "工具flow管理即将推出。",
+      "url_copied": "URL 已复制！",
+      "username_password": "用户名和密码"
+    },
     "metric": "指标",
-    "metric choice": "请选择一个指标和一个聚合",
+    "metric choice": "此flow没有可用的指标",
     "metrics": "指标",
     "min": "最小",
     "missingSource": "缺少源",
@@ -1277,6 +1369,12 @@
     "pluginPage": {
       "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
+      "sort": {
+        "most_used": "最常使用",
+        "name_asc": "名称 A-Z",
+        "name_desc": "名称 Z-A",
+        "newest": "最新"
+      },
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
     },
@@ -1363,6 +1461,7 @@
     "row count": "行数",
     "run task in playground": "在playground中运行task",
     "runners": "运行者",
+    "running": "运行",
     "running duration": "运行时间",
     "save": "保存",
     "save draft": {
@@ -1416,6 +1515,7 @@
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "select": "选择您的{{section}}",
     "select datetime": "选择日期",
+    "select view": "选择视图",
     "selected": "已选择",
     "selection": {
       "all": "选择所有 ({count})",
@@ -1682,6 +1782,37 @@
     "triggered done": "执行 <em>{name}</em> 成功触发",
     "triggerflow disabled": "触发器在流程定义中被禁用",
     "triggers": "触发器",
+    "triggers_add_card_add": "添加",
+    "triggers_add_card_add_to_flow": "添加到flow",
+    "triggers_add_category_app_description": "定期检查外部资源的变化。",
+    "triggers_add_category_app_title": "应用 Triggers",
+    "triggers_add_category_core_description": "内置触发器是大多数工作流所必需的。",
+    "triggers_add_category_core_title": "核心触发器",
+    "triggers_add_category_empty": "此类别中没有trigger。",
+    "triggers_add_category_realtime_description": "即时响应来自消息系统的事件。",
+    "triggers_add_category_realtime_title": "实时触发器",
+    "triggers_add_ee_tooltip": "此trigger需要企业版。",
+    "triggers_add_empty_hint": "尝试不同的搜索词或浏览所有类别。",
+    "triggers_add_empty_title": "未找到trigger",
+    "triggers_add_filter_all": "全部",
+    "triggers_add_filter_app": "应用程序",
+    "triggers_add_filter_core": "核心",
+    "triggers_add_filter_realtime": "实时",
+    "triggers_add_modal_add_button": "将 Trigger 添加到 Flow",
+    "triggers_add_modal_ee_notice": "此trigger需要企业版。",
+    "triggers_add_modal_flow_placeholder": "选择一个flow",
+    "triggers_add_modal_namespace_placeholder": "选择一个namespace",
+    "triggers_add_modal_properties_hint": "在添加trigger后，在flow编辑器中配置trigger属性。",
+    "triggers_add_modal_tab_documentation": "文档",
+    "triggers_add_modal_tab_form": "表单",
+    "triggers_add_modal_tab_source": "来源",
+    "triggers_add_modal_title": "{name}",
+    "triggers_add_modal_trigger_id": "触发器ID",
+    "triggers_add_modal_trigger_id_placeholder": "此trigger的唯一标识符",
+    "triggers_add_search_placeholder": "搜索 triggers...",
+    "triggers_add_see_less": "查看较少",
+    "triggers_add_see_more": "查看更多（还有 {count} 个）",
+    "triggers_header_description": "浏览、添加和管理触发器以自动化您的flows。您可以选择将flow公开为AI工具、进行调度、添加webhook trigger、轮询外部应用程序中的更改或实时事件监听器。",
     "triggers_state": {
       "options": {
         "disabled": "禁用",
@@ -1689,6 +1820,8 @@
       },
       "state": "状态"
     },
+    "triggers_tabs_add": "添加",
+    "triggers_tabs_manage": "管理",
     "true": "真",
     "type": "类型",
     "unable to generate graph": "生成图表时发生问题，无法显示拓扑。",
@@ -1824,7 +1957,7 @@
       },
       "need_help": "需要帮助？",
       "placeholder_prompt": "每天早上9点发送问候消息给我。",
-      "remaining_quota": "您还有 {count} 次 AI 生成机会",
+      "remaining_quota": "您还有 {count} 次AI生成机会。限制将在每天的UTC午夜重置。",
       "show_less": "显示更少提示",
       "show_more": "显示更多提示",
       "success_page": {

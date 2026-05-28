@@ -28,33 +28,33 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import {
         COMPARATOR_DESCRIPTIONS,
         COMPARATOR_LABELS,
-        Comparators
-    } from "../utils/filterTypes";
+        Comparators,
+    } from "../utils/filterTypes"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     const props = defineProps<{
         shouldShowComparator: boolean;
         selectedComparator: Comparators;
         filterKey: {comparators: Comparators[]};
-    }>();
+    }>()
 
     const emits = defineEmits<{
         "update:selectedComparator": [value: Comparators];
-    }>();
+    }>()
 
     const comparatorModel = computed({
         get: () => props.selectedComparator,
-        set: (value: Comparators) => emits("update:selectedComparator", value)
-    });
+        set: (value: Comparators) => emits("update:selectedComparator", value),
+    })
 
-    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator];
-    const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator]);
+    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator]
+    const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator])
 </script>
 
 <style lang="scss" scoped>
@@ -67,7 +67,7 @@
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin: 0.25rem 0;
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
     }
 
     .select {
@@ -84,7 +84,7 @@
     }
 
     .comp-desc {
-        color: var(--ks-content-tertiary);
+        color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         line-height: 1.3;
     }

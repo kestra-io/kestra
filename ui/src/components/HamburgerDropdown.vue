@@ -12,6 +12,6 @@
 </template>
 
 <script setup lang="ts">
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
 </script>
 

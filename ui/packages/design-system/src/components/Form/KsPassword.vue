@@ -70,7 +70,7 @@
     }
 
     .ks-password {
-        position: relative; 
+        position: relative;
 
         .hide {
             top: 5px;

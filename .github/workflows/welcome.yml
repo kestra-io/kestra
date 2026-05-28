@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: plbstl/first-contribution@v4
         env:
-          GH_PAT_READ_ORG: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT_READ_ORG: ${{ secrets.GH_READ_ORG_TOKEN }}
         with:
           skip-internal-contributors: true
           pr-opened-msg: |

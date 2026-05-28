@@ -123,7 +123,7 @@ class FlowControllerTest {
 
     @Test
     void task() {
-        Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/each-object/tasks/not-json"), Task.class);
+        Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/loop-object/tasks/not-json"), Task.class);
 
         assertThat(result.getId()).isEqualTo("not-json");
         assertThat(result.getType()).isEqualTo("io.kestra.plugin.core.debug.Return");
@@ -786,7 +786,7 @@ class FlowControllerTest {
     @Test
     void exportByIds() throws IOException {
         List<IdWithNamespace> ids = List.of(
-            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "loop-object"),
             new IdWithNamespace("io.kestra.tests", "webhook"),
             new IdWithNamespace("io.kestra.tests", "task-flow")
         );
@@ -911,7 +911,7 @@ class FlowControllerTest {
     @Test
     void disableEnableFlowsByIds() {
         List<IdWithNamespace> ids = List.of(
-            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "loop-object"),
             new IdWithNamespace("io.kestra.tests", "webhook"),
             new IdWithNamespace("io.kestra.tests", "task-flow")
         );
@@ -922,7 +922,7 @@ class FlowControllerTest {
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
-        Flow eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/each-object"), String.class));
+        Flow eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/loop-object"), String.class));
         Flow webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/webhook"), String.class));
         Flow taskFlow = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/task-flow"), String.class));
 
@@ -936,7 +936,7 @@ class FlowControllerTest {
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
-        eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/each-object"), String.class));
+        eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/loop-object"), String.class));
         webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/webhook"), String.class));
         taskFlow = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.tests/task-flow"), String.class));
 

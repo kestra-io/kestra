@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.Await;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -27,6 +29,9 @@ class FinallyTest {
 
     @Inject
     private FlowInputOutput flowIO;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @LoadFlows(value = { "flows/valids/finally-sequential.yaml" }, tenantId = "sequentialwithouterrors")
@@ -183,75 +188,104 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/finally-foreach.yaml" }, tenantId = "foreachwithouterrors")
-    void forEachWithoutErrors() throws QueueException, TimeoutException {
+    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwithouterrors")
+    void loopWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            "foreachwithouterrors",
-            NAMESPACE, "finally-foreach", null,
+            "loopwithouterrors",
+            NAMESPACE, "finally-loop", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", false)),
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/finally-foreach.yaml" }, tenantId = "foreachwitherrors")
-    void forEachWithErrors() throws QueueException, TimeoutException {
+    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwitherrors")
+    void loopWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            "foreachwitherrors",
-            NAMESPACE, "finally-foreach", null,
+            "loopwitherrors",
+            NAMESPACE, "finally-loop", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // With transmitFailed=true, the parent terminates when the first sub-execution fails,
+        // but other sub-executions continue running their errors/finally tasks in parallel.
+        // Wait for all sub-executions to reach terminal state before asserting.
+        Await.until(
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/finally-eachparallel.yaml" }, tenantId = "eachparallelwithouterrors")
-    void eachParallelWithoutErrors() throws QueueException, TimeoutException {
+    @LoadFlows(value = {"flows/valids/finally-loop-parallel.yaml"}, tenantId = "loopparallelwithouterrors")
+    void loopParallelWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            "eachparallelwithouterrors",
-            NAMESPACE, "finally-eachparallel", null,
+            "loopparallelwithouterrors",
+            NAMESPACE, "finally-loop-parallel", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", false)),
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/finally-eachparallel.yaml" }, tenantId = "eachparallelwitherrors")
-    void eachParallelWithErrors() throws QueueException, TimeoutException {
+    @LoadFlows(value = { "flows/valids/finally-loop-parallel.yaml" }, tenantId = "loopparallelwitherrors")
+    void loopParallelWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            "eachparallelwitherrors",
-            NAMESPACE, "finally-eachparallel", null,
+            "loopparallelwitherrors",
+            NAMESPACE, "finally-loop-parallel", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // With transmitFailed=true, the parent terminates when the first sub-execution fails,
+        // but other sub-executions continue running their errors/finally tasks in parallel.
+        // Wait for all sub-executions to reach terminal state before asserting.
+        Await.until(
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(3);
+
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test

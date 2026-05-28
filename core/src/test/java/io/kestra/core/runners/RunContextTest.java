@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.event.Level;
@@ -93,10 +94,10 @@ class RunContextTest {
     private TestRunnerUtils runnerUtils;
 
     @Inject
-    protected LocalFlowRepositoryLoader repositoryLoader;
+    private TaskOutputService taskOutputService;
 
     @Inject
-    private TaskOutputService taskOutputService;
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
@@ -148,15 +149,12 @@ class RunContextTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(10);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<LogEntry> logEntries = TestsUtils
-            .awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
-        logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
-
-        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli()).isEqualTo(logEntries.get(1).getTimestamp().toEpochMilli());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(9);
     }
 
     @Test
@@ -342,17 +340,20 @@ class RunContextTest {
     }
 
     @Test
-    @ExecuteFlow("flows/invalids/foreach-switch-failed.yaml")
+    @ExecuteFlow("flows/invalids/loop-switch-failed.yaml")
     void failedTasksVariable(Execution execution) throws Exception {
-
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
 
-        TaskRun taskRun = execution.getTaskRunList().stream()
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions.size()).isEqualTo(2);
+        TaskRun taskRun = subExecutions.stream()
+            .flatMap(e -> e.getTaskRunList().stream())
             .filter(tr -> tr.getTaskId().equals("errorforeach"))
             .findFirst()
             .orElseThrow(() -> new Exception("TaskRun not found"));
 
-        assertThat(taskOutputService.getOutputs(taskRun).get("value").toString().contains("{\"state\":\"FAILED\",\"value\":\"2\",\"taskId\":\"switch\"}")).isEqualTo(true);
+        assertThat(taskOutputService.getOutputs(taskRun).get("value").toString()).contains("{\"state\":\"FAILED\",\"taskId\":\"switch\"}");
 
     }
 

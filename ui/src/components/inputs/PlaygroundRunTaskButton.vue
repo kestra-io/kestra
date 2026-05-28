@@ -22,15 +22,15 @@
 </template>
 
 <script setup lang="ts">
-    import {usePlaygroundStore} from "../../stores/playground";
-    import Play from "vue-material-design-icons/Play.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
+    import {usePlaygroundStore} from "../../stores/playground"
+    import Play from "vue-material-design-icons/Play.vue"
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
-    const playgroundStore = usePlaygroundStore();
+    const playgroundStore = usePlaygroundStore()
 
     defineProps<{
         taskId?: string;
-    }>();
+    }>()
 </script>
 
 <style scoped lang="scss">

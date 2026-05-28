@@ -1,8 +1,8 @@
-import {defineStore} from "pinia";
-import {apiUrl} from "override/utils/route";
-import {ref} from "vue";
-import {useAxios} from "../utils/axios";
-import {LevelKey} from "../utils/logs";
+import {defineStore} from "pinia"
+import {apiUrl} from "override/utils/route"
+import {ref} from "vue"
+import {useClient} from "@kestra-io/kestra-sdk"
+import {LevelKey} from "../utils/logs"
 
 export interface Log{
     level: LevelKey;
@@ -25,7 +25,7 @@ export const useLogsStore = defineStore("logs", () => {
     const total = ref(0)
     const level = ref<LevelKey>("INFO")
 
-    const axios = useAxios();
+    const axios = useClient()
 
 
     function findLogs(options: any) {
@@ -36,7 +36,7 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     function deleteLogs(log: { namespace: string, flowId: string, triggerId?: string }) {
-        const URL = `${apiUrl()}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`;
+        const URL = `${apiUrl()}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`
         return axios.delete(URL).then(() => (logs.value = undefined))
     }
 

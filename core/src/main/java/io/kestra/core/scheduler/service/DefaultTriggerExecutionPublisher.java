@@ -35,12 +35,12 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
     public void send(final Execution execution) {
         try {
             this.executionQueue.emit(execution);
-            this.executionEventPublisher.publishEvent(CrudEvent.create(execution));
+            this.executionEventPublisher.publishEvent(CrudEvent.create(execution));// FIXME probably a bug, should not exist here
         } catch (QueueException e) {
             try {
                 Execution failedExecution = fail(execution, e);
                 this.executionQueue.emit(failedExecution);
-                this.executionEventPublisher.publishEvent(CrudEvent.create(execution));
+                this.executionEventPublisher.publishEvent(CrudEvent.create(execution));// FIXME same
             } catch (QueueException ex) {
                 LOG.error("Unable to emit the execution", ex);
             }

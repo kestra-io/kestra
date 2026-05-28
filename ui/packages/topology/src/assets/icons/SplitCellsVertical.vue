@@ -12,8 +12,8 @@
 </template>
 
 <script setup lang="ts">
-    defineOptions({name: "SplitCellsVerticalIcon"});
-    defineEmits(["click"]);
+    defineOptions({name: "SplitCellsVerticalIcon"})
+    defineEmits(["click"])
 </script>
 
 <style scoped>

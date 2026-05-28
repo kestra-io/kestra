@@ -1,11 +1,13 @@
 <template>
-    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)" />
+    <ElProgress v-bind="({...filteredProps(), ...$attrs} as any)">
+        <slot/>
+    </ElProgress>
 </template>
 
 <script setup lang="ts">
     import {ElProgress} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
-    import {computed} from "vue";
+    import {computed} from "vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -27,6 +29,7 @@
         color: undefined,
         showText: undefined,
         status: undefined,
+        strokeLinecap: "square",
     })
 
     const left = computed(() => `${props.left ?? 0}%`)
@@ -46,7 +49,7 @@
         :deep(.kel-progress-bar__outer) {
             border-radius: var(--kel-border-radius-small);
 
-            background-color: var(--ks-scrollbar-background);
+            background-color: var(--ks-bg-base);
         }
 
         :deep(.kel-progress-bar__inner) {

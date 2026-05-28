@@ -219,7 +219,10 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest extends Abstract
                     Duration.ofSeconds(10), // timeout
                     Duration.ZERO,
                     Duration.ZERO
-                )
+                ),
+                null,
+                null,
+                null
             );
             return new ServiceInstance(
                 IdUtils.create(),

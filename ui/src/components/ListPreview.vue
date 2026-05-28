@@ -37,92 +37,92 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {ref, computed} from "vue"
 
-    const MAX_CELL_CHARS = 2000;
+    const MAX_CELL_CHARS = 2000
 
     const props = defineProps({
         value: {
             type: Array as () => Record<string, any>[],
-            required: true
-        }
-    });
+            required: true,
+        },
+    })
 
-    const expandedCells = ref(new Set<string>());
-    const currentPage = ref(1);
-    const pageSize = ref(50);
+    const expandedCells = ref(new Set<string>())
+    const currentPage = ref(1)
+    const pageSize = ref(50)
 
     const previewData = computed(() => {
-        const startIndex = (currentPage.value - 1) * pageSize.value;
-        const endIndex = startIndex + pageSize.value;
-        return props.value.slice(startIndex, endIndex);
-    });
+        const startIndex = (currentPage.value - 1) * pageSize.value
+        const endIndex = startIndex + pageSize.value
+        return props.value.slice(startIndex, endIndex)
+    })
 
     const totalPages = computed(() => {
-        return Math.ceil(props.value.length / pageSize.value);
-    });
+        return Math.ceil(props.value.length / pageSize.value)
+    })
 
     const indexMethod = (index: number) => {
-        return (currentPage.value - 1) * pageSize.value + index + 1;
-    };
+        return (currentPage.value - 1) * pageSize.value + index + 1
+    }
 
     const onPageChanged = (payload: { page?: number; size?: number }): void => {
         if (payload.page !== undefined) {
-            currentPage.value = payload.page;
+            currentPage.value = payload.page
         }
         if (payload.size !== undefined) {
-            pageSize.value = payload.size;
+            pageSize.value = payload.size
         }
-        expandedCells.value.clear();
-    };
+        expandedCells.value.clear()
+    }
 
     const generateTableColumns = computed(() => {
-        const allKeys = new Set<string>();
+        const allKeys = new Set<string>()
         props.value.forEach(item => {
             if (item && typeof item === "object") {
-                Object.keys(item).forEach(key => allKeys.add(key));
+                Object.keys(item).forEach(key => allKeys.add(key))
             }
-        });
-        return Array.from(allKeys);
-    });
+        })
+        return Array.from(allKeys)
+    })
 
 
     const isComplex = (data: any): boolean => {
-        return data !== null && typeof data === "object";
-    };
+        return data !== null && typeof data === "object"
+    }
 
     const getCellKey = (rowIndex: number, column: string): string => {
-        return `${rowIndex}-${column}`;
-    };
+        return `${rowIndex}-${column}`
+    }
 
     const needsExpansion = (data: any): boolean => {
-        const stringified = JSON.stringify(data, null, 2);
-        return stringified.length > MAX_CELL_CHARS;
-    };
+        const stringified = JSON.stringify(data, null, 2)
+        return stringified.length > MAX_CELL_CHARS
+    }
 
     const getTruncatedContent = (data: any, rowIndex: number, column: string): string => {
-        const cellKey = getCellKey(rowIndex, column);
-        const stringified = JSON.stringify(data, null, 2);
+        const cellKey = getCellKey(rowIndex, column)
+        const stringified = JSON.stringify(data, null, 2)
 
         if (expandedCells.value.has(cellKey)) {
-            return stringified;
+            return stringified
         }
 
         if (stringified.length > MAX_CELL_CHARS) {
-            return stringified.slice(0, MAX_CELL_CHARS) + "... [truncated]";
+            return stringified.slice(0, MAX_CELL_CHARS) + "... [truncated]"
         }
 
-        return stringified;
-    };
+        return stringified
+    }
 
     const toggleExpand = (rowIndex: number, column: string): void => {
-        const cellKey = getCellKey(rowIndex, column);
+        const cellKey = getCellKey(rowIndex, column)
         if (expandedCells.value.has(cellKey)) {
-            expandedCells.value.delete(cellKey);
+            expandedCells.value.delete(cellKey)
         } else {
-            expandedCells.value.add(cellKey);
+            expandedCells.value.add(cellKey)
         }
-    };
+    }
 </script>
 
 <style scoped lang="scss">

@@ -11,6 +11,14 @@ on:
           - patch
           - minor
           - major
+      package:
+        description: What package to publish
+        required: true
+        type: choice
+        options:
+          - design-system
+          - topology
+
       skip-test:
         description: "Skip test"
         required: false
@@ -29,58 +37,61 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ui/packages/design-system
+        working-directory: ui
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         
-      - name: Get OIDC Token
-        env:
-          AUDIENCE: "npm:registry.npmjs.org"
-        run: |
-          TOKEN_JSON=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE")
-          ID_TOKEN=$(echo "$TOKEN_JSON" | jq -r .value)
-          echo "$TOKEN_JSON"
-          echo "NODE_AUTH_TOKEN=$ID_TOKEN" >> "$GITHUB_ENV"
-          echo "$ID_TOKEN" | awk -F. '{print $2}' | base64 -d 2>/dev/null | jq -r
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22.18
           cache: npm
           registry-url: https://registry.npmjs.org
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Install Playwright browsers
+        if: inputs.skip-test != 'true' && inputs.package == 'design-system'
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
         if: inputs.skip-test != 'true'
-        run: npm run test
+        run: npm run test --workspace @kestra-io/${{ inputs.package }}
 
       - name: Build
-        run: npm run build
+        run: npm run build --workspace @kestra-io/${{ inputs.package }}
 
-      - name: Bump version
-        run: npm version ${{ inputs.increment }} --no-git-tag-version
+      - name: Remove export changes
+        run: git reset --hard HEAD
+
+      - name: Extract latest published version from npmjs.com
+        run: |
+          publishedVersion=$(npm view @kestra-io/${{ inputs.package }} version --registry https://registry.npmjs.org)
+          echo "Latest published version: $publishedVersion"
+          # Set the version in package.json to the latest published version to ensure correct version bumping
+          npm pkg set --workspace @kestra-io/${{ inputs.package }} version=$publishedVersion
+          # Bump the version based on the input increment (patch, minor, major)
+          newVersion=$(npm version ${{ inputs.increment }} --workspace @kestra-io/${{ inputs.package }} --no-git-tag-version)
+          echo "New version: $newVersion"
 
       - name: Read new version
         id: version
-        run: echo "value=$(npm pkg get version | tr -d '"')" >> "$GITHUB_OUTPUT"
+        # Read the new version from the package.json and set it as an output for later steps
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/${{ inputs.package }} | jq -r '."@kestra-io/${{ inputs.package }}"')" >> $GITHUB_OUTPUT 
 
       - name: Commit and tag
         working-directory: .
         run: |
+          # setup the bot for commit and tag
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ui/packages/design-system/package.json
-          git commit -m "chore(deps): bump @kestra-io/design-system to v${{ steps.version.outputs.value }}"
-          git tag "design-system/v${{ steps.version.outputs.value }}"
-          git push origin HEAD --tags
+          # tag the version and push
+          git tag "${{ inputs.package }}/v${{ steps.version.outputs.value }}"
+          git push --tags
 
       # Trusted publishing need npm 11.+
       - name: Upgrade npm
@@ -89,13 +100,7 @@ jobs:
           npm version
 
       - name: Publish to npm
-        run: npm publish --access public
-
-      - name: Create GitHub Release
-        working-directory: .
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "design-system/v${{ steps.version.outputs.value }}" \
-            --title "@kestra-io/design-system v${{ steps.version.outputs.value }}" \
-            --generate-notes
+        run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
+      
+      - name: Create release tarball
+        run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}

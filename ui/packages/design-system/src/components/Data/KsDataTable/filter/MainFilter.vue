@@ -45,11 +45,11 @@
                 'read-only': filter.readOnly?.value
             }"
         >
-            <SearchInput
-                :modelValue="filter.searchQuery?.value"
-                @update:model-value="debouncedUpdateSearch"
+            <KsSearch
+                v-model="localSearchQuery"
+                @update:modelValue="(v) => debouncedUpdateSearch(v ?? '')"
                 :placeholder="filter.configuration?.value?.searchPlaceholder"
-                :fullWidth="filter.searchInputFullWidth?.value"
+                clearable
             />
         </div>
 
@@ -87,58 +87,62 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick, computed} from "vue";
-    import {useDebounceFn} from "@vueuse/core";
+    import {ref, inject, nextTick, computed, watch} from "vue"
+    import {useDebounceFn} from "@vueuse/core"
 
-    import {FilterOutline} from "./utils/icons";
+    import {FilterOutline} from "./utils/icons"
 
-    import FilterChip from "./layout/FilterChip.vue";
-    import SearchInput from "./layout/SearchInput.vue";
-    import CustomizeFilters from "./segments/CustomizeFilters.vue";
+    import FilterChip from "./layout/FilterChip.vue"
+    import CustomizeFilters from "./segments/CustomizeFilters.vue"
 
-    import type {AppliedFilter} from "./utils/filterTypes";
-    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys";
+    import type {AppliedFilter} from "./utils/filterTypes"
+    import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
 
-    const isCustomizeFiltersVisible = ref(false);
-    const chipRefs = ref<Record<string, any>>({});
-    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+    const isCustomizeFiltersVisible = ref(false)
+    const chipRefs = ref<Record<string, any>>({})
+    const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
     const canReset = computed(() => {
         return (
             !!filter.hasAppliedFilters?.value ||
             !!filter.hasDismissedDefaultVisibleKeys?.value ||
             !!filter.searchQuery?.value
-        );
-    });
+        )
+    })
 
     const getFilterKeyConfig = (appliedFilter: any) => {
-        return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null;
-    };
+        return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null
+    }
 
     const setChipRef = (filterId: string, el: any) => el
         ? chipRefs.value[filterId] = el
-        : delete chipRefs.value[filterId];
+        : delete chipRefs.value[filterId]
 
     const handleAddFilter = (newFilter: AppliedFilter) => {
-        filter.addFilter(newFilter);
+        filter.addFilter(newFilter)
         setTimeout(() => {
-            isCustomizeFiltersVisible.value = false;
-        }, 300);
-        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog());
-    };
+            isCustomizeFiltersVisible.value = false
+        }, 300)
+        nextTick(() => chipRefs.value[newFilter.id]?.editPopover?.toggleDialog())
+    }
 
     const handleReset = () => {
-        filter.resetToDefaults();
-    };
+        filter.resetToDefaults()
+    }
+
+    const localSearchQuery = ref(filter.searchQuery?.value ?? "")
+    watch(() => filter.searchQuery?.value, (v) => {
+        if (v !== localSearchQuery.value) localSearchQuery.value = v ?? ""
+    })
 
     const debouncedUpdateSearch = useDebounceFn((value: string) => {
-        filter.searchQuery.value = value;
-    }, 700);
+        filter.searchQuery.value = value
+    }, 700)
 </script>
 
 <style lang="scss" scoped>
 .filter-container {
-    --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
+    --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     display: flex;
     align-items: center;
@@ -147,7 +151,7 @@
     gap: .5rem;
     row-gap: 0.5rem;
     flex: 1;
-    min-width: 0;
+    min-width: 7rem;
 
     &.filter-grow {
         flex-wrap: nowrap;
@@ -156,17 +160,17 @@
 }
 
 .customize-button {
-    background-color: var(--ks-button-background-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
     font-size: var(--ks-font-size-xs);
     flex-shrink: 0;
     box-shadow: var(--ks-box-shadow);
 
     &:hover {
-        background-color: var(--ks-button-background-secondary-hover);
+        background-color: var(--ks-btn-secondary-bg-hover);
     }
 
     :deep(svg) {
-        color: var(--ks-content-tertiary) !important;
+        color: var(--ks-text-dim) !important;
         font-size: var(--ks-font-size-md);
     }
 }
@@ -174,10 +178,10 @@
 .refresh-btn {
     margin: 0 !important;
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-content-secondary);
+    color: var(--ks-text-secondary);
 
     &:hover {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         text-decoration: underline;
     }
 
@@ -203,7 +207,7 @@
 
 .filter-chip {
     flex-shrink: 0;
-    box-shadow: 0 1px 2px var(--ks-card-shadow);
+    box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     &.filters-hidden {
         display: none;

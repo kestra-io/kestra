@@ -1,4 +1,4 @@
-export const CLUSTER_PREFIX = "cluster_";
+export const CLUSTER_PREFIX = "cluster_"
 
 export const EVENTS = {
     EDIT: "edit",
@@ -17,7 +17,7 @@ export const EVENTS = {
     RUN_TASK: "runTask",
     SHOW_CUSTOM_ACTION: "showCustomAction",
     SHOW_DETAILS: "showDetails",
-} as const;
+} as const
 
 export interface CustomActionConfig {
     label: string;
@@ -43,4 +43,4 @@ export const NODE_SIZES = {
     TRIGGER_CLUSTER_WIDTH: 350,
     TRIGGER_CLUSTER_HEIGHT: 180,
     TASK_EXPANDED_FALLBACK_HEIGHT: 140,
-} as const;
+} as const

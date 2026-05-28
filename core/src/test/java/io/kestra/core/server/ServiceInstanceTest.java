@@ -22,7 +22,10 @@ class ServiceInstanceTest {
             Duration.ofSeconds(10), // timeout
             Duration.ZERO,
             Duration.ZERO
-        )
+        ),
+        null,
+        null,
+        null
     );
 
     @Test

@@ -182,7 +182,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
-    import permission from "../../../../../models/permission"
+    import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
@@ -243,17 +243,17 @@
                     revision.revision +
                     (revision.revision === props.execution.flowRevision
                         ? ` (${t("current")})`
-                        : "")
+                        : ""),
             }))
-            .reverse()
+            .reverse(),
     )
 
     const enabled = computed(() => {
         if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, props.execution.namespace)
-            : authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)
+            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
+            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
         if (!hasPermission) return false
 
@@ -274,7 +274,7 @@
             ? props.taskRun?.id
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
                 : t("replay from beginning tooltip")
-            : t("restart tooltip", {state: props.execution.state?.current})
+            : t("restart tooltip", {state: props.execution.state?.current}),
     )
 
     const openReplayWithInputsDialog = () => {
@@ -292,7 +292,7 @@
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,
             revision,
-            store: true
+            store: true,
         })
         isReplayWithInputsOpen.value = true
     }
@@ -302,13 +302,13 @@
         currentFlow.value = undefined
         flowStore.loadRevisions({
             namespace: props.execution.namespace,
-            id: props.execution.flowId
+            id: props.execution.flowId,
         })
         currentFlow.value = await executionsStore.loadFlowForExecution({
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: props.execution.flowRevision,
-            store: true
+            store: true,
         })
     }
 
@@ -349,7 +349,7 @@
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: revisionsSelected.value
+            revision: revisionsSelected.value,
         })
 
         const newExecution = response.data
@@ -364,8 +364,8 @@
                     flowId: newExecution.flowId,
                     id: newExecution.id,
                     tab: "gantt",
-                    tenant: router.currentRoute.value.params.tenant
-                }
+                    tenant: router.currentRoute.value.params.tenant,
+                },
             }).href
         } else {
             window.setTimeout(() => window.location.reload(), 500)
@@ -381,7 +381,7 @@
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: newRevision,
-            store: false
+            store: false,
         })
     })
 
@@ -436,7 +436,7 @@
             &::after {
                 width: 8px;
                 height: 8px;
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-btn-primary-bg-default);
             }
         }
     }
@@ -451,8 +451,8 @@
     &.is-checked {
         :deep(.kel-radio__input) {
             .kel-radio__inner {
-                border-color: var(--ks-button-background-primary);
-                background-color: var(--ks-button-background-primary);
+                border-color: var(--ks-btn-primary-bg-default);
+                background-color: var(--ks-btn-primary-bg-default);
 
                 &::after {
                     background-color: var(--ks-white);

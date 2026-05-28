@@ -14,12 +14,17 @@ export enum Comparators {
     PREFIX = "^.=",
 }
 
-export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS];
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS]
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
     Comparators.ENDS_WITH, 
     Comparators.STARTS_WITH, 
-];
+]
+
+export interface DateFilterOption {
+    value: string;
+    label: string;
+}
 
 export interface FilterKeyConfig {
     key: string;
@@ -28,10 +33,21 @@ export interface FilterKeyConfig {
     searchable?: boolean;
     comparators: Comparators[];
     showComparatorSelection?: boolean;
-    valueProvider?: () => Promise<FilterValue[]>;
+    /**
+     * Returns the dropdown options for a filter.
+     * Declare an `options` parameter (any name) to opt into server-side search:
+     * the multi-select will call `valueProvider({search})` on user input instead
+     * of filtering the loaded list client-side. Server-side support is detected
+     * via `valueProvider.length > 0`, so avoid default-valued or rest params.
+     */
+    valueProvider?: (options?: {search?: string}) => Promise<FilterValue[]>;
     valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
+    dateFilterOptions?: DateFilterOption[];
+    /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
+    keyLabelProvider?: (meta?: Record<string, string>) => string;
 }
 
 export interface FilterValue {
@@ -50,6 +66,8 @@ export interface AppliedFilter {
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
+    /** Extra key-value metadata (e.g. dateFilter for timeRange filters). */
+    meta?: Record<string, string>;
 }
 
 export interface SavedFilter {
@@ -104,7 +122,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.CONTAINS]: "Contains",
     [Comparators.REGEX]: "Matches Pattern",
     [Comparators.PREFIX]: "Prefix",
-};
+}
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "filter.comparator_descriptions.EQUALS",
@@ -120,4 +138,4 @@ export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.CONTAINS]: "filter.comparator_descriptions.CONTAINS",
     [Comparators.REGEX]: "filter.comparator_descriptions.REGEX",
     [Comparators.PREFIX]: "filter.comparator_descriptions.PREFIX",
-};
+}

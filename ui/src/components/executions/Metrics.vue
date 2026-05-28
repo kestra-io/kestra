@@ -23,13 +23,13 @@
     import {ref, nextTick} from "vue"
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
     import MetricsTable from "./MetricsTable.vue"
-    import {Execution} from "../../stores/executions";
+    import {Execution} from "../../stores/executions"
 
     const props = defineProps<{
         embed?: boolean;
         taskRun: Record<string, any>;
         execution: Execution;
-    }>();
+    }>()
 
     const isOpen = ref(false)
     const table = ref<InstanceType<typeof MetricsTable> | null>(null)

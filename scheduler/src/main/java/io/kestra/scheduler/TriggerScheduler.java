@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -335,11 +336,11 @@ public class TriggerScheduler {
         triggerState = triggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
 
         // Evaluate Schedulable
-        Optional<Execution> maybeExecution = schedulableEvaluator.evaluate(trigger, triggerContext, triggerEvaluationContext.conditionContext());
-        if (maybeExecution.isPresent()) {
-            log(clock, triggerContext, maybeExecution.get());
+        Optional<TriggerEvaluationResult> evaluationResult = schedulableEvaluator.evaluate(trigger, triggerContext, triggerEvaluationContext.conditionContext());
+        if (evaluationResult.isPresent()) {
+            log(clock, triggerContext, evaluationResult.get());
             triggerState = triggerState
-                .updateOnExecutionCreated(clock, maybeExecution.get().getState().getCurrent())
+                .updateOnExecutionCreated(clock, evaluationResult.get().stateType())
                 .locked(clock, !((AbstractTrigger) trigger).isAllowConcurrent());
         }
         // Save the final trigger state
@@ -347,9 +348,9 @@ public class TriggerScheduler {
 
         // May send a new execution - if Schedulable trigger or on error
         final String tenantId = triggerState.getTenantId();
-        maybeExecution.ifPresent(execution ->
+        evaluationResult.ifPresent(res ->
         {
-            execution = execution
+            var execution = res.toExecution(triggerContext)
                 .withScheduleDate(scheduleTime.toInstant())
                 .withTenantId(tenantId);
             triggerExecutionSender.send(execution);
@@ -421,19 +422,19 @@ public class TriggerScheduler {
         return Optional.empty();
     }
 
-    private void log(Clock clock, TriggerContext triggerContext, Execution execution) {
+    private void log(Clock clock, TriggerContext triggerContext, TriggerEvaluationResult evaluationResult) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(execution))
+            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext))
             .increment();
 
         ZonedDateTime now = ZonedDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
 
         if (
-            execution.getTrigger() != null &&
-                execution.getTrigger().getVariables() != null &&
-                execution.getTrigger().getVariables().containsKey("next")
+            evaluationResult.trigger() != null &&
+                evaluationResult.trigger().getVariables() != null &&
+                evaluationResult.trigger().getVariables().containsKey("next")
         ) {
-            Object nextVariable = execution.getTrigger().getVariables().get("next");
+            Object nextVariable = evaluationResult.trigger().getVariables().get("next");
 
             ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
 
@@ -441,7 +442,7 @@ public class TriggerScheduler {
             // FIXME : "late" are not excluded and can increase delay value (false positive)
             if (next != null && now.isBefore(next)) {
                 metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(execution))
+                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext))
                     .record(Duration.between(triggerContext.getDate(), now));
             }
         }
@@ -450,7 +451,7 @@ public class TriggerScheduler {
             triggerContext,
             Level.INFO,
             "Scheduled execution {} at '{}' started at '{}'",
-            execution.getId(),
+            evaluationResult.executionId(),
             triggerContext.getDate(),
             now
         );

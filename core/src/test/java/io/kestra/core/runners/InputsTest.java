@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
@@ -54,6 +55,9 @@ public class InputsTest {
 
     @Inject
     private NamespaceFactory namespaceFactory;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     private static final Map<String, Object> object = Map.of(
         "people", List.of(
@@ -222,8 +226,11 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(16);
+        assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(3);
+
         assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("file").getFirst()).get("value"))
             .matches("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml");
         // secret inputs are decrypted to be used as task properties
@@ -387,8 +394,10 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(16);
+        assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        assertThat(subExecutions).hasSize(3);
 
         assertThat(execution.getInputs().get("json1")).isInstanceOf(Map.class);
         assertThat(((Map<?, ?>) execution.getInputs().get("json1")).size()).isZero();

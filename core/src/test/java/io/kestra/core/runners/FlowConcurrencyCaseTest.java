@@ -6,17 +6,16 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.utils.Await;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -38,10 +37,10 @@ public class FlowConcurrencyCaseTest {
     private ExecutionService executionService;
 
     @Inject
-    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     public void flowConcurrencyCancel(String tenantId) throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
@@ -55,7 +54,6 @@ public class FlowConcurrencyCaseTest {
             assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(Type.CANCELLED::equals);
         } finally {
             runnerUtils.killExecution(execution1);
-            runnerUtils.awaitExecution(e -> e.getState().isTerminated(), execution1);
         }
     }
 
@@ -71,7 +69,6 @@ public class FlowConcurrencyCaseTest {
             assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(State.Type.FAILED::equals);
         } finally {
             runnerUtils.killExecution(execution1);
-            runnerUtils.awaitExecution(e -> e.getState().isTerminated(), execution1);
         }
     }
 
@@ -194,24 +191,14 @@ public class FlowConcurrencyCaseTest {
         Execution parent = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-parallel-subflow-kill", null, null, Duration.ofSeconds(30));
         Execution queued = runnerUtils.awaitFlowExecution(e -> e.getState().isQueued(), tenantId, NAMESPACE, "flow-concurrency-parallel-subflow-kill-child");
 
-        // Kill the parent
-        killQueue.emit(
-            ExecutionKilledExecution
-                .builder()
-                .state(ExecutionKilled.State.REQUESTED)
-                .executionId(parent.getId())
-                .isOnKillCascade(true)
-                .tenantId(tenantId)
-                .build()
-        );
-
+        runnerUtils.killExecution(parent);
         Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), queued);
         assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(terminated.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
         assertThat(terminated.getTaskRunList()).isNull();
     }
 
-    public void flowConcurrencyKilled(String tenantId) throws QueueException, InterruptedException {
+    public void flowConcurrencyKilled(String tenantId) throws QueueException {
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed", Optional.empty())
             .orElseThrow();
@@ -225,17 +212,7 @@ public class FlowConcurrencyCaseTest {
             assertThat(execution3.getState().getCurrent()).isEqualTo(Type.QUEUED);
 
             // we kill execution 1, execution 2 should run but not execution 3
-            killQueue.emit(
-                ExecutionKilledExecution
-                    .builder()
-                    .state(ExecutionKilled.State.REQUESTED)
-                    .executionId(execution1.getId())
-                    .isOnKillCascade(true)
-                    .tenantId(tenantId)
-                    .build()
-            );
-
-            Execution killed = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution1);
+            Execution killed = runnerUtils.killExecution(execution1);
             assertThat(killed.getState().getCurrent()).isEqualTo(Type.KILLED);
             assertThat(killed.getState().getHistories().stream().anyMatch(h -> h.getState() == Type.RUNNING)).isTrue();
 
@@ -243,21 +220,20 @@ public class FlowConcurrencyCaseTest {
             Execution running = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.RUNNING), execution2);
             assertThat(running.getState().getCurrent()).isEqualTo(Type.RUNNING);
 
-            // we check that execution 3 is still queued
-            Thread.sleep(100); // wait a little to be 100% sure
-            Execution queued = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution3);
-            assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
+            // exec2 is running so the concurrency limit (1) is saturated — exec3 must stay queued
+            Await.await()
+                .during(Duration.ofMillis(100))
+                .atMost(Duration.ofSeconds(5))
+                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                    .map(e -> e.getState().isQueued())
+                    .orElse(false));
         } finally {
-            // kill everything to avoid dangling executions
             runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
-
-            // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(30));
         }
     }
 
-    public void flowConcurrencyQueueKilled(String tenantId) throws QueueException, InterruptedException {
+    public void flowConcurrencyQueueKilled(String tenantId) throws QueueException {
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed", Optional.empty())
             .orElseThrow();
@@ -270,32 +246,21 @@ public class FlowConcurrencyCaseTest {
             assertThat(execution2.getState().getCurrent()).isEqualTo(Type.QUEUED);
             assertThat(execution3.getState().getCurrent()).isEqualTo(Type.QUEUED);
 
-            // we kill execution 2, execution 3 should not run
-            killQueue.emit(
-                ExecutionKilledExecution
-                    .builder()
-                    .state(ExecutionKilled.State.REQUESTED)
-                    .executionId(execution2.getId())
-                    .isOnKillCascade(true)
-                    .tenantId(tenantId)
-                    .build()
-            );
-
-            Execution killed = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution2);
+            // we kill execution 2 (queued), execution 3 should not run
+            Execution killed = runnerUtils.killExecution(execution2);
             assertThat(killed.getState().getCurrent()).isEqualTo(Type.KILLED);
             assertThat(killed.getState().getHistories().stream().noneMatch(h -> h.getState() == Type.RUNNING)).isTrue();
 
-            // we now check that execution 3 is still queued
-            Thread.sleep(100); // wait a little to be 100% sure
-            Execution queued = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution3);
-            assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
+            // exec1 is still running, exec2 was killed from queue — exec3 must stay queued
+            Await.await()
+                .during(Duration.ofMillis(100))
+                .atMost(Duration.ofSeconds(5))
+                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                    .map(e -> e.getState().isQueued())
+                    .orElse(false));
         } finally {
-            // kill everything to avoid dangling executions
             runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution3);
-
-            // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
-            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed", Duration.ofSeconds(30));
         }
     }
 

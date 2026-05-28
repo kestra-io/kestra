@@ -1,9 +1,11 @@
 package io.kestra.jdbc.repository;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,6 +44,23 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
     @Override
     protected Condition findQueryCondition(String query) {
         return findCondition(query);
+    }
+
+    @Override
+    public Set<String> findDistinctNamespace(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(
+                configuration -> new HashSet<>(DSL
+                    .using(configuration)
+                    .select(field("namespace"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId, false))
+                    .and(lastCondition())
+                    .groupBy(field("namespace"))
+                    .fetch()
+                    .map(record -> record.getValue("namespace", String.class)))
+            );
     }
 
     @Override

@@ -73,7 +73,7 @@
 
 <style scoped lang="scss">
     .ks-icon-button {
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         width: 24px;
         height: 24px;
         min-width: 24px;
@@ -89,8 +89,8 @@
         cursor: pointer;
 
         &:hover {
-            color: var(--ks-content-primary);
-            background-color: var(--ks-tag-background);
+            color: var(--ks-text-primary);
+            background-color: var(--ks-bg-tag);
         }
 
         :deep(.material-design-icon__svg) {

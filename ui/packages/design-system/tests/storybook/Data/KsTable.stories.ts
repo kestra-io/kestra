@@ -27,7 +27,7 @@ type Story = StoryObj<typeof KsTable>
 
 export const Default: Story = {
     args: {
-        showHeader: true
+        showHeader: true,
     },
 
     render: (args) => ({
@@ -49,7 +49,7 @@ export const Default: Story = {
                 </ks-table>
             </div>
         `,
-    })
+    }),
 }
 
 export const Sortable: Story = {

@@ -79,7 +79,7 @@ export const WithNavbar: Story = {
 
             const onFilter = () => {
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
                 )
                 total.value = filtered.length
                 filteredData.value = filtered.slice(0, size.value)
@@ -90,7 +90,7 @@ export const WithNavbar: Story = {
                 page.value = p
                 size.value = s
                 const filtered = SAMPLE_DATA.filter(r =>
-                    r.id.includes(search.value) || r.namespace.includes(search.value)
+                    r.id.includes(search.value) || r.namespace.includes(search.value),
                 )
                 filteredData.value = filtered.slice((p - 1) * s, p * s)
             }
@@ -247,7 +247,7 @@ export const CustomContent: Story = {
                                 style="border: 1px solid var(--ks-border-primary); border-radius: 8px; padding: 12px"
                             >
                                 <strong style="font-size: 13px">{{ row.id }}</strong>
-                                <p style="margin: 4px 0; font-size: 12px; color: var(--ks-content-secondary)">{{ row.namespace }}</p>
+                                <p style="margin: 4px 0; font-size: 12px; color: var(--ks-text-secondary)">{{ row.namespace }}</p>
                                 <ks-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'RUNNING' ? 'primary' : 'danger'" size="small">
                                     {{ row.status }}
                                 </ks-tag>

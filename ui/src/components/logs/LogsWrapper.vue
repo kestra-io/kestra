@@ -20,6 +20,16 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
+                    <LogQuickFilters
+                        :levels="VALUES.LEVELS"
+                        :intervals="quickIntervals"
+                        :level="effectiveLogLevel"
+                        :timeRange="selectedTimeRange"
+                        :intervalLabel="t('filter.timeRange_log.label')"
+                        :levelLabel="t('filter.level_log_executions.label')"
+                        @update:level="onQuickFilterLevel"
+                        @update:time-range="onQuickFilterTimeRange"
+                    />
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
@@ -57,6 +67,8 @@
     import _merge from "lodash/merge"
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
+    import {useValues} from "../filter/composables/useValues"
+    import LogQuickFilters from "./LogQuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
@@ -109,6 +121,17 @@
     const {t} = useI18n()
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
+    const {VALUES} = useValues("logs")
+    // Quick-filter interval is a curated subset with short labels for a compact
+    // single-row layout; the full localized range list stays available via the
+    // "Add filters" dropdown (timeRange).
+    const quickIntervals = [
+        {label: "15m", value: "PT15M"},
+        {label: "1h", value: "PT1H"},
+        {label: "12h", value: "PT12H"},
+        {label: "1d", value: "PT24H"},
+        {label: "7d", value: "PT168H"},
+    ]
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
 
@@ -133,6 +156,7 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
+        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<string>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel,
@@ -199,6 +223,19 @@
     const charts = computed(() => [
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
+
+    const onQuickFilterLevel = (level: string) => {
+        setLevelRouteValue(level)
+    }
+
+    const onQuickFilterTimeRange = (value: string) => {
+        const query = {...route.query}
+        delete query.startDate
+        delete query.endDate
+        delete query.timeRange
+        query["filters[timeRange][EQUALS]"] = value
+        router.replace({query})
+    }
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...routeFilters} = route.query

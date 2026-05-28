@@ -460,10 +460,6 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("getSuperAdminCondition must be overridden for JSONB-backed superAdmin field");
     }
 
-    protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
-        throw new InvalidQueryFiltersException("Unsupported operation for TAGS field: " + operation);
-    }
-
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     protected Condition generateStateCondition(Object value, QueryFilter.Op operation) {

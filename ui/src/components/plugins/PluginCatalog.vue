@@ -5,12 +5,12 @@
         {{ $t("pluginPage.loadError") }}
     </KsAlert>
 
-    <section v-else-if="!filteredPlugins" class="px-3 plugins-container plugins-container--loading">
+    <section v-else-if="!filteredPlugins" class="plugins-container plugins-container--loading">
         <KsSkeleton v-for="n in 8" :key="n" animated :rows="4" class="plugin-skeleton" />
     </section>
 
     <template v-else>
-        <KsRow class="my-4 px-3">
+        <KsRow class="plugin-header">
             <h4 class="plugin-title">{{ $t("pluginPage.title1") }}</h4>
 
             <div class="filter-toolbar">
@@ -57,7 +57,7 @@
             class="my-6"
         />
 
-        <section v-else class="px-3 plugins-container">
+        <section v-else class="plugins-container">
             <KsTooltip
                 v-for="plugin in pluginsList"
                 :showAfter="1000"
@@ -307,64 +307,68 @@
 </script>
 
 <style scoped lang="scss">
-    .plugin-title {
-        font-weight: var(--ks-font-weight-semibold);
-        margin-bottom: var(--ks-spacing-6);
-    }
-
-    .filter-toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-3);
-        width: 100%;
-        margin-top: var(--ks-spacing-3);
-
-        &__search {
-            min-width: 17rem;
+    .plugin-header {
+        padding: var(--ks-spacing-6);
+    
+        .plugin-title {
+            font-weight: var(--ks-font-weight-semibold);
+            margin-bottom: var(--ks-spacing-6);
         }
-    }
 
-    .category-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--ks-spacing-2);
-        flex: 1 1 auto;
-        min-width: 0;
-    }
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-3);
+            width: 100%;
+            margin-top: var(--ks-spacing-3);
 
-    .category-label {
-        display: inline-block;
-        text-transform: lowercase;
-
-        &::first-letter {
-            text-transform: uppercase;
+            &__search {
+                min-width: 17rem;
+            }
         }
-    }
 
-    .sort-by {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        flex: 0 0 auto;
-    }
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--ks-spacing-2);
+            flex: 1 1 auto;
+            min-width: 0;
+        }
 
-    .sort-label {
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
-        white-space: nowrap;
-    }
+        .category-label {
+            display: inline-block;
+            text-transform: lowercase;
 
-    .sort-select {
-        width: 8.75rem;
+            &::first-letter {
+                text-transform: uppercase;
+            }
+        }
+
+        .sort-by {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
+            flex: 0 0 auto;
+        }
+
+        .sort-label {
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-xs);
+            white-space: nowrap;
+        }
+
+        .sort-select {
+            width: 8.75rem;
+        }
     }
 
     .plugins-container {
         display: grid;
         gap: var(--ks-spacing-4);
         grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-        padding-bottom: var(--ks-spacing-10);
+        padding: 0 var(--ks-spacing-6) var(--ks-spacing-10) var(--ks-spacing-6);
 
         &--loading {
             margin-top: var(--ks-spacing-4);
@@ -382,5 +386,16 @@
         max-height: 20rem;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+
+    @media (max-width: 650px) {
+        .plugin-header {
+            padding: var(--ks-spacing-3);
+        }
+
+        .plugins-container {
+            padding-left: var(--ks-spacing-3);
+            padding-right: var(--ks-spacing-3);
+        }
     }
 </style>

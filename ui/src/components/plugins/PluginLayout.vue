@@ -9,7 +9,7 @@
         />
         <div class="plugin-page__body">
             <div class="plugin-detail">
-                <div class="plugin-detail__main">
+                <div :class="['plugin-detail__main', {'plugin-detail__main--flat': flat}]">
                     <header class="plugin-header">
                         <div class="plugin-header__row">
                             <KsIconButton
@@ -281,9 +281,6 @@
         flex-direction: column;
         gap: var(--ks-spacing-4);
         min-width: 0;
-        background-color: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
         padding: var(--ks-spacing-6);
 
         &__row {
@@ -377,27 +374,36 @@
     .plugin-detail {
         display: flex;
         align-items: flex-start;
-        gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-4);
+        gap: var(--ks-spacing-6);
+        padding: var(--ks-spacing-6);
 
         &__main {
             flex: 1 1 auto;
             min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: var(--ks-spacing-4);
-        }
-
-        &__body {
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-base);
-            padding: var(--ks-spacing-5);
 
             &--flat {
                 background-color: transparent;
                 border: none;
                 border-radius: 0;
+                gap: var(--ks-spacing-4);
+
+                .plugin-header {
+                    background-color: var(--ks-bg-surface);
+                    border: 1px solid var(--ks-border-default);
+                    border-radius: var(--ks-radius-base);
+                }
+            }
+        }
+
+        &__body {
+            padding: var(--ks-spacing-6);
+
+            &--flat {
                 padding: 0;
             }
         }

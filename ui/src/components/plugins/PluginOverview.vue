@@ -227,7 +227,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-5);
-        padding: var(--ks-spacing-4) var(--ks-spacing-6) var(--ks-spacing-4);
+        margin-top: var(--ks-spacing-8);
         min-width: 0;
 
         &__title {

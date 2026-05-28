@@ -6,11 +6,11 @@
 
 <style scoped lang="scss">
     .settings-wrapper {
-        max-width: 42rem;
+        width: min(600px, 100% - 2rem);
         margin: 0 auto;
-        padding: 2rem 1rem 4rem;
+        padding-block: 2rem 4rem;
         display: flex;
         flex-direction: column;
-        gap: 2.5rem;
+        gap: 4rem;
     }
 </style>

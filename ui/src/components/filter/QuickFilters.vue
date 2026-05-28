@@ -1,7 +1,7 @@
 <template>
     <div class="quick-filters">
         <div v-if="showInterval" class="quick-filters__group">
-            <span v-if="intervalLabel" class="quick-filters__label">{{ intervalLabel }}</span>
+            <span v-if="intervalLabel" class="quick-filters__label">{{ intervalLabel }}:</span>
             <KsSegmented
                 data-test="quick-filters-interval"
                 :modelValue="timeRange"
@@ -12,7 +12,7 @@
         </div>
 
         <div v-if="showLevel" class="quick-filters__group">
-            <span v-if="levelLabel" class="quick-filters__label">{{ levelLabel }}</span>
+            <span v-if="levelLabel" class="quick-filters__label">{{ levelLabel }}:</span>
             <div
                 class="quick-filters__levels"
                 data-test="quick-filters-level"
@@ -104,7 +104,7 @@
 
         &__label {
             font-size: var(--ks-font-size-sm);
-            font-weight: 500;
+            font-weight: 400;
             color: var(--ks-text-secondary);
             white-space: nowrap;
         }
@@ -125,8 +125,9 @@
             border: 1px solid transparent;
             border-radius: var(--ks-radius-lg);
             background: transparent;
-            color: var(--ks-text-secondary);
+            color: var(--ks-text-primary);
             font-size: var(--ks-font-size-sm);
+            font-weight: 500;
             line-height: 1;
             white-space: nowrap;
             cursor: pointer;

@@ -2,14 +2,14 @@
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
     <div id="app-shell">
-        <AppTopNavBar  v-if="shouldRenderApp && route?.name && !route.meta?.anonymous"  />
+        <AppTopNavBar  v-if="loaded && route?.name && !route.meta?.anonymous"  />
         <div id="app-body">
-            <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+            <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded">
                 <router-view />
             </component>
         </div>
     </div>
-    <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
+    <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
 </template>
 
@@ -46,8 +46,6 @@
     const route = useRoute()
 
     const envName = computed(() => layoutStore.envName || miscStore.configs?.environment?.name)
-
-    const shouldRenderApp = computed(() => loaded.value)
 
     function setTitleEnvSuffix() {
         const envSuffix = envName.value ? ` - ${envName.value}` : ""
@@ -92,6 +90,7 @@
         if (appContainer) appContainer.style.display = "block"
         loaded.value = true
     }
+
     watch(() => route?.meta?.anonymous, async (anonymous) => {
         if (!anonymous && BasicAuth.isLoggedIn()) {
             try {

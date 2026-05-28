@@ -11,9 +11,9 @@
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
         <template v-else>
-            <a
+            <router-link
                 class="bookmark-anchor"
-                :href="href"
+                :to="href"
                 :title="updatedTitle"
             >
                 <span class="bookmark-title">{{ updatedTitle }}</span>
@@ -27,7 +27,7 @@
                         :title="$t('delete')"
                     />
                 </div>
-            </a>
+            </router-link>
         </template>
     </div>
 </template>

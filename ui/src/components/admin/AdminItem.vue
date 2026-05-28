@@ -7,7 +7,7 @@
         @click="open"
     >
         <template v-if="configs?.version" #suffix>
-            <KsTooltip placement="top">
+            <KsTooltip placement="top" effect="light">
                 <template #content>
                     <div class="admin-item__tooltip">
                         <div>{{ t("version") }}: {{ configs.version }}</div>

@@ -858,6 +858,7 @@
     "last 48 hours": "지난 48시간",
     "last X days count": "지난 {days}일 동안 {count}",
     "last evaluation date": "마지막 평가 날짜",
+    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
     "last execution status": "마지막 실행 상태",

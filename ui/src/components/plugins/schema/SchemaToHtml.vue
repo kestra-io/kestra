@@ -314,6 +314,7 @@
     .example-block {
         display: flex;
         flex-direction: column;
+        gap: 1rem
     }
 
     .example-block-tight {

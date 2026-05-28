@@ -863,6 +863,7 @@
       }
     },
     "no inputs": "This flow has no inputs.",
+    "admin_preferences": "Preferences",
     "settings": {
       "label": "Settings",
       "blocks": {

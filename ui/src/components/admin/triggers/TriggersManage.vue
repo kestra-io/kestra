@@ -357,7 +357,7 @@
     const isBackfillOpen = ref(false)
     const isDetailsOpen = ref(false)
     const detailsTriggerId = ref<string | undefined>()
-    const selectedTrigger = ref(null)
+    const selectedTrigger = ref<any>(undefined)
 
     const DATE_COLUMNS: readonly string[] = ["lastTriggeredDate", "nextEvaluationDate", "evaluatedAt", "updatedAt"]
     const SORTABLE_COLUMNS: readonly string[] = ["flowId", "namespace", ...DATE_COLUMNS]
@@ -537,7 +537,7 @@
     const setBackfillModal = (trigger: any, bool: boolean) => {
         if (!trigger) {
             isBackfillOpen.value = false
-            selectedTrigger.value = null
+            selectedTrigger.value = undefined
             return
         }
 

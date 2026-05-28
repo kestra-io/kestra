@@ -597,7 +597,11 @@ class ScheduleTest {
                     MultiselectInput.builder()
                         .id("multiselectInput")
                         .type(Type.MULTISELECT)
-                        .values(List.of("option1", "option2", "option3"))
+                        .values(List.of(
+                            new io.kestra.core.models.flows.input.ValueOption("option1", "option1"),
+                            new io.kestra.core.models.flows.input.ValueOption("option2", "option2"),
+                            new io.kestra.core.models.flows.input.ValueOption("option3", "option3")
+                        ))
                         .defaults(Property.ofValue(List.of("option1", "option2")))
                         .build()
                 )
@@ -637,7 +641,11 @@ class ScheduleTest {
                     MultiselectInput.builder()
                         .id("multiselectAutoSelect")
                         .type(Type.MULTISELECT)
-                        .values(List.of("first", "second", "third"))
+                        .values(List.of(
+                            new io.kestra.core.models.flows.input.ValueOption("first", "first"),
+                            new io.kestra.core.models.flows.input.ValueOption("second", "second"),
+                            new io.kestra.core.models.flows.input.ValueOption("third", "third")
+                        ))
                         .autoSelectFirst(true)
                         .build()
                 )

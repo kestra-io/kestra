@@ -35,12 +35,12 @@
                 clearable
             >
                 <KsOption
-                    v-for="item in input.values"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in (input.values ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsRadioGroup
@@ -49,7 +49,7 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <KsRadio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <KsRadio v-for="item in (input.values ?? []).map(toOption)" :key="item.value" :label="item.label" :value="item.value" />
                 <KsInput
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
@@ -71,12 +71,12 @@
                 :allowCreate="input.allowCustomValue"
             >
                 <KsOption
-                    v-for="item in (input.values ?? input.options)"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                 >
-                    <KsMarkdown :content="item" />
+                    <KsMarkdown :content="item.label" />
                 </KsOption>
             </KsSelect>
             <KsInput
@@ -268,6 +268,8 @@
         message: string;
     }
 
+    type ValueOptionLike = string | {label: string; value: string};
+
     interface InputMetaData {
         id: string;
         type: InputType
@@ -276,8 +278,8 @@
         required?: boolean;
         defaults?: unknown;
         value?: unknown;
-        values?: string[];
-        options?: string[];
+        values?: ValueOptionLike[];
+        options?: ValueOptionLike[];
         errors?: InputError[];
         isDefault?: boolean;
         isRadio?: boolean;
@@ -287,6 +289,10 @@
         allowedFileExtensions?: string[];
         accept?: string;
         prefill?: unknown;
+    }
+
+    function toOption(item: ValueOptionLike): {label: string; value: string} {
+        return typeof item === "string" ? {label: item, value: item} : item
     }
 
     interface SelectedTrigger {

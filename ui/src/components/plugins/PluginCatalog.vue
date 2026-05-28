@@ -31,7 +31,7 @@
                         @change="toggleCategory(category)"
                     >
                         <template #icon>
-                            <component :is="CATEGORY_ICONS[category]" :size="16" />
+                            <component :is="CATEGORY_ICONS[category] ?? TagOutline" :size="16" />
                         </template>
                         <span class="category-label">{{ category }}</span>
                     </KsCheckTag>
@@ -118,6 +118,7 @@
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Creation from "vue-material-design-icons/Creation.vue"
     import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
+    import TagOutline from "vue-material-design-icons/TagOutline.vue"
 
     const route = useRoute()
     const router = useRouter()
@@ -181,7 +182,9 @@
         INFRASTRUCTURE: CogOutline,
     })
 
-    const availableCategories = Object.keys(CATEGORY_ICONS)
+    const availableCategories = computed<string[]>(() =>
+        [...new Set((filteredPlugins.value ?? []).flatMap(p => p.categories ?? []))].sort(),
+    )
 
     const toggleCategory = (category: string) => {
         const idx = selectedCategories.value.indexOf(category)

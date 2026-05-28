@@ -61,7 +61,7 @@ export const usePluginsEnrichmentStore = defineStore("pluginsEnrichment", () => 
         const timeout = setTimeout(() => controller.abort(), PUBLIC_API_TIMEOUT_MS)
 
         const informationPromise = axios.get<{byPlugin: Record<string, PluginsInformationEntry>}>(
-            `${API_URL}/v1/plugins/pluginsInformation`,
+            `${API_URL}/v1/plugins/pluginsInformation?icons=false`,
             {signal: controller.signal},
         )
         const metadataPromise = axios.get<MetadataEntry[]>(

@@ -51,23 +51,22 @@
                 </div>
             </section>
 
-            <section class="plugin-group plugin-group--blueprints">
+            <section v-if="groupBlueprints.length > 0" class="plugin-group plugin-group--blueprints">
                 <h5 class="plugin-group__title">
                     {{ $t("pluginPage.group.blueprints", {count: groupBlueprints.length}) }}
                 </h5>
-                <div v-if="groupBlueprints.length === 0" class="plugin-group__empty">
-                    {{ $t("pluginPage.group.noBlueprints") }}
-                </div>
-                <div v-else class="plugin-group__grid">
+                <div class="plugin-group__grid">
                     <KsPluginCard
                         v-for="bp in groupBlueprints"
                         :key="bp.id"
-                        :iconCls="bp.includedTasks?.[0]"
-                        :icons="allIcons"
                         :title="bp.title"
                         :description="bp.description"
                         @click="openBlueprint(bp.id)"
-                    />
+                    >
+                        <template #footer-content>
+                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" />
+                        </template>
+                    </KsPluginCard>
                 </div>
             </section>
         </template>
@@ -90,6 +89,7 @@
     import {useI18n} from "vue-i18n"
     import {KsPluginCard, KsEmpty, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginLayout from "./PluginLayout.vue"
+    import BlueprintIconStack from "./BlueprintIconStack.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
     import {useMiscStore} from "override/stores/misc"
@@ -310,12 +310,6 @@
             display: grid;
             gap: var(--ks-spacing-3);
             grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-        }
-
-        &__empty {
-            padding: var(--ks-spacing-3) 0;
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-secondary);
         }
 
         &--blueprints {

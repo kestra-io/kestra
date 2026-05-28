@@ -879,8 +879,7 @@
       "group": {
         "plugins": "Plugins ({count})",
         "tasks": "Tasks ({count})",
-        "blueprints": "Blueprints ({count})",
-        "noBlueprints": "No blueprints available for this plugin yet."
+        "blueprints": "Blueprints ({count})"
       },
       "overview": {
         "title": "Overview",

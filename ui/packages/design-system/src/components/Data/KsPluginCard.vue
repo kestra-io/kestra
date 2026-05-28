@@ -37,14 +37,16 @@
         <hr v-if="hasDivider" class="ks-plugin-card__divider">
 
         <footer v-if="hasFooter" class="ks-plugin-card__footer">
-            <span v-if="hasTaskCount" class="ks-plugin-card__count">
-                <span class="ks-plugin-card__count-value">{{ taskCount }}</span>
-                <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.tasks", taskCount ?? 0) }}</span>
-            </span>
-            <span v-if="hasBlueprintCount" class="ks-plugin-card__count">
-                <span class="ks-plugin-card__count-value">{{ blueprintCount }}</span>
-                <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.blueprints", blueprintCount ?? 0) }}</span>
-            </span>
+            <slot name="footer-content">
+                <span v-if="hasTaskCount" class="ks-plugin-card__count">
+                    <span class="ks-plugin-card__count-value">{{ taskCount }}</span>
+                    <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.tasks", taskCount ?? 0) }}</span>
+                </span>
+                <span v-if="hasBlueprintCount" class="ks-plugin-card__count">
+                    <span class="ks-plugin-card__count-value">{{ blueprintCount }}</span>
+                    <span class="ks-plugin-card__count-label">{{ t("ks_plugin_card.blueprints", blueprintCount ?? 0) }}</span>
+                </span>
+            </slot>
             <ChevronRight
                 v-if="clickable"
                 class="ks-plugin-card__chevron"
@@ -94,14 +96,15 @@
 
     defineSlots<{
         icon?(): unknown
+        "footer-content"?(): unknown
     }>()
 
     const hasIcon = computed(() => Boolean(props.iconCls) || Boolean(slots.icon))
     const hasTaskCount = computed(() => typeof props.taskCount === "number" && props.taskCount > 0)
     const hasBlueprintCount = computed(() => typeof props.blueprintCount === "number" && props.blueprintCount > 0)
     const hasCounts = computed(() => hasTaskCount.value || hasBlueprintCount.value)
-    const hasDivider = computed(() => hasCounts.value)
-    const hasFooter = computed(() => hasCounts.value || props.clickable)
+    const hasDivider = computed(() => hasCounts.value || Boolean(slots["footer-content"]))
+    const hasFooter = computed(() => hasDivider.value || props.clickable)
 
     function onClick(event: Event) {
         if (!props.clickable) return
@@ -145,6 +148,9 @@
 
         &__logo {
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: 2.625rem;
             height: 2.625rem;
             padding: var(--ks-spacing-1);

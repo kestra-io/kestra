@@ -132,7 +132,6 @@
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-sm);
             font-weight: 500;
-            line-height: 1;
             white-space: nowrap;
             cursor: pointer;
             transition:

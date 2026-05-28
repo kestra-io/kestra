@@ -486,7 +486,7 @@
             ...(parsed?.errors ?? []),
             ...(parsed?.finally ?? []),
         ]
-        const fullTask = allTasks.find((t: any) => t.id === event.task.id) ?? event.task
+        const fullTask = allTasks.find((task: any) => task.id === event.task.id) ?? event.task
         selectedTask.value = fullTask
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true

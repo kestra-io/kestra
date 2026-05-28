@@ -226,7 +226,11 @@ public final class FileSerde {
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
         SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {
         });
-        return writeAll(values, seqWriter);
+        return values
+            .filter(Objects::nonNull)
+            .doOnNext(throwConsumer(seqWriter::write))
+            .doFinally(throwConsumer(ignored -> seqWriter.flush()))
+            .count();
     }
 
     // endregion

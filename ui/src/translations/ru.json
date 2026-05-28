@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
     "add_new_item": "Добавить новый элемент",
     "additionalPlugins": "Дополнительные плагины",
+    "admin": "Администратор",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -174,6 +175,7 @@
     "codeDisabled": "Отключено в flow",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
+    "commit_id": "Идентификатор коммита",
     "common": {
       "back": "Назад"
     },
@@ -880,6 +882,7 @@
       "raw": "Временной вид",
       "raw_details": "Показать полные task logs и flow логи в формате необработанных временных меток"
     },
+    "main_configuration": "Основная конфигурация",
     "management port": "Порт управления",
     "mark as": "Пометить как <code>{status}</code>",
     "max": "Макс",
@@ -1366,6 +1369,12 @@
     "pluginPage": {
       "alt": "Иконка плагинов",
       "search": "Поиск среди {count}+ плагинов",
+      "sort": {
+        "most_used": "Наиболее используемые",
+        "name_asc": "Имя A-Я",
+        "name_desc": "Имя Я-А",
+        "newest": "Новейшие"
+      },
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
       "title2": "Ищите tasks и triggers для создания вашего flow."
     },

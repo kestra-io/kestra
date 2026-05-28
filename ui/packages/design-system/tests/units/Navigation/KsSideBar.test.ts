@@ -1,3 +1,4 @@
+import {markRaw} from "vue"
 import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../src/index"
@@ -148,7 +149,7 @@ describe("KsSideBarItem", () => {
     test("renders the icon component when provided", () => {
         const wrapper = mount(KsSideBarItem, {
             global: globalConfig,
-            props: {title: "Flows", icon: FileTreeOutline},
+            props: {title: "Flows", icon: markRaw(FileTreeOutline)},
         })
         expect(wrapper.find(".ks-sidebar-item__icon").exists()).toBe(true)
     })

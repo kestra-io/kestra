@@ -30,7 +30,7 @@
     "dependencies": {
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
-        "@kestra-io/kestra-sdk": "^2.0.0-develop.17791128.6116c70d.4181ce21",
+        "@kestra-io/kestra-sdk": "^2.0.0-develop.17797027.1f59eb1f.3afa0199",
         "@kestra-io/slot-contracts": "*",
         "@kestra-io/topology": "*",
         "@kestra-io/ui-libs": "^0.0.302",

@@ -50,6 +50,7 @@ import KsId from "./components/Data/KsId.vue"
 import KsIcon from "./components/Basic/KsIcon.vue"
 import KsIconButton from "./components/Basic/KsIconButton/KsIconButton.vue"
 import KsInput from "./components/Form/KsInput.vue"
+import KsSearch from "./components/Form/KsSearch.vue"
 import KsPassword from "./components/Form/KsPassword.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
@@ -93,6 +94,14 @@ import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
+import KsSubMenu from "./components/Navigation/KsMenu/KsSubMenu.vue"
+import KsPageHeader from "./components/Data/KsPageHeader.vue"
+import KsDescriptions from "./components/Data/KsDescriptions.vue"
+import KsDescriptionsItem from "./components/Data/KsDescriptionsItem.vue"
+import KsCarousel from "./components/Data/KsCarousel.vue"
+import KsCarouselItem from "./components/Data/KsCarouselItem.vue"
+import KsResult from "./components/Feedback/KsResult.vue"
+import KsBacktop from "./components/Others/KsBacktop.vue"
 import KsFilterChip from "./components/Data/KsDataTable/filter/layout/FilterChip.vue"
 
 import {vKsLoading} from "./components/Feedback/KsLoading"
@@ -212,6 +221,7 @@ const components: Record<string, Component> = {
     KsRadioGroup,
     KsRow,
     KsScrollbar,
+    KsSearch,
     KsSegmented,
     KsSelect,
     KsSideBar,
@@ -239,6 +249,14 @@ const components: Record<string, Component> = {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
 }
 
 export {
@@ -332,6 +350,14 @@ export {
     KsTopNavBar,
     KsTree,
     KsUpload,
+    KsSubMenu,
+    KsPageHeader,
+    KsDescriptions,
+    KsDescriptionsItem,
+    KsCarousel,
+    KsCarouselItem,
+    KsResult,
+    KsBacktop,
     KsFilterChip,
 }
 
@@ -419,6 +445,7 @@ declare module "vue" {
         KsRadioGroup: typeof KsRadioGroup
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar
+        KsSearch: typeof KsSearch
         KsSegmented: typeof KsSegmented
         KsSelect: typeof KsSelect
         KsSideBar: typeof KsSideBar

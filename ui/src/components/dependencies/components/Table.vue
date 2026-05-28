@@ -1,6 +1,6 @@
 <template>
     <section id="filtering">
-        <KsInput
+        <KsSearch
             v-model="search"
             :placeholder="$t(`dependency.search.placeholders.${props.subtype === ASSET ? 'asset' : 'default'}`)"
             clearable
@@ -179,7 +179,7 @@ section#filtering {
     top: 0;
     z-index: 10; // Keeps it above table rows
     padding: 1rem;
-    background-color: var(--ks-background-input);
+    background-color: var(--ks-bg-input);
 
     :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
         margin-bottom: 0.5rem;
@@ -190,7 +190,7 @@ section#filtering {
 .kel-table.nodes {
     outline: none;
     border-radius: 0;
-    border-top: 1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-default);
 
     :deep(.kel-table__empty-text) {
         width: 100%;
@@ -198,10 +198,10 @@ section#filtering {
     }
 
     & :deep(.kel-table__row.selected) {
-        background-color: var(--ks-tag-background);
+        background-color: var(--ks-bg-tag);
 
         &:hover {
-            --kel-table-row-hover-bg-color: var(--ks-tag-background-hover);
+            --kel-table-row-hover-bg-color: var(--ks-bg-tag-hover);
         }
     }
 }
@@ -234,7 +234,7 @@ section#row {
 
         & p.description {
             margin: 0;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
@@ -243,7 +243,7 @@ section#row {
         margin-left: 0.5rem;
 
         :deep(a:hover .kel-icon) {
-            color: var(--ks-content-link-hover);
+            color: var(--ks-text-link);
         }
     }
 }

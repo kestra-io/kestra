@@ -105,7 +105,7 @@
         </div>
     </div>
     <div v-else>
-        <KsAlert class="mb-0" showIcon :closable="false">
+        <KsAlert class="mb-0" :closable="false">
             {{ $t("no revisions found") }}
         </KsAlert>
     </div>

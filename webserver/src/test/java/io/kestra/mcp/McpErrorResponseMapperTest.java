@@ -13,7 +13,7 @@ class McpErrorResponseMapperTest {
     private final McpErrorResponseMapper mapper = new McpErrorResponseMapper();
 
     @Test
-    void givenExceptionResponse_whenThrowableProvided_thenJsonRpcErrorWithThrowableMessageAndInternalErrorStatusIsReturned() {
+    void shouldReturnJsonRpcErrorWithInternalErrorStatusWhenThrowableProvided() {
         // Given
         RuntimeException throwable = new RuntimeException("something went wrong");
         McpSchema.JSONRPCRequest msg = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION, "test/method", "req-1", null);
@@ -33,7 +33,7 @@ class McpErrorResponseMapperTest {
     }
 
     @Test
-    void givenExceptionResponse_whenMcpErrorProvided_thenJsonRpcErrorWithMcpErrorMessageAndInternalErrorStatusIsReturned() {
+    void shouldReturnJsonRpcErrorWithMcpErrorMessageWhenMcpErrorProvided() {
         // Given
         String errorMessage = "custom mcp error message";
         McpError mcpError = McpError.builder(McpSchema.ErrorCodes.INTERNAL_ERROR).message(errorMessage).build();

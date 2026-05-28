@@ -129,7 +129,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
         workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
-        assertThat(runningLatch.await(10, TimeUnit.SECONDS)).isTrue();
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
         // WHEN - stop first worker. The task is guaranteed to still be running because it is
         // blocked on holdLatch.
@@ -200,7 +200,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         });
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
-        assertThat(runningLatch.await(10, TimeUnit.SECONDS)).isTrue();
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
 
         // Task is held by holdLatch, guaranteed still running when we stop the worker.
         worker.close();

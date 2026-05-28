@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
     "add_new_item": "新しいアイテムを追加",
     "additionalPlugins": "追加プラグイン",
+    "admin": "管理者",
     "administration": "管理",
     "advanced configuration": "他のプロパティ",
     "after": "後",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flowで無効化",
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
+    "commit_id": "コミット id",
     "common": {
       "back": "戻る"
     },
@@ -205,6 +207,7 @@
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_and_close": "コピーして閉じる",
     "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
@@ -335,6 +338,7 @@
         "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。",
         "title": "カスタムBlueprintの追加"
       },
+      "contact_sales": "営業に問い合わせる",
       "enterprise_edition": "エンタープライズエディション",
       "get_a_demo_button": "デモを取得",
       "instance": {
@@ -392,7 +396,8 @@
         "label": "テスト",
         "message": "フローのロジックを個別に検証し、リグレッションを早期に検出し、変更や成長に伴う自動化に自信を持ち続けましょう。",
         "title": "すべての変更で信頼性を確保"
-      }
+      },
+      "watch_the_video": "ビデオを見る"
     },
     "dependencies": "依存関係",
     "dependencies delete flow": "このflowには依存関係があります。削除すると、依存関係が実行されなくなります。<br /><br /> 影響を受けるflowのリストはこちらです:",
@@ -478,6 +483,10 @@
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
         "title": "お知らせはまだありません！"
       },
+      "apiTokens": {
+        "content": "APIトークンは、Kestra APIへのプログラムによるアクセスを許可したいときに使用されます。",
+        "title": "APIトークンを管理する"
+      },
       "apps": {
         "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
@@ -493,6 +502,10 @@
       "concurrency_limit": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには制限が設定されていません。"
+      },
+      "concurrency_limits": {
+        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
+        "title": "同時実行制限は設定されていません。"
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +524,10 @@
           "content": "<a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
         }
+      },
+      "groups": {
+        "content": "グループを使用すると、ユーザーをまとめてバンドルし、テナント全体で権限とロールバインディングを一括管理できます。",
+        "title": "まだグループがありません！"
       },
       "kill_switches": {
         "content": "キルスイッチ機能は、問題のある実行を停止するためのUIベースのメカニズムを提供します。これは、CLI専用の<code>--skip-executions</code>および<code>--skip-flows</code>コマンドを包括的な管理インターフェースに置き換えます。",
@@ -539,6 +556,10 @@
       "versionPlugin": {
         "content": "ここでは、Kestraインスタンスにインストールされているすべてのプラグインを管理できます。新しくインストールされたプラグインは、インスタンスの設定によっては、すべてのKestraサービスで直ちに利用可能にならない場合があります。",
         "title": "まだバージョン管理されたプラグインがありません！"
+      },
+      "workerRegistrationTokens": {
+        "content": "登録トークンを使用すると、リモートworkerが安全に認証し、Kestraインスタンスに登録できます。トークンを作成し、それを使用して新しいworkerをこのクラスターに接続します。",
+        "title": "登録トークンがまだありません！"
       }
     },
     "empty search": "検索結果がありません",
@@ -648,6 +669,8 @@
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
     "feeds": {
+      "heading": "すべてのKestraに関すること。",
+      "subheading": "最新の更新情報、ガイド、ストーリー",
       "title": "Kestraの新機能"
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
@@ -737,6 +760,27 @@
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "アプリケーション",
+        "tooltip": "このflowを使用しているアプリを表示"
+      },
+      "dependencies": {
+        "suffix": "依存関係",
+        "tooltip": "フローの依存関係を表示"
+      },
+      "errors": {
+        "label": "{count} エラー"
+      },
+      "revisions": {
+        "suffix": "リビジョン",
+        "tooltip": "フローのリビジョンを表示"
+      },
+      "tests": {
+        "suffix": "テスト",
+        "tooltip": "フローテストを表示"
+      }
+    },
     "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
     "flow_outputs": "フロー出力",
@@ -838,6 +882,7 @@
       "raw": "Temporalビュー",
       "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示"
     },
+    "main_configuration": "メイン設定",
     "management port": "管理ポート",
     "mark as": "<code>{status}</code>としてマーク",
     "max": "Max",
@@ -865,7 +910,10 @@
       "copy_url": "URLをコピー",
       "create": "サーバーを作成",
       "delete_confirm": "このMCPサーバーを削除してもよろしいですか？",
+      "id_invalid": "IDは小文字のアルファベットまたは数字で始まり、小文字のアルファベット、数字、ハイフン、またはアンダースコアのみを含む必要があります。",
+      "id_placeholder": "例: my-mcp-server",
       "instructions": "指示",
+      "main_tenant": "メイン",
       "no_servers": "MCPサーバーが見つかりません。最初のサーバーを作成して、MCP Tool triggerを外部AIエージェントに公開してください。",
       "page_description": "KestraのflowをMCP互換のAIエージェント用ツールとして公開する",
       "private": "プライベート",
@@ -874,6 +922,11 @@
       "server": "MCPサーバー",
       "server_type": "サーバータイプ",
       "servers": "MCPサーバー",
+      "tab_connect": "接続",
+      "tab_connect_placeholder": "接続の詳細は近日公開予定です。",
+      "tab_edit": "編集",
+      "tab_tool_flows": "ツールフローズ",
+      "tab_tool_flows_placeholder": "ツールフロー管理は近日公開予定です。",
       "url_copied": "URLをコピーしました！",
       "username_password": "ユーザー名 & パスワード"
     },
@@ -1316,6 +1369,12 @@
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
+      "sort": {
+        "most_used": "最も使用されている",
+        "name_asc": "名前 A-Z",
+        "name_desc": "名前 Z-A",
+        "newest": "最新"
+      },
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },
@@ -1402,6 +1461,7 @@
     "row count": "行数",
     "run task in playground": "プレイグラウンドでタスクを実行",
     "runners": "ランナー",
+    "running": "RUNNING",
     "running duration": "実行期間",
     "save": "保存",
     "save draft": {
@@ -1455,6 +1515,7 @@
     "seeing old revision": "古いリビジョンを表示しています: {revision}",
     "select": "{{section}}を選択してください",
     "select datetime": "日付を選択",
+    "select view": "ビューを選択",
     "selected": "選択済み",
     "selection": {
       "all": "すべて選択 ({count})",

@@ -142,8 +142,8 @@
         width: calc(100% - 5rem);
         left: 3rem;
         max-width: 700px;
-        background-color: var(--ks-background-panel);
-        box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
+        background-color: var(--ks-bg-surface);
+        box-shadow: 0 2px 4px 0 var(--ks-shadow-element);
     }
 
     .no-code-ai-trigger {

@@ -34,6 +34,7 @@
         appendToBody?: boolean
         width?: string | number
         top?: string
+        beforeClose?: (done: () => void) => void    
     }>(), {
         title: undefined,
         lockScroll: undefined,
@@ -42,6 +43,7 @@
         showClose: undefined,
         width: undefined,
         top: undefined,
+        beforeClose: undefined,
     })
 
     const emit = defineEmits<{
@@ -62,83 +64,36 @@
     @use 'element-plus/theme-chalk/src/dialog';
 
     .kel-dialog {
-        --kel-dialog-border-radius: var(--kel-border-radius-round);
-        background-color: var(--ks-background-card);
-
-        &.custom-dialog {
-            background-color: var(--ks-background-panel);
-
-            .kel-dialog__header {
-                background: var(--ks-background-panel);
-                margin-bottom: 0;
-
-                .kel-dialog__headerbtn {
-                    svg {
-                        color: var(--ks-content-secondary);
-                    }
-                }
-            }
-            .kel-dialog__title {
-                font-size: var(--ks-font-size-base);
-                font-weight: 700;
-            }
-        }
+        --kel-dialog-bg-color: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-default);
 
         .kel-dialog__header {
-            padding: 1rem;
-            margin: -1rem -1rem 1rem;
-            border-top-right-radius: var(--kel-border-radius-round);
-            border-top-left-radius: var(--kel-border-radius-round);
-            background: var(--ks-dialog-header);
-            font-size: var(--ks-font-size-md);
+            font-size: var(--ks-font-size-base);
+            font-weight: bold;
 
             .kel-dialog__headerbtn {
                 height: 62px;
                 width: 62px;
+            }
 
-                .kel-dialog__close {
+            .kel-dialog__close {
+                color: var(--ks-icon-default);
 
-                    color: var(--ks-dialog-headerbtn) !important;
-
-                    &:hover {
-                        color: var(--ks-dialog-headerbtn-hover) !important;
-                    }
+                &:hover {
+                    color: var(--ks-icon-hover) !important;
                 }
             }
         }
 
-        .kel-dialog__title {
-            color: var(--ks-content-primary);
-        }
-
-        .bottom-buttons {
-            margin-top: 36px;
-            display: flex;
-
-            > * {
-                flex: 1;
-
-                * {
-                    margin: 0;
-                }
-            }
-
-            .left-align {
-                &, & div {
-                    gap: 1rem;
-                    display: flex;
-                    flex-direction: row
-                }
-            }
-
-            .right-align {
-                &, & div {
-                    gap: 1rem;
-                    display: flex;
-                    flex-direction: row-reverse;
-                }
-            }
+        .kel-dialog__footer {
+            border-top: 1px solid var(--ks-border-default);
+            margin-left: calc(var(--kel-dialog-padding-primary) * -1);
+            margin-bottom: calc(var(--kel-dialog-padding-primary) * -1);
+            padding-bottom: var(--kel-dialog-padding-primary);
+            padding-right: var(--kel-dialog-padding-primary);
+            width: calc(100% + var(--kel-dialog-padding-primary) * 2);
+            background-color: var(--ks-bg-base);
+            border-radius: 0 0  var(--kel-dialog-border-radius) var(--kel-dialog-border-radius);
         }
     }
-
 </style>

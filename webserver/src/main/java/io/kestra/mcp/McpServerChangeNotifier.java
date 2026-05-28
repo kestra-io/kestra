@@ -10,14 +10,13 @@ import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import com.google.common.annotations.VisibleForTesting;
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -102,9 +101,8 @@ public class McpServerChangeNotifier {
 
         log.debug("Flow id: {} changed; refreshing tools on {} MCP server(s)", flow.getId(), serverIdsToRefresh.size());
 
-        boolean flowDeletedOrDisabled = flow.isDisabled() || flow.isDeleted();
         for (String serverId : serverIdsToRefresh) {
-            mcpServerHandlerTransport.get().refreshTools(flow.getTenantId(), serverId, flowDeletedOrDisabled)
+            mcpServerHandlerTransport.get().refreshTools(flow.getTenantId(), serverId)
                 .doOnError(e -> log.error("Failed to refresh tools for server {}: {}", serverId, e.getMessage()))
                 .doOnSuccess((_) -> log.debug("Tool list change notification successfully sent serverId: {}", serverId))
                 .onErrorComplete()

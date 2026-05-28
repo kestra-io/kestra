@@ -1,12 +1,11 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    
-    <section class="container">
+
+    <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
+    <section v-else class="container">
         <KsDataTable :total="data?.total ?? 0">
             <template #table>
-                <KsEmpty v-if="data?.results === undefined || data?.results.length === 0" />
                 <KsTable
-                    v-else
                     :data="data?.results"
                     stripe
                 >
@@ -30,7 +29,7 @@
             </template>
         </KsDataTable>
         <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
-            <KsAlert type="warning" :closable="false" showIcon>
+            <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
             <br>
@@ -51,6 +50,7 @@
     import {computed, onMounted, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import TopNavBar from "../layout/TopNavBar.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
@@ -121,7 +121,7 @@
         align-items: center;
         border-radius: 4px;
         &:hover{
-            border-color: var(--ks-border-primary);
+            border-color: var(--ks-border-default);
         }
     }
 </style>

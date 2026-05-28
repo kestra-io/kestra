@@ -27,7 +27,6 @@
                         {{ $t("save task") }}
                     </KsButton>
                     <KsAlert
-                        showIcon
                         :closable="false"
                         class="mb-0 mt-3"
                         v-if="revision && revisions?.length !== revision"

@@ -173,7 +173,7 @@
             {
                 name: `${t(aggregationLabel)} ${t("of")} ${metric}`,
                 data: aggregations.map((e) => e.value ?? 0),
-                itemStyle: {color: cssVar("--ks-content-success")},
+                itemStyle: {color: cssVar("--ks-status-success")},
             },
         ]
     }
@@ -291,7 +291,7 @@
         font-size: var(--kel-font-size-small);
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     .chart {

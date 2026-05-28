@@ -185,7 +185,7 @@
 <style scoped lang="scss">
     .section {
         h2 {
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: 1.20rem;
             font-weight: 600;
             padding: 0 1.25rem;
@@ -204,7 +204,7 @@
     .sub-sec {
         h2 {
             margin-bottom: 1rem;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             font-size: 1.10rem;
             font-weight: 600;
         }
@@ -220,7 +220,7 @@
         align-items: center;
         gap: 1rem;
         margin-bottom: 1rem;
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
         font-weight: 600;
         font-size: var(--ks-font-size-xl);
         line-height: 36px;

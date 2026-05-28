@@ -35,6 +35,7 @@
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
     "add_new_item": "नया आइटम जोड़ें",
     "additionalPlugins": "अतिरिक्त Plugins",
+    "admin": "प्रशासनिक",
     "administration": "प्रशासन",
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
@@ -174,6 +175,7 @@
     "codeDisabled": "Flow में अक्षम",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
+    "commit_id": "कमिट id",
     "common": {
       "back": "वापस"
     },
@@ -205,6 +207,7 @@
     "copy": "कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "copy url": "URL कॉपी करें",
+    "copy_and_close": "कॉपी करें और बंद करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
@@ -335,6 +338,7 @@
         "message": "Kestra एंटरप्राइज एडिशन में, आप अपनी संस्था के लिए केवल उपलब्ध कस्टम Blueprints बना सकते हैं। आप इन्हें अपनी टीम में साझा करने, केंद्रीकृत करने और सामान्य रूप से उपयोग किए जाने वाले workflows को दस्तावेज़ करने के लिए सर्वोत्तम-प्रथाओं के टेम्पलेट के रूप में उपयोग कर सकते हैं।",
         "title": "कस्टम Blueprints जोड़ें"
       },
+      "contact_sales": "सेल्स से संपर्क करें",
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
       "instance": {
@@ -392,7 +396,8 @@
         "label": "टेस्ट्स",
         "message": "अपने flows की लॉजिक को अलग-अलग सत्यापित करें, जल्दी से रिग्रेशन का पता लगाएं, और जैसे-जैसे आपके ऑटोमेशन बदलते और बढ़ते हैं, उन पर विश्वास बनाए रखें।",
         "title": "हर परिवर्तन के साथ विश्वसनीयता सुनिश्चित करें"
-      }
+      },
+      "watch_the_video": "वीडियो देखें"
     },
     "dependencies": "निर्भरताएँ",
     "dependencies delete flow": "इस flow में निर्भरताएँ हैं। इसे हटाने से उनकी निर्भरताओं को निष्पादित करने से रोका जाएगा।<br /><br /> यहाँ प्रभावित flows की सूची है:",
@@ -478,6 +483,10 @@
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
         "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
       },
+      "apiTokens": {
+        "content": "API टोकन का उपयोग तब किया जाता है जब आप Kestra API के लिए प्रोग्रामेटिक एक्सेस प्रदान करना चाहते हैं।",
+        "title": "अपने API Tokens प्रबंधित करें"
+      },
       "apps": {
         "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।",
         "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
@@ -493,6 +502,10 @@
       "concurrency_limit": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
+      },
+      "concurrency_limits": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "कोई concurrency सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
         "ASSET": {
@@ -511,6 +524,10 @@
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/namespaces?utm_source=app&utm_medium=referral&utm_campaign=dependencies-inlinedoc#dependencies\" target=\"_blank\">Namespace Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
         }
+      },
+      "groups": {
+        "content": "समूह आपको उपयोगकर्ताओं को एक साथ जोड़ने की अनुमति देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।",
+        "title": "आपके पास अभी तक कोई समूह नहीं है!"
       },
       "kill_switches": {
         "content": "किल स्विच फीचर एक UI आधारित तंत्र प्रदान करता है जो समस्याग्रस्त executions को रोकने के लिए है। यह केवल CLI <code>--skip-executions</code> और <code>--skip-flows</code> कमांड्स को एक व्यापक प्रशासनिक इंटरफेस के साथ बदलता है।",
@@ -539,6 +556,10 @@
       "versionPlugin": {
         "content": "यहां आप अपने Kestra instance पर इंस्टॉल किए गए सभी प्लगइन्स का प्रबंधन कर सकते हैं। नए इंस्टॉल किए गए प्लगइन्स आपके instance की कॉन्फ़िगरेशन के आधार पर सभी Kestra सेवाओं में तुरंत उपलब्ध नहीं हो सकते हैं।",
         "title": "आपके पास अभी तक कोई संस्करणित प्लगइन नहीं है!"
+      },
+      "workerRegistrationTokens": {
+        "content": "पंजीकरण टोकन दूरस्थ workers को सुरक्षित रूप से प्रमाणित और आपके Kestra instance के साथ पंजीकृत करने की अनुमति देते हैं। एक टोकन बनाएं, फिर इसे नए workers को इस क्लस्टर से जोड़ने के लिए उपयोग करें।",
+        "title": "आपके पास अभी तक कोई पंजीकरण टोकन नहीं है!"
       }
     },
     "empty search": "खोज परिणाम खाली हैं",
@@ -648,6 +669,8 @@
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
     "feeds": {
+      "heading": "सभी चीजें Kestra।",
+      "subheading": "नवीनतम अपडेट, गाइड और कहानियाँ",
       "title": "केस्ट्रा में नया क्या है"
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
@@ -737,6 +760,27 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_editor_stats": {
+      "apps": {
+        "suffix": "ऐप(s)",
+        "tooltip": "इस flow का उपयोग करने वाले ऐप्स देखें"
+      },
+      "dependencies": {
+        "suffix": "निर्भरता(एं)",
+        "tooltip": "flow निर्भरता देखें"
+      },
+      "errors": {
+        "label": "{count} त्रुटि(याँ)"
+      },
+      "revisions": {
+        "suffix": "संशोधन(संशोधन)",
+        "tooltip": "flow संशोधन देखें"
+      },
+      "tests": {
+        "suffix": "परीक्षण(परीक्षण)",
+        "tooltip": "flow परीक्षण देखें"
+      }
+    },
     "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flow_outputs": "फ्लो Outputs",
@@ -838,6 +882,7 @@
       "raw": "Temporal दृश्य",
       "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं"
     },
+    "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "management port": "प्रबंधन पोर्ट",
     "mark as": "<code>{status}</code> के रूप में चिह्नित करें",
     "max": "अधिकतम",
@@ -865,7 +910,10 @@
       "copy_url": "URL कॉपी करें",
       "create": "सर्वर बनाएं",
       "delete_confirm": "क्या आप वाकई इस MCP सर्वर को हटाना चाहते हैं?",
+      "id_invalid": "आईडी को एक छोटे अक्षर या अंक से शुरू होना चाहिए, और इसमें केवल छोटे अक्षर, अंक, हाइफन, या अंडरस्कोर शामिल होने चाहिए।",
+      "id_placeholder": "उदा. my-mcp-server",
       "instructions": "निर्देश",
+      "main_tenant": "मुख्य",
       "no_servers": "कोई MCP सर्वर नहीं मिला। बाहरी AI एजेंट्स के लिए MCP Tool triggers को एक्सपोज़ करने के लिए अपना पहला सर्वर बनाएं।",
       "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
       "private": "निजी",
@@ -874,6 +922,11 @@
       "server": "MCP सर्वर",
       "server_type": "सर्वर प्रकार",
       "servers": "MCP सर्वर",
+      "tab_connect": "कनेक्ट करें",
+      "tab_connect_placeholder": "कनेक्शन विवरण जल्द ही आ रहे हैं।",
+      "tab_edit": "संपादित करें",
+      "tab_tool_flows": "टूल Flows",
+      "tab_tool_flows_placeholder": "टूल flows प्रबंधन जल्द ही आ रहा है।",
       "url_copied": "URL कॉपी हो गया!",
       "username_password": "यूज़रनेम और पासवर्ड"
     },
@@ -1316,6 +1369,12 @@
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
+      "sort": {
+        "most_used": "सबसे अधिक उपयोग किया गया",
+        "name_asc": "नाम A-Z",
+        "name_desc": "नाम Z-A",
+        "newest": "नवीनतम"
+      },
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
     },
@@ -1402,6 +1461,7 @@
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",
     "runners": "धावक",
+    "running": "RUNNING",
     "running duration": "चलने की अवधि",
     "save": "सहेजें",
     "save draft": {
@@ -1455,6 +1515,7 @@
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
     "select datetime": "एक तिथि चुनें",
+    "select view": "दृश्य चुनें",
     "selected": "चयनित",
     "selection": {
       "all": "सभी का चयन करें ({count})",

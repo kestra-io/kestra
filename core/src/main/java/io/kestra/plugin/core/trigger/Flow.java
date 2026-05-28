@@ -1,8 +1,10 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Window;
 import io.kestra.core.utils.*;
@@ -329,6 +331,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                         .flowId(current.getFlowId())
                         .flowRevision(current.getFlowRevision())
                         .state(current.getState().getCurrent())
+                        .startDate(current.getState().getStartDate())
+                        .endDate(current.getState().getEndDate().orElse(null))
+                        .firstFailedTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).stream().filter(t -> t.getState().getCurrent().isFailed()).map(TaskRun::getTaskId).findFirst().orElse(null))
+                        .lastTaskId(ListUtils.emptyOnNull(current.getTaskRunList()).reversed().stream().map(TaskRun::getTaskId).findFirst().orElse(null))
                         .outputs(outputs)
                         .build()
                 )
@@ -532,6 +538,18 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         private State.Type state;
 
         @Schema(
+            title = "The execution start date",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
+        @NotNull
+        private Instant startDate;
+
+        @Schema(
+            title = "The execution end date",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
+        @NotNull
+        private Instant endDate;
+
+        @Schema(
             title = "The namespace of the flow that triggered the current flow",
             description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
@@ -548,6 +566,16 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             description = "In case multiple executions triggered the current flow, this will be the last one.")
         @NotNull
         private Integer flowRevision;
+
+        @Schema(
+            title = "The first failed task ID from the execution that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
+        private String firstFailedTaskId;
+
+        @Schema(
+            title = "The last task ID from the execution that triggered the current flow",
+            description = "In case multiple executions triggered the current flow, this will be the last one.")
+        private String lastTaskId;
 
         @Schema(
             title = "The extracted outputs from the flows that triggered the current flow",

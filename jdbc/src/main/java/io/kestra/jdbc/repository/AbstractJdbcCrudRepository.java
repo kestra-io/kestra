@@ -9,6 +9,7 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
@@ -492,6 +493,40 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
 
                 return this.jdbcRepository.fetch(select);
             });
+    }
+
+    /**
+     * Returns distinct values of {@code field}, optionally narrowed by {@code filters}.
+     * <p>
+     * Filters are routed through {@link #filter(List, String, QueryFilter.Resource)} which validates
+     * them against {@code resource} and combines each filter's condition via
+     * {@link #getConditionOnField}. Per-repository {@link #getColumnName} overrides (e.g.
+     * FLOW_ID → {@code id} on flows, → {@code detail_flow_id} on audit logs) are therefore
+     * honored. Pass {@code null} or an empty filter list to fetch the full distinct set under
+     * the tenant default filter.
+     * <p>
+     * Concrete repositories should expose this via a public override that supplies their resource.
+     */
+    protected List<String> findDistinctFieldValues(
+        String tenantId,
+        QueryFilter.Field field,
+        List<QueryFilter> filters,
+        Pageable pageable,
+        QueryFilter.Resource resource
+    ) {
+        Field<String> column = DSL.field(getColumnName(field), String.class);
+        Condition where = defaultFilter(tenantId).and(filter(filters, null, resource));
+
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .selectDistinct(column)
+                .from(this.jdbcRepository.getTable())
+                .where(where)
+                .orderBy(column.asc())
+                .limit(pageable.getSize())
+                .fetch(column));
     }
 
     /**

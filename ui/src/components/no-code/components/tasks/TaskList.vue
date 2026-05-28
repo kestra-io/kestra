@@ -46,7 +46,7 @@
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
     import Creation from "./taskList/buttons/Creation.vue"
     import Element from "./taskList/Element.vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     import {CollapseItem} from "../../utils/types"
 

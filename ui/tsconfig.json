@@ -1,37 +1,7 @@
 {
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ES2023.Array", "ES2020", "DOM", "DOM.Iterable", "ES2021.String", "ES2022.Array"],
-    "skipLibCheck": true,
-    "incremental": true,
-    "types": ["vitest/globals"],
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "preserve",
-    "jsxImportSource": "vue",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "preserveSymlinks": true,
-    "paths": {
-      "override/*": ["./src/override/*"]
-    }
-  },
-  "include": [
-    ".storybook/preview.*",
-    "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue",
-    "tests/**/*.ts", "tests/**/*.tsx", "tests/**/*.jsx", "tests/**/*.vue"
+  "files": [],
+  "references": [
+    {"path": "./tsconfig.app.json"},
+    {"path": "./tsconfig.test.json"}
   ]
 }

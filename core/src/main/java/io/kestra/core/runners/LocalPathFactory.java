@@ -17,13 +17,23 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class LocalPathFactory {
-    private final List<String> globalAllowedPaths;
+    private final List<Path> globalAllowedPaths;
 
     @Inject
     public LocalPathFactory(LocalFilesConfiguration localFilesConfiguration) {
         this.globalAllowedPaths = localFilesConfiguration.allowedPaths() != null
-            ? localFilesConfiguration.allowedPaths()
+            ? localFilesConfiguration.allowedPaths().stream().map(LocalPathFactory::resolveAllowedPath).toList()
             : Collections.emptyList();
+    }
+
+    // Resolve symlinks so that configured paths like /tmp match their real location (e.g. /private/tmp on macOS).
+    // Falls back to normalized absolute path if the directory does not yet exist.
+    private static Path resolveAllowedPath(String p) {
+        try {
+            return Path.of(p).toRealPath();
+        } catch (IOException e) {
+            return Path.of(p).toAbsolutePath().normalize();
+        }
     }
 
     /**
@@ -87,10 +97,10 @@ public class LocalPathFactory {
     }
 
     static class RunContextLocalPath extends AbstractLocalPath {
-        private final List<String> globalAllowedPaths;
+        private final List<Path> globalAllowedPaths;
         private final RunContext runContext;
 
-        RunContextLocalPath(List<String> globalAllowedPaths, RunContext runContext) {
+        RunContextLocalPath(List<Path> globalAllowedPaths, RunContext runContext) {
             this.globalAllowedPaths = globalAllowedPaths;
             this.runContext = runContext;
         }
@@ -104,7 +114,7 @@ public class LocalPathFactory {
             if (!path.startsWith(workingDirectory) && globalAllowedPaths.stream().noneMatch(path::startsWith)) {
                 // if not globally allowed, we check if it's allowed for this specific plugin
                 List<String> pluginAllowedPaths = (List<String>) runContext.pluginConfiguration("allowed-paths").orElse(Collections.emptyList());
-                if (pluginAllowedPaths.stream().noneMatch(path::startsWith)) {
+                if (pluginAllowedPaths.stream().map(LocalPathFactory::resolveAllowedPath).noneMatch(path::startsWith)) {
                     throw new SecurityException(
                         "The path " + path + " is not authorized. " +
                             "Only files inside the working directory are allowed by default, other path must be allowed either globally inside the Kestra configuration using the `"
@@ -119,9 +129,9 @@ public class LocalPathFactory {
     }
 
     static class DefaultLocalPath extends AbstractLocalPath {
-        private final List<String> globalAllowedPaths;
+        private final List<Path> globalAllowedPaths;
 
-        DefaultLocalPath(List<String> globalAllowedPaths) {
+        DefaultLocalPath(List<Path> globalAllowedPaths) {
             this.globalAllowedPaths = globalAllowedPaths;
         }
 

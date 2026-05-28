@@ -143,8 +143,7 @@
         }
 
         if (selectedTextSearch.value) {
-            const search = selectedTextSearch.value
-            return metrics.filter((m) => m.indexOf(search) !== -1)
+            return metrics.filter((m) => m.indexOf(selectedTextSearch.value!) !== -1)
         }
 
         return metrics
@@ -174,7 +173,7 @@
             {
                 name: `${t(aggregationLabel)} ${t("of")} ${metric}`,
                 data: aggregations.map((e) => e.value ?? 0),
-                itemStyle: {color: cssVar("--ks-content-success")},
+                itemStyle: {color: cssVar("--ks-status-success")},
             },
         ]
     }
@@ -289,10 +288,10 @@
     }
 
     .metric-title {
-        font-size: var(--ks-font-size-sm);
+        font-size: var(--kel-font-size-small);
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 
     .chart {

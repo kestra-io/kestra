@@ -44,6 +44,8 @@ class AiServiceManagerTest {
     @Mock
     NamespaceContextTool namespaceContextTool;
     @Mock
+    KestraDocsContextTool kestraDocsContextTool;
+    @Mock
     ExpressionContextService expressionContextService;
     @Mock
     io.kestra.core.services.PluginDefaultService pluginDefaultService;
@@ -62,6 +64,7 @@ class AiServiceManagerTest {
             posthogService,
             List.of(),
             namespaceContextTool,
+            kestraDocsContextTool,
             expressionContextService,
             pluginDefaultService
         );

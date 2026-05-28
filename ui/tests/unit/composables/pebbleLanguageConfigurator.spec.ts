@@ -6,7 +6,7 @@ import {describe, expect, it, vi} from "vitest";
 
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
 
-vi.mock("@kestra-io/ui-libs/flow-yaml-utils", () => ({parse: () => ({})}))
+vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => ({})}}))
 
 import {
     registerPebbleAutocompletion,

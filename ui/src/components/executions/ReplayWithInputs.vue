@@ -13,13 +13,12 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
+    import moment from "moment-timezone"
     import {useToast} from "../../utils/toast"
     import {useRouter, useRoute} from "vue-router"
-    // @ts-expect-error no types yet
     import {inputsToFormData} from "../../utils/submitTask"
     import {useExecutionsStore} from "../../stores/executions"
     import * as ExecutionUtils from "../../utils/executionUtils"
-    // @ts-expect-error no types yet
     import FlowRun from "../../components/flows/FlowRun.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {useClient} from "@kestra-io/kestra-sdk"
@@ -45,7 +44,7 @@
 
     const handleReplaySubmit = async ({inputs}: any) => {
 
-        const formData = inputsToFormData({}, flow.value.inputs, inputs)
+        const formData = inputsToFormData({$moment: moment}, flow.value.inputs, inputs)
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,

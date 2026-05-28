@@ -19,7 +19,7 @@
                 :item="currentTaskRun"
                 :active="isTaskRunActive"
                 :data-index="currentTaskRunIndex"
-            >
+            >   
                 <KsCard class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
@@ -52,7 +52,7 @@
                                 )
                             ] ?? []
                         "
-                        :minItemSize="1"
+                        :minItemSize="32"
                         keyField="index"
                         class="log-lines"
                         :class="{'single-line': currentTaskRuns.length === 1}"
@@ -200,6 +200,31 @@
                         </template>
                     </DynamicScroller>
                 </KsCard>
+                <div 
+                    v-if="taskType(currentTaskRun) === 'io.kestra.plugin.core.flow.Loop' && isTaskRunActive" 
+                    style="display:flex; align-items: center; gap: 12px; margin-bottom: 12px"
+                >
+                    <KsButton
+                        :tag="RouterLink"
+                        :to="{
+                            name: 'executions/list', 
+                            query: {
+                                'filters[parentId][EQUALS]': currentTaskRun.executionId,
+                                'filters[kind][EQUALS]': 'LOOP',
+                            }        
+                        }"
+                    >
+                        Iterations
+                    </KsButton>
+                    <KsProgress 
+                        :percentage="Math.ceil((loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0) / (loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? 1) * 100)" 
+                        :strokeWidth="24"
+                        :textInside="true"
+                        class="progress-bar"
+                    >
+                        <span>{{ loopOutputsByTaskRunId[currentTaskRun.id]?.terminatedIterations ?? 0 }} / {{ loopOutputsByTaskRunId[currentTaskRun.id]?.iterationCount ?? '?' }}</span>
+                    </KsProgress>
+                </div>
             </DynamicScrollerItem>
         </template>
     </DynamicScroller>
@@ -207,9 +232,11 @@
 
 <script setup>
     import Download from "vue-material-design-icons/Download.vue"
+    import {RouterLink} from "vue-router"
 </script>
 
 <script>
+    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
     import LogLine from "./LogLine.vue"
     import {State} from "@kestra-io/design-system"
     import _xor from "lodash/xor"
@@ -317,6 +344,7 @@
                 subflowTaskRunDetailsRefs: {},
                 throttledExecutionUpdate: undefined,
                 targetExecution: undefined,
+                loopOutputsByTaskRunId: {},
             }
         },
         watch: {
@@ -421,6 +449,12 @@
             }
 
             this.autoExpandBasedOnSettings()
+
+            for(const taskRun of this.currentTaskRuns) {
+                if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                    this.updateLoopStatus(taskRun.id)
+                }
+            }
         },
         setup(){
             const $http = useClient()
@@ -579,6 +613,24 @@
             },
         },
         methods: {
+            async updateLoopStatus(taskRunId) {
+                if (!this.followedExecution) return
+                try {
+                    const outputs = await OutputsAPI.taskRunOutputs({
+                        executionId: this.followedExecution.id,
+                        taskRunId,
+                    })
+                    if(outputs === null 
+                        || !outputs.iterationCount 
+                        || !outputs.terminatedIterations) {
+                        return
+                    }
+
+                    this.loopOutputsByTaskRunId[taskRunId] = outputs
+                } catch {
+                    // ignore fetch errors
+                }
+            },
             fileUrl(path) {
                 return `${apiUrl()}/executions/${this.followedExecution.id}/file?path=${path}`
             },
@@ -675,6 +727,17 @@
                         }
                     })
             },
+            refreshLogs(){
+                this.timer = moment()
+                this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
+                for(const taskRun of this.currentTaskRuns) {
+                    if (this.taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
+                        this.updateLoopStatus(taskRun.id)
+                    }
+                }
+                this.logsBuffer = []
+                this.scrollToBottomFailedTask()
+            },
             followLogs(executionId) {
                 this.executionsStore.followLogs({id: executionId}).then((sse) => {
                     this.logsSSE = sse
@@ -689,19 +752,13 @@
 
                         clearTimeout(this.timeout)
                         this.timeout = setTimeout(() => {
-                            this.timer = moment()
-                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
-                            this.logsBuffer = []
-                            this.scrollToBottomFailedTask()
+                            this.refreshLogs()
                         }, 100)
 
                         // force at least 1 logs refresh / 500ms
                         if (moment().diff(this.timer, "seconds") > 0.5) {
                             clearTimeout(this.timeout)
-                            this.timer = moment()
-                            this.rawLogs = this.deduplicateLogs(this.rawLogs.concat(this.logsBuffer))
-                            this.logsBuffer = []
-                            this.scrollToBottomFailedTask()
+                            this.refreshLogs()
                         }
                     }
 
@@ -928,26 +985,31 @@
         padding-left: 0;
     }
 
+    .progress-bar {
+        margin-block: .5rem;
+        flex: 1;
+    }
+
     .attempt-wrapper {
-        background-color: var(--ks-background-input);
+        background-color: var(--ks-bg-input);
         margin-bottom: 0;
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-default);
 
         :deep(.kel-card__body) {
             padding: 0;
         }
 
         .attempt-wrapper & {
-            border-radius: 0.25rem;
+            border-radius: var(--ks-radius-base);
         }
 
         tbody:last-child & {
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .attempt-header {
             padding: 0 0.5rem 0.5rem;
-            border-bottom: 1px solid var(--ks-border-primary);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         .line {
@@ -971,6 +1033,10 @@
         transition: max-height 0.2s ease-out;
         max-height: 300px;
 
+        :deep(.vue-recycle-scroller__item-view > div) {
+            min-height: 2rem;
+        }
+
         &.single-line {
             max-height: calc(100vh - 250px);
         }
@@ -979,7 +1045,7 @@
             padding: 1rem;
 
             &.cursor {
-                background-color: var(--ks-tooltip-border);
+                background-color: var(--ks-border-default);
             }
         }
     }

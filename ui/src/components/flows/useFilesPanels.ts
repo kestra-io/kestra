@@ -1,9 +1,8 @@
-import {h, markRaw, provide, Ref} from "vue"
+import {h, markRaw, onScopeDispose, provide, Ref, watchEffect} from "vue"
 import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue"
 import TypeIcon from "../utils/icons/Type.vue"
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue"
-import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue"
 import {useNamespacesStore} from "override/stores/namespaces"
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
 import {useFlowStore} from "../../stores/flow"
@@ -141,7 +140,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     // on save all files, save all namespace files
     // and set all tabs as not dirty
-    provide(FILES_SAVE_ALL_INJECTION_KEY, async () => {
+    const saveAllFiles = async () => {
         const files:{
             file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
             tab: TabLiveWithContent
@@ -172,6 +171,22 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                     .then(() => file.tab.dirty = false)),
             )
         }
+    }
+
+    flowStore.filesSaveAll = saveAllFiles
+    onScopeDispose(() => {
+        if (flowStore.filesSaveAll === saveAllFiles) {
+            flowStore.filesSaveAll = null
+        }
+        flowStore.hasDirtyEditorFiles = false
+    })
+
+    watchEffect(() => {
+        flowStore.hasDirtyEditorFiles = panels.value.some(p =>
+            p.tabs.some(t =>
+                t.uid.startsWith(`${CODE_PREFIX}-`) && (t as TabLive).dirty,
+            ),
+        )
     })
 
     const defaultSize = usePanelDefaultSize(panels)

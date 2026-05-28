@@ -14,9 +14,9 @@
 .toggle{
     margin-right: 1rem;
     &.is-active{
-        --kel-switch-border-color: var(--ks-white);
+        --kel-switch-border-color: var(--ks-border-active);
         ::v-deep(.kel-switch__label){
-            color: var(--ks-white);
+            color: var(--ks-text-primary);
         }
     }
 }

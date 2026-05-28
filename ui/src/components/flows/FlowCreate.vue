@@ -1,5 +1,9 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title">
+        <template #actions>
+            <Actions />
+        </template>
+    </TopNavBar>
     <section class="full-container">
         <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
@@ -9,11 +13,12 @@
     import {computed, onBeforeUnmount} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import Actions from "override/components/flows/Actions.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
     import {useBlueprintsStore} from "../../stores/blueprints"
-    import {getRandomID} from "../../../scripts/id"
+    import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import useRouteContext from "../../composables/useRouteContext"

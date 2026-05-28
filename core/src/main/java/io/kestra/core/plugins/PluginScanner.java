@@ -44,8 +44,7 @@ public class PluginScanner {
     ClassLoader parent;
 
     private static final String UI_MANIFEST_PATH = "plugin-ui/manifest.json";
-    private static final TypeReference<Map<String, List<PluginUiModule>>> PLUGIN_UI_MANIFEST_TYPE = new TypeReference<>() {
-    };
+    private static final String SOURCE_HASH_KEY = "sourceHash";
 
     public PluginScanner(final ClassLoader parent) {
         this.parent = parent;
@@ -237,9 +236,21 @@ public class PluginScanner {
             }
         }
 
+        String pluginUiSourceHash = null;
         try (InputStream in = classLoader.getResourceAsStream(UI_MANIFEST_PATH)) {
             if (in != null) {
-                pluginUiManifest.putAll(JacksonMapper.ofJson().readValue(in, PLUGIN_UI_MANIFEST_TYPE));
+                var rawManifest = JacksonMapper.ofJson().readValue(in, new TypeReference<Map<String, Object>>() {});
+                var mapper = JacksonMapper.ofJson();
+                for (var entry : rawManifest.entrySet()) {
+                    if (SOURCE_HASH_KEY.equals(entry.getKey())) {
+                        pluginUiSourceHash = (String) entry.getValue();
+                    } else {
+                        pluginUiManifest.put(
+                            entry.getKey(),
+                            mapper.convertValue(entry.getValue(), new TypeReference<List<PluginUiModule>>() {})
+                        );
+                    }
+                }
             }
         } catch (IOException e) {
             log.error("Unable to read plugin ui manifest for plugin {}", getLocation(externalPlugin));
@@ -273,6 +284,7 @@ public class PluginScanner {
                 )
             )
             .pluginUiManifest(pluginUiManifest)
+            .pluginUiSourceHash(pluginUiSourceHash)
             .build();
     }
 

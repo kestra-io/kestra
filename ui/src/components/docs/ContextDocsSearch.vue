@@ -1,6 +1,6 @@
 <template>
     <div class="search-container" ref="searchContainer">
-        <KsInput
+        <KsSearch
             v-model="searchQuery"
             :placeholder="$t('search_docs')"
             class="search-input"
@@ -8,13 +8,7 @@
             @keydown.enter.prevent="handleEnterKey"
             @keydown.up.prevent="handleKeyUp"
             @keydown.down.prevent="handleKeyDown"
-            :loading="loading"
-            type="search"
-        >
-            <template #prefix>
-                <Magnify class="search-icon" />
-            </template>
-        </KsInput>
+        />
         <div v-if="loading" class="loading-indicator">
             {{ $t('searching') }}
         </div>
@@ -48,7 +42,6 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue"
     import {useDocStore} from "../../stores/doc"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
     import ContextDocsLink from "./ContextDocsLink.vue"
     import {debounce} from "lodash-es"
 
@@ -151,44 +144,13 @@
     .search-input {
         width: 100%;
     }
-    .kel-input__wrapper {
-        background-color: var(--ks-background-input);
-        box-shadow: 0 0 0 1px var(--ks-border-color);
-        border-radius: 6px;
-        padding: 0.5rem;
-        transition: box-shadow 0.2s ease;
-
-        &.is-focus {
-            box-shadow: 0 0 0 1px var(--ks-primary);
-        }
-    }
-
-    .kel-input__inner {
-        color: var(--ks-content-primary);
-        font-size: var(--ks-font-size-sm);
-        height: 1.25rem;
-        background: transparent;
-    }
-
-    .kel-input__inner::placeholder {
-        color: var(--ks-content-secondary);
-    }
-
-    .kel-input__prefix {
-        margin-right: 0.5rem;
-    }
-
-    .search-icon {
-        font-size: var(--ks-font-size-base);
-        color: var(--ks-content-tertiary);
-    }
 
     .loading-indicator {
         position: absolute;
         right: 2rem;
         top: 60%;
         transform: translateY(-50%);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
     }
 
@@ -197,7 +159,7 @@
         top: 100%;
         left: 26px;
         right: 26px;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-bg-surface);
         border-radius: 6px;
         margin-top: 4px;
         max-height: 400px;
@@ -213,11 +175,11 @@
         display: block;
         text-decoration: none;
         color: inherit;
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         transition: background-color 0.2s;
 
         &:hover {
-            background: var(--ks-background-hover);
+            background: var(--ks-bg-hover);
             text-decoration: none;
             color: inherit;
         }
@@ -229,21 +191,21 @@
 
         .result-title {
             font-weight: 400;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
             margin-bottom: 2px;
             font-size: var(--ks-font-size-sm);
         }
 
         .result-preview {
             font-size: var(--ks-font-size-xs);
-            color: var(--ks-content-secondary);
+            color: var(--ks-text-secondary);
             margin: 0;
             opacity: 0.8;
         }
     }
 
     .no-results {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         text-align: center;
         cursor: default;
         padding: 6px 12px;

@@ -36,6 +36,7 @@ public class AiServiceManager {
     protected final ExpressionContextService expressionContextService;
     protected final PluginDefaultService pluginDefaultService;
     protected final NamespaceContextTool namespaceContextTool;
+    protected final KestraDocsContextTool kestraDocsContextTool;
 
     public AiServiceManager(
         @Client("api") HttpClient apiHttpClient,
@@ -49,12 +50,14 @@ public class AiServiceManager {
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
         @Nullable NamespaceContextTool namespaceContextTool,
+        @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
         PluginDefaultService pluginDefaultService) {
         this.providersConfiguration = providersConfiguration;
         this.expressionContextService = expressionContextService;
         this.pluginDefaultService = pluginDefaultService;
         this.namespaceContextTool = namespaceContextTool;
+        this.kestraDocsContextTool = kestraDocsContextTool;
 
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
@@ -140,9 +143,13 @@ public class AiServiceManager {
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
-            return new GeminiAiService(
+            AiService<?> service = new GeminiAiService(
                 pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
             );
+            if (this.kestraDocsContextTool != null) {
+                service.setKestraDocsContextTool(this.kestraDocsContextTool);
+            }
+            return service;
         } catch (Exception e) {
             log.error("Failed to create AI service for provider {}: {}", provider.id(), e.getMessage());
             return null;

@@ -12,7 +12,7 @@ $survey-group-spacing: 0.75rem;
 }
 
 %text-primary {
-  color: var(--ks-content-primary);
+  color: var(--ks-text-primary);
 }
 
 %border-reset {
@@ -83,10 +83,10 @@ $survey-group-spacing: 0.75rem;
     font-size: var(--ks-font-size-sm);
     font-weight: 400;
     transition: color 0.2s;
-    background-color: var(--ks-button-background-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
 
     &:hover {
-      background-color: var(--ks-button-background-secondary-hover);
+      background-color: var(--ks-btn-secondary-bg-hover);
     }
   }
 
@@ -110,7 +110,7 @@ $survey-group-spacing: 0.75rem;
   margin-top: -8px;
 
   .kel-text {
-    color: var(--ks-content-tertiary);
+    color: var(--ks-text-dim);
     font-size: var(--ks-font-size-xs);
   }
 }
@@ -138,10 +138,10 @@ $survey-group-spacing: 0.75rem;
     :deep(.kel-step__title) {
     vertical-align: middle;
     line-height: $step-icon-size;
-    color: var(--ks-content-inactive);
+    color: var(--ks-text-inactive);
 
     &.is-process {
-      color: var(--ks-content-primary);
+      color: var(--ks-text-primary);
       font-weight: 400;
       font-size: var(--ks-font-size-base);
     }
@@ -153,7 +153,7 @@ $survey-group-spacing: 0.75rem;
 }
 
 .primary-icon :deep(.kel-step__icon-inner) {
-  color: var(--ks-content-primary);
+  color: var(--ks-text-primary);
 }
 
 .survey-radio-group {
@@ -192,18 +192,18 @@ $survey-group-spacing: 0.75rem;
     .kel-radio__inner {
       width: $radio-size;
       height: $radio-size;
-      border: 2px solid var(--ks-border-primary);
+      border: 2px solid var(--ks-border-default);
       @extend %border-reset;
 
       &::after {
         width: 12px;
         height: 12px;
-        background-color: var(--ks-content-link);
+        background-color: var(--ks-text-link);
       }
     }
 
     &.is-checked .kel-radio__inner {
-      border-color: var(--ks-content-link);
+      border-color: var(--ks-text-link);
     }
   }
 }
@@ -364,14 +364,14 @@ $survey-group-spacing: 0.75rem;
 
 :deep(.kel-form-item.is-error .kel-input__suffix-inner),
 :deep(.kel-form-item__error) {
-  color: var(--ks-content-alert) !important;
+  color: var(--ks-status-error) !important;
 }
 
 :deep(.kel-input__inner) {
   font-size: var(--ks-font-size-sm);
 
   &::placeholder {
-    color: var(--ks-content-tertiary) !important;
+    color: var(--ks-text-dim) !important;
   }
 }
 

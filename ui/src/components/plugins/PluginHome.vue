@@ -15,7 +15,11 @@
                 }"
                 :searchInputFullWidth="true"
                 @search="handleSearch"
-            />
+            >
+                <template #extra>
+                    <KsSegmented v-model="sortBy" :options="sortOptions" />
+                </template>
+            </KSFilter>
         </KsRow>
         <section class="px-3 plugins-container">
             <KsTooltip
@@ -63,19 +67,22 @@
 <script setup lang="ts">
     import {ref, computed, onBeforeMount, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
+    import {KsTaskIcon, KsSegmented, KsFilter as KSFilter} from "@kestra-io/design-system"
     import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils"
     import DottedLayout from "../layout/DottedLayout.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {usePluginFilter} from "../filter/configurations"
     import headerImage from "../../assets/icons/plugin.svg"
     import headerImageDark from "../../assets/icons/plugin-dark.svg"
     import {usePluginsStore} from "../../stores/plugins"
+    import {useApiStore} from "../../stores/api"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     const route = useRoute()
     const router = useRouter()
+    const {t} = useI18n()
     const pluginsStore = usePluginsStore()
+    const apiStore = useApiStore()
 
     const pluginFilter = usePluginFilter()
 
@@ -90,12 +97,58 @@
 
     const icons = ref<Record<string, any>>({})
     const searchText = ref("")
+    const sortBy = ref<string>("name-asc")
+    /** Plugin metrics keyed by className (subGroup ?? group). Populated from api.kestra.io. */
+    const pluginInfoMap = ref<Record<string, {lastReleasedAt?: string; usageCount?: number}>>({})
+
+    const sortOptions = computed(() => [
+        {label: t("pluginPage.sort.name_asc"), value: "name-asc"},
+        {label: t("pluginPage.sort.name_desc"), value: "name-desc"},
+        {label: t("pluginPage.sort.newest"), value: "newest"},
+        {label: t("pluginPage.sort.most_used"), value: "most-used"},
+    ])
 
     const handleSearch = (query: string) => {
         searchText.value = query
     }
 
+    const pluginInfoKey = (plugin: any): string => plugin.subGroup ?? plugin.group
+
     const searchInput = computed(() => searchText.value.toLowerCase())
+
+    type Comparator = (a: any, b: any) => number
+
+    /** Locale-aware name comparison (ascending). */
+    const nameAscComparator: Comparator = (a, b) =>
+        a.title.localeCompare(b.title)
+
+    /** Sort by most-recently-released; ties fall back to name ascending. */
+    const newestComparator: Comparator = (a, b) => {
+        const infoA = pluginInfoMap.value[pluginInfoKey(a)]
+        const infoB = pluginInfoMap.value[pluginInfoKey(b)]
+        const dateA = infoA?.lastReleasedAt ? new Date(infoA.lastReleasedAt).getTime() : 0
+        const dateB = infoB?.lastReleasedAt ? new Date(infoB.lastReleasedAt).getTime() : 0
+        // Null/missing dates sort last
+        if (dateA === 0 && dateB === 0) return nameAscComparator(a, b)
+        if (dateA === 0) return 1
+        if (dateB === 0) return -1
+        return dateB - dateA || nameAscComparator(a, b)
+    }
+
+    /** Sort by descending usage count; ties fall back to name ascending. */
+    const mostUsedComparator: Comparator = (a, b) => {
+        const usageA = pluginInfoMap.value[pluginInfoKey(a)]?.usageCount ?? 0
+        const usageB = pluginInfoMap.value[pluginInfoKey(b)]?.usageCount ?? 0
+        return usageB - usageA || nameAscComparator(a, b)
+    }
+
+    /** Comparator map keyed by sortBy value. */
+    const comparators: Record<string, Comparator> = {
+        "name-asc": nameAscComparator,
+        "name-desc": (a, b) => nameAscComparator(b, a),
+        "newest": newestComparator,
+        "most-used": mostUsedComparator,
+    }
 
     const pluginsList = computed(() => {
         // Show subgroups only if exist, else show main group - GH-8940
@@ -108,18 +161,25 @@
             group.filter((p: any) => p.subGroup).length ? group.filter((p: any) => p.subGroup) : group.filter((p: any) => !p.subGroup),
         )
 
+        const comparator = comparators[sortBy.value] ?? nameAscComparator
+
         return filtered
             .filter((plugin, index, self) =>
-                index === self.findIndex(t => t.title === plugin.title && t.group === plugin.group),
+                index === self.findIndex(p => p.title === plugin.title && p.group === plugin.group),
             )
             .filter(plugin => isPluginMatched(plugin, searchInput.value))
             .filter(plugin => isVisible(plugin))
-            .sort((a, b) => {
-                const nameA = a.manifest["X-Kestra-Title"].toLowerCase()
-                const nameB = b.manifest["X-Kestra-Title"].toLowerCase()
-                return nameA < nameB ? -1 : nameA > nameB ? 1 : 0
-            })
+            .sort(comparator)
     })
+
+    const loadPluginInformation = async () => {
+        try {
+            const response = await apiStore.pluginsInformation()
+            pluginInfoMap.value = response.data?.byPlugin ?? {}
+        } catch {
+            // api.kestra.io unavailable — sort options relying on this data will degrade gracefully
+        }
+    }
 
     const loadPluginIcons = async () => {
         try {
@@ -172,6 +232,7 @@
 
     onBeforeMount(() => {
         loadPluginIcons()
+        loadPluginInformation()
         searchText.value = String(route.query?.["filters[q][EQUALS]"] ?? "")
     })
 
@@ -200,7 +261,7 @@
 
         &.enhance-readability {
             padding: 1.5rem;
-            background-color: var(--ks-tag-background);
+            background-color: var(--ks-bg-tag);
         }
     }
 
@@ -218,13 +279,13 @@
         line-height: 26px;
         cursor: pointer;
 
-        border: 1px solid var(--ks-border-primary);
-        background-color: var(--ks-button-background-secondary);
-        color: var(--ks-content-primary);
+        border: 1px solid var(--ks-border-default);
+        background-color: var(--ks-btn-secondary-bg-default);
+        color: var(--ks-text-primary);
 
         &:hover {
-            border-color: var(--ks-border-active);
-            background-color: var(--ks-button-background-secondary-hover);
+            border-color: var(--ks-border-focus);
+            background-color: var(--ks-btn-secondary-bg-hover);
         }
     }
 

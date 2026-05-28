@@ -59,7 +59,7 @@
     .kel-autocomplete {
         .kel-input {
             height: 100%;
-            --kel-input-bg-color: var(--ks-background-body);
+            --kel-input-bg-color: var(--ks-bg-base);
         }
 
         .kel-input__suffix-inner {
@@ -78,7 +78,7 @@
         }
 
         li {
-            --kel-fill-color-light: var(--ks-select-hover);
+            --kel-fill-color-light: var(--ks-bg-hover-elevated);
             padding: 0 1rem;
             border-radius: 5px;
 
@@ -87,7 +87,7 @@
             }
 
             a {
-                color: var(--ks-content-primary);
+                color: var(--ks-text-primary);
                 justify-content: space-between;
             }
         }

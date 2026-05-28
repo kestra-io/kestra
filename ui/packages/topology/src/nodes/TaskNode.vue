@@ -22,7 +22,7 @@
                             type="button"
                             class="view-details-button"
                             aria-label="Show details"
-                            @click="onShowDetails()"
+                            @click.stop="onShowDetails()"
                         >
                             Show details
                         </button>
@@ -85,18 +85,7 @@
                     <TextBoxSearch class="button-icon" alt="Show logs" />
                 </KsTooltip>
             </span>
-            <button
-                v-if="actionConfig?.eventName === EVENTS.SHOW_CUSTOM_ACTION && data.node.task"
-                type="button"
-                class="circle-button"
-                :style="{backgroundColor: `var(--ks-node-${color})`}"
-                :aria-label="actionConfig.config.label"
-                @click="onShowDetails()"
-            >
-                <KsTooltip :content="actionConfig.config.label">
-                    <Eye class="button-icon" :alt="actionConfig.config.label" />
-                </KsTooltip>
-            </button>
+
             <span
                 v-if="!taskExecution && !data.isReadOnly && data.isFlowable"
                 class="circle-button"
@@ -157,8 +146,7 @@
     import AlertIcon from "vue-material-design-icons/Alert.vue"
     import SkipForwardIcon from "vue-material-design-icons/SkipForward.vue"
     import RotatingDots from "../assets/icons/RotatingDots.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
-
+    
 
     interface TaskType {
         id: string;
@@ -392,7 +380,7 @@
     right: 0;
     z-index: 1;
     border: none;
-    background-color: var(--ks-background-card);
+    background-color: var(--ks-bg-surface);
     border-radius: 3px;
     height: 1rem;
     width: 1rem;
@@ -424,8 +412,8 @@ button.playground-button {
     padding: 4px 10px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 999px;
-    background-color: var(--ks-background-card);
-    color: var(--ks-content-secondary);
+    background-color: var(--ks-bg-surface);
+    color: var(--ks-text-secondary);
     cursor: pointer;
     font: inherit;
     font-size: 0.75rem;
@@ -439,7 +427,7 @@ button.playground-button {
     &:hover {
         border-color: var(--ks-border-active);
         background-color: var(--ks-button-background-secondary-hover);
-        color: var(--ks-content-primary);
+        color: var(--ks-text-primary);
     }
 
     &:focus-visible {
